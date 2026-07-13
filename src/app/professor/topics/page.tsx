@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { TopicForm } from "@/app/professor/topics/topic-form";
+import { TopicStatusButton } from "@/app/professor/topics/topic-status-button";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -50,6 +51,7 @@ export default async function ProfessorTopicsPage() {
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm text-zinc-600">{topic.description}</p>
                 <p className="mt-3 text-sm">모집 인원 {topic.capacity}명</p>
+                <TopicStatusButton topicId={topic.id} status={topic.status} />
               </li>
             ))}
           </ul>

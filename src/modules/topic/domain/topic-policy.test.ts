@@ -105,6 +105,9 @@ describe("주제 소유권 정책", () => {
     expect(canManageTopic({ id: "other", role: "PROFESSOR" }, "author")).toBe(
       false,
     );
+    expect(canManageTopic({ id: "author", role: "STUDENT" }, "author")).toBe(
+      false,
+    );
     expect(canManageTopic({ id: "admin", role: "ADMIN" }, "author")).toBe(true);
   });
 });

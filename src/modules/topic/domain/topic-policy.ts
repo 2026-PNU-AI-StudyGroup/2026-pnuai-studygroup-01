@@ -91,5 +91,8 @@ export function canCreateTopic(actor: CurrentActor): boolean {
 }
 
 export function canManageTopic(actor: CurrentActor, authorId: string): boolean {
-  return actor.role === "ADMIN" || actor.id === authorId;
+  return (
+    actor.role === "ADMIN" ||
+    (actor.role === "PROFESSOR" && actor.id === authorId)
+  );
 }

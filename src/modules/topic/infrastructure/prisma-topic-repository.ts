@@ -3,10 +3,14 @@ import type {
   TopicCreator,
   TopicDraft,
   TopicLister,
+  TopicStateRecord,
+  TopicStateRepository,
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
 
-export class PrismaTopicRepository implements TopicCreator, TopicLister {
+export class PrismaTopicRepository
+  implements TopicCreator, TopicLister, TopicStateRepository
+{
   constructor(private readonly client: PrismaClient) {}
 
   createDraft(topic: TopicDraft): Promise<{ id: string }> {
@@ -41,5 +45,37 @@ export class PrismaTopicRepository implements TopicCreator, TopicLister {
         publishedAt: true,
       },
     });
+  }
+
+  findState(id: string): Promise<TopicStateRecord | null> {
+    return this.client.topic.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        authorId: true,
+        status: true,
+        recruitmentEndsAt: true,
+      },
+    });
+  }
+
+  async publishDraft(id: string, publishedAt: Date): Promise<boolean> {
+    const result = await this.client.topic.updateMany({
+      where: {
+        id,
+        status: "DRAFT",
+        recruitmentEndsAt: { gt: publishedAt },
+      },
+      data: { status: "PUBLISHED", publishedAt },
+    });
+    return result.count === 1;
+  }
+
+  async closePublished(id: string): Promise<boolean> {
+    const result = await this.client.topic.updateMany({
+      where: { id, status: "PUBLISHED" },
+      data: { status: "CLOSED" },
+    });
+    return result.count === 1;
   }
 }

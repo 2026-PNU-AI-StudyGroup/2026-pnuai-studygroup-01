@@ -22,3 +22,16 @@ export type TopicSummary = TopicDraft & {
 export interface TopicLister {
   listByAuthor(authorId: string): Promise<TopicSummary[]>;
 }
+
+export type TopicStateRecord = {
+  id: string;
+  authorId: string;
+  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  recruitmentEndsAt: Date;
+};
+
+export interface TopicStateRepository {
+  findState(id: string): Promise<TopicStateRecord | null>;
+  publishDraft(id: string, publishedAt: Date): Promise<boolean>;
+  closePublished(id: string): Promise<boolean>;
+}
