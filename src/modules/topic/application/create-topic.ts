@@ -1,22 +1,14 @@
 import type { AcademicCycleReader } from "@/modules/academic-cycle/application/academic-cycle-ports";
+import type {
+  TopicCreator,
+  TopicDraft,
+} from "@/modules/topic/application/topic-ports";
 import {
   assertValidTopicDetails,
   assertValidTopicSchedule,
   canCreateTopic,
   type TopicActor,
-  type TopicDetails,
-  type TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
-
-export type TopicDraft = TopicDetails &
-  TopicSchedule & {
-    academicCycleId: string;
-    authorId: string;
-  };
-
-export interface TopicRepository {
-  createDraft(topic: TopicDraft): Promise<{ id: string }>;
-}
 
 export class TopicCreationForbiddenError extends Error {
   constructor() {
@@ -34,7 +26,7 @@ export class AcademicCycleNotFoundError extends Error {
 
 export class CreateTopicService {
   constructor(
-    private readonly topicRepository: TopicRepository,
+    private readonly topicRepository: TopicCreator,
     private readonly academicCycleRepository: AcademicCycleReader,
   ) {}
 

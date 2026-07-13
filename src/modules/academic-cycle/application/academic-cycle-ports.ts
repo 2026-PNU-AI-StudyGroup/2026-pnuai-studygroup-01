@@ -11,3 +11,7 @@ export interface AcademicCycleCreator {
 export interface AcademicCycleReader {
   exists(id: string): Promise<boolean>;
 }
+
+export interface AcademicCycleLister {
+  listAll(): Promise<AcademicCycleRecord[]>;
+}

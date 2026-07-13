@@ -5,8 +5,8 @@ import {
   AcademicCycleNotFoundError,
   CreateTopicService,
   TopicCreationForbiddenError,
-  type TopicRepository,
 } from "@/modules/topic/application/create-topic";
+import type { TopicCreator } from "@/modules/topic/application/topic-ports";
 
 const topicInput = {
   academicCycleId: "cycle-1",
@@ -22,7 +22,7 @@ const topicInput = {
 };
 
 function repositories(cycleExists = true) {
-  const topics: TopicRepository = {
+  const topics: TopicCreator = {
     createDraft: vi.fn(async () => ({ id: "topic-1" })),
   };
   const cycles: AcademicCycleReader = {
