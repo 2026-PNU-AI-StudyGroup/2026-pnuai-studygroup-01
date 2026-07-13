@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl items-center px-6 py-16">
@@ -10,6 +12,12 @@ export default function Home() {
           주제 탐색부터 팀 구성, 진행 관리, 보고서 승인과 결과물 보관까지
           하나의 흐름으로 관리합니다.
         </p>
+        <Link
+          href="/sign-in"
+          className="inline-flex rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
+        >
+          시작하기
+        </Link>
       </section>
     </main>
   );

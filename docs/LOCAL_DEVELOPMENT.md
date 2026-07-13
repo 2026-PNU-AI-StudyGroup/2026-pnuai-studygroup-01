@@ -14,10 +14,36 @@ Ollama는 macOS Docker Desktop에서 GPU 가속을 사용할 수 없으므로 Do
 ```bash
 nvm use
 npm install
-cp .env.example .env.local
+cp .env.example .env
 docker compose up -d
+npm run db:generate
+npm run db:deploy
 ollama pull qwen3.5:2b
 ```
+
+`db:generate`는 Prisma Client를 생성하고 `db:deploy`는 저장소에 커밋된 마이그레이션을 로컬 DB에 적용한다. Prisma 스키마를 직접 변경해 새 마이그레이션을 만들 때만 `npm run db:migrate -- --name <이름>`을 사용한다.
+
+`.env`의 다음 값은 직접 설정한다.
+
+- `BETTER_AUTH_SECRET`: 32바이트 이상의 무작위 값
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: Google OAuth Web Client 자격 증명
+- `INITIAL_ADMIN_EMAIL`: 관리자 bootstrap 대상 부산대학교 이메일
+
+Google Cloud Console의 승인된 Redirect URI에는 다음 값을 등록한다.
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+로그인은 Google이 서명한 `hd=pusan.ac.kr` Workspace 클레임, `email_verified=true`, `@pusan.ac.kr` 이메일을 모두 통과해야 한다. 신규 사용자는 학생이며, 교수 허용 목록에 등록된 이메일만 교수로 생성된다.
+
+최초 관리자는 자동 승격하지 않는다. `INITIAL_ADMIN_EMAIL`의 계정으로 한 번 로그인한 뒤 운영자가 다음 명령을 명시적으로 한 번 실행한다.
+
+```bash
+npm run db:bootstrap-admin
+```
+
+명령은 검증된 기존 사용자만 관리자로 승격한다. 마이그레이션이나 애플리케이션 시작 과정에서는 자동 실행되지 않는다.
 
 외부 AI API는 사용하지 않는다. Ollama의 Cloud 기능은 비활성화한다.
 
