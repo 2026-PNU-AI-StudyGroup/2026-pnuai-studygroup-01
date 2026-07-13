@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   ApplyToTopicService,
+  StudentAlreadyAssignedError,
   TopicAlreadyAppliedError,
   TopicUnavailableForApplicationError,
 } from "@/modules/topic-application/application/apply-to-topic";
@@ -50,6 +51,7 @@ export async function applyTopicAction(
     if (
       error instanceof TopicAlreadyAppliedError ||
       error instanceof TopicUnavailableForApplicationError ||
+      error instanceof StudentAlreadyAssignedError ||
       error instanceof TopicApplicationForbiddenError ||
       error instanceof InvalidTopicApplicationMessageError
     ) {

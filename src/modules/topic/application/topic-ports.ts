@@ -40,6 +40,7 @@ export type PublicTopicSummary = TopicSummary & {
   authorName: string;
   academicYear: number;
   term: "FIRST" | "SECOND";
+  memberCount: number;
 };
 
 export interface PublicTopicLister {

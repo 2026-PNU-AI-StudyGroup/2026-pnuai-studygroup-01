@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { TopicForm } from "@/app/professor/topics/topic-form";
@@ -27,9 +28,14 @@ export default async function ProfessorTopicsPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl space-y-10 px-6 py-12">
-      <header>
-        <p className="text-sm font-semibold text-blue-700">교수</p>
-        <h1 className="mt-2 text-3xl font-bold">주제 관리</h1>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">교수</p>
+          <h1 className="mt-2 text-3xl font-bold">주제 관리</h1>
+        </div>
+        <Link href="/professor/applications" className="text-sm font-semibold text-blue-700">
+          받은 지원서
+        </Link>
       </header>
       {cycles.length === 0 ? (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">

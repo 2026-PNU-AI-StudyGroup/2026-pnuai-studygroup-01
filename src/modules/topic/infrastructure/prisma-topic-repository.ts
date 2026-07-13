@@ -88,14 +88,16 @@ export class PrismaTopicRepository
       include: {
         author: { select: { name: true } },
         academicCycle: { select: { academicYear: true, term: true } },
+        team: { select: { _count: { select: { members: true } } } },
       },
     });
 
-    return topics.map(({ author, academicCycle, ...topic }) => ({
+    return topics.map(({ author, academicCycle, team, ...topic }) => ({
       ...topic,
       authorName: author.name,
       academicYear: academicCycle.academicYear,
       term: academicCycle.term,
+      memberCount: team?._count.members ?? 0,
     }));
   }
 }

@@ -30,6 +30,12 @@ enum TopicApplicationStatus {
   REJECTED
 }
 
+enum TeamStatus {
+  FORMING
+  CONFIRMED
+  CLOSED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -44,6 +50,7 @@ model User {
   allowlistEntriesCreated ProfessorAllowlist[] @relation("AllowlistCreator")
   topics                  Topic[]
   topicApplications       TopicApplication[]
+  teamMemberships         TeamMember[]
 
   @@map("user")
 }
@@ -140,9 +147,11 @@ model Topic {
   academicCycle        AcademicCycle @relation(fields: [academicCycleId], references: [id])
   author               User          @relation(fields: [authorId], references: [id])
   applications         TopicApplication[]
+  team                 Team?
 
   @@index([academicCycleId, status])
   @@index([authorId])
+  @@unique([id, academicCycleId, authorId])
   @@map("topic")
 }
 
@@ -157,8 +166,48 @@ model TopicApplication {
   updatedAt  DateTime               @updatedAt
   topic      Topic                  @relation(fields: [topicId], references: [id])
   student    User                   @relation(fields: [studentId], references: [id])
+  teamMember TeamMember?
 
   @@unique([topicId, studentId])
+  @@unique([id, studentId, topicId])
   @@index([studentId, status])
   @@map("topic_application")
+}
+
+model Team {
+  id              String        @id @default(uuid())
+  academicCycleId String
+  topicId         String        @unique
+  professorId     String
+  name            String
+  status          TeamStatus    @default(FORMING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  topic           Topic         @relation(fields: [topicId, academicCycleId, professorId], references: [id, academicCycleId, authorId])
+  members         TeamMember[]
+
+  @@unique([topicId, academicCycleId, professorId])
+  @@unique([id, academicCycleId, topicId])
+  @@index([academicCycleId, status])
+  @@index([professorId])
+  @@map("team")
+}
+
+model TeamMember {
+  id              String         @id @default(uuid())
+  teamId          String
+  academicCycleId String
+  topicId         String
+  studentId       String
+  applicationId   String         @unique
+  joinedAt        DateTime       @default(now())
+  team            Team           @relation(fields: [teamId, academicCycleId, topicId], references: [id, academicCycleId, topicId], onDelete: Cascade)
+  student         User           @relation(fields: [studentId], references: [id])
+  application     TopicApplication @relation(fields: [applicationId, studentId, topicId], references: [id, studentId, topicId])
+
+  @@unique([teamId, studentId])
+  @@unique([academicCycleId, studentId])
+  @@unique([applicationId, studentId, topicId])
+  @@index([studentId])
+  @@map("team_member")
 }

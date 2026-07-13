@@ -52,7 +52,9 @@ export default async function TopicsPage() {
           {topics.map((topic) => {
             const application = applicationsByTopic.get(topic.id);
             const isRecruiting =
-              topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now;
+              topic.recruitmentStartsAt <= now &&
+              topic.recruitmentEndsAt > now &&
+              topic.memberCount < topic.capacity;
 
             return (
               <li key={topic.id} className="rounded-xl border p-6">
@@ -73,7 +75,11 @@ export default async function TopicsPage() {
                   <ApplyTopicForm topicId={topic.id} />
                 ) : (
                   <p className="mt-5 text-sm text-zinc-600">
-                    {actor.role === "STUDENT" ? "현재 모집 기간이 아닙니다." : "학생 계정으로 지원할 수 있습니다."}
+                    {actor.role === "STUDENT"
+                      ? topic.memberCount >= topic.capacity
+                        ? "모집 정원이 찼습니다."
+                        : "현재 모집 기간이 아닙니다."
+                      : "학생 계정으로 지원할 수 있습니다."}
                   </p>
                 )}
               </li>

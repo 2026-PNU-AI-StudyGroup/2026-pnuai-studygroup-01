@@ -19,6 +19,13 @@ export class TopicUnavailableForApplicationError extends Error {
   }
 }
 
+export class StudentAlreadyAssignedError extends Error {
+  constructor() {
+    super("이미 같은 학기의 팀에 소속되어 있습니다.");
+    this.name = "StudentAlreadyAssignedError";
+  }
+}
+
 export class ApplyToTopicService {
   constructor(
     private readonly repository: TopicApplicationCreator,
@@ -44,6 +51,9 @@ export class ApplyToTopicService {
     }
     if (result.outcome === "TOPIC_UNAVAILABLE") {
       throw new TopicUnavailableForApplicationError();
+    }
+    if (result.outcome === "STUDENT_ALREADY_ASSIGNED") {
+      throw new StudentAlreadyAssignedError();
     }
     return { id: result.id };
   }
