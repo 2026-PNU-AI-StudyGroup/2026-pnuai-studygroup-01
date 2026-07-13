@@ -1,4 +1,4 @@
-import type { UserRole } from "@/modules/identity/domain/user-role";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicSchedule = {
   recruitmentStartsAt: Date;
@@ -7,11 +7,6 @@ export type TopicSchedule = {
   executionEndsAt: Date;
   submissionStartsAt: Date;
   submissionEndsAt: Date;
-};
-
-export type TopicActor = {
-  id: string;
-  role: UserRole;
 };
 
 export type TopicPublication = {
@@ -91,10 +86,10 @@ export function assertValidTopicPublication(
   }
 }
 
-export function canCreateTopic(actor: TopicActor): boolean {
+export function canCreateTopic(actor: CurrentActor): boolean {
   return actor.role === "PROFESSOR" || actor.role === "ADMIN";
 }
 
-export function canManageTopic(actor: TopicActor, authorId: string): boolean {
+export function canManageTopic(actor: CurrentActor, authorId: string): boolean {
   return actor.role === "ADMIN" || actor.id === authorId;
 }

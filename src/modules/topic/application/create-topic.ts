@@ -1,4 +1,5 @@
 import type { AcademicCycleReader } from "@/modules/academic-cycle/application/academic-cycle-ports";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   TopicCreator,
   TopicDraft,
@@ -7,7 +8,6 @@ import {
   assertValidTopicDetails,
   assertValidTopicSchedule,
   canCreateTopic,
-  type TopicActor,
 } from "@/modules/topic/domain/topic-policy";
 
 export class TopicCreationForbiddenError extends Error {
@@ -31,7 +31,7 @@ export class CreateTopicService {
   ) {}
 
   async execute(
-    actor: TopicActor,
+    actor: CurrentActor,
     input: Omit<TopicDraft, "authorId">,
   ): Promise<{ id: string }> {
     if (!canCreateTopic(actor)) {
