@@ -13,6 +13,17 @@ enum UserRole {
   ADMIN
 }
 
+enum AcademicTerm {
+  FIRST
+  SECOND
+}
+
+enum TopicStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -25,6 +36,7 @@ model User {
   sessions                Session[]
   accounts                Account[]
   allowlistEntriesCreated ProfessorAllowlist[] @relation("AllowlistCreator")
+  topics                  Topic[]
 
   @@map("user")
 }
@@ -87,4 +99,41 @@ model ProfessorAllowlist {
 
   @@index([createdById])
   @@map("professor_allowlist")
+}
+
+model AcademicCycle {
+  id           String       @id @default(uuid())
+  academicYear Int
+  term         AcademicTerm
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  topics       Topic[]
+
+  @@unique([academicYear, term])
+  @@map("academic_cycle")
+}
+
+model Topic {
+  id                   String        @id @default(uuid())
+  academicCycleId      String
+  authorId             String
+  title                String
+  description          String
+  capacity             Int
+  recruitmentStartsAt  DateTime
+  recruitmentEndsAt    DateTime
+  executionStartsAt    DateTime
+  executionEndsAt      DateTime
+  submissionStartsAt   DateTime
+  submissionEndsAt     DateTime
+  status               TopicStatus   @default(DRAFT)
+  publishedAt          DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  academicCycle        AcademicCycle @relation(fields: [academicCycleId], references: [id])
+  author               User          @relation(fields: [authorId], references: [id])
+
+  @@index([academicCycleId, status])
+  @@index([authorId])
+  @@map("topic")
 }
