@@ -36,6 +36,12 @@ enum TeamStatus {
   CLOSED
 }
 
+enum MilestoneStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -51,6 +57,8 @@ model User {
   topics                  Topic[]
   topicApplications       TopicApplication[]
   teamMemberships         TeamMember[]
+  milestonesCreated       Milestone[]
+  progressUpdates         ProgressUpdate[]
 
   @@map("user")
 }
@@ -185,6 +193,8 @@ model Team {
   updatedAt       DateTime      @updatedAt
   topic           Topic         @relation(fields: [topicId, academicCycleId, professorId], references: [id, academicCycleId, authorId])
   members         TeamMember[]
+  milestones      Milestone[]
+  progressUpdates ProgressUpdate[]
 
   @@unique([topicId, academicCycleId, professorId])
   @@unique([id, academicCycleId, topicId])
@@ -210,4 +220,35 @@ model TeamMember {
   @@unique([applicationId, studentId, topicId])
   @@index([studentId])
   @@map("team_member")
+}
+
+model Milestone {
+  id          String          @id @default(uuid())
+  teamId      String
+  createdById String
+  title       String
+  dueAt       DateTime
+  status      MilestoneStatus @default(TODO)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  team        Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy   User            @relation(fields: [createdById], references: [id])
+
+  @@index([teamId, dueAt])
+  @@map("milestone")
+}
+
+model ProgressUpdate {
+  id          String   @id @default(uuid())
+  teamId      String
+  authorId    String
+  content     String
+  risk        String
+  nextAction  String
+  createdAt   DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author      User     @relation(fields: [authorId], references: [id])
+
+  @@index([teamId, createdAt])
+  @@map("progress_update")
 }
