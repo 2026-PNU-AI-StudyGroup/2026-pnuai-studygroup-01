@@ -24,6 +24,12 @@ enum TopicStatus {
   CLOSED
 }
 
+enum TopicApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -37,6 +43,7 @@ model User {
   accounts                Account[]
   allowlistEntriesCreated ProfessorAllowlist[] @relation("AllowlistCreator")
   topics                  Topic[]
+  topicApplications       TopicApplication[]
 
   @@map("user")
 }
@@ -132,8 +139,26 @@ model Topic {
   updatedAt            DateTime      @updatedAt
   academicCycle        AcademicCycle @relation(fields: [academicCycleId], references: [id])
   author               User          @relation(fields: [authorId], references: [id])
+  applications         TopicApplication[]
 
   @@index([academicCycleId, status])
   @@index([authorId])
   @@map("topic")
+}
+
+model TopicApplication {
+  id         String                 @id @default(uuid())
+  topicId    String
+  studentId  String
+  message    String
+  status     TopicApplicationStatus @default(PENDING)
+  decidedAt  DateTime?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  topic      Topic                  @relation(fields: [topicId], references: [id])
+  student    User                   @relation(fields: [studentId], references: [id])
+
+  @@unique([topicId, studentId])
+  @@index([studentId, status])
+  @@map("topic_application")
 }

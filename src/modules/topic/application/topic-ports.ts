@@ -35,3 +35,13 @@ export interface TopicStateRepository {
   publishDraft(id: string, publishedAt: Date): Promise<boolean>;
   closePublished(id: string): Promise<boolean>;
 }
+
+export type PublicTopicSummary = TopicSummary & {
+  authorName: string;
+  academicYear: number;
+  term: "FIRST" | "SECOND";
+};
+
+export interface PublicTopicLister {
+  listPublished(): Promise<PublicTopicSummary[]>;
+}

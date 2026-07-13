@@ -3,13 +3,15 @@ import type {
   TopicCreator,
   TopicDraft,
   TopicLister,
+  PublicTopicLister,
+  PublicTopicSummary,
   TopicStateRecord,
   TopicStateRepository,
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
 
 export class PrismaTopicRepository
-  implements TopicCreator, TopicLister, TopicStateRepository
+  implements TopicCreator, TopicLister, TopicStateRepository, PublicTopicLister
 {
   constructor(private readonly client: PrismaClient) {}
 
@@ -77,5 +79,23 @@ export class PrismaTopicRepository
       data: { status: "CLOSED" },
     });
     return result.count === 1;
+  }
+
+  async listPublished(): Promise<PublicTopicSummary[]> {
+    const topics = await this.client.topic.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      include: {
+        author: { select: { name: true } },
+        academicCycle: { select: { academicYear: true, term: true } },
+      },
+    });
+
+    return topics.map(({ author, academicCycle, ...topic }) => ({
+      ...topic,
+      authorName: author.name,
+      academicYear: academicCycle.academicYear,
+      term: academicCycle.term,
+    }));
   }
 }
