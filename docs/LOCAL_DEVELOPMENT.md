@@ -63,6 +63,16 @@ npm run dev
 - PostgreSQL: `localhost:5432`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
+
+만료된 미완료 업로드와 팀 삭제 등으로 발생한 Object Storage 삭제 작업은
+다음 명령으로 재시도한다. 운영 환경에서는 이 명령을 주기 작업으로 실행한다.
+`compose.yaml`은 재사용된 업로드 URL로 생긴 임시 객체도 최종 회수되도록
+`staging/` prefix에 1일 만료 lifecycle을 설정한다. 운영 bucket에도 같은
+lifecycle 규칙이 필수다.
+
+```bash
+npm run cleanup:uploads
+```
 - Ollama API: `http://127.0.0.1:11434`
 
 ## 상태 확인

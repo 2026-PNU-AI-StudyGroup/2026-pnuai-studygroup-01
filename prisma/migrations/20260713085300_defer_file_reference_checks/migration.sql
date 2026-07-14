@@ -1,0 +1,5 @@
+ALTER TABLE "report_version"
+ALTER CONSTRAINT "report_version_fileId_fkey" DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE "artifact"
+ALTER CONSTRAINT "artifact_fileId_fkey" DEFERRABLE INITIALLY DEFERRED;

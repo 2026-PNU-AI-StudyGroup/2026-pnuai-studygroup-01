@@ -42,6 +42,35 @@ enum MilestoneStatus {
   DONE
 }
 
+enum StoredFileStatus {
+  PENDING
+  READY
+  ATTACHED
+}
+
+enum FilePurpose {
+  REPORT
+  ARTIFACT
+}
+
+enum ReportType {
+  START
+  MIDTERM
+  FINAL
+}
+
+enum ApprovalDecisionType {
+  APPROVED
+  REVISION_REQUESTED
+}
+
+enum ArtifactType {
+  PRESENTATION_VIDEO
+  SOURCE_CODE
+  POSTER
+  OTHER
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -59,6 +88,10 @@ model User {
   teamMemberships         TeamMember[]
   milestonesCreated       Milestone[]
   progressUpdates         ProgressUpdate[]
+  storedFiles             StoredFile[]
+  reportVersionsSubmitted ReportVersion[]
+  approvalDecisions       ApprovalDecision[]
+  artifactsRegistered     Artifact[]
 
   @@map("user")
 }
@@ -195,6 +228,9 @@ model Team {
   members         TeamMember[]
   milestones      Milestone[]
   progressUpdates ProgressUpdate[]
+  storedFiles     StoredFile[]
+  reports         Report[]
+  artifacts       Artifact[]
 
   @@unique([topicId, academicCycleId, professorId])
   @@unique([id, academicCycleId, topicId])
@@ -251,4 +287,105 @@ model ProgressUpdate {
 
   @@index([teamId, createdAt])
   @@map("progress_update")
+}
+
+model StoredFile {
+  id           String           @id @default(uuid())
+  teamId       String
+  ownerId      String
+  purpose      FilePurpose
+  status       StoredFileStatus @default(PENDING)
+  objectKey    String           @unique
+  uploadObjectKey String        @unique
+  originalName String
+  contentType  String
+  size         Int
+  sha256       String
+  expiresAt    DateTime
+  cleanupAfter DateTime
+  createdAt    DateTime         @default(now())
+  readyAt      DateTime?
+  team         Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  owner        User             @relation(fields: [ownerId], references: [id])
+  reportVersion ReportVersion?
+  artifact     Artifact?
+
+  @@index([teamId, status])
+  @@index([status, cleanupAfter])
+  @@map("stored_file")
+}
+
+model ObjectDeletionJob {
+  id         String   @id @default(uuid())
+  objectKey  String   @unique
+  createdAt  DateTime @default(now())
+  attempts   Int      @default(0)
+  lastError  String?
+  nextAttemptAt DateTime @default(now())
+  lockedAt   DateTime?
+
+  @@index([nextAttemptAt, lockedAt])
+  @@map("object_deletion_job")
+}
+
+model Report {
+  id        String      @id @default(uuid())
+  teamId    String
+  type      ReportType
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  team      Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  versions  ReportVersion[]
+
+  @@unique([teamId, type])
+  @@map("report")
+}
+
+model ReportVersion {
+  id          String    @id @default(uuid())
+  reportId    String
+  version     Int
+  fileId      String    @unique
+  submitterId String
+  description String
+  submittedAt DateTime  @default(now())
+  report      Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  file        StoredFile @relation(fields: [fileId], references: [id], onDelete: NoAction)
+  submitter   User      @relation(fields: [submitterId], references: [id])
+  decision    ApprovalDecision?
+
+  @@unique([reportId, version])
+  @@index([submitterId])
+  @@map("report_version")
+}
+
+model ApprovalDecision {
+  id              String               @id @default(uuid())
+  reportVersionId String               @unique
+  reviewerId      String
+  decision        ApprovalDecisionType
+  comment         String
+  decidedAt       DateTime             @default(now())
+  reportVersion   ReportVersion        @relation(fields: [reportVersionId], references: [id], onDelete: Cascade)
+  reviewer        User                 @relation(fields: [reviewerId], references: [id])
+
+  @@index([reviewerId])
+  @@map("approval_decision")
+}
+
+model Artifact {
+  id           String       @id @default(uuid())
+  teamId       String
+  registeredById String
+  type         ArtifactType
+  title        String
+  fileId       String?      @unique
+  externalUrl  String?
+  createdAt    DateTime     @default(now())
+  team         Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registeredBy User         @relation(fields: [registeredById], references: [id])
+  file         StoredFile?  @relation(fields: [fileId], references: [id], onDelete: NoAction)
+
+  @@index([teamId, createdAt])
+  @@map("artifact")
 }

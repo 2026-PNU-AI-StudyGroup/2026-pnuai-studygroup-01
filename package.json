@@ -22,9 +22,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:team-concurrency": "tsx scripts/verify-team-concurrency.ts",
-    "verify:team-workspace": "tsx scripts/verify-team-workspace.ts"
+    "verify:team-workspace": "tsx scripts/verify-team-workspace.ts",
+    "verify:file-upload": "tsx scripts/verify-file-upload.ts",
+    "cleanup:uploads": "tsx scripts/cleanup-uploads.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1085.0",
+    "@aws-sdk/s3-request-presigner": "3.1085.0",
     "@prisma/adapter-pg": "7.8.0",
     "@prisma/client": "7.8.0",
     "better-auth": "1.6.23",
@@ -47,8 +51,8 @@
     "jsdom": "29.1.1",
     "prisma": "7.8.0",
     "tailwindcss": "4.3.2",
-    "typescript": "6.0.3",
     "tsx": "4.23.1",
+    "typescript": "6.0.3",
     "vitest": "4.1.10"
   },
   "overrides": {
