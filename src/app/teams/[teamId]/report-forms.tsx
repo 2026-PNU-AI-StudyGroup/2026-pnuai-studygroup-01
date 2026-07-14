@@ -81,7 +81,7 @@ export function ReportSubmissionForm({ teamId }: { teamId: string }) {
       <input name="file" aria-label="보고서 파일" type="file" required accept=".pdf,.doc,.docx" className="field" />
       <textarea name="description" aria-label="버전 설명" maxLength={2000} rows={2} placeholder="이번 버전의 변경 사항 (선택)" className="field md:col-span-2" />
       <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 제출 중" : "새 버전 제출"}</button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-[var(--teal)]"}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-[var(--success)]"}>{state.message}</p> : null}
     </form>
   );
 }
@@ -98,7 +98,7 @@ export function ReportDecisionForm({ teamId, reportVersionId }: { teamId: string
       </select>
       <input name="comment" aria-label="검토 의견" maxLength={2000} placeholder="수정 요청 시 의견 필수" className="field" />
       <button disabled={pending} className="button-quiet">결정 저장</button>
-      {state.message ? <p className={`sm:col-span-3 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--teal)]"}`}>{state.message}</p> : null}
+      {state.message ? <p className={`sm:col-span-3 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
@@ -122,7 +122,7 @@ export function ArtifactExternalForm({ teamId }: { teamId: string }) {
       <input name="title" required maxLength={200} placeholder="결과물 제목" className="field" />
       <input name="externalUrl" required type="url" placeholder="https://..." className="field" />
       <button disabled={pending} className="button-primary justify-self-start">외부 링크 등록</button>
-      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--teal)]"}`}>{state.message}</p> : null}
+      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
@@ -155,7 +155,7 @@ export function ArtifactFileForm({ teamId }: { teamId: string }) {
       <input name="title" required maxLength={200} placeholder="결과물 제목" className="field" />
       <input name="file" aria-label="결과물 파일" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" />
       <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 등록 중" : "파일 결과물 등록"}</button>
-      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--teal)]"}`}>{state.message}</p> : null}
+      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }

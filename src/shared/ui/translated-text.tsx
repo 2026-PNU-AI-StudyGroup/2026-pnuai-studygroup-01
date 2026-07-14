@@ -45,7 +45,7 @@ export function TranslatedText({ text, className = "" }: { text: string; classNa
             type="button"
             disabled={pending !== null}
             aria-pressed={view === item}
-            className="text-[var(--muted)] underline-offset-4 hover:text-[var(--ink)] hover:underline disabled:opacity-50 aria-pressed:font-semibold aria-pressed:text-[var(--teal-dark)]"
+            className="snap-color text-[var(--muted)] underline-offset-4 hover:text-[var(--ink)] hover:underline disabled:opacity-50 aria-pressed:font-semibold aria-pressed:text-[var(--accent)]"
             onClick={() => void changeView(item)}
           >
             {item === "original" ? "원문" : item === "ko" ? "한국어" : "English"}

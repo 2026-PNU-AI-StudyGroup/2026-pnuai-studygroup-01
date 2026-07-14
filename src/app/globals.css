@@ -1,20 +1,31 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("/fonts/pretendard/PretendardVariable.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+}
+
 :root {
-  --canvas: #f6f5f2;
+  --canvas: #f7f8fa;
   --surface: #ffffff;
-  --surface-subtle: #faf9f7;
-  --ink: #1f252b;
-  --muted: #697078;
-  --line: #dde0e2;
-  --navy: #315e5b;
-  --navy-deep: #1f252b;
-  --teal: #315e5b;
-  --teal-dark: #274d4b;
-  --focus: #315e5b;
-  --success: #315e5b;
-  --warning: #a9624b;
-  --danger: #a94c42;
+  --surface-subtle: #f3f5f8;
+  --ink: #172033;
+  --muted: #697386;
+  --line: #dfe3ea;
+  --accent: #2f5bea;
+  --accent-hover: #2449c4;
+  --accent-subtle: #edf1ff;
+  --focus: var(--accent);
+  --success: #18794e;
+  --warning: #9a6700;
+  --danger: #b42318;
+  --radius-control: 0.625rem;
+  --radius-panel: 0.75rem;
+  --snap-duration: 140ms;
+  --snap-ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
 * {
@@ -30,8 +41,11 @@ body {
   margin: 0;
   background: var(--canvas);
   color: var(--ink);
-  font-family: Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a,
@@ -47,8 +61,8 @@ textarea {
 }
 
 ::selection {
-  background: #bce7e5;
-  color: var(--navy-deep);
+  background: #dbe4ff;
+  color: var(--ink);
 }
 
 @layer components {
@@ -56,34 +70,34 @@ textarea {
     margin-inline: auto;
     width: 100%;
     max-width: 1180px;
-    padding: 2rem 1.25rem 7rem;
+    padding: 2.5rem 1.5rem 7rem;
   }
 
   .panel {
     border: 1px solid var(--line);
-    border-radius: 1rem;
+    border-radius: var(--radius-panel);
     background: var(--surface);
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgb(23 32 51 / 4%);
   }
 
   .field {
     min-height: 2.75rem;
     width: 100%;
-    border: 1px solid #c9d1d9;
-    border-radius: 0.625rem;
+    border: 1px solid #c9d0dc;
+    border-radius: var(--radius-control);
     background: var(--surface);
     padding: 0.625rem 0.75rem;
     color: var(--ink);
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
   }
 
   .field:hover {
-    border-color: #9ba8b5;
+    border-color: #8d98aa;
   }
 
   .field:focus {
     border-color: var(--focus);
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
+    box-shadow: 0 0 0 3px rgb(47 91 234 / 14%);
     outline: none;
   }
 
@@ -95,51 +109,59 @@ textarea {
     min-height: 2.75rem;
     align-items: center;
     justify-content: center;
-    border-radius: 0.625rem;
+    border-radius: var(--radius-control);
     padding: 0.625rem 1rem;
     font-weight: 700;
-    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    transition: background-color var(--snap-duration) var(--snap-ease), border-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease), transform var(--snap-duration) var(--snap-ease);
   }
 
   .button-primary {
-    border: 1px solid var(--teal);
-    background: var(--teal);
+    border: 1px solid var(--accent);
+    background: var(--accent);
     color: white;
   }
 
   .button-primary:hover {
-    border-color: var(--teal-dark);
-    background: var(--teal-dark);
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
   }
 
   .button-secondary {
-    border: 1px solid #b9c5cf;
+    border: 1px solid #c4cad5;
     background: white;
-    color: var(--navy);
+    color: var(--ink);
   }
 
   .button-secondary:hover {
-    border-color: var(--navy);
-    background: #f4f8fb;
+    border-color: #8994a6;
+    background: var(--surface-subtle);
   }
 
   .button-danger {
-    border: 1px solid #e7b5b5;
-    background: #fff7f7;
+    border: 1px solid #f0b7b2;
+    background: #fff8f7;
     color: var(--danger);
   }
 
   .button-danger:hover {
     border-color: var(--danger);
-    background: #fff0f0;
+    background: #fff0ee;
   }
 
   .button-quiet {
-    color: var(--navy);
+    color: var(--ink);
   }
 
   .button-quiet:hover {
-    background: #edf3f7;
+    background: var(--accent-subtle);
+    color: var(--accent-hover);
+  }
+
+  .button-primary:active,
+  .button-secondary:active,
+  .button-danger:active,
+  .button-quiet:active {
+    transform: translateY(1px);
   }
 
   button:disabled,
@@ -149,7 +171,7 @@ textarea {
   }
 
   .eyebrow {
-    color: var(--teal-dark);
+    color: var(--accent-hover);
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0.1em;
@@ -159,11 +181,15 @@ textarea {
   .muted {
     color: var(--muted);
   }
+
+  .snap-color {
+    transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), border-color var(--snap-duration) var(--snap-ease);
+  }
 }
 
 @media (min-width: 1024px) {
   .content-shell {
-    padding: 2.5rem 2.5rem 4rem;
+    padding: 3.5rem 2.5rem 5rem;
   }
 }
 
@@ -173,5 +199,7 @@ textarea {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

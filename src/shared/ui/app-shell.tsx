@@ -54,17 +54,17 @@ export function AppShell({ role, userName, currentPath, children }: { role: User
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-8 px-5">
+        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-8 px-6">
           <Brand />
           <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-8 lg:flex">
             {navigation.map((item) => {
               const active = currentPath === item.href;
-              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`relative flex h-full items-center text-sm font-semibold ${active ? "text-[var(--teal)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--teal)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
+              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color relative flex h-full items-center text-sm font-semibold ${active ? "text-[var(--accent)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--accent)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
             })}
           </nav>
           <div className="flex min-w-0 items-center gap-3 text-right">
             <span className="hidden truncate text-sm font-semibold text-[var(--ink)] sm:block">{userName}</span>
-            <span className="rounded-full bg-[#ecefed] px-2.5 py-1 text-xs font-bold text-[var(--teal-dark)]">{roleLabel}</span>
+            <span className="rounded-lg bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-bold text-[var(--ink)]">{roleLabel}</span>
           </div>
         </div>
       </header>
@@ -72,7 +72,7 @@ export function AppShell({ role, userName, currentPath, children }: { role: User
       <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
         {navigation.map((item) => {
           const active = currentPath === item.href;
-          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[0.6875rem] font-bold ${active ? "text-[var(--teal)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} />{item.label}</Link>;
+          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[0.6875rem] font-bold ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} />{item.label}</Link>;
         })}
       </nav>
     </div>

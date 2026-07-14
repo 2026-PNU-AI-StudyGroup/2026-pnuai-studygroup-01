@@ -4,7 +4,7 @@ import { Brand } from "@/shared/ui/brand";
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f6f5f2]">
+    <main className="min-h-screen overflow-hidden bg-[var(--canvas)]">
       <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6" aria-label="랜딩 메뉴">
         <Brand />
         <Link href="/sign-in" className="button-secondary">로그인</Link>
@@ -33,7 +33,7 @@ export default function Home() {
               ["04", "제출과 승인", "보고서와 결과물을 웹에서 검토합니다."],
             ].map(([number, title, description]) => (
               <li key={number} className="grid grid-cols-[3rem_1fr] gap-4 py-6">
-                <span className="font-mono text-sm text-[var(--teal)]">{number}</span>
+                <span className="font-mono text-sm font-bold text-[var(--accent)]">{number}</span>
                 <div><h2 className="text-lg font-bold">{title}</h2><p className="muted mt-1 text-sm leading-6">{description}</p></div>
               </li>
             ))}

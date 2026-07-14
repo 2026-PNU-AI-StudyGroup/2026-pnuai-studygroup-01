@@ -20,7 +20,7 @@ export function RecruitmentPostForm({ teams }: { teams: Array<{ id: string; name
 
 export function RecruitmentApplyForm({ postId }: { postId: string }) {
   const [state, action, pending] = useActionState(applyRecruitmentAction, initial);
-  return <form action={action} className="mt-5 grid gap-3 border-l-2 border-[var(--teal)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-2">
+  return <form action={action} className="mt-5 grid gap-3 rounded-r-lg border-l-2 border-[var(--accent)] bg-[var(--accent-subtle)] p-5 sm:grid-cols-2">
     <input type="hidden" name="postId" value={postId} /><label className="grid gap-2 text-sm font-medium">보유 기술<input name="skills" required className="field" /></label><label className="grid gap-2 text-sm font-medium">희망 역할<input name="desiredRole" required className="field" /></label><label className="grid gap-2 text-sm font-medium">활동 가능 시간<input name="availability" required className="field" /></label><label className="grid gap-2 text-sm font-medium">지원 메시지<textarea name="message" maxLength={2000} required className="field" /></label><button className="button-primary justify-self-start" disabled={pending}>{pending ? "지원 중" : "지원하기"}</button>{state.message ? <p className={state.status === "error" ? "text-red-700" : "text-green-700"}>{state.message}</p> : null}
   </form>;
 }
