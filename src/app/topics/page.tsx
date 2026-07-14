@@ -9,6 +9,7 @@ import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-top
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
+import { TranslatedText } from "@/shared/ui/translated-text";
 
 const koreanDateTime = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
 const applicationStatus = {
@@ -45,7 +46,7 @@ export default async function TopicsPage() {
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
                     <div>
                       <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-bold tracking-tight">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
-                      <p className="muted mt-3 line-clamp-3 whitespace-pre-wrap leading-7">{topic.description}</p>
+                      <TranslatedText text={topic.description} className="muted mt-3 line-clamp-3 leading-7" />
                     </div>
                     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-1">
                       <div><dt className="muted text-xs">지도교수</dt><dd className="mt-1 font-semibold">{topic.authorName}</dd></div>
