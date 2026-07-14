@@ -9,6 +9,7 @@ import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-top
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
+import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
 const koreanDateTime = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
@@ -18,11 +19,11 @@ const applicationStatus = {
   REJECTED: { label: "거절", tone: "danger" },
 } as const;
 
-export default async function TopicsPage({ searchParams }: { searchParams: Promise<{ programId?: string }> }) {
+export default async function TopicsPage({ searchParams }: { searchParams: Promise<{ programId?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const topicRepository = new PrismaTopicRepository(prisma);
-  const requestedProgramId = (await searchParams).programId;
+  const requestedProgramId = firstSearchParam((await searchParams).programId);
   const programId = requestedProgramId && requestedProgramId.length <= 200 ? requestedProgramId : undefined;
   const topics = await new ListPublishedTopicsService(topicRepository).execute(programId);
   const applications = actor.role === "STUDENT" ? await new ListOwnTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor) : [];
@@ -32,7 +33,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   return (
     <AppShell role={actor.role} userName="부산대학교" currentPath="/topics">
       <main className="content-shell space-y-10">
-        <PageHeader eyebrow="Discover" title="주제 탐색" description="학과 프로젝트와 대회의 주제를 살펴보고, 함께하고 싶은 팀에 지원하세요." />
+        <PageHeader eyebrow="Project topics" title="주제 탐색" description="프로그램별 연구·개발 주제, 요구 역량, 활동 조건을 비교하고 함께할 팀에 지원하세요." />
         <div className="flex flex-wrap gap-2 border-y border-[var(--line)] py-4" aria-label="주제 안내">
           <StatusBadge tone="success">현재 모집 중 우선</StatusBadge><span className="muted self-center text-sm">총 {topics.length}개의 공개 주제</span>
         </div>
@@ -44,12 +45,12 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               const application = applicationsByTopic.get(topic.id);
               const isRecruiting = topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
               return (
-                <li key={topic.id} className="py-8">
+                <li key={topic.id} className="py-9">
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
                     <div>
-                      <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-bold tracking-tight">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
-                      <p className="muted mt-2 text-xs">{topic.programName} · {topic.programCategory}</p>
-                      <TranslatedText text={topic.description} className="muted mt-3 line-clamp-3 leading-7" />
+                      <div className="flex flex-wrap items-start gap-3"><h2 className="text-2xl font-extrabold leading-tight tracking-[-0.035em]">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
+                      <p className="mt-3 text-xs font-bold text-[var(--accent)]">{topic.programName} · {topic.programCategory}</p>
+                      <TranslatedText text={topic.description} className="muted mt-4 line-clamp-3 max-w-3xl leading-7" />
                       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><p className="muted text-xs">필수 기술</p><p className="mt-1 font-semibold">{topic.requiredSkills.join(", ")}</p></div><div><p className="muted text-xs">우대 기술</p><p className="mt-1 font-semibold">{topic.preferredSkills.join(", ") || "없음"}</p></div><div><p className="muted text-xs">기대 역할</p><p className="mt-1">{topic.roleExpectations}</p></div><div><p className="muted text-xs">활동 조건</p><p className="mt-1">{topic.availabilityRequirement}</p></div></div>
                     </div>
                     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-1">
@@ -58,7 +59,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
                       <div className="col-span-2 lg:col-span-1"><dt className="muted text-xs">모집 마감</dt><dd className="mt-1 font-semibold">{koreanDateTime.format(topic.recruitmentEndsAt)}</dd></div>
                     </dl>
                   </div>
-                  <div className="mt-5 text-sm">
+                  <div className="mt-6 text-sm">
                     {application ? <StatusBadge tone={applicationStatus[application.status].tone}>지원 상태 · {applicationStatus[application.status].label}</StatusBadge> : actor.role === "STUDENT" && isRecruiting ? <ApplyTopicForm topicId={topic.id} /> : <p className="muted">{actor.role === "STUDENT" ? topic.memberCount >= topic.capacity ? "모집 정원이 찼습니다." : "현재 모집 기간이 아닙니다." : "학생 계정으로 지원할 수 있습니다."}</p>}
                   </div>
                 </li>

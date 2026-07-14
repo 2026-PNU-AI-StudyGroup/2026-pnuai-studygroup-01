@@ -19,9 +19,14 @@ export type ArchivedProject = {
   }>;
 };
 
+export type ArchiveFilters = {
+  query?: string;
+  academicYear?: number;
+};
+
 export interface ArchivedProjectReader {
-  countClosed(): Promise<number>;
-  listClosed(input: { offset: number; limit: number }): Promise<ArchivedProject[]>;
+  countClosed(filters: ArchiveFilters): Promise<number>;
+  listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]>;
 }
 
 export interface TeamCloser {
@@ -48,17 +53,24 @@ export class CloseTeamService {
 export class ListArchivedProjectsService {
   constructor(private readonly reader: ArchivedProjectReader) {}
 
-  async execute(page = 1, pageSize = 20) {
+  async execute(page = 1, pageSize = 20, filters: ArchiveFilters = {}) {
     const normalizedPageSize = Number.isInteger(pageSize) && pageSize > 0
       ? Math.min(pageSize, 50)
       : 20;
-    const total = await this.reader.countClosed();
+    const normalizedFilters: ArchiveFilters = {
+      query: filters.query?.trim().slice(0, 100) || undefined,
+      academicYear: Number.isInteger(filters.academicYear) && (filters.academicYear ?? 0) >= 2000 && (filters.academicYear ?? 0) <= 9999
+        ? filters.academicYear
+        : undefined,
+    };
+    const total = await this.reader.countClosed(normalizedFilters);
     const totalPages = Math.max(1, Math.ceil(total / normalizedPageSize));
     const requestedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
     const normalizedPage = Math.min(requestedPage, totalPages);
     const projects = await this.reader.listClosed({
       offset: (normalizedPage - 1) * normalizedPageSize,
       limit: normalizedPageSize,
+      filters: normalizedFilters,
     });
     return {
       projects,

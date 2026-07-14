@@ -31,10 +31,10 @@ export default async function ProfessorTopicsPage() {
           <h2 id="new-topic-title" className="mb-5 text-lg font-bold">새 주제 등록</h2><TopicForm programs={programs} />
         </section>
         <section aria-labelledby="topic-list-title">
-          <div className="flex items-end justify-between border-b border-[var(--line)] pb-4"><h2 id="topic-list-title" className="text-lg font-bold">내 주제</h2><span className="muted text-sm">{topics.length}개</span></div>
-          {topics.length === 0 ? <div className="mt-6"><EmptyState title="등록한 주제가 없습니다" description="위 양식을 작성해 첫 번째 프로젝트 주제를 등록하세요." /></div> : (
+          <div className="flex items-end justify-between border-b border-[var(--line)] pb-4"><h2 id="topic-list-title" className="text-lg font-bold">{actor.role === "ADMIN" ? "전체 주제" : "내 주제"}</h2><span className="muted text-sm">{topics.length}개</span></div>
+          {topics.length === 0 ? <div className="mt-6"><EmptyState title={actor.role === "ADMIN" ? "등록된 주제가 없습니다" : "등록한 주제가 없습니다"} description="위 양식을 작성해 첫 번째 프로젝트 주제를 등록하세요." /></div> : (
             <ul className="divide-y divide-[var(--line)]">
-              {topics.map((topic) => <li key={topic.id} className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><div className="flex flex-wrap items-center gap-3"><h3 className="font-bold">{topic.title}</h3><StatusBadge tone={statusPresentation[topic.status][1]}>{statusPresentation[topic.status][0]}</StatusBadge></div><p className="muted mt-1 text-xs">{topic.programName} · {topic.programCategory}</p><p className="muted mt-2 line-clamp-2 text-sm leading-6">{topic.description}</p><p className="muted mt-2 text-xs">모집 정원 {topic.capacity}명</p></div><TopicStatusButton topicId={topic.id} status={topic.status} programStatus={topic.programStatus} /></li>)}
+              {topics.map((topic) => <li key={topic.id} className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><div className="flex flex-wrap items-center gap-3"><h3 className="font-bold">{topic.title}</h3><StatusBadge tone={statusPresentation[topic.status][1]}>{statusPresentation[topic.status][0]}</StatusBadge></div><p className="muted mt-1 text-xs">{topic.programName} · {topic.programCategory}{actor.role === "ADMIN" ? ` · ${topic.authorName} 교수` : ""}</p><p className="muted mt-2 line-clamp-2 text-sm leading-6">{topic.description}</p><p className="muted mt-2 text-xs">모집 정원 {topic.capacity}명</p></div><TopicStatusButton topicId={topic.id} status={topic.status} programStatus={topic.programStatus} /></li>)}
             </ul>
           )}
         </section>

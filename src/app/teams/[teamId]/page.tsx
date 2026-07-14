@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { confirmTeamAction } from "@/app/teams/[teamId]/actions";
@@ -21,6 +22,7 @@ import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/pri
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
+import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
@@ -28,14 +30,23 @@ const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 �
 const reportTypeLabel = { START: "착수 보고서", MIDTERM: "중간 보고서", FINAL: "결과 보고서" } as const;
 const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
 
-export default async function TeamWorkspacePage({ params }: { params: Promise<{ teamId: string }> }) {
+export default async function TeamWorkspacePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ teamId: string }>;
+  searchParams: Promise<{ discussionPage?: SearchParamValue; progressPage?: SearchParamValue }>;
+}) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { teamId } = await params;
+  const workspaceParams = await searchParams;
+  const requestedDiscussionPage = Number(firstSearchParam(workspaceParams.discussionPage) ?? "1");
+  const requestedProgressPage = Number(firstSearchParam(workspaceParams.progressPage) ?? "1");
   const repository = new PrismaTeamWorkspaceRepository(prisma);
   const service = new TeamWorkspaceService(repository, repository, repository, repository);
   let workspace: TeamWorkspace;
-  try { workspace = await service.get(actor, teamId); } catch (error) { if (error instanceof TeamNotFoundError) notFound(); throw error; }
+  try { workspace = await service.get(actor, teamId, requestedDiscussionPage, requestedProgressPage); } catch (error) { if (error instanceof TeamNotFoundError) notFound(); throw error; }
   let reportWorkspace: ReportWorkspace;
   try {
     reportWorkspace = await new ReportService(
@@ -46,6 +57,15 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
     throw error;
   }
   const progress = workspace.milestoneCount === 0 ? 0 : Math.round((workspace.completedMilestoneCount / workspace.milestoneCount) * 100);
+  const workspaceHref = (target: { discussionPage?: number; progressPage?: number; anchor: string }) => {
+    const query = new URLSearchParams();
+    const discussionPage = target.discussionPage ?? workspace.discussionPage;
+    const progressPage = target.progressPage ?? workspace.progressPage;
+    if (discussionPage > 1) query.set("discussionPage", String(discussionPage));
+    if (progressPage > 1) query.set("progressPage", String(progressPage));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return `/teams/${workspace.id}${suffix}#${target.anchor}`;
+  };
 
   return (
     <AppShell role={actor.role} userName="부산대학교" currentPath="/dashboard">
@@ -57,19 +77,21 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
         <div className="grid gap-14 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)] xl:items-start">
           <section aria-labelledby="milestones-title">
             <div className="mb-5 flex items-end justify-between"><div><p className="eyebrow">Plan</p><h2 id="milestones-title" className="mt-1 text-xl font-bold">마일스톤</h2></div><span className="muted text-sm">완료 {workspace.completedMilestoneCount} / {workspace.milestoneCount}</span></div>
-            {workspace.status !== "CLOSED" ? <MilestoneForm teamId={workspace.id} /> : null}
-            {workspace.milestones.length === 0 ? <div className="mt-5"><EmptyState title="마일스톤이 없습니다" description="첫 목표와 완료 예정일을 등록해 프로젝트의 리듬을 만드세요." /></div> : <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">{workspace.milestones.map((milestone) => <li key={milestone.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="flex items-start gap-3"><StatusBadge tone={milestoneStatus[milestone.status][1]}>{milestoneStatus[milestone.status][0]}</StatusBadge><div><p className="font-semibold">{milestone.title}</p><p className="muted mt-1 text-xs">{koreanDate.format(milestone.dueAt)}까지</p></div></div>{workspace.status !== "CLOSED" ? <MilestoneStatusForm teamId={workspace.id} milestoneId={milestone.id} status={milestone.status} /> : null}</li>)}</ul>}
+            {workspace.status !== "CLOSED" && actor.role !== "PROFESSOR" ? <MilestoneForm teamId={workspace.id} /> : null}
+            {workspace.milestones.length === 0 ? <div className="mt-5"><EmptyState title="마일스톤이 없습니다" description="첫 목표와 완료 예정일을 등록해 프로젝트의 리듬을 만드세요." /></div> : <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">{workspace.milestones.map((milestone) => <li key={milestone.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="flex items-start gap-3"><StatusBadge tone={milestoneStatus[milestone.status][1]}>{milestoneStatus[milestone.status][0]}</StatusBadge><div><p className="font-semibold">{milestone.title}</p><p className="muted mt-1 text-xs">{koreanDate.format(milestone.dueAt)}까지</p></div></div>{workspace.status !== "CLOSED" && actor.role !== "PROFESSOR" ? <MilestoneStatusForm teamId={workspace.id} milestoneId={milestone.id} status={milestone.status} /> : null}</li>)}</ul>}
           </section>
           <section aria-labelledby="updates-title">
             <div className="mb-5"><p className="eyebrow">Log</p><h2 id="updates-title" className="mt-1 text-xl font-bold">진행 기록</h2></div>
-            {workspace.status !== "CLOSED" ? <ProgressUpdateForm teamId={workspace.id} /> : null}
+            {workspace.status !== "CLOSED" && actor.role !== "PROFESSOR" ? <ProgressUpdateForm teamId={workspace.id} /> : null}
             {workspace.progressUpdates.length === 0 ? <p className="muted mt-5 border-t border-[var(--line)] py-7 text-sm">아직 진행 기록이 없습니다.</p> : <ol className="mt-6 border-l border-[var(--line)] pl-5">{workspace.progressUpdates.map((update) => <li key={update.id} className="relative pb-8 before:absolute before:-left-[1.45rem] before:top-1 before:size-2 before:rounded-full before:bg-[var(--accent)]"><div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--muted)]"><strong className="text-[var(--ink)]">{update.authorName}</strong><time>{koreanDate.format(update.createdAt)}</time></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{update.content}</p>{update.risk ? <p className="mt-3 border-l-2 border-[var(--warning)] pl-3 text-sm text-[#794636]">위험 · {update.risk}</p> : null}{update.nextAction ? <p className="mt-2 text-sm font-medium text-[var(--accent-hover)]">다음 행동 · {update.nextAction}</p> : null}</li>)}</ol>}
+            {workspace.progressTotalPages > 1 ? <nav aria-label="진행 기록 이력 페이지" className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="muted text-sm">{workspace.progressPage} / {workspace.progressTotalPages} 페이지 · 총 {workspace.progressTotal}개</span><div className="flex gap-2">{workspace.progressPage > 1 ? <Link className="button-quiet" href={workspaceHref({ progressPage: workspace.progressPage - 1, anchor: "updates-title" })}>최근 기록</Link> : null}{workspace.progressPage < workspace.progressTotalPages ? <Link className="button-quiet" href={workspaceHref({ progressPage: workspace.progressPage + 1, anchor: "updates-title" })}>이전 기록</Link> : null}</div></nav> : null}
           </section>
         </div>
         <section aria-labelledby="discussion-title" className="space-y-5">
           <div><p className="eyebrow">Discussion</p><h2 id="discussion-title" className="mt-1 text-2xl font-bold">팀 토론</h2><p className="muted mt-2 text-sm">팀원과 지도교수가 의견을 공유합니다. 필요한 글은 한국어 또는 영어로 바로 번역할 수 있습니다.</p></div>
           {workspace.status !== "CLOSED" ? <DiscussionPostForm teamId={workspace.id} /> : null}
           {workspace.discussionPosts.length === 0 ? <EmptyState title="아직 토론이 없습니다" description="첫 질문이나 의견을 남겨 프로젝트 논의를 시작하세요." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{workspace.discussionPosts.map((post) => <li key={post.id} className="py-5"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{post.authorName}</strong><time className="muted text-xs">{koreanDate.format(post.createdAt)}</time></div><TranslatedText text={post.content} className="text-sm leading-7" /></li>)}</ol>}
+          {workspace.discussionTotalPages > 1 ? <nav aria-label="팀 토론 이력 페이지" className="flex flex-wrap items-center justify-between gap-3"><span className="muted text-sm">{workspace.discussionPage} / {workspace.discussionTotalPages} 페이지 · 총 {workspace.discussionTotal}개</span><div className="flex gap-2">{workspace.discussionPage > 1 ? <Link className="button-quiet" href={workspaceHref({ discussionPage: workspace.discussionPage - 1, anchor: "discussion-title" })}>최근 기록</Link> : null}{workspace.discussionPage < workspace.discussionTotalPages ? <Link className="button-quiet" href={workspaceHref({ discussionPage: workspace.discussionPage + 1, anchor: "discussion-title" })}>이전 기록</Link> : null}</div></nav> : null}
         </section>
         <section aria-labelledby="reports-title" className="space-y-6">
           <div><p className="eyebrow">Documents</p><h2 id="reports-title" className="mt-1 text-2xl font-bold">보고서 제출 및 웹 승인</h2><p className="muted mt-2 text-sm">기존 파일을 덮어쓰지 않고 제출 이력과 교수 검토 결정을 버전별로 보관합니다.</p></div>

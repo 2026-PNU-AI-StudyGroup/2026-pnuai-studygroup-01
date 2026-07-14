@@ -9,26 +9,27 @@ import { PrismaTopicApplicationRepository } from "@/modules/topic-application/in
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
+import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
-export default async function RecruitmentsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+export default async function RecruitmentsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "STUDENT") redirect("/");
   const data = await new RecruitmentService(
     new PrismaRecruitmentRepository(prisma),
     new PrismaTopicApplicationRepository(prisma),
-  ).list(actor, Number((await searchParams).page ?? "1"));
+  ).list(actor, Number(firstSearchParam((await searchParams).page) ?? "1"));
 
   return <AppShell role={actor.role} userName="부산대학교" currentPath="/recruitments">
     <main className="content-shell space-y-10">
-      <PageHeader eyebrow="Team up" title="팀원 모집" description="구성 중인 팀의 필요한 역할을 알리고 함께할 학생을 찾으세요." />
+      <PageHeader eyebrow="Team formation" title="팀원 모집" description="구성 중인 프로젝트 팀의 필요한 역할과 활동 조건을 확인하고 함께할 학생을 찾으세요." />
       <RecruitmentPostForm teams={data.formingTeams} />
       {data.posts.length === 0 ? <EmptyState title="열린 모집 글이 없습니다" description="구성 중인 팀원이 모집 글을 등록하면 이곳에 표시됩니다." /> : <>
-        <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{data.posts.map((post) => <li key={post.id} className="py-8">
+        <ol className="border-b border-[var(--line)]">{data.posts.map((post) => <li key={post.id} className="border-t border-[var(--line)] py-9">
           <div className="flex flex-wrap items-center gap-3"><StatusBadge>{post.teamName} · {post.memberCount}/{post.capacity}명</StatusBadge><span className="muted text-sm">{post.topicTitle} · {post.authorName}</span></div>
-          <h2 className="mt-4 text-xl font-bold">{post.title}</h2>
-          <TranslatedText text={post.content} className="muted mt-3 leading-7" />
+          <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.035em]">{post.title}</h2>
+          <TranslatedText text={post.content} className="muted mt-3 max-w-3xl leading-7" />
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><dt className="muted text-xs">필요 기술</dt><dd>{post.requiredSkills.join(", ")}</dd></div><div><dt className="muted text-xs">필요 역할</dt><dd>{post.roleNeeded}</dd></div><div><dt className="muted text-xs">활동 시간</dt><dd>{post.availability}</dd></div></dl>
           {post.authorId !== actor.id && post.canApply && !post.ownApplication ? <RecruitmentApplyForm postId={post.id} /> : post.ownApplication ? <p className="mt-4 text-sm font-semibold">지원 상태 · {post.ownApplication.status}</p> : null}
           {post.authorId === actor.id && post.receivedApplications.length ? <ul className="mt-6 divide-y divide-[var(--line)] border-t border-[var(--line)]">{post.receivedApplications.map((application) => <li key={application.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto]">

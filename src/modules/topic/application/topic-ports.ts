@@ -16,6 +16,7 @@ export interface TopicCreator {
 
 export type TopicSummary = TopicDraft & {
   id: string;
+  authorName: string;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   publishedAt: Date | null;
   programName: string;
@@ -25,6 +26,7 @@ export type TopicSummary = TopicDraft & {
 
 export interface TopicLister {
   listByAuthor(authorId: string): Promise<TopicSummary[]>;
+  listAll(): Promise<TopicSummary[]>;
 }
 
 export type TopicStateRecord = {

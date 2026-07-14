@@ -259,6 +259,15 @@ async function main() {
   const archivePage = await new ListArchivedProjectsService(archiveRepository).execute();
   const archivedTeam = archivePage.projects.find(({ id }) => id === team.id);
   if (archivedTeam?.artifacts.length !== 2) throw new Error("종료 팀 결과물이 아카이브에 보존되지 않았습니다.");
+  const archiveService = new ListArchivedProjectsService(archiveRepository);
+  const searchedArchive = await archiveService.execute(1, 20, { query: team.name });
+  if (!searchedArchive.projects.some(({ id }) => id === team.id)) {
+    throw new Error("팀 이름으로 종료 프로젝트를 검색할 수 없습니다.");
+  }
+  const yearlyArchive = await archiveService.execute(1, 20, { academicYear: archivedTeam.academicYear });
+  if (!yearlyArchive.projects.some(({ id }) => id === team.id)) {
+    throw new Error("연도별 종료 프로젝트를 조회할 수 없습니다.");
+  }
   let closedTeamSubmissionDenied = false;
   try {
     await service.submit(student, {

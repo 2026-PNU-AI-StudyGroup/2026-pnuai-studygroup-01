@@ -18,6 +18,8 @@ const teamListInclude = {
   members: { select: { id: true } },
   milestones: { select: { status: true } },
 } satisfies Prisma.TeamInclude;
+const DISCUSSION_PAGE_SIZE = 50;
+const PROGRESS_PAGE_SIZE = 30;
 
 export class PrismaTeamWorkspaceRepository
   implements
@@ -51,7 +53,11 @@ export class PrismaTeamWorkspaceRepository
   async findWorkspaceForActor(
     teamId: string,
     actor: CurrentActor,
+    discussionPage = 1,
+    progressPage = 1,
   ): Promise<TeamWorkspace | null> {
+    const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
+    const normalizedProgressPage = Number.isSafeInteger(progressPage) && progressPage > 0 ? progressPage : 1;
     const team = await this.client.team.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       include: {
@@ -67,8 +73,9 @@ export class PrismaTeamWorkspaceRepository
           select: { id: true, title: true, dueAt: true, status: true },
         },
         progressUpdates: {
-          orderBy: { createdAt: "desc" },
-          take: 30,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          skip: (normalizedProgressPage - 1) * PROGRESS_PAGE_SIZE,
+          take: PROGRESS_PAGE_SIZE,
           select: {
             id: true,
             content: true,
@@ -79,8 +86,9 @@ export class PrismaTeamWorkspaceRepository
           },
         },
         discussionPosts: {
-          orderBy: { createdAt: "desc" },
-          take: 50,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          skip: (normalizedDiscussionPage - 1) * DISCUSSION_PAGE_SIZE,
+          take: DISCUSSION_PAGE_SIZE,
           select: {
             id: true,
             content: true,
@@ -99,6 +107,7 @@ export class PrismaTeamWorkspaceRepository
             },
           },
         },
+        _count: { select: { discussionPosts: true, progressUpdates: true } },
       },
     });
     if (!team) {
@@ -108,6 +117,40 @@ export class PrismaTeamWorkspaceRepository
     const completedMilestoneCount = team.milestones.filter(
       ({ status }) => status === "DONE",
     ).length;
+    const progressTotalPages = Math.max(1, Math.ceil(team._count.progressUpdates / PROGRESS_PAGE_SIZE));
+    const resolvedProgressPage = Math.min(normalizedProgressPage, progressTotalPages);
+    const progressUpdates = resolvedProgressPage === normalizedProgressPage
+      ? team.progressUpdates
+      : await this.client.progressUpdate.findMany({
+        where: { teamId: team.id },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: (resolvedProgressPage - 1) * PROGRESS_PAGE_SIZE,
+        take: PROGRESS_PAGE_SIZE,
+        select: {
+          id: true,
+          content: true,
+          risk: true,
+          nextAction: true,
+          createdAt: true,
+          author: { select: { name: true } },
+        },
+      });
+    const discussionTotalPages = Math.max(1, Math.ceil(team._count.discussionPosts / DISCUSSION_PAGE_SIZE));
+    const resolvedDiscussionPage = Math.min(normalizedDiscussionPage, discussionTotalPages);
+    const discussionPosts = resolvedDiscussionPage === normalizedDiscussionPage
+      ? team.discussionPosts
+      : await this.client.discussionPost.findMany({
+        where: { teamId: team.id },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: (resolvedDiscussionPage - 1) * DISCUSSION_PAGE_SIZE,
+        take: DISCUSSION_PAGE_SIZE,
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          author: { select: { name: true } },
+        },
+      });
     return {
       id: team.id,
       name: team.name,
@@ -120,14 +163,20 @@ export class PrismaTeamWorkspaceRepository
       completedMilestoneCount,
       members: team.members.map(({ student }) => student),
       milestones: team.milestones,
-      progressUpdates: team.progressUpdates.map(({ author, ...update }) => ({
+      progressUpdates: progressUpdates.map(({ author, ...update }) => ({
         ...update,
         authorName: author.name,
       })),
-      discussionPosts: team.discussionPosts.reverse().map(({ author, ...post }) => ({
+      progressPage: resolvedProgressPage,
+      progressTotalPages,
+      progressTotal: team._count.progressUpdates,
+      discussionPosts: discussionPosts.reverse().map(({ author, ...post }) => ({
         ...post,
         authorName: author.name,
       })),
+      discussionPage: resolvedDiscussionPage,
+      discussionTotalPages,
+      discussionTotal: team._count.discussionPosts,
     };
   }
 
@@ -162,7 +211,7 @@ export class PrismaTeamWorkspaceRepository
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" <> 'CLOSED'
-          AND ${teamActorSql(input.actor)}
+          AND ${teamRecordActorSql(input.actor)}
         RETURNING "id"
       `)
       .then((rows) => rows[0] ?? null);
@@ -181,7 +230,7 @@ export class PrismaTeamWorkspaceRepository
         WHERE "milestone"."id" = ${id}
           AND "team"."id" = "milestone"."teamId"
           AND "team"."status" <> 'CLOSED'
-          AND ${teamActorSql(actor)}
+          AND ${teamRecordActorSql(actor)}
         RETURNING "milestone"."teamId"
       `)
       .then((rows) => rows[0] ?? null);
@@ -206,7 +255,7 @@ export class PrismaTeamWorkspaceRepository
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" <> 'CLOSED'
-          AND ${teamActorSql(input.actor)}
+          AND ${teamRecordActorSql(input.actor)}
         RETURNING "id"
       `)
       .then((rows) => rows[0] ?? null);
@@ -260,6 +309,16 @@ function teamActorSql(actor: CurrentActor): Prisma.Sql {
   if (actor.role === "PROFESSOR") {
     return Prisma.sql`"team"."professorId" = ${actor.id}`;
   }
+  return Prisma.sql`EXISTS (
+    SELECT 1 FROM "team_member"
+    WHERE "team_member"."teamId" = "team"."id"
+      AND "team_member"."studentId" = ${actor.id}
+  )`;
+}
+
+function teamRecordActorSql(actor: CurrentActor): Prisma.Sql {
+  if (actor.role === "ADMIN") return Prisma.sql`TRUE`;
+  if (actor.role === "PROFESSOR") return Prisma.sql`FALSE`;
   return Prisma.sql`EXISTS (
     SELECT 1 FROM "team_member"
     WHERE "team_member"."teamId" = "team"."id"

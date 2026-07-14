@@ -30,18 +30,26 @@ export type TeamWorkspace = TeamListItem & {
     nextAction: string;
     createdAt: Date;
   }>;
+  progressPage: number;
+  progressTotalPages: number;
+  progressTotal: number;
   discussionPosts: Array<{
     id: string;
     authorName: string;
     content: string;
     createdAt: Date;
   }>;
+  discussionPage: number;
+  discussionTotalPages: number;
+  discussionTotal: number;
 };
 
 export interface TeamWorkspaceReader {
   findWorkspaceForActor(
     teamId: string,
     actor: CurrentActor,
+    discussionPage?: number,
+    progressPage?: number,
   ): Promise<TeamWorkspace | null>;
   listForStudent(studentId: string): Promise<TeamListItem[]>;
   listForProfessor(professorId: string): Promise<TeamListItem[]>;

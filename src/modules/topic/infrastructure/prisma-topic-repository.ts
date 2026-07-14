@@ -35,13 +35,22 @@ export class PrismaTopicRepository
   }
 
   listByAuthor(authorId: string): Promise<TopicSummary[]> {
+    return this.list({ authorId });
+  }
+
+  listAll(): Promise<TopicSummary[]> {
+    return this.list({});
+  }
+
+  private list(where: Prisma.TopicWhereInput): Promise<TopicSummary[]> {
     return this.client.topic.findMany({
-      where: { authorId },
+      where,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         academicCycleId: true,
         authorId: true,
+        author: { select: { name: true } },
         title: true,
         description: true,
         programId: true,
@@ -60,7 +69,13 @@ export class PrismaTopicRepository
         publishedAt: true,
         program: { select: { name: true, category: true, status: true } },
       },
-    }).then((topics) => topics.map(({ program, ...topic }) => ({ ...topic, programName: program.name, programCategory: program.category, programStatus: program.status })));
+    }).then((topics) => topics.map(({ author, program, ...topic }) => ({
+      ...topic,
+      authorName: author.name,
+      programName: program.name,
+      programCategory: program.category,
+      programStatus: program.status,
+    })));
   }
 
   findState(id: string): Promise<TopicStateRecord | null> {

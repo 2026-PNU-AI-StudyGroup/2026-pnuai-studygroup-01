@@ -33,7 +33,7 @@ describe("아카이브 페이지", () => {
       listClosed: vi.fn(async () => []),
     };
     const result = await new ListArchivedProjectsService(reader).execute(2, 20);
-    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 20, limit: 20 });
+    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 20, limit: 20, filters: {} });
     expect(result.totalPages).toBe(3);
   });
 
@@ -44,8 +44,15 @@ describe("아카이브 페이지", () => {
     };
     const service = new ListArchivedProjectsService(reader);
     await expect(service.execute(999, 20)).resolves.toMatchObject({ page: 3 });
-    expect(reader.listClosed).toHaveBeenLastCalledWith({ offset: 40, limit: 20 });
+    expect(reader.listClosed).toHaveBeenLastCalledWith({ offset: 40, limit: 20, filters: {} });
     await expect(service.execute(1e20, 20)).resolves.toMatchObject({ page: 1 });
-    expect(reader.listClosed).toHaveBeenLastCalledWith({ offset: 0, limit: 20 });
+    expect(reader.listClosed).toHaveBeenLastCalledWith({ offset: 0, limit: 20, filters: {} });
+  });
+
+  it("검색어와 학년도를 정규화해 개수와 목록에 동일하게 적용한다", async () => {
+    const reader = { countClosed: vi.fn(async () => 0), listClosed: vi.fn(async () => []) };
+    await new ListArchivedProjectsService(reader).execute(1, 20, { query: "  TypeScript  ", academicYear: 2026 });
+    expect(reader.countClosed).toHaveBeenCalledWith({ query: "TypeScript", academicYear: 2026 });
+    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 0, limit: 20, filters: { query: "TypeScript", academicYear: 2026 } });
   });
 });

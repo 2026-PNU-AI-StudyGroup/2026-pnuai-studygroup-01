@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   ArchivedProject,
+  ArchiveFilters,
   ArchivedProjectReader,
   TeamCloser,
 } from "@/modules/team/application/archive-projects";
@@ -61,25 +62,21 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
     });
   }
 
-  async countClosed(): Promise<number> {
-    return this.client.team.count({ where: { status: "CLOSED" } });
+  async countClosed(filters: ArchiveFilters): Promise<number> {
+    return this.client.team.count({ where: closedProjectWhere(filters) });
   }
 
-  async listClosed(input: { offset: number; limit: number }): Promise<ArchivedProject[]> {
-    const ids = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      SELECT "team"."id"
-      FROM "team"
-      JOIN "topic" ON "topic"."id" = "team"."topicId"
-      JOIN "academic_cycle" ON "academic_cycle"."id" = "topic"."academicCycleId"
-      WHERE "team"."status" = 'CLOSED'
-      ORDER BY "academic_cycle"."academicYear" DESC,
-        "academic_cycle"."term" DESC, "team"."name" ASC, "team"."id" ASC
-      LIMIT ${input.limit} OFFSET ${input.offset}
-    `);
-    if (ids.length === 0) return [];
-    const order = new Map(ids.map(({ id }, index) => [id, index]));
+  async listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]> {
     const teams = await this.client.team.findMany({
-      where: { id: { in: ids.map(({ id }) => id) }, status: "CLOSED" },
+      where: closedProjectWhere(input.filters),
+      orderBy: [
+        { topic: { academicCycle: { academicYear: "desc" } } },
+        { topic: { academicCycle: { term: "desc" } } },
+        { name: "asc" },
+        { id: "asc" },
+      ],
+      skip: input.offset,
+      take: input.limit,
       select: {
         id: true,
         name: true,
@@ -125,7 +122,25 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
         fileName: file?.originalName,
         externalUrl: artifact.externalUrl ?? undefined,
       })),
-    })).sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
+    }));
     return projects;
   }
+}
+
+function closedProjectWhere(filters: ArchiveFilters): Prisma.TeamWhereInput {
+  const conditions: Prisma.TeamWhereInput[] = [];
+  if (filters.academicYear) conditions.push({ topic: { academicCycle: { academicYear: filters.academicYear } } });
+  if (filters.query) {
+    const query = filters.query;
+    conditions.push({ OR: [
+      { name: { contains: query, mode: "insensitive" } },
+      { topic: { author: { name: { contains: query, mode: "insensitive" } } } },
+      { topic: { title: { contains: query, mode: "insensitive" } } },
+      { topic: { description: { contains: query, mode: "insensitive" } } },
+      { topic: { requiredSkills: { has: query } } },
+      { topic: { preferredSkills: { has: query } } },
+      { artifacts: { some: { title: { contains: query, mode: "insensitive" } } } },
+    ] });
+  }
+  return { status: "CLOSED", AND: conditions };
 }

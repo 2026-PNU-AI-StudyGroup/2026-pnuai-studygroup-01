@@ -8,7 +8,7 @@ import type { TopicLister } from "@/modules/topic/application/topic-ports";
 
 describe("내 주제 조회", () => {
   it("현재 교수의 식별자로만 조회한다", async () => {
-    const repository: TopicLister = { listByAuthor: vi.fn(async () => []) };
+    const repository: TopicLister = { listByAuthor: vi.fn(async () => []), listAll: vi.fn(async () => []) };
     const service = new ListOwnTopicsService(repository);
 
     await service.execute({ id: "professor-1", role: "PROFESSOR" });
@@ -17,12 +17,19 @@ describe("내 주제 조회", () => {
   });
 
   it("학생의 조회를 저장소 호출 전에 거절한다", async () => {
-    const repository: TopicLister = { listByAuthor: vi.fn(async () => []) };
+    const repository: TopicLister = { listByAuthor: vi.fn(async () => []), listAll: vi.fn(async () => []) };
     const service = new ListOwnTopicsService(repository);
 
     await expect(
       service.execute({ id: "student-1", role: "STUDENT" }),
     ).rejects.toBeInstanceOf(TopicListingForbiddenError);
+    expect(repository.listByAuthor).not.toHaveBeenCalled();
+  });
+
+  it("관리자는 작성자와 무관하게 전체 주제를 조회한다", async () => {
+    const repository: TopicLister = { listByAuthor: vi.fn(async () => []), listAll: vi.fn(async () => []) };
+    await new ListOwnTopicsService(repository).execute({ id: "admin-1", role: "ADMIN" });
+    expect(repository.listAll).toHaveBeenCalledOnce();
     expect(repository.listByAuthor).not.toHaveBeenCalled();
   });
 });

@@ -6,11 +6,11 @@ import { OllamaTranslationEngine } from "../src/modules/translation/infrastructu
 async function main() {
   const service = new TranslateTextService(new OllamaTranslationEngine());
   const english = await service.execute({
-    text: "부산대학교 졸업과제 관리 시스템",
+    text: "부산대학교 학과 프로젝트 관리 시스템",
     target: "en",
   });
   const korean = await service.execute({
-    text: "Students can apply to a graduation project topic during the recruitment period.",
+    text: "Students can apply to a department project topic during the recruitment period.",
     target: "ko",
   });
 

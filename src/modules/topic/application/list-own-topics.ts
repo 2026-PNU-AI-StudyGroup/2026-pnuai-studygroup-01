@@ -20,6 +20,8 @@ export class ListOwnTopicsService {
       throw new TopicListingForbiddenError();
     }
 
-    return this.repository.listByAuthor(actor.id);
+    return actor.role === "ADMIN"
+      ? this.repository.listAll()
+      : this.repository.listByAuthor(actor.id);
   }
 }
