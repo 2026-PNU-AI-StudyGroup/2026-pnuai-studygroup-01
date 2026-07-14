@@ -30,23 +30,22 @@ export class PrismaTeamWorkspaceRepository
   constructor(private readonly client: PrismaClient) {}
 
   confirm(teamId: string, actor: CurrentActor): Promise<boolean> {
-    return this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      UPDATE "team"
-      SET "status" = 'CONFIRMED', "updatedAt" = ${new Date()}
-      WHERE "id" = ${teamId}
-        AND "status" = 'FORMING'
-        AND EXISTS (
-          SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id"
-        )
-        AND (
-          ${actor.role}::"UserRole" = 'ADMIN'
-          OR (
-            ${actor.role}::"UserRole" = 'PROFESSOR'
-            AND "professorId" = ${actor.id}
-          )
-        )
-      RETURNING "id"
-    `).then((rows) => rows.length === 1);
+    return this.client.$transaction(async (transaction) => {
+      const decidedAt = new Date();
+      const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string }>>(Prisma.sql`
+        UPDATE "team" SET "status" = 'CONFIRMED', "updatedAt" = ${decidedAt}
+        WHERE "id" = ${teamId} AND "status" = 'FORMING'
+          AND EXISTS (SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id")
+          AND (${actor.role}::"UserRole" = 'ADMIN' OR (${actor.role}::"UserRole" = 'PROFESSOR' AND "professorId" = ${actor.id}))
+        RETURNING "id", "topicId"
+      `);
+      const team = rows[0];
+      if (!team) return false;
+      await transaction.recruitmentPost.updateMany({ where: { teamId, status: "OPEN" }, data: { status: "CLOSED" } });
+      await transaction.topicApplication.updateMany({ where: { topicId: team.topicId, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      await transaction.recruitmentApplication.updateMany({ where: { post: { teamId }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      return true;
+    });
   }
 
   async findWorkspaceForActor(

@@ -71,6 +71,17 @@ enum ArtifactType {
   OTHER
 }
 
+enum RecruitmentPostStatus {
+  OPEN
+  CLOSED
+}
+
+enum RecruitmentApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -93,6 +104,8 @@ model User {
   reportVersionsSubmitted ReportVersion[]
   approvalDecisions       ApprovalDecision[]
   artifactsRegistered     Artifact[]
+  recruitmentPosts        RecruitmentPost[]
+  recruitmentApplications RecruitmentApplication[]
 
   @@map("user")
 }
@@ -216,6 +229,7 @@ model TopicApplication {
   topic      Topic                  @relation(fields: [topicId], references: [id])
   student    User                   @relation(fields: [studentId], references: [id])
   teamMember TeamMember?
+  recruitmentApplication RecruitmentApplication?
 
   @@unique([topicId, studentId])
   @@unique([id, studentId, topicId])
@@ -240,12 +254,52 @@ model Team {
   storedFiles     StoredFile[]
   reports         Report[]
   artifacts       Artifact[]
+  recruitmentPosts RecruitmentPost[]
 
   @@unique([topicId, academicCycleId, professorId])
   @@unique([id, academicCycleId, topicId])
   @@index([academicCycleId, status])
   @@index([professorId])
   @@map("team")
+}
+
+model RecruitmentPost {
+  id              String                @id @default(uuid())
+  teamId          String
+  authorId        String
+  title           String
+  content         String
+  requiredSkills  String[]              @default([])
+  roleNeeded      String
+  availability    String
+  status          RecruitmentPostStatus @default(OPEN)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  team            Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author          User                  @relation(fields: [authorId], references: [id])
+  applications    RecruitmentApplication[]
+
+  @@index([status, createdAt])
+  @@index([teamId, status])
+  @@map("recruitment_post")
+}
+
+model RecruitmentApplication {
+  id                 String                       @id @default(uuid())
+  postId             String
+  topicApplicationId String                       @unique
+  studentId          String
+  status             RecruitmentApplicationStatus @default(PENDING)
+  decidedAt          DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  post               RecruitmentPost              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topicApplication   TopicApplication              @relation(fields: [topicApplicationId], references: [id], onDelete: Cascade)
+  student            User                         @relation(fields: [studentId], references: [id])
+
+  @@unique([postId, studentId])
+  @@index([studentId, status])
+  @@map("recruitment_application")
 }
 
 model TeamMember {

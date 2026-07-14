@@ -205,27 +205,19 @@ export class PrismaTopicApplicationRepository
     actor: TopicApplicationDecisionActor,
     decidedAt: Date,
   ): Promise<RejectTopicApplicationOutcome> {
-    const result = await this.client.topicApplication.updateMany({
-      where: {
-        id,
-        status: "PENDING",
-        ...(actor.isAdmin ? {} : { topic: { authorId: actor.id } }),
-      },
-      data: { status: "REJECTED", decidedAt },
-    });
-    if (result.count === 1) {
+    return this.client.$transaction(async (transaction) => {
+      const application = await transaction.topicApplication.findUnique({
+        where: { id },
+        include: { topic: { select: { authorId: true } }, recruitmentApplication: { include: { post: { include: { team: { select: { status: true } } } } } } },
+      });
+      if (!application || application.status !== "PENDING") return "CONFLICT";
+      const recruiterAllowed = application.recruitmentApplication?.post.authorId === actor.id && application.recruitmentApplication.post.status === "OPEN" && application.recruitmentApplication.post.team.status === "FORMING";
+      if (!actor.isAdmin && application.topic.authorId !== actor.id && !recruiterAllowed) return "FORBIDDEN";
+      const result = await transaction.topicApplication.updateMany({ where: { id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      if (result.count !== 1) return "CONFLICT";
+      await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       return "REJECTED";
-    }
-
-    const application = await this.client.topicApplication.findUnique({
-      where: { id },
-      select: { status: true, topic: { select: { authorId: true } } },
     });
-    return application?.status === "PENDING" &&
-      !actor.isAdmin &&
-      application.topic.authorId !== actor.id
-      ? "FORBIDDEN"
-      : "CONFLICT";
   }
 
   private acceptOnce(
@@ -273,14 +265,17 @@ export class PrismaTopicApplicationRepository
                 authorId: true,
                 academicCycleId: true,
                 capacity: true,
+                status: true,
               },
             },
+            recruitmentApplication: { include: { post: { include: { team: { select: { status: true } } } } } },
           },
         });
         if (!application || application.status !== "PENDING") {
           return "CONFLICT";
         }
-        if (!actor.isAdmin && application.topic.authorId !== actor.id) {
+        const recruiterAllowed = application.topic.status === "PUBLISHED" && application.recruitmentApplication?.post.authorId === actor.id && application.recruitmentApplication.post.status === "OPEN" && application.recruitmentApplication.post.team.status === "FORMING";
+        if (!actor.isAdmin && application.topic.authorId !== actor.id && !recruiterAllowed) {
           return "FORBIDDEN";
         }
 
@@ -334,6 +329,7 @@ export class PrismaTopicApplicationRepository
         if (accepted.count !== 1) {
           throw new DecisionWriteConflictError();
         }
+        await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: application.id, status: "PENDING" }, data: { status: "ACCEPTED", decidedAt } });
 
         await transaction.topicApplication.updateMany({
           where: {
@@ -346,6 +342,10 @@ export class PrismaTopicApplicationRepository
           },
           data: { status: "REJECTED", decidedAt },
         });
+        await transaction.recruitmentApplication.updateMany({
+          where: { status: "PENDING", topicApplication: { studentId: application.studentId, status: "REJECTED", topic: { academicCycleId: application.topic.academicCycleId } } },
+          data: { status: "REJECTED", decidedAt },
+        });
 
         if (memberCount + 1 === application.topic.capacity) {
           await transaction.topicApplication.updateMany({
@@ -356,6 +356,11 @@ export class PrismaTopicApplicationRepository
             },
             data: { status: "REJECTED", decidedAt },
           });
+          await transaction.recruitmentApplication.updateMany({
+            where: { status: "PENDING", topicApplication: { topicId: application.topicId, status: "REJECTED" } },
+            data: { status: "REJECTED", decidedAt },
+          });
+          await transaction.recruitmentPost.updateMany({ where: { teamId: team.id, status: "OPEN" }, data: { status: "CLOSED" } });
         }
 
         return "ACCEPTED";

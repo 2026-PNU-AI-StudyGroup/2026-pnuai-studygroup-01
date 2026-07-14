@@ -17,7 +17,7 @@ const commonNavigation: NavigationItem[] = [
 
 function navigationFor(role: UserRole): NavigationItem[] {
   if (role === "STUDENT") {
-    return [...commonNavigation, { href: "/topics", label: "주제 탐색", icon: "search" }];
+    return [...commonNavigation, { href: "/topics", label: "주제 탐색", icon: "search" }, { href: "/recruitments", label: "팀원 모집", icon: "users" }];
   }
   if (role === "ADMIN") {
     return [
