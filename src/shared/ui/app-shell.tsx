@@ -25,6 +25,7 @@ function navigationFor(role: UserRole): NavigationItem[] {
       { href: "/professor/topics", label: "주제 관리", icon: "file" },
       { href: "/professor/applications", label: "지원 검토", icon: "users" },
       { href: "/admin/academic-cycles", label: "학기 관리", icon: "settings" },
+      { href: "/admin/professors", label: "교수 권한", icon: "users" },
     ];
   }
   return [

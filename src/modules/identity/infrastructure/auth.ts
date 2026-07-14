@@ -1,9 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
+import { Prisma } from "@/generated/prisma/client";
 import {
   canProvisionInstitutionUser,
-  determineInitialRole,
   normalizeEmail,
   USER_ROLES,
 } from "@/modules/identity/domain/user-role";
@@ -11,6 +11,28 @@ import { parseAuthEnvironment } from "@/modules/identity/infrastructure/auth-env
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const authEnvironment = parseAuthEnvironment(process.env);
+
+async function reconcileProfessorRole(userId: string): Promise<void> {
+  await prisma.$transaction(async (transaction) => {
+    const user = await transaction.user.findUnique({
+      where: { id: userId },
+      select: { email: true, role: true },
+    });
+    if (!user || user.role === "ADMIN") return;
+    const email = normalizeEmail(user.email);
+    await transaction.$queryRaw(Prisma.sql`
+      SELECT pg_advisory_xact_lock(hashtextextended(${email}, 0))::text AS "lock"
+    `);
+    const professorEntry = await transaction.professorAllowlist.findFirst({
+      where: { email, revokedAt: null },
+      select: { id: true },
+    });
+    await transaction.user.updateMany({
+      where: { id: userId, role: { not: "ADMIN" } },
+      data: { role: professorEntry ? "PROFESSOR" : "STUDENT" },
+    });
+  });
+}
 
 export const auth = betterAuth({
   appName: "PNU 프로젝트 관리 시스템",
@@ -48,24 +70,20 @@ export const auth = betterAuth({
             return false;
           }
 
-          const email = normalizeEmail(user.email);
-          const professorEntry = await prisma.professorAllowlist.findFirst({
-            where: {
-              email,
-              revokedAt: null,
-            },
-            select: { id: true },
-          });
-
           return {
             data: {
               ...user,
-              email,
-              role: determineInitialRole({
-                isProfessorAllowlisted: professorEntry !== null,
-              }),
+              email: normalizeEmail(user.email),
+              role: "STUDENT",
             },
           };
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          await reconcileProfessorRole(session.userId);
         },
       },
     },
