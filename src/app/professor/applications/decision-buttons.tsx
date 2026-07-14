@@ -16,13 +16,13 @@ export function DecisionButtons({ applicationId }: { applicationId: string }) {
   );
 
   return (
-    <form action={action} className="mt-4 flex flex-wrap items-center gap-3">
+    <form action={action} className="flex flex-wrap items-center gap-2 lg:justify-end">
       <input type="hidden" name="applicationId" value={applicationId} />
       <button
         name="decision"
         value="accept"
         disabled={pending}
-        className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="button-primary text-sm"
       >
         수락
       </button>
@@ -30,7 +30,7 @@ export function DecisionButtons({ applicationId }: { applicationId: string }) {
         name="decision"
         value="reject"
         disabled={pending}
-        className="rounded-lg border px-4 py-2 text-sm font-semibold disabled:opacity-50"
+        className="button-danger text-sm"
       >
         거절
       </button>

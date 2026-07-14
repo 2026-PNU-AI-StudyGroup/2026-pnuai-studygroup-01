@@ -5,44 +5,39 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { AppShell } from "@/shared/ui/app-shell";
+import { EmptyState, PageHeader, ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 export default async function DashboardPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const teams = await new TeamWorkspaceService(
-    repository,
-    repository,
-    repository,
-  ).list(actor);
+  const teams = await new TeamWorkspaceService(repository, repository, repository).list(actor);
+  const title = actor.role === "PROFESSOR" ? "지도 프로젝트" : actor.role === "ADMIN" ? "전체 프로젝트" : "내 프로젝트";
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl space-y-8 px-6 py-12">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-blue-700">대시보드</p>
-          <h1 className="mt-2 text-3xl font-bold">{actor.role === "PROFESSOR" ? "지도 팀" : actor.role === "ADMIN" ? "전체 팀" : "내 팀"}</h1>
-        </div>
-        <Link href={actor.role === "STUDENT" ? "/topics" : "/professor/topics"} className="text-sm font-semibold text-blue-700">주제 화면</Link>
-      </header>
-      {teams.length === 0 ? (
-        <p className="text-zinc-600">표시할 팀이 없습니다.</p>
-      ) : (
-        <ul className="grid gap-5 sm:grid-cols-2">
-          {teams.map((team) => {
-            const progress = team.milestoneCount === 0 ? 0 : Math.round((team.completedMilestoneCount / team.milestoneCount) * 100);
-            return (
-              <li key={team.id} className="rounded-xl border p-5">
-                <p className="text-sm text-zinc-600">{team.topicTitle}</p>
-                <h2 className="mt-1 text-xl font-semibold">{team.name}</h2>
-                <p className="mt-3 text-sm">팀원 {team.memberCount}명 · 진행률 {progress}%</p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-200"><div className="h-full bg-blue-700" style={{ width: `${progress}%` }} /></div>
-                <Link href={`/teams/${team.id}`} className="mt-4 inline-block text-sm font-semibold text-blue-700">워크스페이스 열기</Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
+    <AppShell role={actor.role} userName="부산대학교" currentPath="/dashboard">
+      <main className="content-shell space-y-10">
+        <PageHeader eyebrow="Workspace" title={title} description="팀의 현재 진행 상태와 다음 작업을 한눈에 확인하세요." actions={<Link href={actor.role === "STUDENT" ? "/topics" : "/professor/topics"} className="button-primary">{actor.role === "STUDENT" ? "새 주제 탐색" : "주제 관리"}</Link>} />
+        {teams.length === 0 ? (
+          <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "공개 주제를 탐색하고 관심 있는 프로젝트에 지원해 보세요." : "주제를 등록하거나 학생 지원을 승인하면 이곳에 팀이 표시됩니다."} action={<Link href={actor.role === "STUDENT" ? "/topics" : "/professor/topics"} className="button-secondary">{actor.role === "STUDENT" ? "주제 탐색하기" : "주제 등록하기"}</Link>} />
+        ) : (
+          <section aria-label="프로젝트 목록" className="border-t border-[var(--line)]">
+            <ul className="divide-y divide-[var(--line)]">
+              {teams.map((team) => {
+                const progress = team.milestoneCount === 0 ? 0 : Math.round((team.completedMilestoneCount / team.milestoneCount) * 100);
+                return (
+                  <li key={team.id} className="grid gap-5 py-7 lg:grid-cols-[minmax(0,1fr)_260px_9rem] lg:items-center">
+                    <div><div className="flex flex-wrap items-center gap-3"><h2 className="text-xl font-bold tracking-tight">{team.name}</h2><StatusBadge tone="success">진행 중</StatusBadge></div><p className="muted mt-2 text-sm">{team.topicTitle} · 팀원 {team.memberCount}명</p></div>
+                    <ProgressBar value={progress} />
+                    <Link href={`/teams/${team.id}`} className="button-secondary">워크스페이스</Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+      </main>
+    </AppShell>
   );
 }

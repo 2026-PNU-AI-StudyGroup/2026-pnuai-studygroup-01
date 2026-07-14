@@ -16,7 +16,7 @@ export function AcademicCycleForm() {
   );
 
   return (
-    <form action={action} className="grid gap-4 rounded-xl border p-5 sm:grid-cols-3">
+    <form action={action} className="grid gap-4 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-6 sm:grid-cols-3 sm:px-6">
       <label className="grid gap-2 text-sm font-medium">
         학년도
         <input
@@ -26,12 +26,12 @@ export function AcademicCycleForm() {
           max="9999"
           defaultValue={new Date().getFullYear()}
           required
-          className="rounded-lg border px-3 py-2"
+          className="field"
         />
       </label>
       <label className="grid gap-2 text-sm font-medium">
         학기
-        <select name="term" className="rounded-lg border px-3 py-2">
+        <select name="term" className="field">
           <option value="FIRST">1학기</option>
           <option value="SECOND">2학기</option>
         </select>
@@ -39,7 +39,7 @@ export function AcademicCycleForm() {
       <button
         type="submit"
         disabled={pending}
-        className="self-end rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white disabled:opacity-50"
+        className="button-primary self-end"
       >
         {pending ? "등록 중" : "학기 등록"}
       </button>

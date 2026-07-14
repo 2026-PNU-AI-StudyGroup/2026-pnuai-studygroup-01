@@ -28,13 +28,13 @@ export function TopicStatusButton({
   const intent = status === "DRAFT" ? "publish" : "close";
 
   return (
-    <form action={action} className="mt-4">
+    <form action={action}>
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="intent" value={intent} />
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg border border-blue-700 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+        className="button-secondary text-sm"
       >
         {pending ? "처리 중" : intent === "publish" ? "공개" : "마감"}
       </button>

@@ -29,7 +29,7 @@ export function GoogleSignInButton() {
         type="button"
         onClick={signIn}
         disabled={isPending}
-        className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="button-primary w-full"
       >
         {isPending ? "Google로 이동 중..." : "부산대학교 Google 계정으로 로그인"}
       </button>

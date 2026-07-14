@@ -7,86 +7,61 @@ import { PrismaTopicApplicationRepository } from "@/modules/topic-application/in
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { AppShell } from "@/shared/ui/app-shell";
+import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
-const koreanDateTime = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul",
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-const applicationStatusLabel = {
-  PENDING: "검토 중",
-  ACCEPTED: "수락",
-  REJECTED: "거절",
+const koreanDateTime = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
+const applicationStatus = {
+  PENDING: { label: "검토 중", tone: "warning" },
+  ACCEPTED: { label: "수락", tone: "success" },
+  REJECTED: { label: "거절", tone: "danger" },
 } as const;
 
 export default async function TopicsPage() {
   const actor = await getCurrentActor();
-  if (!actor) {
-    redirect("/sign-in");
-  }
-
+  if (!actor) redirect("/sign-in");
   const topicRepository = new PrismaTopicRepository(prisma);
   const topics = await new ListPublishedTopicsService(topicRepository).execute();
-  const applications =
-    actor.role === "STUDENT"
-      ? await new ListOwnTopicApplicationsService(
-          new PrismaTopicApplicationRepository(prisma),
-        ).execute(actor)
-      : [];
-  const applicationsByTopic = new Map(
-    applications.map((application) => [application.topicId, application]),
-  );
+  const applications = actor.role === "STUDENT" ? await new ListOwnTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor) : [];
+  const applicationsByTopic = new Map(applications.map((application) => [application.topicId, application]));
   const now = new Date();
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl space-y-8 px-6 py-12">
-      <header>
-        <p className="text-sm font-semibold text-blue-700">졸업과제</p>
-        <h1 className="mt-2 text-3xl font-bold">공개 주제</h1>
-      </header>
-      {topics.length === 0 ? (
-        <p className="text-zinc-600">공개된 주제가 없습니다.</p>
-      ) : (
-        <ul className="grid gap-5">
-          {topics.map((topic) => {
-            const application = applicationsByTopic.get(topic.id);
-            const isRecruiting =
-              topic.recruitmentStartsAt <= now &&
-              topic.recruitmentEndsAt > now &&
-              topic.memberCount < topic.capacity;
-
-            return (
-              <li key={topic.id} className="rounded-xl border p-6">
-                <p className="text-sm text-zinc-600">
-                  {topic.academicYear}학년도 {topic.term === "FIRST" ? "1" : "2"}학기 · {topic.authorName}
-                </p>
-                <h2 className="mt-2 text-xl font-semibold">{topic.title}</h2>
-                <p className="mt-3 whitespace-pre-wrap text-zinc-700">{topic.description}</p>
-                <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                  <div><dt className="font-semibold">모집 인원</dt><dd>{topic.capacity}명</dd></div>
-                  <div><dt className="font-semibold">모집 기간</dt><dd>{koreanDateTime.format(topic.recruitmentStartsAt)} – {koreanDateTime.format(topic.recruitmentEndsAt)}</dd></div>
-                </dl>
-                {application ? (
-                  <p className="mt-5 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
-                    지원 상태: {applicationStatusLabel[application.status]}
-                  </p>
-                ) : actor.role === "STUDENT" && isRecruiting ? (
-                  <ApplyTopicForm topicId={topic.id} />
-                ) : (
-                  <p className="mt-5 text-sm text-zinc-600">
-                    {actor.role === "STUDENT"
-                      ? topic.memberCount >= topic.capacity
-                        ? "모집 정원이 찼습니다."
-                        : "현재 모집 기간이 아닙니다."
-                      : "학생 계정으로 지원할 수 있습니다."}
-                  </p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
+    <AppShell role={actor.role} userName="부산대학교" currentPath="/topics">
+      <main className="content-shell space-y-10">
+        <PageHeader eyebrow="Discover" title="주제 탐색" description="관심 분야의 졸업과제를 살펴보고, 함께하고 싶은 팀에 지원하세요." />
+        <div className="flex flex-wrap gap-2 border-y border-[var(--line)] py-4" aria-label="주제 안내">
+          <StatusBadge tone="success">현재 모집 중 우선</StatusBadge><span className="muted self-center text-sm">총 {topics.length}개의 공개 주제</span>
+        </div>
+        {topics.length === 0 ? (
+          <EmptyState title="공개된 주제가 없습니다" description="교수가 주제를 공개하면 이곳에 표시됩니다. 잠시 후 다시 확인해 주세요." />
+        ) : (
+          <ul className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+            {topics.map((topic) => {
+              const application = applicationsByTopic.get(topic.id);
+              const isRecruiting = topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
+              return (
+                <li key={topic.id} className="py-8">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-bold tracking-tight">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
+                      <p className="muted mt-3 line-clamp-3 whitespace-pre-wrap leading-7">{topic.description}</p>
+                    </div>
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-1">
+                      <div><dt className="muted text-xs">지도교수</dt><dd className="mt-1 font-semibold">{topic.authorName}</dd></div>
+                      <div><dt className="muted text-xs">모집 현황</dt><dd className="mt-1 font-semibold">{topic.memberCount} / {topic.capacity}명</dd></div>
+                      <div className="col-span-2 lg:col-span-1"><dt className="muted text-xs">모집 마감</dt><dd className="mt-1 font-semibold">{koreanDateTime.format(topic.recruitmentEndsAt)}</dd></div>
+                    </dl>
+                  </div>
+                  <div className="mt-5 text-sm">
+                    {application ? <StatusBadge tone={applicationStatus[application.status].tone}>지원 상태 · {applicationStatus[application.status].label}</StatusBadge> : actor.role === "STUDENT" && isRecruiting ? <ApplyTopicForm topicId={topic.id} /> : <p className="muted">{actor.role === "STUDENT" ? topic.memberCount >= topic.capacity ? "모집 정원이 찼습니다." : "현재 모집 기간이 아닙니다." : "학생 계정으로 지원할 수 있습니다."}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </main>
+    </AppShell>
   );
 }

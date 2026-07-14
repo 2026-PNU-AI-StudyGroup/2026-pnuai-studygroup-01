@@ -6,61 +6,30 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { ListReceivedTopicApplicationsService } from "@/modules/topic-application/application/list-received-topic-applications";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { AppShell } from "@/shared/ui/app-shell";
+import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
-const statusLabel = {
-  PENDING: "검토 중",
-  ACCEPTED: "수락",
-  REJECTED: "거절",
-} as const;
+const statusPresentation = { PENDING: ["검토 중", "warning"], ACCEPTED: ["수락", "success"], REJECTED: ["거절", "danger"] } as const;
 
 export default async function ProfessorApplicationsPage() {
   const actor = await getCurrentActor();
-  if (!actor) {
-    redirect("/sign-in");
-  }
-  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") {
-    redirect("/");
-  }
-
-  const applications = await new ListReceivedTopicApplicationsService(
-    new PrismaTopicApplicationRepository(prisma),
-  ).execute(actor);
+  if (!actor) redirect("/sign-in");
+  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/");
+  const applications = await new ListReceivedTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor);
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl space-y-8 px-6 py-12">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-blue-700">교수</p>
-          <h1 className="mt-2 text-3xl font-bold">받은 주제 지원서</h1>
-        </div>
-        <Link href="/professor/topics" className="text-sm font-semibold text-blue-700">
-          주제 관리
-        </Link>
-      </header>
-      {applications.length === 0 ? (
-        <p className="text-zinc-600">받은 지원서가 없습니다.</p>
-      ) : (
-        <ul className="grid gap-5">
-          {applications.map((application) => (
-            <li key={application.id} className="rounded-xl border p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-zinc-600">{application.topicTitle}</p>
-                  <h2 className="mt-1 text-lg font-semibold">{application.studentName}</h2>
-                  <p className="text-sm text-zinc-600">{application.studentEmail}</p>
-                </div>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold">
-                  {statusLabel[application.status]}
-                </span>
-              </div>
-              <p className="mt-4 whitespace-pre-wrap text-zinc-700">{application.message}</p>
-              {application.status === "PENDING" ? (
-                <DecisionButtons applicationId={application.id} />
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+    <AppShell role={actor.role} userName="부산대학교" currentPath="/professor/applications">
+      <main className="content-shell space-y-10">
+        <PageHeader eyebrow="Review" title="지원 검토" description="학생의 지원 동기와 주제를 확인하고 팀 참여 여부를 결정하세요." actions={<Link href="/professor/topics" className="button-secondary">주제 관리</Link>} />
+        {applications.length === 0 ? <EmptyState title="받은 지원서가 없습니다" description="학생이 공개 주제에 지원하면 이곳에 지원서가 표시됩니다." /> : (
+          <section aria-label="지원서 목록">
+            <div className="flex items-center gap-4 border-y border-[var(--line)] py-4 text-sm"><StatusBadge tone="warning">검토 대기 {applications.filter((item) => item.status === "PENDING").length}</StatusBadge><span className="muted">전체 {applications.length}</span></div>
+            <ul className="divide-y divide-[var(--line)]">
+              {applications.map((application) => <li key={application.id} className="grid gap-5 py-7 lg:grid-cols-[13rem_minmax(0,1fr)_10rem]"><div><p className="font-bold">{application.studentName}</p><p className="muted mt-1 break-all text-sm">{application.studentEmail}</p><div className="mt-3"><StatusBadge tone={statusPresentation[application.status][1]}>{statusPresentation[application.status][0]}</StatusBadge></div></div><div><p className="muted text-xs">지원 주제</p><h2 className="mt-1 font-bold">{application.topicTitle}</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[var(--muted)]">{application.message}</p></div><div className="lg:text-right">{application.status === "PENDING" ? <DecisionButtons applicationId={application.id} /> : null}</div></li>)}
+            </ul>
+          </section>
+        )}
+      </main>
+    </AppShell>
   );
 }
