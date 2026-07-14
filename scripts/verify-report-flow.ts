@@ -2,11 +2,19 @@ import "dotenv/config";
 
 import { createHash, randomUUID } from "node:crypto";
 
-import { UploadService } from "../src/modules/file/application/manage-upload";
+import { UploadNotFoundError, UploadService } from "../src/modules/file/application/manage-upload";
 import { PrismaUploadIntentRepository } from "../src/modules/file/infrastructure/prisma-upload-intent-repository";
 import { S3ObjectStorage } from "../src/modules/file/infrastructure/s3-object-storage";
 import { ReportOperationNotAllowedError, ReportService } from "../src/modules/report/application/manage-reports";
 import { PrismaReportRepository } from "../src/modules/report/infrastructure/prisma-report-repository";
+import {
+  CloseTeamService,
+  ListArchivedProjectsService,
+  TeamCloseNotAllowedError,
+} from "../src/modules/team/application/archive-projects";
+import { PrismaTeamArchiveRepository } from "../src/modules/team/infrastructure/prisma-team-archive-repository";
+import { TeamNotFoundError, TeamWorkspaceService } from "../src/modules/team/application/manage-team-workspace";
+import { PrismaTeamWorkspaceRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
 
@@ -17,6 +25,7 @@ if (process.env.ALLOW_LOCAL_REPORT_TEST !== "true") {
 const professorId = randomUUID();
 const otherProfessorId = randomUUID();
 const studentId = randomUUID();
+const pendingStudentId = randomUUID();
 let cycleId: string | null = null;
 const storage = new S3ObjectStorage(s3, objectStorageBucket);
 const uploads = new UploadService(new PrismaUploadIntentRepository(prisma), storage);
@@ -29,7 +38,7 @@ async function cleanup() {
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     await uploads.cleanup(new Date(Date.now() + 27 * 60 * 60_000));
   }
-  await prisma.user.deleteMany({ where: { id: { in: [professorId, otherProfessorId, studentId] } } });
+  await prisma.user.deleteMany({ where: { id: { in: [professorId, otherProfessorId, studentId, pendingStudentId] } } });
 }
 
 async function upload(teamId: string, purpose: "REPORT" | "ARTIFACT", name: string, content: string) {
@@ -61,6 +70,7 @@ async function main() {
     { id: professorId, name: "Report Professor", email: `${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
     { id: otherProfessorId, name: "Other Professor", email: `${otherProfessorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
     { id: studentId, name: "Report Student", email: `${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: pendingStudentId, name: "Pending Student", email: `${pendingStudentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
   const cycle = await prisma.academicCycle.create({ data: {
     academicYear: 7000 + Math.floor(Math.random() * 1000), term: "SECOND",
@@ -75,6 +85,9 @@ async function main() {
   } });
   const application = await prisma.topicApplication.create({ data: {
     topicId: topic.id, studentId, message: "보고서 검증", status: "ACCEPTED", decidedAt: new Date(),
+  } });
+  const pendingApplication = await prisma.topicApplication.create({ data: {
+    topicId: topic.id, studentId: pendingStudentId, message: "종료 전 대기 지원", status: "PENDING",
   } });
   const team = await prisma.team.create({ data: {
     academicCycleId: cycle.id, topicId: topic.id, professorId, name: "보고서 검증 팀", status: "CONFIRMED",
@@ -127,9 +140,12 @@ async function main() {
     where: { reportId: midtermV1.reportId, version: 1 }, select: { id: true },
   });
   const midtermV2File = await upload(team.id, "REPORT", "midterm-v2.pdf", "midterm report version two");
-  await service.submit(student, {
+  const midtermV2 = await service.submit(student, {
     teamId: team.id, type: "MIDTERM", fileId: midtermV2File, description: "중간 보고서 2차",
   }, new Date("2026-07-15T02:00:00Z"));
+  const midtermV2Row = await prisma.reportVersion.findFirstOrThrow({
+    where: { reportId: midtermV2.reportId, version: 2 }, select: { id: true },
+  });
   let staleVersionDecisionDenied = false;
   try {
     await service.decide(professor, {
@@ -152,7 +168,7 @@ async function main() {
       reportVersionId: finalV1Row.id, decision: "APPROVED", comment: "동시 승인",
     }),
     service.decide(professor, {
-      reportVersionId: finalV1Row.id, decision: "REVISION_REQUESTED", comment: "동시 수정 요청",
+      reportVersionId: finalV1Row.id, decision: "APPROVED", comment: "동시 중복 승인",
     }),
   ]);
   const concurrentDecisionConverged =
@@ -225,6 +241,69 @@ async function main() {
   }
   if (!submissionPeriodDenied) throw new Error("제출 기간 밖 보고서가 접수되었습니다.");
 
+  const archiveRepository = new PrismaTeamArchiveRepository(prisma);
+  const closeTeam = new CloseTeamService(archiveRepository);
+  let unrelatedProfessorCloseDenied = false;
+  try {
+    await closeTeam.close({ id: otherProfessorId, role: "PROFESSOR" }, team.id);
+  } catch (error) {
+    unrelatedProfessorCloseDenied = error instanceof TeamCloseNotAllowedError;
+  }
+  if (!unrelatedProfessorCloseDenied) throw new Error("다른 교수가 팀을 종료했습니다.");
+  await closeTeam.close(professor, team.id);
+  const archivePage = await new ListArchivedProjectsService(archiveRepository).execute();
+  const archivedTeam = archivePage.projects.find(({ id }) => id === team.id);
+  if (archivedTeam?.artifacts.length !== 2) throw new Error("종료 팀 결과물이 아카이브에 보존되지 않았습니다.");
+  let closedTeamSubmissionDenied = false;
+  try {
+    await service.submit(student, {
+      teamId: team.id, type: "FINAL", fileId: lateFile, description: "종료 후 제출",
+    }, new Date("2026-07-17T00:00:00Z"));
+  } catch (error) {
+    closedTeamSubmissionDenied = error instanceof ReportOperationNotAllowedError;
+  }
+  if (!closedTeamSubmissionDenied) throw new Error("종료 팀에 보고서가 추가되었습니다.");
+  const workspaceRepository = new PrismaTeamWorkspaceRepository(prisma);
+  let closedTeamDiscussionDenied = false;
+  try {
+    await new TeamWorkspaceService(
+      workspaceRepository,
+      workspaceRepository,
+      workspaceRepository,
+      workspaceRepository,
+    ).createDiscussionPost(student, { teamId: team.id, content: "종료 후 토론" });
+  } catch (error) {
+    closedTeamDiscussionDenied = error instanceof TeamNotFoundError;
+  }
+  if (!closedTeamDiscussionDenied) throw new Error("종료 팀에 토론 글이 추가되었습니다.");
+  let closedTeamDecisionDenied = false;
+  try {
+    await service.decide(professor, {
+      reportVersionId: midtermV2Row.id, decision: "APPROVED", comment: "종료 후 승인",
+    });
+  } catch (error) {
+    closedTeamDecisionDenied = error instanceof ReportOperationNotAllowedError;
+  }
+  if (!closedTeamDecisionDenied) throw new Error("종료 팀 보고서에 결정이 추가되었습니다.");
+  const closedApplication = await prisma.topicApplication.findUniqueOrThrow({
+    where: { id: pendingApplication.id }, select: { status: true },
+  });
+  if (closedApplication.status !== "REJECTED") throw new Error("종료 팀의 대기 지원서가 정리되지 않았습니다.");
+  let closedTeamUploadDenied = false;
+  try {
+    await uploads.create(student, {
+      teamId: team.id,
+      purpose: "ARTIFACT",
+      originalName: "closed.pdf",
+      contentType: "application/pdf",
+      size: 6,
+      sha256: createHash("sha256").update("closed").digest("hex"),
+    });
+  } catch (error) {
+    closedTeamUploadDenied = error instanceof UploadNotFoundError;
+  }
+  if (!closedTeamUploadDenied) throw new Error("종료 팀에 업로드 예약이 생성되었습니다.");
+
   console.log(JSON.stringify({
     immutableVersions: start.versions.length,
     approvedHistoryPreserved: true,
@@ -237,6 +316,13 @@ async function main() {
     attachedFileOwnerMutationDenied,
     attachedFileStatusMutationDenied,
     submissionPeriodDenied,
+    unrelatedProfessorCloseDenied,
+    closedTeamSubmissionDenied,
+    closedTeamDiscussionDenied,
+    closedTeamDecisionDenied,
+    closedTeamUploadDenied,
+    pendingApplicationRejected: closedApplication.status === "REJECTED",
+    archivedArtifacts: archivedTeam.artifacts.length,
     artifacts: workspace.artifacts.length,
   }));
 }

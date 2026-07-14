@@ -234,6 +234,18 @@ export class PrismaTopicApplicationRepository
           return "CONFLICT";
         }
 
+        const existingTeams = await transaction.$queryRaw<Array<{
+          id: string;
+          status: "FORMING" | "CONFIRMED" | "CLOSED";
+        }>>(Prisma.sql`
+          SELECT "id", "status"
+          FROM "team"
+          WHERE "topicId" = ${target.topicId}
+          FOR UPDATE
+        `);
+        const existingTeam = existingTeams[0];
+        if (existingTeam?.status === "CLOSED") return "CONFLICT";
+
         await transaction.$queryRaw(Prisma.sql`
           SELECT "topic"."id"
           FROM "topic"
@@ -276,10 +288,6 @@ export class PrismaTopicApplicationRepository
           return "STUDENT_ALREADY_ASSIGNED";
         }
 
-        const existingTeam = await transaction.team.findUnique({
-          where: { topicId: application.topicId },
-          select: { id: true },
-        });
         const memberCount = existingTeam
           ? await transaction.teamMember.count({
               where: { teamId: existingTeam.id },

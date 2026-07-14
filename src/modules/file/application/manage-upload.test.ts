@@ -12,7 +12,6 @@ function dependencies() {
     createForActor: vi.fn(async () => true),
     findPendingForOwner: vi.fn(),
     isCompletedForOwner: vi.fn(async () => false),
-    updateUploadWindow: vi.fn(async () => true),
     finalizeWithTeamLock: vi.fn(async (_id, _ownerId, _readyAt, promote) => {
       await promote({
         id: "upload-1",

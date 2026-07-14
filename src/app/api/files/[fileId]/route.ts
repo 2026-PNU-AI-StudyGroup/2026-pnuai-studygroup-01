@@ -18,7 +18,10 @@ export async function GET(
     where: {
       id: fileId,
       status: "ATTACHED",
-      team: teamActorWhere(actor),
+      OR: [
+        { team: teamActorWhere(actor) },
+        { purpose: "ARTIFACT", team: { status: "CLOSED" } },
+      ],
     },
     select: { objectKey: true, originalName: true },
   });

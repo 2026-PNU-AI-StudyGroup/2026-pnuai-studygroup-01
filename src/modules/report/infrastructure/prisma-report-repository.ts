@@ -170,6 +170,7 @@ export class PrismaReportRepository implements ReportRepository {
         JOIN "report" ON "report"."id" = "report_version"."reportId"
         JOIN "team" ON "team"."id" = "report"."teamId"
         WHERE "report_version"."id" = ${input.reportVersionId}
+          AND "team"."status" = 'CONFIRMED'
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
             OR (

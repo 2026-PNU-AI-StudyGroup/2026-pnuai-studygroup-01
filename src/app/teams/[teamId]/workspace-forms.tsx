@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import {
+  closeTeamAction,
   createDiscussionPostAction,
   createMilestoneAction,
   createProgressUpdateAction,
@@ -12,6 +13,17 @@ import {
 import type { MilestoneStatus } from "@/modules/team/application/team-workspace-ports";
 
 const initialState: TeamActionState = { status: "idle", message: "" };
+
+export function CloseTeamForm({ teamId }: { teamId: string }) {
+  const [state, action, pending] = useActionState(closeTeamAction, initialState);
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="teamId" value={teamId} />
+      <button disabled={pending} className="button-secondary">{pending ? "종료 중" : "팀 종료"}</button>
+      {state.status === "error" ? <span role="alert" className="text-xs text-red-700">{state.message}</span> : null}
+    </form>
+  );
+}
 
 export function MilestoneForm({ teamId }: { teamId: string }) {
   const [state, action, pending] = useActionState(createMilestoneAction, initialState);

@@ -12,6 +12,7 @@ type NavigationItem = {
 
 const commonNavigation: NavigationItem[] = [
   { href: "/dashboard", label: "내 프로젝트", icon: "home" },
+  { href: "/archive", label: "아카이브", icon: "file" },
 ];
 
 function navigationFor(role: UserRole): NavigationItem[] {

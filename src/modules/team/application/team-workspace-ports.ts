@@ -14,6 +14,7 @@ export type TeamListItem = {
 
 export type TeamWorkspace = TeamListItem & {
   professorName: string;
+  canClose: boolean;
   members: Array<{ id: string; name: string; email: string }>;
   milestones: Array<{
     id: string;

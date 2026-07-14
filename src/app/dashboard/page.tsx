@@ -28,7 +28,7 @@ export default async function DashboardPage() {
                 const progress = team.milestoneCount === 0 ? 0 : Math.round((team.completedMilestoneCount / team.milestoneCount) * 100);
                 return (
                   <li key={team.id} className="grid gap-5 py-7 lg:grid-cols-[minmax(0,1fr)_260px_9rem] lg:items-center">
-                    <div><div className="flex flex-wrap items-center gap-3"><h2 className="text-xl font-bold tracking-tight">{team.name}</h2><StatusBadge tone="success">진행 중</StatusBadge></div><p className="muted mt-2 text-sm">{team.topicTitle} · 팀원 {team.memberCount}명</p></div>
+                    <div><div className="flex flex-wrap items-center gap-3"><h2 className="text-xl font-bold tracking-tight">{team.name}</h2><StatusBadge tone={team.status === "CLOSED" ? "neutral" : "success"}>{team.status === "CLOSED" ? "종료" : team.status === "CONFIRMED" ? "진행 중" : "구성 중"}</StatusBadge></div><p className="muted mt-2 text-sm">{team.topicTitle} · 팀원 {team.memberCount}명</p></div>
                     <ProgressBar value={progress} />
                     <Link href={`/teams/${team.id}`} className="button-secondary">워크스페이스</Link>
                   </li>

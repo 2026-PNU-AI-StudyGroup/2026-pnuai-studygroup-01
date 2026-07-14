@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
+  CloseTeamService,
+  TeamCloseNotAllowedError,
+} from "@/modules/team/application/archive-projects";
+import {
   ConfirmTeamService,
   TeamConfirmationNotAllowedError,
 } from "@/modules/team/application/confirm-team";
@@ -19,6 +23,7 @@ import {
   InvalidProgressUpdateError,
 } from "@/modules/team/domain/team-workspace-policy";
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
+import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
 import {
   discussionPostInputSchema,
   milestoneInputSchema,
@@ -46,6 +51,30 @@ export async function confirmTeamAction(formData: FormData) {
   }
   revalidatePath(`/teams/${teamId}`);
   revalidatePath("/dashboard");
+}
+
+export async function closeTeamAction(
+  _state: TeamActionState,
+  formData: FormData,
+): Promise<TeamActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const teamId = formData.get("teamId");
+  if (typeof teamId !== "string") {
+    return { status: "error", message: "팀 종료 요청을 확인해 주세요." };
+  }
+  try {
+    await new CloseTeamService(new PrismaTeamArchiveRepository(prisma)).close(actor, teamId);
+  } catch (error) {
+    if (error instanceof TeamCloseNotAllowedError) {
+      return { status: "error", message: error.message };
+    }
+    throw error;
+  }
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/archive");
+  return { status: "success", message: "팀을 종료하고 아카이브에 보관했습니다." };
 }
 
 function service() {

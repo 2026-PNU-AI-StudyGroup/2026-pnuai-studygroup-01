@@ -23,6 +23,22 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       await transaction.$executeRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${input.teamId}, 0))
       `);
+      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "team"."id"
+        FROM "team"
+        WHERE "team"."id" = ${input.teamId}
+          AND "team"."status" <> 'CLOSED'
+          AND (
+            ${input.actor.role}::"UserRole" = 'ADMIN' OR
+            (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
+              SELECT 1 FROM "team_member"
+              WHERE "team_member"."teamId" = "team"."id"
+                AND "team_member"."studentId" = ${input.actor.id}
+            ))
+          )
+        FOR UPDATE
+      `);
+      if (teams.length !== 1) return false;
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         INSERT INTO "stored_file" (
           "id", "teamId", "ownerId", "purpose", "status", "objectKey",
@@ -36,14 +52,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
           ${input.cleanupAfter}, ${new Date()}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
-          AND (
-            ${input.actor.role}::"UserRole" = 'ADMIN' OR
-            (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-              SELECT 1 FROM "team_member"
-              WHERE "team_member"."teamId" = "team"."id"
-                AND "team_member"."studentId" = ${input.actor.id}
-            ))
-          )
+          AND "team"."status" <> 'CLOSED'
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
@@ -80,18 +89,6 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
     }).then((count) => count === 1);
   }
 
-  updateUploadWindow(
-    id: string,
-    ownerId: string,
-    expiresAt: Date,
-    cleanupAfter: Date,
-  ): Promise<boolean> {
-    return this.client.storedFile.updateMany({
-      where: { id, ownerId, status: "PENDING" },
-      data: { expiresAt, cleanupAfter },
-    }).then(({ count }) => count === 1);
-  }
-
   finalizeWithTeamLock(
     id: string,
     ownerId: string,
@@ -109,6 +106,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         WHERE "stored_file"."id" = ${id}
           AND "stored_file"."ownerId" = ${ownerId}
           AND "stored_file"."status" = 'PENDING'
+          AND "team"."status" <> 'CLOSED'
         FOR UPDATE OF "team", "stored_file"
       `);
       const file = files[0];

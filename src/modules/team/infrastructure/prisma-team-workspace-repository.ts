@@ -89,6 +89,17 @@ export class PrismaTeamWorkspaceRepository
             author: { select: { name: true } },
           },
         },
+        reports: {
+          where: { type: "FINAL" },
+          take: 1,
+          select: {
+            versions: {
+              orderBy: { version: "desc" },
+              take: 1,
+              select: { decision: { select: { decision: true } } },
+            },
+          },
+        },
       },
     });
     if (!team) {
@@ -104,6 +115,7 @@ export class PrismaTeamWorkspaceRepository
       topicTitle: team.topic.title,
       status: team.status,
       professorName: team.topic.author.name,
+      canClose: team.status === "CONFIRMED" && team.reports[0]?.versions[0]?.decision?.decision === "APPROVED",
       memberCount: team.members.length,
       milestoneCount: team.milestones.length,
       completedMilestoneCount,
@@ -150,6 +162,7 @@ export class PrismaTeamWorkspaceRepository
           ${input.dueAt}, 'TODO'::"MilestoneStatus", ${now}, ${now}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
+          AND "team"."status" <> 'CLOSED'
           AND ${teamActorSql(input.actor)}
         RETURNING "id"
       `)
@@ -168,6 +181,7 @@ export class PrismaTeamWorkspaceRepository
         FROM "team"
         WHERE "milestone"."id" = ${id}
           AND "team"."id" = "milestone"."teamId"
+          AND "team"."status" <> 'CLOSED'
           AND ${teamActorSql(actor)}
         RETURNING "milestone"."teamId"
       `)
@@ -192,6 +206,7 @@ export class PrismaTeamWorkspaceRepository
           ${input.risk}, ${input.nextAction}, ${now}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
+          AND "team"."status" <> 'CLOSED'
           AND ${teamActorSql(input.actor)}
         RETURNING "id"
       `)
@@ -209,6 +224,7 @@ export class PrismaTeamWorkspaceRepository
       SELECT ${id}, "team"."id", ${input.actor.id}, ${input.content}, ${new Date()}
       FROM "team"
       WHERE "team"."id" = ${input.teamId}
+        AND "team"."status" <> 'CLOSED'
         AND ${teamActorSql(input.actor)}
       RETURNING "id"
     `).then((rows) => rows[0] ?? null);

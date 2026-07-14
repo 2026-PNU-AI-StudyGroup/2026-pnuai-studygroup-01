@@ -33,7 +33,6 @@ export interface UploadIntentRepository {
   }): Promise<boolean>;
   findPendingForOwner(id: string, ownerId: string): Promise<UploadIntent | null>;
   isCompletedForOwner(id: string, ownerId: string): Promise<boolean>;
-  updateUploadWindow(id: string, ownerId: string, expiresAt: Date, cleanupAfter: Date): Promise<boolean>;
   finalizeWithTeamLock(
     id: string,
     ownerId: string,
@@ -89,6 +88,9 @@ export class UploadService {
       expiresAt: new Date(now.getTime() + 15 * 60_000),
       cleanupAfter: new Date(now.getTime() + 26 * 60 * 60_000),
     };
+    const signed = await this.storage.createUploadUrl(intent);
+    intent.expiresAt = signed.expiresAt;
+    intent.cleanupAfter = new Date(signed.expiresAt.getTime() + 26 * 60 * 60_000);
     const created = await this.repository.createForActor({
       ...intent,
       teamId: input.teamId,
@@ -97,22 +99,7 @@ export class UploadService {
       originalName: validated.originalName,
     });
     if (!created) throw new UploadNotFoundError();
-    try {
-      const signed = await this.storage.createUploadUrl(intent);
-      const cleanupAfter = new Date(signed.expiresAt.getTime() + 26 * 60 * 60_000);
-      if (!(await this.repository.updateUploadWindow(
-        id,
-        actor.id,
-        signed.expiresAt,
-        cleanupAfter,
-      ))) {
-        throw new UploadNotFoundError();
-      }
-      return { uploadId: id, uploadUrl: signed.url };
-    } catch (error) {
-      await this.repository.deletePending(id, actor.id);
-      throw error;
-    }
+    return { uploadId: id, uploadUrl: signed.url };
   }
 
   async complete(actor: CurrentActor, uploadId: string, now = new Date()) {
