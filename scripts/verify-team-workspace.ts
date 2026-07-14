@@ -3,6 +3,10 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 
 import {
+  ConfirmTeamService,
+  TeamConfirmationNotAllowedError,
+} from "../src/modules/team/application/confirm-team";
+import {
   MilestoneNotFoundError,
   TeamNotFoundError,
   TeamWorkspaceService,
@@ -131,6 +135,15 @@ async function main() {
   const professor = { id: professorId, role: "PROFESSOR" as const };
   const student = { id: studentId, role: "STUDENT" as const };
   const outsider = { id: outsiderId, role: "STUDENT" as const };
+  const confirmation = new ConfirmTeamService(repository);
+
+  try {
+    await confirmation.confirm(student, team.id);
+    throw new Error("학생이 팀을 확정했습니다.");
+  } catch (error) {
+    if (!(error instanceof TeamConfirmationNotAllowedError)) throw error;
+  }
+  await confirmation.confirm(professor, team.id);
 
   const milestone = await service.createMilestone(student, {
     teamId: team.id,
@@ -183,6 +196,7 @@ async function main() {
       unauthorizedRead: "NOT_FOUND",
       unauthorizedWrite: "NOT_FOUND",
       demotedProfessorRead: "NOT_FOUND",
+      professorTeamConfirmation: true,
       milestones: workspace.milestoneCount,
       completedMilestones: workspace.completedMilestoneCount,
       progressUpdates: workspace.progressUpdates.length,

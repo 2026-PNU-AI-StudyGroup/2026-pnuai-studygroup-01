@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
+  ConfirmTeamService,
+  TeamConfirmationNotAllowedError,
+} from "@/modules/team/application/confirm-team";
+import {
   MilestoneNotFoundError,
   TeamNotFoundError,
   TeamWorkspaceService,
@@ -25,6 +29,22 @@ export type TeamActionState = {
   status: "idle" | "error" | "success";
   message: string;
 };
+
+export async function confirmTeamAction(formData: FormData) {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const teamId = formData.get("teamId");
+  if (typeof teamId !== "string") return;
+  const repository = new PrismaTeamWorkspaceRepository(prisma);
+  try {
+    await new ConfirmTeamService(repository).confirm(actor, teamId);
+  } catch (error) {
+    if (error instanceof TeamConfirmationNotAllowedError) return;
+    throw error;
+  }
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/dashboard");
+}
 
 function service() {
   const repository = new PrismaTeamWorkspaceRepository(prisma);

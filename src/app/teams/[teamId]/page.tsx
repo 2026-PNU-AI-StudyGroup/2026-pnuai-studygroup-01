@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { confirmTeamAction } from "@/app/teams/[teamId]/actions";
 import { MilestoneForm, MilestoneStatusForm, ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { TeamNotFoundError, TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
@@ -25,7 +26,7 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
   return (
     <AppShell role={actor.role} userName="부산대학교" currentPath="/dashboard">
       <main className="content-shell space-y-12">
-        <PageHeader eyebrow="Team workspace" title={workspace.name} description={`${workspace.topicTitle} · 지도교수 ${workspace.professorName}`} actions={<div className="w-56"><ProgressBar value={progress} /></div>} />
+        <PageHeader eyebrow="Team workspace" title={workspace.name} description={`${workspace.topicTitle} · 지도교수 ${workspace.professorName}`} actions={<div className="flex items-center gap-3">{workspace.status === "FORMING" && actor.role !== "STUDENT" ? <form action={confirmTeamAction}><input type="hidden" name="teamId" value={workspace.id} /><button className="button-primary">팀 확정</button></form> : <StatusBadge tone={workspace.status === "CONFIRMED" ? "success" : "neutral"}>{workspace.status === "CONFIRMED" ? "확정 팀" : "구성 중"}</StatusBadge>}<div className="w-48"><ProgressBar value={progress} /></div></div>} />
         <section aria-labelledby="members-title" className="border-y border-[var(--line)] py-5">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3"><h2 id="members-title" className="text-sm font-bold">팀원 {workspace.members.length}명</h2>{workspace.members.map((member) => <span key={member.id} className="text-sm"><strong>{member.name}</strong><span className="muted ml-2 hidden sm:inline">{member.email}</span></span>)}</div>
         </section>

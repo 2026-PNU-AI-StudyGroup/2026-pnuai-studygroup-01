@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { TeamConfirmationWriter } from "@/modules/team/application/confirm-team";
 import type {
   MilestoneStatus,
   MilestoneWriter,
@@ -21,9 +22,30 @@ export class PrismaTeamWorkspaceRepository
   implements
     TeamWorkspaceReader,
     MilestoneWriter,
-    ProgressUpdateWriter
+    ProgressUpdateWriter,
+    TeamConfirmationWriter
 {
   constructor(private readonly client: PrismaClient) {}
+
+  confirm(teamId: string, actor: CurrentActor): Promise<boolean> {
+    return this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      UPDATE "team"
+      SET "status" = 'CONFIRMED', "updatedAt" = ${new Date()}
+      WHERE "id" = ${teamId}
+        AND "status" = 'FORMING'
+        AND EXISTS (
+          SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id"
+        )
+        AND (
+          ${actor.role}::"UserRole" = 'ADMIN'
+          OR (
+            ${actor.role}::"UserRole" = 'PROFESSOR'
+            AND "professorId" = ${actor.id}
+          )
+        )
+      RETURNING "id"
+    `).then((rows) => rows.length === 1);
+  }
 
   async findWorkspaceForActor(
     teamId: string,
