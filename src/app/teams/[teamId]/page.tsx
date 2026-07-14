@@ -1,8 +1,20 @@
 import { notFound, redirect } from "next/navigation";
 
 import { confirmTeamAction } from "@/app/teams/[teamId]/actions";
+import {
+  ArtifactExternalForm,
+  ArtifactFileForm,
+  ReportDecisionForm,
+  ReportSubmissionForm,
+} from "@/app/teams/[teamId]/report-forms";
 import { MilestoneForm, MilestoneStatusForm, ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import {
+  ReportOperationNotAllowedError,
+  ReportService,
+} from "@/modules/report/application/manage-reports";
+import type { ReportWorkspace } from "@/modules/report/application/report-ports";
+import { PrismaReportRepository } from "@/modules/report/infrastructure/prisma-report-repository";
 import { TeamNotFoundError, TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
@@ -12,6 +24,8 @@ import { EmptyState, PageHeader, ProgressBar, StatusBadge } from "@/shared/ui/pa
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 중", "warning"], DONE: ["완료", "success"] } as const;
+const reportTypeLabel = { START: "착수 보고서", MIDTERM: "중간 보고서", FINAL: "결과 보고서" } as const;
+const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
 
 export default async function TeamWorkspacePage({ params }: { params: Promise<{ teamId: string }> }) {
   const actor = await getCurrentActor();
@@ -21,6 +35,15 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
   const service = new TeamWorkspaceService(repository, repository, repository);
   let workspace: TeamWorkspace;
   try { workspace = await service.get(actor, teamId); } catch (error) { if (error instanceof TeamNotFoundError) notFound(); throw error; }
+  let reportWorkspace: ReportWorkspace;
+  try {
+    reportWorkspace = await new ReportService(
+      new PrismaReportRepository(prisma),
+    ).get(actor, teamId);
+  } catch (error) {
+    if (error instanceof ReportOperationNotAllowedError) notFound();
+    throw error;
+  }
   const progress = workspace.milestoneCount === 0 ? 0 : Math.round((workspace.completedMilestoneCount / workspace.milestoneCount) * 100);
 
   return (
@@ -42,6 +65,22 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
             {workspace.progressUpdates.length === 0 ? <p className="muted mt-5 border-t border-[var(--line)] py-7 text-sm">아직 진행 기록이 없습니다.</p> : <ol className="mt-6 border-l border-[var(--line)] pl-5">{workspace.progressUpdates.map((update) => <li key={update.id} className="relative pb-8 before:absolute before:-left-[1.45rem] before:top-1 before:size-2 before:rounded-full before:bg-[var(--teal)]"><div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--muted)]"><strong className="text-[var(--ink)]">{update.authorName}</strong><time>{koreanDate.format(update.createdAt)}</time></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{update.content}</p>{update.risk ? <p className="mt-3 border-l-2 border-[var(--warning)] pl-3 text-sm text-[#794636]">위험 · {update.risk}</p> : null}{update.nextAction ? <p className="mt-2 text-sm text-[var(--teal-dark)]">다음 행동 · {update.nextAction}</p> : null}</li>)}</ol>}
           </section>
         </div>
+        <section aria-labelledby="reports-title" className="space-y-6">
+          <div><p className="eyebrow">Documents</p><h2 id="reports-title" className="mt-1 text-2xl font-bold">보고서 제출 및 웹 승인</h2><p className="muted mt-2 text-sm">기존 파일을 덮어쓰지 않고 제출 이력과 교수 검토 결정을 버전별로 보관합니다.</p></div>
+          {workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" ? <ReportSubmissionForm teamId={workspace.id} /> : null}
+          {workspace.status !== "CONFIRMED" ? <EmptyState title="팀 확정 후 제출할 수 있습니다" description="지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." /> : null}
+          <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {(["START", "MIDTERM", "FINAL"] as const).map((type) => {
+              const report = reportWorkspace.reports.find((item) => item.type === type);
+              return <article key={type} className="py-6"><div className="flex items-center justify-between"><h3 className="font-bold">{reportTypeLabel[type]}</h3><span className="muted text-xs">{report?.versions.length ?? 0}개 버전</span></div>{!report?.versions.length ? <p className="muted mt-3 text-sm">아직 제출된 버전이 없습니다.</p> : <ol className="mt-4 space-y-5">{report.versions.map((version, index) => <li key={version.id} className="bg-[var(--surface)] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><a href={`/api/files/${version.fileId}`} className="font-semibold text-[var(--teal-dark)] underline-offset-4 hover:underline">v{version.version} · {version.fileName}</a><p className="muted mt-1 text-xs">{version.submitterName} · {koreanDate.format(version.submittedAt)}</p></div>{version.decision ? <StatusBadge tone={version.decision.decision === "APPROVED" ? "success" : "warning"}>{version.decision.decision === "APPROVED" ? "승인" : "수정 요청"}</StatusBadge> : <StatusBadge tone="neutral">{index === 0 ? "검토 대기" : "이전 버전"}</StatusBadge>}</div>{version.description ? <p className="mt-3 text-sm">{version.description}</p> : null}{version.decision ? <p className="muted mt-3 text-sm">{version.decision.reviewerName} · {version.decision.comment || "의견 없음"}</p> : actor.role !== "STUDENT" && index === 0 ? <ReportDecisionForm teamId={workspace.id} reportVersionId={version.id} /> : null}</li>)}</ol>}</article>;
+            })}
+          </div>
+        </section>
+        <section aria-labelledby="artifacts-title" className="space-y-6">
+          <div><p className="eyebrow">Deliverables</p><h2 id="artifacts-title" className="mt-1 text-2xl font-bold">결과물 및 발표 자료</h2></div>
+          {workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" ? <div className="border-y border-[var(--line)] py-5"><ArtifactExternalForm teamId={workspace.id} /><ArtifactFileForm teamId={workspace.id} /></div> : null}
+          {reportWorkspace.artifacts.length === 0 ? <EmptyState title="등록된 결과물이 없습니다" description="소스 코드, 발표 영상, 포스터를 파일 또는 HTTPS 링크로 등록하세요." /> : <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{reportWorkspace.artifacts.map((artifact) => <li key={artifact.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><p className="font-semibold">{artifact.title}</p><p className="muted mt-1 text-xs">{artifactTypeLabel[artifact.type]} · {koreanDate.format(artifact.createdAt)}</p></div>{artifact.fileId ? <a className="button-quiet" href={`/api/files/${artifact.fileId}`}>파일 받기</a> : <a className="button-quiet" href={artifact.externalUrl} target="_blank" rel="noreferrer">링크 열기</a>}</li>)}</ul>}
+        </section>
       </main>
     </AppShell>
   );
