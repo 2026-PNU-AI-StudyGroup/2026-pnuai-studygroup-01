@@ -21,6 +21,7 @@ async function cleanup() {
     await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.topicApplication.deleteMany({ where: { topic: { academicCycleId: cycleId } } });
     await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
+    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     const cleanupService = new UploadService(
       new PrismaUploadIntentRepository(prisma),
@@ -38,8 +39,12 @@ async function main() {
   ] });
   const cycle = await prisma.academicCycle.create({ data: { academicYear: 8000 + Math.floor(Math.random() * 1000), term: "FIRST" } });
   cycleId = cycle.id;
+  const program = await prisma.projectProgram.create({ data: {
+    academicCycleId: cycle.id, createdById: professorId, name: "업로드 검증 프로그램", category: "검증", description: "업로드 통합 검증",
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+  } });
   const topic = await prisma.topic.create({ data: {
-    academicCycleId: cycle.id, authorId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
+    academicCycleId: cycle.id, programId: program.id, authorId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
     recruitmentStartsAt: new Date("2026-01-01"), recruitmentEndsAt: new Date("2026-12-31"),
     executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
     submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),

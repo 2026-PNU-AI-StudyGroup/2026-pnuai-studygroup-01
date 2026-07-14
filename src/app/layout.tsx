@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     default: "PNU Project",
     template: "%s · PNU Project",
   },
-  description: "부산대학교 졸업과제 프로젝트 관리 시스템",
+  description: "부산대학교 학과 프로젝트 관리 시스템",
 };
 
 export default function RootLayout({

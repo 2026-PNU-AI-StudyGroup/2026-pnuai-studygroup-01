@@ -6,12 +6,12 @@ import {
   createTopicAction,
   type CreateTopicActionState,
 } from "@/app/professor/topics/actions";
-import type { AcademicCycleRecord } from "@/modules/academic-cycle/application/academic-cycle-ports";
+import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 
 const initialState: CreateTopicActionState = { status: "idle", message: "" };
 
 type TopicFormProps = {
-  cycles: AcademicCycleRecord[];
+  programs: ProjectProgramRecord[];
 };
 
 const periodFields = [
@@ -23,18 +23,18 @@ const periodFields = [
   ["제출 종료", "submissionEndsAt"],
 ] as const;
 
-export function TopicForm({ cycles }: TopicFormProps) {
+export function TopicForm({ programs }: TopicFormProps) {
   const [state, action, pending] = useActionState(createTopicAction, initialState);
 
   return (
     <form action={action} className="grid gap-6 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-6 sm:px-6">
       <label className="grid gap-2 text-sm font-medium">
-        학기
-        <select name="academicCycleId" required className="field">
-          <option value="">학기를 선택하세요</option>
-          {cycles.map((cycle) => (
-            <option key={cycle.id} value={cycle.id}>
-              {cycle.academicYear}학년도 {cycle.term === "FIRST" ? "1" : "2"}학기
+        프로젝트 프로그램
+        <select name="programId" required className="field">
+          <option value="">프로그램을 선택하세요</option>
+          {programs.map((program) => (
+            <option key={program.id} value={program.id}>
+              {program.name} · {program.academicYear}학년도 {program.term === "FIRST" ? "1" : "2"}학기
             </option>
           ))}
         </select>
@@ -68,7 +68,7 @@ export function TopicForm({ cycles }: TopicFormProps) {
         ))}
       </fieldset>
       <p className="text-sm text-zinc-600">모집·수행·제출 기간은 서로 겹칠 수 있습니다.</p>
-      <button type="submit" disabled={pending || cycles.length === 0} className="button-primary justify-self-start">
+      <button type="submit" disabled={pending || programs.length === 0} className="button-primary justify-self-start">
         {pending ? "저장 중" : "초안 저장"}
       </button>
       {state.message ? (

@@ -10,7 +10,7 @@ export default function SignInPage() {
         <Brand />
         <blockquote className="max-w-xl">
           <p className="text-3xl font-bold leading-snug tracking-tight text-[var(--ink)]">“좋은 프로젝트는 결과뿐 아니라 과정이 선명합니다.”</p>
-          <footer className="muted mt-5">부산대학교 졸업과제 프로젝트 관리</footer>
+          <footer className="muted mt-5">부산대학교 학과 프로젝트 관리</footer>
         </blockquote>
         <p className="muted text-sm">주제 · 팀 · 진행 · 보고서 · 결과물</p>
       </section>

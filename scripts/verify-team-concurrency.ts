@@ -16,6 +16,7 @@ const term = "SECOND" as const;
 const professorId = randomUUID();
 const studentIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
 let createdCycleId: string | null = null;
+let createdProgramId: string | null = null;
 
 async function cleanup() {
   if (createdCycleId) {
@@ -31,6 +32,7 @@ async function cleanup() {
     await prisma.topic.deleteMany({
       where: { academicCycleId: createdCycleId },
     });
+    await prisma.projectProgram.deleteMany({ where: { academicCycleId: createdCycleId } });
     await prisma.academicCycle.deleteMany({
       where: { id: createdCycleId },
     });
@@ -42,9 +44,11 @@ async function cleanup() {
 }
 
 async function createTopic(cycleId: string, title: string, capacity: number) {
+  if (!createdProgramId) throw new Error("검증 프로그램이 생성되지 않았습니다.");
   return prisma.topic.create({
     data: {
       academicCycleId: cycleId,
+      programId: createdProgramId,
       authorId: professorId,
       title,
       description: "동시성 검증용 주제",
@@ -94,6 +98,11 @@ async function main() {
     data: { academicYear, term },
   });
   createdCycleId = cycle.id;
+  const program = await prisma.projectProgram.create({ data: {
+    academicCycleId: cycle.id, createdById: professorId, name: "동시성 검증 프로그램", category: "검증", description: "동시성 통합 검증",
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+  } });
+  createdProgramId = program.id;
   const repository = new PrismaTopicApplicationRepository(prisma);
   const actor = { id: professorId, isAdmin: false };
 

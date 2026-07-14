@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "@/modules/topic/application/create-topic";
 import {
   ChangeTopicStatusService,
@@ -38,9 +38,8 @@ export async function createTopicAction(
     return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
   }
 
-  const cycleRepository = new PrismaAcademicCycleRepository(prisma);
   const topicRepository = new PrismaTopicRepository(prisma);
-  const service = new CreateTopicService(topicRepository, cycleRepository);
+  const service = new CreateTopicService(topicRepository, new PrismaProjectProgramRepository(prisma));
 
   try {
     await service.execute(actor, parsed.data);

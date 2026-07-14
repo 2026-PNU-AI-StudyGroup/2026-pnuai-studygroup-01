@@ -1,5 +1,5 @@
-import type { AcademicCycleReader } from "@/modules/academic-cycle/application/academic-cycle-ports";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type {
   TopicCreator,
   TopicDraft,
@@ -17,22 +17,22 @@ export class TopicCreationForbiddenError extends Error {
   }
 }
 
-export class AcademicCycleNotFoundError extends Error {
+export class ProjectProgramNotOpenError extends Error {
   constructor() {
-    super("존재하지 않는 학기입니다.");
-    this.name = "AcademicCycleNotFoundError";
+    super("현재 주제를 등록할 수 있는 공개 프로그램이 아닙니다.");
+    this.name = "ProjectProgramNotOpenError";
   }
 }
 
 export class CreateTopicService {
   constructor(
     private readonly topicRepository: TopicCreator,
-    private readonly academicCycleRepository: AcademicCycleReader,
+    private readonly programRepository: Pick<ProjectProgramRepository, "findOpen">,
   ) {}
 
   async execute(
     actor: CurrentActor,
-    input: Omit<TopicDraft, "authorId">,
+    input: Omit<TopicDraft, "authorId" | "academicCycleId">,
   ): Promise<{ id: string }> {
     if (!canCreateTopic(actor)) {
       throw new TopicCreationForbiddenError();
@@ -50,13 +50,23 @@ export class CreateTopicService {
     assertValidTopicDetails(details);
     assertValidTopicSchedule(input);
 
-    if (!(await this.academicCycleRepository.exists(input.academicCycleId))) {
-      throw new AcademicCycleNotFoundError();
+    const program = await this.programRepository.findOpen(input.programId);
+    if (!program) {
+      throw new ProjectProgramNotOpenError();
+    }
+    const topicTimes = [input.recruitmentStartsAt, input.recruitmentEndsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
+    if (topicTimes.some((time) => time < program.startsAt || time > program.endsAt)) {
+      throw new ProjectProgramNotOpenError();
     }
 
-    return this.topicRepository.createDraft({
+    const created = await this.topicRepository.createDraft({
       ...details,
+      academicCycleId: program.academicCycleId,
       authorId: actor.id,
     });
+    if (!created) {
+      throw new ProjectProgramNotOpenError();
+    }
+    return created;
   }
 }

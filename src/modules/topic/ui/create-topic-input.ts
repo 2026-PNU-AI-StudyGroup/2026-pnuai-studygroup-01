@@ -20,7 +20,7 @@ function isValidCalendarDateTime(value: string): boolean {
   );
 }
 
-const koreanLocalDateTime = z
+export const koreanLocalDateTime = z
   .string()
   .regex(KOREAN_LOCAL_DATE_TIME)
   .transform((value, context) => {
@@ -49,7 +49,7 @@ const skillList = z.string().transform((value, context) => {
 });
 
 export const createTopicInputSchema = z.object({
-  academicCycleId: z.string().uuid(),
+  programId: z.string().min(1).max(200),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(10_000),
   requiredSkills: skillList.refine((skills) => skills.length > 0),

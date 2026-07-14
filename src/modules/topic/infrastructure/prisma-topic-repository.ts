@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
   TopicCreator,
   TopicDraft,
@@ -15,14 +15,22 @@ export class PrismaTopicRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
-  createDraft(topic: TopicDraft): Promise<{ id: string }> {
-    return this.client.topic.create({
-      data: {
-        ...topic,
-        status: "DRAFT",
-        publishedAt: null,
-      },
-      select: { id: true },
+  createDraft(topic: TopicDraft): Promise<{ id: string } | null> {
+    return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "project_program"
+        WHERE "id" = ${topic.programId} AND "status" = 'OPEN'::"ProjectProgramStatus"
+        FOR SHARE
+      `);
+      if (!programs[0]) return null;
+      return transaction.topic.create({
+        data: {
+          ...topic,
+          status: "DRAFT",
+          publishedAt: null,
+        },
+        select: { id: true },
+      });
     });
   }
 
@@ -36,6 +44,7 @@ export class PrismaTopicRepository
         authorId: true,
         title: true,
         description: true,
+        programId: true,
         requiredSkills: true,
         preferredSkills: true,
         roleExpectations: true,
@@ -49,8 +58,9 @@ export class PrismaTopicRepository
         submissionEndsAt: true,
         status: true,
         publishedAt: true,
+        program: { select: { name: true, category: true, status: true } },
       },
-    });
+    }).then((topics) => topics.map(({ program, ...topic }) => ({ ...topic, programName: program.name, programCategory: program.category, programStatus: program.status })));
   }
 
   findState(id: string): Promise<TopicStateRecord | null> {
@@ -66,18 +76,28 @@ export class PrismaTopicRepository
   }
 
   async publishDraft(id: string, publishedAt: Date): Promise<boolean> {
-    const result = await this.client.topic.updateMany({
-      where: {
-        id,
-        status: "DRAFT",
-        recruitmentEndsAt: { gt: publishedAt },
-        requiredSkills: { isEmpty: false },
-        roleExpectations: { not: "" },
-        availabilityRequirement: { not: "" },
-      },
-      data: { status: "PUBLISHED", publishedAt },
+    return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program"
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${id} AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
+        FOR SHARE OF "project_program"
+      `);
+      if (!programs[0]) return false;
+      const result = await transaction.topic.updateMany({
+        where: {
+          id,
+          status: "DRAFT",
+          recruitmentEndsAt: { gt: publishedAt },
+          requiredSkills: { isEmpty: false },
+          roleExpectations: { not: "" },
+          availabilityRequirement: { not: "" },
+        },
+        data: { status: "PUBLISHED", publishedAt },
+      });
+      return result.count === 1;
     });
-    return result.count === 1;
   }
 
   async closePublished(id: string): Promise<boolean> {
@@ -88,22 +108,26 @@ export class PrismaTopicRepository
     return result.count === 1;
   }
 
-  async listPublished(): Promise<PublicTopicSummary[]> {
+  async listPublished(programId?: string): Promise<PublicTopicSummary[]> {
     const topics = await this.client.topic.findMany({
-      where: { status: "PUBLISHED" },
+      where: { status: "PUBLISHED", programId, program: { status: "OPEN" } },
       orderBy: { publishedAt: "desc" },
       include: {
         author: { select: { name: true } },
         academicCycle: { select: { academicYear: true, term: true } },
+        program: { select: { name: true, category: true, status: true } },
         team: { select: { _count: { select: { members: true } } } },
       },
     });
 
-    return topics.map(({ author, academicCycle, team, ...topic }) => ({
+    return topics.map(({ author, academicCycle, program, team, ...topic }) => ({
       ...topic,
       authorName: author.name,
       academicYear: academicCycle.academicYear,
       term: academicCycle.term,
+      programName: program.name,
+      programCategory: program.category,
+      programStatus: program.status,
       memberCount: team?._count.members ?? 0,
     }));
   }

@@ -12,6 +12,7 @@ type NavigationItem = {
 
 const commonNavigation: NavigationItem[] = [
   { href: "/dashboard", label: "내 프로젝트", icon: "home" },
+  { href: "/programs", label: "프로그램", icon: "file" },
   { href: "/archive", label: "아카이브", icon: "file" },
 ];
 
@@ -25,6 +26,7 @@ function navigationFor(role: UserRole): NavigationItem[] {
       { href: "/professor/topics", label: "주제 관리", icon: "file" },
       { href: "/professor/applications", label: "지원 검토", icon: "users" },
       { href: "/admin/academic-cycles", label: "학기 관리", icon: "settings" },
+      { href: "/admin/programs", label: "프로그램 관리", icon: "file" },
       { href: "/admin/professors", label: "교수 권한", icon: "users" },
     ];
   }

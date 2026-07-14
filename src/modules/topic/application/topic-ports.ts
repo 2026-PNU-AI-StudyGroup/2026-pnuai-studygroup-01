@@ -6,17 +6,21 @@ import type {
 export type TopicDraft = TopicDetails &
   TopicSchedule & {
     academicCycleId: string;
+    programId: string;
     authorId: string;
   };
 
 export interface TopicCreator {
-  createDraft(topic: TopicDraft): Promise<{ id: string }>;
+  createDraft(topic: TopicDraft): Promise<{ id: string } | null>;
 }
 
 export type TopicSummary = TopicDraft & {
   id: string;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   publishedAt: Date | null;
+  programName: string;
+  programCategory: string;
+  programStatus: "DRAFT" | "OPEN" | "CLOSED";
 };
 
 export interface TopicLister {
@@ -44,5 +48,5 @@ export type PublicTopicSummary = TopicSummary & {
 };
 
 export interface PublicTopicLister {
-  listPublished(): Promise<PublicTopicSummary[]>;
+  listPublished(programId?: string): Promise<PublicTopicSummary[]>;
 }

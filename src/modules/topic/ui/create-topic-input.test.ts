@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createTopicInputSchema } from "@/modules/topic/ui/create-topic-input";
 
 const input = {
-  academicCycleId: "7f69845e-d4d2-4c20-b6d7-13e77d1029f3",
+  programId: "7f69845e-d4d2-4c20-b6d7-13e77d1029f3",
   title: "주제",
   description: "설명",
   requiredSkills: "TypeScript, Python",

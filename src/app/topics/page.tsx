@@ -18,11 +18,13 @@ const applicationStatus = {
   REJECTED: { label: "거절", tone: "danger" },
 } as const;
 
-export default async function TopicsPage() {
+export default async function TopicsPage({ searchParams }: { searchParams: Promise<{ programId?: string }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const topicRepository = new PrismaTopicRepository(prisma);
-  const topics = await new ListPublishedTopicsService(topicRepository).execute();
+  const requestedProgramId = (await searchParams).programId;
+  const programId = requestedProgramId && requestedProgramId.length <= 200 ? requestedProgramId : undefined;
+  const topics = await new ListPublishedTopicsService(topicRepository).execute(programId);
   const applications = actor.role === "STUDENT" ? await new ListOwnTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor) : [];
   const applicationsByTopic = new Map(applications.map((application) => [application.topicId, application]));
   const now = new Date();
@@ -30,7 +32,7 @@ export default async function TopicsPage() {
   return (
     <AppShell role={actor.role} userName="부산대학교" currentPath="/topics">
       <main className="content-shell space-y-10">
-        <PageHeader eyebrow="Discover" title="주제 탐색" description="관심 분야의 졸업과제를 살펴보고, 함께하고 싶은 팀에 지원하세요." />
+        <PageHeader eyebrow="Discover" title="주제 탐색" description="학과 프로젝트와 대회의 주제를 살펴보고, 함께하고 싶은 팀에 지원하세요." />
         <div className="flex flex-wrap gap-2 border-y border-[var(--line)] py-4" aria-label="주제 안내">
           <StatusBadge tone="success">현재 모집 중 우선</StatusBadge><span className="muted self-center text-sm">총 {topics.length}개의 공개 주제</span>
         </div>
@@ -46,6 +48,7 @@ export default async function TopicsPage() {
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
                     <div>
                       <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-bold tracking-tight">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
+                      <p className="muted mt-2 text-xs">{topic.programName} · {topic.programCategory}</p>
                       <TranslatedText text={topic.description} className="muted mt-3 line-clamp-3 leading-7" />
                       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><p className="muted text-xs">필수 기술</p><p className="mt-1 font-semibold">{topic.requiredSkills.join(", ")}</p></div><div><p className="muted text-xs">우대 기술</p><p className="mt-1 font-semibold">{topic.preferredSkills.join(", ") || "없음"}</p></div><div><p className="muted text-xs">기대 역할</p><p className="mt-1">{topic.roleExpectations}</p></div><div><p className="muted text-xs">활동 조건</p><p className="mt-1">{topic.availabilityRequirement}</p></div></div>
                     </div>

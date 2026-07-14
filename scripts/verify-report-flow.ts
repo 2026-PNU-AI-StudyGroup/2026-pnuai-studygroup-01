@@ -35,6 +35,7 @@ async function cleanup() {
     await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.topicApplication.deleteMany({ where: { topic: { academicCycleId: cycleId } } });
     await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
+    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     await uploads.cleanup(new Date(Date.now() + 27 * 60 * 60_000));
   }
@@ -76,8 +77,12 @@ async function main() {
     academicYear: 7000 + Math.floor(Math.random() * 1000), term: "SECOND",
   } });
   cycleId = cycle.id;
+  const program = await prisma.projectProgram.create({ data: {
+    academicCycleId: cycle.id, createdById: professorId, name: "보고서 검증 프로그램", category: "검증", description: "보고서 통합 검증",
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+  } });
   const topic = await prisma.topic.create({ data: {
-    academicCycleId: cycle.id, authorId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
+    academicCycleId: cycle.id, programId: program.id, authorId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
     recruitmentStartsAt: new Date("2026-01-01"), recruitmentEndsAt: new Date("2026-12-31"),
     executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
     submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),

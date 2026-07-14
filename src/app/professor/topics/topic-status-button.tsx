@@ -12,9 +12,11 @@ const initialState: TopicStatusActionState = { status: "idle", message: "" };
 export function TopicStatusButton({
   topicId,
   status,
+  programStatus,
 }: {
   topicId: string;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  programStatus: "DRAFT" | "OPEN" | "CLOSED";
 }) {
   const [state, action, pending] = useActionState(
     changeTopicStatusAction,
@@ -23,6 +25,9 @@ export function TopicStatusButton({
 
   if (status === "CLOSED") {
     return null;
+  }
+  if (status === "DRAFT" && programStatus !== "OPEN") {
+    return <p className="muted text-sm">프로그램 마감</p>;
   }
 
   const intent = status === "DRAFT" ? "publish" : "close";

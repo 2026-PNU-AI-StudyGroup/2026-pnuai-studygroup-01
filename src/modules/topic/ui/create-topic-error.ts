@@ -1,5 +1,5 @@
 import {
-  AcademicCycleNotFoundError,
+  ProjectProgramNotOpenError,
   TopicCreationForbiddenError,
 } from "@/modules/topic/application/create-topic";
 import {
@@ -10,7 +10,7 @@ import {
 export function getCreateTopicErrorMessage(error: unknown): string | null {
   if (
     error instanceof TopicCreationForbiddenError ||
-    error instanceof AcademicCycleNotFoundError ||
+    error instanceof ProjectProgramNotOpenError ||
     error instanceof InvalidTopicDetailsError ||
     error instanceof InvalidTopicScheduleError
   ) {

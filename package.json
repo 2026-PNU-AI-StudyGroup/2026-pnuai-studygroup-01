@@ -26,6 +26,7 @@
     "verify:file-upload": "tsx scripts/verify-file-upload.ts",
     "verify:report-flow": "tsx scripts/verify-report-flow.ts",
     "verify:translation": "tsx scripts/verify-translation.ts",
+    "verify:project-program": "tsx scripts/verify-project-program.ts",
     "backup:academic-year": "tsx scripts/backup-academic-year.ts",
     "cleanup:uploads": "tsx scripts/cleanup-uploads.ts"
   },

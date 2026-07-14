@@ -82,6 +82,12 @@ enum RecruitmentApplicationStatus {
   REJECTED
 }
 
+enum ProjectProgramStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -106,6 +112,7 @@ model User {
   artifactsRegistered     Artifact[]
   recruitmentPosts        RecruitmentPost[]
   recruitmentApplications RecruitmentApplication[]
+  projectProgramsCreated  ProjectProgram[]
 
   @@map("user")
 }
@@ -177,14 +184,39 @@ model AcademicCycle {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   topics       Topic[]
+  programs     ProjectProgram[]
 
   @@unique([academicYear, term])
   @@map("academic_cycle")
 }
 
+model ProjectProgram {
+  id              String               @id @default(uuid())
+  academicCycleId String
+  createdById     String?
+  name            String
+  category        String
+  description     String
+  startsAt        DateTime
+  endsAt          DateTime
+  status          ProjectProgramStatus @default(DRAFT)
+  openedAt        DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  academicCycle   AcademicCycle        @relation(fields: [academicCycleId], references: [id])
+  createdBy       User?                @relation(fields: [createdById], references: [id])
+  topics          Topic[]
+
+  @@unique([academicCycleId, name])
+  @@unique([id, academicCycleId])
+  @@index([status, startsAt, endsAt])
+  @@map("project_program")
+}
+
 model Topic {
   id                   String        @id @default(uuid())
   academicCycleId      String
+  programId            String
   authorId             String
   title                String
   description          String
@@ -204,11 +236,13 @@ model Topic {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   academicCycle        AcademicCycle @relation(fields: [academicCycleId], references: [id])
+  program              ProjectProgram @relation(fields: [programId, academicCycleId], references: [id, academicCycleId])
   author               User          @relation(fields: [authorId], references: [id])
   applications         TopicApplication[]
   team                 Team?
 
   @@index([academicCycleId, status])
+  @@index([programId, status])
   @@index([authorId])
   @@unique([id, academicCycleId, authorId])
   @@map("topic")

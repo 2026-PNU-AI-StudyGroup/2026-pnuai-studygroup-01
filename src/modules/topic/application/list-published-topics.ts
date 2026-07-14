@@ -6,7 +6,7 @@ import type {
 export class ListPublishedTopicsService {
   constructor(private readonly repository: PublicTopicLister) {}
 
-  execute(): Promise<PublicTopicSummary[]> {
-    return this.repository.listPublished();
+  execute(programId?: string): Promise<PublicTopicSummary[]> {
+    return this.repository.listPublished(programId);
   }
 }

@@ -32,6 +32,7 @@ async function cleanup() {
       where: { topic: { academicCycleId: cycleId } },
     });
     await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
+    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     cycleId = null;
   }
@@ -86,9 +87,14 @@ async function main() {
     },
   });
   cycleId = cycle.id;
+  const program = await prisma.projectProgram.create({ data: {
+    academicCycleId: cycle.id, createdById: professorId, name: "워크스페이스 검증 프로그램", category: "검증", description: "워크스페이스 통합 검증",
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+  } });
   const topic = await prisma.topic.create({
     data: {
       academicCycleId: cycle.id,
+      programId: program.id,
       authorId: professorId,
       title: "워크스페이스 검증 주제",
       description: "워크스페이스 통합 검증",

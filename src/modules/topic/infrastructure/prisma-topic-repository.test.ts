@@ -6,7 +6,8 @@ import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-top
 describe("Prisma 주제 저장소", () => {
   it("공개 상태와 모집 종료 시각을 하나의 조건부 갱신으로 검사한다", async () => {
     const updateMany = vi.fn(async () => ({ count: 0 }));
-    const client = { topic: { updateMany } } as unknown as PrismaClient;
+    const transaction = { $queryRaw: vi.fn(async () => [{ id: "program-1" }]), topic: { updateMany } };
+    const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
     const repository = new PrismaTopicRepository(client);
     const publishedAt = new Date("2026-03-10T00:00:00Z");
 
