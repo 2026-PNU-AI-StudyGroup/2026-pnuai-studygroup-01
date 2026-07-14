@@ -12,6 +12,7 @@
 .env
 .env.local
 .env.*.local
+/client_secret_*.json
 
 # logs
 npm-debug.log*

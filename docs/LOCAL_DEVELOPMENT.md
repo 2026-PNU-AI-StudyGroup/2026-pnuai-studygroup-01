@@ -44,6 +44,8 @@ npm run db:bootstrap-admin
 ```
 
 명령은 검증된 기존 사용자만 관리자로 승격한다. 마이그레이션이나 애플리케이션 시작 과정에서는 자동 실행되지 않는다.
+관리자는 로그인 후 `/admin/professors`에서 교수 이메일을 사전 등록하거나 권한을 회수한다.
+운영 학기는 `/admin/academic-cycles`에서 등록하고, 실제 졸업과제·대회·교육 과정은 `/admin/programs`에서 이름과 분류를 자유롭게 입력해 개설한다. 공개 상태인 프로그램에만 교수가 주제를 등록할 수 있다.
 
 외부 AI API는 사용하지 않는다. Ollama의 Cloud 기능은 비활성화한다.
 
@@ -63,6 +65,7 @@ npm run dev
 - PostgreSQL: `localhost:5432`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
+- Ollama API: `http://127.0.0.1:11434`
 
 만료된 미완료 업로드와 팀 삭제 등으로 발생한 Object Storage 삭제 작업은
 다음 명령으로 재시도한다. 운영 환경에서는 이 명령을 주기 작업으로 실행한다.
@@ -73,7 +76,19 @@ lifecycle 규칙이 필수다.
 ```bash
 npm run cleanup:uploads
 ```
-- Ollama API: `http://127.0.0.1:11434`
+
+동적 프로그램과 하위 상태의 통합 검증은 격리된 로컬 DB에서 다음과 같이 실행한다.
+
+```bash
+ALLOW_LOCAL_PROGRAM_TEST=true npm run verify:project-program
+```
+
+종료된 팀의 결과물과 메타데이터를 학년도별로 백업하려면 다음 명령을 실행한다.
+파일은 DB의 크기와 SHA-256으로 검증되며, 완성된 백업만 최종 디렉터리에 남는다.
+
+```bash
+npm run backup:academic-year -- 2026 /absolute/path/to/backups
+```
 
 ## 상태 확인
 
