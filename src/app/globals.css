@@ -9,9 +9,9 @@
 }
 
 :root {
-  --canvas: #f7f8fa;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --surface-subtle: #f3f5f8;
+  --surface-subtle: #f7f8fa;
   --ink: #172033;
   --muted: #697386;
   --line: #dfe3ea;
@@ -69,7 +69,7 @@ textarea {
   .content-shell {
     margin-inline: auto;
     width: 100%;
-    max-width: 1180px;
+    max-width: 1280px;
     padding: 2.5rem 1.5rem 7rem;
   }
 
@@ -77,7 +77,6 @@ textarea {
     border: 1px solid var(--line);
     border-radius: var(--radius-panel);
     background: var(--surface);
-    box-shadow: 0 1px 2px rgb(23 32 51 / 4%);
   }
 
   .field {
@@ -88,7 +87,7 @@ textarea {
     background: var(--surface);
     padding: 0.625rem 0.75rem;
     color: var(--ink);
-    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
+    transition: border-color var(--snap-duration) var(--snap-ease);
   }
 
   .field:hover {
@@ -97,8 +96,6 @@ textarea {
 
   .field:focus {
     border-color: var(--focus);
-    box-shadow: 0 0 0 3px rgb(47 91 234 / 14%);
-    outline: none;
   }
 
   .button-primary,
@@ -171,11 +168,18 @@ textarea {
   }
 
   .eyebrow {
-    color: var(--accent-hover);
+    color: var(--accent);
     font-size: 0.75rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  .editorial-title {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
   }
 
   .muted {

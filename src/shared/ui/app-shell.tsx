@@ -54,7 +54,7 @@ export function AppShell({ role, userName, currentPath, children }: { role: User
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-8 px-6">
+        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-8 px-6">
           <Brand />
           <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-8 lg:flex">
             {navigation.map((item) => {

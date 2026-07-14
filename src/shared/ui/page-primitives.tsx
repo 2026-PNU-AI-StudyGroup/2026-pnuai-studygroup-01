@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 
-export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: string; title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: string; title: ReactNode; description?: string; actions?: ReactNode }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-5">
-      <div className="max-w-2xl">
+    <header className="grid gap-10 border-b border-[var(--line)] pb-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,.5fr)] lg:items-end lg:gap-16 lg:pb-14">
+      <div className="max-w-4xl">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.025em] text-[var(--ink)] sm:text-4xl">{title}</h1>
-        {description ? <p className="muted mt-2 leading-7">{description}</p> : null}
+        <h1 className="mt-4 text-[clamp(2.75rem,5vw,3.5rem)] font-black leading-[1.05] tracking-[-0.045em] text-[var(--ink)]">{title}</h1>
       </div>
-      {actions ? <div>{actions}</div> : null}
+      <div className="border-l-2 border-[var(--accent)] pl-5 lg:mb-1">
+        {description ? <p className="muted max-w-md text-base leading-7">{description}</p> : null}
+        {actions ? <div className="mt-6">{actions}</div> : null}
+      </div>
     </header>
   );
 }
@@ -35,7 +37,7 @@ const statusStyle = {
 } as const;
 
 export function StatusBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: keyof typeof statusStyle }) {
-  return <span className={`inline-flex min-h-7 items-center rounded-full px-2.5 py-1 text-xs font-bold ${statusStyle[tone]}`}>{children}</span>;
+  return <span className={`inline-flex min-h-7 items-center rounded px-2.5 py-1 text-xs font-bold ${statusStyle[tone]}`}>{children}</span>;
 }
 
 export function ProgressBar({ value, label = "진행률" }: { value: number; label?: string }) {

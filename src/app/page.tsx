@@ -27,13 +27,12 @@ export default function Home() {
         <div className="relative border-y border-[var(--line)] py-3 lg:border-y-0 lg:border-l lg:py-6 lg:pl-16" aria-label="프로젝트 운영 단계">
           <ol id="workflow" className="divide-y divide-[var(--line)]">
             {[
-              ["01", "프로그램 탐색", "열린 프로젝트와 대회의 주제를 비교하고 지원합니다."],
-              ["02", "팀 구성", "교수 승인으로 팀이 확정됩니다."],
-              ["03", "진행 관리", "마일스톤과 위험 요소를 함께 기록합니다."],
-              ["04", "제출과 승인", "보고서와 결과물을 웹에서 검토합니다."],
-            ].map(([number, title, description]) => (
-              <li key={number} className="grid grid-cols-[3rem_1fr] gap-4 py-6">
-                <span className="font-mono text-sm font-bold text-[var(--accent)]">{number}</span>
+              ["프로그램 탐색", "학과에서 운영하는 프로젝트의 주제와 지원 조건을 비교합니다."],
+              ["팀 구성", "구조화된 지원 정보와 교수 승인으로 팀을 확정합니다."],
+              ["진행 관리", "마일스톤, 진행 기록, 지도 의견을 한 흐름에서 관리합니다."],
+              ["보고서와 결과물", "착수·중간·결과 보고서와 프로젝트 결과물을 검토하고 보관합니다."],
+            ].map(([title, description]) => (
+              <li key={title} className="py-6">
                 <div><h2 className="text-lg font-bold">{title}</h2><p className="muted mt-1 text-sm leading-6">{description}</p></div>
               </li>
             ))}
