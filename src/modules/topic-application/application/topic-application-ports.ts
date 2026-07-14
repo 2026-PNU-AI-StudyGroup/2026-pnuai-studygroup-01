@@ -2,6 +2,9 @@ export type CreateTopicApplicationInput = {
   topicId: string;
   studentId: string;
   message: string;
+  skills: string[];
+  desiredRole: string;
+  availability: string;
   appliedAt: Date;
 };
 
@@ -22,6 +25,9 @@ export type TopicApplicationSummary = {
   topicId: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
   message: string;
+  skills: string[];
+  desiredRole: string;
+  availability: string;
   createdAt: Date;
 };
 

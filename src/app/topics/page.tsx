@@ -47,6 +47,7 @@ export default async function TopicsPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-bold tracking-tight">{topic.title}</h2>{isRecruiting ? <StatusBadge tone="success">모집 중</StatusBadge> : <StatusBadge>모집 종료</StatusBadge>}</div>
                       <TranslatedText text={topic.description} className="muted mt-3 line-clamp-3 leading-7" />
+                      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><p className="muted text-xs">필수 기술</p><p className="mt-1 font-semibold">{topic.requiredSkills.join(", ")}</p></div><div><p className="muted text-xs">우대 기술</p><p className="mt-1 font-semibold">{topic.preferredSkills.join(", ") || "없음"}</p></div><div><p className="muted text-xs">기대 역할</p><p className="mt-1">{topic.roleExpectations}</p></div><div><p className="muted text-xs">활동 조건</p><p className="mt-1">{topic.availabilityRequirement}</p></div></div>
                     </div>
                     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-1">
                       <div><dt className="muted text-xs">지도교수</dt><dd className="mt-1 font-semibold">{topic.authorName}</dd></div>

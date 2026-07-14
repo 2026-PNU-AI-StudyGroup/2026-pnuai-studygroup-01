@@ -38,7 +38,16 @@ export class CreateTopicService {
       throw new TopicCreationForbiddenError();
     }
 
-    assertValidTopicDetails(input);
+    const details = {
+      ...input,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      requiredSkills: [...new Set(input.requiredSkills.map((skill) => skill.trim()).filter(Boolean))],
+      preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
+      roleExpectations: input.roleExpectations.trim(),
+      availabilityRequirement: input.availabilityRequirement.trim(),
+    };
+    assertValidTopicDetails(details);
     assertValidTopicSchedule(input);
 
     if (!(await this.academicCycleRepository.exists(input.academicCycleId))) {
@@ -46,9 +55,7 @@ export class CreateTopicService {
     }
 
     return this.topicRepository.createDraft({
-      ...input,
-      title: input.title.trim(),
-      description: input.description.trim(),
+      ...details,
       authorId: actor.id,
     });
   }

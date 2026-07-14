@@ -3,6 +3,7 @@ import type { TopicApplicationCreator } from "@/modules/topic-application/applic
 import {
   assertCanApplyToTopic,
   normalizeApplicationMessage,
+  normalizeApplicationProfile,
 } from "@/modules/topic-application/domain/topic-application-policy";
 
 export class TopicAlreadyAppliedError extends Error {
@@ -34,15 +35,17 @@ export class ApplyToTopicService {
 
   async execute(
     actor: CurrentActor,
-    input: { topicId: string; message: string },
+    input: { topicId: string; message: string; skills: string[]; desiredRole: string; availability: string },
   ): Promise<{ id: string }> {
     assertCanApplyToTopic(actor);
     const message = normalizeApplicationMessage(input.message);
+    const profile = normalizeApplicationProfile(input);
 
     const result = await this.repository.createIfAvailable({
       topicId: input.topicId,
       studentId: actor.id,
       message,
+      ...profile,
       appliedAt: this.now(),
     });
 

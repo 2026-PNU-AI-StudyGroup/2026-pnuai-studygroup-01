@@ -39,10 +39,23 @@ const koreanLocalDateTime = z
     return date;
   });
 
+const skillList = z.string().transform((value, context) => {
+  const skills = [...new Set(value.split(",").map((skill) => skill.trim()).filter(Boolean))];
+  if (skills.length > 20 || skills.some((skill) => skill.length > 50)) {
+    context.addIssue({ code: "custom", message: "기술은 최대 20개, 항목당 50자까지 입력할 수 있습니다." });
+    return z.NEVER;
+  }
+  return skills;
+});
+
 export const createTopicInputSchema = z.object({
   academicCycleId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(10_000),
+  requiredSkills: skillList.refine((skills) => skills.length > 0),
+  preferredSkills: skillList,
+  roleExpectations: z.string().trim().min(1).max(500),
+  availabilityRequirement: z.string().trim().min(1).max(500),
   capacity: z.coerce.number().int().min(1).max(100),
   recruitmentStartsAt: koreanLocalDateTime,
   recruitmentEndsAt: koreanLocalDateTime,

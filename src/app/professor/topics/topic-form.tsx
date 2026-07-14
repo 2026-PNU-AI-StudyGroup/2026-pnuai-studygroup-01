@@ -47,6 +47,13 @@ export function TopicForm({ cycles }: TopicFormProps) {
         설명
         <textarea name="description" maxLength={10000} required rows={6} className="field" />
       </label>
+      <fieldset className="grid gap-4 border-y border-[var(--line)] py-5 sm:grid-cols-2">
+        <legend className="mb-3 font-semibold">지원 조건</legend>
+        <label className="grid gap-2 text-sm font-medium">필수 기술<input name="requiredSkills" maxLength={1000} required className="field" placeholder="예: TypeScript, Python" /><span className="muted text-xs">쉼표로 구분해 입력합니다.</span></label>
+        <label className="grid gap-2 text-sm font-medium">우대 기술<input name="preferredSkills" maxLength={1000} className="field" placeholder="예: Docker, Figma" /><span className="muted text-xs">없으면 비워둘 수 있습니다.</span></label>
+        <label className="grid gap-2 text-sm font-medium">기대 역할<textarea name="roleExpectations" maxLength={500} required rows={3} className="field" placeholder="예: 프론트엔드 구현과 사용자 테스트" /></label>
+        <label className="grid gap-2 text-sm font-medium">활동 가능 시간 조건<textarea name="availabilityRequirement" maxLength={500} required rows={3} className="field" placeholder="예: 매주 수요일 18시 정기 회의 참여" /></label>
+      </fieldset>
       <label className="grid gap-2 text-sm font-medium sm:max-w-xs">
         모집 인원
         <input name="capacity" type="number" min="1" max="100" defaultValue="4" required className="field" />

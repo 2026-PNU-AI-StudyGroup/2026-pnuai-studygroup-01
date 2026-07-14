@@ -127,6 +127,9 @@ async function main() {
     topicId: capacityTopic.id,
     studentId: studentIds[2],
     message: "정원 충족 후 지원",
+    skills: ["TypeScript"],
+    desiredRole: "개발",
+    availability: "평일 저녁",
     appliedAt: new Date("2026-07-13T00:00:00Z"),
   });
   if (fullTopicApplication.outcome !== "TOPIC_UNAVAILABLE") {
@@ -173,6 +176,9 @@ async function main() {
       topicId: applyingTopic.id,
       studentId: studentIds[3],
       message: "수락 중 동시 지원",
+      skills: ["TypeScript"],
+      desiredRole: "개발",
+      availability: "평일 저녁",
       appliedAt: new Date("2026-07-13T00:00:00Z"),
     }),
   ]);

@@ -14,18 +14,35 @@ describe("주제 내용 정책", () => {
   it("제목과 설명, 양의 정수 모집 인원을 허용한다", () => {
     expect(() =>
       assertValidTopicDetails({
-        title: "로컬 LLM 기반 추천",
-        description: "졸업과제 주제 추천 시스템",
+        title: "로컬 LLM 기반 번역",
+        description: "졸업과제 번역 시스템",
+        requiredSkills: ["TypeScript"],
+        preferredSkills: [],
+        roleExpectations: "프론트엔드 구현",
+        availabilityRequirement: "수요일 회의",
         capacity: 4,
       }),
     ).not.toThrow();
   });
 
+  const valid = {
+    title: "주제",
+    description: "설명",
+    requiredSkills: ["TypeScript"],
+    preferredSkills: [] as string[],
+    roleExpectations: "프론트엔드 구현",
+    availabilityRequirement: "수요일 회의",
+    capacity: 1,
+  };
+
   it.each([
-    { title: " ", description: "설명", capacity: 1 },
-    { title: "주제", description: " ", capacity: 1 },
-    { title: "주제", description: "설명", capacity: 0 },
-    { title: "주제", description: "설명", capacity: 1.5 },
+    { ...valid, title: " " },
+    { ...valid, description: " " },
+    { ...valid, requiredSkills: [] },
+    { ...valid, roleExpectations: " " },
+    { ...valid, availabilityRequirement: " " },
+    { ...valid, capacity: 0 },
+    { ...valid, capacity: 1.5 },
   ])("유효하지 않은 주제 내용 $title/$description/$capacity 을 거절한다", (details) => {
     expect(() => assertValidTopicDetails(details)).toThrow();
   });

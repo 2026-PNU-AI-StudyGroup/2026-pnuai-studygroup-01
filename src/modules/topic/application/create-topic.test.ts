@@ -10,8 +10,12 @@ import type { TopicCreator } from "@/modules/topic/application/topic-ports";
 
 const topicInput = {
   academicCycleId: "cycle-1",
-  title: "  로컬 LLM 추천  ",
-  description: "  졸업과제 주제 추천  ",
+  title: "  로컬 번역  ",
+  description: "  졸업과제 번역  ",
+  requiredSkills: [" TypeScript "],
+  preferredSkills: [" Docker "],
+  roleExpectations: " 프론트엔드 구현 ",
+  availabilityRequirement: " 수요일 회의 참여 ",
   capacity: 4,
   recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
   recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
@@ -41,8 +45,12 @@ describe("주제 초안 생성", () => {
     ).resolves.toEqual({ id: "topic-1" });
     expect(topics.createDraft).toHaveBeenCalledWith({
       ...topicInput,
-      title: "로컬 LLM 추천",
-      description: "졸업과제 주제 추천",
+      title: "로컬 번역",
+      description: "졸업과제 번역",
+      requiredSkills: ["TypeScript"],
+      preferredSkills: ["Docker"],
+      roleExpectations: "프론트엔드 구현",
+      availabilityRequirement: "수요일 회의 참여",
       authorId: "professor-1",
     });
   });

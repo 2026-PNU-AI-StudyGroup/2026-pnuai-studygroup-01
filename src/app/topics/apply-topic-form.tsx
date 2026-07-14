@@ -15,6 +15,9 @@ export function ApplyTopicForm({ topicId }: { topicId: string }) {
   return (
     <form action={action} className="mt-6 grid max-w-2xl gap-3 border-l-2 border-[var(--teal)] bg-[#f3f4f1] p-4">
       <input type="hidden" name="topicId" value={topicId} />
+      <label className="grid gap-2 text-sm font-medium">보유 기술<input name="skills" maxLength={1000} required className="field" placeholder="예: TypeScript, Python" /></label>
+      <label className="grid gap-2 text-sm font-medium">희망 역할<input name="desiredRole" maxLength={500} required className="field" placeholder="예: 프론트엔드 개발" /></label>
+      <label className="grid gap-2 text-sm font-medium">활동 가능 시간<input name="availability" maxLength={500} required className="field" placeholder="예: 평일 18시 이후" /></label>
       <label className="grid gap-2 text-sm font-medium">
         지원 메시지
         <textarea

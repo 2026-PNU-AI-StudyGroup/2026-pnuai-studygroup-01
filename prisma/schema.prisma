@@ -175,6 +175,10 @@ model Topic {
   authorId             String
   title                String
   description          String
+  requiredSkills       String[]      @default(["별도 협의"])
+  preferredSkills      String[]      @default([])
+  roleExpectations     String        @default("세부 역할 별도 협의")
+  availabilityRequirement String     @default("활동 가능 시간 별도 협의")
   capacity             Int
   recruitmentStartsAt  DateTime
   recruitmentEndsAt    DateTime
@@ -202,6 +206,9 @@ model TopicApplication {
   topicId    String
   studentId  String
   message    String
+  skills     String[]               @default(["기존 지원서 미입력"])
+  desiredRole String                @default("기존 지원서 미입력")
+  availability String               @default("기존 지원서 미입력")
   status     TopicApplicationStatus @default(PENDING)
   decidedAt  DateTime?
   createdAt  DateTime               @default(now())

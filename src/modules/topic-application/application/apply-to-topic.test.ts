@@ -18,13 +18,16 @@ describe("주제 지원", () => {
     await expect(
       service.execute(
         { id: "student-1", role: "STUDENT" },
-        { topicId: "topic-1", message: "  참여하고 싶습니다.  " },
+        { topicId: "topic-1", message: "  참여하고 싶습니다.  ", skills: [" TypeScript "], desiredRole: " 프론트엔드 ", availability: " 평일 저녁 " },
       ),
     ).resolves.toEqual({ id: "app-1" });
     expect(repository.createIfAvailable).toHaveBeenCalledWith({
       topicId: "topic-1",
       studentId: "student-1",
       message: "참여하고 싶습니다.",
+      skills: ["TypeScript"],
+      desiredRole: "프론트엔드",
+      availability: "평일 저녁",
       appliedAt,
     });
   });
@@ -36,7 +39,7 @@ describe("주제 지원", () => {
     await expect(
       service.execute(
         { id: "professor-1", role: "PROFESSOR" },
-        { topicId: "topic-1", message: "지원" },
+        { topicId: "topic-1", message: "지원", skills: ["TypeScript"], desiredRole: "개발", availability: "주말" },
       ),
     ).rejects.toBeInstanceOf(TopicApplicationForbiddenError);
     expect(repository.createIfAvailable).not.toHaveBeenCalled();
@@ -51,7 +54,7 @@ describe("주제 지원", () => {
     await expect(
       service.execute(
         { id: "student-1", role: "STUDENT" },
-        { topicId: "topic-1", message: "지원" },
+        { topicId: "topic-1", message: "지원", skills: ["TypeScript"], desiredRole: "개발", availability: "주말" },
       ),
     ).rejects.toBeInstanceOf(TopicAlreadyAppliedError);
   });

@@ -18,6 +18,9 @@ describe("Prisma 주제 저장소", () => {
         id: "topic-1",
         status: "DRAFT",
         recruitmentEndsAt: { gt: publishedAt },
+        requiredSkills: { isEmpty: false },
+        roleExpectations: { not: "" },
+        availabilityRequirement: { not: "" },
       },
       data: { status: "PUBLISHED", publishedAt },
     });

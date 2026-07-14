@@ -17,6 +17,10 @@ export type TopicPublication = {
 export type TopicDetails = {
   title: string;
   description: string;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  roleExpectations: string;
+  availabilityRequirement: string;
   capacity: number;
 };
 
@@ -62,6 +66,28 @@ export function assertValidTopicDetails(details: TopicDetails): void {
 
   if (details.description.trim().length === 0) {
     throw new InvalidTopicDetailsError("주제 설명은 비어 있을 수 없습니다.");
+  }
+
+  if (
+    details.requiredSkills.length === 0 ||
+    details.requiredSkills.length > 20 ||
+    details.preferredSkills.length > 20 ||
+    [...details.requiredSkills, ...details.preferredSkills].some(
+      (skill) => skill.trim().length === 0 || skill.length > 50,
+    )
+  ) {
+    throw new InvalidTopicDetailsError("필수 기술은 1개 이상이며 각 기술은 50자 이하여야 합니다.");
+  }
+
+  if (details.roleExpectations.trim().length === 0 || details.roleExpectations.length > 500) {
+    throw new InvalidTopicDetailsError("기대 역할은 1자 이상 500자 이하여야 합니다.");
+  }
+
+  if (
+    details.availabilityRequirement.trim().length === 0 ||
+    details.availabilityRequirement.length > 500
+  ) {
+    throw new InvalidTopicDetailsError("활동 가능 시간 조건은 1자 이상 500자 이하여야 합니다.");
   }
 
   if (!Number.isSafeInteger(details.capacity) || details.capacity < 1) {
