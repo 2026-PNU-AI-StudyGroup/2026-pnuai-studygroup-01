@@ -21,7 +21,7 @@ describe("Ollama 번역 어댑터", () => {
     );
     const request = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
     expect(request).toMatchObject({ model: "qwen3.5:2b", stream: false, think: false });
-    expect(request.format.required).toEqual(["translation"]);
+    expect(request.format).toBe("json");
     expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
   });
 
