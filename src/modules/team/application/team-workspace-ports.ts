@@ -29,6 +29,12 @@ export type TeamWorkspace = TeamListItem & {
     nextAction: string;
     createdAt: Date;
   }>;
+  discussionPosts: Array<{
+    id: string;
+    authorName: string;
+    content: string;
+    createdAt: Date;
+  }>;
 };
 
 export interface TeamWorkspaceReader {
@@ -62,5 +68,13 @@ export interface ProgressUpdateWriter {
     content: string;
     risk: string;
     nextAction: string;
+  }): Promise<{ id: string } | null>;
+}
+
+export interface DiscussionPostWriter {
+  createDiscussionPost(input: {
+    teamId: string;
+    actor: CurrentActor;
+    content: string;
   }): Promise<{ id: string } | null>;
 }

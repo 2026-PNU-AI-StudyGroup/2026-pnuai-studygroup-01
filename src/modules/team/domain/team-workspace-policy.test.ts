@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   canAccessTeam,
+  normalizeDiscussionPost,
   normalizeMilestoneTitle,
   normalizeProgressUpdate,
 } from "@/modules/team/domain/team-workspace-policy";
@@ -58,5 +59,8 @@ describe("팀 기록 정규화", () => {
       risk: "데이터 부족",
       nextAction: "추가 수집",
     });
+    expect(normalizeDiscussionPost("  이번 주 회의는 금요일입니다.  ")).toBe(
+      "이번 주 회의는 금요일입니다.",
+    );
   });
 });

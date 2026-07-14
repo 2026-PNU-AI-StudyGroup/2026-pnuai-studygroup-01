@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
 import type {
+  DiscussionPostWriter,
   MilestoneWriter,
   ProgressUpdateWriter,
   TeamWorkspaceReader,
@@ -22,7 +23,10 @@ function dependencies() {
   const progress: ProgressUpdateWriter = {
     createProgressUpdate: vi.fn(async () => ({ id: "progress-1" })),
   };
-  return { reader, milestones, progress };
+  const discussion: DiscussionPostWriter = {
+    createDiscussionPost: vi.fn(async () => ({ id: "post-1" })),
+  };
+  return { reader, milestones, progress, discussion };
 }
 
 describe("팀 워크스페이스 기록", () => {
@@ -32,6 +36,7 @@ describe("팀 워크스페이스 기록", () => {
       deps.reader,
       deps.milestones,
       deps.progress,
+      deps.discussion,
     );
     const dueAt = new Date("2026-05-01T00:00:00Z");
 
@@ -54,6 +59,7 @@ describe("팀 워크스페이스 기록", () => {
       deps.reader,
       deps.milestones,
       deps.progress,
+      deps.discussion,
     );
 
     await service.createProgressUpdate(
@@ -81,6 +87,7 @@ describe("팀 워크스페이스 기록", () => {
       deps.reader,
       deps.milestones,
       deps.progress,
+      deps.discussion,
     );
 
     await expect(
@@ -94,5 +101,24 @@ describe("팀 워크스페이스 기록", () => {
       ),
     ).rejects.toBeInstanceOf(InvalidMilestoneError);
     expect(deps.milestones.createMilestone).not.toHaveBeenCalled();
+  });
+
+  it("팀 토론 내용을 정규화해 작성자와 함께 전달한다", async () => {
+    const deps = dependencies();
+    const service = new TeamWorkspaceService(
+      deps.reader,
+      deps.milestones,
+      deps.progress,
+      deps.discussion,
+    );
+    await service.createDiscussionPost(
+      { id: "student-1", role: "STUDENT" },
+      { teamId: "team-1", content: "  회의는 금요일입니다.  " },
+    );
+    expect(deps.discussion.createDiscussionPost).toHaveBeenCalledWith({
+      teamId: "team-1",
+      actor: { id: "student-1", role: "STUDENT" },
+      content: "회의는 금요일입니다.",
+    });
   });
 });

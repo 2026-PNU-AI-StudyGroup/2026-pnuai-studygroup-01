@@ -7,7 +7,7 @@ import {
   ReportDecisionForm,
   ReportSubmissionForm,
 } from "@/app/teams/[teamId]/report-forms";
-import { MilestoneForm, MilestoneStatusForm, ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
+import { DiscussionPostForm, MilestoneForm, MilestoneStatusForm, ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   ReportOperationNotAllowedError,
@@ -21,6 +21,7 @@ import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/pri
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
+import { TranslatedText } from "@/shared/ui/translated-text";
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 중", "warning"], DONE: ["완료", "success"] } as const;
@@ -32,7 +33,7 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
   if (!actor) redirect("/sign-in");
   const { teamId } = await params;
   const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const service = new TeamWorkspaceService(repository, repository, repository);
+  const service = new TeamWorkspaceService(repository, repository, repository, repository);
   let workspace: TeamWorkspace;
   try { workspace = await service.get(actor, teamId); } catch (error) { if (error instanceof TeamNotFoundError) notFound(); throw error; }
   let reportWorkspace: ReportWorkspace;
@@ -65,6 +66,11 @@ export default async function TeamWorkspacePage({ params }: { params: Promise<{ 
             {workspace.progressUpdates.length === 0 ? <p className="muted mt-5 border-t border-[var(--line)] py-7 text-sm">아직 진행 기록이 없습니다.</p> : <ol className="mt-6 border-l border-[var(--line)] pl-5">{workspace.progressUpdates.map((update) => <li key={update.id} className="relative pb-8 before:absolute before:-left-[1.45rem] before:top-1 before:size-2 before:rounded-full before:bg-[var(--teal)]"><div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--muted)]"><strong className="text-[var(--ink)]">{update.authorName}</strong><time>{koreanDate.format(update.createdAt)}</time></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{update.content}</p>{update.risk ? <p className="mt-3 border-l-2 border-[var(--warning)] pl-3 text-sm text-[#794636]">위험 · {update.risk}</p> : null}{update.nextAction ? <p className="mt-2 text-sm text-[var(--teal-dark)]">다음 행동 · {update.nextAction}</p> : null}</li>)}</ol>}
           </section>
         </div>
+        <section aria-labelledby="discussion-title" className="space-y-5">
+          <div><p className="eyebrow">Discussion</p><h2 id="discussion-title" className="mt-1 text-2xl font-bold">팀 토론</h2><p className="muted mt-2 text-sm">팀원과 지도교수가 의견을 공유합니다. 필요한 글은 한국어 또는 영어로 바로 번역할 수 있습니다.</p></div>
+          <DiscussionPostForm teamId={workspace.id} />
+          {workspace.discussionPosts.length === 0 ? <EmptyState title="아직 토론이 없습니다" description="첫 질문이나 의견을 남겨 프로젝트 논의를 시작하세요." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{workspace.discussionPosts.map((post) => <li key={post.id} className="py-5"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{post.authorName}</strong><time className="muted text-xs">{koreanDate.format(post.createdAt)}</time></div><TranslatedText text={post.content} className="text-sm leading-7" /></li>)}</ol>}
+        </section>
         <section aria-labelledby="reports-title" className="space-y-6">
           <div><p className="eyebrow">Documents</p><h2 id="reports-title" className="mt-1 text-2xl font-bold">보고서 제출 및 웹 승인</h2><p className="muted mt-2 text-sm">기존 파일을 덮어쓰지 않고 제출 이력과 교수 검토 결정을 버전별로 보관합니다.</p></div>
           {workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" ? <ReportSubmissionForm teamId={workspace.id} /> : null}

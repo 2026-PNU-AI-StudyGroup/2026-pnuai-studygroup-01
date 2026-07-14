@@ -1,5 +1,6 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
+  DiscussionPostWriter,
   MilestoneStatus,
   MilestoneWriter,
   ProgressUpdateWriter,
@@ -9,6 +10,7 @@ import type {
 } from "@/modules/team/application/team-workspace-ports";
 import {
   assertValidMilestoneDueAt,
+  normalizeDiscussionPost,
   normalizeMilestoneTitle,
   normalizeProgressUpdate,
 } from "@/modules/team/domain/team-workspace-policy";
@@ -32,6 +34,7 @@ export class TeamWorkspaceService {
     private readonly workspaceReader: TeamWorkspaceReader,
     private readonly milestoneWriter: MilestoneWriter,
     private readonly progressWriter: ProgressUpdateWriter,
+    private readonly discussionWriter: DiscussionPostWriter,
   ) {}
 
   async get(actor: CurrentActor, teamId: string): Promise<TeamWorkspace> {
@@ -104,5 +107,18 @@ export class TeamWorkspaceService {
       throw new TeamNotFoundError();
     }
     return progress;
+  }
+
+  async createDiscussionPost(
+    actor: CurrentActor,
+    input: { teamId: string; content: string },
+  ): Promise<{ id: string }> {
+    const post = await this.discussionWriter.createDiscussionPost({
+      teamId: input.teamId,
+      actor,
+      content: normalizeDiscussionPost(input.content),
+    });
+    if (!post) throw new TeamNotFoundError();
+    return post;
   }
 }

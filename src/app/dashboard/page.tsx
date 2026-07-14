@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const teams = await new TeamWorkspaceService(repository, repository, repository).list(actor);
+  const teams = await new TeamWorkspaceService(repository, repository, repository, repository).list(actor);
   const title = actor.role === "PROFESSOR" ? "지도 프로젝트" : actor.role === "ADMIN" ? "전체 프로젝트" : "내 프로젝트";
 
   return (

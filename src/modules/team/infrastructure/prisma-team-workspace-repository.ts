@@ -4,6 +4,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { TeamConfirmationWriter } from "@/modules/team/application/confirm-team";
 import type {
+  DiscussionPostWriter,
   MilestoneStatus,
   MilestoneWriter,
   ProgressUpdateWriter,
@@ -23,6 +24,7 @@ export class PrismaTeamWorkspaceRepository
     TeamWorkspaceReader,
     MilestoneWriter,
     ProgressUpdateWriter,
+    DiscussionPostWriter,
     TeamConfirmationWriter
 {
   constructor(private readonly client: PrismaClient) {}
@@ -77,6 +79,16 @@ export class PrismaTeamWorkspaceRepository
             author: { select: { name: true } },
           },
         },
+        discussionPosts: {
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            author: { select: { name: true } },
+          },
+        },
       },
     });
     if (!team) {
@@ -99,6 +111,10 @@ export class PrismaTeamWorkspaceRepository
       milestones: team.milestones,
       progressUpdates: team.progressUpdates.map(({ author, ...update }) => ({
         ...update,
+        authorName: author.name,
+      })),
+      discussionPosts: team.discussionPosts.reverse().map(({ author, ...post }) => ({
+        ...post,
         authorName: author.name,
       })),
     };
@@ -180,6 +196,22 @@ export class PrismaTeamWorkspaceRepository
         RETURNING "id"
       `)
       .then((rows) => rows[0] ?? null);
+  }
+
+  createDiscussionPost(input: {
+    teamId: string;
+    actor: CurrentActor;
+    content: string;
+  }): Promise<{ id: string } | null> {
+    const id = randomUUID();
+    return this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      INSERT INTO "discussion_post" ("id", "teamId", "authorId", "content", "createdAt")
+      SELECT ${id}, "team"."id", ${input.actor.id}, ${input.content}, ${new Date()}
+      FROM "team"
+      WHERE "team"."id" = ${input.teamId}
+        AND ${teamActorSql(input.actor)}
+      RETURNING "id"
+    `).then((rows) => rows[0] ?? null);
   }
 
   private async list(where: Prisma.TeamWhereInput): Promise<TeamListItem[]> {

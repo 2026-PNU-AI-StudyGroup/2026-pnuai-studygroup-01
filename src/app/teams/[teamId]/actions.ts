@@ -14,11 +14,13 @@ import {
   TeamWorkspaceService,
 } from "@/modules/team/application/manage-team-workspace";
 import {
+  InvalidDiscussionPostError,
   InvalidMilestoneError,
   InvalidProgressUpdateError,
 } from "@/modules/team/domain/team-workspace-policy";
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
 import {
+  discussionPostInputSchema,
   milestoneInputSchema,
   milestoneStatusInputSchema,
   progressUpdateInputSchema,
@@ -52,12 +54,14 @@ function service() {
     repository,
     repository,
     repository,
+    repository,
   );
 }
 
 function expectedMessage(error: unknown): string | null {
   return error instanceof TeamNotFoundError ||
     error instanceof MilestoneNotFoundError ||
+    error instanceof InvalidDiscussionPostError ||
     error instanceof InvalidMilestoneError ||
     error instanceof InvalidProgressUpdateError
     ? error.message
@@ -131,4 +135,23 @@ export async function createProgressUpdateAction(
   }
   revalidatePath(`/teams/${parsed.data.teamId}`);
   return { status: "success", message: "진행 기록을 추가했습니다." };
+}
+
+export async function createDiscussionPostAction(
+  _state: TeamActionState,
+  formData: FormData,
+): Promise<TeamActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = discussionPostInputSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "토론 내용을 확인해 주세요." };
+  try {
+    await service().createDiscussionPost(actor, parsed.data);
+  } catch (error) {
+    const message = expectedMessage(error);
+    if (message) return { status: "error", message };
+    throw error;
+  }
+  revalidatePath(`/teams/${parsed.data.teamId}`);
+  return { status: "success", message: "토론 글을 등록했습니다." };
 }

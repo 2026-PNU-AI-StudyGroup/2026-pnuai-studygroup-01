@@ -131,7 +131,7 @@ async function main() {
   });
 
   const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const service = new TeamWorkspaceService(repository, repository, repository);
+  const service = new TeamWorkspaceService(repository, repository, repository, repository);
   const professor = { id: professorId, role: "PROFESSOR" as const };
   const student = { id: studentId, role: "STUDENT" as const };
   const outsider = { id: outsiderId, role: "STUDENT" as const };
@@ -156,6 +156,17 @@ async function main() {
     risk: "",
     nextAction: "도메인 모델 구현",
   });
+  await service.createDiscussionPost(student, {
+    teamId: team.id,
+    content: "  Can we meet on Friday?  ",
+  });
+  await expectRejected(
+    () => service.createDiscussionPost(outsider, {
+      teamId: team.id,
+      content: "권한 없는 토론",
+    }),
+    TeamNotFoundError,
+  );
   await expectRejected(
     () => service.createMilestone(outsider, {
       teamId: team.id,
@@ -185,6 +196,7 @@ async function main() {
     workspace.milestoneCount !== 1 ||
     workspace.completedMilestoneCount !== 1 ||
     workspace.progressUpdates.length !== 1 ||
+    workspace.discussionPosts[0]?.content !== "Can we meet on Friday?" ||
     workspace.members[0]?.email !== `${studentId}@pusan.ac.kr`
   ) {
     throw new Error("워크스페이스 조회 결과가 저장 결과와 일치하지 않습니다.");
@@ -200,6 +212,7 @@ async function main() {
       milestones: workspace.milestoneCount,
       completedMilestones: workspace.completedMilestoneCount,
       progressUpdates: workspace.progressUpdates.length,
+      discussionPosts: workspace.discussionPosts.length,
     }),
   );
 }

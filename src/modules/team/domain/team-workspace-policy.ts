@@ -14,6 +14,13 @@ export class InvalidProgressUpdateError extends Error {
   }
 }
 
+export class InvalidDiscussionPostError extends Error {
+  constructor() {
+    super("토론 내용은 1자 이상 2,000자 이하여야 합니다.");
+    this.name = "InvalidDiscussionPostError";
+  }
+}
+
 export function canAccessTeam(
   actor: CurrentActor,
   access: { isMember: boolean; isProfessor: boolean },
@@ -56,6 +63,14 @@ export function normalizeProgressUpdate(input: {
     normalized.nextAction.length > 2_000
   ) {
     throw new InvalidProgressUpdateError();
+  }
+  return normalized;
+}
+
+export function normalizeDiscussionPost(content: string): string {
+  const normalized = content.trim();
+  if (normalized.length < 1 || normalized.length > 2_000) {
+    throw new InvalidDiscussionPostError();
   }
   return normalized;
 }

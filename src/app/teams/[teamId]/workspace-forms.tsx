@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import {
+  createDiscussionPostAction,
   createMilestoneAction,
   createProgressUpdateAction,
   type TeamActionState,
@@ -55,6 +56,18 @@ export function ProgressUpdateForm({ teamId }: { teamId: string }) {
       <button disabled={pending} className="button-primary justify-self-start">
         {pending ? "기록 중" : "진행 기록 추가"}
       </button>
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-green-700"}>{state.message}</p> : null}
+    </form>
+  );
+}
+
+export function DiscussionPostForm({ teamId }: { teamId: string }) {
+  const [state, action, pending] = useActionState(createDiscussionPostAction, initialState);
+  return (
+    <form action={action} className="grid gap-3 border-y border-[var(--line)] py-5">
+      <input type="hidden" name="teamId" value={teamId} />
+      <textarea name="content" aria-label="토론 내용" required maxLength={2000} rows={3} placeholder="팀에 질문이나 의견을 남기세요" className="field" />
+      <button disabled={pending} className="button-primary justify-self-start">{pending ? "등록 중" : "의견 남기기"}</button>
       {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-green-700"}>{state.message}</p> : null}
     </form>
   );

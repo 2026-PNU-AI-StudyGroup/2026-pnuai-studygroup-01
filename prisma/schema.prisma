@@ -88,6 +88,7 @@ model User {
   teamMemberships         TeamMember[]
   milestonesCreated       Milestone[]
   progressUpdates         ProgressUpdate[]
+  discussionPosts         DiscussionPost[]
   storedFiles             StoredFile[]
   reportVersionsSubmitted ReportVersion[]
   approvalDecisions       ApprovalDecision[]
@@ -228,6 +229,7 @@ model Team {
   members         TeamMember[]
   milestones      Milestone[]
   progressUpdates ProgressUpdate[]
+  discussionPosts DiscussionPost[]
   storedFiles     StoredFile[]
   reports         Report[]
   artifacts       Artifact[]
@@ -287,6 +289,20 @@ model ProgressUpdate {
 
   @@index([teamId, createdAt])
   @@map("progress_update")
+}
+
+model DiscussionPost {
+  id        String   @id @default(uuid())
+  teamId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([teamId, createdAt])
+  @@index([authorId])
+  @@map("discussion_post")
 }
 
 model StoredFile {

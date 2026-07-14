@@ -31,3 +31,8 @@ export const progressUpdateInputSchema = z.object({
   risk: z.string().trim().max(2_000),
   nextAction: z.string().trim().max(2_000),
 });
+
+export const discussionPostInputSchema = z.object({
+  teamId: z.string().uuid(),
+  content: z.string().trim().min(1).max(2_000),
+});
