@@ -18,6 +18,9 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
+# local backups
+/backups
+
 # system and editor
 .DS_Store
 *.pem
