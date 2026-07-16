@@ -52,6 +52,12 @@ export const auth = betterAuth({
         defaultValue: "STUDENT",
         input: false,
       },
+      isActive: {
+        type: "boolean",
+        required: true,
+        defaultValue: true,
+        input: false,
+      },
     },
   },
   socialProviders: {
@@ -84,6 +90,8 @@ export const auth = betterAuth({
       create: {
         before: async (session) => {
           await reconcileProfessorRole(session.userId);
+          const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { isActive: true } });
+          if (!user?.isActive) return false;
         },
       },
     },

@@ -43,7 +43,7 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
     return `/recruitments${suffix}`;
   };
 
-  return <AppShell role={actor.role} userName={actor.name} currentPath="/recruitments">
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments">
     <main className="content-shell space-y-10">
       <PageHeader eyebrow="팀 구성" title="팀원 모집" description="구성 중인 프로젝트 팀의 필요한 역할과 활동 조건을 확인하고 함께할 학생을 찾으세요." />
       <RecruitmentPostForm teams={data.formingTeams} />

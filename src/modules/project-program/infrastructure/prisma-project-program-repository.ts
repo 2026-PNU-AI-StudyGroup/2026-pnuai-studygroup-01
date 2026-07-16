@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { ProjectProgramRecord, ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type { ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
 
@@ -53,10 +54,21 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       if (result.count !== 1) return false;
       if (status === "CLOSED") {
         const topicIds = (await transaction.topic.findMany({ where: { programId: id }, select: { id: true } })).map(({ id: topicId }) => topicId);
+        const applications = await transaction.topicApplication.findMany({
+          where: { topicId: { in: topicIds }, status: "PENDING" },
+          select: { id: true, studentId: true, topic: { select: { title: true } } },
+        });
         await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PUBLISHED" }, data: { status: "CLOSED" } });
         await transaction.topicApplication.updateMany({ where: { topicId: { in: topicIds }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
         await transaction.recruitmentPost.updateMany({ where: { team: { topicId: { in: topicIds } }, status: "OPEN" }, data: { status: "CLOSED" } });
         await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: { in: topicIds } } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
+        await createApplicationResultNotifications(transaction, applications.map((application) => ({
+          applicationId: application.id,
+          recipientId: application.studentId,
+          topicTitle: application.topic.title,
+          outcome: "REJECTED",
+          createdAt: changedAt,
+        })));
       }
       return true;
     });

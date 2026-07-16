@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { TeamConfirmationWriter } from "@/modules/team/application/confirm-team";
 import type {
   DiscussionPostWriter,
@@ -43,9 +44,28 @@ export class PrismaTeamWorkspaceRepository
       `);
       const team = rows[0];
       if (!team) return false;
+      const applications = await transaction.topicApplication.findMany({
+        where: { topicId: team.topicId, status: "PENDING" },
+        select: { id: true, studentId: true, topic: { select: { title: true } } },
+      });
       await transaction.recruitmentPost.updateMany({ where: { teamId, status: "OPEN" }, data: { status: "CLOSED" } });
       await transaction.topicApplication.updateMany({ where: { topicId: team.topicId, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       await transaction.recruitmentApplication.updateMany({ where: { post: { teamId }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      await createApplicationResultNotifications(transaction, applications.map((application) => ({
+        applicationId: application.id,
+        recipientId: application.studentId,
+        topicTitle: application.topic.title,
+        outcome: "REJECTED",
+        createdAt: decidedAt,
+      })));
+      await transaction.auditLog.create({ data: {
+        actorId: actor.id,
+        action: "TEAM_CONFIRMED",
+        targetType: "TEAM",
+        targetId: team.id,
+        metadata: { topicId: team.topicId },
+        createdAt: decidedAt,
+      } });
       return true;
     });
   }

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { createReportActivityNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type {
   ReportRepository,
   ReportWorkspace,
@@ -93,8 +94,8 @@ export class PrismaReportRepository implements ReportRepository {
     submittedAt: Date;
   }): Promise<{ reportId: string; version: number } | null> {
     return this.client.$transaction(async (transaction) => {
-      const authorized = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "team"."id"
+      const authorized = await transaction.$queryRaw<Array<{ id: string; professorId: string; name: string }>>(Prisma.sql`
+        SELECT "team"."id", "team"."professorId", "team"."name"
         FROM "team"
         JOIN "topic" ON "topic"."id" = "team"."topicId"
         WHERE "team"."id" = ${input.teamId}
@@ -138,9 +139,10 @@ export class PrismaReportRepository implements ReportRepository {
         _max: { version: true },
       });
       const version = (latest._max.version ?? 0) + 1;
+      const reportVersionId = randomUUID();
       await transaction.reportVersion.create({
         data: {
-          id: randomUUID(),
+          id: reportVersionId,
           reportId: report.id,
           version,
           fileId: input.fileId,
@@ -149,6 +151,14 @@ export class PrismaReportRepository implements ReportRepository {
           submittedAt: input.submittedAt,
         },
       });
+      await createReportActivityNotifications(transaction, [{
+        dedupeKey: `report-submitted:${reportVersionId}`,
+        recipientId: authorized[0].professorId,
+        title: `${authorized[0].name} 보고서가 제출되었습니다`,
+        body: `${reportTypeLabel(input.type)} ${version}버전이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
+        href: `/teams/${input.teamId}`,
+        createdAt: input.submittedAt,
+      }]);
       return { reportId: report.id, version };
     });
   }
@@ -164,8 +174,8 @@ export class PrismaReportRepository implements ReportRepository {
       await transaction.$executeRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${input.reportVersionId}, 2))
       `);
-      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "team"."id"
+      const teams = await transaction.$queryRaw<Array<{ id: string; name: string }>>(Prisma.sql`
+        SELECT "team"."id", "team"."name"
         FROM "report_version"
         JOIN "report" ON "report"."id" = "report_version"."reportId"
         JOIN "team" ON "team"."id" = "report"."teamId"
@@ -207,6 +217,35 @@ export class PrismaReportRepository implements ReportRepository {
           decidedAt: input.decidedAt,
         },
       });
+      const reportVersion = await transaction.reportVersion.findUnique({
+        where: { id: input.reportVersionId },
+        select: { version: true, report: { select: { type: true } } },
+      });
+      const members = await transaction.teamMember.findMany({
+        where: { teamId: teams[0].id },
+        select: { studentId: true },
+      });
+      if (reportVersion) {
+        const approved = input.decision === "APPROVED";
+        await createReportActivityNotifications(transaction, members.map(({ studentId }) => ({
+          dedupeKey: `report-decision:${input.reportVersionId}:${input.decision}:${studentId}`,
+          recipientId: studentId,
+          title: approved ? `${reportTypeLabel(reportVersion.report.type)}가 승인되었습니다` : `${reportTypeLabel(reportVersion.report.type)}에 수정 요청이 있습니다`,
+          body: approved
+            ? `${teams[0].name}의 ${reportVersion.version}버전 보고서가 승인되었습니다.`
+            : input.comment,
+          href: `/teams/${teams[0].id}`,
+          createdAt: input.decidedAt,
+        })));
+      }
+      await transaction.auditLog.create({ data: {
+        actorId: input.actor.id,
+        action: input.decision === "APPROVED" ? "REPORT_APPROVED" : "REPORT_REVISION_REQUESTED",
+        targetType: "REPORT_VERSION",
+        targetId: input.reportVersionId,
+        metadata: { teamId: teams[0].id, decision: input.decision },
+        createdAt: input.decidedAt,
+      } });
       return true;
     });
   }
@@ -269,6 +308,10 @@ export class PrismaReportRepository implements ReportRepository {
       return artifact;
     });
   }
+}
+
+function reportTypeLabel(type: ReportType) {
+  return type === "START" ? "착수 보고서" : type === "MIDTERM" ? "중간 보고서" : "결과 보고서";
 }
 
 function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {

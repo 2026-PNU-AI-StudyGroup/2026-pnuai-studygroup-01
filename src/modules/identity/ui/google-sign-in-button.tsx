@@ -34,7 +34,7 @@ export function GoogleSignInButton() {
         {isPending ? "Google로 이동 중..." : "부산대학교 Google 계정으로 로그인"}
       </button>
       {errorMessage ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-[var(--danger)]">
           {errorMessage}
         </p>
       ) : null}

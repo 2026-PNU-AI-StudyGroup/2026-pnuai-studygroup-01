@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
 import type {
   CreateTopicApplicationInput,
   CreateTopicApplicationResult,
@@ -221,7 +222,7 @@ export class PrismaTopicApplicationRepository
     return this.client.$transaction(async (transaction) => {
       const application = await transaction.topicApplication.findUnique({
         where: { id },
-        include: { topic: { select: { authorId: true } }, recruitmentApplication: { include: { post: { include: { team: { select: { status: true } } } } } } },
+        include: { topic: { select: { authorId: true, title: true } }, recruitmentApplication: { include: { post: { include: { team: { select: { status: true } } } } } } },
       });
       if (!application || application.status !== "PENDING") return "CONFLICT";
       const recruiterAllowed = application.recruitmentApplication?.post.authorId === actor.id && application.recruitmentApplication.post.status === "OPEN" && application.recruitmentApplication.post.team.status === "FORMING";
@@ -229,6 +230,13 @@ export class PrismaTopicApplicationRepository
       const result = await transaction.topicApplication.updateMany({ where: { id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       if (result.count !== 1) return "CONFLICT";
       await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      await createApplicationResultNotification(transaction, {
+        applicationId: application.id,
+        recipientId: application.studentId,
+        topicTitle: application.topic.title,
+        outcome: "REJECTED",
+        createdAt: decidedAt,
+      });
       return "REJECTED";
     });
   }
@@ -344,6 +352,19 @@ export class PrismaTopicApplicationRepository
         }
         await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: application.id, status: "PENDING" }, data: { status: "ACCEPTED", decidedAt } });
 
+        const reachesCapacity = memberCount + 1 === application.topic.capacity;
+        const automaticallyRejected = await transaction.topicApplication.findMany({
+          where: {
+            id: { not: application.id },
+            status: "PENDING",
+            OR: [
+              { studentId: application.studentId, topic: { academicCycleId: application.topic.academicCycleId } },
+              ...(reachesCapacity ? [{ topicId: application.topicId }] : []),
+            ],
+          },
+          select: { id: true, studentId: true, topic: { select: { title: true } } },
+        });
+
         await transaction.topicApplication.updateMany({
           where: {
             id: { not: application.id },
@@ -360,7 +381,7 @@ export class PrismaTopicApplicationRepository
           data: { status: "REJECTED", decidedAt },
         });
 
-        if (memberCount + 1 === application.topic.capacity) {
+        if (reachesCapacity) {
           await transaction.topicApplication.updateMany({
             where: {
               id: { not: application.id },
@@ -374,6 +395,23 @@ export class PrismaTopicApplicationRepository
             data: { status: "REJECTED", decidedAt },
           });
           await transaction.recruitmentPost.updateMany({ where: { teamId: team.id, status: "OPEN" }, data: { status: "CLOSED" } });
+        }
+
+        await createApplicationResultNotification(transaction, {
+          applicationId: application.id,
+          recipientId: application.studentId,
+          topicTitle: application.topic.title,
+          outcome: "ACCEPTED",
+          createdAt: decidedAt,
+        });
+        for (const rejected of automaticallyRejected) {
+          await createApplicationResultNotification(transaction, {
+            applicationId: rejected.id,
+            recipientId: rejected.studentId,
+            topicTitle: rejected.topic.title,
+            outcome: "REJECTED",
+            createdAt: decidedAt,
+          });
         }
 
         return "ACCEPTED";

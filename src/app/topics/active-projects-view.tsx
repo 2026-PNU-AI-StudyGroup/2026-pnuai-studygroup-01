@@ -32,6 +32,10 @@ export function ActiveProjectsView({ actor, profile, programs, programId, topics
   const applicationsByTopic = new Map(applications.map((application) => [application.topicId, application]));
   return <>
     <PageHeader eyebrow="프로젝트 탐색" title="진행 중 프로젝트" description="프로그램 태그로 공개 주제를 좁혀 지원 조건과 전체 일정을 비교하고 팀 참여를 시작하세요." />
+    {actor.role === "STUDENT" && !profile ? <section aria-labelledby="profile-onboarding-title" className="grid gap-5 border-y border-[var(--line)] bg-[var(--accent-subtle)] px-5 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7">
+      <div><p className="eyebrow">첫 시작</p><h2 id="profile-onboarding-title" className="mt-2 text-xl font-extrabold">프로젝트 프로필을 먼저 완성해 주세요</h2><p className="muted mt-2 text-sm leading-6">관심 분야, 보유 기술과 활동 가능 시간을 한 번 저장하면 주제와 팀원 모집 지원서에 자동으로 채워집니다.</p></div>
+      <Link href="/account" className="button-primary justify-self-start">프로필 작성</Link>
+    </section> : null}
     <section aria-labelledby="program-filter-title" className="border-b border-[var(--line)] pb-8">
       <div className="mb-4 flex items-baseline justify-between gap-4"><h2 id="program-filter-title" className="text-base font-extrabold">프로그램</h2><p className="muted text-sm">공개 주제 {topics.length}개</p></div>
       <nav aria-label="프로그램별 주제 필터" className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">

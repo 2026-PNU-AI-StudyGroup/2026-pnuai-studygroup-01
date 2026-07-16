@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const title = actor.role === "PROFESSOR" ? "지도 프로젝트" : actor.role === "ADMIN" ? "전체 프로젝트" : "내 프로젝트";
 
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/dashboard">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
       <main className="content-shell space-y-10">
         <PageHeader eyebrow="프로젝트 현황" title={title} description="팀의 현재 진행 상태, 마일스톤, 보고서 제출과 다음 작업을 확인하세요." actions={<Link href={actor.role === "STUDENT" ? "/topics" : "/professor/topics"} className="button-primary">{actor.role === "STUDENT" ? "프로젝트 탐색" : "주제 관리"}</Link>} />
         {teams.length === 0 ? (

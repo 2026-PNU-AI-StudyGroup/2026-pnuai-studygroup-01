@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type {
   ArchivedProject,
   ArchiveFilters,
@@ -32,6 +33,7 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
 
   close(teamId: string, actor: CurrentActor): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
+      const decidedAt = new Date();
       const teams = await transaction.$queryRaw<Array<{ id: string; topicId: string }>>(Prisma.sql`
         SELECT "team"."id", "team"."topicId"
         FROM "team"
@@ -69,14 +71,33 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
         data: { status: "CLOSED" },
       });
       if (result.count === 1) {
+        const applications = await transaction.topicApplication.findMany({
+          where: { topicId: team.topicId, status: "PENDING" },
+          select: { id: true, studentId: true, topic: { select: { title: true } } },
+        });
         await transaction.topic.updateMany({
           where: { id: team.topicId },
           data: { status: "CLOSED" },
         });
         await transaction.topicApplication.updateMany({
           where: { topicId: team.topicId, status: "PENDING" },
-          data: { status: "REJECTED", decidedAt: new Date() },
+          data: { status: "REJECTED", decidedAt },
         });
+        await createApplicationResultNotifications(transaction, applications.map((application) => ({
+          applicationId: application.id,
+          recipientId: application.studentId,
+          topicTitle: application.topic.title,
+          outcome: "REJECTED",
+          createdAt: decidedAt,
+        })));
+        await transaction.auditLog.create({ data: {
+          actorId: actor.id,
+          action: "TEAM_CLOSED",
+          targetType: "TEAM",
+          targetId: team.id,
+          metadata: { topicId: team.topicId },
+          createdAt: decidedAt,
+        } });
       }
       return result.count === 1;
     });

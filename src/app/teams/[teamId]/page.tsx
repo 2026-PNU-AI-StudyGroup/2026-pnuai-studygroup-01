@@ -71,7 +71,7 @@ export default async function TeamWorkspacePage({
   };
 
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/dashboard">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
       <main className="content-shell space-y-12">
         <PageHeader eyebrow="프로젝트 워크스페이스" title={workspace.name} description={`${workspace.topicTitle} · 지도교수 ${workspace.professorName}`} actions={<div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center"><StatusBadge>{workspace.status === "FORMING" ? "구성 중" : workspace.status === "CONFIRMED" ? "확정 팀" : "종료 팀"}</StatusBadge>{workspace.status === "FORMING" && actor.role !== "STUDENT" ? <form action={confirmTeamAction}><input type="hidden" name="teamId" value={workspace.id} /><button className="button-primary">팀 확정</button></form> : null}{workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}<div className="w-full sm:w-48"><ProgressBar value={progress} /></div></div>} />
         <section aria-labelledby="members-title" className="border-y border-[var(--line)] py-5">

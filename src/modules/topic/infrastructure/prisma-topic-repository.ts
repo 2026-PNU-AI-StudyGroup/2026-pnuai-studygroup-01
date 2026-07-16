@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type {
   TopicCreator,
   TopicDraft,
@@ -119,11 +120,29 @@ export class PrismaTopicRepository
   }
 
   async closePublished(id: string): Promise<boolean> {
-    const result = await this.client.topic.updateMany({
-      where: { id, status: "PUBLISHED" },
-      data: { status: "CLOSED" },
+    return this.client.$transaction(async (transaction) => {
+      const decidedAt = new Date();
+      const applications = await transaction.topicApplication.findMany({
+        where: { topicId: id, status: "PENDING" },
+        select: { id: true, studentId: true, topic: { select: { title: true } } },
+      });
+      const result = await transaction.topic.updateMany({
+        where: { id, status: "PUBLISHED" },
+        data: { status: "CLOSED" },
+      });
+      if (result.count !== 1) return false;
+      await transaction.topicApplication.updateMany({ where: { topicId: id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      await transaction.recruitmentPost.updateMany({ where: { team: { topicId: id }, status: "OPEN" }, data: { status: "CLOSED" } });
+      await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: id } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
+      await createApplicationResultNotifications(transaction, applications.map((application) => ({
+        applicationId: application.id,
+        recipientId: application.studentId,
+        topicTitle: application.topic.title,
+        outcome: "REJECTED",
+        createdAt: decidedAt,
+      })));
+      return true;
     });
-    return result.count === 1;
   }
 
   async updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean> {

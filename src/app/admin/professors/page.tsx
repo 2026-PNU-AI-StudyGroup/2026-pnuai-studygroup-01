@@ -23,7 +23,7 @@ export default async function ProfessorsPage() {
   );
   const [entries, auditEntries] = await Promise.all([service.list(actor), service.listAudit(actor)]);
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/admin/professors">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
       <main className="content-shell space-y-12">
         <PageHeader eyebrow="운영 관리" title="교수 권한 관리" description="사전 등록된 부산대학교 이메일만 교수 기능을 사용할 수 있습니다." />
         <section aria-labelledby="professor-create-title"><h2 id="professor-create-title" className="mb-5 text-lg font-bold">교수 이메일 등록</h2><ProfessorAccessForm /></section>

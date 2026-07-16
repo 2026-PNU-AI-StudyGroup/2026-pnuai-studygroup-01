@@ -83,6 +83,7 @@ async function seed() {
   }))));
 
   const seedResult = await prisma.$transaction(async (tx) => {
+    await tx.notification.deleteMany({ where: { dedupeKey: { startsWith: "demo:" } } });
     await tx.artifact.deleteMany({ where: { id: { in: ids.artifacts } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: ids.approvalDecisions } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: ids.reportVersions } } });
@@ -109,8 +110,8 @@ async function seed() {
     for (const [id, name, email, role] of people) {
       await tx.user.upsert({
         where: { id },
-        update: { name, email, emailVerified: true, role },
-        create: { id, name, email, emailVerified: true, role },
+        update: { name, email, emailVerified: true, role, isActive: true },
+        create: { id, name, email, emailVerified: true, role, isActive: true },
       });
     }
 
@@ -414,7 +415,7 @@ async function seed() {
       { id: ids.milestones[0], teamId: ids.teams[0], createdById: ids.students[0], title: "교내 접근성 경로 현장 조사", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE" },
       { id: ids.milestones[1], teamId: ids.teams[0], createdById: ids.students[0], title: "길찾기 프로토타입 사용성 테스트", dueAt: new Date("2026-08-20T18:00:00+09:00"), status: "IN_PROGRESS" },
       { id: ids.milestones[2], teamId: ids.teams[0], createdById: ids.students[1], title: "학내 지도 데이터 정합성 검증", dueAt: new Date("2026-09-10T18:00:00+09:00"), status: "TODO" },
-      { id: ids.milestones[3], teamId: ids.teams[1], createdById: ids.students[2], title: "교수·학생 인터뷰 5건 완료", dueAt: new Date("2026-08-05T18:00:00+09:00"), status: "IN_PROGRESS" },
+      { id: ids.milestones[3], teamId: ids.teams[1], createdById: ids.students[2], title: "교수·학생 인터뷰 5건 완료", dueAt: new Date("2026-07-22T18:00:00+09:00"), status: "IN_PROGRESS" },
       { id: ids.milestones[4], teamId: ids.teams[1], createdById: ids.students[2], title: "핵심 사용자 흐름 와이어프레임 검증", dueAt: new Date("2026-08-12T18:00:00+09:00"), status: "TODO" },
       { id: ids.milestones[5], teamId: ids.teams[1], createdById: ids.students[2], title: "프로젝트 탐색 화면 반응형 구현", dueAt: new Date("2026-08-26T18:00:00+09:00"), status: "TODO" },
       { id: ids.milestones[6], teamId: ids.teams[1], createdById: ids.students[2], title: "지원·승인 통합 시나리오 테스트", dueAt: new Date("2026-09-09T18:00:00+09:00"), status: "TODO" },
@@ -431,6 +432,47 @@ async function seed() {
       { id: ids.discussions[2], teamId: ids.teams[1], authorId: ids.students[2], content: "이번 주에는 프로그램을 별도 메뉴로 분리하지 않고 주제 필터로 이해되는지 확인하겠습니다.", createdAt: new Date("2026-07-15T13:30:00+09:00") },
       { id: ids.discussions[3], teamId: ids.teams[1], authorId: ids.professors[2], content: "지난 프로젝트의 결과물까지 같은 탐색 맥락에서 이어지는지 사용자 테스트 항목에 포함해 주세요.", createdAt: new Date("2026-07-16T11:00:00+09:00") },
     ] });
+    if (localViewer) {
+      await tx.notification.createMany({ data: [
+        {
+          recipientId: localViewer.id,
+          type: "APPLICATION_RESULT",
+          title: "프로젝트 참여가 확정되었습니다",
+          body: "학과 프로젝트 운영 기록 자동화 프로젝트 팀에 합류했습니다. 팀 공간에서 다음 일정을 확인해 주세요.",
+          href: `/teams/${ids.teams[1]}`,
+          dedupeKey: `demo:viewer:application-accepted:${localViewer.id}`,
+          readAt: new Date("2026-07-11T16:00:00+09:00"),
+          createdAt: new Date("2026-07-11T15:00:00+09:00"),
+        },
+        {
+          recipientId: localViewer.id,
+          type: "SYSTEM",
+          title: "새로운 팀원 지원이 도착했습니다",
+          body: "프론트엔드 팀원 모집 글에 한지우 학생이 지원했습니다. 지원 조건과 메시지를 확인해 주세요.",
+          href: "/recruitments",
+          dedupeKey: `demo:viewer:recruitment-application:${localViewer.id}`,
+          createdAt: new Date("2026-07-15T21:00:00+09:00"),
+        },
+        {
+          recipientId: localViewer.id,
+          type: "DEADLINE",
+          title: "프로젝트 모아 마일스톤 마감 임박",
+          body: "교수·학생 인터뷰 정리 마감이 가까워졌습니다. 진행 기록과 다음 행동을 확인해 주세요.",
+          href: `/teams/${ids.teams[1]}`,
+          dedupeKey: `demo:viewer:milestone-deadline:${localViewer.id}`,
+          createdAt: new Date("2026-07-16T09:00:00+09:00"),
+        },
+        {
+          recipientId: localViewer.id,
+          type: "SYSTEM",
+          title: "지도교수의 새 피드백이 있습니다",
+          body: "지난 프로젝트 결과물이 같은 탐색 맥락에서 이어지는지 사용자 테스트에 포함해 달라는 의견이 등록되었습니다.",
+          href: `/teams/${ids.teams[1]}`,
+          dedupeKey: `demo:viewer:professor-feedback:${localViewer.id}`,
+          createdAt: new Date("2026-07-16T11:00:00+09:00"),
+        },
+      ] });
+    }
 
     const artifactRows = [
       [2, "SOURCE_CODE", "PNU Navi 소스 코드", "https://github.com/pusan-cse-demo/pnu-navi"], [2, "PRESENTATION_VIDEO", "최종 발표 영상", "https://www.youtube.com/"],
@@ -457,6 +499,7 @@ async function seed() {
     topicApplications: 16 + (seedResult.localViewer ? 1 : 0),
     recruitmentPosts: 2,
     recruitmentApplications: 2,
+    notifications: seedResult.localViewer ? 4 : 0,
     archivedProjects: 5,
     approvedFinalReports: 5,
     artifacts: 10,

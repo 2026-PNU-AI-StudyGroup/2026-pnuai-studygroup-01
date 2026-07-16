@@ -15,6 +15,7 @@
     "predb:bootstrap-admin": "prisma generate",
     "db:bootstrap-admin": "prisma db seed",
     "db:seed-demo": "tsx scripts/seed-demo-data.ts",
+    "notifications:deadlines": "tsx scripts/generate-deadline-notifications.ts",
     "db:deploy": "prisma migrate deploy",
     "db:migrate": "prisma migrate dev",
     "db:status": "prisma migrate status",

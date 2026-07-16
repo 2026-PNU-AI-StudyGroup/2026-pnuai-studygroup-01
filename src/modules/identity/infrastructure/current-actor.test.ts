@@ -19,4 +19,9 @@ describe("현재 로그인 사용자", () => {
     getSession.mockResolvedValue(null);
     await expect(getCurrentActor()).resolves.toBeNull();
   });
+
+  it("비활성 계정의 기존 세션을 로그인 상태로 인정하지 않는다", async () => {
+    getSession.mockResolvedValue({ user: { id: "user-1", role: "STUDENT", name: "김학생", email: "student@pusan.ac.kr", image: null, isActive: false } });
+    await expect(getCurrentActor()).resolves.toBeNull();
+  });
 });

@@ -28,7 +28,13 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       take: 50,
       select: { id: true, action: true, targetId: true, createdAt: true, actor: { select: { name: true } } },
     });
-    return entries.map((entry) => ({ id: entry.id, action: entry.action, targetEmail: entry.targetId, actorName: entry.actor.name, createdAt: entry.createdAt }));
+    return entries.map((entry) => ({
+      id: entry.id,
+      action: entry.action === "PROFESSOR_ACCESS_GRANTED" ? "PROFESSOR_ACCESS_GRANTED" : "PROFESSOR_ACCESS_REVOKED",
+      targetEmail: entry.targetId,
+      actorName: entry.actor.name,
+      createdAt: entry.createdAt,
+    }));
   }
 
   async grant(email: string, createdById: string): Promise<void> {

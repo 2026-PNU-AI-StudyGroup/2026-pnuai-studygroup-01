@@ -18,7 +18,7 @@ export default async function AcademicCyclesPage() {
   const repository = new PrismaAcademicCycleRepository(prisma);
   const cycles = await new ListAcademicCyclesService(repository).execute();
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/admin/academic-cycles">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/academic-cycles">
       <main className="content-shell space-y-12">
         <PageHeader eyebrow="운영 관리" title="학기 관리" description="주제와 팀 운영의 기준이 되는 학년도·학기를 등록합니다." />
         <section aria-labelledby="cycle-create-title"><h2 id="cycle-create-title" className="mb-5 text-lg font-bold">새 학기 등록</h2><AcademicCycleForm /></section>

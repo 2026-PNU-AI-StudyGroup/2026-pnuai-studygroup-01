@@ -28,7 +28,7 @@ export default async function AccountPage() {
       : [["전체 프로젝트", "/dashboard"], ["프로그램 관리", "/admin/programs"], ["교수 권한", "/admin/professors"]];
 
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/account">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
       <main className="content-shell">
         <div className="mx-auto max-w-3xl">
           <PageHeader eyebrow="계정" title="내 정보" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />

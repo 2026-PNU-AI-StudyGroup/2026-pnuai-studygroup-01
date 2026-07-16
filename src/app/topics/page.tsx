@@ -64,5 +64,5 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     content = <ActiveProjectsView actor={actor} profile={profile} programs={programs} programId={programId} topics={topics} applications={applications} now={new Date()} />;
   }
 
-  return <AppShell role={actor.role} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout role={actor.role} view={view}>{content}</ProjectExplorerLayout></AppShell>;
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout role={actor.role} view={view}>{content}</ProjectExplorerLayout></AppShell>;
 }

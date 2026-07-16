@@ -91,6 +91,19 @@ enum ProjectProgramStatus {
 enum AuditAction {
   PROFESSOR_ACCESS_GRANTED
   PROFESSOR_ACCESS_REVOKED
+  USER_DEACTIVATED
+  USER_REACTIVATED
+  TEAM_CONFIRMED
+  TEAM_CLOSED
+  REPORT_APPROVED
+  REPORT_REVISION_REQUESTED
+}
+
+enum NotificationType {
+  APPLICATION_RESULT
+  REPORT_ACTIVITY
+  DEADLINE
+  SYSTEM
 }
 
 model User {
@@ -100,6 +113,7 @@ model User {
   emailVerified           Boolean              @default(false)
   image                   String?
   role                    UserRole             @default(STUDENT)
+  isActive                Boolean              @default(true)
   createdAt               DateTime             @default(now())
   updatedAt               DateTime             @updatedAt
   sessions                Session[]
@@ -119,9 +133,26 @@ model User {
   recruitmentApplications RecruitmentApplication[]
   projectProgramsCreated  ProjectProgram[]
   auditLogsCreated        AuditLog[]
+  notifications           Notification[]
   studentProfile          StudentProfile?
 
   @@map("user")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String
+  type        NotificationType
+  title       String
+  body        String
+  href        String
+  dedupeKey   String           @unique
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  recipient   User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt, createdAt])
+  @@map("notification")
 }
 
 model StudentProfile {

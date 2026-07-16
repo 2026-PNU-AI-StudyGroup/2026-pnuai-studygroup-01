@@ -30,7 +30,7 @@ export default async function ProfessorTopicsPage() {
   const [programs, topics] = await Promise.all([new ProjectProgramService(programRepository).listOpen(), new ListOwnTopicsService(topicRepository).execute(actor)]);
 
   return (
-    <AppShell role={actor.role} userName={actor.name} currentPath="/professor/topics">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics">
       <main className="content-shell space-y-12">
         <PageHeader eyebrow="교수 작업" title="주제 관리" description="공개된 학과 프로젝트 프로그램에 주제를 등록하고 모집 상태를 관리하세요." actions={<Link href="/professor/applications" className="button-secondary">받은 지원서 보기</Link>} />
         {programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[var(--warning-subtle)] p-4 text-sm text-[var(--warning-ink)]">관리자가 프로젝트 프로그램을 먼저 공개해야 주제를 만들 수 있습니다.</p> : null}
