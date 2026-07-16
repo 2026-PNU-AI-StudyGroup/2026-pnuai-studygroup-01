@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "번역할 내용을 확인해 주세요." }, { status: 400 });
   }
 
-  const release = translationGate.tryAcquire();
+  const release = translationGate.tryAcquire(actor.id);
   if (!release) {
     return NextResponse.json(
       { message: "다른 번역을 처리 중입니다. 잠시 후 다시 시도해 주세요." },
