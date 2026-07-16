@@ -4,7 +4,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { createHash } from "node:crypto";
 
-import { PrismaClient, UserRole } from "../src/generated/prisma/client";
+import { Prisma, PrismaClient, UserRole } from "../src/generated/prisma/client";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
 
 const connectionString = process.env.DATABASE_URL;
@@ -48,34 +48,38 @@ const demoReportPdf = createDemoPdf();
 const demoReportSha256 = createHash("sha256").update(demoReportPdf).digest("hex");
 
 const ids = {
+  admin: "00000000-0000-4000-8000-000000000001",
   professors: [
     "10000000-0000-4000-8000-000000000001",
     "10000000-0000-4000-8000-000000000002",
     "10000000-0000-4000-8000-000000000003",
   ],
-  students: Array.from({ length: 8 }, (_, index) => `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  programs: Array.from({ length: 6 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  topics: Array.from({ length: 11 }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  applications: Array.from({ length: 32 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  students: Array.from({ length: 12 }, (_, index) => `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  programs: Array.from({ length: 11 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  topics: Array.from({ length: 18 }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  applications: Array.from({ length: 64 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   localViewerApplication: "61000000-0000-4000-8000-000000000001",
-  teams: Array.from({ length: 7 }, (_, index) => `70000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  members: Array.from({ length: 32 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  teams: Array.from({ length: 14 }, (_, index) => `70000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  members: Array.from({ length: 64 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   recruitments: Array.from({ length: 2 }, (_, index) => `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   recruitmentApplications: Array.from({ length: 2 }, (_, index) => `91000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   milestones: Array.from({ length: 7 }, (_, index) => `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   progress: Array.from({ length: 4 }, (_, index) => `b0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   discussions: Array.from({ length: 4 }, (_, index) => `c0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  artifacts: Array.from({ length: 10 }, (_, index) => `d0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  storedFiles: Array.from({ length: 5 }, (_, index) => `e0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  reports: Array.from({ length: 5 }, (_, index) => `f0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  reportVersions: Array.from({ length: 5 }, (_, index) => `f1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  approvalDecisions: Array.from({ length: 5 }, (_, index) => `f2000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  artifacts: Array.from({ length: 12 }, (_, index) => `d0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  storedFiles: Array.from({ length: 24 }, (_, index) => `e0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  reports: Array.from({ length: 12 }, (_, index) => `f0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  reportVersions: Array.from({ length: 12 }, (_, index) => `f1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  approvalDecisions: Array.from({ length: 12 }, (_, index) => `f2000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
 };
-const demoReportObjectKeys = [2, 3, 4, 5, 6].map((teamIndex) => `demo/teams/${ids.teams[teamIndex]}/final-report.pdf`);
-const demoReportUploadObjectKeys = demoReportObjectKeys.map((objectKey) => `staging/${objectKey}`);
+const closedTeamIndexes = Array.from({ length: 12 }, (_, index) => index + 2);
+const demoReportObjectKeys = closedTeamIndexes.map((teamIndex) => `demo/teams/${ids.teams[teamIndex]}/final-report.pdf`);
+const demoArtifactObjectKeys = closedTeamIndexes.map((teamIndex) => `demo/teams/${ids.teams[teamIndex]}/published-result.pdf`);
+const demoObjectKeys = [...demoReportObjectKeys, ...demoArtifactObjectKeys];
+const demoUploadObjectKeys = demoObjectKeys.map((objectKey) => `staging/${objectKey}`);
 
 async function seed() {
-  await Promise.all(demoReportObjectKeys.map((objectKey) => s3.send(new PutObjectCommand({
+  await Promise.all(demoObjectKeys.map((objectKey) => s3.send(new PutObjectCommand({
     Bucket: objectStorageBucket,
     Key: objectKey,
     Body: demoReportPdf,
@@ -118,6 +122,10 @@ async function seed() {
     }
 
     await tx.notification.deleteMany({ where: { dedupeKey: { startsWith: "demo:" } } });
+    await tx.auditLog.deleteMany({ where: { OR: [
+      { actorId: { in: [ids.admin, ...ids.professors] } },
+      { targetId: { in: [...ids.teams, ...ids.reportVersions, ...ids.professors.map((_, index) => `demo.professor${index + 1}@pusan.ac.kr`)] } },
+    ] } });
     await tx.artifact.deleteMany({ where: { id: { in: ids.artifacts } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: ids.approvalDecisions } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: ids.reportVersions } } });
@@ -134,10 +142,11 @@ async function seed() {
     await tx.topic.deleteMany({ where: { id: { in: ids.topics } } });
 
     const people: Array<[string, string, string, UserRole]> = [
+      [ids.admin, "박지은", "demo.admin@pusan.ac.kr", UserRole.ADMIN],
       [ids.professors[0], "김도윤", "demo.professor1@pusan.ac.kr", UserRole.PROFESSOR],
       [ids.professors[1], "이서현", "demo.professor2@pusan.ac.kr", UserRole.PROFESSOR],
       [ids.professors[2], "박준호", "demo.professor3@pusan.ac.kr", UserRole.PROFESSOR],
-      ...["정하늘", "윤서준", "최민지", "한지우", "오세진", "문가영", "임도현", "백소연"].map<[string, string, string, UserRole]>((name, index) => [
+      ...["정하늘", "윤서준", "최민지", "한지우", "오세진", "문가영", "임도현", "백소연", "강민재", "서유진", "조현우", "신예린"].map<[string, string, string, UserRole]>((name, index) => [
         ids.students[index], name, `demo.student${index + 1}@pusan.ac.kr`, UserRole.STUDENT,
       ]),
     ];
@@ -147,6 +156,22 @@ async function seed() {
         update: { name, email, emailVerified: true, role, isActive: true },
         create: { id, name, email, emailVerified: true, role, isActive: true },
       });
+    }
+    for (const [index] of ids.professors.entries()) {
+      const email = `demo.professor${index + 1}@pusan.ac.kr`;
+      await tx.professorAllowlist.upsert({
+        where: { email },
+        update: { createdById: ids.admin, revokedAt: null },
+        create: { email, createdById: ids.admin, createdAt: new Date(`2026-02-${String(10 + index).padStart(2, "0")}T10:00:00+09:00`) },
+      });
+      await tx.auditLog.create({ data: {
+        actorId: ids.admin,
+        action: "PROFESSOR_ACCESS_GRANTED",
+        targetType: "PUSAN_EMAIL",
+        targetId: email,
+        metadata: {},
+        createdAt: new Date(`2026-02-${String(10 + index).padStart(2, "0")}T10:00:00+09:00`),
+      } });
     }
 
     const requestedViewerEmail = process.env.DEMO_VIEWER_EMAIL?.trim().toLowerCase();
@@ -170,6 +195,10 @@ async function seed() {
       [["자연어 처리", "번역"], ["Python", "Ollama"], "번역 품질 평가", "월·수 저녁", "로컬 모델의 번역 결과를 사용자 관점에서 평가하고 개선하는 데 관심이 있습니다."],
       [["임베디드", "IoT"], ["C", "Arduino"], "센서 연동", "금요일 오후, 주말", "센서 데이터를 안정적으로 수집하고 웹 서비스와 연결하는 작업을 해 왔습니다."],
       [["시각화", "UX"], ["D3.js", "Figma"], "정보 시각화", "화요일 저녁", "복잡한 정보를 빠르게 이해할 수 있는 인터랙션과 시각 표현을 탐구합니다."],
+      [["백엔드", "분산 시스템"], ["Java", "Spring"], "서버 개발", "월·수 19시 이후", "신뢰할 수 있는 API와 관찰 가능한 서버를 설계하고 운영하는 데 관심이 있습니다."],
+      [["데이터 엔지니어링", "검색"], ["Python", "Elasticsearch"], "데이터 파이프라인 개발", "목요일 저녁, 주말", "흩어진 데이터를 정리해 실제 검색과 분석에 사용할 수 있는 형태로 만드는 일을 좋아합니다."],
+      [["보안", "인프라"], ["Go", "Docker"], "인프라와 보안 점검", "화·금 저녁", "서비스가 안전하게 배포되고 장애 상황에서도 복구 가능한 구조를 만들고 싶습니다."],
+      [["서비스 기획", "사용자 조사"], ["Figma", "Notion"], "프로덕트 기획", "평일 18시 이후", "인터뷰와 사용성 테스트를 바탕으로 팀이 풀 문제와 우선순위를 명확히 정리합니다."],
     ] as const;
     for (const [index, [interests, skills, desiredRole, availability, bio]] of studentProfiles.entries()) {
       await tx.studentProfile.upsert({
@@ -201,7 +230,12 @@ async function seed() {
       });
     }
     const currentCycle = await cycle(2026, "FIRST");
-    const pastCycles = [await cycle(2025, "SECOND"), await cycle(2024, "SECOND"), await cycle(2023, "SECOND")];
+    const pastCycles = [
+      await cycle(2025, "FIRST"),
+      await cycle(2024, "FIRST"),
+      await cycle(2023, "FIRST"),
+      await cycle(2022, "FIRST"),
+    ];
 
     async function program(input: {
       id: string; academicCycleId: string; name: string; category: string; description: string;
@@ -227,8 +261,13 @@ async function seed() {
     ];
     const pastPrograms = [
       await program({ id: ids.programs[3], academicCycleId: pastCycles[0].id, name: "CSE 캡스톤 디자인 2025", category: "캡스톤", description: "2025학년도 캡스톤 디자인", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[4], academicCycleId: pastCycles[1].id, name: "CSE 캡스톤 디자인 2024", category: "캡스톤", description: "2024학년도 캡스톤 디자인", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[5], academicCycleId: pastCycles[2].id, name: "PNU 창의융합 해커톤 2023", category: "해커톤", description: "2023학년도 창의융합 해커톤", startsAt: new Date("2023-05-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[4], academicCycleId: pastCycles[0].id, name: "PNU 창의융합 해커톤 2025", category: "해커톤", description: "지역과 캠퍼스의 문제를 해결한 2025학년도 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[5], academicCycleId: pastCycles[1].id, name: "CSE 캡스톤 디자인 2024", category: "캡스톤", description: "2024학년도 캡스톤 디자인", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[6], academicCycleId: pastCycles[1].id, name: "PNU AI 부스터 2024", category: "교육 프로그램", description: "AI 활용 문제 해결 역량을 다룬 2024학년도 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[7], academicCycleId: pastCycles[2].id, name: "CSE 캡스톤 디자인 2023", category: "캡스톤", description: "2023학년도 캡스톤 디자인", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[8], academicCycleId: pastCycles[2].id, name: "카카오 테크 캠퍼스 1기", category: "산학 프로그램", description: "실무형 웹 서비스 개발을 수행한 산학 협력 프로그램", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[9], academicCycleId: pastCycles[3].id, name: "CSE 캡스톤 디자인 2022", category: "캡스톤", description: "2022학년도 캡스톤 디자인", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[10], academicCycleId: pastCycles[3].id, name: "PNU 오픈소스 SW 경진대회 2022", category: "경진대회", description: "오픈소스 기반 제품 개발과 공개 기여를 다룬 교내 경진대회", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), status: "CLOSED" }),
     ];
 
     const activeTopics = [
@@ -241,38 +280,59 @@ async function seed() {
     ] as const;
     for (const [index, data] of activeTopics.entries()) {
       const [title, description, requiredSkills, preferredSkills, roleExpectations, availabilityRequirement, capacity, programIndex, professorIndex] = data;
+      const schedules = [
+        {
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-15T23:59:59+09:00"),
+          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+        },
+        {
+          recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-07-31T23:59:59+09:00"),
+          executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
+          submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
+        },
+        {
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-10T23:59:59+09:00"),
+          executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
+          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+        },
+      ] as const;
+      const schedule = schedules[programIndex];
       await tx.topic.upsert({
         where: { id: ids.topics[index] },
         update: {
           academicCycleId: currentCycle.id, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity,
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-15T23:59:59+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+          ...schedule,
           status: "PUBLISHED", publishedAt: new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`),
         },
         create: {
           id: ids.topics[index], academicCycleId: currentCycle.id, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity,
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-15T23:59:59+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+          ...schedule,
           status: "PUBLISHED", publishedAt: new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`),
         },
       });
     }
 
     const pastTopics = [
-      ["스마트 캠퍼스 내비게이션 앱", "건물 간 이동 시간과 무장애 경로를 함께 제공하는 교내 길찾기 서비스", ["Flutter", "PostGIS"], ["모바일 UX"], 0, 0],
-      ["코드 리뷰 학습 분석 플랫폼", "리뷰 코멘트와 수정 이력을 분석해 반복되는 학습 주제를 보여 주는 협업 도구", ["Spring", "React"], ["텍스트 분석"], 0, 1],
-      ["IoT 기반 강의실 공기질 모니터링", "센서 데이터를 수집해 환기 시점과 공간별 공기질 변화를 알리는 시스템", ["IoT", "Grafana"], ["임베디드"], 1, 2],
-      ["시각장애 학생을 위한 강의자료 OCR", "강의자료의 표와 수식을 읽기 쉬운 구조로 변환하는 접근성 도구", ["Python", "OCR"], ["접근성"], 1, 0],
-      ["교과목 선수관계 시각화", "교육과정의 선수 과목과 진로별 추천 이수 흐름을 탐색하는 웹 서비스", ["D3.js", "TypeScript"], ["정보 시각화"], 2, 1],
+      ["스마트 캠퍼스 내비게이션 앱", "건물 간 이동 시간과 무장애 경로를 함께 제공하는 교내 길찾기 서비스", ["Flutter", "PostGIS"], ["모바일 UX"], 0, 0, 0],
+      ["코드 리뷰 학습 분석 플랫폼", "리뷰 코멘트와 수정 이력을 분석해 반복되는 학습 주제를 보여 주는 협업 도구", ["Spring", "React"], ["텍스트 분석"], 0, 0, 1],
+      ["축제 다회용기 반납 동선 최적화", "교내 축제의 대여·반납 기록을 분석해 대기 시간을 줄이는 수거 지점 배치 도구", ["Python", "React"], ["최적화"], 0, 1, 2],
+      ["IoT 기반 강의실 공기질 모니터링", "센서 데이터를 수집해 환기 시점과 공간별 공기질 변화를 알리는 시스템", ["IoT", "Grafana"], ["임베디드"], 1, 2, 2],
+      ["시각장애 학생을 위한 강의자료 OCR", "강의자료의 표와 수식을 읽기 쉬운 구조로 변환하는 접근성 도구", ["Python", "OCR"], ["접근성"], 1, 2, 0],
+      ["전공 용어 한영 병렬 말뭉치 검수 도구", "학과 강의자료에서 구축한 병렬 문장의 번역 누락과 용어 불일치를 검토하는 도구", ["Python", "NLP"], ["번역 평가"], 1, 3, 1],
+      ["교과목 선수관계 시각화", "교육과정의 선수 과목과 진로별 추천 이수 흐름을 탐색하는 웹 서비스", ["D3.js", "TypeScript"], ["정보 시각화"], 2, 4, 1],
+      ["실험실 장비 예약 충돌 방지 서비스", "공용 장비의 예약, 승인과 사용 이력을 연결해 중복 예약과 미반납을 줄이는 웹 서비스", ["Spring", "PostgreSQL"], ["도메인 모델링"], 2, 4, 0],
+      ["신입생 수강 계획 도우미", "관심 진로와 이수 현황을 바탕으로 다음 학기 수강 계획을 비교하는 서비스", ["React", "Kotlin"], ["추천 UX"], 2, 5, 2],
+      ["졸업 요건 점검 자동화", "학생별 이수 내역에서 전공·교양·졸업 요건의 충족 여부와 남은 항목을 설명하는 도구", ["Java", "PostgreSQL"], ["규칙 엔진"], 3, 6, 0],
+      ["학내 분실물 이미지 검색", "분실물 사진과 설명을 함께 검색해 유사한 습득물 후보를 빠르게 찾는 서비스", ["Python", "OpenCV"], ["검색"], 3, 6, 1],
+      ["오픈소스 기여 시작 안내서", "초보 기여자가 이슈 선택부터 첫 풀 리퀘스트까지 따라갈 수 있는 저장소 탐색 도구", ["TypeScript", "GitHub API"], ["오픈소스"], 3, 7, 2],
     ] as const;
     for (const [offset, data] of pastTopics.entries()) {
-      const [title, description, requiredSkills, preferredSkills, programIndex, professorIndex] = data;
+      const [title, description, requiredSkills, preferredSkills, cycleIndex, programIndex, professorIndex] = data;
       const topicIndex = offset + 6;
-      const targetCycle = pastCycles[programIndex];
+      const targetCycle = pastCycles[cycleIndex];
       const targetProgram = pastPrograms[programIndex];
       await tx.topic.upsert({
         where: { id: ids.topics[topicIndex] },
@@ -295,32 +355,34 @@ async function seed() {
       });
     }
 
-    const acceptedApplicationRows = [
-      // 2026년 진행 팀
-      [0, 0], [0, 1], [2, 2],
-      // 2025년 종료 팀: 같은 학기에는 학생이 한 팀에만 속한다.
-      [6, 0], [6, 1], [6, 2], [6, 3],
-      [7, 4], [7, 5], [7, 6], [7, 7],
-      // 2024년 종료 팀
-      [8, 0], [8, 2], [8, 4], [8, 6],
-      [9, 1], [9, 3], [9, 5], [9, 7],
-      // 2023년 종료 팀
-      [10, 0], [10, 1], [10, 2], [10, 3],
-    ] as const;
+    const pastAcceptedApplicationRows = pastTopics.flatMap((_, offset) => {
+      const firstStudentIndex = (offset % 3) * 4;
+      return Array.from({ length: 4 }, (__, memberOffset) => [offset + 6, firstStudentIndex + memberOffset] as const);
+    });
+    const acceptedApplicationRows: Array<readonly [number, number]> = [
+      // 2026년 진행 팀. 모두의 길은 정원 마감, 프로젝트 모아는 추가 모집 중이다.
+      [0, 0], [0, 1], [0, 3], [0, 4], [2, 2],
+      // 과거 학년도마다 학생은 한 팀에만 속하고, 다음 학년도에는 새 팀으로 참여할 수 있다.
+      ...pastAcceptedApplicationRows,
+    ];
     const reviewApplicationRows = [
-      [1, 3, "PENDING", "시계열 데이터를 정리하고 예측 결과를 이해하기 쉬운 화면으로 표현해 보고 싶습니다."],
-      [1, 4, "REJECTED", "Flutter 프로젝트 경험을 바탕으로 모바일에서도 혼잡도 정보를 빠르게 확인할 수 있게 만들겠습니다."],
-      [3, 5, "PENDING", "공공 데이터를 안정적으로 정제하고 상황별 안내 문구의 정확성을 검증하겠습니다."],
-      [4, 6, "REJECTED", "센서 수집 경험을 살려 행사 현장의 데이터 입력 과정을 단순하게 만들고 싶습니다."],
-      [5, 7, "PENDING", "번역 결과의 차이를 한눈에 비교할 수 있는 정보 구조와 평가 화면을 설계하겠습니다."],
-      [2, 3, "PENDING", "교수와 학생 인터뷰 결과를 바탕으로 지원부터 결과물 관리까지의 흐름을 다듬고 싶습니다."],
-      [2, 4, "REJECTED", "반응형 인터페이스 구현과 접근성 점검을 맡아 실제 학과 구성원이 편하게 쓰는 화면을 만들겠습니다."],
+      [1, 5, "PENDING", "시계열 데이터를 정리하고 예측 결과를 이해하기 쉬운 화면으로 표현해 보고 싶습니다."],
+      [1, 6, "REJECTED", "센서 수집 경험을 바탕으로 혼잡도 데이터의 수집 품질을 높이겠습니다."],
+      [3, 7, "PENDING", "공공 데이터를 안정적으로 정제하고 상황별 안내 문구의 정확성을 검증하겠습니다."],
+      [4, 8, "REJECTED", "서버 개발 경험을 살려 행사 수요 데이터의 수집 과정을 안정적으로 만들겠습니다."],
+      [5, 9, "PENDING", "번역 결과의 차이를 한눈에 비교할 수 있는 정보 구조와 평가 화면을 설계하겠습니다."],
+      [2, 10, "PENDING", "인증과 권한 경계를 점검해 학과 프로젝트 기록을 안전하게 관리하고 싶습니다."],
+      [2, 11, "REJECTED", "학생 인터뷰 결과를 바탕으로 처음 쓰는 사람도 이해할 수 있는 흐름을 설계하겠습니다."],
     ] as const;
-    await tx.topicApplication.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
+    function acceptedApplicationTiming(topicIndex: number) {
       const createdAt = topicIndex < 6
         ? new Date("2026-07-05T12:00:00+09:00")
-        : new Date(pastPrograms[pastTopics[topicIndex - 6][4]].startsAt.getTime() + 14 * 86_400_000);
+        : new Date(pastPrograms[pastTopics[topicIndex - 6][5]].startsAt.getTime() + 14 * 86_400_000);
       const decidedAt = new Date(createdAt.getTime() + 5 * 86_400_000);
+      return { createdAt, decidedAt };
+    }
+    await tx.topicApplication.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
+      const { createdAt, decidedAt } = acceptedApplicationTiming(topicIndex);
       return {
       id: ids.applications[index], topicId: ids.topics[topicIndex], studentId: ids.students[studentIndex], message: "프로젝트 목표에 공감하며 맡은 역할을 끝까지 수행하겠습니다.",
       skills: topicIndex === 0 ? ["Next.js", "Figma"] : ["TypeScript", "Git"], desiredRole: "개발 및 사용자 검증", availability: "평일 저녁과 주말 가능",
@@ -370,21 +432,29 @@ async function seed() {
       }
     }
 
-    const teamRows = [
+    const pastTeamNames = [
+      "PNU Navi", "Review Loop", "Re:cup", "AirClass", "SeeText", "TermBridge",
+      "Curriculum Map", "LabLink", "Roadmap", "Degree Check", "FindIt", "First Commit",
+    ] as const;
+    const teamRows: Array<readonly [number, string, number, string, "FORMING" | "CONFIRMED" | "CLOSED"]> = [
       [0, currentCycle.id, 0, "모두의 길", "CONFIRMED"],
       [2, currentCycle.id, 2, "프로젝트 모아", "FORMING"],
-      [6, pastCycles[0].id, 0, "PNU Navi", "CLOSED"],
-      [7, pastCycles[0].id, 1, "Review Loop", "CLOSED"],
-      [8, pastCycles[1].id, 2, "AirClass", "CLOSED"],
-      [9, pastCycles[1].id, 0, "SeeText", "CLOSED"],
-      [10, pastCycles[2].id, 1, "Curriculum Map", "CLOSED"],
-    ] as const;
+      ...pastTopics.map((topic, offset) => [offset + 6, pastCycles[topic[4]].id, topic[6], pastTeamNames[offset], "CLOSED"] as const),
+    ];
     await tx.team.createMany({ data: teamRows.map(([topicIndex, academicCycleId, professorIndex, name, status], index) => ({
       id: ids.teams[index], academicCycleId, topicId: ids.topics[topicIndex], professorId: ids.professors[professorIndex], name, status,
+      createdAt: topicIndex < 6
+        ? new Date("2026-07-10T15:00:00+09:00")
+        : acceptedApplicationTiming(topicIndex).decidedAt,
     })) });
+    const teamIndexByTopic = new Map(teamRows.map(([topicIndex], teamIndex) => [topicIndex, teamIndex]));
     await tx.teamMember.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
-      const teamIndex = topicIndex === 0 ? 0 : topicIndex === 2 ? 1 : topicIndex - 4;
-      return { id: ids.members[index], teamId: ids.teams[teamIndex], academicCycleId: teamRows[teamIndex][1], topicId: ids.topics[topicIndex], studentId: ids.students[studentIndex], applicationId: ids.applications[index] };
+      const teamIndex = teamIndexByTopic.get(topicIndex);
+      if (teamIndex === undefined) throw new Error(`팀이 없는 주제에 합격 지원이 연결되었습니다: ${topicIndex}`);
+      return {
+        id: ids.members[index], teamId: ids.teams[teamIndex], academicCycleId: teamRows[teamIndex][1], topicId: ids.topics[topicIndex],
+        studentId: ids.students[studentIndex], applicationId: ids.applications[index], joinedAt: acceptedApplicationTiming(topicIndex).decidedAt,
+      };
     }) });
     if (localViewer && localViewerApplicationId) {
       await tx.teamMember.create({ data: {
@@ -398,26 +468,37 @@ async function seed() {
       } });
     }
 
-    const closedTeamIndexes = [2, 3, 4, 5, 6] as const;
-    const closedTeamSubmitters = [0, 4, 0, 1, 0] as const;
     for (const [reportIndex, teamIndex] of closedTeamIndexes.entries()) {
-      const programIndex = teamIndex <= 3 ? 0 : teamIndex <= 5 ? 1 : 2;
+      const topicIndex = teamRows[teamIndex][0];
+      const programIndex = pastTopics[topicIndex - 6][5];
+      const submitterIndex = (reportIndex % 3) * 4;
       const submittedAt = new Date(pastPrograms[programIndex].endsAt.getTime() - 14 * 86_400_000);
+      const approvedAt = new Date(submittedAt.getTime() + 5 * 86_400_000);
       const objectKey = `demo/teams/${ids.teams[teamIndex]}/final-report.pdf`;
       await tx.storedFile.create({ data: {
-        id: ids.storedFiles[reportIndex], teamId: ids.teams[teamIndex], ownerId: ids.students[closedTeamSubmitters[reportIndex]], purpose: "REPORT", status: "READY",
+        id: ids.storedFiles[reportIndex], teamId: ids.teams[teamIndex], ownerId: ids.students[submitterIndex], purpose: "REPORT", status: "READY",
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: demoReportPdf.byteLength,
         sha256: demoReportSha256, expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
       await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
         id: ids.reportVersions[reportIndex], reportId: ids.reports[reportIndex], version: 1, fileId: ids.storedFiles[reportIndex],
-        submitterId: ids.students[closedTeamSubmitters[reportIndex]], description: "최종 검토 의견을 반영한 결과 보고서", submittedAt,
+        submitterId: ids.students[submitterIndex], description: "최종 검토 의견을 반영한 결과 보고서", submittedAt,
       } });
       await tx.approvalDecision.create({ data: {
         id: ids.approvalDecisions[reportIndex], reportVersionId: ids.reportVersions[reportIndex], reviewerId: ids.professors[teamRows[teamIndex][2]],
-        decision: "APPROVED", comment: "최종 결과와 수행 과정 확인 완료", decidedAt: new Date(submittedAt.getTime() + 5 * 86_400_000),
+        decision: "APPROVED", comment: "최종 결과와 수행 과정 확인 완료", decidedAt: approvedAt,
       } });
+      await tx.auditLog.createMany({ data: [
+        {
+          actorId: ids.professors[teamRows[teamIndex][2]], action: "REPORT_APPROVED", targetType: "REPORT_VERSION",
+          targetId: ids.reportVersions[reportIndex], metadata: { teamId: ids.teams[teamIndex], reportType: "FINAL", version: 1 }, createdAt: approvedAt,
+        },
+        {
+          actorId: ids.professors[teamRows[teamIndex][2]], action: "TEAM_CLOSED", targetType: "TEAM",
+          targetId: ids.teams[teamIndex], metadata: { topicId: ids.topics[topicIndex] }, createdAt: new Date(approvedAt.getTime() + 86_400_000),
+        },
+      ] });
     }
 
     const recruitmentAuthorId = localViewerApplicationId && localViewer ? localViewer.id : ids.students[2];
@@ -440,7 +521,7 @@ async function seed() {
         id: ids.recruitmentApplications[0],
         postId: ids.recruitments[0],
         topicApplicationId: ids.applications[acceptedApplicationRows.length + 5],
-        studentId: ids.students[3],
+        studentId: ids.students[10],
         status: "PENDING",
         createdAt: new Date("2026-07-15T21:00:00+09:00"),
       },
@@ -448,7 +529,7 @@ async function seed() {
         id: ids.recruitmentApplications[1],
         postId: ids.recruitments[1],
         topicApplicationId: ids.applications[acceptedApplicationRows.length + 6],
-        studentId: ids.students[4],
+        studentId: ids.students[11],
         status: "REJECTED",
         createdAt: new Date("2026-07-15T22:30:00+09:00"),
         decidedAt: new Date("2026-07-16T19:00:00+09:00"),
@@ -475,7 +556,7 @@ async function seed() {
       { id: ids.discussions[2], teamId: ids.teams[1], authorId: ids.students[2], content: "이번 주에는 프로그램을 별도 메뉴로 분리하지 않고 주제 필터로 이해되는지 확인하겠습니다.", createdAt: new Date("2026-07-15T13:30:00+09:00") },
       { id: ids.discussions[3], teamId: ids.teams[1], authorId: ids.professors[2], content: "지난 프로젝트의 결과물까지 같은 탐색 맥락에서 이어지는지 사용자 테스트 항목에 포함해 주세요.", createdAt: new Date("2026-07-16T11:00:00+09:00") },
     ] });
-    if (localViewer) {
+    if (localViewer && localViewerApplicationId) {
       await tx.notification.createMany({ data: [
         {
           recipientId: localViewer.id,
@@ -491,7 +572,7 @@ async function seed() {
           recipientId: localViewer.id,
           type: "SYSTEM",
           title: "새로운 팀원 지원이 도착했습니다",
-          body: "프론트엔드 팀원 모집 글에 한지우 학생이 지원했습니다. 지원 조건과 메시지를 확인해 주세요.",
+          body: "프론트엔드 팀원 모집 글에 조현우 학생이 지원했습니다. 지원 조건과 메시지를 확인해 주세요.",
           href: "/recruitments",
           dedupeKey: `demo:viewer:recruitment-application:${localViewer.id}`,
           createdAt: new Date("2026-07-15T21:00:00+09:00"),
@@ -517,18 +598,69 @@ async function seed() {
       ] });
     }
 
-    const artifactRows = [
-      [2, "SOURCE_CODE", "PNU Navi 소스 코드", "https://github.com/pusan-cse-demo/pnu-navi"], [2, "PRESENTATION_VIDEO", "최종 발표 영상", "https://www.youtube.com/"],
-      [3, "SOURCE_CODE", "Review Loop 저장소", "https://github.com/pusan-cse-demo/review-loop"], [3, "POSTER", "학습 분석 포스터", "https://example.com/pusan-demo/review-loop-poster"],
-      [4, "SOURCE_CODE", "AirClass 펌웨어와 서버", "https://github.com/pusan-cse-demo/air-class"], [4, "OTHER", "공기질 데이터 설명서", "https://example.com/pusan-demo/air-class-data"],
-      [5, "SOURCE_CODE", "SeeText 소스 코드", "https://github.com/pusan-cse-demo/see-text"], [5, "PRESENTATION_VIDEO", "접근성 사용자 테스트", "https://www.youtube.com/"],
-      [6, "SOURCE_CODE", "Curriculum Map 저장소", "https://github.com/pusan-cse-demo/curriculum-map"], [6, "POSTER", "교육과정 시각화 포스터", "https://example.com/pusan-demo/curriculum-map-poster"],
-    ] as const;
-    const artifactRegistrants = [0, 1, 4, 5, 0, 2, 1, 3, 0, 1] as const;
-    await tx.artifact.createMany({ data: artifactRows.map(([teamIndex, type, title, externalUrl], index) => ({ id: ids.artifacts[index], teamId: ids.teams[teamIndex], registeredById: ids.students[artifactRegistrants[index]], type, title, externalUrl })) });
+    for (const [index, teamIndex] of closedTeamIndexes.entries()) {
+      const ownerId = ids.students[(index % 3) * 4];
+      const publishedAt = new Date(pastPrograms[pastTopics[teamRows[teamIndex][0] - 6][5]].endsAt.getTime() - 8 * 86_400_000);
+      const objectKey = demoArtifactObjectKeys[index];
+      const fileId = ids.storedFiles[index + closedTeamIndexes.length];
+      await tx.storedFile.create({ data: {
+        id: fileId, teamId: ids.teams[teamIndex], ownerId, purpose: "ARTIFACT", status: "READY",
+        objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-공개결과.pdf`, contentType: "application/pdf",
+        size: demoReportPdf.byteLength, sha256: demoReportSha256, expiresAt: publishedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"),
+        readyAt: publishedAt, createdAt: publishedAt,
+      } });
+      await tx.artifact.create({ data: {
+        id: ids.artifacts[index], teamId: ids.teams[teamIndex], registeredById: ownerId, type: "OTHER",
+        title: `${teamRows[teamIndex][3]} 승인 결과 보고서`, fileId, createdAt: publishedAt,
+      } });
+    }
     await tx.objectDeletionJob.deleteMany({
-      where: { objectKey: { in: [...demoReportObjectKeys, ...demoReportUploadObjectKeys] } },
+      where: { objectKey: { in: [...demoObjectKeys, ...demoUploadObjectKeys] } },
     });
+    const [integrity] = await tx.$queryRaw<Array<{
+      scheduleOutsideProgram: number;
+      duplicateMembership: number;
+      recruitmentStudentMismatch: number;
+      professorWithoutAllowlist: number;
+      closedTeamWithoutApproval: number;
+      closedTeamWithoutAudit: number;
+    }>>(Prisma.sql`
+      SELECT
+        (SELECT count(*)::int FROM "topic" AS topic
+          JOIN "project_program" AS program ON program."id" = topic."programId"
+          WHERE topic."recruitmentStartsAt" < program."startsAt"
+            OR topic."recruitmentEndsAt" > program."endsAt"
+            OR topic."executionStartsAt" < program."startsAt"
+            OR topic."executionEndsAt" > program."endsAt"
+            OR topic."submissionStartsAt" < program."startsAt"
+            OR topic."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
+        (SELECT count(*)::int FROM (
+          SELECT "academicCycleId", "studentId" FROM "team_member" GROUP BY 1, 2 HAVING count(*) > 1
+        ) AS duplicate) AS "duplicateMembership",
+        (SELECT count(*)::int FROM "recruitment_application" AS recruitment
+          JOIN "topic_application" AS application ON application."id" = recruitment."topicApplicationId"
+          WHERE recruitment."studentId" <> application."studentId") AS "recruitmentStudentMismatch",
+        (SELECT count(*)::int FROM "user" AS account
+          LEFT JOIN "professor_allowlist" AS allowlist ON allowlist."email" = account."email" AND allowlist."revokedAt" IS NULL
+          WHERE account."role" = 'PROFESSOR'::"UserRole" AND allowlist."id" IS NULL) AS "professorWithoutAllowlist",
+        (SELECT count(*)::int FROM "team" AS team
+          WHERE team."status" = 'CLOSED'::"TeamStatus" AND NOT EXISTS (
+            SELECT 1 FROM "report" AS report
+            JOIN "report_version" AS version ON version."reportId" = report."id"
+            JOIN "approval_decision" AS decision ON decision."reportVersionId" = version."id"
+            WHERE report."teamId" = team."id" AND report."type" = 'FINAL'::"ReportType"
+              AND decision."decision" = 'APPROVED'::"ApprovalDecisionType"
+          )) AS "closedTeamWithoutApproval",
+        (SELECT count(*)::int FROM "team" AS team
+          WHERE team."status" = 'CLOSED'::"TeamStatus" AND NOT EXISTS (
+            SELECT 1 FROM "audit_log" AS audit
+            WHERE audit."action" = 'TEAM_CLOSED'::"AuditAction" AND audit."targetId" = team."id"
+          )) AS "closedTeamWithoutAudit"
+    `);
+    const failedIntegrityChecks = Object.entries(integrity).filter(([, failures]) => failures !== 0);
+    if (failedIntegrityChecks.length > 0) {
+      throw new Error(`데모 데이터 정합성 검증 실패: ${failedIntegrityChecks.map(([name, failures]) => `${name}=${failures}`).join(", ")}`);
+    }
     return {
       localViewer: localViewer ? { name: localViewer.name, email: localViewer.email } : null,
       connectedToDemoProject: Boolean(localViewerApplicationId),
@@ -544,10 +676,10 @@ async function seed() {
     topicApplications: seedResult.topicApplications,
     recruitmentPosts: 2,
     recruitmentApplications: 2,
-    notifications: seedResult.localViewer ? 4 : 0,
-    archivedProjects: 5,
-    approvedFinalReports: 5,
-    artifacts: 10,
+    notifications: seedResult.connectedToDemoProject ? 4 : 0,
+    archivedProjects: 12,
+    approvedFinalReports: 12,
+    artifacts: 12,
     localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
     verificationResidueRemoved: seedResult.verificationResidueRemoved,
   }));
