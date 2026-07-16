@@ -61,7 +61,16 @@ export class PrismaTeamWorkspaceRepository
     const team = await this.client.team.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       include: {
-        topic: { select: { title: true, author: { select: { name: true } } } },
+        topic: { select: {
+          title: true,
+          recruitmentStartsAt: true,
+          recruitmentEndsAt: true,
+          executionStartsAt: true,
+          executionEndsAt: true,
+          submissionStartsAt: true,
+          submissionEndsAt: true,
+          author: { select: { name: true } },
+        } },
         members: {
           orderBy: { joinedAt: "asc" },
           select: {
@@ -157,6 +166,14 @@ export class PrismaTeamWorkspaceRepository
       topicTitle: team.topic.title,
       status: team.status,
       professorName: team.topic.author.name,
+      schedule: {
+        recruitmentStartsAt: team.topic.recruitmentStartsAt,
+        recruitmentEndsAt: team.topic.recruitmentEndsAt,
+        executionStartsAt: team.topic.executionStartsAt,
+        executionEndsAt: team.topic.executionEndsAt,
+        submissionStartsAt: team.topic.submissionStartsAt,
+        submissionEndsAt: team.topic.submissionEndsAt,
+      },
       canClose: team.status === "CONFIRMED" && team.reports[0]?.versions[0]?.decision?.decision === "APPROVED",
       memberCount: team.members.length,
       milestoneCount: team.milestones.length,

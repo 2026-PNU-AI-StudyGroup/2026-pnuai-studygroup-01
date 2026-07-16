@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { RecruitmentOperationError, RecruitmentService } from "@/modules/recruitment/application/manage-recruitment";
 
 describe("학생 팀원 모집", () => {
+  it("열린 모집과 전체 지원 이력 페이지를 함께 조회한다", async () => {
+    const repository = { list: vi.fn(async () => ({ posts: [], formingTeams: [], page: 1, totalPages: 1, total: 0, applicationHistory: [], historyPage: 1, historyTotalPages: 1, historyTotal: 0 })), createPost: vi.fn(), apply: vi.fn(), findDecisionTarget: vi.fn() };
+    const decisions = { findDecisionState: vi.fn(), accept: vi.fn(), reject: vi.fn() };
+    await new RecruitmentService(repository, decisions).list({ id: "student", role: "STUDENT" }, 2, 3);
+    expect(repository.list).toHaveBeenCalledWith("student", 2, 3);
+  });
+
   it("구성 단계 팀원이 구조화 모집 글을 등록한다", async () => {
     const repository = { list: vi.fn(), createPost: vi.fn(async () => true), apply: vi.fn(), findDecisionTarget: vi.fn() };
     const decisions = { findDecisionState: vi.fn(), accept: vi.fn(), reject: vi.fn() };

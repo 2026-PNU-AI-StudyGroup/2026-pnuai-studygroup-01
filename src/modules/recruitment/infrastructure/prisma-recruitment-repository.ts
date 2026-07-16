@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import type { RecruitmentPostView, RecruitmentRepository } from "@/modules/recruitment/application/manage-recruitment";
+import type { RecruitmentListResult, RecruitmentPostView, RecruitmentRepository } from "@/modules/recruitment/application/manage-recruitment";
 
 export class PrismaRecruitmentRepository implements RecruitmentRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(actorId: string, requestedPage: number): Promise<{ posts: RecruitmentPostView[]; formingTeams: Array<{ id: string; name: string }>; page: number; totalPages: number; total: number }> {
+  async list(actorId: string, requestedPage: number, requestedHistoryPage: number): Promise<RecruitmentListResult> {
     const now = new Date();
     const visible: Prisma.RecruitmentPostWhereInput = { status: "OPEN", team: { status: "FORMING" }, OR: [
       { authorId: actorId, team: { topic: { status: "PUBLISHED" } } },
@@ -14,7 +14,10 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
     const total = await this.client.recruitmentPost.count({ where: visible });
     const totalPages = Math.max(1, Math.ceil(total / 20));
     const page = Math.min(Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1, totalPages);
-    const [posts, formingTeams] = await Promise.all([
+    const historyTotal = await this.client.recruitmentApplication.count({ where: { studentId: actorId } });
+    const historyTotalPages = Math.max(1, Math.ceil(historyTotal / 20));
+    const historyPage = Math.min(Number.isSafeInteger(requestedHistoryPage) && requestedHistoryPage > 0 ? requestedHistoryPage : 1, historyTotalPages);
+    const [posts, formingTeams, applicationHistory] = await Promise.all([
       this.client.recruitmentPost.findMany({
         where: visible, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 20, take: 20,
         include: {
@@ -26,6 +29,25 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
       this.client.team.findMany({
         where: { status: "FORMING", members: { some: { studentId: actorId } }, topic: { status: "PUBLISHED", recruitmentStartsAt: { lte: now }, recruitmentEndsAt: { gt: now } } },
         select: { id: true, name: true, topic: { select: { capacity: true } }, _count: { select: { members: true } } }, orderBy: { name: "asc" },
+      }),
+      this.client.recruitmentApplication.findMany({
+        where: { studentId: actorId },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: (historyPage - 1) * 20,
+        take: 20,
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          decidedAt: true,
+          post: {
+            select: {
+              title: true,
+              author: { select: { name: true } },
+              team: { select: { name: true, topic: { select: { title: true } } } },
+            },
+          },
+        },
       }),
     ]);
     const visiblePostIds = posts.filter(({ authorId }) => authorId === actorId).map(({ id }) => id);
@@ -41,6 +63,16 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
     }
     return {
       formingTeams: formingTeams.filter((team) => team._count.members < team.topic.capacity).map(({ id, name }) => ({ id, name })), page, totalPages, total,
+      applicationHistory: applicationHistory.map(({ post, ...application }) => ({
+        ...application,
+        postTitle: post.title,
+        teamName: post.team.name,
+        topicTitle: post.team.topic.title,
+        recruiterName: post.author.name,
+      })),
+      historyPage,
+      historyTotalPages,
+      historyTotal,
       posts: posts.map((post) => ({
         id: post.id, teamId: post.teamId, teamName: post.team.name, topicTitle: post.team.topic.title,
         authorId: post.authorId, authorName: post.author.name, title: post.title, content: post.content,

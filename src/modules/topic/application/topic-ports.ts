@@ -2,6 +2,7 @@ import type {
   TopicDetails,
   TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicDraft = TopicDetails &
   TopicSchedule & {
@@ -12,6 +13,10 @@ export type TopicDraft = TopicDetails &
 
 export interface TopicCreator {
   createDraft(topic: TopicDraft): Promise<{ id: string } | null>;
+}
+
+export interface TopicScheduleUpdater {
+  updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
 }
 
 export type TopicSummary = TopicDraft & {

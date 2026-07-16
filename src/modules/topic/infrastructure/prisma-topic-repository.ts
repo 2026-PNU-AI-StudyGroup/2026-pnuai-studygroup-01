@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   TopicCreator,
   TopicDraft,
@@ -7,11 +8,13 @@ import type {
   PublicTopicSummary,
   TopicStateRecord,
   TopicStateRepository,
+  TopicScheduleUpdater,
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
+import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
 
 export class PrismaTopicRepository
-  implements TopicCreator, TopicLister, TopicStateRepository, PublicTopicLister
+  implements TopicCreator, TopicLister, TopicStateRepository, TopicScheduleUpdater, PublicTopicLister
 {
   constructor(private readonly client: PrismaClient) {}
 
@@ -121,6 +124,35 @@ export class PrismaTopicRepository
       data: { status: "CLOSED" },
     });
     return result.count === 1;
+  }
+
+  async updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean> {
+    const changedAt = new Date();
+    const rows = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      UPDATE "topic"
+      SET
+        "recruitmentStartsAt" = ${schedule.recruitmentStartsAt},
+        "recruitmentEndsAt" = ${schedule.recruitmentEndsAt},
+        "executionStartsAt" = ${schedule.executionStartsAt},
+        "executionEndsAt" = ${schedule.executionEndsAt},
+        "submissionStartsAt" = ${schedule.submissionStartsAt},
+        "submissionEndsAt" = ${schedule.submissionEndsAt},
+        "updatedAt" = ${changedAt}
+      FROM "project_program"
+      WHERE "topic"."id" = ${id}
+        AND "topic"."programId" = "project_program"."id"
+        AND "topic"."status" <> 'CLOSED'::"TopicStatus"
+        AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
+        AND (${actor.role}::"UserRole" = 'ADMIN'::"UserRole" OR "topic"."authorId" = ${actor.id})
+        AND ${schedule.recruitmentStartsAt} >= "project_program"."startsAt"
+        AND ${schedule.recruitmentEndsAt} <= "project_program"."endsAt"
+        AND ${schedule.executionStartsAt} >= "project_program"."startsAt"
+        AND ${schedule.executionEndsAt} <= "project_program"."endsAt"
+        AND ${schedule.submissionStartsAt} >= "project_program"."startsAt"
+        AND ${schedule.submissionEndsAt} <= "project_program"."endsAt"
+      RETURNING "topic"."id"
+    `);
+    return rows.length === 1;
   }
 
   async listPublished(programId?: string): Promise<PublicTopicSummary[]> {

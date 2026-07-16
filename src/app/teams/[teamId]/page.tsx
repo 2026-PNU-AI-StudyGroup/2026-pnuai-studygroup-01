@@ -74,6 +74,10 @@ export default async function TeamWorkspacePage({
         <section aria-labelledby="members-title" className="border-y border-[var(--line)] py-5">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3"><h2 id="members-title" className="text-sm font-bold">팀원 {workspace.members.length}명</h2>{workspace.members.map((member) => <span key={member.id} className="text-sm"><strong>{member.name}</strong><span className="muted ml-2 hidden sm:inline">{member.email}</span></span>)}</div>
         </section>
+        <section aria-labelledby="schedule-title">
+          <div className="mb-4"><p className="eyebrow">Schedule</p><h2 id="schedule-title" className="mt-1 text-xl font-bold">프로젝트 일정</h2></div>
+          <dl className="grid gap-4 border-y border-[var(--line)] py-5 text-sm md:grid-cols-3"><div><dt className="muted text-xs">모집 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.recruitmentStartsAt)} – {koreanDate.format(workspace.schedule.recruitmentEndsAt)}</dd></div><div><dt className="muted text-xs">수행 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.executionStartsAt)} – {koreanDate.format(workspace.schedule.executionEndsAt)}</dd></div><div><dt className="muted text-xs">제출 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.submissionStartsAt)} – {koreanDate.format(workspace.schedule.submissionEndsAt)}</dd></div></dl>
+        </section>
         <div className="grid gap-14 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)] xl:items-start">
           <section aria-labelledby="milestones-title">
             <div className="mb-5 flex items-end justify-between"><div><p className="eyebrow">Plan</p><h2 id="milestones-title" className="mt-1 text-xl font-bold">마일스톤</h2></div><span className="muted text-sm">완료 {workspace.completedMilestoneCount} / {workspace.milestoneCount}</span></div>

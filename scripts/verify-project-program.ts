@@ -5,7 +5,10 @@ import { randomUUID } from "node:crypto";
 import { ProjectProgramService } from "../src/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "../src/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "../src/modules/topic/application/create-topic";
+import { UpdateTopicScheduleService } from "../src/modules/topic/application/update-topic-schedule";
 import { PrismaTopicRepository } from "../src/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicApplicationRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_PROGRAM_TEST !== "true") {
@@ -74,6 +77,23 @@ async function main() {
   if (!(await topics.publishDraft(topic.id, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
   const filtered = await topics.listPublished(program.id);
   if (filtered.length !== 1 || filtered[0].programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
+  const changedSchedule = {
+    recruitmentStartsAt: new Date(now.getTime() - 30 * 60_000),
+    recruitmentEndsAt: new Date(now.getTime() + 40 * day),
+    executionStartsAt: new Date(now.getTime() + 10 * day),
+    executionEndsAt: new Date(now.getTime() + 75 * day),
+    submissionStartsAt: new Date(now.getTime() + 65 * day),
+    submissionEndsAt: new Date(now.getTime() + 85 * day),
+  };
+  await new UpdateTopicScheduleService(topics).execute(
+    { id: professorId, role: "PROFESSOR" },
+    topic.id,
+    changedSchedule,
+  );
+  const scheduledTopic = await prisma.topic.findUniqueOrThrow({ where: { id: topic.id } });
+  if (scheduledTopic.recruitmentEndsAt.getTime() !== changedSchedule.recruitmentEndsAt.getTime()) {
+    throw new Error("주제 작성자가 변경한 일정이 저장되지 않았습니다.");
+  }
 
   const accepted = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: leaderId, message: "팀장", status: "ACCEPTED", decidedAt: now } });
   const pending = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: applicantId, message: "지원", status: "PENDING" } });
@@ -91,6 +111,16 @@ async function main() {
   ]);
   if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED") {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
+  }
+  const [topicHistory, recruitmentHistory] = await Promise.all([
+    new PrismaTopicApplicationRepository(prisma).listByStudent(applicantId),
+    new PrismaRecruitmentRepository(prisma).list(applicantId, 1, 1),
+  ]);
+  if (topicHistory[0]?.topicStatus !== "CLOSED" || topicHistory[0]?.status !== "REJECTED") {
+    throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
+  }
+  if (recruitmentHistory.applicationHistory[0]?.status !== "REJECTED") {
+    throw new Error("마감된 팀원 모집 지원 이력을 학생이 조회할 수 없습니다.");
   }
   if (await topics.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
 
@@ -115,7 +145,7 @@ async function main() {
   const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "PUBLISHED" } });
   if (publishedRaceTopics !== 0) throw new Error("프로그램 마감과 주제 생성 경합 후 공개 주제가 남았습니다.");
 
-  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicApplication: rejectedTopicApplication.status, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, closeCreateRacePublishedTopics: publishedRaceTopics }));
+  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.length, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, recruitmentApplicationHistory: recruitmentHistory.historyTotal, closeCreateRacePublishedTopics: publishedRaceTopics }));
 }
 
 main()

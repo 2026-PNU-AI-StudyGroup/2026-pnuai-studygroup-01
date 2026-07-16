@@ -13,8 +13,14 @@ import {
   TopicNotFoundError,
 } from "@/modules/topic/application/change-topic-status";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import {
+  TopicScheduleUpdateForbiddenError,
+  TopicScheduleUpdateUnavailableError,
+  UpdateTopicScheduleService,
+} from "@/modules/topic/application/update-topic-schedule";
+import { InvalidTopicScheduleError } from "@/modules/topic/domain/topic-policy";
 import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
-import { createTopicInputSchema } from "@/modules/topic/ui/create-topic-input";
+import { createTopicInputSchema, koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type CreateTopicActionState = {
@@ -23,6 +29,17 @@ export type CreateTopicActionState = {
 };
 
 export type TopicStatusActionState = CreateTopicActionState;
+export type TopicScheduleActionState = CreateTopicActionState;
+
+const topicScheduleInputSchema = z.object({
+  topicId: z.string().uuid(),
+  recruitmentStartsAt: koreanLocalDateTime,
+  recruitmentEndsAt: koreanLocalDateTime,
+  executionStartsAt: koreanLocalDateTime,
+  executionEndsAt: koreanLocalDateTime,
+  submissionStartsAt: koreanLocalDateTime,
+  submissionEndsAt: koreanLocalDateTime,
+});
 
 export async function createTopicAction(
   _previousState: CreateTopicActionState,
@@ -100,4 +117,31 @@ export async function changeTopicStatusAction(
     status: "success",
     message: parsed.data.intent === "publish" ? "주제가 공개되었습니다." : "주제가 마감되었습니다.",
   };
+}
+
+export async function updateTopicScheduleAction(
+  _previousState: TopicScheduleActionState,
+  formData: FormData,
+): Promise<TopicScheduleActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = topicScheduleInputSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "모집·수행·제출 기간을 확인해 주세요." };
+  const { topicId, ...schedule } = parsed.data;
+  try {
+    await new UpdateTopicScheduleService(new PrismaTopicRepository(prisma)).execute(actor, topicId, schedule);
+  } catch (error) {
+    if (
+      error instanceof TopicScheduleUpdateForbiddenError ||
+      error instanceof TopicScheduleUpdateUnavailableError ||
+      error instanceof InvalidTopicScheduleError
+    ) {
+      return { status: "error", message: error.message };
+    }
+    throw error;
+  }
+  revalidatePath("/professor/topics");
+  revalidatePath("/topics");
+  revalidatePath("/dashboard");
+  return { status: "success", message: "주제 일정을 변경했습니다." };
 }
