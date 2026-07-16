@@ -11,6 +11,7 @@ import {
 function repository(overrides: Partial<ProfessorAccessRepository> = {}): ProfessorAccessRepository {
   return {
     list: vi.fn(async () => []),
+    listAudit: vi.fn(async () => []),
     grant: vi.fn(async () => undefined),
     revoke: vi.fn(async () => true),
     ...overrides,
@@ -43,5 +44,16 @@ describe("교수 권한 관리", () => {
       { id: "admin", role: "ADMIN" },
       "professor@pusan.ac.kr",
     )).rejects.toBeInstanceOf(ProfessorAccessNotFoundError);
+  });
+
+  it("권한 회수자와 시각을 저장소에 전달한다", async () => {
+    const target = repository();
+    const revokedAt = new Date("2026-07-17T00:00:00Z");
+    await new ProfessorAccessService(target).revoke(
+      { id: "admin", role: "ADMIN" },
+      "professor@pusan.ac.kr",
+      revokedAt,
+    );
+    expect(target.revoke).toHaveBeenCalledWith("professor@pusan.ac.kr", "admin", revokedAt);
   });
 });

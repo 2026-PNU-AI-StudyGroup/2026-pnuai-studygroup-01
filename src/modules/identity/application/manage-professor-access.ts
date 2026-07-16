@@ -9,10 +9,19 @@ export type ProfessorAccessRecord = {
   account: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" } | null;
 };
 
+export type ProfessorAccessAuditRecord = {
+  id: string;
+  action: "PROFESSOR_ACCESS_GRANTED" | "PROFESSOR_ACCESS_REVOKED";
+  targetEmail: string;
+  actorName: string;
+  createdAt: Date;
+};
+
 export interface ProfessorAccessRepository {
   list(): Promise<ProfessorAccessRecord[]>;
+  listAudit(): Promise<ProfessorAccessAuditRecord[]>;
   grant(email: string, createdById: string): Promise<void>;
-  revoke(email: string, revokedAt: Date): Promise<boolean>;
+  revoke(email: string, revokedById: string, revokedAt: Date): Promise<boolean>;
 }
 
 export class ProfessorAccessForbiddenError extends Error {
@@ -44,6 +53,11 @@ export class ProfessorAccessService {
     return this.repository.list();
   }
 
+  listAudit(actor: CurrentActor): Promise<ProfessorAccessAuditRecord[]> {
+    this.assertAdmin(actor);
+    return this.repository.listAudit();
+  }
+
   async grant(actor: CurrentActor, email: string): Promise<void> {
     this.assertAdmin(actor);
     const normalizedEmail = this.normalizeProfessorEmail(email);
@@ -53,7 +67,7 @@ export class ProfessorAccessService {
   async revoke(actor: CurrentActor, email: string, revokedAt = new Date()): Promise<void> {
     this.assertAdmin(actor);
     const normalizedEmail = this.normalizeProfessorEmail(email);
-    if (!(await this.repository.revoke(normalizedEmail, revokedAt))) {
+    if (!(await this.repository.revoke(normalizedEmail, actor.id, revokedAt))) {
       throw new ProfessorAccessNotFoundError();
     }
   }

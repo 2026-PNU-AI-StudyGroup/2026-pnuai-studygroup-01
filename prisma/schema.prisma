@@ -88,6 +88,11 @@ enum ProjectProgramStatus {
   CLOSED
 }
 
+enum AuditAction {
+  PROFESSOR_ACCESS_GRANTED
+  PROFESSOR_ACCESS_REVOKED
+}
+
 model User {
   id                      String               @id
   name                    String
@@ -113,8 +118,39 @@ model User {
   recruitmentPosts        RecruitmentPost[]
   recruitmentApplications RecruitmentApplication[]
   projectProgramsCreated  ProjectProgram[]
+  auditLogsCreated        AuditLog[]
+  studentProfile          StudentProfile?
 
   @@map("user")
+}
+
+model StudentProfile {
+  userId       String   @id
+  interests    String[]
+  skills       String[]
+  desiredRole  String
+  availability String
+  bio          String
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profile")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  actorId    String
+  action     AuditAction
+  targetType String
+  targetId   String
+  metadata   Json
+  createdAt  DateTime    @default(now())
+  actor      User        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@map("audit_log")
 }
 
 model Session {

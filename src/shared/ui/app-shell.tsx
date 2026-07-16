@@ -81,10 +81,11 @@ export function AppShell({ role, userName, currentPath, children }: { role: User
               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color relative flex h-full items-center text-sm font-semibold ${active ? "text-[var(--accent)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--accent)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
             })}
           </nav>
-          <div className="flex min-w-0 items-center gap-3 text-right">
-            <span className="hidden truncate text-sm font-semibold text-[var(--ink)] sm:block">{userName}</span>
-            <span className="rounded-lg bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-bold text-[var(--ink)]">{roleLabel}</span>
-          </div>
+          <Link href="/account" aria-current={currentPath === "/account" ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--accent-hover)]" aria-label={`${userName} 계정 정보`}>
+            <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold">{userName}</span><span className="muted block text-xs">내 정보</span></span>
+            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--accent-subtle)] text-sm font-extrabold text-[var(--accent-hover)]">{userName.trim().charAt(0) || "나"}</span>
+            <span className="sr-only">{roleLabel}</span>
+          </Link>
         </div>
         {showManagementNavigation ? (
           <nav aria-label="관리 메뉴" className="mx-auto flex max-w-[1280px] gap-6 overflow-x-auto px-6">

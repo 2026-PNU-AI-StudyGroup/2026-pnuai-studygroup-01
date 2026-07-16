@@ -6,6 +6,7 @@ import {
   revokeProfessorAccessAction,
   type ProfessorAccessActionState,
 } from "@/app/admin/professors/actions";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: ProfessorAccessActionState = { status: "idle", message: "" };
 
@@ -14,8 +15,8 @@ export function RevokeProfessorAccessForm({ email }: { email: string }) {
   return (
     <form action={action} className="flex flex-wrap items-center justify-end gap-2">
       <input type="hidden" name="email" value={email} />
-      <button className="button-quiet" type="submit" disabled={pending}>{pending ? "회수 중" : "권한 회수"}</button>
-      {state.message ? <span aria-live="polite" className={`text-xs ${state.status === "error" ? "text-red-700" : "text-green-700"}`}>{state.message}</span> : null}
+      <ConfirmSubmitButton className="button-danger" confirmMessage={`${email}의 교수 권한을 회수하시겠습니까? 해당 계정은 학생 역할로 변경됩니다.`} disabled={pending}>{pending ? "회수 중" : "권한 회수"}</ConfirmSubmitButton>
+      {state.message ? <span aria-live="polite" className={`text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</span> : null}
     </form>
   );
 }
