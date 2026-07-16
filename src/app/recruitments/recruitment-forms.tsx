@@ -14,7 +14,7 @@ export function RecruitmentPostForm({ teams }: { teams: Array<{ id: string; name
     <label className="grid gap-2 text-sm font-medium sm:col-span-2">모집 내용<textarea name="content" maxLength={2000} rows={4} required className="field" /></label>
     <label className="grid gap-2 text-sm font-medium">필요 기술<input name="requiredSkills" required className="field" placeholder="TypeScript, Python" /></label>
     <label className="grid gap-2 text-sm font-medium">필요 역할<input name="roleNeeded" maxLength={500} required className="field" /></label>
-    <label className="grid gap-2 text-sm font-medium">활동 시간<input name="availability" maxLength={500} required className="field" /></label>
+    <label className="grid gap-2 text-sm font-medium">활동 가능 시간<input name="availability" maxLength={500} required className="field" /></label>
     <button className="button-primary self-end" disabled={pending}>{pending ? "등록 중" : "모집 글 등록"}</button>
     {state.message ? <p aria-live="polite" className={`sm:col-span-2 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
   </form>;
@@ -22,9 +22,12 @@ export function RecruitmentPostForm({ teams }: { teams: Array<{ id: string; name
 
 export function RecruitmentApplyForm({ postId, profile }: { postId: string; profile: StudentProfile | null }) {
   const [state, action, pending] = useActionState(applyRecruitmentAction, initial);
-  return <form action={action} className="mt-5 grid gap-3 rounded-r-lg border-l-2 border-[var(--accent)] bg-[var(--accent-subtle)] p-5 sm:grid-cols-2">
-    <input type="hidden" name="postId" value={postId} /><label className="grid gap-2 text-sm font-medium">보유 기술<input name="skills" required defaultValue={profile?.skills.join(", ")} className="field" /></label><label className="grid gap-2 text-sm font-medium">희망 역할<input name="desiredRole" required defaultValue={profile?.desiredRole} className="field" /></label><label className="grid gap-2 text-sm font-medium">활동 가능 시간<input name="availability" required defaultValue={profile?.availability} className="field" /></label><label className="grid gap-2 text-sm font-medium">지원 메시지<textarea name="message" maxLength={2000} required className="field" /></label><button className="button-primary justify-self-start" disabled={pending}>{pending ? "지원 중" : "지원하기"}</button>{state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
-  </form>;
+  return <details className="group mt-5 border-t border-[var(--line)] pt-2">
+    <summary className="snap-color flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm font-extrabold text-[var(--accent)]">이 팀에 지원하기<span aria-hidden="true" className="group-open:rotate-180">↓</span></summary>
+    <form action={action} className="grid gap-3 rounded-r-lg border-l-2 border-[var(--accent)] bg-[var(--accent-subtle)] p-5 sm:grid-cols-2">
+      <input type="hidden" name="postId" value={postId} /><label className="grid gap-2 text-sm font-medium">보유 기술<input name="skills" required defaultValue={profile?.skills.join(", ")} className="field" /></label><label className="grid gap-2 text-sm font-medium">희망 역할<input name="desiredRole" required defaultValue={profile?.desiredRole} className="field" /></label><label className="grid gap-2 text-sm font-medium">활동 가능 시간<input name="availability" required defaultValue={profile?.availability} className="field" /></label><label className="grid gap-2 text-sm font-medium">지원 메시지<textarea name="message" maxLength={2000} required className="field" /></label><button className="button-primary justify-self-start" disabled={pending}>{pending ? "지원 중" : "지원하기"}</button>{state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
+    </form>
+  </details>;
 }
 
 export function RecruitmentDecisionForm({ applicationId, decision }: { applicationId: string; decision: "ACCEPT" | "REJECT" }) {

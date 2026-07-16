@@ -12,7 +12,7 @@ import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 import { AccountControls } from "./account-controls";
 import { StudentProfileForm } from "./student-profile-form";
 
-export const metadata: Metadata = { title: "내 정보" };
+export const metadata: Metadata = { title: "마이페이지" };
 
 const roleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자" } as const;
 
@@ -31,7 +31,7 @@ export default async function AccountPage() {
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
       <main className="content-shell">
         <div className="mx-auto max-w-3xl">
-          <PageHeader eyebrow="계정" title="내 정보" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
+          <PageHeader eyebrow="계정" title="마이페이지" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
           <section aria-labelledby="account-summary-heading" className="mt-10 border-y border-[var(--line)] py-8">
             <div className="flex items-start gap-5">
               <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-lg bg-[var(--accent-subtle)] text-xl font-extrabold text-[var(--accent-hover)]">{actor.name.trim().charAt(0) || "나"}</span>

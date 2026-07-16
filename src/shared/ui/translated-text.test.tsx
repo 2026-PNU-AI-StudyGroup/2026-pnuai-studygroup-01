@@ -16,7 +16,7 @@ describe("번역 본문", () => {
     vi.stubGlobal("fetch", fetcher);
     render(<TranslatedText text="졸업과제" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: "영어" }));
     expect(await screen.findByText("Graduation project")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "원문" }));
     expect(screen.getByText("졸업과제")).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe("번역 본문", () => {
     )));
     render(<TranslatedText text="졸업과제" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: "영어" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Ollama"));
     expect(screen.getByText("졸업과제")).toBeInTheDocument();
   });

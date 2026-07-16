@@ -11,6 +11,15 @@ import {
 import type { ApprovalDecision } from "@/modules/report/domain/report-policy";
 
 const initialState: ReportActionState = { status: "idle", message: "" };
+const uploadFailureMessage = "파일을 업로드하지 못했습니다. 파일 형식과 용량을 확인한 뒤 다시 시도해 주세요.";
+
+async function uploadErrorMessage(response: Response): Promise<string> {
+  const body: unknown = await response.json().catch(() => null);
+  if (body && typeof body === "object" && "message" in body && typeof body.message === "string") {
+    return body.message;
+  }
+  return uploadFailureMessage;
+}
 
 async function uploadFile(teamId: string, purpose: "REPORT" | "ARTIFACT", file: File) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
@@ -28,20 +37,20 @@ async function uploadFile(teamId: string, purpose: "REPORT" | "ARTIFACT", file: 
       sha256,
     }),
   });
-  if (!presign.ok) throw new Error((await presign.json()).message ?? "업로드 URL 발급 실패");
+  if (!presign.ok) throw new Error(await uploadErrorMessage(presign));
   const { uploadId, uploadUrl } = await presign.json() as { uploadId: string; uploadUrl: string };
   const uploaded = await fetch(uploadUrl, {
     method: "PUT",
     headers: { "content-type": file.type, "x-amz-checksum-sha256": checksum },
     body: file,
   });
-  if (!uploaded.ok) throw new Error("파일 업로드에 실패했습니다.");
+  if (!uploaded.ok) throw new Error(uploadFailureMessage);
   const completed = await fetch("/api/uploads/complete", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ uploadId }),
   });
-  if (!completed.ok) throw new Error((await completed.json()).message ?? "업로드 검증 실패");
+  if (!completed.ok) throw new Error(await uploadErrorMessage(completed));
   return uploadId;
 }
 
@@ -68,7 +77,7 @@ export function ReportSubmissionForm({ teamId }: { teamId: string }) {
             setState(result);
             if (result.status === "success") form.reset();
           } catch (error) {
-            setState({ status: "error", message: error instanceof Error ? error.message : "업로드 실패" });
+            setState({ status: "error", message: error instanceof Error ? error.message : uploadFailureMessage });
           }
         });
       }}
@@ -147,7 +156,7 @@ export function ArtifactFileForm({ teamId }: { teamId: string }) {
           setState(result);
           if (result.status === "success") form.reset();
         } catch (error) {
-          setState({ status: "error", message: error instanceof Error ? error.message : "업로드 실패" });
+          setState({ status: "error", message: error instanceof Error ? error.message : uploadFailureMessage });
         }
       });
     }}>

@@ -14,7 +14,8 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).toHaveAttribute("href", "/topics");
     expect(screen.getByRole("link", { name: "부산대학교 학과 프로젝트 탐색" })).toHaveAttribute("href", "/topics");
-    expect(screen.getByRole("link", { name: "테스트 계정 정보" })).toHaveAttribute("href", "/account");
+    expect(screen.getByRole("link", { name: "테스트 마이페이지" })).toHaveAttribute("href", "/account");
+    expect(screen.getByRole("link", { name: "본문으로 건너뛰기" })).toHaveAttribute("href", "#main-content");
     expect(screen.queryByRole("link", { name: "지원 검토" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("link", { name: "지난 프로젝트" })).not.toBeInTheDocument();

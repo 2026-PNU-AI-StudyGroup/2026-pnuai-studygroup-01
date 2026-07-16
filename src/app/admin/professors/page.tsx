@@ -33,7 +33,7 @@ export default async function ProfessorsPage() {
         </section>
         <section aria-labelledby="professor-audit-title">
           <div className="flex items-end justify-between border-b border-[var(--line)] pb-4"><div><p className="eyebrow">감사 기록</p><h2 id="professor-audit-title" className="mt-1 text-lg font-bold">최근 권한 변경 이력</h2></div><span className="muted text-sm">최근 {auditEntries.length}건</span></div>
-          {auditEntries.length === 0 ? <p className="muted py-7 text-sm">아직 기록된 권한 변경이 없습니다.</p> : <ol className="divide-y divide-[var(--line)]">{auditEntries.map((entry) => <li key={entry.id} className="grid gap-2 py-4 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><strong>{entry.targetEmail}</strong><p className="muted mt-1 text-xs">{entry.actorName} 관리자가 {entry.action === "PROFESSOR_ACCESS_GRANTED" ? "교수 권한 허용" : "교수 권한 회수"}</p></div><time className="muted text-xs" dateTime={entry.createdAt.toISOString()}>{koreanDate.format(entry.createdAt)}</time></li>)}</ol>}
+          {auditEntries.length === 0 ? <p className="muted py-7 text-sm">아직 기록된 권한 변경이 없습니다.</p> : <ol className="divide-y divide-[var(--line)]">{auditEntries.map((entry) => <li key={entry.id} className="grid gap-2 py-4 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><strong>{entry.targetEmail}</strong><p className="muted mt-1 text-xs">처리자 {entry.actorName} · {entry.action === "PROFESSOR_ACCESS_GRANTED" ? "교수 권한 허용" : "교수 권한 회수"}</p></div><time className="muted text-xs" dateTime={entry.createdAt.toISOString()}>{koreanDate.format(entry.createdAt)}</time></li>)}</ol>}
         </section>
       </main>
     </AppShell>

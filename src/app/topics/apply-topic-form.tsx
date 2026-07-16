@@ -14,7 +14,12 @@ export function ApplyTopicForm({ topicId, profile }: { topicId: string; profile:
   const [state, action, pending] = useActionState(applyTopicAction, initialState);
 
   return (
-    <form action={action} className="mt-6 grid max-w-2xl gap-3 rounded-r-lg border-l-2 border-[var(--accent)] bg-[var(--accent-subtle)] p-5">
+    <details className="group mt-6 max-w-2xl border-t border-[var(--line)] pt-2">
+      <summary className="snap-color flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm font-extrabold text-[var(--accent)]">
+        이 주제에 지원하기
+        <span aria-hidden="true" className="group-open:rotate-180">↓</span>
+      </summary>
+      <form action={action} className="grid gap-3 rounded-r-lg border-l-2 border-[var(--accent)] bg-[var(--accent-subtle)] p-5">
       <input type="hidden" name="topicId" value={topicId} />
       <label className="grid gap-2 text-sm font-medium">보유 기술<input name="skills" maxLength={1000} required defaultValue={profile?.skills.join(", ")} className="field" placeholder="예: TypeScript, Python" /></label>
       <label className="grid gap-2 text-sm font-medium">희망 역할<input name="desiredRole" maxLength={500} required defaultValue={profile?.desiredRole} className="field" placeholder="예: 프론트엔드 개발" /></label>
@@ -45,6 +50,7 @@ export function ApplyTopicForm({ topicId, profile }: { topicId: string; profile:
           {state.message}
         </p>
       ) : null}
-    </form>
+      </form>
+    </details>
   );
 }

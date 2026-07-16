@@ -37,7 +37,7 @@ export function TranslatedText({ text, className = "" }: { text: string; classNa
   const content = view === "original" ? text : translations[view] ?? text;
   return (
     <div>
-      <p className={`${className} whitespace-pre-wrap`}>{content}</p>
+      <p aria-live="polite" className={`${className} whitespace-pre-wrap`}>{content}</p>
       <div className="mt-2 flex flex-wrap items-center gap-1 text-xs">
         {(["original", "ko", "en"] as const).map((item) => (
           <button
@@ -48,10 +48,10 @@ export function TranslatedText({ text, className = "" }: { text: string; classNa
             className="snap-color inline-flex min-h-11 items-center rounded-lg px-3 text-[var(--muted)] underline-offset-4 hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] disabled:opacity-50 aria-pressed:bg-[var(--accent-subtle)] aria-pressed:font-semibold aria-pressed:text-[var(--accent-hover)]"
             onClick={() => void changeView(item)}
           >
-            {item === "original" ? "원문" : item === "ko" ? "한국어" : "English"}
+            {item === "original" ? "원문" : item === "ko" ? "한국어" : "영어"}
           </button>
         ))}
-        {pending ? <span className="muted">번역 중…</span> : null}
+        {pending ? <span role="status" className="muted">번역 중</span> : null}
         {error ? <span role="alert" className="text-[var(--danger)]">{error}</span> : null}
       </div>
     </div>

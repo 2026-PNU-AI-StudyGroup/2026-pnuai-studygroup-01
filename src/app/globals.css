@@ -13,7 +13,7 @@
   --surface: #ffffff;
   --surface-subtle: #f7f8fa;
   --ink: #172033;
-  --muted: #697386;
+  --muted: #626c7f;
   --line: #dfe3ea;
   --accent: #2f5bea;
   --accent-hover: #2449c4;
@@ -88,7 +88,7 @@ textarea {
   .field {
     min-height: 2.75rem;
     width: 100%;
-    border: 1px solid #c9d0dc;
+    border: 1px solid #7c8799;
     border-radius: var(--radius-control);
     background: var(--surface);
     padding: 0.625rem 0.75rem;
@@ -102,6 +102,24 @@ textarea {
 
   .field:focus {
     border-color: var(--focus);
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 50;
+    min-height: 2.75rem;
+    translate: 0 -200%;
+    border-radius: var(--radius-control);
+    background: var(--ink);
+    padding: 0.625rem 1rem;
+    color: white;
+    font-weight: 700;
+  }
+
+  .skip-link:focus {
+    translate: 0;
   }
 
   .button-primary,

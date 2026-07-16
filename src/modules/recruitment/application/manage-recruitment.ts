@@ -69,7 +69,7 @@ export class RecruitmentService {
     const created = await this.repository.createPost({
       teamId: input.teamId, authorId: actor.id, requiredSkills,
       title: normalizeText(input.title, 200, "제목"), content: normalizeText(input.content, 2000, "내용"),
-      roleNeeded: normalizeText(input.roleNeeded, 500, "필요 역할"), availability: normalizeText(input.availability, 500, "활동 시간"),
+      roleNeeded: normalizeText(input.roleNeeded, 500, "필요 역할"), availability: normalizeText(input.availability, 500, "활동 가능 시간"),
     });
     if (!created) throw new RecruitmentOperationError("모집 중인 본인의 구성 단계 팀에서만 글을 작성할 수 있습니다.");
   }

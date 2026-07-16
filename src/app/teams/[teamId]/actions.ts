@@ -74,7 +74,7 @@ export async function closeTeamAction(
   revalidatePath(`/teams/${teamId}`);
   revalidatePath("/dashboard");
   revalidatePath("/topics");
-  return { status: "success", message: "팀을 종료하고 아카이브에 보관했습니다." };
+  return { status: "success", message: "팀을 종료하고 지난 프로젝트에 보관했습니다." };
 }
 
 function service() {

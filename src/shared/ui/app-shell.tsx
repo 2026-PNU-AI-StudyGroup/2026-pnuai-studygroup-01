@@ -75,6 +75,7 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
   const roleLabel = role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자";
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
+      <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-8 px-6">
           <Brand href="/topics" />
@@ -86,8 +87,8 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
           </nav>
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
-            <Link href="/account" aria-current={currentPath === "/account" ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--accent-hover)]" aria-label={`${userName} 계정 정보`}>
-              <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold">{userName}</span><span className="muted block text-xs">내 정보</span></span>
+            <Link href="/account" aria-current={currentPath === "/account" ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--accent-hover)]" aria-label={`${userName} 마이페이지`}>
+              <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold">{userName}</span><span className="muted block text-xs">마이페이지</span></span>
               <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--accent-subtle)] text-sm font-extrabold text-[var(--accent-hover)]">{userName.trim().charAt(0) || "나"}</span>
               <span className="sr-only">{roleLabel}</span>
             </Link>
@@ -102,7 +103,7 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
           </nav>
         ) : null}
       </header>
-      {children}
+      <div id="main-content" tabIndex={-1}>{children}</div>
       <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
         {navigation.map((item) => {
           const active = isNavigationActive(item, currentPath, role);

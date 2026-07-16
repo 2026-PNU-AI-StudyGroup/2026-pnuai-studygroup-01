@@ -18,9 +18,9 @@ export function ProjectExplorerLayout({ role, view, children }: { role: UserRole
       <div className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12">
         <aside aria-label="프로젝트 탐색 메뉴" className="hidden border-r border-[var(--line)] pr-8 lg:block">
           <p className="eyebrow">프로젝트 탐색</p>
-          <nav className="mt-5 grid gap-1">
+          <nav aria-label="프로젝트 상태 전환" className="mt-5 grid gap-1">
             <Link href="/topics?view=active" aria-current={view === "active" ? "page" : undefined} className={`snap-color flex min-h-11 items-center border-l-2 pl-4 text-sm font-extrabold ${view === "active" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>진행 중 프로젝트</Link>
-            <Link href="/topics?view=past" aria-current={view === "past" ? "page" : undefined} className={`snap-color flex min-h-11 items-center border-l-2 pl-4 text-sm font-extrabold ${view === "past" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>종료된 프로젝트</Link>
+            <Link href="/topics?view=past" aria-current={view === "past" ? "page" : undefined} className={`snap-color flex min-h-11 items-center border-l-2 pl-4 text-sm font-extrabold ${view === "past" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>지난 프로젝트</Link>
           </nav>
           <nav aria-label="내 프로젝트 메뉴" className="mt-6 grid gap-1 border-t border-[var(--line)] pt-5">
             <Link href="/dashboard" className="button-quiet justify-start px-4 text-sm">{projectLabel}</Link>
@@ -31,7 +31,7 @@ export function ProjectExplorerLayout({ role, view, children }: { role: UserRole
         <div className="min-w-0">
           <nav aria-label="프로젝트 상태 전환" className="mb-8 grid grid-cols-2 gap-2 lg:hidden">
             <Link href="/topics?view=active" aria-current={view === "active" ? "page" : undefined} className={`snap-color inline-flex min-h-11 items-center justify-center rounded-lg border px-4 text-sm font-extrabold ${viewClass(view === "active")}`}>진행 중</Link>
-            <Link href="/topics?view=past" aria-current={view === "past" ? "page" : undefined} className={`snap-color inline-flex min-h-11 items-center justify-center rounded-lg border px-4 text-sm font-extrabold ${viewClass(view === "past")}`}>종료됨</Link>
+            <Link href="/topics?view=past" aria-current={view === "past" ? "page" : undefined} className={`snap-color inline-flex min-h-11 items-center justify-center rounded-lg border px-4 text-sm font-extrabold ${viewClass(view === "past")}`}>지난 프로젝트</Link>
           </nav>
           <div className="space-y-10">{children}</div>
         </div>
