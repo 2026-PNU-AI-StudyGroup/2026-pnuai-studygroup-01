@@ -56,13 +56,15 @@ const ids = {
   students: Array.from({ length: 8 }, (_, index) => `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   programs: Array.from({ length: 6 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   topics: Array.from({ length: 11 }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  applications: Array.from({ length: 9 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  applications: Array.from({ length: 16 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  localViewerApplication: "61000000-0000-4000-8000-000000000001",
   teams: Array.from({ length: 7 }, (_, index) => `70000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  members: Array.from({ length: 9 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  recruitments: ["90000000-0000-4000-8000-000000000001"],
-  milestones: Array.from({ length: 4 }, (_, index) => `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  progress: ["b0000000-0000-4000-8000-000000000001"],
-  discussions: ["c0000000-0000-4000-8000-000000000001"],
+  members: Array.from({ length: 10 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  recruitments: Array.from({ length: 2 }, (_, index) => `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  recruitmentApplications: Array.from({ length: 2 }, (_, index) => `91000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  milestones: Array.from({ length: 7 }, (_, index) => `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  progress: Array.from({ length: 4 }, (_, index) => `b0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  discussions: Array.from({ length: 4 }, (_, index) => `c0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   artifacts: Array.from({ length: 10 }, (_, index) => `d0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   storedFiles: Array.from({ length: 5 }, (_, index) => `e0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   reports: Array.from({ length: 5 }, (_, index) => `f0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -80,7 +82,7 @@ async function seed() {
     ContentType: "application/pdf",
   }))));
 
-  await prisma.$transaction(async (tx) => {
+  const seedResult = await prisma.$transaction(async (tx) => {
     await tx.artifact.deleteMany({ where: { id: { in: ids.artifacts } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: ids.approvalDecisions } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: ids.reportVersions } } });
@@ -93,7 +95,7 @@ async function seed() {
     await tx.progressUpdate.deleteMany({ where: { id: { in: ids.progress } } });
     await tx.discussionPost.deleteMany({ where: { id: { in: ids.discussions } } });
     await tx.team.deleteMany({ where: { id: { in: ids.teams } } });
-    await tx.topicApplication.deleteMany({ where: { id: { in: ids.applications } } });
+    await tx.topicApplication.deleteMany({ where: { id: { in: [...ids.applications, ids.localViewerApplication] } } });
     await tx.topic.deleteMany({ where: { id: { in: ids.topics } } });
 
     const people: Array<[string, string, string, UserRole]> = [
@@ -109,6 +111,50 @@ async function seed() {
         where: { id },
         update: { name, email, emailVerified: true, role },
         create: { id, name, email, emailVerified: true, role },
+      });
+    }
+
+    const requestedViewerEmail = process.env.DEMO_VIEWER_EMAIL?.trim().toLowerCase();
+    const localStudentCandidates = await tx.user.findMany({
+      where: { role: UserRole.STUDENT, id: { notIn: ids.students } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, name: true, email: true },
+    });
+    const localViewer = requestedViewerEmail
+      ? localStudentCandidates.find(({ email }) => email.toLowerCase() === requestedViewerEmail)
+      : localStudentCandidates.find(({ email, name }) => !email.startsWith("demo.") && !name.startsWith("Upload "));
+    if (requestedViewerEmail && !localViewer) {
+      throw new Error(`DEMO_VIEWER_EMAIL에 해당하는 로컬 학생 계정을 찾을 수 없습니다: ${requestedViewerEmail}`);
+    }
+    const studentProfiles = [
+      [["접근성", "지도 서비스"], ["Next.js", "Figma"], "프론트엔드 개발과 사용자 검증", "평일 18시 이후, 토요일 오전", "사용자가 실제로 겪는 이동 문제를 관찰하고 화면으로 해결하는 일에 관심이 있습니다."],
+      [["공간 데이터", "백엔드"], ["PostgreSQL", "PostGIS"], "공간 데이터 모델링", "월·목 저녁", "교내 지도 데이터의 정확도를 높이고 접근 가능한 경로를 모델링하고 싶습니다."],
+      [["제품 설계", "웹 서비스"], ["TypeScript", "React"], "서비스 기획과 풀스택 개발", "수요일 저녁, 주말", "사용자 인터뷰를 바탕으로 반복 가능한 프로젝트 운영 흐름을 설계합니다."],
+      [["데이터 분석"], ["Python", "SQL"], "데이터 분석", "화·목 19시 이후", "데이터에서 의미 있는 패턴을 찾고 팀의 의사결정에 연결하는 역할을 선호합니다."],
+      [["모바일", "접근성"], ["Flutter", "Dart"], "모바일 앱 개발", "평일 저녁", "다양한 사용 환경에서도 이해하기 쉬운 모바일 경험을 만들고 싶습니다."],
+      [["자연어 처리", "번역"], ["Python", "Ollama"], "번역 품질 평가", "월·수 저녁", "로컬 모델의 번역 결과를 사용자 관점에서 평가하고 개선하는 데 관심이 있습니다."],
+      [["임베디드", "IoT"], ["C", "Arduino"], "센서 연동", "금요일 오후, 주말", "센서 데이터를 안정적으로 수집하고 웹 서비스와 연결하는 작업을 해 왔습니다."],
+      [["시각화", "UX"], ["D3.js", "Figma"], "정보 시각화", "화요일 저녁", "복잡한 정보를 빠르게 이해할 수 있는 인터랙션과 시각 표현을 탐구합니다."],
+    ] as const;
+    for (const [index, [interests, skills, desiredRole, availability, bio]] of studentProfiles.entries()) {
+      await tx.studentProfile.upsert({
+        where: { userId: ids.students[index] },
+        update: { interests: [...interests], skills: [...skills], desiredRole, availability, bio },
+        create: { userId: ids.students[index], interests: [...interests], skills: [...skills], desiredRole, availability, bio },
+      });
+    }
+    if (localViewer) {
+      await tx.studentProfile.upsert({
+        where: { userId: localViewer.id },
+        update: {},
+        create: {
+          userId: localViewer.id,
+          interests: ["캡스톤 디자인", "프로덕트 개발", "사용자 경험"],
+          skills: ["TypeScript", "Next.js", "PostgreSQL"],
+          desiredRole: "풀스택 개발과 제품 설계",
+          availability: "평일 저녁, 주말 협의 가능",
+          bio: "실제 사용자의 문제를 관찰하고 팀과 함께 작동하는 제품으로 완성하는 과정에 관심이 있습니다.",
+        },
       });
     }
 
@@ -214,10 +260,19 @@ async function seed() {
       });
     }
 
-    const applicationRows = [
+    const acceptedApplicationRows = [
       [0, 0], [0, 1], [2, 2], [6, 0], [7, 1], [8, 2], [9, 3], [10, 4], [10, 5],
     ] as const;
-    await tx.topicApplication.createMany({ data: applicationRows.map(([topicIndex, studentIndex], index) => {
+    const reviewApplicationRows = [
+      [1, 3, "PENDING", "시계열 데이터를 정리하고 예측 결과를 이해하기 쉬운 화면으로 표현해 보고 싶습니다."],
+      [1, 4, "REJECTED", "Flutter 프로젝트 경험을 바탕으로 모바일에서도 혼잡도 정보를 빠르게 확인할 수 있게 만들겠습니다."],
+      [3, 5, "PENDING", "공공 데이터를 안정적으로 정제하고 상황별 안내 문구의 정확성을 검증하겠습니다."],
+      [4, 6, "REJECTED", "센서 수집 경험을 살려 행사 현장의 데이터 입력 과정을 단순하게 만들고 싶습니다."],
+      [5, 7, "PENDING", "번역 결과의 차이를 한눈에 비교할 수 있는 정보 구조와 평가 화면을 설계하겠습니다."],
+      [2, 3, "PENDING", "교수와 학생 인터뷰 결과를 바탕으로 지원부터 결과물 관리까지의 흐름을 다듬고 싶습니다."],
+      [2, 4, "REJECTED", "반응형 인터페이스 구현과 접근성 점검을 맡아 실제 학과 구성원이 편하게 쓰는 화면을 만들겠습니다."],
+    ] as const;
+    await tx.topicApplication.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
       const createdAt = topicIndex < 6
         ? new Date("2026-07-05T12:00:00+09:00")
         : new Date(pastPrograms[pastTopics[topicIndex - 6][4]].startsAt.getTime() + 14 * 86_400_000);
@@ -227,6 +282,49 @@ async function seed() {
       skills: topicIndex === 0 ? ["Next.js", "Figma"] : ["TypeScript", "Git"], desiredRole: "개발 및 사용자 검증", availability: "평일 저녁과 주말 가능",
       status: "ACCEPTED", createdAt, decidedAt,
     }}) });
+    await tx.topicApplication.createMany({ data: reviewApplicationRows.map(([topicIndex, studentIndex, status, message], offset) => ({
+      id: ids.applications[acceptedApplicationRows.length + offset],
+      topicId: ids.topics[topicIndex],
+      studentId: ids.students[studentIndex],
+      message,
+      skills: [...studentProfiles[studentIndex][1]],
+      desiredRole: studentProfiles[studentIndex][2],
+      availability: studentProfiles[studentIndex][3],
+      status,
+      createdAt: new Date(`2026-07-${String(8 + offset).padStart(2, "0")}T1${offset}:00:00+09:00`),
+      decidedAt: status === "REJECTED" ? new Date(`2026-07-${String(10 + offset).padStart(2, "0")}T14:00:00+09:00`) : null,
+    })) });
+
+    let localViewerApplicationId: string | null = null;
+    if (localViewer) {
+      const currentMembership = await tx.teamMember.findUnique({
+        where: { academicCycleId_studentId: { academicCycleId: currentCycle.id, studentId: localViewer.id } },
+        select: { id: true },
+      });
+      if (!currentMembership) {
+        const viewerApplication = await tx.topicApplication.upsert({
+          where: { topicId_studentId: { topicId: ids.topics[2], studentId: localViewer.id } },
+          update: {
+            status: "ACCEPTED",
+            decidedAt: new Date("2026-07-11T15:00:00+09:00"),
+          },
+          create: {
+            id: ids.localViewerApplication,
+            topicId: ids.topics[2],
+            studentId: localViewer.id,
+            message: "학과 구성원이 반복해서 겪는 프로젝트 운영의 불편을 실제 사용 흐름과 코드로 함께 해결하고 싶습니다.",
+            skills: ["TypeScript", "Next.js", "PostgreSQL"],
+            desiredRole: "풀스택 개발과 제품 설계",
+            availability: "평일 저녁, 주말 협의 가능",
+            status: "ACCEPTED",
+            createdAt: new Date("2026-07-07T19:30:00+09:00"),
+            decidedAt: new Date("2026-07-11T15:00:00+09:00"),
+          },
+          select: { id: true },
+        });
+        localViewerApplicationId = viewerApplication.id;
+      }
+    }
 
     const teamRows = [
       [0, currentCycle.id, 0, "모두의 길", "CONFIRMED"],
@@ -240,10 +338,21 @@ async function seed() {
     await tx.team.createMany({ data: teamRows.map(([topicIndex, academicCycleId, professorIndex, name, status], index) => ({
       id: ids.teams[index], academicCycleId, topicId: ids.topics[topicIndex], professorId: ids.professors[professorIndex], name, status,
     })) });
-    await tx.teamMember.createMany({ data: applicationRows.map(([topicIndex, studentIndex], index) => {
+    await tx.teamMember.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
       const teamIndex = topicIndex === 0 ? 0 : topicIndex === 2 ? 1 : topicIndex - 4;
       return { id: ids.members[index], teamId: ids.teams[teamIndex], academicCycleId: teamRows[teamIndex][1], topicId: ids.topics[topicIndex], studentId: ids.students[studentIndex], applicationId: ids.applications[index] };
     }) });
+    if (localViewer && localViewerApplicationId) {
+      await tx.teamMember.create({ data: {
+        id: ids.members[9],
+        teamId: ids.teams[1],
+        academicCycleId: currentCycle.id,
+        topicId: ids.topics[2],
+        studentId: localViewer.id,
+        applicationId: localViewerApplicationId,
+        joinedAt: new Date("2026-07-11T15:00:00+09:00"),
+      } });
+    }
 
     const closedTeamIndexes = [2, 3, 4, 5, 6] as const;
     const closedTeamSubmitters = [0, 1, 2, 3, 4] as const;
@@ -267,19 +376,61 @@ async function seed() {
       } });
     }
 
-    await tx.recruitmentPost.create({ data: {
-      id: ids.recruitments[0], teamId: ids.teams[1], authorId: ids.students[2], title: "사용자 흐름을 함께 다듬을 프론트엔드 팀원 모집",
-      content: "학과 프로젝트 운영 기록 자동화 주제의 실제 사용자 인터뷰와 반응형 화면 구현을 함께 진행합니다.", requiredSkills: ["React", "CSS"],
-      roleNeeded: "프론트엔드 개발", availability: "수요일 저녁 정기 회의", status: "OPEN",
-    } });
+    const recruitmentAuthorId = localViewerApplicationId && localViewer ? localViewer.id : ids.students[2];
+    await tx.recruitmentPost.createMany({ data: [
+      {
+        id: ids.recruitments[0], teamId: ids.teams[1], authorId: recruitmentAuthorId, title: "사용자 흐름을 함께 설계할 프론트엔드 팀원 모집",
+        content: "교수와 학생 인터뷰 결과를 바탕으로 프로젝트 탐색부터 결과물 열람까지의 반응형 화면을 함께 구현합니다.", requiredSkills: ["React", "CSS", "접근성"],
+        roleNeeded: "프론트엔드 개발과 사용성 검증", availability: "수요일 19시 정기 회의, 주 4시간 이상", status: "OPEN",
+        createdAt: new Date("2026-07-12T18:00:00+09:00"),
+      },
+      {
+        id: ids.recruitments[1], teamId: ids.teams[1], authorId: recruitmentAuthorId, title: "프로젝트 기록 구조를 다듬을 백엔드 팀원 모집",
+        content: "주제 지원, 팀 진행 기록, 보고서 승인과 결과물 공개가 끊기지 않도록 데이터 모델과 서버 로직을 함께 설계합니다.", requiredSkills: ["TypeScript", "PostgreSQL"],
+        roleNeeded: "백엔드 개발과 테스트 자동화", availability: "주 1회 온라인 회의, 비동기 코드 리뷰", status: "OPEN",
+        createdAt: new Date("2026-07-14T20:00:00+09:00"),
+      },
+    ] });
+    await tx.recruitmentApplication.createMany({ data: [
+      {
+        id: ids.recruitmentApplications[0],
+        postId: ids.recruitments[0],
+        topicApplicationId: ids.applications[14],
+        studentId: ids.students[3],
+        status: "PENDING",
+        createdAt: new Date("2026-07-15T21:00:00+09:00"),
+      },
+      {
+        id: ids.recruitmentApplications[1],
+        postId: ids.recruitments[1],
+        topicApplicationId: ids.applications[15],
+        studentId: ids.students[4],
+        status: "REJECTED",
+        createdAt: new Date("2026-07-15T22:30:00+09:00"),
+        decidedAt: new Date("2026-07-16T19:00:00+09:00"),
+      },
+    ] });
     await tx.milestone.createMany({ data: [
       { id: ids.milestones[0], teamId: ids.teams[0], createdById: ids.students[0], title: "교내 접근성 경로 현장 조사", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE" },
       { id: ids.milestones[1], teamId: ids.teams[0], createdById: ids.students[0], title: "길찾기 프로토타입 사용성 테스트", dueAt: new Date("2026-08-20T18:00:00+09:00"), status: "IN_PROGRESS" },
       { id: ids.milestones[2], teamId: ids.teams[0], createdById: ids.students[1], title: "학내 지도 데이터 정합성 검증", dueAt: new Date("2026-09-10T18:00:00+09:00"), status: "TODO" },
       { id: ids.milestones[3], teamId: ids.teams[1], createdById: ids.students[2], title: "교수·학생 인터뷰 5건 완료", dueAt: new Date("2026-08-05T18:00:00+09:00"), status: "IN_PROGRESS" },
+      { id: ids.milestones[4], teamId: ids.teams[1], createdById: ids.students[2], title: "핵심 사용자 흐름 와이어프레임 검증", dueAt: new Date("2026-08-12T18:00:00+09:00"), status: "TODO" },
+      { id: ids.milestones[5], teamId: ids.teams[1], createdById: ids.students[2], title: "프로젝트 탐색 화면 반응형 구현", dueAt: new Date("2026-08-26T18:00:00+09:00"), status: "TODO" },
+      { id: ids.milestones[6], teamId: ids.teams[1], createdById: ids.students[2], title: "지원·승인 통합 시나리오 테스트", dueAt: new Date("2026-09-09T18:00:00+09:00"), status: "TODO" },
     ] });
-    await tx.progressUpdate.create({ data: { id: ids.progress[0], teamId: ids.teams[0], authorId: ids.students[0], content: "제1공학관과 중앙도서관의 무장애 출입구 18곳을 확인했습니다.", risk: "일부 엘리베이터 운행 시간 데이터가 공개되어 있지 않습니다.", nextAction: "시설과에 운영 시간 확인 요청", createdAt: new Date("2026-07-16T20:00:00+09:00") } });
-    await tx.discussionPost.create({ data: { id: ids.discussions[0], teamId: ids.teams[0], authorId: ids.professors[0], content: "경로 정확도보다 접근 불가능한 구간을 명확히 설명하는 것을 우선해 주세요.", createdAt: new Date("2026-07-17T10:00:00+09:00") } });
+    await tx.progressUpdate.createMany({ data: [
+      { id: ids.progress[0], teamId: ids.teams[0], authorId: ids.students[0], content: "제1공학관과 중앙도서관의 무장애 출입구 18곳을 확인했습니다.", risk: "일부 엘리베이터 운행 시간 데이터가 공개되어 있지 않습니다.", nextAction: "시설과에 운영 시간 확인 요청", createdAt: new Date("2026-07-16T20:00:00+09:00") },
+      { id: ids.progress[1], teamId: ids.teams[1], authorId: ids.students[2], content: "학생 3명과 지도교수 2명의 인터뷰를 정리하고 프로젝트 탐색 단계의 공통 불편 7가지를 도출했습니다.", risk: "교수와 학생이 같은 용어를 서로 다르게 이해하는 항목이 있습니다.", nextAction: "주제·프로그램·프로젝트 용어 정의 검토", createdAt: new Date("2026-07-13T21:00:00+09:00") },
+      { id: ids.progress[2], teamId: ids.teams[1], authorId: ids.students[2], content: "주제 탐색과 지난 프로젝트를 한 화면에서 전환하는 프로토타입을 완성했습니다.", risk: "모바일에서 필터 항목이 길어질 때 탐색 흐름이 끊길 수 있습니다.", nextAction: "모바일 필터 사용성 테스트 3건 진행", createdAt: new Date("2026-07-15T22:00:00+09:00") },
+      { id: ids.progress[3], teamId: ids.teams[1], authorId: recruitmentAuthorId, content: "프로젝트 프로필 정보를 지원서에 자동 반영하고 수정 가능한 흐름까지 연결했습니다.", risk: "프로필이 비어 있는 신규 사용자의 첫 지원 경험을 추가로 확인해야 합니다.", nextAction: "신규 사용자 빈 상태와 오류 문구 점검", createdAt: new Date("2026-07-17T00:30:00+09:00") },
+    ] });
+    await tx.discussionPost.createMany({ data: [
+      { id: ids.discussions[0], teamId: ids.teams[0], authorId: ids.professors[0], content: "경로 정확도보다 접근 불가능한 구간을 명확히 설명하는 것을 우선해 주세요.", createdAt: new Date("2026-07-17T10:00:00+09:00") },
+      { id: ids.discussions[1], teamId: ids.teams[1], authorId: ids.professors[2], content: "기능 목록보다 학생이 처음 들어와 주제를 찾고 팀에 합류하는 순서를 먼저 검증해 주세요.", createdAt: new Date("2026-07-14T10:00:00+09:00") },
+      { id: ids.discussions[2], teamId: ids.teams[1], authorId: ids.students[2], content: "이번 주에는 프로그램을 별도 메뉴로 분리하지 않고 주제 필터로 이해되는지 확인하겠습니다.", createdAt: new Date("2026-07-15T13:30:00+09:00") },
+      { id: ids.discussions[3], teamId: ids.teams[1], authorId: ids.professors[2], content: "지난 프로젝트의 결과물까지 같은 탐색 맥락에서 이어지는지 사용자 테스트 항목에 포함해 주세요.", createdAt: new Date("2026-07-16T11:00:00+09:00") },
+    ] });
 
     const artifactRows = [
       [2, "SOURCE_CODE", "PNU Navi 소스 코드", "https://github.com/pusan-cse-demo/pnu-navi"], [2, "PRESENTATION_VIDEO", "최종 발표 영상", "https://www.youtube.com/"],
@@ -293,9 +444,24 @@ async function seed() {
     await tx.objectDeletionJob.deleteMany({
       where: { objectKey: { in: [...demoReportObjectKeys, ...demoReportUploadObjectKeys] } },
     });
+    return {
+      localViewer: localViewer ? { name: localViewer.name, email: localViewer.email } : null,
+      connectedToDemoProject: Boolean(localViewerApplicationId),
+    };
   });
 
-  console.log(JSON.stringify({ activePrograms: 3, activeTopics: 6, activeTeams: 2, archivedProjects: 5, approvedFinalReports: 5, artifacts: 10 }));
+  console.log(JSON.stringify({
+    activePrograms: 3,
+    activeTopics: 6,
+    activeTeams: 2,
+    topicApplications: 16 + (seedResult.localViewer ? 1 : 0),
+    recruitmentPosts: 2,
+    recruitmentApplications: 2,
+    archivedProjects: 5,
+    approvedFinalReports: 5,
+    artifacts: 10,
+    localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
+  }));
 }
 
 seed()
