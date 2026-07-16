@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProgramForm, ProgramStatusForm } from "@/app/admin/programs/program-forms";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
@@ -8,7 +9,9 @@ import { PrismaProjectProgramRepository } from "@/modules/project-program/infras
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
-const status = { DRAFT: ["초안", "neutral"], OPEN: ["공개", "success"], CLOSED: ["마감", "warning"] } as const;
+
+export const metadata: Metadata = { title: "프로그램 관리" };
+const status = { DRAFT: ["초안", "neutral"], OPEN: ["공개", "info"], CLOSED: ["마감", "neutral"] } as const;
 const date = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "Asia/Seoul" });
 
 export default async function ProgramsAdminPage() {
@@ -17,8 +20,8 @@ export default async function ProgramsAdminPage() {
     new ListAcademicCyclesService(new PrismaAcademicCycleRepository(prisma)).execute(),
     new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor),
   ]);
-  return <AppShell role={actor.role} userName="부산대학교" currentPath="/admin/programs"><main className="content-shell space-y-12">
-    <PageHeader eyebrow="Administration" title="프로젝트 프로그램 관리" description="졸업과제, 교내외 대회, 교육 프로그램을 이름에 제한 없이 개설합니다." />
+  return <AppShell role={actor.role} userName={actor.name} currentPath="/admin/programs"><main className="content-shell space-y-12">
+    <PageHeader eyebrow="운영 관리" title="프로젝트 프로그램 관리" description="캡스톤, 교내외 대회, 교육 프로그램을 유형에 관계없이 개설하고 운영합니다." />
     {cycles.length ? <ProgramForm cycles={cycles} /> : <p className="muted">먼저 학기를 등록해 주세요.</p>}
     {programs.length === 0 ? <EmptyState title="등록된 프로그램이 없습니다" description="위 양식에서 첫 프로그램을 개설하세요." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{programs.map((program) => <li key={program.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto]"><div><div className="flex flex-wrap items-center gap-3"><h2 className="font-bold">{program.name}</h2><StatusBadge tone={status[program.status][1]}>{status[program.status][0]}</StatusBadge></div><p className="muted mt-1 text-sm">{program.category} · {program.academicYear}학년도 {program.term === "FIRST" ? "1" : "2"}학기</p><p className="mt-2 text-sm">{program.description}</p><p className="muted mt-2 text-xs">{date.format(program.startsAt)}–{date.format(program.endsAt)} · 공개 주제 {program.topicCount} · 팀 {program.teamCount}</p></div><ProgramStatusForm id={program.id} status={program.status} /></li>)}</ol>}
   </main></AppShell>;

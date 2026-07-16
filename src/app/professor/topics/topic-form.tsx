@@ -67,12 +67,12 @@ export function TopicForm({ programs }: TopicFormProps) {
           </label>
         ))}
       </fieldset>
-      <p className="text-sm text-zinc-600">모집·수행·제출 기간은 서로 겹칠 수 있습니다.</p>
+      <p className="muted text-sm">모집·수행·제출 기간은 서로 겹칠 수 있습니다.</p>
       <button type="submit" disabled={pending || programs.length === 0} className="button-primary justify-self-start">
         {pending ? "저장 중" : "초안 저장"}
       </button>
       {state.message ? (
-        <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-green-700"}>
+        <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>
           {state.message}
         </p>
       ) : null}

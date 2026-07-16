@@ -15,7 +15,7 @@ export function ProfessorAccessForm() {
     <form action={action} className="grid gap-4 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6">
       <label className="grid gap-2 text-sm font-medium">부산대학교 교수 이메일<input name="email" type="email" placeholder="professor@pusan.ac.kr" required className="field" /></label>
       <button type="submit" disabled={pending} className="button-primary self-end">{pending ? "등록 중" : "교수 권한 허용"}</button>
-      {state.message ? <p aria-live="polite" className={`sm:col-span-2 ${state.status === "error" ? "text-red-700" : "text-green-700"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`sm:col-span-2 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }

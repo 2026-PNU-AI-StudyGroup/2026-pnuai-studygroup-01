@@ -73,15 +73,15 @@ export function ReportSubmissionForm({ teamId }: { teamId: string }) {
         });
       }}
     >
-      <select name="type" aria-label="보고서 종류" className="field" defaultValue="START">
+      <label className="grid gap-2 text-sm font-semibold">보고서 종류<select name="type" className="field" defaultValue="START">
         <option value="START">착수 보고서</option>
         <option value="MIDTERM">중간 보고서</option>
         <option value="FINAL">결과 보고서</option>
-      </select>
-      <input name="file" aria-label="보고서 파일" type="file" required accept=".pdf,.doc,.docx" className="field" />
-      <textarea name="description" aria-label="버전 설명" maxLength={2000} rows={2} placeholder="이번 버전의 변경 사항 (선택)" className="field md:col-span-2" />
+      </select></label>
+      <label className="grid gap-2 text-sm font-semibold">보고서 파일<input name="file" type="file" required accept=".pdf,.doc,.docx" className="field" /></label>
+      <label className="grid gap-2 text-sm font-semibold md:col-span-2">버전 설명 <span className="muted font-normal">선택 입력</span><textarea name="description" maxLength={2000} rows={2} placeholder="이번 버전에서 변경한 내용을 입력하세요." className="field" /></label>
       <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 제출 중" : "새 버전 제출"}</button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-[var(--success)]"}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
     </form>
   );
 }
@@ -92,13 +92,13 @@ export function ReportDecisionForm({ teamId, reportVersionId }: { teamId: string
     <form action={action} className="mt-3 grid gap-2 sm:grid-cols-[11rem_minmax(0,1fr)_auto]">
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="reportVersionId" value={reportVersionId} />
-      <select name="decision" aria-label="검토 결정" className="field" defaultValue="APPROVED">
+      <label className="grid gap-2 text-sm font-semibold">검토 결정<select name="decision" className="field" defaultValue="APPROVED">
         <option value="APPROVED">승인</option>
         <option value="REVISION_REQUESTED">수정 요청</option>
-      </select>
-      <input name="comment" aria-label="검토 의견" maxLength={2000} placeholder="수정 요청 시 의견 필수" className="field" />
+      </select></label>
+      <label className="grid gap-2 text-sm font-semibold">검토 의견<input name="comment" maxLength={2000} placeholder="수정 요청을 선택한 경우 필수" className="field" /></label>
       <button disabled={pending} className="button-quiet">결정 저장</button>
-      {state.message ? <p className={`sm:col-span-3 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`sm:col-span-3 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
@@ -118,11 +118,11 @@ export function ArtifactExternalForm({ teamId }: { teamId: string }) {
         if (result.status === "success") form.reset();
       });
     }}>
-      <select name="type" aria-label="결과물 종류" className="field"><option value="SOURCE_CODE">소스 코드</option><option value="PRESENTATION_VIDEO">발표 영상</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select>
-      <input name="title" required maxLength={200} placeholder="결과물 제목" className="field" />
-      <input name="externalUrl" required type="url" placeholder="https://..." className="field" />
+      <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field"><option value="SOURCE_CODE">소스 코드</option><option value="PRESENTATION_VIDEO">발표 영상</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
+      <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 최종 발표 자료" className="field" /></label>
+      <label className="grid gap-2 text-sm font-semibold">외부 링크<input name="externalUrl" required type="url" placeholder="https://..." className="field" /></label>
       <button disabled={pending} className="button-primary justify-self-start">외부 링크 등록</button>
-      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
@@ -151,11 +151,11 @@ export function ArtifactFileForm({ teamId }: { teamId: string }) {
         }
       });
     }}>
-      <select name="type" aria-label="파일 결과물 종류" className="field"><option value="PRESENTATION_VIDEO">발표 영상</option><option value="SOURCE_CODE">소스 코드</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select>
-      <input name="title" required maxLength={200} placeholder="결과물 제목" className="field" />
-      <input name="file" aria-label="결과물 파일" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" />
+      <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field"><option value="PRESENTATION_VIDEO">발표 영상</option><option value="SOURCE_CODE">소스 코드</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
+      <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 프로젝트 포스터" className="field" /></label>
+      <label className="grid gap-2 text-sm font-semibold">결과물 파일<input name="file" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" /></label>
       <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 등록 중" : "파일 결과물 등록"}</button>
-      {state.message ? <p className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-red-700" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }

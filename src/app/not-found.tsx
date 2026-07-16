@@ -9,8 +9,8 @@ export default function NotFound() {
         <div className="flex justify-center"><Brand /></div>
         <p className="eyebrow mt-10">404</p>
         <h1 className="mt-3 text-3xl font-extrabold tracking-tight">페이지를 찾을 수 없습니다</h1>
-        <p className="muted mx-auto mt-4 max-w-md leading-7">주소가 변경되었거나, 이 페이지를 볼 권한이 없을 수 있습니다.</p>
-        <Link href="/topics" className="button-primary mt-8">주제 탐색으로 이동</Link>
+        <p className="muted mx-auto mt-4 max-w-md leading-7">입력한 주소가 정확한지 확인하거나 프로젝트 탐색으로 돌아가 주세요.</p>
+        <Link href="/topics" className="button-primary mt-8">프로젝트 탐색으로 이동</Link>
       </section>
     </main>
   );

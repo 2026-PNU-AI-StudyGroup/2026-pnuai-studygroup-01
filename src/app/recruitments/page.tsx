@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { RecruitmentApplyForm, RecruitmentDecisionForm, RecruitmentPostForm } from "@/app/recruitments/recruitment-forms";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
+import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { RecruitmentService } from "@/modules/recruitment/application/manage-recruitment";
 import { PrismaRecruitmentRepository } from "@/modules/recruitment/infrastructure/prisma-recruitment-repository";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
@@ -12,9 +15,11 @@ import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
+export const metadata: Metadata = { title: "팀원 모집" };
+
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 const historyStatus = {
-  PENDING: { label: "검토 중", tone: "warning" },
+  PENDING: { label: "검토 중", tone: "info" },
   ACCEPTED: { label: "수락", tone: "success" },
   REJECTED: { label: "거절", tone: "danger" },
 } as const;
@@ -26,10 +31,10 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const requestedHistoryPage = Number(firstSearchParam(params.historyPage) ?? "1");
-  const data = await new RecruitmentService(
-    new PrismaRecruitmentRepository(prisma),
-    new PrismaTopicApplicationRepository(prisma),
-  ).list(actor, requestedPage, requestedHistoryPage);
+  const [data, profile] = await Promise.all([
+    new RecruitmentService(new PrismaRecruitmentRepository(prisma), new PrismaTopicApplicationRepository(prisma)).list(actor, requestedPage, requestedHistoryPage),
+    new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor),
+  ]);
   const pageHref = (page: number, historyPage: number) => {
     const query = new URLSearchParams();
     if (page > 1) query.set("page", String(page));
@@ -38,9 +43,9 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
     return `/recruitments${suffix}`;
   };
 
-  return <AppShell role={actor.role} userName="부산대학교" currentPath="/recruitments">
+  return <AppShell role={actor.role} userName={actor.name} currentPath="/recruitments">
     <main className="content-shell space-y-10">
-      <PageHeader eyebrow="Team formation" title="팀원 모집" description="구성 중인 프로젝트 팀의 필요한 역할과 활동 조건을 확인하고 함께할 학생을 찾으세요." />
+      <PageHeader eyebrow="팀 구성" title="팀원 모집" description="구성 중인 프로젝트 팀의 필요한 역할과 활동 조건을 확인하고 함께할 학생을 찾으세요." />
       <RecruitmentPostForm teams={data.formingTeams} />
       {data.posts.length === 0 ? <EmptyState title="열린 모집 글이 없습니다" description="구성 중인 팀원이 모집 글을 등록하면 이곳에 표시됩니다." /> : <>
         <ol className="border-b border-[var(--line)]">{data.posts.map((post) => <li key={post.id} className="border-t border-[var(--line)] py-9">
@@ -48,17 +53,17 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
           <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.035em]">{post.title}</h2>
           <TranslatedText text={post.content} className="muted mt-3 max-w-3xl leading-7" />
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><dt className="muted text-xs">필요 기술</dt><dd>{post.requiredSkills.join(", ")}</dd></div><div><dt className="muted text-xs">필요 역할</dt><dd>{post.roleNeeded}</dd></div><div><dt className="muted text-xs">활동 시간</dt><dd>{post.availability}</dd></div></dl>
-          {post.authorId !== actor.id && post.canApply && !post.ownApplication ? <RecruitmentApplyForm postId={post.id} /> : post.ownApplication ? <p className="mt-4 text-sm font-semibold">지원 상태 · {post.ownApplication.status}</p> : null}
+          {post.authorId !== actor.id && post.canApply && !post.ownApplication ? <RecruitmentApplyForm postId={post.id} profile={profile} /> : post.ownApplication ? <div className="mt-4 flex items-center gap-2 text-sm font-semibold"><span>지원 상태</span><StatusBadge tone={historyStatus[post.ownApplication.status].tone}>{historyStatus[post.ownApplication.status].label}</StatusBadge></div> : null}
           {post.authorId === actor.id && post.receivedApplications.length ? <ul className="mt-6 divide-y divide-[var(--line)] border-t border-[var(--line)]">{post.receivedApplications.map((application) => <li key={application.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto]">
             <div><p className="font-semibold">{application.studentName} · {application.skills.join(", ")}</p><p className="muted text-sm">{application.desiredRole} · {application.availability}</p><TranslatedText text={application.message} className="mt-2 text-sm" /></div>
-            {application.status === "PENDING" ? <div className="flex gap-2"><RecruitmentDecisionForm applicationId={application.id} decision="ACCEPT" /><RecruitmentDecisionForm applicationId={application.id} decision="REJECT" /></div> : <StatusBadge>{application.status}</StatusBadge>}
+            {application.status === "PENDING" ? <div className="flex gap-2"><RecruitmentDecisionForm applicationId={application.id} decision="ACCEPT" /><RecruitmentDecisionForm applicationId={application.id} decision="REJECT" /></div> : <StatusBadge tone={historyStatus[application.status].tone}>{historyStatus[application.status].label}</StatusBadge>}
           </li>)}</ul> : null}
         </li>)}</ol>
         <nav aria-label="모집 글 페이지" className="flex items-center justify-between"><span className="muted text-sm">{data.page} / {data.totalPages} 페이지 · 총 {data.total}개</span><div className="flex gap-2">{data.page > 1 ? <Link className="button-quiet" href={pageHref(data.page - 1, data.historyPage)}>이전</Link> : null}{data.page < data.totalPages ? <Link className="button-quiet" href={pageHref(data.page + 1, data.historyPage)}>다음</Link> : null}</div></nav>
       </>}
       <section aria-labelledby="application-history-title" className="space-y-5 border-t border-[var(--line)] pt-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div><p className="eyebrow">My applications</p><h2 id="application-history-title" className="mt-1 text-2xl font-bold">내 모집 지원 이력</h2></div>
+          <div><p className="eyebrow">지원 내역</p><h2 id="application-history-title" className="mt-1 text-2xl font-bold">내 모집 지원 이력</h2></div>
           <span className="muted text-sm">총 {data.historyTotal}개</span>
         </div>
         {data.applicationHistory.length === 0 ? <EmptyState title="모집 지원 이력이 없습니다" description="팀원 모집 글에 지원하면 마감 이후에도 처리 결과가 이곳에 남습니다." /> : <>

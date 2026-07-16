@@ -13,7 +13,7 @@ export default function Home() {
         <div className="max-w-2xl">
           <p className="eyebrow">Pusan National University</p>
           <h1 aria-label="학과 프로젝트 관리 시스템" className="mt-5 text-4xl font-black leading-[1.15] tracking-[-0.04em] text-[var(--ink)] sm:text-6xl">
-            학과 프로젝트의 모든 흐름을,<br />한곳에서 선명하게.
+            학과 프로젝트의<br />모든 흐름을,<br />한곳에서 선명하게.
           </h1>
           <p className="muted mt-7 max-w-xl text-lg leading-8">
             진행 중인 주제와 지난 프로젝트 탐색부터 팀 구성, 보고서 승인, 결과물 보관까지. 학생과 교수의 협업 과정을 단순하게 연결합니다.

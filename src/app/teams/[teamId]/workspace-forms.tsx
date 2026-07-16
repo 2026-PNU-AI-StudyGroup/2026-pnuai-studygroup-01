@@ -11,6 +11,7 @@ import {
   updateMilestoneStatusAction,
 } from "@/app/teams/[teamId]/actions";
 import type { MilestoneStatus } from "@/modules/team/application/team-workspace-ports";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: TeamActionState = { status: "idle", message: "" };
 
@@ -19,8 +20,8 @@ export function CloseTeamForm({ teamId }: { teamId: string }) {
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="teamId" value={teamId} />
-      <button disabled={pending} className="button-secondary">{pending ? "종료 중" : "팀 종료"}</button>
-      {state.status === "error" ? <span role="alert" className="text-xs text-red-700">{state.message}</span> : null}
+      <ConfirmSubmitButton disabled={pending} className="button-danger" confirmMessage="팀을 종료하면 진행 기록과 보고서를 더 이상 수정할 수 없습니다. 승인된 최종 보고서를 확인하고 종료하시겠습니까?">{pending ? "종료 중" : "팀 종료"}</ConfirmSubmitButton>
+      {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]">{state.message}</span> : null}
     </form>
   );
 }
@@ -35,7 +36,7 @@ export function MilestoneForm({ teamId }: { teamId: string }) {
       <button disabled={pending} className="button-primary">
         {pending ? "추가 중" : "마일스톤 추가"}
       </button>
-      {state.message ? <p aria-live="polite" className={`sm:col-span-3 ${state.status === "error" ? "text-red-700" : "text-green-700"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`sm:col-span-3 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
@@ -46,13 +47,13 @@ export function MilestoneStatusForm({ teamId, milestoneId, status }: { teamId: s
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="milestoneId" value={milestoneId} />
-      <select name="status" aria-label="마일스톤 상태" defaultValue={status} className="field min-h-10 py-1 text-sm">
+      <select name="status" aria-label="마일스톤 상태" defaultValue={status} className="field text-sm">
         <option value="TODO">할 일</option>
         <option value="IN_PROGRESS">진행 중</option>
         <option value="DONE">완료</option>
       </select>
-      <button disabled={pending} className="button-quiet min-h-10 px-2 text-sm">저장</button>
-      {state.status === "error" ? <span className="text-xs text-red-700">{state.message}</span> : null}
+      <button disabled={pending} className="button-quiet px-2 text-sm">저장</button>
+      {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]">{state.message}</span> : null}
     </form>
   );
 }
@@ -68,7 +69,7 @@ export function ProgressUpdateForm({ teamId }: { teamId: string }) {
       <button disabled={pending} className="button-primary justify-self-start">
         {pending ? "기록 중" : "진행 기록 추가"}
       </button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-green-700"}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
     </form>
   );
 }
@@ -80,7 +81,7 @@ export function DiscussionPostForm({ teamId }: { teamId: string }) {
       <input type="hidden" name="teamId" value={teamId} />
       <textarea name="content" aria-label="토론 내용" required maxLength={2000} rows={3} placeholder="팀에 질문이나 의견을 남기세요" className="field" />
       <button disabled={pending} className="button-primary justify-self-start">{pending ? "등록 중" : "의견 남기기"}</button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-red-700" : "text-green-700"}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
     </form>
   );
 }

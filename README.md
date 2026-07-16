@@ -1,6 +1,8 @@
 # PNU Project Management System
 
-부산대학교 학과의 졸업과제, 교내외 대회, 교육 프로그램을 개설하고 주제 공개부터 결과물 아카이브까지 한곳에서 관리하는 웹 시스템입니다.
+부산대학교 학과의 캡스톤, 교내외 대회, 교육 프로그램을 개설하고 주제 공개부터 결과물 아카이브까지 한곳에서 관리하는 웹 시스템입니다.
+
+화면의 부산대학교 워드마크는 [부산대학교 공식 홈페이지](https://www.pusan.ac.kr/kor/Main.do)에서 제공하는 브랜드 자산을 자체 호스팅해 사용합니다.
 
 ![PMS UI concept](docs/design/pms-ui-concept-ink-cobalt.png)
 

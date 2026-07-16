@@ -46,7 +46,7 @@ export function AcademicCycleForm() {
       {state.message ? (
         <p
           aria-live="polite"
-          className={`sm:col-span-3 ${state.status === "error" ? "text-red-700" : "text-green-700"}`}
+          className={`sm:col-span-3 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}
         >
           {state.message}
         </p>

@@ -20,8 +20,12 @@
   --accent-subtle: #edf1ff;
   --focus: var(--accent);
   --success: #18794e;
+  --success-subtle: #eaf7f0;
   --warning: #9a6700;
+  --warning-ink: #755000;
+  --warning-subtle: #fff7df;
   --danger: #b42318;
+  --danger-subtle: #fff0ee;
   --radius-control: 0.625rem;
   --radius-panel: 0.75rem;
   --snap-duration: 140ms;
@@ -46,6 +50,8 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 a,

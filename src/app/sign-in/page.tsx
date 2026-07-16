@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
 import { Brand } from "@/shared/ui/brand";
+
+export const metadata: Metadata = { title: "로그인" };
 
 export default function SignInPage() {
   return (
@@ -9,7 +12,7 @@ export default function SignInPage() {
       <section className="hidden flex-col justify-between bg-[var(--surface-subtle)] p-12 lg:flex">
         <Brand />
         <blockquote className="max-w-xl">
-          <p className="text-3xl font-bold leading-snug tracking-tight text-[var(--ink)]">“좋은 프로젝트는 결과뿐 아니라 과정이 선명합니다.”</p>
+          <p className="max-w-lg text-3xl font-bold leading-snug tracking-tight text-[var(--ink)]">좋은 프로젝트는 결과뿐 아니라<br />과정까지 선명합니다.</p>
           <footer className="muted mt-5">부산대학교 학과 프로젝트 관리</footer>
         </blockquote>
         <p className="muted text-sm">주제 · 팀 · 진행 · 보고서 · 결과물</p>
@@ -17,7 +20,7 @@ export default function SignInPage() {
       <section className="flex min-h-screen items-center px-6 py-12 sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-md">
           <div className="mb-12 lg:hidden"><Brand /></div>
-          <p className="eyebrow">Secure access</p>
+          <p className="eyebrow">계정 인증</p>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight">로그인</h1>
           <p className="muted mt-4 leading-7">부산대학교 구성원 인증을 위해 Google Workspace 로그인을 사용합니다.</p>
           <div className="mt-8 border-y border-[var(--line)] py-8">

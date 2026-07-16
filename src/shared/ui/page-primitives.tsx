@@ -29,11 +29,11 @@ export function EmptyState({ title, description, action }: { title: string; desc
 }
 
 const statusStyle = {
-  neutral: "bg-slate-100 text-slate-700",
+  neutral: "bg-[var(--surface-subtle)] text-[var(--muted)]",
   info: "bg-[var(--accent-subtle)] text-[var(--accent-hover)]",
-  success: "bg-emerald-50 text-emerald-700",
-  warning: "bg-amber-50 text-amber-700",
-  danger: "bg-red-50 text-red-700",
+  success: "bg-[var(--success-subtle)] text-[var(--success)]",
+  warning: "bg-[var(--warning-subtle)] text-[var(--warning-ink)]",
+  danger: "bg-[var(--danger-subtle)] text-[var(--danger)]",
 } as const;
 
 export function StatusBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: keyof typeof statusStyle }) {
@@ -47,7 +47,7 @@ export function ProgressBar({ value, label = "진행률" }: { value: number; lab
       <div className="mb-2 flex items-baseline justify-between gap-4 text-sm">
         <span className="muted font-medium">{label}</span><strong className="text-[var(--ink)]">{safeValue}%</strong>
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label={label} aria-valuenow={safeValue} aria-valuemin={0} aria-valuemax={100}>
+      <div className="h-2.5 overflow-hidden rounded-full bg-[var(--line)]" role="progressbar" aria-label={label} aria-valuenow={safeValue} aria-valuemin={0} aria-valuemax={100}>
         <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${safeValue}%` }} />
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   decideTopicApplicationAction,
   type DecisionActionState,
 } from "@/app/professor/applications/actions";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: DecisionActionState = { status: "idle", message: "" };
 
@@ -26,18 +27,19 @@ export function DecisionButtons({ applicationId }: { applicationId: string }) {
       >
         수락
       </button>
-      <button
+      <ConfirmSubmitButton
         name="decision"
         value="reject"
         disabled={pending}
         className="button-danger text-sm"
+        confirmMessage="이 주제 지원을 거절하시겠습니까?"
       >
         거절
-      </button>
+      </ConfirmSubmitButton>
       {state.message ? (
         <p
           aria-live="polite"
-          className={`w-full text-sm ${state.status === "error" ? "text-red-700" : "text-green-700"}`}
+          className={`w-full text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}
         >
           {state.message}
         </p>

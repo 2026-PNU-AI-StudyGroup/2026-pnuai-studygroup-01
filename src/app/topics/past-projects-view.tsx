@@ -29,7 +29,7 @@ export function PastProjectsView({ projects, total, page, totalPages, academicYe
   const years = academicYear && !academicYears.includes(academicYear) ? [academicYear, ...academicYears] : academicYears;
   const hasFilters = Boolean(query || academicYear || category);
   return <>
-    <PageHeader eyebrow="Past projects" title="종료된 선배 프로젝트" description="캡스톤을 중심으로 이전 학년도의 주제와 결과물을 찾아 다음 프로젝트의 출발점으로 참고하세요." />
+    <PageHeader eyebrow="프로젝트 탐색" title="종료된 프로젝트" description="캡스톤을 비롯한 이전 학년도의 주제와 결과물을 찾아 다음 프로젝트의 출발점으로 참고하세요." />
     <section aria-labelledby="past-filter-title" className="border-b border-[var(--line)] pb-7">
       <div className="mb-4 flex items-baseline justify-between gap-4"><h2 id="past-filter-title" className="text-base font-extrabold">학년도</h2><p className="muted text-sm">검색 결과 {total}개</p></div>
       <nav aria-label="학년도별 프로젝트 필터" className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-3">

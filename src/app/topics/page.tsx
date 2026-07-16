@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -5,6 +6,8 @@ import { ActiveProjectsView } from "@/app/topics/active-projects-view";
 import { PastProjectsView } from "@/app/topics/past-projects-view";
 import { ProjectExplorerLayout, type ProjectView } from "@/app/topics/project-explorer-layout";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
+import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
@@ -16,6 +19,8 @@ import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prism
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+
+export const metadata: Metadata = { title: "프로젝트 탐색" };
 
 type TopicsSearchParams = {
   view?: SearchParamValue;
@@ -51,12 +56,13 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen();
     const requestedProgramId = firstSearchParam(params.programId);
     const programId = requestedProgramId && requestedProgramId.length <= 200 && programs.some((program) => program.id === requestedProgramId) ? requestedProgramId : undefined;
-    const [topics, applications] = await Promise.all([
+    const [topics, applications, profile] = await Promise.all([
       new ListPublishedTopicsService(topicRepository).execute(programId),
       actor.role === "STUDENT" ? new ListOwnTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor) : Promise.resolve([]),
+      actor.role === "STUDENT" ? new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor) : Promise.resolve(null),
     ]);
-    content = <ActiveProjectsView actor={actor} programs={programs} programId={programId} topics={topics} applications={applications} now={new Date()} />;
+    content = <ActiveProjectsView actor={actor} profile={profile} programs={programs} programId={programId} topics={topics} applications={applications} now={new Date()} />;
   }
 
-  return <AppShell role={actor.role} userName="부산대학교" currentPath="/topics"><ProjectExplorerLayout role={actor.role} view={view}>{content}</ProjectExplorerLayout></AppShell>;
+  return <AppShell role={actor.role} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout role={actor.role} view={view}>{content}</ProjectExplorerLayout></AppShell>;
 }

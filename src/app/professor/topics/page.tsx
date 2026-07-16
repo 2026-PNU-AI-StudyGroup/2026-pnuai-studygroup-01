@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -13,7 +14,9 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
-const statusPresentation = { DRAFT: ["초안", "neutral"], PUBLISHED: ["공개", "success"], CLOSED: ["마감", "warning"] } as const;
+export const metadata: Metadata = { title: "주제 관리" };
+
+const statusPresentation = { DRAFT: ["초안", "neutral"], PUBLISHED: ["공개", "info"], CLOSED: ["마감", "neutral"] } as const;
 const koreanDateTime = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
 const localInputDateTime = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 const inputDateTime = (date: Date) => localInputDateTime.format(date).replace(" ", "T");
@@ -27,10 +30,10 @@ export default async function ProfessorTopicsPage() {
   const [programs, topics] = await Promise.all([new ProjectProgramService(programRepository).listOpen(), new ListOwnTopicsService(topicRepository).execute(actor)]);
 
   return (
-    <AppShell role={actor.role} userName="부산대학교" currentPath="/professor/topics">
+    <AppShell role={actor.role} userName={actor.name} currentPath="/professor/topics">
       <main className="content-shell space-y-12">
-        <PageHeader eyebrow="Professor" title="주제 관리" description="공개된 학과 프로젝트 프로그램 안에 주제를 등록하고 모집 상태를 관리하세요." actions={<Link href="/professor/applications" className="button-secondary">받은 지원서 보기</Link>} />
-        {programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[#f6eee9] p-4 text-sm text-[#794636]">관리자가 프로젝트 프로그램을 먼저 공개해야 주제를 만들 수 있습니다.</p> : null}
+        <PageHeader eyebrow="교수 작업" title="주제 관리" description="공개된 학과 프로젝트 프로그램에 주제를 등록하고 모집 상태를 관리하세요." actions={<Link href="/professor/applications" className="button-secondary">받은 지원서 보기</Link>} />
+        {programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[var(--warning-subtle)] p-4 text-sm text-[var(--warning-ink)]">관리자가 프로젝트 프로그램을 먼저 공개해야 주제를 만들 수 있습니다.</p> : null}
         <section aria-labelledby="new-topic-title">
           <h2 id="new-topic-title" className="mb-5 text-lg font-bold">새 주제 등록</h2><TopicForm programs={programs} />
         </section>
