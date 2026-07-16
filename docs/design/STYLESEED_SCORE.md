@@ -4,7 +4,7 @@
 - Design lock: `STYLESEED.md`
 - Visual reference: `docs/design/pms-ui-concept-capstone-studio.png` (information rhythm only; the department-wide product lock takes precedence)
 - Excluded concepts: earlier green, generic Ink/Cobalt SaaS, and competition-catalogue explorations
-- Gate date: 2026-07-14
+- Gate date: 2026-07-17
 - Final score: **94 / 100 (A)**
 - Result: **PASS** (`>= 80`)
 
@@ -42,7 +42,28 @@
 | Restrained cool-gray surfaces | `--surface-subtle` is used only for forms, role selection, login support copy, and workspace input areas. |
 | Mobile navigation language | Mobile navigation remains a fixed white 64px bar with gray inactive items and a Cobalt active icon/label. |
 | Department-wide framing | Programs, topics, teams, progress, and reports share one structure; capstone, hackathons, competitions, and other projects are content types rather than separate visual identities. |
+| Program-to-topic integration | `topics/page.tsx` presents open programs as a horizontal 44px tag filter and immediately follows it with the filtered topic list; the retired `/programs` route redirects here. |
+| Complete topic comparison | Topic rows keep the full translated description and expose recruitment, execution, and submission periods without assuming the periods are disjoint. |
+| Complete student history | The student-only history section includes pending, accepted, rejected, and closed-topic applications with application and decision timestamps. |
+| Past-project archive | The archive uses 44px academic-year tags, one search action, complete descriptions, skill references, and flat result rows without dashboard metrics or floating cards. |
 | Project workflow rhythm | Team workspace keeps milestones, progress logs, discussion, reports, approvals, and deliverables on separate content-led sections instead of a dense multi-panel dashboard. |
 | Restrained art direction | Page headings use precise 44–56px typography and asymmetric description alignment; promotional catalogue copy and numbered storytelling are absent. |
 
 The score clears the StyleSeed floor. The remaining deductions cover compact operational metadata, absent dedicated route loading screens, and conventional form controls; they are not blockers.
+
+## Archive screen gate · 2026-07-17
+
+- Target: `src/app/archive/page.tsx`
+- Final score: **96 / 100 (A)**
+- Result: **PASS** (`>= 80`)
+
+| Category | Score | Evidence |
+| --- | ---: | --- |
+| Color discipline | 16 / 16 | White canvas, Ink typography, and Cobalt-only selection/action treatment; semantic rainbow decoration is absent. |
+| Hierarchy & typography | 15 / 16 | One 44–56px page heading leads year tags, search, and project references; compact labels remain metadata only. |
+| Layout & rhythm | 12 / 12 | Full-width divider rows and a three-column desktop rhythm collapse to one readable mobile flow. |
+| Cards & elevation | 10 / 10 | No shadows, floating cards, or card grid; grouping uses whitespace and rules. |
+| States & a11y | 16 / 18 | Empty and filtered-empty states, 44px controls, semantic labels, visible focus, and non-color selected checkmarks are present; no route-specific loading screen. |
+| Motion & interaction | 6 / 6 | Existing Snap timing and global reduced-motion handling apply to filters and actions. |
+| Coherence | 12 / 12 | One radius family, flat elevation, and the locked Ink/Cobalt/Pretendard system remain intact. |
+| Distinctiveness | 9 / 10 | Senior-project language, academic-year navigation, skills, team context, and artifacts make the archive product-specific without catalogue theatrics. |

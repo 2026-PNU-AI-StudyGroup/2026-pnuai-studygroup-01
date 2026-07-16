@@ -1,7 +1,6 @@
 import "dotenv/config";
 
 import { createHash, randomUUID } from "node:crypto";
-
 import { UploadNotFoundError, UploadService } from "../src/modules/file/application/manage-upload";
 import { PrismaUploadIntentRepository } from "../src/modules/file/infrastructure/prisma-upload-intent-repository";
 import { S3ObjectStorage } from "../src/modules/file/infrastructure/s3-object-storage";
@@ -259,6 +258,9 @@ async function main() {
   const archivePage = await new ListArchivedProjectsService(archiveRepository).execute();
   const archivedTeam = archivePage.projects.find(({ id }) => id === team.id);
   if (archivedTeam?.artifacts.length !== 2) throw new Error("종료 팀 결과물이 아카이브에 보존되지 않았습니다.");
+  if (!archivePage.academicYears.includes(cycle.academicYear)) {
+    throw new Error("종료 프로젝트의 수행 연도가 아카이브 필터에 나타나지 않습니다.");
+  }
   const archiveService = new ListArchivedProjectsService(archiveRepository);
   const searchedArchive = await archiveService.execute(1, 20, { query: team.name });
   if (!searchedArchive.projects.some(({ id }) => id === team.id)) {
@@ -267,6 +269,10 @@ async function main() {
   const yearlyArchive = await archiveService.execute(1, 20, { academicYear: archivedTeam.academicYear });
   if (!yearlyArchive.projects.some(({ id }) => id === team.id)) {
     throw new Error("연도별 종료 프로젝트를 조회할 수 없습니다.");
+  }
+  const categorizedArchive = await archiveService.execute(1, 20, { programCategory: archivedTeam.programCategory });
+  if (!categorizedArchive.projects.some(({ id }) => id === team.id)) {
+    throw new Error("프로그램 분류로 종료 프로젝트를 조회할 수 없습니다.");
   }
   let closedTeamSubmissionDenied = false;
   try {

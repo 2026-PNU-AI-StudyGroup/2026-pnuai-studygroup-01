@@ -68,7 +68,7 @@ npm run dev
 - Ollama API: `http://127.0.0.1:11434`
 
 만료된 미완료 업로드와 팀 삭제 등으로 발생한 Object Storage 삭제 작업은
-다음 명령으로 재시도한다. 운영 환경에서는 이 명령을 주기 작업으로 실행한다.
+서버 런타임이 주기적으로 정리한다. 다음 명령은 수동 복구가 필요할 때 실행한다.
 `compose.yaml`은 재사용된 업로드 URL로 생긴 임시 객체도 최종 회수되도록
 `staging/` prefix에 1일 만료 lifecycle을 설정한다. 운영 bucket에도 같은
 lifecycle 규칙이 필수다.
@@ -83,12 +83,9 @@ npm run cleanup:uploads
 ALLOW_LOCAL_PROGRAM_TEST=true npm run verify:project-program
 ```
 
-종료된 팀의 결과물과 메타데이터를 학년도별로 백업하려면 다음 명령을 실행한다.
-파일은 DB의 크기와 SHA-256으로 검증되며, 완성된 백업만 최종 디렉터리에 남는다.
-
-```bash
-npm run backup:academic-year -- 2026 /absolute/path/to/backups
-```
+종료된 팀의 주제, 참여자와 공개 결과물은 로그인 후 `/archive`에서 수행 연도별로
+검색하고 열람한다. 이 제품에서 연도별 `backup`은 기술 백업 명령이 아니라 지난
+프로젝트를 계속 찾아볼 수 있게 보존하는 아카이브 기능을 뜻한다.
 
 ## 상태 확인
 

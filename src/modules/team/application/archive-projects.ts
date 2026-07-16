@@ -5,8 +5,12 @@ export type ArchivedProject = {
   academicYear: number;
   term: "FIRST" | "SECOND";
   teamName: string;
+  programName: string;
+  programCategory: string;
   topicTitle: string;
   topicDescription: string;
+  requiredSkills: string[];
+  preferredSkills: string[];
   professorName: string;
   memberNames: string[];
   artifacts: Array<{
@@ -22,9 +26,12 @@ export type ArchivedProject = {
 export type ArchiveFilters = {
   query?: string;
   academicYear?: number;
+  programCategory?: string;
 };
 
 export interface ArchivedProjectReader {
+  listAcademicYears(): Promise<number[]>;
+  listProgramCategories(): Promise<string[]>;
   countClosed(filters: ArchiveFilters): Promise<number>;
   listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]>;
 }
@@ -62,8 +69,13 @@ export class ListArchivedProjectsService {
       academicYear: Number.isInteger(filters.academicYear) && (filters.academicYear ?? 0) >= 2000 && (filters.academicYear ?? 0) <= 9999
         ? filters.academicYear
         : undefined,
+      programCategory: filters.programCategory?.trim().slice(0, 100) || undefined,
     };
-    const total = await this.reader.countClosed(normalizedFilters);
+    const [total, academicYears, programCategories] = await Promise.all([
+      this.reader.countClosed(normalizedFilters),
+      this.reader.listAcademicYears(),
+      this.reader.listProgramCategories(),
+    ]);
     const totalPages = Math.max(1, Math.ceil(total / normalizedPageSize));
     const requestedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
     const normalizedPage = Math.min(requestedPage, totalPages);
@@ -77,6 +89,8 @@ export class ListArchivedProjectsService {
       total,
       page: normalizedPage,
       totalPages,
+      academicYears,
+      programCategories,
     };
   }
 }

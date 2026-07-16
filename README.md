@@ -24,7 +24,7 @@ AI는 한국어·영어 번역에만 사용합니다. 주제 추천, 팀원 추�
 - 착수·중간·최종 보고서 버전 제출과 교수 웹 승인·수정 요청
 - SHA-256 무결성 검증 파일 업로드와 결과물 등록
 - 최종 보고서 승인 후 팀 종료 및 완료 프로젝트 아카이브 공개
-- 연도별 결과물·메타데이터 백업과 체크섬 재검증
+- 종료된 지난 프로젝트의 연도별 검색과 공개 결과물 열람
 - 로컬 Ollama `qwen3.5:2b` 기반 한영 번역
 
 ## 2. 상세 설계
@@ -65,8 +65,7 @@ flowchart LR
     Work --> Report["보고서 버전 제출"]
     Report --> Approval["교수 웹 승인"]
     Approval --> Close["팀 종료"]
-    Close --> Archive["완료 프로젝트 아카이브"]
-    Archive --> Backup["연도별 무결성 백업"]
+    Close --> Archive["연도별 지난 프로젝트 아카이브"]
 ```
 
 ## 3. 역할별 기능
@@ -168,14 +167,6 @@ npm run build
 npm run cleanup:uploads
 ```
 
-### 연도별 결과물 백업
-
-```bash
-npm run backup:academic-year -- 2026 /absolute/path/to/backups
-```
-
-명령은 해당 학년도의 종료된 팀만 내보냅니다. 파일 결과물은 스트리밍으로 내려받아 DB에 저장된 크기와 SHA-256을 다시 검증하고, 프로젝트·팀원·결과물 메타데이터는 `manifest.json`에 기록합니다. 외부 링크 결과물은 URL로 보존됩니다. 모든 검증이 끝난 경우에만 최종 디렉터리로 원자적으로 전환됩니다.
-
 ## 6. 디렉터리 구조
 
 ```text
@@ -190,8 +181,7 @@ src/
 │   ├── team/               # 팀 워크스페이스와 아카이브
 │   ├── report/             # 보고서 승인과 결과물
 │   ├── file/               # 무결성 업로드
-│   ├── translation/        # 로컬 LLM 번역
-│   └── backup/             # 연도별 결과물 백업
+│   └── translation/        # 로컬 LLM 번역
 └── shared/                 # 공통 UI와 인프라
 prisma/                     # 스키마와 마이그레이션
 scripts/                    # 통합 검증과 운영 스크립트

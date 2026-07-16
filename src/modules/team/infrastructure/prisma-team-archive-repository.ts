@@ -10,6 +10,26 @@ import type {
 export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamCloser {
   constructor(private readonly client: PrismaClient) {}
 
+  async listAcademicYears(): Promise<number[]> {
+    const cycles = await this.client.academicCycle.findMany({
+      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
+      distinct: ["academicYear"],
+      orderBy: { academicYear: "desc" },
+      select: { academicYear: true },
+    });
+    return cycles.map(({ academicYear }) => academicYear);
+  }
+
+  async listProgramCategories(): Promise<string[]> {
+    const programs = await this.client.projectProgram.findMany({
+      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
+      distinct: ["category"],
+      orderBy: { category: "asc" },
+      select: { category: true },
+    });
+    return programs.map(({ category }) => category);
+  }
+
   close(teamId: string, actor: CurrentActor): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const teams = await transaction.$queryRaw<Array<{ id: string; topicId: string }>>(Prisma.sql`
@@ -84,6 +104,9 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
           select: {
             title: true,
             description: true,
+            requiredSkills: true,
+            preferredSkills: true,
+            program: { select: { name: true, category: true } },
             author: { select: { name: true } },
             academicCycle: { select: { academicYear: true, term: true } },
           },
@@ -110,8 +133,12 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
       academicYear: team.topic.academicCycle.academicYear,
       term: team.topic.academicCycle.term,
       teamName: team.name,
+      programName: team.topic.program.name,
+      programCategory: team.topic.program.category,
       topicTitle: team.topic.title,
       topicDescription: team.topic.description,
+      requiredSkills: team.topic.requiredSkills,
+      preferredSkills: team.topic.preferredSkills,
       professorName: team.topic.author.name,
       memberNames: team.members.map(({ student }) => student.name),
       artifacts: team.artifacts.map(({ file, ...artifact }) => ({
@@ -130,6 +157,7 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
 function closedProjectWhere(filters: ArchiveFilters): Prisma.TeamWhereInput {
   const conditions: Prisma.TeamWhereInput[] = [];
   if (filters.academicYear) conditions.push({ topic: { academicCycle: { academicYear: filters.academicYear } } });
+  if (filters.programCategory) conditions.push({ topic: { program: { category: filters.programCategory } } });
   if (filters.query) {
     const query = filters.query;
     conditions.push({ OR: [

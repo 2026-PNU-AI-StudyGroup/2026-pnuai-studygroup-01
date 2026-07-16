@@ -29,16 +29,22 @@ describe("팀 종료", () => {
 describe("아카이브 페이지", () => {
   it("페이지 번호를 offset과 제한으로 변환한다", async () => {
     const reader = {
+      listAcademicYears: vi.fn(async () => [2026, 2025]),
+      listProgramCategories: vi.fn(async () => ["캡스톤", "대회"]),
       countClosed: vi.fn(async () => 41),
       listClosed: vi.fn(async () => []),
     };
     const result = await new ListArchivedProjectsService(reader).execute(2, 20);
     expect(reader.listClosed).toHaveBeenCalledWith({ offset: 20, limit: 20, filters: {} });
     expect(result.totalPages).toBe(3);
+    expect(result.academicYears).toEqual([2026, 2025]);
+    expect(result.programCategories).toEqual(["캡스톤", "대회"]);
   });
 
   it("범위를 벗어나거나 안전하지 않은 페이지를 유효 범위로 제한한다", async () => {
     const reader = {
+      listAcademicYears: vi.fn(async () => [2026]),
+      listProgramCategories: vi.fn(async () => ["캡스톤"]),
       countClosed: vi.fn(async () => 41),
       listClosed: vi.fn(async () => []),
     };
@@ -50,9 +56,9 @@ describe("아카이브 페이지", () => {
   });
 
   it("검색어와 학년도를 정규화해 개수와 목록에 동일하게 적용한다", async () => {
-    const reader = { countClosed: vi.fn(async () => 0), listClosed: vi.fn(async () => []) };
-    await new ListArchivedProjectsService(reader).execute(1, 20, { query: "  TypeScript  ", academicYear: 2026 });
-    expect(reader.countClosed).toHaveBeenCalledWith({ query: "TypeScript", academicYear: 2026 });
-    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 0, limit: 20, filters: { query: "TypeScript", academicYear: 2026 } });
+    const reader = { listAcademicYears: vi.fn(async () => [2026]), listProgramCategories: vi.fn(async () => ["캡스톤"]), countClosed: vi.fn(async () => 0), listClosed: vi.fn(async () => []) };
+    await new ListArchivedProjectsService(reader).execute(1, 20, { query: "  TypeScript  ", academicYear: 2026, programCategory: "  캡스톤  " });
+    expect(reader.countClosed).toHaveBeenCalledWith({ query: "TypeScript", academicYear: 2026, programCategory: "캡스톤" });
+    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 0, limit: 20, filters: { query: "TypeScript", academicYear: 2026, programCategory: "캡스톤" } });
   });
 });
