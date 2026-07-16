@@ -146,12 +146,14 @@ export class PrismaTopicApplicationRepository
   ): Promise<ProfessorTopicApplicationSummary[]> {
     const applications = await this.client.topicApplication.findMany({
       where,
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       include: {
         topic: { select: { title: true, authorId: true } },
         student: { select: { name: true, email: true } },
       },
     });
+
+    applications.sort((left, right) => Number(right.status === "PENDING") - Number(left.status === "PENDING"));
 
     return applications.map(({ topic, student, ...application }) => ({
       id: application.id,

@@ -3,6 +3,8 @@ import "dotenv/config";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import PDFDocument from "pdfkit";
 
 import { Prisma, PrismaClient, UserRole } from "../src/generated/prisma/client";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
@@ -23,30 +25,39 @@ if (!s3Endpoint || !["127.0.0.1", "localhost"].includes(new URL(s3Endpoint).host
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-function createDemoPdf() {
-  const header = "%PDF-1.4\n";
-  const stream = "BT /F1 18 Tf 72 720 Td (Approved final project report) Tj ET";
-  const objects = [
-    "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
-    "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
-    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>\nendobj\n",
-    `4 0 obj\n<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream\nendobj\n`,
-    "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
-  ];
-  const offsets: number[] = [];
-  let body = header;
-  for (const object of objects) {
-    offsets.push(Buffer.byteLength(body));
-    body += object;
-  }
-  const xrefOffset = Buffer.byteLength(body);
-  body += `xref\n0 6\n0000000000 65535 f \n${offsets.map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  return Buffer.from(body);
+function createDemoPdf(lines: string[], fontPath: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const document = new PDFDocument({ size: "A4", margin: 64 });
+    document.on("data", (chunk: Buffer) => chunks.push(chunk));
+    document.on("end", () => resolve(Buffer.concat(chunks)));
+    document.on("error", reject);
+    document.font(fontPath).fillColor("#172033");
+    document.fontSize(22).text(lines[0]);
+    document.moveDown(1.5);
+    document.fontSize(13);
+    lines.slice(1).forEach((line) => {
+      document.text(line);
+      document.moveDown(1.25);
+    });
+    document.end();
+  });
 }
 
-const demoReportPdf = createDemoPdf();
-const demoReportSha256 = createHash("sha256").update(demoReportPdf).digest("hex");
-
+const demoProjectDocuments = [
+  ["PNU Navi", "스마트 캠퍼스 내비게이션 앱", "무장애 경로와 건물 간 이동 시간을 함께 안내하는 모바일 서비스", "POSTER", "사용자 검증 포스터"],
+  ["Review Loop", "코드 리뷰 학습 분석 플랫폼", "리뷰 이력에서 반복 학습 주제를 찾는 협업 도구", "OTHER", "서비스 설계 및 평가 자료"],
+  ["Re:cup", "축제 다회용기 반납 동선 최적화", "대여와 반납 기록을 바탕으로 수거 지점을 제안하는 분석 도구", "POSTER", "축제 운영 결과 포스터"],
+  ["AirClass", "IoT 기반 강의실 공기질 모니터링", "센서 데이터로 환기 시점과 공간별 공기질을 알리는 시스템", "OTHER", "센서 검증 결과 보고서"],
+  ["SeeText", "시각장애 학생을 위한 강의자료 OCR", "표와 수식을 읽기 쉬운 구조로 변환하는 접근성 도구", "POSTER", "접근성 사용성 평가 포스터"],
+  ["TermBridge", "전공 용어 한영 병렬 말뭉치 검수 도구", "번역 누락과 전공 용어 불일치를 검토하는 품질 도구", "OTHER", "번역 품질 평가 자료"],
+  ["Curriculum Map", "교과목 선수관계 시각화", "선수 과목과 진로별 추천 이수 흐름을 탐색하는 웹 서비스", "POSTER", "교육과정 시각화 포스터"],
+  ["LabLink", "실험실 장비 예약 충돌 방지 서비스", "공용 장비 예약과 사용 이력을 연결하는 관리 서비스", "OTHER", "도메인 설계 결과 보고서"],
+  ["Roadmap", "신입생 수강 계획 도우미", "관심 진로와 이수 현황에 맞춘 수강 계획 비교 서비스", "POSTER", "신입생 사용성 평가 포스터"],
+  ["Degree Check", "졸업 요건 점검 자동화", "남은 전공과 교양 요건을 설명하는 규칙 기반 도구", "OTHER", "규칙 검증 결과 보고서"],
+  ["FindIt", "학내 분실물 이미지 검색", "사진과 설명으로 유사한 습득물 후보를 찾는 검색 서비스", "POSTER", "검색 성능 평가 포스터"],
+  ["First Commit", "오픈소스 기여 시작 안내서", "첫 이슈 선택부터 풀 리퀘스트까지 안내하는 저장소 탐색 도구", "OTHER", "오픈소스 기여 안내 자료"],
+] as const;
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
   professors: [
@@ -79,12 +90,23 @@ const demoObjectKeys = [...demoReportObjectKeys, ...demoArtifactObjectKeys];
 const demoUploadObjectKeys = demoObjectKeys.map((objectKey) => `staging/${objectKey}`);
 
 async function seed() {
-  await Promise.all(demoObjectKeys.map((objectKey) => s3.send(new PutObjectCommand({
-    Bucket: objectStorageBucket,
-    Key: objectKey,
-    Body: demoReportPdf,
-    ContentType: "application/pdf",
-  }))));
+  const fontPath = fileURLToPath(new URL("../public/fonts/pretendard/Pretendard-Regular.ttf", import.meta.url));
+  const demoReportPdfs = await Promise.all(demoProjectDocuments.map(([teamName, topicTitle, summary]) => createDemoPdf([
+    `${teamName} 결과 보고서`,
+    topicTitle,
+    summary,
+    "수행 과정과 지도교수 승인 내역을 반영한 최종본",
+  ], fontPath)));
+  const demoArtifactPdfs = await Promise.all(demoProjectDocuments.map(([teamName, topicTitle, summary, , artifactTitle]) => createDemoPdf([
+    `${teamName} 공개 결과물`,
+    artifactTitle,
+    topicTitle,
+    summary,
+  ], fontPath)));
+  await Promise.all([
+    ...demoReportObjectKeys.map((objectKey, index) => s3.send(new PutObjectCommand({ Bucket: objectStorageBucket, Key: objectKey, Body: demoReportPdfs[index], ContentType: "application/pdf" }))),
+    ...demoArtifactObjectKeys.map((objectKey, index) => s3.send(new PutObjectCommand({ Bucket: objectStorageBucket, Key: objectKey, Body: demoArtifactPdfs[index], ContentType: "application/pdf" }))),
+  ]);
 
   const seedResult = await prisma.$transaction(async (tx) => {
     // 검증 프로세스가 강제 종료돼도 전용 이메일 표식이 있는 임시 계정과 그 주기만 회수한다.
@@ -383,9 +405,12 @@ async function seed() {
     }
     await tx.topicApplication.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
       const { createdAt, decidedAt } = acceptedApplicationTiming(topicIndex);
+      const topicTitle = topicIndex < activeTopics.length ? activeTopics[topicIndex][0] : pastTopics[topicIndex - activeTopics.length][0];
+      const profile = studentProfiles[studentIndex];
       return {
-      id: ids.applications[index], topicId: ids.topics[topicIndex], studentId: ids.students[studentIndex], message: "프로젝트 목표에 공감하며 맡은 역할을 끝까지 수행하겠습니다.",
-      skills: topicIndex === 0 ? ["Next.js", "Figma"] : ["TypeScript", "Git"], desiredRole: "개발 및 사용자 검증", availability: "평일 저녁과 주말 가능",
+      id: ids.applications[index], topicId: ids.topics[topicIndex], studentId: ids.students[studentIndex],
+      message: `${topicTitle}의 문제 정의에 공감합니다. ${profile[2]} 역할을 맡아 팀의 결과물 완성까지 책임 있게 참여하겠습니다.`,
+      skills: [...profile[1]], desiredRole: profile[2], availability: profile[3],
       status: "ACCEPTED", createdAt, decidedAt,
     }}) });
     await tx.topicApplication.createMany({ data: reviewApplicationRows.map(([topicIndex, studentIndex, status, message], offset) => ({
@@ -432,10 +457,7 @@ async function seed() {
       }
     }
 
-    const pastTeamNames = [
-      "PNU Navi", "Review Loop", "Re:cup", "AirClass", "SeeText", "TermBridge",
-      "Curriculum Map", "LabLink", "Roadmap", "Degree Check", "FindIt", "First Commit",
-    ] as const;
+    const pastTeamNames = demoProjectDocuments.map(([teamName]) => teamName);
     const teamRows: Array<readonly [number, string, number, string, "FORMING" | "CONFIRMED" | "CLOSED"]> = [
       [0, currentCycle.id, 0, "모두의 길", "CONFIRMED"],
       [2, currentCycle.id, 2, "프로젝트 모아", "FORMING"],
@@ -475,10 +497,11 @@ async function seed() {
       const submittedAt = new Date(pastPrograms[programIndex].endsAt.getTime() - 14 * 86_400_000);
       const approvedAt = new Date(submittedAt.getTime() + 5 * 86_400_000);
       const objectKey = `demo/teams/${ids.teams[teamIndex]}/final-report.pdf`;
+      const reportPdf = demoReportPdfs[reportIndex];
       await tx.storedFile.create({ data: {
         id: ids.storedFiles[reportIndex], teamId: ids.teams[teamIndex], ownerId: ids.students[submitterIndex], purpose: "REPORT", status: "READY",
-        objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: demoReportPdf.byteLength,
-        sha256: demoReportSha256, expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
+        objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: reportPdf.byteLength,
+        sha256: createHash("sha256").update(reportPdf).digest("hex"), expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
       await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
@@ -603,15 +626,17 @@ async function seed() {
       const publishedAt = new Date(pastPrograms[pastTopics[teamRows[teamIndex][0] - 6][5]].endsAt.getTime() - 8 * 86_400_000);
       const objectKey = demoArtifactObjectKeys[index];
       const fileId = ids.storedFiles[index + closedTeamIndexes.length];
+      const artifactPdf = demoArtifactPdfs[index];
+      const artifactSeed = demoProjectDocuments[index];
       await tx.storedFile.create({ data: {
         id: fileId, teamId: ids.teams[teamIndex], ownerId, purpose: "ARTIFACT", status: "READY",
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-공개결과.pdf`, contentType: "application/pdf",
-        size: demoReportPdf.byteLength, sha256: demoReportSha256, expiresAt: publishedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"),
+        size: artifactPdf.byteLength, sha256: createHash("sha256").update(artifactPdf).digest("hex"), expiresAt: publishedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"),
         readyAt: publishedAt, createdAt: publishedAt,
       } });
       await tx.artifact.create({ data: {
-        id: ids.artifacts[index], teamId: ids.teams[teamIndex], registeredById: ownerId, type: "OTHER",
-        title: `${teamRows[teamIndex][3]} 승인 결과 보고서`, fileId, createdAt: publishedAt,
+        id: ids.artifacts[index], teamId: ids.teams[teamIndex], registeredById: ownerId, type: artifactSeed[3],
+        title: artifactSeed[4], fileId, createdAt: publishedAt,
       } });
     }
     await tx.objectDeletionJob.deleteMany({
