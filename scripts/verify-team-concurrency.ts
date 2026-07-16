@@ -38,6 +38,7 @@ async function cleanup() {
     });
     createdCycleId = null;
   }
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, ...studentIds] } } });
   await prisma.user.deleteMany({
     where: { id: { in: [professorId, ...studentIds] } },
   });
@@ -81,14 +82,14 @@ async function main() {
       {
         id: professorId,
         name: "Concurrency Professor",
-        email: `${professorId}@pusan.ac.kr`,
+        email: `verification+${professorId}@pusan.ac.kr`,
         emailVerified: true,
         role: "PROFESSOR",
       },
       ...studentIds.map((id) => ({
         id,
         name: "Concurrency Student",
-        email: `${id}@pusan.ac.kr`,
+        email: `verification+${id}@pusan.ac.kr`,
         emailVerified: true,
         role: "STUDENT" as const,
       })),

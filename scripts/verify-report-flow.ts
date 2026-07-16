@@ -38,6 +38,7 @@ async function cleanup() {
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     await uploads.cleanup(new Date(Date.now() + 27 * 60 * 60_000));
   }
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, otherProfessorId, studentId, pendingStudentId] } } });
   await prisma.user.deleteMany({ where: { id: { in: [professorId, otherProfessorId, studentId, pendingStudentId] } } });
 }
 
@@ -67,10 +68,10 @@ async function upload(teamId: string, purpose: "REPORT" | "ARTIFACT", name: stri
 
 async function main() {
   await prisma.user.createMany({ data: [
-    { id: professorId, name: "Report Professor", email: `${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
-    { id: otherProfessorId, name: "Other Professor", email: `${otherProfessorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
-    { id: studentId, name: "Report Student", email: `${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
-    { id: pendingStudentId, name: "Pending Student", email: `${pendingStudentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: professorId, name: "Report Professor", email: `verification+${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
+    { id: otherProfessorId, name: "Other Professor", email: `verification+${otherProfessorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
+    { id: studentId, name: "Report Student", email: `verification+${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: pendingStudentId, name: "Pending Student", email: `verification+${pendingStudentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
   const cycle = await prisma.academicCycle.create({ data: {
     academicYear: 7000 + Math.floor(Math.random() * 1000), term: "SECOND",

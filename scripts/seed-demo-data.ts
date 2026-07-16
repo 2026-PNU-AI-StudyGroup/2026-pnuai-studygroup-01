@@ -56,10 +56,10 @@ const ids = {
   students: Array.from({ length: 8 }, (_, index) => `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   programs: Array.from({ length: 6 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   topics: Array.from({ length: 11 }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  applications: Array.from({ length: 16 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  applications: Array.from({ length: 32 }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   localViewerApplication: "61000000-0000-4000-8000-000000000001",
   teams: Array.from({ length: 7 }, (_, index) => `70000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  members: Array.from({ length: 10 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  members: Array.from({ length: 32 }, (_, index) => `80000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   recruitments: Array.from({ length: 2 }, (_, index) => `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   recruitmentApplications: Array.from({ length: 2 }, (_, index) => `91000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   milestones: Array.from({ length: 7 }, (_, index) => `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -83,6 +83,40 @@ async function seed() {
   }))));
 
   const seedResult = await prisma.$transaction(async (tx) => {
+    // 검증 프로세스가 강제 종료돼도 전용 이메일 표식이 있는 임시 계정과 그 주기만 회수한다.
+    // 학년도 숫자만으로 사용자 데이터를 검증 데이터라고 추정하지 않는다.
+    const verificationUsers = await tx.user.findMany({
+      where: { email: { startsWith: "verification+" } },
+      select: { id: true },
+    });
+    const verificationUserIds = verificationUsers.map(({ id }) => id);
+    const verificationCycles = await tx.academicCycle.findMany({
+      where: { OR: [
+        { programs: { some: { createdById: { in: verificationUserIds } } } },
+        { topics: { some: { OR: [
+          { authorId: { in: verificationUserIds } },
+          { applications: { some: { studentId: { in: verificationUserIds } } } },
+          { team: { is: { OR: [
+            { professorId: { in: verificationUserIds } },
+            { members: { some: { studentId: { in: verificationUserIds } } } },
+          ] } } },
+        ] } } },
+      ] },
+      select: { id: true },
+    });
+    const verificationCycleIds = verificationCycles.map(({ id }) => id);
+    if (verificationCycleIds.length > 0) {
+      await tx.team.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
+      await tx.topicApplication.deleteMany({ where: { topic: { academicCycleId: { in: verificationCycleIds } } } });
+      await tx.topic.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
+      await tx.projectProgram.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
+      await tx.academicCycle.deleteMany({ where: { id: { in: verificationCycleIds } } });
+    }
+    if (verificationUserIds.length > 0) {
+      await tx.auditLog.deleteMany({ where: { actorId: { in: verificationUserIds } } });
+      await tx.user.deleteMany({ where: { id: { in: verificationUserIds } } });
+    }
+
     await tx.notification.deleteMany({ where: { dedupeKey: { startsWith: "demo:" } } });
     await tx.artifact.deleteMany({ where: { id: { in: ids.artifacts } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: ids.approvalDecisions } } });
@@ -100,9 +134,9 @@ async function seed() {
     await tx.topic.deleteMany({ where: { id: { in: ids.topics } } });
 
     const people: Array<[string, string, string, UserRole]> = [
-      [ids.professors[0], "김도윤 교수", "demo.professor1@pusan.ac.kr", UserRole.PROFESSOR],
-      [ids.professors[1], "이서현 교수", "demo.professor2@pusan.ac.kr", UserRole.PROFESSOR],
-      [ids.professors[2], "박준호 교수", "demo.professor3@pusan.ac.kr", UserRole.PROFESSOR],
+      [ids.professors[0], "김도윤", "demo.professor1@pusan.ac.kr", UserRole.PROFESSOR],
+      [ids.professors[1], "이서현", "demo.professor2@pusan.ac.kr", UserRole.PROFESSOR],
+      [ids.professors[2], "박준호", "demo.professor3@pusan.ac.kr", UserRole.PROFESSOR],
       ...["정하늘", "윤서준", "최민지", "한지우", "오세진", "문가영", "임도현", "백소연"].map<[string, string, string, UserRole]>((name, index) => [
         ids.students[index], name, `demo.student${index + 1}@pusan.ac.kr`, UserRole.STUDENT,
       ]),
@@ -262,7 +296,16 @@ async function seed() {
     }
 
     const acceptedApplicationRows = [
-      [0, 0], [0, 1], [2, 2], [6, 0], [7, 1], [8, 2], [9, 3], [10, 4], [10, 5],
+      // 2026년 진행 팀
+      [0, 0], [0, 1], [2, 2],
+      // 2025년 종료 팀: 같은 학기에는 학생이 한 팀에만 속한다.
+      [6, 0], [6, 1], [6, 2], [6, 3],
+      [7, 4], [7, 5], [7, 6], [7, 7],
+      // 2024년 종료 팀
+      [8, 0], [8, 2], [8, 4], [8, 6],
+      [9, 1], [9, 3], [9, 5], [9, 7],
+      // 2023년 종료 팀
+      [10, 0], [10, 1], [10, 2], [10, 3],
     ] as const;
     const reviewApplicationRows = [
       [1, 3, "PENDING", "시계열 데이터를 정리하고 예측 결과를 이해하기 쉬운 화면으로 표현해 보고 싶습니다."],
@@ -345,7 +388,7 @@ async function seed() {
     }) });
     if (localViewer && localViewerApplicationId) {
       await tx.teamMember.create({ data: {
-        id: ids.members[9],
+        id: ids.members[acceptedApplicationRows.length],
         teamId: ids.teams[1],
         academicCycleId: currentCycle.id,
         topicId: ids.topics[2],
@@ -356,7 +399,7 @@ async function seed() {
     }
 
     const closedTeamIndexes = [2, 3, 4, 5, 6] as const;
-    const closedTeamSubmitters = [0, 1, 2, 3, 4] as const;
+    const closedTeamSubmitters = [0, 4, 0, 1, 0] as const;
     for (const [reportIndex, teamIndex] of closedTeamIndexes.entries()) {
       const programIndex = teamIndex <= 3 ? 0 : teamIndex <= 5 ? 1 : 2;
       const submittedAt = new Date(pastPrograms[programIndex].endsAt.getTime() - 14 * 86_400_000);
@@ -396,7 +439,7 @@ async function seed() {
       {
         id: ids.recruitmentApplications[0],
         postId: ids.recruitments[0],
-        topicApplicationId: ids.applications[14],
+        topicApplicationId: ids.applications[acceptedApplicationRows.length + 5],
         studentId: ids.students[3],
         status: "PENDING",
         createdAt: new Date("2026-07-15T21:00:00+09:00"),
@@ -404,7 +447,7 @@ async function seed() {
       {
         id: ids.recruitmentApplications[1],
         postId: ids.recruitments[1],
-        topicApplicationId: ids.applications[15],
+        topicApplicationId: ids.applications[acceptedApplicationRows.length + 6],
         studentId: ids.students[4],
         status: "REJECTED",
         createdAt: new Date("2026-07-15T22:30:00+09:00"),
@@ -481,7 +524,7 @@ async function seed() {
       [5, "SOURCE_CODE", "SeeText 소스 코드", "https://github.com/pusan-cse-demo/see-text"], [5, "PRESENTATION_VIDEO", "접근성 사용자 테스트", "https://www.youtube.com/"],
       [6, "SOURCE_CODE", "Curriculum Map 저장소", "https://github.com/pusan-cse-demo/curriculum-map"], [6, "POSTER", "교육과정 시각화 포스터", "https://example.com/pusan-demo/curriculum-map-poster"],
     ] as const;
-    const artifactRegistrants = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5] as const;
+    const artifactRegistrants = [0, 1, 4, 5, 0, 2, 1, 3, 0, 1] as const;
     await tx.artifact.createMany({ data: artifactRows.map(([teamIndex, type, title, externalUrl], index) => ({ id: ids.artifacts[index], teamId: ids.teams[teamIndex], registeredById: ids.students[artifactRegistrants[index]], type, title, externalUrl })) });
     await tx.objectDeletionJob.deleteMany({
       where: { objectKey: { in: [...demoReportObjectKeys, ...demoReportUploadObjectKeys] } },
@@ -489,6 +532,8 @@ async function seed() {
     return {
       localViewer: localViewer ? { name: localViewer.name, email: localViewer.email } : null,
       connectedToDemoProject: Boolean(localViewerApplicationId),
+      verificationResidueRemoved: verificationCycles.length,
+      topicApplications: acceptedApplicationRows.length + reviewApplicationRows.length + (localViewerApplicationId ? 1 : 0),
     };
   });
 
@@ -496,7 +541,7 @@ async function seed() {
     activePrograms: 3,
     activeTopics: 6,
     activeTeams: 2,
-    topicApplications: 16 + (seedResult.localViewer ? 1 : 0),
+    topicApplications: seedResult.topicApplications,
     recruitmentPosts: 2,
     recruitmentApplications: 2,
     notifications: seedResult.localViewer ? 4 : 0,
@@ -504,6 +549,7 @@ async function seed() {
     approvedFinalReports: 5,
     artifacts: 10,
     localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
+    verificationResidueRemoved: seedResult.verificationResidueRemoved,
   }));
 }
 

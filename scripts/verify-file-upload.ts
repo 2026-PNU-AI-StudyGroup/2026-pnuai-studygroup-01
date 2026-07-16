@@ -29,13 +29,14 @@ async function cleanup() {
     );
     await cleanupService.cleanup();
   }
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, studentId] } } });
   await prisma.user.deleteMany({ where: { id: { in: [professorId, studentId] } } });
 }
 
 async function main() {
   await prisma.user.createMany({ data: [
-    { id: professorId, name: "Upload Professor", email: `${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
-    { id: studentId, name: "Upload Student", email: `${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: professorId, name: "Upload Professor", email: `verification+${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
+    { id: studentId, name: "Upload Student", email: `verification+${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
   const cycle = await prisma.academicCycle.create({ data: { academicYear: 8000 + Math.floor(Math.random() * 1000), term: "FIRST" } });
   cycleId = cycle.id;

@@ -29,15 +29,16 @@ async function cleanup() {
     await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
   }
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [adminId, professorId, leaderId, applicantId] } } });
   await prisma.user.deleteMany({ where: { id: { in: [adminId, professorId, leaderId, applicantId] } } });
 }
 
 async function main() {
   await prisma.user.createMany({ data: [
-    { id: adminId, name: "Program Admin", email: `${adminId}@pusan.ac.kr`, emailVerified: true, role: "ADMIN" },
-    { id: professorId, name: "Program Professor", email: `${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
-    { id: leaderId, name: "Program Leader", email: `${leaderId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
-    { id: applicantId, name: "Program Applicant", email: `${applicantId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: adminId, name: "Program Admin", email: `verification+${adminId}@pusan.ac.kr`, emailVerified: true, role: "ADMIN" },
+    { id: professorId, name: "Program Professor", email: `verification+${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
+    { id: leaderId, name: "Program Leader", email: `verification+${leaderId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
+    { id: applicantId, name: "Program Applicant", email: `verification+${applicantId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
   const cycle = await prisma.academicCycle.create({ data: { academicYear: 6000 + Math.floor(Math.random() * 1000), term: "FIRST" } });
   cycleId = cycle.id;

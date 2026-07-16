@@ -36,6 +36,7 @@ async function cleanup() {
     await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
     cycleId = null;
   }
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, studentId, outsiderId] } } });
   await prisma.user.deleteMany({
     where: { id: { in: [professorId, studentId, outsiderId] } },
   });
@@ -60,21 +61,21 @@ async function main() {
       {
         id: professorId,
         name: "Workspace Professor",
-        email: `${professorId}@pusan.ac.kr`,
+        email: `verification+${professorId}@pusan.ac.kr`,
         emailVerified: true,
         role: "PROFESSOR",
       },
       {
         id: studentId,
         name: "Workspace Student",
-        email: `${studentId}@pusan.ac.kr`,
+        email: `verification+${studentId}@pusan.ac.kr`,
         emailVerified: true,
         role: "STUDENT",
       },
       {
         id: outsiderId,
         name: "Workspace Outsider",
-        email: `${outsiderId}@pusan.ac.kr`,
+        email: `verification+${outsiderId}@pusan.ac.kr`,
         emailVerified: true,
         role: "STUDENT",
       },
@@ -212,7 +213,7 @@ async function main() {
     workspace.completedMilestoneCount !== 1 ||
     workspace.progressUpdates.length !== 1 ||
     workspace.discussionPosts[0]?.content !== "Can we meet on Friday?" ||
-    workspace.members[0]?.email !== `${studentId}@pusan.ac.kr`
+    workspace.members[0]?.email !== `verification+${studentId}@pusan.ac.kr`
   ) {
     throw new Error("워크스페이스 조회 결과가 저장 결과와 일치하지 않습니다.");
   }
