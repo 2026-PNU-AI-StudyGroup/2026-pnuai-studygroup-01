@@ -26,5 +26,5 @@ export async function changeProgramStatusAction(_state: ProgramActionState, form
   if (!parsed.success) return { status: "error", message: "잘못된 상태 변경 요청입니다." };
   try { await service().changeStatus(await actor(), parsed.data.programId, parsed.data.status); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); revalidatePath("/programs"); return { status: "success", message: parsed.data.status === "OPEN" ? "프로그램을 공개했습니다." : "프로그램을 마감했습니다." };
+  revalidatePath("/admin/programs"); revalidatePath("/topics"); return { status: "success", message: parsed.data.status === "OPEN" ? "프로그램을 공개했습니다." : "프로그램을 마감했습니다." };
 }

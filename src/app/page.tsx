@@ -27,7 +27,7 @@ export default function Home() {
         <div className="relative border-y border-[var(--line)] py-3 lg:border-y-0 lg:border-l lg:py-6 lg:pl-16" aria-label="프로젝트 운영 단계">
           <ol id="workflow" className="divide-y divide-[var(--line)]">
             {[
-              ["프로그램 탐색", "학과에서 운영하는 프로젝트의 주제와 지원 조건을 비교합니다."],
+              ["주제 탐색", "프로그램 태그로 학과 프로젝트를 좁혀 주제와 지원 조건을 비교합니다."],
               ["팀 구성", "구조화된 지원 정보와 교수 승인으로 팀을 확정합니다."],
               ["진행 관리", "마일스톤, 진행 기록, 지도 의견을 한 흐름에서 관리합니다."],
               ["보고서와 결과물", "착수·중간·결과 보고서와 프로젝트 결과물을 검토하고 보관합니다."],

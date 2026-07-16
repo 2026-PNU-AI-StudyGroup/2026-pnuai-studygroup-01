@@ -10,31 +10,51 @@ type NavigationItem = {
   icon: "home" | "search" | "file" | "users" | "settings";
 };
 
-const commonNavigation: NavigationItem[] = [
-  { href: "/dashboard", label: "내 프로젝트", icon: "home" },
-  { href: "/programs", label: "프로그램", icon: "file" },
-  { href: "/archive", label: "아카이브", icon: "file" },
-];
-
 function navigationFor(role: UserRole): NavigationItem[] {
   if (role === "STUDENT") {
-    return [...commonNavigation, { href: "/topics", label: "주제 탐색", icon: "search" }, { href: "/recruitments", label: "팀원 모집", icon: "users" }];
+    return [
+      { href: "/topics", label: "주제 탐색", icon: "search" },
+      { href: "/dashboard", label: "내 프로젝트", icon: "home" },
+      { href: "/recruitments", label: "팀원 모집", icon: "users" },
+      { href: "/archive", label: "지난 프로젝트", icon: "file" },
+    ];
   }
   if (role === "ADMIN") {
     return [
-      ...commonNavigation,
-      { href: "/professor/topics", label: "주제 관리", icon: "file" },
-      { href: "/professor/applications", label: "지원 검토", icon: "users" },
-      { href: "/admin/academic-cycles", label: "학기 관리", icon: "settings" },
-      { href: "/admin/programs", label: "프로그램 관리", icon: "file" },
-      { href: "/admin/professors", label: "교수 권한", icon: "users" },
+      { href: "/topics", label: "주제 탐색", icon: "search" },
+      { href: "/dashboard", label: "전체 프로젝트", icon: "home" },
+      { href: "/archive", label: "지난 프로젝트", icon: "file" },
+      { href: "/admin/programs", label: "관리", icon: "settings" },
     ];
   }
   return [
-    ...commonNavigation,
-    { href: "/professor/topics", label: "주제 관리", icon: "file" },
-    { href: "/professor/applications", label: "지원 검토", icon: "users" },
+    { href: "/topics", label: "주제 탐색", icon: "search" },
+    { href: "/dashboard", label: "지도 프로젝트", icon: "home" },
+    { href: "/archive", label: "지난 프로젝트", icon: "file" },
+    { href: "/professor/topics", label: "관리", icon: "settings" },
   ];
+}
+
+function managementNavigationFor(role: UserRole): Array<Pick<NavigationItem, "href" | "label">> {
+  if (role === "ADMIN") return [
+    { href: "/admin/programs", label: "프로그램" },
+    { href: "/admin/academic-cycles", label: "학기" },
+    { href: "/admin/professors", label: "교수 권한" },
+    { href: "/professor/topics", label: "주제" },
+    { href: "/professor/applications", label: "지원 검토" },
+  ];
+  if (role === "PROFESSOR") return [
+    { href: "/professor/topics", label: "주제" },
+    { href: "/professor/applications", label: "지원 검토" },
+  ];
+  return [];
+}
+
+function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
+  if (item.label !== "관리") return currentPath === item.href;
+  return role === "ADMIN"
+    ? currentPath.startsWith("/admin/") || currentPath.startsWith("/professor/")
+    : currentPath.startsWith("/professor/");
 }
 
 function NavIcon({ name }: { name: NavigationItem["icon"] }) {
@@ -50,15 +70,17 @@ function NavIcon({ name }: { name: NavigationItem["icon"] }) {
 
 export function AppShell({ role, userName, currentPath, children }: { role: UserRole; userName: string; currentPath: string; children: ReactNode }) {
   const navigation = navigationFor(role);
+  const managementNavigation = managementNavigationFor(role);
+  const showManagementNavigation = managementNavigation.some(({ href }) => currentPath === href);
   const roleLabel = role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자";
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-8 px-6">
-          <Brand />
+          <Brand href="/topics" />
           <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-8 lg:flex">
             {navigation.map((item) => {
-              const active = currentPath === item.href;
+              const active = isNavigationActive(item, currentPath, role);
               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color relative flex h-full items-center text-sm font-semibold ${active ? "text-[var(--accent)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--accent)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
             })}
           </nav>
@@ -67,11 +89,19 @@ export function AppShell({ role, userName, currentPath, children }: { role: User
             <span className="rounded-lg bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-bold text-[var(--ink)]">{roleLabel}</span>
           </div>
         </div>
+        {showManagementNavigation ? (
+          <nav aria-label="관리 메뉴" className="mx-auto flex max-w-[1280px] gap-6 overflow-x-auto px-6">
+            {managementNavigation.map((item) => {
+              const active = currentPath === item.href;
+              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color flex min-h-11 shrink-0 items-center border-b-2 text-sm font-semibold ${active ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
+            })}
+          </nav>
+        ) : null}
       </header>
       {children}
       <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
         {navigation.map((item) => {
-          const active = currentPath === item.href;
+          const active = isNavigationActive(item, currentPath, role);
           return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[0.6875rem] font-bold ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} />{item.label}</Link>;
         })}
       </nav>

@@ -113,8 +113,21 @@ export class PrismaTopicApplicationRepository
         desiredRole: true,
         availability: true,
         createdAt: true,
+        decidedAt: true,
+        topic: {
+          select: {
+            title: true,
+            status: true,
+            program: { select: { name: true } },
+          },
+        },
       },
-    });
+    }).then((applications) => applications.map(({ topic, ...application }) => ({
+      ...application,
+      topicTitle: topic.title,
+      topicStatus: topic.status,
+      programName: topic.program.name,
+    })));
   }
 
   async listByTopicAuthor(

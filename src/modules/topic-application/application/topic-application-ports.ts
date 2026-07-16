@@ -23,20 +23,23 @@ export interface TopicApplicationCreator {
 export type TopicApplicationSummary = {
   id: string;
   topicId: string;
+  topicTitle: string;
+  topicStatus: "DRAFT" | "PUBLISHED" | "CLOSED";
+  programName: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
   message: string;
   skills: string[];
   desiredRole: string;
   availability: string;
   createdAt: Date;
+  decidedAt: Date | null;
 };
 
 export interface TopicApplicationLister {
   listByStudent(studentId: string): Promise<TopicApplicationSummary[]>;
 }
 
-export type ProfessorTopicApplicationSummary = TopicApplicationSummary & {
-  topicTitle: string;
+export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "decidedAt"> & {
   topicAuthorId: string;
   studentId: string;
   studentName: string;
