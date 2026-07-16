@@ -195,7 +195,7 @@ src/
 │   ├── project-program/    # 동적 프로젝트 프로그램
 │   ├── topic/              # 주제
 │   ├── topic-application/  # 지원과 팀 배정
-│   ├── team/               # 팀 워크스페이스와 아카이브
+│   ├── team/               # 프로젝트 공간과 지난 프로젝트 조회
 │   ├── report/             # 보고서 승인과 결과물
 │   ├── file/               # 무결성 업로드
 │   └── translation/        # 로컬 LLM 번역

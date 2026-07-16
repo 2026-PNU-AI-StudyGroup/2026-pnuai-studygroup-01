@@ -5,7 +5,7 @@
 - Visual reference: `docs/design/pms-ui-concept-capstone-studio.png` (information rhythm only; the department-wide product lock takes precedence)
 - Excluded concepts: earlier green, generic Ink/Cobalt SaaS, and competition-catalogue explorations
 - Gate date: 2026-07-17
-- Final score: **94 / 100 (A)**
+- Final score: **95 / 100 (A)**
 - Result: **PASS** (`>= 80`)
 
 ## Evidence score
@@ -16,7 +16,7 @@
 | Hierarchy & typography | 14 / 16 | Pretendard Variable is self-hosted, desktop body defaults to 16px, and `PageHeader` provides a calm 44–56px focal heading. Compact operational metadata intentionally remains 12–14px. |
 | Layout & rhythm | 12 / 12 | White page canvas, 1280px content measure, airy 24–56px spacing, and disciplined divider lists support the full program-to-report flow. |
 | Cards & elevation | 10 / 10 | No `box-shadow` or floating elevation remains. Grouping uses flat borders, dividers, tonal form sections, and whitespace. |
-| States & a11y | 16 / 18 | Visible focus, 44px controls, disabled/pending/error/empty states, semantic status labels, and mobile 64px navigation are present. Server-rendered data routes do not have dedicated route loading screens. |
+| States & a11y | 17 / 18 | Visible focus, 44px controls, disabled/pending/error/empty states, semantic status labels, global route loading feedback, and mobile 64px navigation are present. One point remains reserved until every authenticated state is visually exercised. |
 | Motion & interaction | 6 / 6 | Snap is locked to 140ms for controls and navigation, payload is not delayed, and reduced motion disables custom transitions and animation. |
 | Coherence | 12 / 12 | One accent, one soft radius family, flat/no-shadow elevation, and one icon stroke family are consistent. Semantic colors appear only in matching status and feedback contexts. |
 | Distinctiveness | 8 / 10 | Precise project headings, flat work sections, and restrained branding avoid dashboard, competition-site, and icon-chip clichés while retaining conventional operational controls. |
@@ -39,17 +39,36 @@
 | Cobalt active underline and CTA | Desktop active links use a 2px Cobalt underline; `.button-primary` is the only filled accent action. |
 | White page and flat content lists | `--canvas` and `--surface` are white; program, topic, application, archive, and recruitment screens retain divider-based lists. |
 | Flat panels without floating cards | The UI source contains no `box-shadow`, `drop-shadow`, or elevation utility. Empty and grouped panels use border and whitespace only. |
-| Restrained cool-gray surfaces | `--surface-subtle` is used only for forms, role selection, login support copy, and workspace input areas. |
+| Restrained cool-gray surfaces | `--surface-subtle` is limited to form sections, neutral status labels, loading skeletons, and hover feedback; the login canvas and support copy remain white. |
 | Mobile navigation language | Mobile navigation remains a fixed white 64px bar with gray inactive items and a Cobalt active icon/label. |
 | Department-wide framing | Programs, topics, teams, progress, and reports share one structure; capstone, hackathons, competitions, and other projects are content types rather than separate visual identities. |
 | Program-to-topic integration | `topics/page.tsx` presents open programs as a horizontal 44px tag filter and immediately follows it with the filtered topic list; the retired `/programs` route redirects here. |
 | Complete topic comparison | Topic rows keep the full translated description and expose recruitment, execution, and submission periods without assuming the periods are disjoint. |
 | Complete student history | The student-only history section includes pending, accepted, rejected, and closed-topic applications with application and decision timestamps. |
 | Past-project archive | The archive uses 44px academic-year tags, one search action, complete descriptions, skill references, and flat result rows without dashboard metrics or floating cards. |
-| Project workflow rhythm | Team workspace keeps milestones, progress logs, discussion, reports, approvals, and deliverables on separate content-led sections instead of a dense multi-panel dashboard. |
+| Project workflow rhythm | The project space keeps milestones, progress logs, discussion, reports, approvals, and deliverables on separate content-led sections instead of a dense multi-panel dashboard. |
 | Restrained art direction | Page headings use precise 44–56px typography and asymmetric description alignment; promotional catalogue copy and numbered storytelling are absent. |
 
-The score clears the StyleSeed floor. The remaining deductions cover compact operational metadata, absent dedicated route loading screens, and conventional form controls; they are not blockers.
+The score clears the StyleSeed floor. The remaining deductions cover compact operational metadata and conventional form controls; they are not blockers.
+
+## Operations surfaces gate · 2026-07-17
+
+- Target: `src/app/notifications/page.tsx`, `src/app/admin/users/page.tsx`, `src/app/admin/audit/page.tsx`
+- Final score: **94 / 100 (A)**
+- Result: **PASS** (`>= 80`)
+
+| Category | Score | Evidence |
+| --- | ---: | --- |
+| Color discipline | 16 / 16 | Cobalt marks unread notification focus only; inactive accounts use danger and ordinary active accounts remain neutral. Audit warnings are limited to revocation, deactivation, and revision requests. |
+| Hierarchy & typography | 14 / 16 | One page title leads each surface, while counts, timestamps, roles, and email addresses stay secondary. |
+| Layout & rhythm | 12 / 12 | All three screens use full-width divider lists and aligned metadata instead of metric cards or floating panels. |
+| Cards & elevation | 10 / 10 | No shadows or card grids are introduced; search and result groups use border rules and whitespace. |
+| States & a11y | 18 / 18 | Search labels, semantic headings and lists, explicit empty states, 44px actions, visible focus, confirmation flows, and text labels independent of color are present. |
+| Motion & interaction | 6 / 6 | The locked 140ms Snap transitions and reduced-motion override apply without decorative animation. |
+| Coherence | 12 / 12 | Shared `PageHeader`, `StatusBadge`, controls, spacing, and responsive list patterns remain consistent with the rest of the product. |
+| Distinctiveness | 6 / 10 | Copy and metadata are specific to project operations, though the administrative controls intentionally remain conventional. |
+
+The operations surfaces pass the static StyleSeed gate. Rendered desktop and mobile verification remains a separate final visual gate.
 
 ## Project explorer gate · 2026-07-17
 

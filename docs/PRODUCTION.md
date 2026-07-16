@@ -16,7 +16,7 @@ https://<운영 도메인>/api/auth/callback/google
 openssl rand -base64 48
 ```
 
-애플리케이션 컨테이너는 PostgreSQL과 MinIO를 외부에 공개하지 않는다. `3000` 포트 앞에는 TLS를 종료하는 Reverse Proxy를 두고, 프록시에서도 `X-Forwarded-Proto=https`를 전달한다.
+애플리케이션 컨테이너는 PostgreSQL과 MinIO를 외부에 공개하지 않는다. 앱의 `3000` 포트도 기본 Compose에서 `127.0.0.1`에만 바인딩하며, 같은 호스트의 Reverse Proxy만 접근하게 한다. Reverse Proxy에서 TLS를 종료하고 `X-Forwarded-Proto=https`를 전달한다. 운영 도메인의 HTTPS 응답에는 프록시에서 `Strict-Transport-Security: max-age=31536000; includeSubDomains`를 추가한다. 전체 하위 도메인이 HTTPS로 운영된다는 확인 전에는 `includeSubDomains`를 사용하지 않는다.
 
 ## 배포
 
