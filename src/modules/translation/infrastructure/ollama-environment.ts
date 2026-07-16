@@ -14,7 +14,7 @@ export function parseOllamaEnvironment(
   const url = new URL(parsed.OLLAMA_BASE_URL);
   if (
     url.protocol !== "http:" ||
-    !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+    !["127.0.0.1", "localhost", "[::1]", "host.docker.internal"].includes(url.hostname)
   ) {
     throw new Error("OLLAMA_BASE_URL은 로컬 HTTP 주소만 허용합니다.");
   }

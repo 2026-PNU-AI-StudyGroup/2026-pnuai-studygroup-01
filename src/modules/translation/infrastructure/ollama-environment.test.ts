@@ -15,4 +15,11 @@ describe("Ollama 환경 설정", () => {
       "로컬 HTTP 주소만 허용",
     );
   });
+
+  it("컨테이너에서 호스트의 로컬 Ollama 접근을 허용한다", () => {
+    expect(parseOllamaEnvironment({
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434",
+      OLLAMA_MODEL: "qwen3.5:2b",
+    }).OLLAMA_BASE_URL).toBe("http://host.docker.internal:11434");
+  });
 });

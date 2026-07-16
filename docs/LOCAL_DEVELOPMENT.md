@@ -28,6 +28,7 @@ ollama pull qwen3.5:2b
 - `BETTER_AUTH_SECRET`: 32바이트 이상의 무작위 값
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: Google OAuth Web Client 자격 증명
 - `INITIAL_ADMIN_EMAIL`: 관리자 bootstrap 대상 부산대학교 이메일
+- `CRON_SECRET`: 마감 알림 작업 호출용 32자 이상의 별도 무작위 값
 
 Google Cloud Console의 승인된 Redirect URI에는 다음 값을 등록한다.
 
@@ -45,6 +46,7 @@ npm run db:bootstrap-admin
 
 명령은 검증된 기존 사용자만 관리자로 승격한다. 마이그레이션이나 애플리케이션 시작 과정에서는 자동 실행되지 않는다.
 관리자는 로그인 후 `/admin/professors`에서 교수 이메일을 사전 등록하거나 권한을 회수한다.
+`/admin/users`에서는 계정을 비활성화하고 기존 세션을 종료하며, `/admin/audit`에서 중요 운영 변경을 확인한다.
 운영 학기는 `/admin/academic-cycles`에서 등록하고, 실제 졸업과제·대회·교육 과정은 `/admin/programs`에서 이름과 분류를 자유롭게 입력해 개설한다. 공개 상태인 프로그램에만 교수가 주제를 등록할 수 있다.
 
 외부 AI API는 사용하지 않는다. Ollama의 Cloud 기능은 비활성화한다.
@@ -88,12 +90,19 @@ ALLOW_LOCAL_PROGRAM_TEST=true npm run verify:project-program
 삭제하지 않는다.
 
 ```bash
-ALLOW_LOCAL_DEMO_SEED=true npm run db:seed-demo
+ALLOW_LOCAL_DEMO_SEED=true DEMO_VIEWER_EMAIL=<로그인한 학생 이메일> npm run db:seed-demo
 ```
 
 데모 데이터에는 2026년 캡스톤·해커톤·AI 교육 프로그램의 공개 주제 6개,
 진행 팀과 팀원 모집, 마일스톤·진행 기록·교수 의견, 2023–2025년 종료 프로젝트
 5개의 승인된 최종 보고서 이력과 공개 결과물 10개가 포함된다.
+`DEMO_VIEWER_EMAIL`을 지정하면 해당 로컬 학생 계정에 프로젝트 프로필, 구성 중인 팀, 모집 지원자와 알림 이력도 연결한다.
+
+7일 이내의 마일스톤·수행·제출 마감 알림은 다음 명령으로 생성한다. 같은 마감 알림은 재실행해도 중복되지 않는다.
+
+```bash
+npm run notifications:deadlines
+```
 
 종료된 팀의 주제, 참여자와 공개 결과물은 로그인 후 `/topics?view=past`에서 수행 연도별로
 검색하고 열람한다. 이 제품에서 연도별 `backup`은 기술 백업 명령이 아니라 지난
@@ -104,6 +113,8 @@ ALLOW_LOCAL_DEMO_SEED=true npm run db:seed-demo
 ```bash
 docker compose ps
 curl http://127.0.0.1:11434/api/tags
+curl http://localhost:3000/api/health/live
+curl http://localhost:3000/api/health/ready
 ```
 
 ## 종료

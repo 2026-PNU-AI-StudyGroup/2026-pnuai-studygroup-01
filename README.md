@@ -27,6 +27,8 @@ AI는 한국어·영어 번역에만 사용합니다. 주제 추천, 팀원 추�
 - SHA-256 무결성 검증 파일 업로드와 결과물 등록
 - 최종 보고서 승인 후 팀 종료 및 완료 프로젝트 아카이브 공개
 - 종료된 지난 프로젝트의 연도별 검색과 공개 결과물 열람
+- 지원·보고서 결과와 프로젝트 마감 알림함
+- 사용자 활성 상태, 세션 종료와 중요 운영 행위 감사 기록
 - 로컬 Ollama `qwen3.5:2b` 기반 한영 번역
 
 ## 2. 상세 설계
@@ -95,6 +97,8 @@ flowchart LR
 - 프로젝트 프로그램 생성·공개·마감
 - 교수 이메일 사전 허용과 권한 회수
 - 교수 기능을 통한 전체 주제·지원·팀 운영
+- 사용자 활성 상태와 기존 세션 관리
+- 권한·팀 확정·보고서 승인 감사 기록 조회
 
 ## 4. 설치 및 실행
 
@@ -123,6 +127,7 @@ ollama pull qwen3.5:2b
 - `BETTER_AUTH_SECRET`: 32바이트 이상의 무작위 값
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: Google OAuth 자격 증명
 - `INITIAL_ADMIN_EMAIL`: 최초 관리자 대상 부산대학교 이메일
+- `CRON_SECRET`: 마감 알림 작업 호출용 별도 무작위 값
 
 Google OAuth Redirect URI는 `http://localhost:3000/api/auth/callback/google`입니다. 외부 AI API는 사용하지 않으며, Ollama Cloud 기능은 다음과 같이 끕니다.
 
@@ -169,6 +174,14 @@ npm run build
 npm run cleanup:uploads
 ```
 
+### 마감 알림 생성
+
+```bash
+npm run notifications:deadlines
+```
+
+Docker 기반 운영 배포, 상태 확인, 정기 작업과 백업·복구 절차는 [프로덕션 운영 문서](docs/PRODUCTION.md)를 따릅니다.
+
 ## 6. 디렉터리 구조
 
 ```text
@@ -176,6 +189,8 @@ src/
 ├── app/                    # Next.js 페이지, Server Action, Route Handler
 ├── modules/                # 업무 모듈별 domain/application/infrastructure
 │   ├── identity/           # 인증과 역할
+│   ├── notification/       # 사용자 알림과 마감 생성
+│   ├── audit/              # 중요 운영 행위 감사 기록
 │   ├── academic-cycle/     # 학년도·학기
 │   ├── project-program/    # 동적 프로젝트 프로그램
 │   ├── topic/              # 주제
