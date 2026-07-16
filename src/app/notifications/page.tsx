@@ -36,7 +36,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           eyebrow="알림"
           title="알림함"
           description="지원 결과, 보고서 처리와 프로젝트 마감을 놓치지 않도록 필요한 소식만 모아 보여드립니다."
-          actions={data.unreadCount ? <form action={markAllNotificationsReadAction}><button className="button-secondary">모두 읽음</button></form> : undefined}
+          actions={data.unreadCount ? <form action={markAllNotificationsReadAction}><button className="button-secondary">모두 읽음으로 표시</button></form> : undefined}
         />
         <section aria-labelledby="notification-list-title">
           <div className="mb-4 flex items-center justify-between gap-4"><h2 id="notification-list-title" className="text-lg font-extrabold">최근 알림</h2><p className="muted text-sm">읽지 않음 {data.unreadCount}개 · 전체 {data.total}개</p></div>

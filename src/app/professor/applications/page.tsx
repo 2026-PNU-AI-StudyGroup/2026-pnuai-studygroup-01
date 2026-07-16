@@ -18,7 +18,7 @@ const statusPresentation = { PENDING: ["검토 중", "info"], ACCEPTED: ["수락
 export default async function ProfessorApplicationsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
   const applications = await new ListReceivedTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor);
 
   return (

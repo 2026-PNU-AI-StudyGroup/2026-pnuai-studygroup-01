@@ -17,7 +17,7 @@ const koreanDate = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" });
 export default async function ProfessorsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "ADMIN") redirect("/topics");
   const service = new ProfessorAccessService(
     new PrismaProfessorAccessRepository(prisma),
   );

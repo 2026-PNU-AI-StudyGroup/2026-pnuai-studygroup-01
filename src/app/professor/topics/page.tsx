@@ -24,7 +24,7 @@ const inputDateTime = (date: Date) => localInputDateTime.format(date).replace(" 
 export default async function ProfessorTopicsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
   const programRepository = new PrismaProjectProgramRepository(prisma);
   const topicRepository = new PrismaTopicRepository(prisma);
   const [programs, topics] = await Promise.all([new ProjectProgramService(programRepository).listOpen(), new ListOwnTopicsService(topicRepository).execute(actor)]);

@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "학기 관리" };
 export default async function AcademicCyclesPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "ADMIN") redirect("/topics");
   const repository = new PrismaAcademicCycleRepository(prisma);
   const cycles = await new ListAcademicCyclesService(repository).execute();
   return (

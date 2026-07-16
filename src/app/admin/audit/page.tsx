@@ -27,7 +27,7 @@ const dateTime = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeSty
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "ADMIN") redirect("/topics");
   const params = await searchParams;
   const page = Number(firstSearchParam(params.page) ?? "1");
   const data = await new ListAuditLogService(new PrismaAuditLogReader(prisma)).execute(actor, page);

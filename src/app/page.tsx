@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { Brand } from "@/shared/ui/brand";
 
-export default function Home() {
+export default async function Home() {
+  if (await getCurrentActor()) redirect("/topics");
+
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--canvas)]">
       <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6" aria-label="랜딩 메뉴">

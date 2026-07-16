@@ -120,7 +120,7 @@ export function ArtifactExternalForm({ teamId }: { teamId: string }) {
     }}>
       <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field"><option value="SOURCE_CODE">소스 코드</option><option value="PRESENTATION_VIDEO">발표 영상</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
       <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 최종 발표 자료" className="field" /></label>
-      <label className="grid gap-2 text-sm font-semibold">외부 링크<input name="externalUrl" required type="url" placeholder="https://..." className="field" /></label>
+      <label className="grid gap-2 text-sm font-semibold">외부 링크<input name="externalUrl" required type="url" placeholder="https://github.com/example/project" className="field" /></label>
       <button disabled={pending} className="button-primary justify-self-start">외부 링크 등록</button>
       {state.message ? <p aria-live="polite" className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>

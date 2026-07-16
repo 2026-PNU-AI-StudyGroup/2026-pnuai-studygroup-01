@@ -17,7 +17,7 @@ export function StudentProfileForm({ profile }: { profile: StudentProfile | null
       <label className="grid gap-2 text-sm font-semibold">희망 역할<input name="desiredRole" required maxLength={200} defaultValue={profile?.desiredRole} placeholder="예: 프론트엔드 개발과 사용자 검증" className="field" /></label>
       <label className="grid gap-2 text-sm font-semibold">활동 가능 시간<input name="availability" required maxLength={500} defaultValue={profile?.availability} placeholder="예: 평일 18시 이후, 토요일 오전" className="field" /></label>
       <label className="grid gap-2 text-sm font-semibold sm:col-span-2">자기소개<textarea name="bio" required maxLength={1_000} rows={4} defaultValue={profile?.bio} placeholder="관심 있는 문제와 프로젝트에서 기여하고 싶은 내용을 작성해 주세요." className="field" /></label>
-      <button type="submit" disabled={pending} className="button-primary justify-self-start">{pending ? "저장 중..." : "프로필 저장"}</button>
+      <button type="submit" disabled={pending} className="button-primary justify-self-start">{pending ? "저장 중" : "프로필 저장"}</button>
       {state.message ? <p role="status" aria-live="polite" className={`self-center text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );

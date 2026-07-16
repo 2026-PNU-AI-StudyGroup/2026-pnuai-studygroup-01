@@ -31,7 +31,7 @@ export function GoogleSignInButton() {
         disabled={isPending}
         className="button-primary w-full"
       >
-        {isPending ? "Google로 이동 중..." : "부산대학교 Google 계정으로 로그인"}
+        {isPending ? "Google로 이동 중" : "부산대학교 Google 계정으로 로그인"}
       </button>
       {errorMessage ? (
         <p role="alert" className="text-sm text-[var(--danger)]">

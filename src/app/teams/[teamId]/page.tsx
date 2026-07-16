@@ -26,7 +26,7 @@ import { EmptyState, PageHeader, ProgressBar, StatusBadge } from "@/shared/ui/pa
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
-export const metadata: Metadata = { title: "프로젝트 워크스페이스" };
+export const metadata: Metadata = { title: "프로젝트 공간" };
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 중", "warning"], DONE: ["완료", "success"] } as const;
@@ -73,7 +73,7 @@ export default async function TeamWorkspacePage({
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
       <main className="content-shell space-y-12">
-        <PageHeader eyebrow="프로젝트 워크스페이스" title={workspace.name} description={`${workspace.topicTitle} · 지도교수 ${workspace.professorName}`} actions={<div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center"><StatusBadge>{workspace.status === "FORMING" ? "구성 중" : workspace.status === "CONFIRMED" ? "확정 팀" : "종료 팀"}</StatusBadge>{workspace.status === "FORMING" && actor.role !== "STUDENT" ? <form action={confirmTeamAction}><input type="hidden" name="teamId" value={workspace.id} /><button className="button-primary">팀 확정</button></form> : null}{workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}<div className="w-full sm:w-48"><ProgressBar value={progress} /></div></div>} />
+        <PageHeader eyebrow="프로젝트 공간" title={workspace.name} description={`${workspace.topicTitle} · 지도교수 ${workspace.professorName}`} actions={<div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center"><StatusBadge>{workspace.status === "FORMING" ? "구성 중" : workspace.status === "CONFIRMED" ? "확정 팀" : "종료 팀"}</StatusBadge>{workspace.status === "FORMING" && actor.role !== "STUDENT" ? <form action={confirmTeamAction}><input type="hidden" name="teamId" value={workspace.id} /><button className="button-primary">팀 확정</button></form> : null}{workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}<div className="w-full sm:w-48"><ProgressBar value={progress} /></div></div>} />
         <section aria-labelledby="members-title" className="border-y border-[var(--line)] py-5">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3"><h2 id="members-title" className="text-sm font-bold">팀원 {workspace.members.length}명</h2>{workspace.members.map((member) => <span key={member.id} className="text-sm"><strong>{member.name}</strong><span className="muted ml-2 hidden sm:inline">{member.email}</span></span>)}</div>
         </section>

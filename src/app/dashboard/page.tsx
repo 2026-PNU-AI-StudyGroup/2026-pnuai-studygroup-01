@@ -33,7 +33,7 @@ export default async function DashboardPage() {
                   <li key={team.id} className="grid gap-6 py-8 lg:grid-cols-[minmax(0,1fr)_260px_9rem] lg:items-center">
                     <div><div className="flex flex-wrap items-start gap-3"><h2 className="text-2xl font-extrabold tracking-[-0.035em]">{team.name}</h2><StatusBadge>{team.status === "CLOSED" ? "종료" : team.status === "CONFIRMED" ? "진행 중" : "구성 중"}</StatusBadge></div><p className="muted mt-2 text-sm">{team.topicTitle} · 팀원 {team.memberCount}명</p></div>
                     <ProgressBar value={progress} />
-                    <Link href={`/teams/${team.id}`} className="button-secondary">워크스페이스</Link>
+                    <Link href={`/teams/${team.id}`} className="button-secondary">프로젝트 열기</Link>
                   </li>
                 );
               })}

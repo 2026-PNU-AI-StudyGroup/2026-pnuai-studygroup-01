@@ -27,7 +27,7 @@ const historyStatus = {
 export default async function RecruitmentsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue; historyPage?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "STUDENT") redirect("/");
+  if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const requestedHistoryPage = Number(firstSearchParam(params.historyPage) ?? "1");

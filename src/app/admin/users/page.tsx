@@ -19,7 +19,7 @@ const date = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "
 export default async function UsersAdminPage({ searchParams }: { searchParams: Promise<{ q?: SearchParamValue; page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "ADMIN") redirect("/");
+  if (actor.role !== "ADMIN") redirect("/topics");
   const params = await searchParams;
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
@@ -36,7 +36,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
         <section aria-labelledby="user-list-title">
           <div className="mb-4 flex items-center justify-between gap-4"><h2 id="user-list-title" className="text-lg font-extrabold">가입 사용자</h2><p className="muted text-sm">총 {data.total}명</p></div>
           {data.items.length === 0 ? <EmptyState title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{data.items.map((user) => <li key={user.id} className="grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_12rem_13rem] lg:items-center">
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h3 className="font-extrabold">{user.name}</h3><StatusBadge>{roleLabel[user.role]}</StatusBadge><StatusBadge tone={user.isActive ? "success" : "danger"}>{user.isActive ? "활성" : "비활성"}</StatusBadge></div><p className="muted mt-2 break-all text-sm">{user.email}</p></div>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h3 className="font-extrabold">{user.name}</h3><StatusBadge>{roleLabel[user.role]}</StatusBadge><StatusBadge tone={user.isActive ? "neutral" : "danger"}>{user.isActive ? "활성" : "비활성"}</StatusBadge></div><p className="muted mt-2 break-all text-sm">{user.email}</p></div>
             <p className="muted text-sm">가입일 {date.format(user.createdAt)}</p>
             <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} disabled={user.id === actor.id} />
           </li>)}</ol>}
