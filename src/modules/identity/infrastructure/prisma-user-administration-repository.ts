@@ -24,6 +24,9 @@ export class PrismaUserAdministrationRepository implements UserAdministrationRep
 
   setActive(input: { actorId: string; targetId: string; isActive: boolean; changedAt: Date }): Promise<"UPDATED" | "NOT_FOUND" | "UNCHANGED" | "SELF_DEACTIVATION" | "LAST_ADMIN"> {
     return this.client.$transaction(async (transaction) => {
+      // 사용자 상태 변경은 드물고, 마지막 활성 관리자 규칙은 관리자 집합 전체의 불변식이다.
+      // 서로 다른 관리자 행을 동시에 잠가도 같은 집합 잠금을 먼저 얻도록 트랜잭션을 직렬화한다.
+      await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(1947337051, 1)::text AS "lock"`);
       const targets = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
         SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${input.targetId} FOR UPDATE
       `);

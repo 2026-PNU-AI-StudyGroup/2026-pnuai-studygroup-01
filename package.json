@@ -29,6 +29,7 @@
     "verify:report-flow": "tsx scripts/verify-report-flow.ts",
     "verify:translation": "tsx scripts/verify-translation.ts",
     "verify:project-program": "tsx scripts/verify-project-program.ts",
+    "verify:user-administration": "tsx scripts/verify-user-administration.ts",
     "cleanup:uploads": "tsx scripts/cleanup-uploads.ts"
   },
   "dependencies": {
