@@ -16,7 +16,7 @@ export default function Home() {
             학과 프로젝트의 모든 흐름을,<br />한곳에서 선명하게.
           </h1>
           <p className="muted mt-7 max-w-xl text-lg leading-8">
-            주제 탐색과 팀 구성부터 진행 기록, 보고서 승인, 결과물 보관까지. 학생과 교수의 협업 과정을 단순하게 연결합니다.
+            진행 중인 주제와 지난 프로젝트 탐색부터 팀 구성, 보고서 승인, 결과물 보관까지. 학생과 교수의 협업 과정을 단순하게 연결합니다.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link href="/sign-in" className="button-primary px-6">부산대학교 계정으로 시작</Link>
@@ -27,7 +27,7 @@ export default function Home() {
         <div className="relative border-y border-[var(--line)] py-3 lg:border-y-0 lg:border-l lg:py-6 lg:pl-16" aria-label="프로젝트 운영 단계">
           <ol id="workflow" className="divide-y divide-[var(--line)]">
             {[
-              ["주제 탐색", "프로그램 태그로 학과 프로젝트를 좁혀 주제와 지원 조건을 비교합니다."],
+              ["프로젝트 탐색", "진행 중인 주제는 프로그램별로 비교하고 지난 프로젝트의 결과물도 함께 찾아봅니다."],
               ["팀 구성", "구조화된 지원 정보와 교수 승인으로 팀을 확정합니다."],
               ["진행 관리", "마일스톤, 진행 기록, 지도 의견을 한 흐름에서 관리합니다."],
               ["보고서와 결과물", "착수·중간·결과 보고서와 프로젝트 결과물을 검토하고 보관합니다."],

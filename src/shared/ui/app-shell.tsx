@@ -13,24 +13,21 @@ type NavigationItem = {
 function navigationFor(role: UserRole): NavigationItem[] {
   if (role === "STUDENT") {
     return [
-      { href: "/topics", label: "주제 탐색", icon: "search" },
+      { href: "/topics", label: "프로젝트 탐색", icon: "search" },
       { href: "/dashboard", label: "내 프로젝트", icon: "home" },
       { href: "/recruitments", label: "팀원 모집", icon: "users" },
-      { href: "/archive", label: "지난 프로젝트", icon: "file" },
     ];
   }
   if (role === "ADMIN") {
     return [
-      { href: "/topics", label: "주제 탐색", icon: "search" },
+      { href: "/topics", label: "프로젝트 탐색", icon: "search" },
       { href: "/dashboard", label: "전체 프로젝트", icon: "home" },
-      { href: "/archive", label: "지난 프로젝트", icon: "file" },
       { href: "/admin/programs", label: "관리", icon: "settings" },
     ];
   }
   return [
-    { href: "/topics", label: "주제 탐색", icon: "search" },
+    { href: "/topics", label: "프로젝트 탐색", icon: "search" },
     { href: "/dashboard", label: "지도 프로젝트", icon: "home" },
-    { href: "/archive", label: "지난 프로젝트", icon: "file" },
     { href: "/professor/topics", label: "관리", icon: "settings" },
   ];
 }

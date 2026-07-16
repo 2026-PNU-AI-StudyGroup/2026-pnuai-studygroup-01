@@ -73,7 +73,7 @@ export async function closeTeamAction(
   }
   revalidatePath(`/teams/${teamId}`);
   revalidatePath("/dashboard");
-  revalidatePath("/archive");
+  revalidatePath("/topics");
   return { status: "success", message: "팀을 종료하고 아카이브에 보관했습니다." };
 }
 

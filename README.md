@@ -65,7 +65,7 @@ flowchart LR
     Work --> Report["보고서 버전 제출"]
     Report --> Approval["교수 웹 승인"]
     Approval --> Close["팀 종료"]
-    Close --> Archive["연도별 지난 프로젝트 아카이브"]
+    Close --> Archive["프로젝트 탐색의 연도별 종료 프로젝트"]
 ```
 
 ## 3. 역할별 기능
