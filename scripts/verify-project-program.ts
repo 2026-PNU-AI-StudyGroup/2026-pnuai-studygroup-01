@@ -76,8 +76,8 @@ async function main() {
     submissionEndsAt: new Date(now.getTime() + 80 * day),
   });
   if (!(await topics.publishDraft(topic.id, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
-  const filtered = await topics.listPublished(program.id);
-  if (filtered.length !== 1 || filtered[0].programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
+  const filtered = await topics.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
     recruitmentStartsAt: new Date(now.getTime() - 30 * 60_000),
     recruitmentEndsAt: new Date(now.getTime() + 40 * day),
@@ -98,6 +98,12 @@ async function main() {
 
   const accepted = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: leaderId, message: "팀장", status: "ACCEPTED", decidedAt: now } });
   const pending = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: applicantId, message: "지원", status: "PENDING" } });
+  const searched = await topics.listPublished({ viewerId: applicantId, programId: program.id, query: "typescript", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  if (searched.total !== 1 || searched.items[0]?.ownApplicationStatus !== "PENDING") {
+    throw new Error("기술 검색 또는 현재 학생의 지원 상태 조회가 일치하지 않습니다.");
+  }
+  const escapedSearch = await topics.listPublished({ programId: program.id, query: "%", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  if (escapedSearch.total !== 0) throw new Error("검색 와일드카드가 일반 문자로 처리되지 않았습니다.");
   const team = await prisma.team.create({ data: { academicCycleId: cycle.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
   await prisma.teamMember.create({ data: { teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
   const post = await prisma.recruitmentPost.create({ data: { teamId: team.id, authorId: leaderId, title: "팀원 모집", content: "내용", roleNeeded: "개발", availability: "주 1회" } });
@@ -114,13 +120,13 @@ async function main() {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
   }
   const [topicHistory, recruitmentHistory] = await Promise.all([
-    new PrismaTopicApplicationRepository(prisma).listByStudent(applicantId),
-    new PrismaRecruitmentRepository(prisma).list(applicantId, 1, 1),
+    new PrismaTopicApplicationRepository(prisma).listByStudent(applicantId, 1, 20),
+    new PrismaRecruitmentRepository(prisma).listApplicationHistory(applicantId, 1),
   ]);
-  if (topicHistory[0]?.topicStatus !== "CLOSED" || topicHistory[0]?.status !== "REJECTED") {
+  if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
   }
-  if (recruitmentHistory.applicationHistory[0]?.status !== "REJECTED") {
+  if (recruitmentHistory.applications[0]?.status !== "REJECTED") {
     throw new Error("마감된 팀원 모집 지원 이력을 학생이 조회할 수 없습니다.");
   }
   if (await topics.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
@@ -146,7 +152,7 @@ async function main() {
   const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "PUBLISHED" } });
   if (publishedRaceTopics !== 0) throw new Error("프로그램 마감과 주제 생성 경합 후 공개 주제가 남았습니다.");
 
-  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.length, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, recruitmentApplicationHistory: recruitmentHistory.historyTotal, closeCreateRacePublishedTopics: publishedRaceTopics }));
+  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, recruitmentApplicationHistory: recruitmentHistory.total, closeCreateRacePublishedTopics: publishedRaceTopics }));
 }
 
 main()

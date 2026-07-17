@@ -6,6 +6,9 @@ import type {
   TopicDraft,
   TopicLister,
   PublicTopicLister,
+  PublicTopicPage,
+  PublicTopicPhase,
+  PublicTopicQuery,
   PublicTopicSummary,
   TopicStateRecord,
   TopicStateRepository,
@@ -13,6 +16,41 @@ import type {
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
 import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
+
+const publicTopicInclude = {
+  author: { select: { name: true } },
+  academicCycle: { select: { academicYear: true, term: true } },
+  program: { select: { name: true, category: true, status: true } },
+  team: { select: { _count: { select: { members: true } } } },
+} satisfies Prisma.TopicInclude;
+
+type PublicTopicRow = Prisma.TopicGetPayload<{ include: typeof publicTopicInclude }>;
+
+function toPublicTopic(
+  { author, academicCycle, program, team, ...topic }: PublicTopicRow,
+  ownApplicationStatus: PublicTopicSummary["ownApplicationStatus"] = null,
+): PublicTopicSummary {
+  return {
+    ...topic,
+    authorName: author.name,
+    academicYear: academicCycle.academicYear,
+    term: academicCycle.term,
+    programName: program.name,
+    programCategory: program.category,
+    programStatus: program.status,
+    memberCount: team?._count.members ?? 0,
+    ownApplicationStatus,
+  };
+}
+
+function phaseWhere(phase: PublicTopicPhase, now: Date): Prisma.TopicWhereInput {
+  if (phase === "RECRUITING") return { recruitmentStartsAt: { lte: now }, recruitmentEndsAt: { gt: now } };
+  if (phase === "CLOSING_SOON") {
+    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1_000);
+    return { recruitmentStartsAt: { lte: now }, recruitmentEndsAt: { gt: now, lte: sevenDaysLater } };
+  }
+  return {};
+}
 
 export class PrismaTopicRepository
   implements TopicCreator, TopicLister, TopicStateRepository, TopicScheduleUpdater, PublicTopicLister
@@ -174,27 +212,65 @@ export class PrismaTopicRepository
     return rows.length === 1;
   }
 
-  async listPublished(programId?: string): Promise<PublicTopicSummary[]> {
+  async listPublished(query: PublicTopicQuery): Promise<PublicTopicPage> {
+    const escapedSkillQuery = query.query.toLowerCase().replace(/[\\%_]/g, "\\$&");
+    const skillTopicIds = query.query
+      ? await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+          SELECT "id" FROM "topic"
+          WHERE lower(array_to_string("requiredSkills", ' ')) LIKE ${`%${escapedSkillQuery}%`} ESCAPE '\'
+             OR lower(array_to_string("preferredSkills", ' ')) LIKE ${`%${escapedSkillQuery}%`} ESCAPE '\'
+        `)
+      : [];
+    const search: Prisma.TopicWhereInput = query.query ? { OR: [
+      { title: { contains: escapedSkillQuery, mode: "insensitive" } },
+      { description: { contains: escapedSkillQuery, mode: "insensitive" } },
+      { id: { in: skillTopicIds.map(({ id }) => id) } },
+      { author: { name: { contains: escapedSkillQuery, mode: "insensitive" } } },
+      { program: { name: { contains: escapedSkillQuery, mode: "insensitive" } } },
+    ] } : {};
+    const baseWhere: Prisma.TopicWhereInput = {
+      status: "PUBLISHED",
+      programId: query.programId,
+      program: { status: "OPEN" },
+      ...search,
+    };
+    const where: Prisma.TopicWhereInput = { AND: [baseWhere, phaseWhere(query.phase, query.now)] };
+    const [total, activeCount, recruitingCount, closingSoonCount] = await Promise.all([
+      this.client.topic.count({ where }),
+      this.client.topic.count({ where: baseWhere }),
+      this.client.topic.count({ where: { AND: [baseWhere, phaseWhere("RECRUITING", query.now)] } }),
+      this.client.topic.count({ where: { AND: [baseWhere, phaseWhere("CLOSING_SOON", query.now)] } }),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
+    const page = Math.min(query.page, totalPages);
     const topics = await this.client.topic.findMany({
-      where: { status: "PUBLISHED", programId, program: { status: "OPEN" } },
-      orderBy: { publishedAt: "desc" },
-      include: {
-        author: { select: { name: true } },
-        academicCycle: { select: { academicYear: true, term: true } },
-        program: { select: { name: true, category: true, status: true } },
-        team: { select: { _count: { select: { members: true } } } },
-      },
+      where,
+      orderBy: query.sort === "DEADLINE" ? [{ recruitmentEndsAt: "asc" }, { id: "asc" }] : [{ publishedAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * query.pageSize,
+      take: query.pageSize,
+      include: publicTopicInclude,
     });
+    const ownApplications = query.viewerId && topics.length
+      ? await this.client.topicApplication.findMany({
+          where: { studentId: query.viewerId, topicId: { in: topics.map(({ id }) => id) } },
+          select: { topicId: true, status: true },
+        })
+      : [];
+    const ownStatusByTopic = new Map(ownApplications.map(({ topicId, status }) => [topicId, status]));
+    return {
+      items: topics.map((topic) => toPublicTopic(topic, ownStatusByTopic.get(topic.id) ?? null)),
+      page,
+      totalPages,
+      total,
+      counts: { ACTIVE: activeCount, RECRUITING: recruitingCount, CLOSING_SOON: closingSoonCount },
+    };
+  }
 
-    return topics.map(({ author, academicCycle, program, team, ...topic }) => ({
-      ...topic,
-      authorName: author.name,
-      academicYear: academicCycle.academicYear,
-      term: academicCycle.term,
-      programName: program.name,
-      programCategory: program.category,
-      programStatus: program.status,
-      memberCount: team?._count.members ?? 0,
-    }));
+  async findPublished(id: string): Promise<PublicTopicSummary | null> {
+    const topic = await this.client.topic.findFirst({
+      where: { id, status: "PUBLISHED", program: { status: "OPEN" } },
+      include: publicTopicInclude,
+    });
+    return topic ? toPublicTopic(topic) : null;
   }
 }

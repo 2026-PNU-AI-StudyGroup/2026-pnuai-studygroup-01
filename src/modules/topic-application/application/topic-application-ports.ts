@@ -26,6 +26,7 @@ export type TopicApplicationSummary = {
   topicTitle: string;
   topicStatus: "DRAFT" | "PUBLISHED" | "CLOSED";
   programName: string;
+  programStatus: "DRAFT" | "OPEN" | "CLOSED";
   status: "PENDING" | "ACCEPTED" | "REJECTED";
   message: string;
   skills: string[];
@@ -35,11 +36,20 @@ export type TopicApplicationSummary = {
   decidedAt: Date | null;
 };
 
+export type TopicApplicationPage = {
+  items: TopicApplicationSummary[];
+  page: number;
+  totalPages: number;
+  total: number;
+  counts: Record<"PENDING" | "ACCEPTED" | "REJECTED", number>;
+};
+
 export interface TopicApplicationLister {
-  listByStudent(studentId: string): Promise<TopicApplicationSummary[]>;
+  listByStudent(studentId: string, page: number, pageSize: number): Promise<TopicApplicationPage>;
+  findByStudentAndTopic(studentId: string, topicId: string): Promise<TopicApplicationSummary | null>;
 }
 
-export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "decidedAt"> & {
+export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "programStatus" | "decidedAt"> & {
   topicAuthorId: string;
   studentId: string;
   studentName: string;

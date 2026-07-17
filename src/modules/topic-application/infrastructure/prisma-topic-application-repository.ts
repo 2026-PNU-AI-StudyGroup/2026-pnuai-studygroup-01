@@ -17,6 +17,26 @@ import type {
   RejectTopicApplicationOutcome,
 } from "@/modules/topic-application/application/topic-application-ports";
 
+const studentSummarySelect = {
+  id: true,
+  topicId: true,
+  status: true,
+  message: true,
+  skills: true,
+  desiredRole: true,
+  availability: true,
+  createdAt: true,
+  decidedAt: true,
+  topic: { select: { title: true, status: true, program: { select: { name: true, status: true } } } },
+} satisfies Prisma.TopicApplicationSelect;
+
+type StudentSummaryRow = Prisma.TopicApplicationGetPayload<{ select: typeof studentSummarySelect }>;
+
+function toStudentSummary(application: StudentSummaryRow): TopicApplicationSummary {
+  const { topic, ...record } = application;
+  return { ...record, topicTitle: topic.title, topicStatus: topic.status, programName: topic.program.name, programStatus: topic.program.status };
+}
+
 export class PrismaTopicApplicationRepository
   implements
     TopicApplicationCreator,
@@ -101,34 +121,39 @@ export class PrismaTopicApplicationRepository
     });
   }
 
-  listByStudent(studentId: string): Promise<TopicApplicationSummary[]> {
-    return this.client.topicApplication.findMany({
+  async listByStudent(studentId: string, requestedPage: number, pageSize: number) {
+    const [total, groupedCounts] = await Promise.all([
+      this.client.topicApplication.count({ where: { studentId } }),
+      this.client.topicApplication.groupBy({ by: ["status"], where: { studentId }, _count: { _all: true } }),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const applications = await this.client.topicApplication.findMany({
       where: { studentId },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        topicId: true,
-        status: true,
-        message: true,
-        skills: true,
-        desiredRole: true,
-        availability: true,
-        createdAt: true,
-        decidedAt: true,
-        topic: {
-          select: {
-            title: true,
-            status: true,
-            program: { select: { name: true } },
-          },
-        },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: studentSummarySelect,
+    });
+    return {
+      items: applications.map(toStudentSummary),
+      page,
+      totalPages,
+      total,
+      counts: {
+        PENDING: groupedCounts.find(({ status }) => status === "PENDING")?._count._all ?? 0,
+        ACCEPTED: groupedCounts.find(({ status }) => status === "ACCEPTED")?._count._all ?? 0,
+        REJECTED: groupedCounts.find(({ status }) => status === "REJECTED")?._count._all ?? 0,
       },
-    }).then((applications) => applications.map(({ topic, ...application }) => ({
-      ...application,
-      topicTitle: topic.title,
-      topicStatus: topic.status,
-      programName: topic.program.name,
-    })));
+    };
+  }
+
+  async findByStudentAndTopic(studentId: string, topicId: string): Promise<TopicApplicationSummary | null> {
+    const application = await this.client.topicApplication.findUnique({
+      where: { topicId_studentId: { topicId, studentId } },
+      select: studentSummarySelect,
+    });
+    return application ? toStudentSummary(application) : null;
   }
 
   async listByTopicAuthor(

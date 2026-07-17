@@ -46,7 +46,7 @@ export function ApplyTopicForm({ topicId, topicTitle, profile }: {
         type="button"
         onClick={openDialog}
         disabled={state.status === "success"}
-        className="button-primary"
+        className="button-secondary w-full"
       >
         {state.status === "success" ? "지원 접수됨" : "지원하기"}
       </button>
@@ -126,7 +126,7 @@ export function ApplyTopicForm({ topicId, topicTitle, profile }: {
         <div
           role="status"
           aria-live="polite"
-          className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6"
+          className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6"
         >
           {state.message}
         </div>

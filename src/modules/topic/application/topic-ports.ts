@@ -52,8 +52,32 @@ export type PublicTopicSummary = TopicSummary & {
   academicYear: number;
   term: "FIRST" | "SECOND";
   memberCount: number;
+  ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;
+};
+
+export type PublicTopicPhase = "ACTIVE" | "RECRUITING" | "CLOSING_SOON";
+export type PublicTopicSort = "LATEST" | "DEADLINE";
+
+export type PublicTopicQuery = {
+  viewerId?: string;
+  programId?: string;
+  query: string;
+  phase: PublicTopicPhase;
+  sort: PublicTopicSort;
+  page: number;
+  pageSize: number;
+  now: Date;
+};
+
+export type PublicTopicPage = {
+  items: PublicTopicSummary[];
+  page: number;
+  totalPages: number;
+  total: number;
+  counts: Record<PublicTopicPhase, number>;
 };
 
 export interface PublicTopicLister {
-  listPublished(programId?: string): Promise<PublicTopicSummary[]>;
+  listPublished(query: PublicTopicQuery): Promise<PublicTopicPage>;
+  findPublished(id: string): Promise<PublicTopicSummary | null>;
 }
