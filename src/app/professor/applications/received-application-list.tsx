@@ -38,14 +38,14 @@ export function ReceivedApplicationList({
                 <StatusBadge tone={statusPresentation[application.status][1]}>
                   {statusPresentation[application.status][0]}
                 </StatusBadge>
-                <span className="muted text-xs">희망 역할 · {application.desiredRole || "미입력"}</span>
+                <span className="muted text-xs">{application.applicationKind === "TEAM" ? `팀 지원 · ${application.teamMembers.length}명` : "개인 지원"}</span>
               </div>
               <h2 className="mt-3 truncate text-lg font-extrabold tracking-[-0.025em]">
                 {application.topicTitle}
               </h2>
             </div>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">{application.studentName}</p>
+              <p className="truncate font-bold">{application.studentName}{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</p>
               <p className="muted mt-1 truncate text-xs">{application.studentEmail}</p>
               <p className="muted mt-2 text-xs">
                 <time dateTime={application.createdAt.toISOString()}>

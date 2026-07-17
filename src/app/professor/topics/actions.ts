@@ -50,7 +50,17 @@ export async function createTopicAction(
     redirect("/sign-in");
   }
 
-  const parsed = createTopicInputSchema.safeParse(Object.fromEntries(formData));
+  const questionLabels = formData.getAll("questionLabel");
+  const questionMaxLengths = formData.getAll("questionMaxLength");
+  const questionRequiredValues = formData.getAll("questionRequired");
+  const parsed = createTopicInputSchema.safeParse({
+    ...Object.fromEntries(formData),
+    applicationQuestions: questionLabels.map((label, index) => ({
+      label,
+      maxLength: questionMaxLengths[index],
+      required: questionRequiredValues[index] === "true",
+    })),
+  });
   if (!parsed.success) {
     return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
   }

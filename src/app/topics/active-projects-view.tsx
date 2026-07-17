@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { ApplyTopicForm } from "@/app/topics/apply-topic-form";
 import { ProjectStatusNavigation } from "@/app/topics/project-portal-chrome";
-import type { StudentProfile } from "@/modules/identity/domain/student-profile";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicApplicationPage } from "@/modules/topic-application/application/topic-application-ports";
 import type { PublicTopicPage, PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
@@ -40,26 +39,20 @@ function ProgramMark({ category, selected = false }: { category?: string; select
   return <span aria-hidden="true" className={`program-mark grid size-12 shrink-0 place-items-center rounded-full ${selected ? "bg-white/18 text-white" : "bg-[var(--primary-subtle)] text-[var(--primary)]"}`}><svg viewBox="0 0 24 24" className="size-6 fill-none stroke-current stroke-[1.8]">{path}</svg></span>;
 }
 
-export function ActiveProjectsView({ profile, programs, programId, topics, applications, phase, query, sort, now }: {
-  profile: StudentProfile | null;
+export function ActiveProjectsView({ programs, programId, topics, applications, pendingTeamTopicIds, phase, query, sort, now }: {
   programs: ProjectProgramRecord[];
   programId?: string;
   topics: PublicTopicPage;
   applications?: TopicApplicationPage;
+  pendingTeamTopicIds: string[];
   phase: PublicTopicPhase;
   query: string;
   sort: PublicTopicSort;
   now: Date;
 }) {
   const selectedProgram = programs.find((program) => program.id === programId);
-  const needsProfile = !profile && Boolean(applications);
   return <div className="space-y-10 pt-7">
-    {needsProfile ? <section aria-labelledby="profile-onboarding-title" className="grid gap-5 border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7">
-      <div><p className="eyebrow">첫 시작</p><h2 id="profile-onboarding-title" className="mt-2 text-xl font-extrabold">프로젝트 프로필을 먼저 완성해 주세요</h2><p className="muted mt-2 text-sm leading-6">관심 분야, 보유 기술과 활동 가능 시간을 저장하면 지원서에 자동으로 채워집니다.</p></div>
-      <Link href="/account/profile" className="button-primary justify-self-start">프로필 작성</Link>
-    </section> : null}
-
-    <section aria-labelledby="program-choice-title" className={`relative border border-[color-mix(in_srgb,var(--primary)_42%,var(--line))] bg-white p-5 sm:p-7 ${needsProfile ? "" : "-mt-12"}`}>
+    <section aria-labelledby="program-choice-title" className="relative -mt-12 border border-[color-mix(in_srgb,var(--primary)_42%,var(--line))] bg-white p-5 sm:p-7">
       <h2 id="program-choice-title" className="text-lg font-extrabold">어떤 프로그램의 주제를 찾고 있나요?</h2>
       <nav aria-label="프로그램 선택" className="-mx-1 mt-5 flex snap-x gap-3 overflow-x-auto px-1 pb-2">
         <Link href={activeHref({ phase, query, sort })} aria-current={!programId ? "page" : undefined} className={`program-choice flex min-h-24 w-56 shrink-0 snap-start items-center gap-4 border p-5 text-left ${!programId ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] hover:border-[var(--primary)]"}`}><ProgramMark selected={!programId} /><span className="text-base font-extrabold">전체 프로그램</span>{!programId ? <span aria-hidden="true" className="ml-auto grid size-6 place-items-center rounded-full bg-white text-sm font-black text-[var(--primary)]">✓</span> : null}</Link>
@@ -86,6 +79,7 @@ export function ActiveProjectsView({ profile, programs, programId, topics, appli
       {!topics.items.length ? <EmptyState title="조건에 맞는 프로젝트가 없습니다" description="상태나 프로그램 태그를 바꾸거나 검색어를 지워 다시 확인해 주세요." /> : <ul className="project-card-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">{topics.items.map((topic) => {
         const recruiting = topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
         const application = topic.ownApplicationStatus;
+        const awaitingTeam = pendingTeamTopicIds.includes(topic.id);
         const skills = [...topic.requiredSkills, ...topic.preferredSkills].slice(0, 4);
         const deadlineSoon = recruiting && daysUntil(topic.recruitmentEndsAt, now) <= 7;
         return <li key={topic.id} className="project-card flex min-h-[25rem] flex-col border border-[var(--line)] bg-white p-5 sm:p-6"><article aria-labelledby={`topic-${topic.id}`} className="flex h-full flex-col">
@@ -94,7 +88,7 @@ export function ActiveProjectsView({ profile, programs, programId, topics, appli
           <p className="muted mt-3 line-clamp-3 text-base leading-7">{topic.description}</p>
           <ul aria-label="필요 기술" className="mt-4 flex flex-wrap gap-2">{skills.map((skill) => <li key={skill} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{skill}</li>)}</ul>
           <dl className="mt-auto grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--line)] pt-5 text-sm"><div><dt className="muted text-xs">지도교수</dt><dd className="mt-1 font-bold">{topic.authorName}</dd></div><div><dt className="muted text-xs">모집 인원</dt><dd className="mt-1 font-bold">{topic.memberCount} / {topic.capacity}명</dd></div><div className="col-span-2"><dt className="muted text-xs">모집 마감</dt><dd className="mt-1 flex items-center justify-between gap-3 font-semibold"><time dateTime={topic.recruitmentEndsAt.toISOString()}>{koreanDate.format(topic.recruitmentEndsAt)}</time>{topic.recruitmentEndsAt > now ? <span className="text-xs font-bold text-[var(--ink)]">D-{daysUntil(topic.recruitmentEndsAt, now)}</span> : null}</dd></div></dl>
-          <div className="mt-5 grid grid-cols-2 gap-2"><Link href={`/topics/${topic.id}`} className="button-secondary">상세 보기</Link>{application ? <span className="flex min-h-11 items-center justify-center"><StatusBadge tone={applicationStatus[application].tone}>{applicationStatus[application].label}</StatusBadge></span> : applications && recruiting ? <ApplyTopicForm topicId={topic.id} topicTitle={topic.title} profile={profile} /> : <span className="muted flex min-h-11 items-center justify-center text-xs">{applications ? "지원 불가" : "상세 확인"}</span>}</div>
+          <div className="mt-5 grid grid-cols-2 gap-2"><Link href={`/topics/${topic.id}`} className="button-secondary">상세 보기</Link>{application ? <span className="flex min-h-11 items-center justify-center"><StatusBadge tone={applicationStatus[application].tone}>{applicationStatus[application].label}</StatusBadge></span> : awaitingTeam ? <Link href="/topics/applications" className="button-quiet">팀원 수락 대기</Link> : applications && recruiting ? <ApplyTopicForm topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} /> : <span className="muted flex min-h-11 items-center justify-center text-xs">{applications ? "지원 불가" : "상세 확인"}</span>}</div>
         </article></li>;
       })}</ul>}
       {topics.totalPages > 1 ? <nav aria-label="프로젝트 페이지" className="mt-6 flex items-center justify-between"><span className="muted text-sm">{topics.page} / {topics.totalPages} 페이지</span><div className="flex gap-2">{topics.page > 1 ? <Link className="button-quiet" href={activeHref({ phase, programId, query, sort, page: topics.page - 1 })}>이전</Link> : null}{topics.page < topics.totalPages ? <Link className="button-quiet" href={activeHref({ phase, programId, query, sort, page: topics.page + 1 })}>다음</Link> : null}</div></nav> : null}

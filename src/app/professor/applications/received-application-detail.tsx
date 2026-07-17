@@ -46,55 +46,42 @@ export function ReceivedApplicationDetail({
 
       <section aria-labelledby="student-profile-title">
         <h3 id="student-profile-title" className="text-lg font-extrabold">
-          지원자 정보
+          {application.applicationKind === "TEAM" ? "지원 팀" : "지원자 정보"}
         </h3>
-        <dl className="mt-5 grid gap-x-10 gap-y-6 border-y border-[var(--line)] py-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="muted text-xs font-bold">이름</dt>
-            <dd className="mt-2 font-bold">{application.studentName}</dd>
-          </div>
-          <div>
-            <dt className="muted text-xs font-bold">부산대 이메일</dt>
-            <dd className="mt-2 break-all">{application.studentEmail}</dd>
-          </div>
-          <div>
-            <dt className="muted text-xs font-bold">희망 역할</dt>
-            <dd className="mt-2">{application.desiredRole || "기존 지원서 미입력"}</dd>
-          </div>
-          <div>
-            <dt className="muted text-xs font-bold">활동 가능 시간</dt>
-            <dd className="mt-2">{application.availability || "기존 지원서 미입력"}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="muted text-xs font-bold">보유 기술</dt>
-            <dd className="mt-2">
-              {application.skills.length ? (
-                <ul className="flex flex-wrap gap-2" aria-label="보유 기술 목록">
-                  {application.skills.map((skill) => (
-                    <li
-                      key={skill}
-                      className="rounded bg-[var(--surface-subtle)] px-2.5 py-1 text-sm font-semibold"
-                    >
-                      {skill}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                "기존 지원서 미입력"
-              )}
-            </dd>
-          </div>
-        </dl>
+        <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          {application.teamMembers.map((member) => (
+            <li key={member.studentId} className="grid gap-2 py-5 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center">
+              <strong>{member.name}</strong>
+              <span className="muted break-all text-sm">{member.email}</span>
+              <StatusBadge tone={member.role === "LEADER" ? "info" : "neutral"}>{member.role === "LEADER" ? "대표 지원자" : "팀원"}</StatusBadge>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <section aria-labelledby="application-message-title">
-        <h3 id="application-message-title" className="text-lg font-extrabold">
-          지원 동기
+      <section aria-labelledby="application-answer-title">
+        <h3 id="application-answer-title" className="text-lg font-extrabold">
+          지원서 답변
         </h3>
-        <TranslatedText
-          text={application.message}
-          className="mt-5 max-w-3xl border-l-2 border-[var(--line)] pl-5 text-base leading-8 text-[var(--ink)]"
-        />
+        {application.answers.length ? (
+          <ol className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {application.answers.map((answer, index) => (
+              <li key={answer.questionId} className="py-6">
+                <p className="text-sm font-extrabold"><span className="mr-2 text-[var(--primary)]">{index + 1}.</span>{answer.label}</p>
+                <TranslatedText text={answer.value} className="mt-3 max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="mt-5 space-y-7 border-y border-[var(--line)] py-6">
+            <dl className="grid gap-5 sm:grid-cols-3">
+              <div><dt className="muted text-xs font-bold">희망 역할</dt><dd className="mt-2">{application.desiredRole || "미입력"}</dd></div>
+              <div><dt className="muted text-xs font-bold">활동 가능 시간</dt><dd className="mt-2">{application.availability || "미입력"}</dd></div>
+              <div><dt className="muted text-xs font-bold">보유 기술</dt><dd className="mt-2">{application.skills.join(", ") || "미입력"}</dd></div>
+            </dl>
+            <TranslatedText text={application.message} className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
+          </div>
+        )}
       </section>
     </article>
   );

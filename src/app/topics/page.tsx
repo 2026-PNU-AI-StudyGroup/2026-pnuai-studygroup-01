@@ -7,11 +7,10 @@ import { PastProjectsView } from "@/app/topics/past-projects-view";
 import { ProjectPortalHero, ProjectStatusNavigation } from "@/app/topics/project-portal-chrome";
 import { ProjectExplorerLayout, type ProjectView } from "@/app/topics/project-explorer-layout";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
-import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
+import { TeamApplicationInvitationService } from "@/modules/topic-application/application/manage-team-application-invitations";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
@@ -65,12 +64,12 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen();
     const requestedProgramId = firstSearchParam(params.programId);
     const programId = requestedProgramId && requestedProgramId.length <= 200 && programs.some((program) => program.id === requestedProgramId) ? requestedProgramId : undefined;
-    const [topics, applications, profile] = await Promise.all([
+    const [topics, applications, teamApplicationState] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, query, phase, sort, page: requestedPage, now }),
       actor.role === "STUDENT" ? applicationService.execute(actor, 1, 2) : Promise.resolve(undefined),
-      actor.role === "STUDENT" ? new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor) : Promise.resolve(null),
+      actor.role === "STUDENT" ? new TeamApplicationInvitationService(new PrismaTopicApplicationRepository(prisma)).list(actor) : Promise.resolve(undefined),
     ]);
-    content = <ActiveProjectsView profile={profile} programs={programs} programId={programId} topics={topics} applications={applications} phase={phase} query={query} sort={sort} now={now} />;
+    content = <ActiveProjectsView programs={programs} programId={programId} topics={topics} applications={applications} pendingTeamTopicIds={teamApplicationState?.drafts.map(({ topicId }) => topicId) ?? []} phase={phase} query={query} sort={sort} now={now} />;
   }
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout><ProjectPortalHero view={view} />{content}</ProjectExplorerLayout></AppShell>;

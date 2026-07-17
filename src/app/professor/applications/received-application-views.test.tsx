@@ -25,6 +25,9 @@ const application: ProfessorTopicApplicationSummary = {
   skills: ["Next.js", "UX 리서치"],
   desiredRole: "프론트엔드",
   availability: "평일 저녁",
+  applicationKind: "INDIVIDUAL",
+  teamMembers: [{ studentId: "student-1", name: "김학생", email: "student@pusan.ac.kr", role: "LEADER" }],
+  answers: [{ questionId: "question-1", label: "지원 동기", required: true, maxLength: 300, value: "영문 자료를 함께 읽고 제품 품질을 높이겠습니다." }],
   createdAt: new Date("2026-07-17T09:00:00+09:00"),
 };
 
@@ -44,17 +47,15 @@ describe("교수 지원서 목록과 상세", () => {
     expect(screen.queryByRole("button", { name: /결정/ })).not.toBeInTheDocument();
   });
 
-  it("상세에서 지원자 정보와 번역 가능한 지원 동기 및 결정 동작을 표시한다", () => {
+  it("상세에서 지원자와 교수 지정 문항 답변 및 결정 동작을 표시한다", () => {
     render(<ReceivedApplicationDetail application={application} />);
 
     expect(screen.getByRole("heading", { name: application.topicTitle })).toBeInTheDocument();
     expect(screen.getByText(application.studentName)).toBeInTheDocument();
     expect(screen.getByText(application.studentEmail)).toBeInTheDocument();
-    expect(screen.getByText(application.desiredRole)).toBeInTheDocument();
-    expect(screen.getByText(application.availability)).toBeInTheDocument();
-    expect(screen.getByText("Next.js")).toBeInTheDocument();
-    expect(screen.getByText("UX 리서치")).toBeInTheDocument();
-    expect(screen.getByText(application.message)).toBeInTheDocument();
+    expect(screen.getByText("지원 동기")).toBeInTheDocument();
+    expect(screen.getByText(application.answers[0].value)).toBeInTheDocument();
+    expect(screen.queryByText(application.desiredRole)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "영어" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "application-1 결정" })).toBeInTheDocument();
   });

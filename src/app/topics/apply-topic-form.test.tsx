@@ -23,7 +23,9 @@ describe("주제 지원 모달", () => {
       <ApplyTopicForm
         topicId="50000000-0000-4000-8000-000000000001"
         topicTitle="캠퍼스 이동약자를 위한 실내 길찾기"
-        profile={null}
+        applicationMode="INDIVIDUAL_ONLY"
+        applicationQuestions={[{ id: "question-1", label: "지원 동기", maxLength: 300, required: true }]}
+        capacity={4}
       />,
     );
 

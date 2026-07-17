@@ -7,12 +7,14 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import {
   ApplyToTopicService,
   StudentAlreadyAssignedError,
+  TeamMemberUnavailableError,
   TopicAlreadyAppliedError,
   TopicUnavailableForApplicationError,
 } from "@/modules/topic-application/application/apply-to-topic";
 import {
-  InvalidTopicApplicationMessageError,
-  InvalidTopicApplicationProfileError,
+  InvalidTeamApplicationMembersError,
+  InvalidTopicApplicationAnswersError,
+  TopicApplicationKindForbiddenError,
   TopicApplicationForbiddenError,
 } from "@/modules/topic-application/domain/topic-application-policy";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
@@ -21,21 +23,12 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export type ApplyTopicActionState = {
   status: "idle" | "error" | "success";
   message: string;
+  outcome?: "CREATED" | "INVITATIONS_PENDING";
 };
 
 const inputSchema = z.object({
   topicId: z.string().uuid(),
-  message: z.string().min(1).max(2_000),
-  skills: z.string().transform((value, context) => {
-    const skills = [...new Set(value.split(",").map((skill) => skill.trim()).filter(Boolean))];
-    if (skills.length === 0 || skills.length > 20 || skills.some((skill) => skill.length > 50)) {
-      context.addIssue({ code: "custom", message: "보유 기술 형식을 확인해 주세요." });
-      return z.NEVER;
-    }
-    return skills;
-  }),
-  desiredRole: z.string().min(1).max(500),
-  availability: z.string().min(1).max(500),
+  kind: z.enum(["INDIVIDUAL", "TEAM"]),
 });
 
 export async function applyTopicAction(
@@ -51,28 +44,36 @@ export async function applyTopicAction(
   if (!parsed.success) {
     return {
       status: "error",
-      message: "지원 메시지와 보유 기술, 희망 역할, 활동 가능 시간을 확인해 주세요.",
+      message: "지원 방식과 지원서 내용을 확인해 주세요.",
     };
   }
+  const answers = [...formData.entries()]
+    .filter(([name]) => name.startsWith("answer:"))
+    .map(([name, value]) => ({ questionId: name.slice("answer:".length), value: String(value) }));
+  const inviteeEmails = String(formData.get("inviteeEmails") ?? "").split(/[\s,;]+/);
 
   const service = new ApplyToTopicService(
     new PrismaTopicApplicationRepository(prisma),
   );
   try {
-    await service.execute(actor, parsed.data);
+    const result = await service.execute(actor, { ...parsed.data, answers, inviteeEmails });
+    return result.outcome === "INVITATIONS_PENDING"
+      ? { status: "success", outcome: result.outcome, message: "팀원 초대를 보냈습니다. 전원이 수락하면 교수에게 지원서가 접수됩니다." }
+      : { status: "success", outcome: result.outcome, message: "주제 지원이 접수되었습니다." };
   } catch (error) {
     if (
       error instanceof TopicAlreadyAppliedError ||
       error instanceof TopicUnavailableForApplicationError ||
       error instanceof StudentAlreadyAssignedError ||
+      error instanceof TeamMemberUnavailableError ||
       error instanceof TopicApplicationForbiddenError ||
-      error instanceof InvalidTopicApplicationMessageError ||
-      error instanceof InvalidTopicApplicationProfileError
+      error instanceof InvalidTeamApplicationMembersError ||
+      error instanceof InvalidTopicApplicationAnswersError ||
+      error instanceof TopicApplicationKindForbiddenError
     ) {
       return { status: "error", message: error.message };
     }
     throw error;
   }
 
-  return { status: "success", message: "주제 지원이 접수되었습니다." };
 }

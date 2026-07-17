@@ -1,26 +1,47 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useId, useRef } from "react";
+import type { ChangeEvent } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import {
   applyTopicAction,
   type ApplyTopicActionState,
 } from "@/app/topics/actions";
-import type { StudentProfile } from "@/modules/identity/domain/student-profile";
+import type { PublicTopicSummary } from "@/modules/topic/application/topic-ports";
 
 const initialState: ApplyTopicActionState = { status: "idle", message: "" };
 const TOAST_DURATION_MS = 3_000;
 
-export function ApplyTopicForm({ topicId, topicTitle, profile }: {
+type ApplicationQuestion = PublicTopicSummary["applicationQuestions"][number];
+
+function ApplicationAnswerField({ question }: { question: ApplicationQuestion }) {
+  const [value, setValue] = useState("");
+  const descriptionId = useId();
+  const common = {
+    name: `answer:${question.id}`,
+    maxLength: question.maxLength,
+    required: question.required,
+    value,
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(event.target.value),
+    className: "field",
+    "aria-describedby": descriptionId,
+  };
+  return <label className="grid gap-2 text-sm font-semibold sm:col-span-2">{question.label} <span className="muted text-xs font-medium">{question.required ? "필수" : "선택"}</span>{question.maxLength <= 200 ? <input {...common} /> : <textarea {...common} rows={5} />}<span id={descriptionId} className="muted text-right text-xs">{value.length} / {question.maxLength}자</span></label>;
+}
+
+export function ApplyTopicForm({ topicId, topicTitle, applicationMode, applicationQuestions, capacity }: {
   topicId: string;
   topicTitle: string;
-  profile: StudentProfile | null;
+  applicationMode: PublicTopicSummary["applicationMode"];
+  applicationQuestions: PublicTopicSummary["applicationQuestions"];
+  capacity: number;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
+  const [kind, setKind] = useState<"INDIVIDUAL" | "TEAM">(applicationMode === "TEAM_ONLY" ? "TEAM" : "INDIVIDUAL");
   const [state, action, pending] = useActionState(applyTopicAction, initialState);
 
   useEffect(() => {
@@ -62,7 +83,7 @@ export function ApplyTopicForm({ topicId, topicTitle, profile }: {
       >
         <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7">
           <div className="min-w-0">
-            <p className="eyebrow">주제 지원</p>
+            <p className="eyebrow">{applicationMode === "TEAM_ONLY" ? "팀 지원" : applicationMode === "INDIVIDUAL_ONLY" ? "개인 지원" : "개인·팀 지원"}</p>
             <h2 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">
               지원서 작성
             </h2>
@@ -83,29 +104,10 @@ export function ApplyTopicForm({ topicId, topicTitle, profile }: {
 
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">
           <input type="hidden" name="topicId" value={topicId} />
-          <label className="grid gap-2 text-sm font-semibold">
-            보유 기술
-            <input name="skills" maxLength={1000} required defaultValue={profile?.skills.join(", ")} className="field" placeholder="예: TypeScript, Python" />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            희망 역할
-            <input name="desiredRole" maxLength={500} required defaultValue={profile?.desiredRole} className="field" placeholder="예: 프론트엔드 개발" />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-            활동 가능 시간
-            <input name="availability" maxLength={500} required defaultValue={profile?.availability} className="field" placeholder="예: 평일 18시 이후" />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-            지원 메시지
-            <textarea
-              name="message"
-              maxLength={2000}
-              required
-              rows={5}
-              className="field"
-              placeholder="관심 분야와 참여 동기를 작성해 주세요."
-            />
-          </label>
+          {applicationMode === "INDIVIDUAL_OR_TEAM" ? <fieldset className="grid gap-3 sm:col-span-2"><legend className="font-semibold">지원 방식</legend><div className="grid gap-3 sm:grid-cols-2"><label className="flex min-h-16 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="kind" value="INDIVIDUAL" checked={kind === "INDIVIDUAL"} onChange={() => setKind("INDIVIDUAL")} /><span><strong className="block">개인 지원</strong><span className="muted text-xs">혼자 지원서를 제출합니다.</span></span></label><label className="flex min-h-16 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="kind" value="TEAM" checked={kind === "TEAM"} onChange={() => setKind("TEAM")} /><span><strong className="block">팀 지원</strong><span className="muted text-xs">팀원 전원 수락 후 접수됩니다.</span></span></label></div></fieldset> : <input type="hidden" name="kind" value={kind} />}
+          {kind === "TEAM" ? <label className="grid gap-2 text-sm font-semibold sm:col-span-2">함께 지원할 팀원 이메일<textarea name="inviteeEmails" rows={3} required className="field" placeholder="student1@pusan.ac.kr, student2@pusan.ac.kr" /><span className="muted text-xs">본인을 제외하고 부산대학교 이메일을 쉼표 또는 줄바꿈으로 입력하세요. 전체 팀은 최대 {capacity}명입니다.</span></label> : null}
+          <div className="border-t border-[var(--line)] pt-5 sm:col-span-2"><h3 className="font-semibold">교수 지정 지원서</h3><p className="muted mt-1 text-sm">필수 여부와 글자 수 제한에 맞춰 작성해 주세요.</p></div>
+          {applicationQuestions.map((question) => <ApplicationAnswerField key={question.id} question={question} />)}
           {state.status === "error" ? (
             <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2">
               {state.message}
@@ -116,7 +118,7 @@ export function ApplyTopicForm({ topicId, topicTitle, profile }: {
               취소
             </button>
             <button type="submit" disabled={pending} className="button-primary">
-              {pending ? "지원 중" : "지원서 제출"}
+              {pending ? "처리 중" : kind === "TEAM" ? "팀원 초대 보내기" : "지원서 제출"}
             </button>
           </div>
         </form>
