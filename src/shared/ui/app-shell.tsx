@@ -93,7 +93,7 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
           </nav>
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
-            <Link href="/account" aria-current={currentPath === "/account" ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--primary-hover)]" aria-label={`${userName} 마이페이지`}>
+            <Link href="/account" aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--primary-hover)]" aria-label={`${userName} 마이페이지`}>
               <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold">{userName}</span><span className="muted block text-xs">마이페이지</span></span>
               <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-sm font-extrabold text-[var(--primary-hover)]">{userName.trim().charAt(0) || "나"}</span>
               <span className="sr-only">{roleLabel}</span>

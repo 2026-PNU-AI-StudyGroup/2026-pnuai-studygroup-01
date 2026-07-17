@@ -10,8 +10,7 @@ const initialState: StudentProfileActionState = { status: "idle", message: "" };
 export function StudentProfileForm({ profile }: { profile: StudentProfile | null }) {
   const [state, action, pending] = useActionState(saveStudentProfileAction, initialState);
   return (
-    <form action={action} className="grid gap-5 border-t border-[var(--line)] pt-8 sm:grid-cols-2">
-      <div className="sm:col-span-2"><h2 className="text-xl font-extrabold">프로젝트 프로필</h2><p className="muted mt-2 text-sm leading-6">주제와 팀원 모집에 지원할 때 반복해서 사용하는 정보를 저장합니다. 쉼표로 여러 항목을 구분하세요.</p></div>
+    <form action={action} className="grid gap-5 border-y border-[var(--line)] py-8 sm:grid-cols-2">
       <label className="grid gap-2 text-sm font-semibold">관심 분야<input name="interests" required maxLength={1_000} defaultValue={profile?.interests.join(", ")} placeholder="예: 접근성, 웹 서비스, 데이터 분석" className="field" /></label>
       <label className="grid gap-2 text-sm font-semibold">보유 기술<input name="skills" required maxLength={1_000} defaultValue={profile?.skills.join(", ")} placeholder="예: TypeScript, Python, Figma" className="field" /></label>
       <label className="grid gap-2 text-sm font-semibold">희망 역할<input name="desiredRole" required maxLength={200} defaultValue={profile?.desiredRole} placeholder="예: 프론트엔드 개발과 사용자 검증" className="field" /></label>

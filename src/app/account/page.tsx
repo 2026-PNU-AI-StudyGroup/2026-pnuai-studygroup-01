@@ -10,7 +10,6 @@ import { AppShell } from "@/shared/ui/app-shell";
 import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
 import { AccountControls } from "./account-controls";
-import { StudentProfileForm } from "./student-profile-form";
 
 export const metadata: Metadata = { title: "마이페이지" };
 
@@ -45,7 +44,15 @@ export default async function AccountPage() {
           <nav aria-label="계정 바로가기" className="grid border-b border-[var(--line)] sm:grid-cols-3">
             {shortcuts.map(([label, href]) => <Link key={href} href={href} className="snap-color flex min-h-14 items-center justify-between border-t border-[var(--line)] px-1 text-sm font-bold hover:text-[var(--primary-hover)] sm:border-t-0 sm:px-4 first:sm:pl-0 last:sm:pr-0">{label}<span aria-hidden="true">→</span></Link>)}
           </nav>
-          {actor.role === "STUDENT" ? <div className="mt-12"><StudentProfileForm profile={profile} /></div> : null}
+          {actor.role === "STUDENT" ? <section aria-labelledby="project-profile-heading" className="mt-12 border-y border-[var(--line)] py-7">
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3"><h2 id="project-profile-heading" className="text-xl font-extrabold">프로젝트 프로필</h2><StatusBadge tone={profile ? "success" : "warning"}>{profile ? "작성 완료" : "작성 필요"}</StatusBadge></div>
+                {profile ? <><p className="muted mt-3 text-sm leading-6">{profile.desiredRole} · {profile.availability}</p><ul aria-label="관심 분야와 보유 기술" className="mt-3 flex flex-wrap gap-2">{[...profile.interests, ...profile.skills].slice(0, 6).map((item) => <li key={item} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{item}</li>)}</ul></> : <p className="muted mt-3 max-w-xl text-sm leading-6">관심 분야와 보유 기술, 활동 가능 시간을 저장하면 프로젝트와 팀원 모집 지원서에 활용할 수 있습니다.</p>}
+              </div>
+              <Link className={profile ? "button-secondary" : "button-primary"} href="/account/profile">{profile ? "프로필 수정" : "프로필 작성"}</Link>
+            </div>
+          </section> : null}
           <div className="mt-12"><AccountControls /></div>
         </div>
       </main>

@@ -29,6 +29,12 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).not.toHaveAttribute("aria-current");
   });
 
+  it("프로필 편집 화면에서도 마이페이지를 현재 위치로 표시한다", () => {
+    render(<AppShell role="STUDENT" userId="student-1" userName="테스트" currentPath="/account/profile"><p>본문</p></AppShell>);
+
+    expect(screen.getByRole("link", { name: "테스트 마이페이지" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("모든 역할의 공개 프로그램 진입점을 주제 탐색으로 통합한다", () => {
     render(<AppShell role="PROFESSOR" userId="professor-1" userName="테스트" currentPath="/topics"><p>본문</p></AppShell>);
 
