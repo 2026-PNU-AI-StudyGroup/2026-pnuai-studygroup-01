@@ -18,9 +18,10 @@
   --primary: #2f5bea;
   --primary-hover: #2449c4;
   --primary-subtle: #edf1ff;
-  --accent: #a13d5d;
-  --accent-hover: #84324d;
-  --accent-subtle: #fbeef2;
+  --accent: #d58a00;
+  --accent-hover: #8b5a00;
+  --accent-ink: #704800;
+  --accent-subtle: #fff6dc;
   --focus: var(--primary);
   --success: #18794e;
   --success-subtle: #eaf7f0;
@@ -236,6 +237,12 @@ textarea {
     animation: portal-rise 280ms var(--silk-ease) both;
   }
 
+  .portal-hero {
+    background:
+      radial-gradient(circle at 62% 22%, rgb(237 241 255 / 0.92), transparent 34%),
+      linear-gradient(90deg, #ffffff 0%, #ffffff 42%, #f5f8ff 100%);
+  }
+
   .portal-hero-visual {
     animation: portal-focus 320ms var(--silk-ease) 50ms both;
   }
@@ -258,6 +265,19 @@ textarea {
 
   .program-choice:active {
     transform: scale(0.99);
+  }
+
+  .program-choice:hover {
+    transform: translateY(-2px);
+  }
+
+  .program-mark {
+    transition: transform var(--silk-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease);
+  }
+
+  .program-choice:hover .program-mark,
+  .program-choice:focus-visible .program-mark {
+    transform: rotate(-4deg) scale(1.04);
   }
 
   .project-card {

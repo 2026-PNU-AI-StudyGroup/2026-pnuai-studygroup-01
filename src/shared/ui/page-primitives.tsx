@@ -4,7 +4,7 @@ export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: 
   return (
     <header className="grid gap-10 border-b border-[var(--line)] pb-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,.5fr)] lg:items-end lg:gap-16 lg:pb-14">
       <div className="max-w-4xl">
-        <p className="eyebrow text-[var(--accent)]">{eyebrow}</p>
+        <p className="eyebrow text-[var(--accent-ink)]">{eyebrow}</p>
         <h1 className="mt-4 text-[clamp(2.75rem,5vw,3.5rem)] font-black leading-[1.05] tracking-[-0.045em] text-[var(--ink)]">{title}</h1>
       </div>
       <div className="border-l-2 border-[var(--line)] pl-5 lg:mb-1">

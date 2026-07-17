@@ -23,9 +23,9 @@
 
 ## Gate fixes applied
 
-1. Replaced the green/teal brand surface with Ink `#172033`, Cobalt `#2F5BEA`, and cool neutrals.
+1. Replaced the green/teal brand surface with Ink `#172033`, Cobalt `#2F5BEA`, Campus Gold `#D58A00`, and cool neutrals.
 2. Removed green from brand, active navigation, progress, links, forms, and decorative timeline markers.
-3. Kept green, amber, and red only for semantic success, warning, danger, and corresponding feedback.
+3. Reserved Campus Gold for one decorative focal cue per screen and kept semantic green, darker warning amber, and red tied to matching states and feedback.
 4. Unified controls at 44px, soft 8–12px radii, and 140ms Snap interaction timing.
 5. Added self-hosted Pretendard Variable and preserved its official SIL OFL license and source metadata.
 6. Added global visible focus and reduced-motion handling.
@@ -72,17 +72,20 @@ The operations surfaces pass the static StyleSeed gate. Rendered desktop and mob
 
 ## Project explorer gate · 2026-07-17
 
-- Target: `src/app/topics/page.tsx`, `src/app/topics/*-projects-view.tsx`, `src/app/topics/project-explorer-layout.tsx`
+- Target: `src/app/topics/page.tsx`, `src/app/topics/active-projects-view.tsx`, `src/app/topics/project-portal-chrome.tsx`, `src/app/globals.css`
 - Final score: **96 / 100 (A)**
 - Result: **PASS** (`>= 80`)
+- Visual verification: authenticated desktop render at `1280 × 720`, including program selection, filtered topic cards, application modal, and application summary
 
 | Category | Score | Evidence |
 | --- | ---: | --- |
-| Color discipline | 16 / 16 | White canvas, Ink typography, and Cobalt-only selection/action treatment; semantic rainbow decoration is absent. |
-| Hierarchy & typography | 15 / 16 | One 44–56px page heading leads year tags, search, and project references; compact labels remain metadata only. |
-| Layout & rhythm | 12 / 12 | One desktop context rail frames active and past content; the rail becomes a two-option mobile switch and both views retain divider-based reading flow. |
-| Cards & elevation | 10 / 10 | No shadows, floating cards, or card grid; grouping uses whitespace and rules. |
-| States & a11y | 16 / 18 | Empty and filtered-empty states, 44px controls, semantic labels, visible focus, and non-color selected checkmarks are present; no route-specific loading screen. |
-| Motion & interaction | 6 / 6 | Existing Snap timing and global reduced-motion handling apply to filters and actions. |
-| Coherence | 12 / 12 | One radius family, flat elevation, and the locked Ink/Cobalt/Pretendard system remain intact. |
-| Distinctiveness | 9 / 10 | Active-to-past project switching, academic-year navigation, support history, skills, team context, and artifacts make the explorer product-specific without catalogue theatrics. |
+| Color discipline | 16 / 16 | Cobalt carries selection and action, Campus Gold is limited to the hero sparkle and support cue, and semantic green/amber/red remain tied to real states. Gold text uses the darker `--accent-ink` token. |
+| Hierarchy & typography | 15 / 16 | One large project-discovery heading dominates the first viewport; program names and topic titles form the second tier, while counts, dates, and labels stay compact metadata. |
+| Layout & rhythm | 12 / 12 | The first viewport follows a clear hero → program choice → filter toolbar sequence, followed by a three-column discovery grid and a single application summary. |
+| Cards & elevation | 10 / 10 | Discovery cards use the explicitly locked flat border treatment with no shadow, floating offset, glossy gradient, or elevated panel stack. |
+| States & a11y | 17 / 18 | Empty results, selected checkmarks plus `aria-current`, semantic status labels, 44px controls, visible focus, and a modal that leaves document height unchanged were verified. One point remains for a dedicated route-level loading state. |
+| Motion & interaction | 6 / 6 | Snap controls and restrained Silk entrances use the locked timing; reduced motion disables the custom transitions and animations. |
+| Coherence | 12 / 12 | Pretendard, one radius family, one Cobalt primary, one Gold accent, flat elevation, and one SVG stroke language remain consistent across the screen. |
+| Distinctiveness | 8 / 10 | The PNU campus collaboration illustration, real program selector, topic-specific metadata, and support summary make the surface product-specific; familiar discovery cards intentionally preserve scanning speed. |
+
+Gate fix: separated decorative Gold from accessible Gold text, increased topic-description body copy to 16px, and verified that program selection preserves URL state while topic application opens without extending page height.
