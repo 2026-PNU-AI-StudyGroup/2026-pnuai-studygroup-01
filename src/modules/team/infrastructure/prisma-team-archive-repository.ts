@@ -163,12 +163,14 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
   }
 
   async countClosed(filters: ArchiveFilters): Promise<number> {
-    return this.client.team.count({ where: closedProjectWhere(filters) });
+    const skillTeamIds = filters.query ? await this.findSkillMatchingTeamIds(filters.query) : undefined;
+    return this.client.team.count({ where: closedProjectWhere(filters, skillTeamIds) });
   }
 
   async listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]> {
+    const skillTeamIds = input.filters.query ? await this.findSkillMatchingTeamIds(input.filters.query) : undefined;
     const teams = await this.client.team.findMany({
-      where: closedProjectWhere(input.filters),
+      where: closedProjectWhere(input.filters, skillTeamIds),
       orderBy: [
         { topic: { academicCycle: { academicYear: "desc" } } },
         { topic: { academicCycle: { term: "desc" } } },
@@ -189,9 +191,21 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
     });
     return team ? toArchivedProject(team) : null;
   }
+
+  private async findSkillMatchingTeamIds(query: string): Promise<string[]> {
+    const rows = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT DISTINCT "team"."id"
+      FROM "team"
+      JOIN "topic" ON "topic"."id" = "team"."topicId"
+      CROSS JOIN LATERAL unnest("topic"."requiredSkills" || "topic"."preferredSkills") AS "skill"("value")
+      WHERE "team"."status" = 'CLOSED'
+        AND strpos(lower("skill"."value"), lower(${query})) > 0
+    `);
+    return rows.map(({ id }) => id);
+  }
 }
 
-function closedProjectWhere(filters: ArchiveFilters): Prisma.TeamWhereInput {
+function closedProjectWhere(filters: ArchiveFilters, skillTeamIds?: string[]): Prisma.TeamWhereInput {
   const conditions: Prisma.TeamWhereInput[] = [];
   if (filters.academicYear) conditions.push({ topic: { academicCycle: { academicYear: filters.academicYear } } });
   if (filters.programCategory) conditions.push({ topic: { program: { category: filters.programCategory } } });
@@ -202,8 +216,7 @@ function closedProjectWhere(filters: ArchiveFilters): Prisma.TeamWhereInput {
       { topic: { author: { name: { contains: query, mode: "insensitive" } } } },
       { topic: { title: { contains: query, mode: "insensitive" } } },
       { topic: { description: { contains: query, mode: "insensitive" } } },
-      { topic: { requiredSkills: { has: query } } },
-      { topic: { preferredSkills: { has: query } } },
+      { id: { in: skillTeamIds ?? [] } },
       { artifacts: { some: { title: { contains: query, mode: "insensitive" } } } },
     ] });
   }

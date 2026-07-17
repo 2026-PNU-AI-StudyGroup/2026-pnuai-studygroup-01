@@ -111,7 +111,7 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
             type: "DEADLINE",
             title: `${team.name} ${label} 마감 임박`,
             body: `${formatKoreanDate(dueAt)}까지입니다. 남은 작업과 제출 상태를 확인해 주세요.`,
-            href: `/teams/${team.id}`,
+            href: kind === "execution" ? `/teams/${team.id}/progress` : `/teams/${team.id}/artifacts`,
             dedupeKey: `deadline:team:${team.id}:${kind}:${dueAt.toISOString()}:${recipientId}`,
             createdAt: now,
           });
@@ -126,7 +126,7 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
           type: "DEADLINE",
           title: `마일스톤 마감 임박 · ${milestone.title}`,
           body: `${milestone.team.name}의 마일스톤이 ${formatKoreanDate(milestone.dueAt)}에 마감됩니다.`,
-          href: `/teams/${milestone.team.id}`,
+          href: `/teams/${milestone.team.id}/milestones`,
           dedupeKey: `deadline:milestone:${milestone.id}:${milestone.dueAt.toISOString()}:${recipientId}`,
           createdAt: now,
         });
@@ -142,7 +142,7 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
           type: "DEADLINE",
           title: `${report.team.name} ${label} 마감 임박`,
           body: `${formatKoreanDate(report.dueAt)}까지입니다. 최신 제출·검토 상태를 확인해 주세요.`,
-          href: `/teams/${report.team.id}`,
+          href: `/teams/${report.team.id}/reports`,
           dedupeKey: `deadline:report:${report.id}:${report.dueAt.toISOString()}:${recipientId}`,
           createdAt: now,
         });

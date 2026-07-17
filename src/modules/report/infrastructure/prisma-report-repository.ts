@@ -243,7 +243,7 @@ export class PrismaReportRepository implements ReportRepository {
         recipientId: authorized[0].professorId,
         title: `${authorized[0].name} 보고서가 제출되었습니다`,
         body: `${reportTypeLabel(input.type)} ${version}버전이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
-        href: `/teams/${input.teamId}`,
+        href: `/teams/${input.teamId}/reports`,
         createdAt: input.submittedAt,
       }]);
       return { reportId: report.id, version };
@@ -321,7 +321,7 @@ export class PrismaReportRepository implements ReportRepository {
           body: approved
             ? `${teams[0].name}의 ${reportVersion.version}버전 보고서가 승인되었습니다.`
             : input.comment,
-          href: `/teams/${teams[0].id}`,
+          href: `/teams/${teams[0].id}/reports`,
           createdAt: input.decidedAt,
         })));
       }
