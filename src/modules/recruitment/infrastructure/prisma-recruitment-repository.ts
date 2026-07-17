@@ -175,18 +175,29 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
   createPost(input: { teamId: string; authorId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string }): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const now = new Date();
-      const teams = await transaction.$queryRaw<Array<{ id: string; capacity: number }>>(Prisma.sql`
-        SELECT "team"."id", "topic"."capacity"
-        FROM "team" JOIN "topic" ON "topic"."id" = "team"."topicId"
-        JOIN "team_member" AS "actor_member" ON "actor_member"."teamId" = "team"."id" AND "actor_member"."studentId" = ${input.authorId}
+      const initial = await transaction.team.findUnique({ where: { id: input.teamId }, select: { topicId: true } });
+      if (!initial) return false;
+      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
+        SELECT "project_program"."status"
+        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${initial.topicId}
+        FOR UPDATE OF "project_program"
+      `);
+      const topics = await transaction.$queryRaw<Array<{ capacity: number }>>(Prisma.sql`
+        SELECT "capacity" FROM "topic"
+        WHERE "id" = ${initial.topicId} AND "status" = 'PUBLISHED'
+          AND "recruitmentStartsAt" <= ${now} AND "recruitmentEndsAt" > ${now}
+        FOR UPDATE
+      `);
+      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "team"."id" FROM "team"
         WHERE "team"."id" = ${input.teamId} AND "team"."status" = 'FORMING'
-          AND "topic"."status" = 'PUBLISHED'
-          AND "topic"."recruitmentStartsAt" <= ${now}
-          AND "topic"."recruitmentEndsAt" > ${now}
-        FOR UPDATE OF "team", "topic"
+          AND EXISTS (SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id" AND "studentId" = ${input.authorId})
+        FOR UPDATE
       `);
       const team = teams[0];
-      if (!team || await transaction.teamMember.count({ where: { teamId: team.id } }) >= team.capacity) return false;
+      const topic = topics[0];
+      if (programs[0]?.status !== "OPEN" || !topic || !team || await transaction.teamMember.count({ where: { teamId: team.id } }) >= topic.capacity) return false;
       await transaction.recruitmentPost.create({ data: { id: randomUUID(), ...input, status: "OPEN" } });
       return true;
     });
@@ -194,28 +205,43 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
 
   apply(input: { postId: string; studentId: string; message: string; skills: string[]; desiredRole: string; availability: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_ASSIGNED"> {
     return this.client.$transaction(async (transaction) => {
-      const rows = await transaction.$queryRaw<Array<{ postId: string; teamId: string; topicId: string; academicCycleId: string; capacity: number }>>(Prisma.sql`
-        SELECT "recruitment_post"."id" AS "postId", "team"."id" AS "teamId", "team"."topicId", "team"."academicCycleId", "topic"."capacity"
-        FROM "recruitment_post" JOIN "team" ON "team"."id" = "recruitment_post"."teamId"
-        JOIN "topic" ON "topic"."id" = "team"."topicId" JOIN "user" ON "user"."id" = ${input.studentId}
-        WHERE "recruitment_post"."id" = ${input.postId} AND "recruitment_post"."status" = 'OPEN'
-          AND "team"."status" = 'FORMING' AND "topic"."status" = 'PUBLISHED'
-          AND "topic"."recruitmentStartsAt" <= ${input.appliedAt} AND "topic"."recruitmentEndsAt" > ${input.appliedAt}
-        FOR UPDATE OF "recruitment_post", "team", "topic"
+      const initial = await transaction.recruitmentPost.findUnique({
+        where: { id: input.postId },
+        select: { teamId: true, team: { select: { topicId: true } } },
+      });
+      if (!initial) return "UNAVAILABLE";
+      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
+        SELECT "project_program"."status"
+        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${initial.team.topicId}
+        FOR UPDATE OF "project_program"
       `);
-      const target = rows[0];
+      const topics = await transaction.$queryRaw<Array<{ id: string; academicCycleId: string; capacity: number }>>(Prisma.sql`
+        SELECT "id", "academicCycleId", "capacity" FROM "topic"
+        WHERE "id" = ${initial.team.topicId} AND "status" = 'PUBLISHED'
+          AND "recruitmentStartsAt" <= ${input.appliedAt} AND "recruitmentEndsAt" > ${input.appliedAt}
+        FOR UPDATE
+      `);
+      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "team" WHERE "id" = ${initial.teamId} AND "status" = 'FORMING' FOR UPDATE
+      `);
+      const posts = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "recruitment_post" WHERE "id" = ${input.postId} AND "status" = 'OPEN' FOR UPDATE
+      `);
+      await transaction.$queryRaw(Prisma.sql`SELECT "id" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE`);
+      const topic = topics[0];
+      const team = teams[0];
+      const post = posts[0];
+      const target = topic && team && post ? { postId: post.id, teamId: team.id, topicId: topic.id, academicCycleId: topic.academicCycleId, capacity: topic.capacity } : null;
+      if (programs[0]?.status !== "OPEN") return "UNAVAILABLE";
       if (!target || await transaction.teamMember.count({ where: { teamId: target.teamId } }) >= target.capacity) return "UNAVAILABLE";
       const membership = await transaction.teamMember.findUnique({ where: { academicCycleId_studentId: { academicCycleId: target.academicCycleId, studentId: input.studentId } }, select: { id: true } });
       if (membership) return "ALREADY_ASSIGNED";
       if (await transaction.recruitmentApplication.findUnique({ where: { postId_studentId: { postId: input.postId, studentId: input.studentId } }, select: { id: true } })) return "ALREADY_APPLIED";
-      const existing = await transaction.topicApplication.findUnique({ where: { topicId_studentId: { topicId: target.topicId, studentId: input.studentId } }, include: { recruitmentApplication: { select: { id: true } } } });
-      if (existing && (existing.status !== "PENDING" || existing.recruitmentApplication)) return "ALREADY_APPLIED";
-      const topicApplicationId = existing?.id ?? randomUUID();
-      if (existing) {
-        await transaction.topicApplication.update({ where: { id: existing.id }, data: { message: input.message, skills: input.skills, desiredRole: input.desiredRole, availability: input.availability } });
-      } else {
-        await transaction.topicApplication.create({ data: { id: topicApplicationId, topicId: target.topicId, studentId: input.studentId, message: input.message, skills: input.skills, desiredRole: input.desiredRole, availability: input.availability, createdAt: input.appliedAt, updatedAt: input.appliedAt } });
-      }
+      const existing = await transaction.topicApplication.findUnique({ where: { topicId_studentId: { topicId: target.topicId, studentId: input.studentId } }, select: { id: true } });
+      if (existing) return "ALREADY_APPLIED";
+      const topicApplicationId = randomUUID();
+      await transaction.topicApplication.create({ data: { id: topicApplicationId, topicId: target.topicId, studentId: input.studentId, message: input.message, skills: input.skills, desiredRole: input.desiredRole, availability: input.availability, createdAt: input.appliedAt, updatedAt: input.appliedAt } });
       await transaction.recruitmentApplication.create({ data: { id: randomUUID(), postId: input.postId, topicApplicationId, studentId: input.studentId, createdAt: input.appliedAt, updatedAt: input.appliedAt } });
       return "CREATED";
     });

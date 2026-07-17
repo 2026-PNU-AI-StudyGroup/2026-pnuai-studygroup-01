@@ -23,6 +23,9 @@ const application: ProfessorTopicApplicationSummary = {
   skills: ["Next.js"],
   desiredRole: "프론트엔드",
   availability: "평일 저녁",
+  applicationKind: "INDIVIDUAL",
+  teamMembers: [{ studentId: "student-1", name: "김학생", email: "student@pusan.ac.kr", role: "LEADER" }],
+  answers: [{ questionId: "question-1", label: "지원 동기", required: true, maxLength: 300, value: "지원합니다." }],
   createdAt: new Date("2026-07-17T09:00:00+09:00"),
 };
 

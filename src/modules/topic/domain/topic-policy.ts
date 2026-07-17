@@ -21,7 +21,15 @@ export type TopicDetails = {
   preferredSkills: string[];
   roleExpectations: string;
   availabilityRequirement: string;
+  applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
+  applicationQuestions: TopicApplicationQuestionDraft[];
   capacity: number;
+};
+
+export type TopicApplicationQuestionDraft = {
+  label: string;
+  maxLength: number;
+  required: boolean;
 };
 
 export class InvalidTopicDetailsError extends Error {
@@ -92,6 +100,29 @@ export function assertValidTopicDetails(details: TopicDetails): void {
 
   if (!Number.isSafeInteger(details.capacity) || details.capacity < 1) {
     throw new InvalidTopicDetailsError("모집 인원은 1명 이상의 정수여야 합니다.");
+  }
+
+  if (details.applicationMode === "TEAM_ONLY" && details.capacity < 2) {
+    throw new InvalidTopicDetailsError("팀 지원만 받는 주제의 모집 인원은 2명 이상이어야 합니다.");
+  }
+
+  if (
+    details.applicationQuestions.length === 0 ||
+    details.applicationQuestions.length > 20 ||
+    details.applicationQuestions.some((question) =>
+      question.label.trim().length === 0 ||
+      question.label.length > 200 ||
+      !Number.isSafeInteger(question.maxLength) ||
+      question.maxLength < 1 ||
+      question.maxLength > 5_000
+    )
+  ) {
+    throw new InvalidTopicDetailsError("지원서 문항은 1~20개이며 문항별 답변 제한은 1~5,000자여야 합니다.");
+  }
+
+  const labels = details.applicationQuestions.map(({ label }) => label.trim());
+  if (new Set(labels).size !== labels.length) {
+    throw new InvalidTopicDetailsError("같은 지원서 문항을 중복해 등록할 수 없습니다.");
   }
 }
 

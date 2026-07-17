@@ -22,6 +22,7 @@ describe("Prisma 주제 저장소", () => {
         requiredSkills: { isEmpty: false },
         roleExpectations: { not: "" },
         availabilityRequirement: { not: "" },
+        applicationQuestions: { some: {} },
       },
       data: { status: "PUBLISHED", publishedAt },
     });

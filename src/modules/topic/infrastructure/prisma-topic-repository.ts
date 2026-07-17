@@ -23,6 +23,7 @@ const publicTopicInclude = {
   academicCycle: { select: { academicYear: true, term: true } },
   program: { select: { name: true, category: true, status: true } },
   team: { select: { _count: { select: { members: true } } } },
+  applicationQuestions: { orderBy: { position: "asc" as const }, select: { id: true, label: true, maxLength: true, required: true, position: true } },
 } satisfies Prisma.TopicInclude;
 
 const managedTopicSelect = {
@@ -37,6 +38,8 @@ const managedTopicSelect = {
   preferredSkills: true,
   roleExpectations: true,
   availabilityRequirement: true,
+  applicationMode: true,
+  applicationQuestions: { orderBy: { position: "asc" }, select: { id: true, label: true, maxLength: true, required: true, position: true } },
   capacity: true,
   recruitmentStartsAt: true,
   recruitmentEndsAt: true,
@@ -96,9 +99,13 @@ export class PrismaTopicRepository
         FOR SHARE
       `);
       if (!programs[0]) return null;
+      const { applicationQuestions, ...topicData } = topic;
       return transaction.topic.create({
         data: {
-          ...topic,
+          ...topicData,
+          applicationQuestions: {
+            create: applicationQuestions.map((question, position) => ({ ...question, position })),
+          },
           status: "DRAFT",
           publishedAt: null,
         },
@@ -161,6 +168,7 @@ export class PrismaTopicRepository
           requiredSkills: { isEmpty: false },
           roleExpectations: { not: "" },
           availabilityRequirement: { not: "" },
+          applicationQuestions: { some: {} },
         },
         data: { status: "PUBLISHED", publishedAt },
       });
@@ -180,6 +188,7 @@ export class PrismaTopicRepository
         data: { status: "CLOSED" },
       });
       if (result.count !== 1) return false;
+      await transaction.teamApplicationDraft.deleteMany({ where: { topicId: id } });
       await transaction.topicApplication.updateMany({ where: { topicId: id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       await transaction.recruitmentPost.updateMany({ where: { team: { topicId: id }, status: "OPEN" }, data: { status: "CLOSED" } });
       await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: id } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });

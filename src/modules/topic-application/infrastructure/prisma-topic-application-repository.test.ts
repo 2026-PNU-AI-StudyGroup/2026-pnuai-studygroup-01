@@ -25,6 +25,7 @@ describe("Prisma 지원 결정 저장소", () => {
       where: {
         id: "application-1",
         topic: { authorId: "professor-1" },
+        OR: [{ groupId: null }, { participantRole: "LEADER" }],
       },
     }));
   });
@@ -39,7 +40,7 @@ describe("Prisma 지원 결정 저장소", () => {
     });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "application-1" },
+      where: { id: "application-1", OR: [{ groupId: null }, { participantRole: "LEADER" }] },
     }));
   });
 

@@ -16,6 +16,8 @@ const topicInput = {
   preferredSkills: [" Docker "],
   roleExpectations: " 프론트엔드 구현 ",
   availabilityRequirement: " 수요일 회의 참여 ",
+  applicationMode: "INDIVIDUAL_OR_TEAM" as const,
+  applicationQuestions: [{ label: " 참여 동기 ", maxLength: 500, required: true }],
   capacity: 4,
   recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
   recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
@@ -57,6 +59,7 @@ describe("주제 초안 생성", () => {
       preferredSkills: ["Docker"],
       roleExpectations: "프론트엔드 구현",
       availabilityRequirement: "수요일 회의 참여",
+      applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
       authorId: "professor-1",
     });
   });

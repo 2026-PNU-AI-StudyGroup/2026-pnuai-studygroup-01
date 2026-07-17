@@ -19,8 +19,16 @@ export interface TopicScheduleUpdater {
   updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
 }
 
-export type TopicSummary = TopicDraft & {
+export type TopicApplicationQuestionSummary = {
   id: string;
+  label: string;
+  maxLength: number;
+  required: boolean;
+};
+
+export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
+  id: string;
+  applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   publishedAt: Date | null;

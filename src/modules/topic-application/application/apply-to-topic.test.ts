@@ -7,55 +7,83 @@ import {
 import type { TopicApplicationCreator } from "@/modules/topic-application/application/topic-application-ports";
 import { TopicApplicationForbiddenError } from "@/modules/topic-application/domain/topic-application-policy";
 
-describe("주제 지원", () => {
-  it("학생의 지원 메시지를 정규화해 저장한다", async () => {
-    const repository: TopicApplicationCreator = {
-      createIfAvailable: vi.fn(async () => ({ outcome: "CREATED" as const, id: "app-1" })),
-    };
-    const appliedAt = new Date("2026-03-05T00:00:00Z");
-    const service = new ApplyToTopicService(repository, () => appliedAt);
+const student = {
+  id: "student-1",
+  role: "STUDENT" as const,
+  name: "김학생",
+  email: "student@pusan.ac.kr",
+  image: null,
+};
+const configuration = {
+  topicId: "topic-1",
+  mode: "INDIVIDUAL_OR_TEAM" as const,
+  capacity: 4,
+  questions: [{ id: "question-1", label: "지원 동기", maxLength: 300, required: true }],
+};
 
-    await expect(
-      service.execute(
-        { id: "student-1", role: "STUDENT" },
-        { topicId: "topic-1", message: "  참여하고 싶습니다.  ", skills: [" TypeScript "], desiredRole: " 프론트엔드 ", availability: " 평일 저녁 " },
-      ),
-    ).resolves.toEqual({ id: "app-1" });
-    expect(repository.createIfAvailable).toHaveBeenCalledWith({
+function repository(
+  outcome: { outcome: "CREATED"; id: string } | { outcome: "ALREADY_APPLIED" } = { outcome: "CREATED", id: "app-1" },
+): TopicApplicationCreator {
+  return {
+    findConfiguration: vi.fn(async () => configuration),
+    createIndividualIfAvailable: vi.fn(async () => outcome),
+    createTeamDraftIfAvailable: vi.fn(async () => ({ outcome: "INVITATIONS_PENDING" as const, draftId: "draft-1" })),
+  };
+}
+
+describe("주제 지원", () => {
+  it("교수 지정 문항의 개인 지원 답변을 정규화해 저장한다", async () => {
+    const store = repository();
+    const appliedAt = new Date("2026-03-05T00:00:00Z");
+    const service = new ApplyToTopicService(store, () => appliedAt);
+
+    await expect(service.execute(student, {
+      topicId: "topic-1",
+      kind: "INDIVIDUAL",
+      answers: [{ questionId: "question-1", value: "  참여하고 싶습니다.  " }],
+      inviteeEmails: [],
+    })).resolves.toEqual({ outcome: "CREATED", id: "app-1" });
+    expect(store.createIndividualIfAvailable).toHaveBeenCalledWith({
       topicId: "topic-1",
       studentId: "student-1",
-      message: "참여하고 싶습니다.",
-      skills: ["TypeScript"],
-      desiredRole: "프론트엔드",
-      availability: "평일 저녁",
+      studentEmail: "student@pusan.ac.kr",
+      kind: "INDIVIDUAL",
+      answers: [{ questionId: "question-1", value: "참여하고 싶습니다." }],
+      inviteeEmails: [],
       appliedAt,
     });
   });
 
-  it("교수의 지원 요청을 저장소 호출 전에 거절한다", async () => {
-    const repository: TopicApplicationCreator = { createIfAvailable: vi.fn() };
-    const service = new ApplyToTopicService(repository);
+  it("팀 지원은 팀원 수락 대기 초안을 생성한다", async () => {
+    const store = repository();
+    await expect(new ApplyToTopicService(store).execute(student, {
+      topicId: "topic-1",
+      kind: "TEAM",
+      answers: [{ questionId: "question-1", value: "함께 지원합니다." }],
+      inviteeEmails: [" teammate@pusan.ac.kr "],
+    })).resolves.toEqual({ outcome: "INVITATIONS_PENDING", draftId: "draft-1" });
+    expect(store.createTeamDraftIfAvailable).toHaveBeenCalledWith(expect.objectContaining({
+      kind: "TEAM",
+      inviteeEmails: ["teammate@pusan.ac.kr"],
+    }));
+  });
 
-    await expect(
-      service.execute(
-        { id: "professor-1", role: "PROFESSOR" },
-        { topicId: "topic-1", message: "지원", skills: ["TypeScript"], desiredRole: "개발", availability: "주말" },
-      ),
-    ).rejects.toBeInstanceOf(TopicApplicationForbiddenError);
-    expect(repository.createIfAvailable).not.toHaveBeenCalled();
+  it("교수의 지원 요청을 저장소 호출 전에 거절한다", async () => {
+    const store = repository();
+    await expect(new ApplyToTopicService(store).execute(
+      { ...student, id: "professor-1", role: "PROFESSOR" },
+      { topicId: "topic-1", kind: "INDIVIDUAL", answers: [], inviteeEmails: [] },
+    )).rejects.toBeInstanceOf(TopicApplicationForbiddenError);
+    expect(store.findConfiguration).not.toHaveBeenCalled();
   });
 
   it("중복 지원 결과를 명시적인 오류로 변환한다", async () => {
-    const repository: TopicApplicationCreator = {
-      createIfAvailable: vi.fn(async () => ({ outcome: "ALREADY_APPLIED" as const })),
-    };
-    const service = new ApplyToTopicService(repository);
-
-    await expect(
-      service.execute(
-        { id: "student-1", role: "STUDENT" },
-        { topicId: "topic-1", message: "지원", skills: ["TypeScript"], desiredRole: "개발", availability: "주말" },
-      ),
-    ).rejects.toBeInstanceOf(TopicAlreadyAppliedError);
+    const store = repository({ outcome: "ALREADY_APPLIED" });
+    await expect(new ApplyToTopicService(store).execute(student, {
+      topicId: "topic-1",
+      kind: "INDIVIDUAL",
+      answers: [{ questionId: "question-1", value: "지원합니다." }],
+      inviteeEmails: [],
+    })).rejects.toBeInstanceOf(TopicAlreadyAppliedError);
   });
 });

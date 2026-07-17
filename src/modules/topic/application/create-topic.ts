@@ -46,6 +46,10 @@ export class CreateTopicService {
       preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
       roleExpectations: input.roleExpectations.trim(),
       availabilityRequirement: input.availabilityRequirement.trim(),
+      applicationQuestions: input.applicationQuestions.map((question) => ({
+        ...question,
+        label: question.label.trim(),
+      })),
     };
     assertValidTopicDetails(details);
     assertValidTopicSchedule(input);

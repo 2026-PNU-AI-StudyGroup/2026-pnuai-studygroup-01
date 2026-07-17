@@ -1,9 +1,10 @@
-import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import type { TopicApplicationCreator } from "@/modules/topic-application/application/topic-application-ports";
 import {
+  assertApplicationKindAllowed,
   assertCanApplyToTopic,
-  normalizeApplicationMessage,
-  normalizeApplicationProfile,
+  normalizeApplicationAnswers,
+  normalizeTeamMemberEmails,
 } from "@/modules/topic-application/domain/topic-application-policy";
 
 export class TopicAlreadyAppliedError extends Error {
@@ -27,6 +28,13 @@ export class StudentAlreadyAssignedError extends Error {
   }
 }
 
+export class TeamMemberUnavailableError extends Error {
+  constructor() {
+    super("초대한 팀원 중 이미 지원했거나 같은 학기의 다른 팀에 소속된 사용자가 있습니다.");
+    this.name = "TeamMemberUnavailableError";
+  }
+}
+
 export class ApplyToTopicService {
   constructor(
     private readonly repository: TopicApplicationCreator,
@@ -34,20 +42,29 @@ export class ApplyToTopicService {
   ) {}
 
   async execute(
-    actor: CurrentActor,
-    input: { topicId: string; message: string; skills: string[]; desiredRole: string; availability: string },
-  ): Promise<{ id: string }> {
+    actor: CurrentUser,
+    input: { topicId: string; kind: "INDIVIDUAL" | "TEAM"; answers: Array<{ questionId: string; value: string }>; inviteeEmails: string[] },
+  ): Promise<{ outcome: "CREATED"; id: string } | { outcome: "INVITATIONS_PENDING"; draftId: string }> {
     assertCanApplyToTopic(actor);
-    const message = normalizeApplicationMessage(input.message);
-    const profile = normalizeApplicationProfile(input);
+    const appliedAt = this.now();
+    const configuration = await this.repository.findConfiguration(input.topicId, appliedAt);
+    if (!configuration) throw new TopicUnavailableForApplicationError();
+    assertApplicationKindAllowed(configuration.mode, input.kind);
+    const answers = normalizeApplicationAnswers(configuration.questions, input.answers);
+    const inviteeEmails = input.kind === "TEAM"
+      ? normalizeTeamMemberEmails(input.inviteeEmails, actor.email, configuration.capacity)
+      : [];
 
-    const result = await this.repository.createIfAvailable({
+    const common = {
       topicId: input.topicId,
       studentId: actor.id,
-      message,
-      ...profile,
-      appliedAt: this.now(),
-    });
+      studentEmail: actor.email,
+      answers,
+      appliedAt,
+    };
+    const result = input.kind === "TEAM"
+      ? await this.repository.createTeamDraftIfAvailable({ ...common, kind: "TEAM", inviteeEmails })
+      : await this.repository.createIndividualIfAvailable({ ...common, kind: "INDIVIDUAL", inviteeEmails: [] });
 
     if (result.outcome === "ALREADY_APPLIED") {
       throw new TopicAlreadyAppliedError();
@@ -58,6 +75,9 @@ export class ApplyToTopicService {
     if (result.outcome === "STUDENT_ALREADY_ASSIGNED") {
       throw new StudentAlreadyAssignedError();
     }
-    return { id: result.id };
+    if (result.outcome === "TEAM_MEMBER_UNAVAILABLE") {
+      throw new TeamMemberUnavailableError();
+    }
+    return result;
   }
 }

@@ -20,6 +20,8 @@ describe("주제 내용 정책", () => {
         preferredSkills: [],
         roleExpectations: "프론트엔드 구현",
         availabilityRequirement: "수요일 회의",
+        applicationMode: "INDIVIDUAL_ONLY",
+        applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
         capacity: 4,
       }),
     ).not.toThrow();
@@ -32,6 +34,8 @@ describe("주제 내용 정책", () => {
     preferredSkills: [] as string[],
     roleExpectations: "프론트엔드 구현",
     availabilityRequirement: "수요일 회의",
+    applicationMode: "INDIVIDUAL_ONLY" as const,
+    applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 1,
   };
 
@@ -43,6 +47,10 @@ describe("주제 내용 정책", () => {
     { ...valid, availabilityRequirement: " " },
     { ...valid, capacity: 0 },
     { ...valid, capacity: 1.5 },
+    { ...valid, applicationQuestions: [] },
+    { ...valid, applicationQuestions: [{ label: " ", maxLength: 500, required: true }] },
+    { ...valid, applicationQuestions: [{ label: "참여 동기", maxLength: 5_001, required: true }] },
+    { ...valid, applicationMode: "TEAM_ONLY" as const, capacity: 1 },
   ])("유효하지 않은 주제 내용 $title/$description/$capacity 을 거절한다", (details) => {
     expect(() => assertValidTopicDetails(details)).toThrow();
   });

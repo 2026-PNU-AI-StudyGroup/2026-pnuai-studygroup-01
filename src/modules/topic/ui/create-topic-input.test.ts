@@ -10,6 +10,8 @@ const input = {
   preferredSkills: "Docker",
   roleExpectations: "프론트엔드 구현",
   availabilityRequirement: "수요일 회의 참여",
+  applicationMode: "INDIVIDUAL_OR_TEAM",
+  applicationQuestions: [{ label: "참여 동기", maxLength: "500", required: true }],
   capacity: "4",
   recruitmentStartsAt: "2026-03-01T09:00",
   recruitmentEndsAt: "2026-03-10T09:00",

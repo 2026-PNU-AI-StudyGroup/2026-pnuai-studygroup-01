@@ -59,6 +59,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           select: { id: true, studentId: true, topic: { select: { title: true } } },
         });
         await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PUBLISHED" }, data: { status: "CLOSED" } });
+        await transaction.teamApplicationDraft.deleteMany({ where: { topicId: { in: topicIds } } });
         await transaction.topicApplication.updateMany({ where: { topicId: { in: topicIds }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
         await transaction.recruitmentPost.updateMany({ where: { team: { topicId: { in: topicIds } }, status: "OPEN" }, data: { status: "CLOSED" } });
         await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: { in: topicIds } } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });

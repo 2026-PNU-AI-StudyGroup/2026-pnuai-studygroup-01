@@ -56,6 +56,12 @@ export const createTopicInputSchema = z.object({
   preferredSkills: skillList,
   roleExpectations: z.string().trim().min(1).max(500),
   availabilityRequirement: z.string().trim().min(1).max(500),
+  applicationMode: z.enum(["TEAM_ONLY", "INDIVIDUAL_ONLY", "INDIVIDUAL_OR_TEAM"]),
+  applicationQuestions: z.array(z.object({
+    label: z.string().trim().min(1).max(200),
+    maxLength: z.coerce.number().int().min(1).max(5_000),
+    required: z.boolean(),
+  })).min(1).max(20),
   capacity: z.coerce.number().int().min(1).max(100),
   recruitmentStartsAt: koreanLocalDateTime,
   recruitmentEndsAt: koreanLocalDateTime,

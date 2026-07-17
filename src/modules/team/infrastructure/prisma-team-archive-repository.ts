@@ -84,6 +84,15 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
   close(teamId: string, actor: CurrentActor): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const decidedAt = new Date();
+      const initial = await transaction.team.findUnique({ where: { id: teamId }, select: { topicId: true } });
+      if (!initial) return false;
+      await transaction.$queryRaw(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${initial.topicId}
+        FOR UPDATE OF "project_program"
+      `);
+      await transaction.$queryRaw(Prisma.sql`SELECT "id" FROM "topic" WHERE "id" = ${initial.topicId} FOR UPDATE`);
       const teams = await transaction.$queryRaw<Array<{ id: string; topicId: string }>>(Prisma.sql`
         SELECT "team"."id", "team"."topicId"
         FROM "team"
@@ -130,6 +139,7 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
         data: { status: "CLOSED" },
       });
       if (result.count === 1) {
+        await transaction.teamApplicationDraft.deleteMany({ where: { topicId: team.topicId } });
         const applications = await transaction.topicApplication.findMany({
           where: { topicId: team.topicId, status: "PENDING" },
           select: { id: true, studentId: true, topic: { select: { title: true } } },
