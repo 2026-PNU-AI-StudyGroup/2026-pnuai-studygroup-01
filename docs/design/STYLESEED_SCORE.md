@@ -89,3 +89,23 @@ The operations surfaces pass the static StyleSeed gate. Rendered desktop and mob
 | Distinctiveness | 8 / 10 | The PNU campus collaboration illustration, real program selector, topic-specific metadata, and support summary make the surface product-specific; familiar discovery cards intentionally preserve scanning speed. |
 
 Gate fix: separated decorative Gold from accessible Gold text, increased topic-description body copy to 16px, and verified that program selection preserves URL state while topic application opens without extending page height.
+
+## Application policy and team consent gate · 2026-07-17
+
+- Target: `src/app/professor/topics/topic-form.tsx`, `src/app/topics/apply-topic-form.tsx`, `src/app/topics/applications/page.tsx`, `src/app/professor/applications/received-application-detail.tsx`
+- Final score: **88 / 100 (B)**
+- Result: **PASS** (`>= 80`)
+- Visual verification: real app CSS at desktop width and `390 × 844`; individual/team selection, team email entry, custom questions, internal modal scrolling, and professor team review were rendered
+
+| Category | Score | Evidence |
+| --- | ---: | --- |
+| Color discipline | 16 / 16 | Cobalt is limited to selected support mode and the primary action. Campus Gold appears once on the professor support-policy legend, while invitation and decision colors remain semantic. |
+| Hierarchy & typography | 14 / 16 | The project or support policy remains the focal heading; question labels, constraints, participant roles, and dates form clear secondary tiers. Compact form guidance remains 12–14px. |
+| Layout & rhythm | 11 / 12 | Professor configuration uses one continuous white form with section rules; student application stays in an internally scrolling modal and never increases the discovery page height. |
+| Cards & elevation | 10 / 10 | Support-mode choices use the locked flat bordered treatment with no shadows or floating cards. The large gray form panel found during the visual pass was removed. |
+| States & a11y | 16 / 18 | Required/optional copy, live character counts, pending labels, explicit invitation outcomes, empty states, confirmations, focus treatment, and 44px controls are present. Authenticated error-state pixel capture remains outstanding. |
+| Motion & interaction | 6 / 6 | Existing Snap controls, dialog/toast transitions, and reduced-motion fallback apply without delaying content. |
+| Coherence | 11 / 12 | White canvas, one soft radius family, flat elevation, Cobalt primary, and one Gold focal cue remain consistent. Native radio rendering differs slightly by browser. |
+| Distinctiveness | 4 / 10 | The team-consent progression and professor-defined form are product-specific, while the long administrative form intentionally favors conventional controls over decorative identity. |
+
+Gate fix: removed the gray full-form background, retained one Gold support-policy cue, and verified that switching to team support reveals only the PNU email invitation field plus the professor-defined questions.

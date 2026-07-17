@@ -67,6 +67,8 @@ async function main() {
     preferredSkills: [],
     roleExpectations: "구현",
     availabilityRequirement: "주 1회 회의",
+    applicationMode: "INDIVIDUAL_ONLY",
+    applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 3,
     recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
     recruitmentEndsAt: new Date(now.getTime() + 30 * day),
@@ -142,6 +144,7 @@ async function main() {
     new CreateTopicService(topics, programs).execute({ id: professorId, role: "PROFESSOR" }, {
       programId: raceProgram.id, title: "마감 경합 주제", description: "원자적 생성 검증", requiredSkills: ["TypeScript"], preferredSkills: [],
       roleExpectations: "구현", availabilityRequirement: "주 1회", capacity: 2,
+      applicationMode: "INDIVIDUAL_ONLY", applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
       recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000), recruitmentEndsAt: new Date(now.getTime() + 30 * day),
       executionStartsAt: new Date(now.getTime() + 20 * day), executionEndsAt: new Date(now.getTime() + 70 * day),
       submissionStartsAt: new Date(now.getTime() + 60 * day), submissionEndsAt: new Date(now.getTime() + 80 * day),

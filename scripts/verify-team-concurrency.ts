@@ -53,6 +53,7 @@ async function createTopic(cycleId: string, title: string, capacity: number) {
       authorId: professorId,
       title,
       description: "동시성 검증용 주제",
+      applicationMode: "INDIVIDUAL_ONLY",
       capacity,
       recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
       recruitmentEndsAt: new Date("2026-12-31T00:00:00Z"),
@@ -62,6 +63,7 @@ async function createTopic(cycleId: string, title: string, capacity: number) {
       submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
       status: "PUBLISHED",
       publishedAt: new Date("2026-01-01T00:00:00Z"),
+      applicationQuestions: { create: { label: "지원 동기", maxLength: 500, required: true, position: 0 } },
     },
   });
 }
@@ -133,13 +135,15 @@ async function main() {
   ) {
     throw new Error("정원 동시 수락 불변식이 깨졌습니다.");
   }
-  const fullTopicApplication = await repository.createIfAvailable({
+  const fullTopicConfiguration = await repository.findConfiguration(capacityTopic.id, new Date("2026-07-13T00:00:00Z"));
+  if (!fullTopicConfiguration) throw new Error("정원 검증 주제 설정을 찾지 못했습니다.");
+  const fullTopicApplication = await repository.createIndividualIfAvailable({
     topicId: capacityTopic.id,
     studentId: studentIds[2],
-    message: "정원 충족 후 지원",
-    skills: ["TypeScript"],
-    desiredRole: "개발",
-    availability: "평일 저녁",
+    studentEmail: `verification+${studentIds[2]}@pusan.ac.kr`,
+    kind: "INDIVIDUAL",
+    answers: [{ questionId: fullTopicConfiguration.questions[0].id, value: "정원 충족 후 지원" }],
+    inviteeEmails: [],
     appliedAt: new Date("2026-07-13T00:00:00Z"),
   });
   if (fullTopicApplication.outcome !== "TOPIC_UNAVAILABLE") {
@@ -182,14 +186,17 @@ async function main() {
   );
   await Promise.all([
     repository.accept(decisionApplication.id, actor, new Date()),
-    repository.createIfAvailable({
+    repository.findConfiguration(applyingTopic.id, new Date("2026-07-13T00:00:00Z")).then((configuration) => {
+      if (!configuration) throw new Error("지원 경합 검증 주제 설정을 찾지 못했습니다.");
+      return repository.createIndividualIfAvailable({
       topicId: applyingTopic.id,
       studentId: studentIds[3],
-      message: "수락 중 동시 지원",
-      skills: ["TypeScript"],
-      desiredRole: "개발",
-      availability: "평일 저녁",
+      studentEmail: `verification+${studentIds[3]}@pusan.ac.kr`,
+      kind: "INDIVIDUAL",
+      answers: [{ questionId: configuration.questions[0].id, value: "수락 중 동시 지원" }],
+      inviteeEmails: [],
       appliedAt: new Date("2026-07-13T00:00:00Z"),
+      });
     }),
   ]);
   const decisionRaceMemberships = await prisma.teamMember.count({

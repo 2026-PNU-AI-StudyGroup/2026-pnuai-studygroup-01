@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:team-concurrency": "tsx scripts/verify-team-concurrency.ts",
+    "verify:team-application-flow": "tsx scripts/verify-team-application-flow.ts",
     "verify:team-workspace": "tsx scripts/verify-team-workspace.ts",
     "verify:file-upload": "tsx scripts/verify-file-upload.ts",
     "verify:report-flow": "tsx scripts/verify-report-flow.ts",
