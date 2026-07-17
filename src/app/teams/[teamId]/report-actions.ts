@@ -44,7 +44,7 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
       fileId: parsed.data.uploadId,
       description: parsed.data.description,
     });
-    revalidatePath(`/teams/${parsed.data.teamId}`);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: `${result.version}차 버전을 제출했습니다.` };
   } catch (error) {
     const expected = message(error);
@@ -63,6 +63,7 @@ export async function setReportRequirementAction(
   if (!parsed.success) return { status: "error", message: "보고서 종류와 기한을 확인해 주세요." };
   try {
     await reportService().setRequirement(actor, parsed.data);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "보고서 요구사항과 기한을 저장했습니다." };
   } catch (error) {
     const expected = message(error);
@@ -81,6 +82,7 @@ export async function removeReportRequirementAction(
   if (!parsed.success) return { status: "error", message: "해제할 보고서 요구사항을 확인해 주세요." };
   try {
     await reportService().removeRequirement(actor, parsed.data);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "보고서 요구사항을 해제했습니다." };
   } catch (error) {
     const expected = message(error);
@@ -99,7 +101,7 @@ export async function decideReportAction(
   if (!parsed.success) return { status: "error", message: "결정 입력을 확인해 주세요." };
   try {
     await reportService().decide(actor, parsed.data);
-    revalidatePath(`/teams/${parsed.data.teamId}`);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "검토 결정을 저장했습니다." };
   } catch (error) {
     const expected = message(error);
@@ -124,7 +126,7 @@ export async function registerArtifactAction(formData: FormData): Promise<Report
       fileId: parsed.data.uploadId,
       externalUrl: parsed.data.externalUrl,
     });
-    revalidatePath(`/teams/${parsed.data.teamId}`);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "결과물을 등록했습니다." };
   } catch (error) {
     const expected = message(error);

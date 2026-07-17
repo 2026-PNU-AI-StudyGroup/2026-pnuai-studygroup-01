@@ -14,6 +14,7 @@ import type {
   TopicStateRepository,
   TopicScheduleUpdater,
   TopicSummary,
+  ManagedTopicReader,
 } from "@/modules/topic/application/topic-ports";
 import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
 
@@ -23,6 +24,36 @@ const publicTopicInclude = {
   program: { select: { name: true, category: true, status: true } },
   team: { select: { _count: { select: { members: true } } } },
 } satisfies Prisma.TopicInclude;
+
+const managedTopicSelect = {
+  id: true,
+  academicCycleId: true,
+  authorId: true,
+  author: { select: { name: true } },
+  title: true,
+  description: true,
+  programId: true,
+  requiredSkills: true,
+  preferredSkills: true,
+  roleExpectations: true,
+  availabilityRequirement: true,
+  capacity: true,
+  recruitmentStartsAt: true,
+  recruitmentEndsAt: true,
+  executionStartsAt: true,
+  executionEndsAt: true,
+  submissionStartsAt: true,
+  submissionEndsAt: true,
+  status: true,
+  publishedAt: true,
+  program: { select: { name: true, category: true, status: true } },
+} satisfies Prisma.TopicSelect;
+
+type ManagedTopicRow = Prisma.TopicGetPayload<{ select: typeof managedTopicSelect }>;
+
+function toTopicSummary({ author, program, ...topic }: ManagedTopicRow): TopicSummary {
+  return { ...topic, authorName: author.name, programName: program.name, programCategory: program.category, programStatus: program.status };
+}
 
 type PublicTopicRow = Prisma.TopicGetPayload<{ include: typeof publicTopicInclude }>;
 
@@ -53,7 +84,7 @@ function phaseWhere(phase: PublicTopicPhase, now: Date): Prisma.TopicWhereInput 
 }
 
 export class PrismaTopicRepository
-  implements TopicCreator, TopicLister, TopicStateRepository, TopicScheduleUpdater, PublicTopicLister
+  implements TopicCreator, TopicLister, ManagedTopicReader, TopicStateRepository, TopicScheduleUpdater, PublicTopicLister
 {
   constructor(private readonly client: PrismaClient) {}
 
@@ -88,36 +119,16 @@ export class PrismaTopicRepository
     return this.client.topic.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        academicCycleId: true,
-        authorId: true,
-        author: { select: { name: true } },
-        title: true,
-        description: true,
-        programId: true,
-        requiredSkills: true,
-        preferredSkills: true,
-        roleExpectations: true,
-        availabilityRequirement: true,
-        capacity: true,
-        recruitmentStartsAt: true,
-        recruitmentEndsAt: true,
-        executionStartsAt: true,
-        executionEndsAt: true,
-        submissionStartsAt: true,
-        submissionEndsAt: true,
-        status: true,
-        publishedAt: true,
-        program: { select: { name: true, category: true, status: true } },
-      },
-    }).then((topics) => topics.map(({ author, program, ...topic }) => ({
-      ...topic,
-      authorName: author.name,
-      programName: program.name,
-      programCategory: program.category,
-      programStatus: program.status,
-    })));
+      select: managedTopicSelect,
+    }).then((topics) => topics.map(toTopicSummary));
+  }
+
+  async findManaged(id: string, actor: CurrentActor): Promise<TopicSummary | null> {
+    const topic = await this.client.topic.findFirst({
+      where: { id, ...(actor.role === "ADMIN" ? {} : { authorId: actor.id }) },
+      select: managedTopicSelect,
+    });
+    return topic ? toTopicSummary(topic) : null;
   }
 
   findState(id: string): Promise<TopicStateRecord | null> {

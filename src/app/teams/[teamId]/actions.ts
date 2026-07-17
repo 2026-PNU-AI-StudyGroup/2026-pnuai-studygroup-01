@@ -49,7 +49,7 @@ export async function confirmTeamAction(formData: FormData) {
     if (error instanceof TeamConfirmationNotAllowedError) return;
     throw error;
   }
-  revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/teams/${teamId}`, "layout");
   revalidatePath("/dashboard");
 }
 
@@ -71,7 +71,7 @@ export async function closeTeamAction(
     }
     throw error;
   }
-  revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/teams/${teamId}`, "layout");
   revalidatePath("/dashboard");
   revalidatePath("/topics");
   return { status: "success", message: "팀을 종료하고 지난 프로젝트에 보관했습니다." };
@@ -114,7 +114,7 @@ export async function createMilestoneAction(
     if (message) return { status: "error", message };
     throw error;
   }
-  revalidatePath(`/teams/${parsed.data.teamId}`);
+  revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
   revalidatePath("/dashboard");
   return { status: "success", message: "마일스톤을 추가했습니다." };
 }
@@ -133,7 +133,7 @@ export async function updateMilestoneStatusAction(
   }
   try {
     const result = await service().updateMilestoneStatus(actor, parsed.data);
-    revalidatePath(`/teams/${result.teamId}`);
+    revalidatePath(`/teams/${result.teamId}`, "layout");
   } catch (error) {
     const message = expectedMessage(error);
     if (message) return { status: "error", message };
@@ -162,7 +162,7 @@ export async function createProgressUpdateAction(
     if (message) return { status: "error", message };
     throw error;
   }
-  revalidatePath(`/teams/${parsed.data.teamId}`);
+  revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
   return { status: "success", message: "진행 기록을 추가했습니다." };
 }
 
@@ -181,6 +181,6 @@ export async function createDiscussionPostAction(
     if (message) return { status: "error", message };
     throw error;
   }
-  revalidatePath(`/teams/${parsed.data.teamId}`);
+  revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
   return { status: "success", message: "토론 글을 등록했습니다." };
 }

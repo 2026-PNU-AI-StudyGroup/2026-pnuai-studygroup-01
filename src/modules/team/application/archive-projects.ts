@@ -34,6 +34,7 @@ export interface ArchivedProjectReader {
   listProgramCategories(): Promise<string[]>;
   countClosed(filters: ArchiveFilters): Promise<number>;
   listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]>;
+  findClosed(id: string): Promise<ArchivedProject | null>;
 }
 
 export interface TeamCloser {
@@ -92,5 +93,9 @@ export class ListArchivedProjectsService {
       academicYears,
       programCategories,
     };
+  }
+
+  find(id: string): Promise<ArchivedProject | null> {
+    return this.reader.findClosed(id);
   }
 }

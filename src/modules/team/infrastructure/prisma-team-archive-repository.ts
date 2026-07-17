@@ -8,6 +8,56 @@ import type {
   TeamCloser,
 } from "@/modules/team/application/archive-projects";
 
+const archivedProjectSelect = {
+  id: true,
+  name: true,
+  topic: { select: {
+    title: true,
+    description: true,
+    requiredSkills: true,
+    preferredSkills: true,
+    program: { select: { name: true, category: true } },
+    author: { select: { name: true } },
+    academicCycle: { select: { academicYear: true, term: true } },
+  } },
+  members: { orderBy: { joinedAt: "asc" as const }, select: { student: { select: { name: true } } } },
+  artifacts: { orderBy: { createdAt: "asc" as const }, select: {
+    id: true,
+    type: true,
+    title: true,
+    fileId: true,
+    externalUrl: true,
+    file: { select: { originalName: true } },
+  } },
+} satisfies Prisma.TeamSelect;
+
+type ArchivedProjectRow = Prisma.TeamGetPayload<{ select: typeof archivedProjectSelect }>;
+
+function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
+  return {
+    id: team.id,
+    academicYear: team.topic.academicCycle.academicYear,
+    term: team.topic.academicCycle.term,
+    teamName: team.name,
+    programName: team.topic.program.name,
+    programCategory: team.topic.program.category,
+    topicTitle: team.topic.title,
+    topicDescription: team.topic.description,
+    requiredSkills: team.topic.requiredSkills,
+    preferredSkills: team.topic.preferredSkills,
+    professorName: team.topic.author.name,
+    memberNames: team.members.map(({ student }) => student.name),
+    artifacts: team.artifacts.map(({ file, ...artifact }) => ({
+      id: artifact.id,
+      type: artifact.type,
+      title: artifact.title,
+      fileId: artifact.fileId ?? undefined,
+      fileName: file?.originalName,
+      externalUrl: artifact.externalUrl ?? undefined,
+    })),
+  };
+}
+
 export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamCloser {
   constructor(private readonly client: PrismaClient) {}
 
@@ -127,60 +177,17 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
       ],
       skip: input.offset,
       take: input.limit,
-      select: {
-        id: true,
-        name: true,
-        topic: {
-          select: {
-            title: true,
-            description: true,
-            requiredSkills: true,
-            preferredSkills: true,
-            program: { select: { name: true, category: true } },
-            author: { select: { name: true } },
-            academicCycle: { select: { academicYear: true, term: true } },
-          },
-        },
-        members: {
-          orderBy: { joinedAt: "asc" },
-          select: { student: { select: { name: true } } },
-        },
-        artifacts: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            type: true,
-            title: true,
-            fileId: true,
-            externalUrl: true,
-            file: { select: { originalName: true } },
-          },
-        },
-      },
+      select: archivedProjectSelect,
     });
-    const projects = teams.map((team) => ({
-      id: team.id,
-      academicYear: team.topic.academicCycle.academicYear,
-      term: team.topic.academicCycle.term,
-      teamName: team.name,
-      programName: team.topic.program.name,
-      programCategory: team.topic.program.category,
-      topicTitle: team.topic.title,
-      topicDescription: team.topic.description,
-      requiredSkills: team.topic.requiredSkills,
-      preferredSkills: team.topic.preferredSkills,
-      professorName: team.topic.author.name,
-      memberNames: team.members.map(({ student }) => student.name),
-      artifacts: team.artifacts.map(({ file, ...artifact }) => ({
-        id: artifact.id,
-        type: artifact.type,
-        title: artifact.title,
-        fileId: artifact.fileId ?? undefined,
-        fileName: file?.originalName,
-        externalUrl: artifact.externalUrl ?? undefined,
-      })),
-    }));
-    return projects;
+    return teams.map(toArchivedProject);
+  }
+
+  async findClosed(id: string): Promise<ArchivedProject | null> {
+    const team = await this.client.team.findFirst({
+      where: { id, status: "CLOSED" },
+      select: archivedProjectSelect,
+    });
+    return team ? toArchivedProject(team) : null;
   }
 }
 

@@ -34,6 +34,10 @@ export interface TopicLister {
   listAll(): Promise<TopicSummary[]>;
 }
 
+export interface ManagedTopicReader {
+  findManaged(id: string, actor: CurrentActor): Promise<TopicSummary | null>;
+}
+
 export type TopicStateRecord = {
   id: string;
   authorId: string;

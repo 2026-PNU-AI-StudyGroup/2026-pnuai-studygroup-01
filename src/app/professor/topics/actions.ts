@@ -113,6 +113,7 @@ export async function changeTopicStatusAction(
   }
 
   revalidatePath("/professor/topics");
+  revalidatePath(`/professor/topics/${parsed.data.topicId}`);
   return {
     status: "success",
     message: parsed.data.intent === "publish" ? "주제가 공개되었습니다." : "주제가 마감되었습니다.",
@@ -141,6 +142,8 @@ export async function updateTopicScheduleAction(
     throw error;
   }
   revalidatePath("/professor/topics");
+  revalidatePath(`/professor/topics/${topicId}`);
+  revalidatePath(`/professor/topics/${topicId}/schedule`);
   revalidatePath("/topics");
   revalidatePath("/dashboard");
   return { status: "success", message: "주제 일정을 변경했습니다." };
