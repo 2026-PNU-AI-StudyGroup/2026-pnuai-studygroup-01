@@ -12,6 +12,37 @@ function knownError(code: string, target?: string[]) {
 }
 
 describe("Prisma 지원 결정 저장소", () => {
+  it("교수 상세 조회에 지원서와 주제 소유자 조건을 함께 적용한다", async () => {
+    const findFirst = vi.fn().mockResolvedValue(null);
+    const repository = new PrismaTopicApplicationRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
+
+    await repository.findVisibleById("application-1", {
+      actorId: "professor-1",
+      isAdmin: false,
+    });
+
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        id: "application-1",
+        topic: { authorId: "professor-1" },
+      },
+    }));
+  });
+
+  it("관리자 상세 조회에는 지원서 식별자만 적용한다", async () => {
+    const findFirst = vi.fn().mockResolvedValue(null);
+    const repository = new PrismaTopicApplicationRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
+
+    await repository.findVisibleById("application-1", {
+      actorId: "admin-1",
+      isAdmin: true,
+    });
+
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "application-1" },
+    }));
+  });
+
   it("교수 검토 목록에서 최신 대기 지원을 처리 이력보다 먼저 반환한다", async () => {
     const findMany = vi.fn().mockResolvedValue([
       { id: "accepted", topicId: "topic-1", studentId: "student-1", status: "ACCEPTED", message: "완료", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-17"), topic: { title: "지난 주제", authorId: "professor-1" }, student: { name: "김학생", email: "student1@pusan.ac.kr" } },

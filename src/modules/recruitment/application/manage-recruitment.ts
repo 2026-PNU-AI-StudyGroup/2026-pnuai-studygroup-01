@@ -7,7 +7,41 @@ export type RecruitmentPostView = {
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
   memberCount: number; capacity: number; createdAt: Date; canApply: boolean;
   ownApplication: { status: "PENDING" | "ACCEPTED" | "REJECTED" } | null;
-  receivedApplications: Array<{ id: string; studentName: string; message: string; skills: string[]; desiredRole: string; availability: string; status: "PENDING" | "ACCEPTED" | "REJECTED" }>;
+};
+
+export type AuthoredRecruitmentPost = {
+  id: string;
+  teamName: string;
+  topicTitle: string;
+  title: string;
+  status: "OPEN" | "CLOSED";
+  memberCount: number;
+  capacity: number;
+  applicationCount: number;
+  pendingApplicationCount: number;
+  createdAt: Date;
+};
+
+export type RecruitmentPostApplication = {
+  id: string;
+  studentName: string;
+  message: string;
+  skills: string[];
+  desiredRole: string;
+  availability: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  createdAt: Date;
+  decidedAt: Date | null;
+};
+
+export type RecruitmentPostApplications = {
+  id: string;
+  teamName: string;
+  topicTitle: string;
+  title: string;
+  content: string;
+  status: "OPEN" | "CLOSED";
+  applications: RecruitmentPostApplication[];
 };
 
 export type RecruitmentApplicationHistory = {
@@ -23,11 +57,19 @@ export type RecruitmentApplicationHistory = {
 
 export type RecruitmentPostListResult = {
   posts: RecruitmentPostView[];
-  formingTeams: Array<{ id: string; name: string }>;
   page: number;
   totalPages: number;
   total: number;
 };
+
+export type AuthoredRecruitmentPostPage = {
+  posts: AuthoredRecruitmentPost[];
+  page: number;
+  totalPages: number;
+  total: number;
+};
+
+export type RecruitmentReviewer = { actorId: string; isAdmin: boolean };
 
 export type RecruitmentApplicationHistoryPage = {
   applications: RecruitmentApplicationHistory[];
@@ -38,11 +80,13 @@ export type RecruitmentApplicationHistoryPage = {
 
 export interface RecruitmentRepository {
   listPosts(actorId: string, page: number): Promise<RecruitmentPostListResult>;
+  listAuthoredPosts(authorId: string, page: number): Promise<AuthoredRecruitmentPostPage>;
+  findPostApplications(postId: string, viewer: RecruitmentReviewer): Promise<RecruitmentPostApplications | null>;
   listApplicationHistory(actorId: string, page: number): Promise<RecruitmentApplicationHistoryPage>;
   listFormingTeams(actorId: string): Promise<Array<{ id: string; name: string }>>;
   createPost(input: { teamId: string; authorId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string }): Promise<boolean>;
   apply(input: { postId: string; studentId: string; message: string; skills: string[]; desiredRole: string; availability: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_ASSIGNED">;
-  findDecisionTarget(id: string, authorId: string): Promise<string | null>;
+  findDecisionTarget(id: string, viewer: RecruitmentReviewer): Promise<string | null>;
 }
 
 export class RecruitmentOperationError extends Error {}
@@ -70,6 +114,19 @@ export class RecruitmentService {
     assertStudent(actor);
     const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
     return this.repository.listApplicationHistory(actor.id, normalizedPage);
+  }
+
+  async listAuthoredPosts(actor: CurrentActor, page = 1) {
+    assertStudent(actor);
+    const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+    return this.repository.listAuthoredPosts(actor.id, normalizedPage);
+  }
+
+  async getPostApplications(actor: CurrentActor, postId: string) {
+    if (actor.role !== "STUDENT" && actor.role !== "ADMIN") {
+      throw new RecruitmentOperationError("모집 글 지원자를 검토할 권한이 없습니다.");
+    }
+    return this.repository.findPostApplications(postId, { actorId: actor.id, isAdmin: actor.role === "ADMIN" });
   }
 
   async listFormingTeams(actor: CurrentActor) {
@@ -100,13 +157,16 @@ export class RecruitmentService {
   }
 
   async decide(actor: CurrentActor, id: string, decision: "ACCEPT" | "REJECT", now = new Date()) {
-    assertStudent(actor);
-    const topicApplicationId = await this.repository.findDecisionTarget(id, actor.id);
+    if (actor.role !== "STUDENT" && actor.role !== "ADMIN") {
+      throw new RecruitmentOperationError("모집 지원을 결정할 권한이 없습니다.");
+    }
+    const decisionActor = { actorId: actor.id, isAdmin: actor.role === "ADMIN" };
+    const topicApplicationId = await this.repository.findDecisionTarget(id, decisionActor);
     if (!topicApplicationId) throw new RecruitmentOperationError("결정할 수 없는 모집 지원입니다.");
-    const decisionActor = { id: actor.id, isAdmin: false };
+    const topicDecisionActor = { id: actor.id, isAdmin: actor.role === "ADMIN" };
     const outcome = decision === "ACCEPT"
-      ? await this.decisions.accept(topicApplicationId, decisionActor, now)
-      : await this.decisions.reject(topicApplicationId, decisionActor, now);
+      ? await this.decisions.accept(topicApplicationId, topicDecisionActor, now)
+      : await this.decisions.reject(topicApplicationId, topicDecisionActor, now);
     if (outcome !== "ACCEPTED" && outcome !== "REJECTED") throw new RecruitmentOperationError("팀 정원 또는 지원 상태가 변경되어 처리하지 못했습니다.");
   }
 }

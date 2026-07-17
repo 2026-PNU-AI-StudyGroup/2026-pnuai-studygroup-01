@@ -63,6 +63,18 @@ export interface ProfessorTopicApplicationLister {
   listAll(): Promise<ProfessorTopicApplicationSummary[]>;
 }
 
+export type ProfessorTopicApplicationViewer = {
+  actorId: string;
+  isAdmin: boolean;
+};
+
+export interface ProfessorTopicApplicationReader {
+  findVisibleById(
+    id: string,
+    viewer: ProfessorTopicApplicationViewer,
+  ): Promise<ProfessorTopicApplicationSummary | null>;
+}
+
 export type TopicApplicationDecisionState = {
   id: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";

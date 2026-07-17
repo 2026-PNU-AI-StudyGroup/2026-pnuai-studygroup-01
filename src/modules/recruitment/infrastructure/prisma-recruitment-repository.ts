@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
+  AuthoredRecruitmentPostPage,
   RecruitmentApplicationHistoryPage,
+  RecruitmentPostApplications,
   RecruitmentPostListResult,
-  RecruitmentPostView,
   RecruitmentRepository,
+  RecruitmentReviewer,
 } from "@/modules/recruitment/application/manage-recruitment";
 
 export class PrismaRecruitmentRepository implements RecruitmentRepository {
@@ -22,37 +24,23 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
 
   async listPosts(actorId: string, requestedPage: number): Promise<RecruitmentPostListResult> {
     const now = new Date();
-    const visible: Prisma.RecruitmentPostWhereInput = { status: "OPEN", team: { status: "FORMING" }, OR: [
-      { authorId: actorId, team: { topic: { status: "PUBLISHED" } } },
-      { team: { topic: { status: "PUBLISHED", recruitmentStartsAt: { lte: now }, recruitmentEndsAt: { gt: now } } } },
-    ] };
+    const visible: Prisma.RecruitmentPostWhereInput = {
+      status: "OPEN",
+      team: { status: "FORMING", topic: { status: "PUBLISHED", recruitmentStartsAt: { lte: now }, recruitmentEndsAt: { gt: now } } },
+    };
     const total = await this.client.recruitmentPost.count({ where: visible });
     const totalPages = Math.max(1, Math.ceil(total / 20));
     const page = Math.min(Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1, totalPages);
-    const [posts, formingTeams] = await Promise.all([
-      this.client.recruitmentPost.findMany({
+    const posts = await this.client.recruitmentPost.findMany({
         where: visible, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 20, take: 20,
         include: {
           author: { select: { name: true } },
           team: { select: { name: true, topic: { select: { title: true, capacity: true, status: true, recruitmentStartsAt: true, recruitmentEndsAt: true } }, _count: { select: { members: true } } } },
           applications: { where: { studentId: actorId }, select: { status: true } },
         },
-      }),
-      this.listFormingTeams(actorId),
-    ]);
-    const visiblePostIds = posts.filter(({ authorId }) => authorId === actorId).map(({ id }) => id);
-    const visibleReceived = visiblePostIds.length ? await this.client.recruitmentApplication.findMany({
-      where: { postId: { in: visiblePostIds } }, orderBy: { createdAt: "asc" },
-      include: { student: { select: { name: true } }, topicApplication: { select: { message: true, skills: true, desiredRole: true, availability: true } } },
-    }) : [];
-    const receivedByPost = new Map<string, RecruitmentPostView["receivedApplications"]>();
-    for (const application of visibleReceived) {
-      const items = receivedByPost.get(application.postId) ?? [];
-      items.push({ id: application.id, studentName: application.student.name, status: application.status, ...application.topicApplication });
-      receivedByPost.set(application.postId, items);
-    }
+      });
     return {
-      formingTeams, page, totalPages, total,
+      page, totalPages, total,
       posts: posts.map((post) => ({
         id: post.id, teamId: post.teamId, teamName: post.team.name, topicTitle: post.team.topic.title,
         authorId: post.authorId, authorName: post.author.name, title: post.title, content: post.content,
@@ -60,7 +48,89 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
         memberCount: post.team._count.members, capacity: post.team.topic.capacity, createdAt: post.createdAt,
         canApply: post.team.topic.status === "PUBLISHED" && post.team.topic.recruitmentStartsAt <= now && post.team.topic.recruitmentEndsAt > now,
         ownApplication: post.applications[0] ?? null,
-        receivedApplications: receivedByPost.get(post.id) ?? [],
+      })),
+    };
+  }
+
+  async listAuthoredPosts(authorId: string, requestedPage: number): Promise<AuthoredRecruitmentPostPage> {
+    const where: Prisma.RecruitmentPostWhereInput = { authorId };
+    const total = await this.client.recruitmentPost.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / 20));
+    const page = Math.min(Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1, totalPages);
+    const posts = await this.client.recruitmentPost.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * 20,
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        team: {
+          select: {
+            name: true,
+            topic: { select: { title: true, capacity: true } },
+            _count: { select: { members: true } },
+          },
+        },
+        _count: { select: { applications: true } },
+        applications: { where: { status: "PENDING" }, select: { id: true } },
+      },
+    });
+    return {
+      page,
+      totalPages,
+      total,
+      posts: posts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        status: post.status,
+        createdAt: post.createdAt,
+        teamName: post.team.name,
+        topicTitle: post.team.topic.title,
+        memberCount: post.team._count.members,
+        capacity: post.team.topic.capacity,
+        applicationCount: post._count.applications,
+        pendingApplicationCount: post.applications.length,
+      })),
+    };
+  }
+
+  async findPostApplications(postId: string, viewer: RecruitmentReviewer): Promise<RecruitmentPostApplications | null> {
+    const post = await this.client.recruitmentPost.findFirst({
+      where: { id: postId, ...(viewer.isAdmin ? {} : { authorId: viewer.actorId }) },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        status: true,
+        team: { select: { name: true, topic: { select: { title: true } } } },
+        applications: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            decidedAt: true,
+            student: { select: { name: true } },
+            topicApplication: { select: { message: true, skills: true, desiredRole: true, availability: true } },
+          },
+        },
+      },
+    });
+    if (!post) return null;
+    return {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      status: post.status,
+      teamName: post.team.name,
+      topicTitle: post.team.topic.title,
+      applications: post.applications.map(({ student, topicApplication, ...application }) => ({
+        ...application,
+        studentName: student.name,
+        ...topicApplication,
       })),
     };
   }
@@ -151,9 +221,18 @@ export class PrismaRecruitmentRepository implements RecruitmentRepository {
     });
   }
 
-  async findDecisionTarget(id: string, authorId: string): Promise<string | null> {
+  async findDecisionTarget(id: string, viewer: RecruitmentReviewer): Promise<string | null> {
     const application = await this.client.recruitmentApplication.findFirst({
-      where: { id, status: "PENDING", post: { authorId, status: "OPEN", team: { status: "FORMING", topic: { status: "PUBLISHED" } } } }, select: { topicApplicationId: true },
+      where: {
+        id,
+        status: "PENDING",
+        post: {
+          ...(viewer.isAdmin ? {} : { authorId: viewer.actorId }),
+          status: "OPEN",
+          team: { status: "FORMING", topic: { status: "PUBLISHED" } },
+        },
+      },
+      select: { topicApplicationId: true },
     });
     return application?.topicApplicationId ?? null;
   }

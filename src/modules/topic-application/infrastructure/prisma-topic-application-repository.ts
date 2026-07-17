@@ -10,7 +10,9 @@ import type {
   TopicApplicationLister,
   TopicApplicationSummary,
   ProfessorTopicApplicationLister,
+  ProfessorTopicApplicationReader,
   ProfessorTopicApplicationSummary,
+  ProfessorTopicApplicationViewer,
   TopicApplicationDecisionState,
   TopicApplicationDecisionActor,
   AcceptTopicApplicationOutcome,
@@ -32,9 +34,36 @@ const studentSummarySelect = {
 
 type StudentSummaryRow = Prisma.TopicApplicationGetPayload<{ select: typeof studentSummarySelect }>;
 
+const professorSummarySelect = {
+  id: true,
+  topicId: true,
+  studentId: true,
+  status: true,
+  message: true,
+  skills: true,
+  desiredRole: true,
+  availability: true,
+  createdAt: true,
+  topic: { select: { title: true, authorId: true } },
+  student: { select: { name: true, email: true } },
+} satisfies Prisma.TopicApplicationSelect;
+
+type ProfessorSummaryRow = Prisma.TopicApplicationGetPayload<{ select: typeof professorSummarySelect }>;
+
 function toStudentSummary(application: StudentSummaryRow): TopicApplicationSummary {
   const { topic, ...record } = application;
   return { ...record, topicTitle: topic.title, topicStatus: topic.status, programName: topic.program.name, programStatus: topic.program.status };
+}
+
+function toProfessorSummary(application: ProfessorSummaryRow): ProfessorTopicApplicationSummary {
+  const { topic, student, ...record } = application;
+  return {
+    ...record,
+    topicTitle: topic.title,
+    topicAuthorId: topic.authorId,
+    studentName: student.name,
+    studentEmail: student.email,
+  };
 }
 
 export class PrismaTopicApplicationRepository
@@ -42,6 +71,7 @@ export class PrismaTopicApplicationRepository
     TopicApplicationCreator,
     TopicApplicationLister,
     ProfessorTopicApplicationLister,
+    ProfessorTopicApplicationReader,
     TopicApplicationDecisionRepository
 {
   constructor(private readonly client: PrismaClient) {}
@@ -166,35 +196,29 @@ export class PrismaTopicApplicationRepository
     return this.listForProfessor({});
   }
 
+  async findVisibleById(
+    id: string,
+    viewer: ProfessorTopicApplicationViewer,
+  ): Promise<ProfessorTopicApplicationSummary | null> {
+    const application = await this.client.topicApplication.findFirst({
+      where: viewer.isAdmin ? { id } : { id, topic: { authorId: viewer.actorId } },
+      select: professorSummarySelect,
+    });
+    return application ? toProfessorSummary(application) : null;
+  }
+
   private async listForProfessor(
     where: Prisma.TopicApplicationWhereInput,
   ): Promise<ProfessorTopicApplicationSummary[]> {
     const applications = await this.client.topicApplication.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      include: {
-        topic: { select: { title: true, authorId: true } },
-        student: { select: { name: true, email: true } },
-      },
+      select: professorSummarySelect,
     });
 
     applications.sort((left, right) => Number(right.status === "PENDING") - Number(left.status === "PENDING"));
 
-    return applications.map(({ topic, student, ...application }) => ({
-      id: application.id,
-      topicId: application.topicId,
-      status: application.status,
-      message: application.message,
-      skills: application.skills,
-      desiredRole: application.desiredRole,
-      availability: application.availability,
-      createdAt: application.createdAt,
-      topicTitle: topic.title,
-      topicAuthorId: topic.authorId,
-      studentId: application.studentId,
-      studentName: student.name,
-      studentEmail: student.email,
-    }));
+    return applications.map(toProfessorSummary);
   }
 
   findDecisionState(

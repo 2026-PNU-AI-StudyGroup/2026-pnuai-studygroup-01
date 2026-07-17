@@ -59,6 +59,7 @@ export async function decideTopicApplicationAction(
   }
 
   revalidatePath("/professor/applications");
+  revalidatePath(`/professor/applications/${parsed.data.applicationId}`);
   return {
     status: "success",
     message: parsed.data.decision === "accept" ? "지원서를 수락했습니다." : "지원서를 거절했습니다.",

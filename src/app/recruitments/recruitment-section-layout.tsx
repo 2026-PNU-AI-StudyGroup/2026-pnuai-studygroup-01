@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 const navigation = [
   { href: "/recruitments", label: "모집 글 탐색" },
+  { href: "/recruitments/mine", label: "내 모집 글" },
   { href: "/recruitments/applications", label: "내 모집 지원 이력" },
   { href: "/recruitments/new", label: "모집 글 등록" },
 ] as const;
@@ -18,7 +19,7 @@ export function RecruitmentSectionLayout({ currentPath, children }: { currentPat
             return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`flex min-h-11 shrink-0 items-center border-l-2 px-3 text-sm font-semibold ${active ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary-hover)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
           })}
         </nav>
-        <p className="muted mt-6 hidden border-t border-[var(--line)] pt-5 text-xs leading-5 lg:block">모집 글 탐색과 내 지원 결과를 분리해 필요한 흐름에 바로 집중할 수 있습니다.</p>
+        <p className="muted mt-6 hidden border-t border-[var(--line)] pt-5 text-xs leading-5 lg:block">공개 모집 탐색, 내가 작성한 글의 지원자 검토, 보낸 지원 이력을 각각 분리해 확인합니다.</p>
       </aside>
       <div className="min-w-0">{children}</div>
     </div>
