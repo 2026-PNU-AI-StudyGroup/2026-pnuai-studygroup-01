@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 
 import {
   createTopicAction,
@@ -12,6 +13,7 @@ const initialState: CreateTopicActionState = { status: "idle", message: "" };
 
 type TopicFormProps = {
   programs: ProjectProgramRecord[];
+  successHref?: string;
 };
 
 const periodFields = [
@@ -23,8 +25,12 @@ const periodFields = [
   ["제출 종료", "submissionEndsAt"],
 ] as const;
 
-export function TopicForm({ programs }: TopicFormProps) {
+export function TopicForm({ programs, successHref }: TopicFormProps) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(createTopicAction, initialState);
+  useEffect(() => {
+    if (state.status === "success" && successHref) router.replace(successHref);
+  }, [router, state.status, successHref]);
 
   return (
     <form action={action} className="grid gap-6 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-6 sm:px-6">

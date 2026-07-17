@@ -21,20 +21,25 @@ export type RecruitmentApplicationHistory = {
   decidedAt: Date | null;
 };
 
-export type RecruitmentListResult = {
+export type RecruitmentPostListResult = {
   posts: RecruitmentPostView[];
   formingTeams: Array<{ id: string; name: string }>;
   page: number;
   totalPages: number;
   total: number;
-  applicationHistory: RecruitmentApplicationHistory[];
-  historyPage: number;
-  historyTotalPages: number;
-  historyTotal: number;
+};
+
+export type RecruitmentApplicationHistoryPage = {
+  applications: RecruitmentApplicationHistory[];
+  page: number;
+  totalPages: number;
+  total: number;
 };
 
 export interface RecruitmentRepository {
-  list(actorId: string, page: number, historyPage: number): Promise<RecruitmentListResult>;
+  listPosts(actorId: string, page: number): Promise<RecruitmentPostListResult>;
+  listApplicationHistory(actorId: string, page: number): Promise<RecruitmentApplicationHistoryPage>;
+  listFormingTeams(actorId: string): Promise<Array<{ id: string; name: string }>>;
   createPost(input: { teamId: string; authorId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string }): Promise<boolean>;
   apply(input: { postId: string; studentId: string; message: string; skills: string[]; desiredRole: string; availability: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_ASSIGNED">;
   findDecisionTarget(id: string, authorId: string): Promise<string | null>;
@@ -55,11 +60,21 @@ function normalizeText(value: string, max: number, label: string) {
 export class RecruitmentService {
   constructor(private readonly repository: RecruitmentRepository, private readonly decisions: TopicApplicationDecisionRepository) {}
 
-  async list(actor: CurrentActor, page = 1, historyPage = 1) {
+  async listPosts(actor: CurrentActor, page = 1) {
     assertStudent(actor);
     const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
-    const normalizedHistoryPage = Number.isSafeInteger(historyPage) && historyPage > 0 ? historyPage : 1;
-    return this.repository.list(actor.id, normalizedPage, normalizedHistoryPage);
+    return this.repository.listPosts(actor.id, normalizedPage);
+  }
+
+  async listApplicationHistory(actor: CurrentActor, page = 1) {
+    assertStudent(actor);
+    const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+    return this.repository.listApplicationHistory(actor.id, normalizedPage);
+  }
+
+  async listFormingTeams(actor: CurrentActor) {
+    assertStudent(actor);
+    return this.repository.listFormingTeams(actor.id);
   }
 
   async createPost(actor: CurrentActor, input: { teamId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string }) {

@@ -92,12 +92,17 @@ export function ReportRequirementForm({ teamId, executionStartsAt, submissionEnd
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [state, action, pending] = useActionState(setReportRequirementAction, initialState);
+  const [dismissedSuccess, setDismissedSuccess] = useState<ReportActionState | null>(null);
+  const toastMessage = state.status === "success" && state !== dismissedSuccess ? state.message : "";
   useEffect(() => {
     if (state.status !== "success") return;
     dialogRef.current?.close();
-    const timer = window.setTimeout(() => router.refresh(), TOAST_DURATION_MS);
+    const timer = window.setTimeout(() => {
+      setDismissedSuccess(state);
+      router.refresh();
+    }, TOAST_DURATION_MS);
     return () => window.clearTimeout(timer);
-  }, [router, state.status]);
+  }, [router, state]);
   return (
     <>
       <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary">보고서 요구사항 설정</button>
@@ -111,7 +116,7 @@ export function ReportRequirementForm({ teamId, executionStartsAt, submissionEnd
           <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><button type="button" onClick={() => dialogRef.current?.close()} disabled={pending} className="button-quiet">취소</button><button disabled={pending} className="button-primary">{pending ? "저장 중" : "요구사항 저장"}</button></div>
         </form>
       </dialog>
-      {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+      {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{toastMessage}</div> : null}
     </>
   );
 }
@@ -132,7 +137,7 @@ export function RemoveReportRequirementForm({ teamId, type, disabled }: { teamId
         {disabled ? "제출 이력 있음" : pending ? "해제 중" : "요구 해제"}
       </ConfirmSubmitButton>
       {state.status === "error" ? <p role="alert" className="mt-2 max-w-sm text-xs font-semibold text-[var(--danger)]">{state.message}</p> : null}
-      {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+      {state.status === "success" ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
     </form>
   );
 }
@@ -146,15 +151,17 @@ export function ReportSubmissionForm({ teamId, requirements }: {
   const titleId = useId();
   const [state, setState] = useState(initialState);
   const [pending, startTransition] = useTransition();
+  const [dismissedSuccess, setDismissedSuccess] = useState<ReportActionState | null>(null);
+  const toastMessage = state.status === "success" && state !== dismissedSuccess ? state.message : "";
   useEffect(() => {
     if (state.status !== "success") return;
     dialogRef.current?.close();
     const timer = window.setTimeout(() => {
-      setState(initialState);
+      setDismissedSuccess(state);
       router.refresh();
     }, TOAST_DURATION_MS);
     return () => window.clearTimeout(timer);
-  }, [router, state.status]);
+  }, [router, state]);
 
   return (
     <>
@@ -193,7 +200,7 @@ export function ReportSubmissionForm({ teamId, requirements }: {
       <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-5 sm:col-span-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => dialogRef.current?.close()} disabled={pending} className="button-quiet">취소</button><button disabled={pending} className="button-primary">{pending ? "검증 및 제출 중" : "새 버전 제출"}</button></div>
     </form>
     </dialog>
-    {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+    {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{toastMessage}</div> : null}
     </>
   );
 }
@@ -215,60 +222,61 @@ export function ReportDecisionForm({ teamId, reportVersionId }: { teamId: string
   );
 }
 
-export function ArtifactExternalForm({ teamId }: { teamId: string }) {
+export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const [method, setMethod] = useState<"LINK" | "FILE">("LINK");
   const [state, setState] = useState(initialState);
   const [pending, startTransition] = useTransition();
+  const [dismissedSuccess, setDismissedSuccess] = useState<ReportActionState | null>(null);
+  const toastMessage = state.status === "success" && state !== dismissedSuccess ? state.message : "";
+  useEffect(() => {
+    if (state.status !== "success") return;
+    dialogRef.current?.close();
+    const timer = window.setTimeout(() => {
+      setDismissedSuccess(state);
+      router.refresh();
+    }, TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [router, state]);
   return (
-    <form className="grid gap-3 sm:grid-cols-3" onSubmit={(event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new FormData(form);
-      data.set("teamId", teamId);
-      startTransition(async () => {
-        const result = await registerArtifactAction(data);
-        setState(result);
-        if (result.status === "success") form.reset();
-      });
-    }}>
-      <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field"><option value="SOURCE_CODE">소스 코드</option><option value="PRESENTATION_VIDEO">발표 영상</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
-      <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 최종 발표 자료" className="field" /></label>
-      <label className="grid gap-2 text-sm font-semibold">외부 링크<input name="externalUrl" required type="url" placeholder="https://github.com/example/project" className="field" /></label>
-      <button disabled={pending} className="button-primary justify-self-start">외부 링크 등록</button>
-      {state.message ? <p aria-live="polite" className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
-    </form>
-  );
-}
-
-export function ArtifactFileForm({ teamId }: { teamId: string }) {
-  const [state, setState] = useState(initialState);
-  const [pending, startTransition] = useTransition();
-  return (
-    <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={(event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new FormData(form);
-      const file = data.get("file");
-      if (!(file instanceof File) || file.size === 0) return;
-      startTransition(async () => {
-        try {
-          const uploadId = await uploadFile(teamId, "ARTIFACT", file);
-          data.delete("file");
-          data.set("teamId", teamId);
-          data.set("uploadId", uploadId);
-          const result = await registerArtifactAction(data);
-          setState(result);
-          if (result.status === "success") form.reset();
-        } catch (error) {
-          setState({ status: "error", message: error instanceof Error ? error.message : uploadFailureMessage });
-        }
-      });
-    }}>
-      <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field"><option value="PRESENTATION_VIDEO">발표 영상</option><option value="SOURCE_CODE">소스 코드</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
-      <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 프로젝트 포스터" className="field" /></label>
-      <label className="grid gap-2 text-sm font-semibold">결과물 파일<input name="file" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" /></label>
-      <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 등록 중" : "파일 결과물 등록"}</button>
-      {state.message ? <p aria-live="polite" className={`sm:col-span-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
-    </form>
+    <>
+      <button type="button" className="button-primary" onClick={() => dialogRef.current?.showModal()}>결과물 등록</button>
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]">
+        <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7"><div><p className="eyebrow">프로젝트 결과</p><h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">결과물 등록</h3><p className="muted mt-2 text-sm">공개 링크 또는 파일 중 한 방식으로 결과물을 추가합니다.</p></div><button type="button" aria-label="결과물 등록 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button></div>
+        <div className="flex gap-2 border-b border-[var(--line)] px-5 py-4 sm:px-7" role="group" aria-label="결과물 등록 방식"><button type="button" disabled={pending} aria-pressed={method === "LINK"} onClick={() => { setMethod("LINK"); setState(initialState); }} className={method === "LINK" ? "button-primary" : "button-quiet"}>외부 링크</button><button type="button" disabled={pending} aria-pressed={method === "FILE"} onClick={() => { setMethod("FILE"); setState(initialState); }} className={method === "FILE" ? "button-primary" : "button-quiet"}>파일 업로드</button></div>
+        <form className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7" onSubmit={(event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const data = new FormData(form);
+          startTransition(async () => {
+            try {
+              data.set("teamId", teamId);
+              if (method === "FILE") {
+                const file = data.get("file");
+                if (!(file instanceof File) || file.size === 0) return;
+                const uploadId = await uploadFile(teamId, "ARTIFACT", file);
+                data.delete("file");
+                data.set("uploadId", uploadId);
+              }
+              const result = await registerArtifactAction(data);
+              setState(result);
+              if (result.status === "success") form.reset();
+            } catch (error) {
+              setState({ status: "error", message: error instanceof Error ? error.message : uploadFailureMessage });
+            }
+          });
+        }}>
+          <label className="grid gap-2 text-sm font-semibold">결과물 종류<select name="type" className="field" defaultValue={method === "LINK" ? "SOURCE_CODE" : "PRESENTATION_VIDEO"}><option value="SOURCE_CODE">소스 코드</option><option value="PRESENTATION_VIDEO">발표 영상</option><option value="POSTER">포스터</option><option value="OTHER">기타</option></select></label>
+          <label className="grid gap-2 text-sm font-semibold">결과물 제목<input name="title" required maxLength={200} placeholder="예: 최종 발표 자료" className="field" /></label>
+          {method === "LINK" ? <label className="grid gap-2 text-sm font-semibold sm:col-span-2">외부 링크<input name="externalUrl" required type="url" placeholder="https://github.com/example/project" className="field" /></label> : <label className="grid gap-2 text-sm font-semibold sm:col-span-2">결과물 파일<input name="file" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" /></label>}
+          {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2">{state.message}</p> : null}
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-5 sm:col-span-2 sm:flex-row sm:justify-end"><button type="button" className="button-quiet" disabled={pending} onClick={() => dialogRef.current?.close()}>취소</button><button className="button-primary" disabled={pending}>{pending ? "검증 및 등록 중" : "결과물 등록"}</button></div>
+        </form>
+      </dialog>
+      {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{toastMessage}</div> : null}
+    </>
   );
 }
 

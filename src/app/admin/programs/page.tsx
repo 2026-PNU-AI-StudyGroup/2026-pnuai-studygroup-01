@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ProgramForm, ProgramStatusForm } from "@/app/admin/programs/program-forms";
+import { ProgramStatusForm } from "@/app/admin/programs/program-forms";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -25,10 +26,9 @@ export default async function ProgramsAdminPage() {
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/programs">
       <main className="content-shell space-y-12">
-        <PageHeader eyebrow="운영 관리" title="프로젝트 프로그램 관리" description="캡스톤, 교내외 대회, 교육 프로그램을 유형에 관계없이 개설하고 운영합니다." />
-        {cycles.length ? <ProgramForm cycles={cycles} /> : <p className="muted">먼저 학기를 등록해 주세요.</p>}
+        <PageHeader eyebrow="운영 관리" title="프로젝트 프로그램 관리" description="캡스톤, 교내외 대회, 교육 프로그램을 유형에 관계없이 개설하고 운영합니다." actions={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램 등록</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 먼저 등록</Link>} />
         {programs.length === 0 ? (
-          <EmptyState title="등록된 프로그램이 없습니다" description="위 양식에서 첫 프로그램을 개설하세요." />
+          <EmptyState title="등록된 프로그램이 없습니다" description={cycles.length ? "새 프로그램 등록에서 첫 운영 프로그램을 개설하세요." : "프로그램을 만들기 전에 운영 학기를 등록해 주세요."} action={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램 등록</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 등록</Link>} />
         ) : (
           <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {programs.map((program) => (

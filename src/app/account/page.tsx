@@ -34,7 +34,7 @@ export default async function AccountPage() {
           <PageHeader eyebrow="계정" title="마이페이지" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
           <section aria-labelledby="account-summary-heading" className="mt-10 border-y border-[var(--line)] py-8">
             <div className="flex items-start gap-5">
-              <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-lg bg-[var(--accent-subtle)] text-xl font-extrabold text-[var(--accent-hover)]">{actor.name.trim().charAt(0) || "나"}</span>
+              <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-xl font-extrabold text-[var(--primary-hover)]">{actor.name.trim().charAt(0) || "나"}</span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-3"><h2 id="account-summary-heading" className="text-2xl font-extrabold tracking-[-0.025em]">{actor.name}</h2><StatusBadge>{roleLabel[actor.role]}</StatusBadge></div>
                 <p className="muted mt-2 break-all text-sm">{actor.email}</p>
@@ -43,7 +43,7 @@ export default async function AccountPage() {
             </div>
           </section>
           <nav aria-label="계정 바로가기" className="grid border-b border-[var(--line)] sm:grid-cols-3">
-            {shortcuts.map(([label, href]) => <Link key={href} href={href} className="snap-color flex min-h-14 items-center justify-between border-t border-[var(--line)] px-1 text-sm font-bold hover:text-[var(--accent-hover)] sm:border-t-0 sm:px-4 first:sm:pl-0 last:sm:pr-0">{label}<span aria-hidden="true">→</span></Link>)}
+            {shortcuts.map(([label, href]) => <Link key={href} href={href} className="snap-color flex min-h-14 items-center justify-between border-t border-[var(--line)] px-1 text-sm font-bold hover:text-[var(--primary-hover)] sm:border-t-0 sm:px-4 first:sm:pl-0 last:sm:pr-0">{label}<span aria-hidden="true">→</span></Link>)}
           </nav>
           {actor.role === "STUDENT" ? <div className="mt-12"><StudentProfileForm profile={profile} /></div> : null}
           <div className="mt-12"><AccountControls /></div>

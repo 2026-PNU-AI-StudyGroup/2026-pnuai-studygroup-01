@@ -1,12 +1,17 @@
 "use client";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 import { changeProgramStatusAction, createProgramAction, type ProgramActionState } from "@/app/admin/programs/actions";
 import type { AcademicCycleRecord } from "@/modules/academic-cycle/application/academic-cycle-ports";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 const initial: ProgramActionState = { status: "idle", message: "" };
 
-export function ProgramForm({ cycles }: { cycles: AcademicCycleRecord[] }) {
+export function ProgramForm({ cycles, successHref }: { cycles: AcademicCycleRecord[]; successHref?: string }) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(createProgramAction, initial);
+  useEffect(() => {
+    if (state.status === "success" && successHref) router.replace(successHref);
+  }, [router, state.status, successHref]);
   return <form action={action} className="grid gap-4 border-y border-[var(--line)] bg-[var(--surface-subtle)] p-5 sm:grid-cols-2">
     <label className="grid gap-2 text-sm font-medium">학기<select name="academicCycleId" className="field">{cycles.map((cycle) => <option key={cycle.id} value={cycle.id}>{cycle.academicYear}학년도 {cycle.term === "FIRST" ? "1" : "2"}학기</option>)}</select></label>
     <label className="grid gap-2 text-sm font-medium">프로그램명<input name="name" maxLength={200} required className="field" placeholder="예: 창의융합 해커톤" /></label>
