@@ -59,7 +59,7 @@ export function ActiveProjectsView({ actor, profile, programs, programId, topics
             <div className="grid grid-cols-2 gap-5"><div><p className="muted text-xs font-semibold">지도교수</p><p className="mt-1 font-bold">{topic.authorName}</p></div><div><p className="muted text-xs font-semibold">모집 현황</p><p className="mt-1 font-bold">{topic.memberCount} / {topic.capacity}명</p></div></div>
             <dl className="mt-6 grid gap-4 border-t border-[var(--line)] pt-5"><Period label="모집 기간" startsAt={topic.recruitmentStartsAt} endsAt={topic.recruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.executionStartsAt} endsAt={topic.executionEndsAt} /><Period label="제출 기간" startsAt={topic.submissionStartsAt} endsAt={topic.submissionEndsAt} /></dl>
           </div></div>
-          <div className="mt-7 text-sm">{application ? <StatusBadge tone={applicationStatus[application.status].tone}>지원 상태 · {applicationStatus[application.status].label}</StatusBadge> : actor.role === "STUDENT" && isRecruiting ? <ApplyTopicForm topicId={topic.id} profile={profile} /> : <p className="muted">{actor.role === "STUDENT" ? topic.memberCount >= topic.capacity ? "모집 정원이 찼습니다." : "현재 모집 기간이 아닙니다." : "학생 계정으로 지원할 수 있습니다."}</p>}</div>
+          <div className="mt-7 text-sm">{application ? <StatusBadge tone={applicationStatus[application.status].tone}>지원 상태 · {applicationStatus[application.status].label}</StatusBadge> : actor.role === "STUDENT" && isRecruiting ? <ApplyTopicForm topicId={topic.id} topicTitle={topic.title} profile={profile} /> : <p className="muted">{actor.role === "STUDENT" ? topic.memberCount >= topic.capacity ? "모집 정원이 찼습니다." : "현재 모집 기간이 아닙니다." : "학생 계정으로 지원할 수 있습니다."}</p>}</div>
         </article></li>;
       })}</ul>}
     </section>

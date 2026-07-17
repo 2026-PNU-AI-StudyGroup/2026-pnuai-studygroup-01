@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -75,6 +74,5 @@ export async function applyTopicAction(
     throw error;
   }
 
-  revalidatePath("/topics");
   return { status: "success", message: "주제 지원이 접수되었습니다." };
 }
