@@ -126,8 +126,6 @@ export class PrismaTeamWorkspaceRepository
           },
         },
         reports: {
-          where: { type: "FINAL" },
-          take: 1,
           select: {
             versions: {
               orderBy: { version: "desc" },
@@ -194,7 +192,9 @@ export class PrismaTeamWorkspaceRepository
         submissionStartsAt: team.topic.submissionStartsAt,
         submissionEndsAt: team.topic.submissionEndsAt,
       },
-      canClose: team.status === "CONFIRMED" && team.reports[0]?.versions[0]?.decision?.decision === "APPROVED",
+      canClose: team.status === "CONFIRMED" && team.reports.length > 0 && team.reports.every(
+        (report) => report.versions[0]?.decision?.decision === "APPROVED",
+      ),
       memberCount: team.members.length,
       milestoneCount: team.milestones.length,
       completedMilestoneCount,

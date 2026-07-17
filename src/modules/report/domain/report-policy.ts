@@ -15,6 +15,13 @@ export function normalizeDescription(value: string) {
   return normalized;
 }
 
+export function validateReportDueAt(dueAt: Date, now: Date) {
+  if (Number.isNaN(dueAt.getTime()) || dueAt <= now) {
+    throw new InvalidReportInputError();
+  }
+  return dueAt;
+}
+
 export function normalizeDecisionComment(decision: ApprovalDecision, value: string) {
   const normalized = value.trim();
   if (

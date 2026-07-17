@@ -503,7 +503,7 @@ async function seed() {
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: reportPdf.byteLength,
         sha256: createHash("sha256").update(reportPdf).digest("hex"), expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
-      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", createdAt: submittedAt } });
+      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", dueAt: pastPrograms[programIndex].endsAt, createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
         id: ids.reportVersions[reportIndex], reportId: ids.reports[reportIndex], version: 1, fileId: ids.storedFiles[reportIndex],
         submitterId: ids.students[submitterIndex], description: "최종 검토 의견을 반영한 결과 보고서", submittedAt,

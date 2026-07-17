@@ -104,6 +104,13 @@ async function main() {
   const service = new ReportService(new PrismaReportRepository(prisma));
   const student = { id: studentId, role: "STUDENT" as const };
   const professor = { id: professorId, role: "PROFESSOR" as const };
+  for (const type of ["START", "MIDTERM", "FINAL"] as const) {
+    await service.setRequirement(
+      professor,
+      { teamId: team.id, type, dueAt: new Date("2026-12-31T14:59:00Z") },
+      new Date("2026-07-13T00:00:00Z"),
+    );
+  }
   const reportV1File = await upload(team.id, "REPORT", "start-v1.pdf", "start report version one");
   const v1 = await service.submit(student, {
     teamId: team.id, type: "START", fileId: reportV1File, description: "착수 보고서 1차",
@@ -183,6 +190,20 @@ async function main() {
     ).length === 1;
   if (!concurrentDecisionConverged) throw new Error("동시 보고서 결정이 단일 결과로 수렴하지 않았습니다.");
 
+  const startV3File = await upload(team.id, "REPORT", "start-v3.pdf", "start report final revision");
+  const startV3 = await service.submit(student, {
+    teamId: team.id, type: "START", fileId: startV3File, description: "수정 요청 반영본",
+  }, new Date("2026-07-15T04:00:00Z"));
+  const startV3Row = await prisma.reportVersion.findFirstOrThrow({
+    where: { reportId: startV3.reportId, version: 3 }, select: { id: true },
+  });
+  await service.decide(professor, {
+    reportVersionId: startV3Row.id, decision: "APPROVED", comment: "수정 반영 확인",
+  });
+  await service.decide(professor, {
+    reportVersionId: midtermV2Row.id, decision: "APPROVED", comment: "중간 보고서 승인",
+  });
+
   await service.registerArtifact(student, {
     teamId: team.id, type: "SOURCE_CODE", title: "GitHub 저장소", externalUrl: "https://github.com/pnu/project",
   }, new Date("2026-07-16T00:00:00Z"));
@@ -227,9 +248,10 @@ async function main() {
   const workspace = await service.get(student, team.id);
   const start = workspace.reports.find(({ type }) => type === "START");
   if (
-    start?.versions.length !== 2 ||
-    start.versions[0]?.decision?.decision !== "REVISION_REQUESTED" ||
-    start.versions[1]?.decision?.decision !== "APPROVED" ||
+    start?.versions.length !== 3 ||
+    start.versions[0]?.decision?.decision !== "APPROVED" ||
+    start.versions[1]?.decision?.decision !== "REVISION_REQUESTED" ||
+    start.versions[2]?.decision?.decision !== "APPROVED" ||
     workspace.artifacts.length !== 2
   ) {
     throw new Error("보고서 승인 이력 또는 결과물 조회가 저장 결과와 다릅니다.");

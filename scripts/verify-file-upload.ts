@@ -77,7 +77,7 @@ async function main() {
   await service.complete({ id: studentId, role: "STUDENT" }, intent.uploadId);
   const stored = await prisma.storedFile.findUniqueOrThrow({ where: { id: intent.uploadId } });
   if (stored.status !== "READY" || stored.sha256 !== sha256) throw new Error("파일 완료 상태 또는 해시가 일치하지 않습니다.");
-  const report = await prisma.report.create({ data: { teamId: team.id, type: "START" } });
+  const report = await prisma.report.create({ data: { teamId: team.id, type: "START", dueAt: new Date("2026-12-31T23:59:00+09:00") } });
   await prisma.reportVersion.create({ data: {
     reportId: report.id, version: 1, fileId: stored.id, submitterId: studentId, description: "업로드 검증",
   } });

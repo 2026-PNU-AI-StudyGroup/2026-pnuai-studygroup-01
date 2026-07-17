@@ -54,7 +54,7 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
   }
 
   async generate(now: Date, endsAt: Date): Promise<number> {
-    const [teams, milestones] = await Promise.all([
+    const [teams, milestones, reports] = await Promise.all([
       this.client.team.findMany({
         where: {
           status: { not: "CLOSED" },
@@ -77,6 +77,20 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
           id: true,
           title: true,
           dueAt: true,
+          team: { select: { id: true, name: true, professorId: true, members: { select: { studentId: true } } } },
+        },
+      }),
+      this.client.report.findMany({
+        where: { dueAt: { gte: now, lte: endsAt }, team: { status: "CONFIRMED" } },
+        select: {
+          id: true,
+          type: true,
+          dueAt: true,
+          versions: {
+            orderBy: { version: "desc" },
+            take: 1,
+            select: { decision: { select: { decision: true } } },
+          },
           team: { select: { id: true, name: true, professorId: true, members: { select: { studentId: true } } } },
         },
       }),
@@ -114,6 +128,22 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
           body: `${milestone.team.name}의 마일스톤이 ${formatKoreanDate(milestone.dueAt)}에 마감됩니다.`,
           href: `/teams/${milestone.team.id}`,
           dedupeKey: `deadline:milestone:${milestone.id}:${milestone.dueAt.toISOString()}:${recipientId}`,
+          createdAt: now,
+        });
+      }
+    }
+    for (const report of reports) {
+      if (report.versions[0]?.decision?.decision === "APPROVED") continue;
+      const recipients = new Set([report.team.professorId, ...report.team.members.map(({ studentId }) => studentId)]);
+      const label = report.type === "START" ? "착수 보고서" : report.type === "MIDTERM" ? "중간 보고서" : "결과 보고서";
+      for (const recipientId of recipients) {
+        rows.push({
+          recipientId,
+          type: "DEADLINE",
+          title: `${report.team.name} ${label} 마감 임박`,
+          body: `${formatKoreanDate(report.dueAt)}까지입니다. 최신 제출·검토 상태를 확인해 주세요.`,
+          href: `/teams/${report.team.id}`,
+          dedupeKey: `deadline:report:${report.id}:${report.dueAt.toISOString()}:${recipientId}`,
           createdAt: now,
         });
       }

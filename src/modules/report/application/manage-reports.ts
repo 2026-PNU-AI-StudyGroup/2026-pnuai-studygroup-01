@@ -8,6 +8,7 @@ import {
   normalizeDecisionComment,
   normalizeDescription,
   type ReportType,
+  validateReportDueAt,
 } from "@/modules/report/domain/report-policy";
 
 export class ReportOperationNotAllowedError extends Error {
@@ -24,6 +25,35 @@ export class ReportService {
     const workspace = await this.repository.findWorkspace(teamId, actor);
     if (!workspace) throw new ReportOperationNotAllowedError();
     return workspace;
+  }
+
+  async setRequirement(actor: CurrentActor, input: {
+    teamId: string;
+    type: ReportType;
+    dueAt: Date;
+  }, now = new Date()) {
+    if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
+    const result = await this.repository.setRequirement({
+      ...input,
+      actor,
+      dueAt: validateReportDueAt(input.dueAt, now),
+      configuredAt: now,
+    });
+    if (!result) throw new ReportOperationNotAllowedError();
+    return result;
+  }
+
+  async removeRequirement(actor: CurrentActor, input: {
+    teamId: string;
+    type: ReportType;
+  }, now = new Date()) {
+    if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
+    const removed = await this.repository.removeRequirement({
+      ...input,
+      actor,
+      removedAt: now,
+    });
+    if (!removed) throw new ReportOperationNotAllowedError();
   }
 
   async submit(actor: CurrentActor, input: {

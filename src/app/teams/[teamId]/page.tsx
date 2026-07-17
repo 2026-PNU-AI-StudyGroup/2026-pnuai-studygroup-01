@@ -7,6 +7,8 @@ import {
   ArtifactExternalForm,
   ArtifactFileForm,
   ReportDecisionForm,
+  RemoveReportRequirementForm,
+  ReportRequirementForm,
   ReportSubmissionForm,
 } from "@/app/teams/[teamId]/report-forms";
 import { CloseTeamForm, DiscussionPostForm, MilestoneForm, MilestoneStatusForm, ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
@@ -29,6 +31,7 @@ import { TranslatedText } from "@/shared/ui/translated-text";
 export const metadata: Metadata = { title: "프로젝트 공간" };
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
+const koreanDateTime = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
 const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 중", "warning"], DONE: ["완료", "success"] } as const;
 const reportTypeLabel = { START: "착수 보고서", MIDTERM: "중간 보고서", FINAL: "결과 보고서" } as const;
 const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
@@ -60,6 +63,15 @@ export default async function TeamWorkspacePage({
     throw error;
   }
   const progress = workspace.milestoneCount === 0 ? 0 : Math.round((workspace.completedMilestoneCount / workspace.milestoneCount) * 100);
+  const now = new Date();
+  const submittableReports = reportWorkspace.reports
+    .filter((report) => report.dueAt >= now)
+    .map(({ type, dueAt }) => ({ type, dueAt }));
+  const canManageReportRequirements = workspace.status !== "CLOSED" && actor.role !== "STUDENT";
+  const canSubmitReport = workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" && submittableReports.length > 0;
+  const earliestReportDueAt = workspace.schedule.executionStartsAt > now
+    ? workspace.schedule.executionStartsAt
+    : now;
   const milestoneEmptyDescription = workspace.status === "CLOSED"
     ? "프로젝트 종료 전에 등록된 마일스톤이 없습니다."
     : actor.role === "PROFESSOR"
@@ -121,15 +133,13 @@ export default async function TeamWorkspacePage({
           {workspace.discussionTotalPages > 1 ? <nav aria-label="팀 토론 이력 페이지" className="flex flex-wrap items-center justify-between gap-3"><span className="muted text-sm">{workspace.discussionPage} / {workspace.discussionTotalPages} 페이지 · 총 {workspace.discussionTotal}개</span><div className="flex gap-2">{workspace.discussionPage > 1 ? <Link className="button-quiet" href={workspaceHref({ discussionPage: workspace.discussionPage - 1, anchor: "discussion-title" })}>최근 기록</Link> : null}{workspace.discussionPage < workspace.discussionTotalPages ? <Link className="button-quiet" href={workspaceHref({ discussionPage: workspace.discussionPage + 1, anchor: "discussion-title" })}>이전 기록</Link> : null}</div></nav> : null}
         </section>
         <section aria-labelledby="reports-title" className="space-y-6">
-          <div><p className="eyebrow">보고서</p><h2 id="reports-title" className="mt-1 text-2xl font-bold">보고서 제출 및 웹 승인</h2><p className="muted mt-2 text-sm">기존 파일을 덮어쓰지 않고 제출 이력과 교수 검토 결정을 버전별로 보관합니다.</p></div>
-          {workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" ? <ReportSubmissionForm teamId={workspace.id} /> : null}
+          <div><p className="eyebrow">보고서</p><h2 id="reports-title" className="mt-1 text-2xl font-bold">보고서 제출 및 웹 승인</h2><p className="muted mt-2 text-sm">교수 또는 관리자가 지정한 보고서와 기한에 따라 제출하며, 파일과 검토 결정을 버전별로 보관합니다.</p></div>
+          {canManageReportRequirements || canSubmitReport ? <div className="flex flex-wrap gap-3">{canManageReportRequirements ? <ReportRequirementForm teamId={workspace.id} executionStartsAt={earliestReportDueAt} submissionEndsAt={workspace.schedule.submissionEndsAt} /> : null}{canSubmitReport ? <ReportSubmissionForm teamId={workspace.id} requirements={submittableReports} /> : null}</div> : null}
+          {workspace.status === "CONFIRMED" && actor.role === "STUDENT" && submittableReports.length === 0 ? <EmptyState title="현재 제출 가능한 보고서가 없습니다" description="지도교수가 제출할 보고서와 기한을 설정하면 이곳에서 파일을 제출할 수 있습니다." /> : null}
           {workspace.status === "FORMING" ? <EmptyState title="팀 확정 후 제출할 수 있습니다" description="지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." /> : workspace.status === "CLOSED" ? <EmptyState title="종료된 프로젝트입니다" description="새 보고서를 제출할 수 없으며 기존 제출·승인 이력만 확인할 수 있습니다." /> : null}
-          <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-            {(["START", "MIDTERM", "FINAL"] as const).map((type) => {
-              const report = reportWorkspace.reports.find((item) => item.type === type);
-              return <article key={type} className="py-6"><div className="flex items-center justify-between"><h3 className="font-bold">{reportTypeLabel[type]}</h3><span className="muted text-xs">{report?.versions.length ?? 0}개 버전</span></div>{!report?.versions.length ? <p className="muted mt-3 text-sm">아직 제출된 버전이 없습니다.</p> : <ol className="mt-4 space-y-5">{report.versions.map((version, index) => <li key={version.id} className="bg-[var(--surface)] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><a href={`/api/files/${version.fileId}`} className="flex min-h-11 items-center font-semibold text-[var(--accent-hover)] underline-offset-4 [overflow-wrap:anywhere] hover:underline">v{version.version} · {version.fileName}</a><p className="muted mt-1 text-xs">{version.submitterName} · {koreanDate.format(version.submittedAt)}</p></div>{version.decision ? <StatusBadge tone={version.decision.decision === "APPROVED" ? "success" : "warning"}>{version.decision.decision === "APPROVED" ? "승인" : "수정 요청"}</StatusBadge> : <StatusBadge tone="neutral">{index === 0 ? "검토 대기" : "이전 버전"}</StatusBadge>}</div>{version.description ? <p className="mt-3 text-sm">{version.description}</p> : null}{version.decision ? <p className="muted mt-3 text-sm">{version.decision.reviewerName} · {version.decision.comment || "의견 없음"}</p> : workspace.status === "CONFIRMED" && actor.role !== "STUDENT" && index === 0 ? <ReportDecisionForm teamId={workspace.id} reportVersionId={version.id} /> : null}</li>)}</ol>}</article>;
-            })}
-          </div>
+          {reportWorkspace.reports.length === 0 ? <EmptyState title="설정된 보고서가 없습니다" description={actor.role === "STUDENT" ? "지도교수의 보고서 요구사항 설정을 기다려 주세요." : "첫 제출 보고서 종류와 기한을 설정해 주세요."} /> : <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {reportWorkspace.reports.map((report) => <article key={report.type} className="py-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="font-bold">{reportTypeLabel[report.type]}</h3><p className="muted mt-1 text-sm"><time dateTime={report.dueAt.toISOString()}>{koreanDateTime.format(report.dueAt)}</time>까지 · {report.versions.length}개 버전</p></div>{canManageReportRequirements ? <RemoveReportRequirementForm teamId={workspace.id} type={report.type} disabled={report.versions.length > 0} /> : null}</div>{!report.versions.length ? <p className="muted mt-3 text-sm">아직 제출된 버전이 없습니다.</p> : <ol className="mt-4 space-y-5">{report.versions.map((version, index) => <li key={version.id} className="bg-[var(--surface)] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><a href={`/api/files/${version.fileId}`} className="flex min-h-11 items-center font-semibold text-[var(--accent-hover)] underline-offset-4 [overflow-wrap:anywhere] hover:underline">v{version.version} · {version.fileName}</a><p className="muted mt-1 text-xs">{version.submitterName} · {koreanDate.format(version.submittedAt)}</p></div>{version.decision ? <StatusBadge tone={version.decision.decision === "APPROVED" ? "success" : "warning"}>{version.decision.decision === "APPROVED" ? "승인" : "수정 요청"}</StatusBadge> : <StatusBadge tone="neutral">{index === 0 ? "검토 대기" : "이전 버전"}</StatusBadge>}</div>{version.description ? <p className="mt-3 text-sm">{version.description}</p> : null}{version.decision ? <p className="muted mt-3 text-sm">{version.decision.reviewerName} · {version.decision.comment || "의견 없음"}</p> : workspace.status === "CONFIRMED" && actor.role !== "STUDENT" && index === 0 ? <ReportDecisionForm teamId={workspace.id} reportVersionId={version.id} /> : null}</li>)}</ol>}</article>)}
+          </div>}
         </section>
         <section aria-labelledby="artifacts-title" className="space-y-6">
           <div><p className="eyebrow">결과물</p><h2 id="artifacts-title" className="mt-1 text-2xl font-bold">결과물 및 발표 자료</h2></div>

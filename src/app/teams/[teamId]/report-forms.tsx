@@ -1,17 +1,46 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 
 import {
   decideReportAction,
   registerArtifactAction,
+  removeReportRequirementAction,
+  setReportRequirementAction,
   type ReportActionState,
   submitReportVersionAction,
 } from "@/app/teams/[teamId]/report-actions";
-import type { ApprovalDecision } from "@/modules/report/domain/report-policy";
+import type { ApprovalDecision, ReportType } from "@/modules/report/domain/report-policy";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: ReportActionState = { status: "idle", message: "" };
 const uploadFailureMessage = "파일을 업로드하지 못했습니다. 파일 형식과 용량을 확인한 뒤 다시 시도해 주세요.";
+const TOAST_DURATION_MS = 3_000;
+const reportTypeLabel: Record<ReportType, string> = {
+  START: "착수 보고서",
+  MIDTERM: "중간 보고서",
+  FINAL: "결과 보고서",
+};
+const koreanDateTime = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+function koreanDateTimeInput(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const value = new Map(parts.map((part) => [part.type, part.value]));
+  return `${value.get("year")}-${value.get("month")}-${value.get("day")}T${value.get("hour")}:${value.get("minute")}`;
+}
 
 async function uploadErrorMessage(response: Response): Promise<string> {
   const body: unknown = await response.json().catch(() => null);
@@ -54,13 +83,86 @@ async function uploadFile(teamId: string, purpose: "REPORT" | "ARTIFACT", file: 
   return uploadId;
 }
 
-export function ReportSubmissionForm({ teamId }: { teamId: string }) {
+export function ReportRequirementForm({ teamId, executionStartsAt, submissionEndsAt }: {
+  teamId: string;
+  executionStartsAt: Date;
+  submissionEndsAt: Date;
+}) {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const [state, action, pending] = useActionState(setReportRequirementAction, initialState);
+  useEffect(() => {
+    if (state.status !== "success") return;
+    dialogRef.current?.close();
+    const timer = window.setTimeout(() => router.refresh(), TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [router, state.status]);
+  return (
+    <>
+      <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary">보고서 요구사항 설정</button>
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]">
+        <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7"><div><p className="eyebrow">보고서 운영</p><h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">제출 요구사항 설정</h3><p className="muted mt-2 text-sm">프로젝트에서 제출할 보고서와 마감 시각을 지정합니다.</p></div><button type="button" onClick={() => { if (!pending) dialogRef.current?.close(); }} disabled={pending} aria-label="보고서 설정 닫기" className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button></div>
+        <form action={action} className="grid gap-5 px-5 py-6 sm:px-7">
+          <input type="hidden" name="teamId" value={teamId} />
+          <label className="grid gap-2 text-sm font-semibold">제출 보고서<select name="type" className="field" defaultValue="START"><option value="START">착수 보고서</option><option value="MIDTERM">중간 보고서</option><option value="FINAL">결과 보고서</option></select></label>
+          <label className="grid gap-2 text-sm font-semibold">제출 기한<input name="dueAt" type="datetime-local" required min={koreanDateTimeInput(executionStartsAt)} max={koreanDateTimeInput(submissionEndsAt)} className="field" /></label>
+          {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]">{state.message}</p> : null}
+          <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><button type="button" onClick={() => dialogRef.current?.close()} disabled={pending} className="button-quiet">취소</button><button disabled={pending} className="button-primary">{pending ? "저장 중" : "요구사항 저장"}</button></div>
+        </form>
+      </dialog>
+      {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+    </>
+  );
+}
+
+export function RemoveReportRequirementForm({ teamId, type, disabled }: { teamId: string; type: ReportType; disabled: boolean }) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(removeReportRequirementAction, initialState);
+  useEffect(() => {
+    if (state.status !== "success") return;
+    const timer = window.setTimeout(() => router.refresh(), TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [router, state.status]);
+  return (
+    <form action={action}>
+      <input type="hidden" name="teamId" value={teamId} />
+      <input type="hidden" name="type" value={type} />
+      <ConfirmSubmitButton disabled={disabled || pending} className="button-quiet text-[var(--danger)]" confirmMessage={`${reportTypeLabel[type]} 요구사항을 해제하시겠습니까?`}>
+        {disabled ? "제출 이력 있음" : pending ? "해제 중" : "요구 해제"}
+      </ConfirmSubmitButton>
+      {state.status === "error" ? <p role="alert" className="mt-2 max-w-sm text-xs font-semibold text-[var(--danger)]">{state.message}</p> : null}
+      {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+    </form>
+  );
+}
+
+export function ReportSubmissionForm({ teamId, requirements }: {
+  teamId: string;
+  requirements: Array<{ type: ReportType; dueAt: Date }>;
+}) {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const [state, setState] = useState(initialState);
   const [pending, startTransition] = useTransition();
+  useEffect(() => {
+    if (state.status !== "success") return;
+    dialogRef.current?.close();
+    const timer = window.setTimeout(() => {
+      setState(initialState);
+      router.refresh();
+    }, TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [router, state.status]);
 
   return (
-    <form
-      className="grid gap-3 border-y border-[var(--line)] bg-[var(--surface)] py-5 md:grid-cols-2"
+    <>
+      <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary">보고서 제출</button>
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]">
+      <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7"><div><p className="eyebrow">보고서 제출</p><h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">새 버전 등록</h3><p className="muted mt-2 text-sm">설정된 기한 안에 PDF 또는 Word 파일을 제출합니다.</p></div><button type="button" onClick={() => { if (!pending) dialogRef.current?.close(); }} disabled={pending} aria-label="보고서 제출 닫기" className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button></div>
+      <form
+      className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7"
       onSubmit={(event) => {
         event.preventDefault();
         const form = event.currentTarget;
@@ -82,16 +184,17 @@ export function ReportSubmissionForm({ teamId }: { teamId: string }) {
         });
       }}
     >
-      <label className="grid gap-2 text-sm font-semibold">보고서 종류<select name="type" className="field" defaultValue="START">
-        <option value="START">착수 보고서</option>
-        <option value="MIDTERM">중간 보고서</option>
-        <option value="FINAL">결과 보고서</option>
+      <label className="grid gap-2 text-sm font-semibold">보고서 종류<select name="type" className="field" defaultValue={requirements[0]?.type}>
+        {requirements.map((requirement) => <option key={requirement.type} value={requirement.type}>{reportTypeLabel[requirement.type]} · {koreanDateTime.format(requirement.dueAt)}까지</option>)}
       </select></label>
       <label className="grid gap-2 text-sm font-semibold">보고서 파일<input name="file" type="file" required accept=".pdf,.doc,.docx" className="field" /></label>
       <label className="grid gap-2 text-sm font-semibold md:col-span-2">버전 설명 <span className="muted font-normal">선택 입력</span><textarea name="description" maxLength={2000} rows={2} placeholder="이번 버전에서 변경한 내용을 입력하세요." className="field" /></label>
-      <button disabled={pending} className="button-primary justify-self-start">{pending ? "검증 및 제출 중" : "새 버전 제출"}</button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
+      {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2">{state.message}</p> : null}
+      <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-5 sm:col-span-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => dialogRef.current?.close()} disabled={pending} className="button-quiet">취소</button><button disabled={pending} className="button-primary">{pending ? "검증 및 제출 중" : "새 버전 제출"}</button></div>
     </form>
+    </dialog>
+    {state.status === "success" ? <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--accent)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">{state.message}</div> : null}
+    </>
   );
 }
 

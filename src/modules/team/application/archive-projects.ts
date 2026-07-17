@@ -42,7 +42,7 @@ export interface TeamCloser {
 
 export class TeamCloseNotAllowedError extends Error {
   constructor() {
-    super("최신 결과 보고서가 승인된 확정 팀만 종료할 수 있습니다.");
+    super("설정된 모든 보고서의 최신 버전이 승인된 확정 팀만 종료할 수 있습니다.");
     this.name = "TeamCloseNotAllowedError";
   }
 }

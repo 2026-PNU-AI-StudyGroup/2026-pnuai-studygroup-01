@@ -13,6 +13,8 @@ import { PrismaReportRepository } from "@/modules/report/infrastructure/prisma-r
 import {
   artifactRegistrationSchema,
   reportDecisionSchema,
+  reportRequirementRemovalSchema,
+  reportRequirementSchema,
   reportSubmissionSchema,
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -47,6 +49,42 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function setReportRequirementAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = reportRequirementSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "보고서 종류와 기한을 확인해 주세요." };
+  try {
+    await reportService().setRequirement(actor, parsed.data);
+    return { status: "success", message: "보고서 요구사항과 기한을 저장했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function removeReportRequirementAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = reportRequirementRemovalSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "해제할 보고서 요구사항을 확인해 주세요." };
+  try {
+    await reportService().removeRequirement(actor, parsed.data);
+    return { status: "success", message: "보고서 요구사항을 해제했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: "제출 이력이 생겼거나 권한이 변경되어 해제하지 못했습니다. 화면을 새로고침한 뒤 다시 확인해 주세요." };
     throw error;
   }
 }

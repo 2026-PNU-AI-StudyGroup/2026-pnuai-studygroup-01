@@ -95,6 +95,8 @@ enum AuditAction {
   USER_REACTIVATED
   TEAM_CONFIRMED
   TEAM_CLOSED
+  REPORT_REQUIREMENT_SET
+  REPORT_REQUIREMENT_REMOVED
   REPORT_APPROVED
   REPORT_REVISION_REQUESTED
 }
@@ -510,12 +512,14 @@ model Report {
   id        String      @id @default(uuid())
   teamId    String
   type      ReportType
+  dueAt     DateTime
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   team      Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   versions  ReportVersion[]
 
   @@unique([teamId, type])
+  @@index([teamId, dueAt])
   @@map("report")
 }
 

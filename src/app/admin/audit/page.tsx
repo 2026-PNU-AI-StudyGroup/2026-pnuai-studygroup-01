@@ -19,6 +19,8 @@ const actionLabel: Record<AuditAction, string> = {
   USER_REACTIVATED: "사용자 재활성화",
   TEAM_CONFIRMED: "팀 확정",
   TEAM_CLOSED: "프로젝트 종료",
+  REPORT_REQUIREMENT_SET: "보고서 요구 설정",
+  REPORT_REQUIREMENT_REMOVED: "보고서 요구 해제",
   REPORT_APPROVED: "보고서 승인",
   REPORT_REVISION_REQUESTED: "보고서 수정 요청",
 };

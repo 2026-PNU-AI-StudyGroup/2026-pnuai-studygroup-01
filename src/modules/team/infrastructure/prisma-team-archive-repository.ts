@@ -51,19 +51,28 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
       const team = teams[0];
       if (!team) return false;
 
-      const approved = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "report_version"."id"
-        FROM "report"
-        JOIN "report_version" ON "report_version"."reportId" = "report"."id"
-        JOIN "approval_decision" ON "approval_decision"."reportVersionId" = "report_version"."id"
-        WHERE "report"."teamId" = ${teamId}
-          AND "report"."type" = 'FINAL'
-          AND "report_version"."version" = (
-            SELECT max("latest"."version")
-            FROM "report_version" AS "latest"
-            WHERE "latest"."reportId" = "report"."id"
+      const approved = await transaction.$queryRaw<Array<{ approved: boolean }>>(Prisma.sql`
+        SELECT true AS "approved"
+        WHERE EXISTS (
+          SELECT 1 FROM "report" WHERE "teamId" = ${teamId}
+        )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM "report"
+            WHERE "report"."teamId" = ${teamId}
+              AND NOT EXISTS (
+                SELECT 1
+                FROM "report_version"
+                JOIN "approval_decision" ON "approval_decision"."reportVersionId" = "report_version"."id"
+                WHERE "report_version"."reportId" = "report"."id"
+                  AND "report_version"."version" = (
+                    SELECT max("latest"."version")
+                    FROM "report_version" AS "latest"
+                    WHERE "latest"."reportId" = "report"."id"
+                  )
+                  AND "approval_decision"."decision" = 'APPROVED'
+              )
           )
-          AND "approval_decision"."decision" = 'APPROVED'
       `);
       if (approved.length !== 1) return false;
       const result = await transaction.team.updateMany({

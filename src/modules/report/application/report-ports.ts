@@ -9,6 +9,7 @@ export type ReportWorkspace = {
   reports: Array<{
     id: string;
     type: ReportType;
+    dueAt: Date;
     versions: Array<{
       id: string;
       version: number;
@@ -37,6 +38,19 @@ export type ReportWorkspace = {
 
 export interface ReportRepository {
   findWorkspace(teamId: string, actor: CurrentActor): Promise<ReportWorkspace | null>;
+  setRequirement(input: {
+    teamId: string;
+    actor: CurrentActor;
+    type: ReportType;
+    dueAt: Date;
+    configuredAt: Date;
+  }): Promise<{ id: string } | null>;
+  removeRequirement(input: {
+    teamId: string;
+    actor: CurrentActor;
+    type: ReportType;
+    removedAt: Date;
+  }): Promise<boolean>;
   submit(input: {
     teamId: string;
     actor: CurrentActor;
