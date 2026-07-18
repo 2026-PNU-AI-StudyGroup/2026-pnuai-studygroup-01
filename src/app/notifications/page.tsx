@@ -32,7 +32,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/notifications">
-      <AccountSectionLayout currentPath="/notifications"><div className="space-y-10">
+      <AccountSectionLayout role={actor.role} currentPath="/notifications"><div className="space-y-10">
         <PageHeader
           eyebrow="알림"
           title="알림함"

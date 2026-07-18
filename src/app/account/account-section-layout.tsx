@@ -1,13 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const items = [
+import type { UserRole } from "@/modules/identity/domain/user-role";
+
+const commonItems = [
   { href: "/account", label: "계정 정보" },
-  { href: "/account/profile", label: "프로젝트 프로필" },
   { href: "/notifications", label: "알림함" },
 ];
 
-export function AccountSectionLayout({ currentPath, children }: { currentPath: string; children: ReactNode }) {
+export function AccountSectionLayout({ role, currentPath, children }: { role: UserRole; currentPath: string; children: ReactNode }) {
+  const items = role === "STUDENT"
+    ? [commonItems[0], { href: "/account/profile", label: "프로젝트 프로필" }, commonItems[1]]
+    : commonItems;
   return <div className="mx-auto grid max-w-[1180px] lg:grid-cols-[13.5rem_minmax(0,1fr)]">
     <aside className="border-b border-[var(--line)] px-6 py-5 lg:min-h-[calc(100vh-4.5rem)] lg:border-b-0 lg:border-r lg:py-10">
       <p className="eyebrow">마이페이지</p>

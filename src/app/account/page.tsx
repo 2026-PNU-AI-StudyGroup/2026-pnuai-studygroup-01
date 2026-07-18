@@ -29,7 +29,7 @@ export default async function AccountPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
-      <AccountSectionLayout currentPath="/account">
+      <AccountSectionLayout role={actor.role} currentPath="/account">
         <div className="max-w-3xl">
           <PageHeader eyebrow="계정" title="마이페이지" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
           <section aria-labelledby="account-summary-heading" className="mt-10 border-y border-[var(--line)] py-8">

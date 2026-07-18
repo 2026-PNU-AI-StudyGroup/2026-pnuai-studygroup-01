@@ -23,7 +23,7 @@ export default async function StudentProfilePage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account/profile">
-      <AccountSectionLayout currentPath="/account/profile">
+      <AccountSectionLayout role={actor.role} currentPath="/account/profile">
         <div className="max-w-3xl space-y-10">
           <PageHeader eyebrow="계정" title="프로젝트 프로필" description="프로젝트와 팀원 모집에 지원할 때 반복해서 사용하는 정보를 관리합니다. 여러 관심 분야와 기술은 쉼표로 구분해 주세요." actions={<Link className="button-quiet" href="/account">마이페이지로</Link>} />
           <StudentProfileForm profile={profile} />
