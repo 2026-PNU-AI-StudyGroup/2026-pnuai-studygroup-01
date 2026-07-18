@@ -30,7 +30,7 @@ export function CloseTeamForm({ teamId }: { teamId: string }) {
 export function MilestoneForm({ teamId }: { teamId: string }) {
   const [state, action, pending] = useActionState(createMilestoneAction, initialState);
   return (
-    <form action={action} className="grid gap-3 rounded-xl bg-[var(--surface-subtle)] p-5 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+    <form action={action} className="grid gap-3 border-y border-[var(--line)] py-5 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
       <input type="hidden" name="teamId" value={teamId} />
       <input name="title" aria-label="마일스톤 제목" required maxLength={200} placeholder="마일스톤 제목" className="field" />
       <input name="dueAt" aria-label="완료 예정일" type="date" required className="field" />

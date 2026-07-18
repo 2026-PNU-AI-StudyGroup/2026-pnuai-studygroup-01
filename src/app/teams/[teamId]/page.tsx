@@ -11,17 +11,66 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
   const { teamId } = await params;
   const { workspace } = await loadTeamWorkspace(teamId);
   const destinations = [
-    ["마일스톤", "목표와 완료 예정일, 현재 상태를 관리합니다.", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
-    ["진행 기록", "수행 내용과 위험 요소, 다음 행동을 남깁니다.", `/teams/${teamId}/progress`, `${workspace.progressTotal}개 기록`],
-    ["팀 토론", "팀원과 지도교수가 의견을 나눕니다.", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
-    ["보고서", "보고서 제출과 교수의 웹 승인을 확인합니다.", `/teams/${teamId}/reports`, "제출·승인 관리"],
-    ["결과물", "발표 영상, 소스 코드와 포스터를 관리합니다.", `/teams/${teamId}/artifacts`, "최종 산출물"],
+    ["마일스톤", "목표와 완료 예정일", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
+    ["진행 기록", "수행 내용과 다음 행동", `/teams/${teamId}/progress`, `${workspace.progressTotal}개 기록`],
+    ["팀 토론", "팀원과 지도교수의 의견", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
+    ["보고서", "제출 버전과 교수 승인", `/teams/${teamId}/reports`, "제출·승인 관리"],
+    ["결과물", "발표 자료와 소스 코드", `/teams/${teamId}/artifacts`, "최종 산출물"],
   ] as const;
-  return <div className="space-y-12">
-    <section aria-labelledby="members-title" className="border-y border-[var(--line)] py-5">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3"><h2 id="members-title" className="text-sm font-bold">팀원 {workspace.members.length}명</h2>{workspace.members.map((member) => <span key={member.id} className="text-sm"><strong>{member.name}</strong><span className="muted ml-2 hidden sm:inline">{member.email}</span></span>)}</div>
-    </section>
-    <section aria-labelledby="schedule-title"><p className="eyebrow">일정</p><h2 id="schedule-title" className="mt-1 text-xl font-bold">프로젝트 일정</h2><dl className="mt-4 grid gap-4 border-y border-[var(--line)] py-5 text-sm md:grid-cols-3"><div><dt className="muted text-xs">모집 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.recruitmentStartsAt)} – {koreanDate.format(workspace.schedule.recruitmentEndsAt)}</dd></div><div><dt className="muted text-xs">수행 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.executionStartsAt)} – {koreanDate.format(workspace.schedule.executionEndsAt)}</dd></div><div><dt className="muted text-xs">제출 기간</dt><dd className="mt-1 font-medium">{koreanDate.format(workspace.schedule.submissionStartsAt)} – {koreanDate.format(workspace.schedule.submissionEndsAt)}</dd></div></dl></section>
-    <section aria-labelledby="workspace-destinations"><div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4"><div><p className="eyebrow">작업 영역</p><h2 id="workspace-destinations" className="mt-1 text-xl font-bold">어떤 작업을 할까요?</h2></div><StatusBadge>{workspace.status === "CLOSED" ? "읽기 전용" : "운영 중"}</StatusBadge></div><ul className="divide-y divide-[var(--line)]">{destinations.map(([title, description, href, meta]) => <li key={href}><Link href={href} className="group grid min-h-24 gap-3 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><h3 className="font-extrabold group-hover:text-[var(--primary-hover)]">{title}</h3><p className="muted mt-1 text-sm">{description}</p></div><span className="flex items-center gap-3 text-sm font-semibold">{meta}<span aria-hidden="true" className="project-row-arrow">→</span></span></Link></li>)}</ul></section>
-  </div>;
+  const nextMilestone = workspace.milestones
+    .filter((milestone) => milestone.status !== "DONE")
+    .sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime())[0];
+
+  return (
+    <div className="space-y-10">
+      <header className="border-b border-[var(--line)] pb-8">
+        <p className="eyebrow">프로젝트 개요</p>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <h1 className="text-[clamp(2rem,5vw,2.75rem)] font-black leading-tight tracking-[-0.045em]">{workspace.topicTitle}</h1>
+            <p className="muted mt-3 text-base">팀의 일정과 현재 작업을 한눈에 확인하세요.</p>
+          </div>
+          <StatusBadge tone={workspace.status === "CLOSED" ? "neutral" : "info"}>{workspace.status === "CLOSED" ? "읽기 전용" : "프로젝트 운영 중"}</StatusBadge>
+        </div>
+      </header>
+
+      <section aria-labelledby="next-action-title" className="border-l-2 border-[var(--accent)] py-1 pl-5">
+        <p className="text-xs font-extrabold text-[var(--accent-ink)]">다음 일정</p>
+        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="next-action-title" className="text-xl font-extrabold">{nextMilestone?.title ?? "등록된 마일스톤이 없습니다"}</h2>
+          <time className="text-sm font-bold text-[var(--accent-ink)]" dateTime={nextMilestone?.dueAt.toISOString()}>{nextMilestone ? `${koreanDate.format(nextMilestone.dueAt)}까지` : `${koreanDate.format(workspace.schedule.executionEndsAt)} 수행 종료`}</time>
+        </div>
+      </section>
+
+      <section aria-labelledby="schedule-title">
+        <div className="flex items-end justify-between border-b border-[var(--line)] pb-3">
+          <div><p className="eyebrow">일정</p><h2 id="schedule-title" className="mt-1 text-xl font-extrabold">프로젝트 기간</h2></div>
+        </div>
+        <dl className="divide-y divide-[var(--line)]">
+          <div className="grid gap-1 py-4 sm:grid-cols-[9rem_1fr]"><dt className="muted text-sm">모집 기간</dt><dd className="font-semibold">{koreanDate.format(workspace.schedule.recruitmentStartsAt)} – {koreanDate.format(workspace.schedule.recruitmentEndsAt)}</dd></div>
+          <div className="grid gap-1 py-4 sm:grid-cols-[9rem_1fr]"><dt className="muted text-sm">수행 기간</dt><dd className="font-semibold">{koreanDate.format(workspace.schedule.executionStartsAt)} – {koreanDate.format(workspace.schedule.executionEndsAt)}</dd></div>
+          <div className="grid gap-1 py-4 sm:grid-cols-[9rem_1fr]"><dt className="muted text-sm">제출 기간</dt><dd className="font-semibold">{koreanDate.format(workspace.schedule.submissionStartsAt)} – {koreanDate.format(workspace.schedule.submissionEndsAt)}</dd></div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="workspace-destinations">
+        <div className="border-b border-[var(--primary)] pb-3"><p className="eyebrow">작업 영역</p><h2 id="workspace-destinations" className="mt-1 text-xl font-extrabold">프로젝트 작업</h2></div>
+        <ul className="divide-y divide-[var(--line)]">
+          {destinations.map(([title, description, href, meta]) => (
+            <li key={href}>
+              <Link href={href} className="group grid min-h-20 gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <div className="flex items-baseline gap-4"><h3 className="min-w-24 font-extrabold group-hover:text-[var(--primary-hover)]">{title}</h3><p className="muted text-sm">{description}</p></div>
+                <span className="flex items-center gap-3 text-sm font-semibold">{meta}<span aria-hidden="true" className="project-row-arrow">→</span></span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="members-title">
+        <div className="border-b border-[var(--line)] pb-3"><p className="eyebrow">구성원</p><h2 id="members-title" className="mt-1 text-xl font-extrabold">팀원 {workspace.members.length}명</h2></div>
+        <ul className="divide-y divide-[var(--line)]">{workspace.members.map((member) => <li key={member.id} className="grid gap-1 py-4 sm:grid-cols-[9rem_1fr]"><strong>{member.name}</strong><span className="muted text-sm">{member.email}</span></li>)}</ul>
+      </section>
+    </div>
+  );
 }
