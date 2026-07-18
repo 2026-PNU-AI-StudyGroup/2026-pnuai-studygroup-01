@@ -54,10 +54,10 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
             {data.posts.length === 0 ? (
               <EmptyState title="열린 모집 글이 없습니다" description="지원 가능한 모집 글이 생기면 이곳에 표시됩니다." />
             ) : (
-              <ol className="border-y border-[var(--line)]">
+              <ol className="border-y-2 border-[var(--line-strong)]">
                 {data.posts.map((post) => (
-                  <li key={post.id} className="border-b border-[var(--line)] last:border-b-0">
-                    <article className="grid gap-6 py-7 lg:grid-cols-[minmax(0,1fr)_12.5rem] lg:items-start">
+                  <li key={post.id} className="border-b-2 border-[var(--line-strong)] last:border-b-0">
+                    <article className="recruitment-row grid gap-7 px-4 py-9 sm:px-6 lg:grid-cols-[minmax(0,1fr)_12.5rem] lg:items-start">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
                           <span className="font-extrabold text-[var(--primary)]">{post.teamName}</span>

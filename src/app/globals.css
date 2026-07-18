@@ -15,6 +15,7 @@
   --ink: #172033;
   --muted: #626c7f;
   --line: #dfe3ea;
+  --line-strong: #aeb7c5;
   --primary: #2f5bea;
   --primary-hover: #2449c4;
   --primary-subtle: #edf1ff;
@@ -243,6 +244,14 @@ textarea {
 
   .record-row:hover {
     background: linear-gradient(90deg, var(--primary-subtle), transparent 72%);
+  }
+
+  .recruitment-row {
+    transition: background-color var(--snap-duration) var(--snap-ease);
+  }
+
+  .recruitment-row:hover {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--primary-subtle) 58%, white), white 76%);
   }
 
   .portal-hero-copy {
