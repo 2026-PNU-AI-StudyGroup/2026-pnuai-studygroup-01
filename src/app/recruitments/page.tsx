@@ -54,52 +54,56 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
             {data.posts.length === 0 ? (
               <EmptyState title="열린 모집 글이 없습니다" description="지원 가능한 모집 글이 생기면 이곳에 표시됩니다." />
             ) : (
-              <ol className="border-y-2 border-[var(--line-strong)]">
+              <ol className="space-y-5">
                 {data.posts.map((post) => (
-                  <li key={post.id} className="border-b-2 border-[var(--line-strong)] last:border-b-0">
-                    <article className="recruitment-row grid gap-7 px-4 py-9 sm:px-6 lg:grid-cols-[minmax(0,1fr)_12.5rem] lg:items-start">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-                          <span className="font-extrabold text-[var(--primary)]">{post.teamName}</span>
-                          <span className="muted">{post.topicTitle}</span>
-                          <span className="muted">모집자 {post.authorName}</span>
+                  <li key={post.id}>
+                    <article className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition-colors hover:border-[var(--primary)]">
+                      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--primary-subtle)] px-6 py-4">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                          <strong className="text-[var(--primary-hover)]">{post.teamName}</strong>
+                          <span className="text-[var(--ink)]">{post.topicTitle}</span>
                         </div>
-                        <h3 className="mt-3 text-2xl font-black leading-snug tracking-[-0.035em] text-[var(--ink)]">{post.title}</h3>
-                        <TranslatedText text={post.content} className="muted mt-3 max-w-3xl leading-7" />
+                        <span className="text-xs font-semibold text-[var(--muted)]">모집자 {post.authorName}</span>
+                      </header>
+                      <div className="grid gap-7 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_12.5rem] lg:items-start">
+                        <div className="min-w-0">
+                          <h3 className="text-2xl font-black leading-snug tracking-[-0.035em] text-[var(--ink)]">{post.title}</h3>
+                          <TranslatedText text={post.content} className="muted mt-3 max-w-3xl leading-7" />
 
-                        <dl className="mt-6 grid gap-x-8 gap-y-4 border-l-2 border-[var(--line)] pl-5 text-sm sm:grid-cols-3">
-                          <div>
-                            <dt className="muted text-xs font-semibold">필요 기술</dt>
-                            <dd className="mt-1 font-bold text-[var(--ink)]">{post.requiredSkills.join(", ")}</dd>
-                          </div>
-                          <div>
-                            <dt className="muted text-xs font-semibold">맡을 역할</dt>
-                            <dd className="mt-1 font-bold text-[var(--ink)]">{post.roleNeeded}</dd>
-                          </div>
-                          <div>
-                            <dt className="muted text-xs font-semibold">활동 가능 시간</dt>
-                            <dd className="mt-1 font-bold text-[var(--ink)]">{post.availability}</dd>
-                          </div>
-                        </dl>
-                      </div>
+                          <dl className="mt-6 grid gap-x-8 gap-y-4 border-t border-[var(--line)] pt-5 text-sm sm:grid-cols-3">
+                            <div>
+                              <dt className="muted text-xs font-semibold">필요 기술</dt>
+                              <dd className="mt-1 font-bold text-[var(--ink)]">{post.requiredSkills.join(", ")}</dd>
+                            </div>
+                            <div>
+                              <dt className="muted text-xs font-semibold">맡을 역할</dt>
+                              <dd className="mt-1 font-bold text-[var(--ink)]">{post.roleNeeded}</dd>
+                            </div>
+                            <div>
+                              <dt className="muted text-xs font-semibold">활동 가능 시간</dt>
+                              <dd className="mt-1 font-bold text-[var(--ink)]">{post.availability}</dd>
+                            </div>
+                          </dl>
+                        </div>
 
-                      <div className="border-t border-[var(--line)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-                        <p className="text-sm font-bold text-[var(--ink)]">현재 팀원</p>
-                        <p className="mt-1 text-2xl font-black tracking-[-0.03em] text-[var(--ink)]">
-                          {post.memberCount}<span className="muted ml-1 text-sm font-semibold">/ {post.capacity}명</span>
-                        </p>
-                        {post.authorId !== actor.id && post.canApply && !post.ownApplication ? (
-                          <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} profile={profile} />
-                        ) : post.ownApplication ? (
-                          <div className="mt-5">
-                            <p className="muted mb-2 text-xs font-semibold">내 지원 상태</p>
-                            <StatusBadge tone={historyStatus[post.ownApplication.status].tone}>{historyStatus[post.ownApplication.status].label}</StatusBadge>
-                          </div>
-                        ) : post.authorId === actor.id ? (
-                          <p className="muted mt-5 text-sm leading-6">내가 등록한 모집 글입니다.</p>
-                        ) : (
-                          <p className="muted mt-5 text-sm leading-6">현재 지원할 수 없습니다.</p>
-                        )}
+                        <div className="border-t border-[var(--line)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                          <p className="text-sm font-bold text-[var(--ink)]">현재 팀원</p>
+                          <p className="mt-1 text-2xl font-black tracking-[-0.03em] text-[var(--ink)]">
+                            {post.memberCount}<span className="muted ml-1 text-sm font-semibold">/ {post.capacity}명</span>
+                          </p>
+                          {post.authorId !== actor.id && post.canApply && !post.ownApplication ? (
+                            <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} profile={profile} />
+                          ) : post.ownApplication ? (
+                            <div className="mt-5">
+                              <p className="muted mb-2 text-xs font-semibold">내 지원 상태</p>
+                              <StatusBadge tone={historyStatus[post.ownApplication.status].tone}>{historyStatus[post.ownApplication.status].label}</StatusBadge>
+                            </div>
+                          ) : post.authorId === actor.id ? (
+                            <p className="muted mt-5 text-sm leading-6">내가 등록한 모집 글입니다.</p>
+                          ) : (
+                            <p className="muted mt-5 text-sm leading-6">현재 지원할 수 없습니다.</p>
+                          )}
+                        </div>
                       </div>
                     </article>
                   </li>
