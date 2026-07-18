@@ -2,24 +2,22 @@ import type { ReactNode } from "react";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: string; title: ReactNode; description?: string; actions?: ReactNode }) {
   return (
-    <header className="grid gap-10 border-b border-[var(--line)] pb-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,.5fr)] lg:items-end lg:gap-16 lg:pb-14">
-      <div className="max-w-4xl">
-        <p className="eyebrow text-[var(--accent-ink)]">{eyebrow}</p>
-        <h1 className="mt-4 text-[clamp(2.75rem,5vw,3.5rem)] font-black leading-[1.05] tracking-[-0.045em] text-[var(--ink)]">{title}</h1>
+    <header className="flex flex-col gap-6 border-b border-[var(--line)] pb-8 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-3xl">
+        <p className="eyebrow">{eyebrow}</p>
+        <h1 className="mt-2 text-[clamp(2rem,4vw,2.5rem)] font-black leading-tight tracking-[-0.04em] text-[var(--ink)]">{title}</h1>
+        {description ? <p className="muted mt-3 max-w-2xl text-[0.9375rem] leading-6">{description}</p> : null}
       </div>
-      <div className="border-l-2 border-[var(--line)] pl-5 lg:mb-1">
-        {description ? <p className="muted max-w-md text-base leading-7">{description}</p> : null}
-        {actions ? <div className="mt-6">{actions}</div> : null}
-      </div>
+      {actions ? <div className="shrink-0">{actions}</div> : null}
     </header>
   );
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
-    <div className="panel grid min-h-56 place-items-center px-6 py-10 text-center">
+    <div className="grid min-h-56 place-items-center border-y border-[var(--line)] px-6 py-10 text-center">
       <div className="max-w-sm">
-        <span aria-hidden="true" className="mx-auto grid size-12 place-items-center rounded-lg bg-[var(--primary-subtle)] text-xl text-[var(--primary)]">○</span>
+        <span aria-hidden="true" className="mx-auto block size-2 rounded-full bg-[var(--accent)]" />
         <h2 className="mt-4 font-bold text-[var(--ink)]">{title}</h2>
         <p className="muted mt-2 text-sm leading-6">{description}</p>
         {action ? <div className="mt-5">{action}</div> : null}

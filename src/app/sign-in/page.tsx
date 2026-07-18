@@ -8,27 +8,15 @@ export const metadata: Metadata = { title: "로그인" };
 
 export default function SignInPage() {
   return (
-    <main className="grid min-h-screen bg-[var(--surface)] lg:grid-cols-[minmax(0,1fr)_minmax(420px,560px)]">
-      <section className="hidden flex-col justify-between border-r border-[var(--line)] bg-white p-12 lg:flex">
-        <Brand />
-        <blockquote className="max-w-xl">
-          <p className="max-w-lg text-3xl font-bold leading-snug tracking-tight text-[var(--ink)]">좋은 프로젝트는 결과뿐 아니라<br />과정까지 선명합니다.</p>
-          <footer className="muted mt-5">부산대학교 학과 프로젝트 관리</footer>
-        </blockquote>
-        <p className="muted text-sm">주제 · 팀 · 진행 · 보고서 · 결과물</p>
-      </section>
-      <section className="flex min-h-screen min-w-0 items-center px-6 py-12 sm:px-12 lg:px-16">
-        <div className="mx-auto min-w-0 w-full max-w-md">
-          <div className="mb-12 lg:hidden"><Brand /></div>
-          <p className="eyebrow">계정 인증</p>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight">로그인</h1>
-          <p className="muted mt-4 leading-7">부산대학교 구성원 인증을 위해 Google Workspace 로그인을 사용합니다.</p>
-          <div className="mt-8 border-y border-[var(--line)] py-8">
-            <GoogleSignInButton />
-          </div>
-          <div className="mt-6 min-w-0 break-words border-l-2 border-[var(--line)] py-1 pl-4 text-sm leading-6 text-[var(--muted)]">
-            인증된 <strong className="text-[var(--ink)]">@pusan.ac.kr</strong> 계정만 이용할 수 있습니다. 다른 Google 계정으로는 가입되지 않습니다.
-          </div>
+    <main className="min-h-screen bg-white">
+      <header className="mx-auto flex h-[4.5rem] max-w-[1280px] items-center border-b border-[var(--line)] px-6"><Brand /></header>
+      <section className="mx-auto grid max-w-[1280px] gap-14 px-6 py-14 lg:min-h-[calc(100vh-4.5rem)] lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-center lg:py-20">
+        <div className="page-enter max-w-2xl"><p className="eyebrow">PNU PROJECTS</p><h1 className="mt-4 text-[clamp(2.75rem,6vw,4.75rem)] font-black leading-[1.02] tracking-[-0.055em]">학교 계정 하나로<br /><span className="text-[var(--primary)]">프로젝트에 연결</span><span className="text-[var(--accent)]">.</span></h1><p className="muted mt-6 max-w-xl text-lg leading-8">학생은 주제와 팀을 찾고, 교수는 지원과 진행을 검토하며, 관리자는 프로그램의 운영 흐름을 이어갑니다.</p></div>
+        <div className="border-t-2 border-[var(--primary)] pt-8 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+          <p className="eyebrow">계정 인증</p><h2 className="mt-2 text-3xl font-extrabold tracking-tight">로그인</h2>
+          <p className="muted mt-4 leading-7">부산대학교 Google Workspace 계정으로 안전하게 인증합니다.</p>
+          <div className="mt-8 border-y border-[var(--line)] py-7"><GoogleSignInButton /></div>
+          <div className="mt-6 min-w-0 break-words border-l-2 border-[var(--accent)] py-1 pl-4 text-sm leading-6 text-[var(--muted)]">인증된 <strong className="text-[var(--ink)]">@pusan.ac.kr</strong> 계정만 이용할 수 있습니다. 다른 Google 계정으로는 가입되지 않습니다.</div>
           <Link href="/" className="button-quiet mt-7 px-0">← 서비스 소개로 돌아가기</Link>
         </div>
       </section>

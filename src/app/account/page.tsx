@@ -10,6 +10,7 @@ import { AppShell } from "@/shared/ui/app-shell";
 import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
 import { AccountControls } from "./account-controls";
+import { AccountSectionLayout } from "./account-section-layout";
 
 export const metadata: Metadata = { title: "마이페이지" };
 
@@ -28,8 +29,8 @@ export default async function AccountPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
-      <main className="content-shell">
-        <div className="mx-auto max-w-3xl">
+      <AccountSectionLayout currentPath="/account">
+        <div className="max-w-3xl">
           <PageHeader eyebrow="계정" title="마이페이지" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
           <section aria-labelledby="account-summary-heading" className="mt-10 border-y border-[var(--line)] py-8">
             <div className="flex items-start gap-5">
@@ -41,8 +42,8 @@ export default async function AccountPage() {
               </div>
             </div>
           </section>
-          <nav aria-label="계정 바로가기" className="grid border-b border-[var(--line)] sm:grid-cols-3">
-            {shortcuts.map(([label, href]) => <Link key={href} href={href} className="snap-color flex min-h-14 items-center justify-between border-t border-[var(--line)] px-1 text-sm font-bold hover:text-[var(--primary-hover)] sm:border-t-0 sm:px-4 first:sm:pl-0 last:sm:pr-0">{label}<span aria-hidden="true">→</span></Link>)}
+          <nav aria-label="주요 업무 바로가기" className="mt-10 grid border-t border-[var(--line)] sm:grid-cols-3">
+            {shortcuts.map(([label, href]) => <Link key={href} href={href} className="record-row flex min-h-16 items-center justify-between border-b border-[var(--line)] px-3 text-sm font-bold hover:text-[var(--primary-hover)] sm:px-4 first:sm:pl-1">{label}<span aria-hidden="true">→</span></Link>)}
           </nav>
           {actor.role === "STUDENT" ? <section aria-labelledby="project-profile-heading" className="mt-12 border-y border-[var(--line)] py-7">
             <div className="flex flex-wrap items-start justify-between gap-5">
@@ -55,7 +56,7 @@ export default async function AccountPage() {
           </section> : null}
           <div className="mt-12"><AccountControls /></div>
         </div>
-      </main>
+      </AccountSectionLayout>
     </AppShell>
   );
 }

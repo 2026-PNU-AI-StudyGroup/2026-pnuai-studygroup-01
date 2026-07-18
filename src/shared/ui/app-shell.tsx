@@ -34,23 +34,6 @@ function navigationFor(role: UserRole): NavigationItem[] {
   ];
 }
 
-function managementNavigationFor(role: UserRole): Array<Pick<NavigationItem, "href" | "label">> {
-  if (role === "ADMIN") return [
-    { href: "/admin/programs", label: "프로그램" },
-    { href: "/admin/academic-cycles", label: "학기" },
-    { href: "/admin/professors", label: "교수 권한" },
-    { href: "/admin/users", label: "사용자" },
-    { href: "/admin/audit", label: "감사 기록" },
-    { href: "/professor/topics", label: "주제" },
-    { href: "/professor/applications", label: "지원 검토" },
-  ];
-  if (role === "PROFESSOR") return [
-    { href: "/professor/topics", label: "주제" },
-    { href: "/professor/applications", label: "지원 검토" },
-  ];
-  return [];
-}
-
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
   if (item.href === "/topics" && currentPath.startsWith("/topics/applications")) return false;
   if (item.label !== "관리") return isSectionActive(item.href, currentPath);
@@ -76,38 +59,28 @@ function NavIcon({ name }: { name: NavigationItem["icon"] }) {
 
 export function AppShell({ role, userId, userName, currentPath, children }: { role: UserRole; userId: string; userName: string; currentPath: string; children: ReactNode }) {
   const navigation = navigationFor(role);
-  const managementNavigation = managementNavigationFor(role);
-  const showManagementNavigation = managementNavigation.some(({ href }) => isSectionActive(href, currentPath));
   const roleLabel = role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자";
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
-      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-8 px-6">
+      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/96 backdrop-blur-sm">
+        <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between gap-8 px-5 sm:px-8">
           <Brand href="/topics" />
-          <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-8 lg:flex">
+          <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-9 lg:flex">
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color relative flex h-full items-center text-sm font-semibold ${active ? "text-[var(--primary)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--primary)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
             })}
           </nav>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
             <Link href="/account" aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-[var(--primary-hover)]" aria-label={`${userName} 마이페이지`}>
               <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold">{userName}</span><span className="muted block text-xs">마이페이지</span></span>
-              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-sm font-extrabold text-[var(--primary-hover)]">{userName.trim().charAt(0) || "나"}</span>
+              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-sm font-extrabold text-[var(--primary-hover)]">{userName.trim().charAt(0) || "나"}</span>
               <span className="sr-only">{roleLabel}</span>
             </Link>
           </div>
         </div>
-        {showManagementNavigation ? (
-          <nav aria-label="관리 메뉴" className="mx-auto flex max-w-[1280px] gap-6 overflow-x-auto px-6">
-            {managementNavigation.map((item) => {
-              const active = isSectionActive(item.href, currentPath);
-              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color flex min-h-11 shrink-0 items-center border-b-2 text-sm font-semibold ${active ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}>{item.label}</Link>;
-            })}
-          </nav>
-        ) : null}
       </header>
       <div id="main-content" tabIndex={-1}>{children}</div>
       <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>

@@ -9,6 +9,7 @@ import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructur
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { PageHeader } from "@/shared/ui/page-primitives";
+import { AccountSectionLayout } from "@/app/account/account-section-layout";
 
 export const metadata: Metadata = { title: "프로젝트 프로필" };
 
@@ -22,12 +23,12 @@ export default async function StudentProfilePage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account/profile">
-      <main className="content-shell">
-        <div className="mx-auto max-w-3xl space-y-10">
+      <AccountSectionLayout currentPath="/account/profile">
+        <div className="max-w-3xl space-y-10">
           <PageHeader eyebrow="계정" title="프로젝트 프로필" description="프로젝트와 팀원 모집에 지원할 때 반복해서 사용하는 정보를 관리합니다. 여러 관심 분야와 기술은 쉼표로 구분해 주세요." actions={<Link className="button-quiet" href="/account">마이페이지로</Link>} />
           <StudentProfileForm profile={profile} />
         </div>
-      </main>
+      </AccountSectionLayout>
     </AppShell>
   );
 }

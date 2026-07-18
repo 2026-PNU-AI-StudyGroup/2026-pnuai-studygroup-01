@@ -233,6 +233,18 @@ textarea {
     animation: toast-enter var(--silk-duration) var(--silk-ease) both;
   }
 
+  .page-enter {
+    animation: page-enter var(--silk-duration) var(--silk-ease) both;
+  }
+
+  .record-row {
+    transition: background-color var(--snap-duration) var(--snap-ease), padding-inline var(--snap-duration) var(--snap-ease);
+  }
+
+  .record-row:hover {
+    background: linear-gradient(90deg, var(--primary-subtle), transparent 72%);
+  }
+
   .portal-hero-copy {
     animation: portal-rise 280ms var(--silk-ease) both;
   }
@@ -375,6 +387,17 @@ dialog::backdrop {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

@@ -11,6 +11,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { AccountSectionLayout } from "@/app/account/account-section-layout";
 
 export const metadata: Metadata = { title: "알림" };
 
@@ -31,7 +32,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/notifications">
-      <main className="content-shell space-y-10">
+      <AccountSectionLayout currentPath="/notifications"><div className="space-y-10">
         <PageHeader
           eyebrow="알림"
           title="알림함"
@@ -40,7 +41,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         />
         <section aria-labelledby="notification-list-title">
           <div className="mb-4 flex items-center justify-between gap-4"><h2 id="notification-list-title" className="text-lg font-extrabold">최근 알림</h2><p className="muted text-sm">읽지 않음 {data.unreadCount}개 · 전체 {data.total}개</p></div>
-          {data.items.length === 0 ? <EmptyState title="새로운 알림이 없습니다" description="지원 결과나 마감 일정처럼 확인할 소식이 생기면 이곳에 표시됩니다." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{data.items.map((notification) => <li key={notification.id} className={notification.readAt ? "py-6" : "border-l-2 border-l-[var(--primary)] py-6 pl-4 sm:pl-6"}>
+          {data.items.length === 0 ? <EmptyState title="새로운 알림이 없습니다" description="지원 결과나 마감 일정처럼 확인할 소식이 생기면 이곳에 표시됩니다." /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{data.items.map((notification) => <li key={notification.id} className={`${notification.readAt ? "py-6" : "border-l-2 border-l-[var(--accent)] py-6 pl-4 sm:pl-6"} record-row`}>
             <form action={openNotificationAction} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <input type="hidden" name="notificationId" value={notification.id} />
               <div><div className="flex flex-wrap items-center gap-3"><StatusBadge tone={notification.readAt ? "neutral" : "info"}>{typeLabel[notification.type]}</StatusBadge>{!notification.readAt ? <span className="text-xs font-bold text-[var(--primary)]">새 알림</span> : null}</div><h3 className="mt-3 text-lg font-extrabold">{notification.title}</h3><p className="muted mt-2 max-w-3xl text-sm leading-6">{notification.body}</p><time className="muted mt-3 block text-xs" dateTime={notification.createdAt.toISOString()}>{dateTime.format(notification.createdAt)}</time></div>
@@ -49,7 +50,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </li>)}</ol>}
         </section>
         {data.totalPages > 1 ? <nav aria-label="알림 페이지" className="flex items-center justify-between"><span className="muted text-sm">{data.page} / {data.totalPages} 페이지</span><div className="flex gap-2">{data.page > 1 ? <Link className="button-quiet" href={`/notifications?page=${data.page - 1}`}>이전</Link> : null}{data.page < data.totalPages ? <Link className="button-quiet" href={`/notifications?page=${data.page + 1}`}>다음</Link> : null}</div></nav> : null}
-      </main>
+      </div></AccountSectionLayout>
     </AppShell>
   );
 }
