@@ -13,7 +13,7 @@ if (process.env.ALLOW_LOCAL_TEAM_APPLICATION_TEST !== "true") {
 }
 
 const professorId = randomUUID();
-const studentIds = Array.from({ length: 8 }, () => randomUUID());
+const studentIds = Array.from({ length: 10 }, () => randomUUID());
 const emails = studentIds.map((id) => `verification+${id}@pusan.ac.kr`);
 const academicYear = 10_000 + Math.floor(Math.random() * 10_000);
 let cycleId: string | null = null;
@@ -89,6 +89,42 @@ async function main() {
   const repository = new PrismaTopicApplicationRepository(prisma);
   const appliedAt = new Date("2026-07-17T00:00:00Z");
 
+  const invalidInviteTopic = await createTopic(program.id, "TEAM_ONLY");
+  const invalidRoleInvite = await repository.createTeamDraftIfAvailable({
+    topicId: invalidInviteTopic.id,
+    studentId: studentIds[8],
+    studentEmail: emails[8],
+    kind: "TEAM",
+    answers: [{ questionId: invalidInviteTopic.applicationQuestions[0].id, value: "교수 계정 초대 차단 검증" }],
+    inviteeEmails: [`verification+${professorId}@pusan.ac.kr`],
+    appliedAt,
+  });
+  if (invalidRoleInvite.outcome !== "TEAM_MEMBER_UNAVAILABLE") throw new Error("학생이 아닌 등록 계정의 팀 초대를 차단하지 못했습니다.");
+
+  const roleChangeTopic = await createTopic(program.id, "TEAM_ONLY", 3);
+  const roleChangeDraft = await repository.createTeamDraftIfAvailable({
+    topicId: roleChangeTopic.id,
+    studentId: studentIds[8],
+    studentEmail: emails[8],
+    kind: "TEAM",
+    answers: [{ questionId: roleChangeTopic.applicationQuestions[0].id, value: "승격 시 역할 재검증" }],
+    inviteeEmails: [emails[7], emails[9]],
+    appliedAt,
+  });
+  if (roleChangeDraft.outcome !== "INVITATIONS_PENDING") throw new Error("역할 변경 검증 팀 초안 생성 실패");
+  const roleInvitations = await prisma.teamApplicationInvitation.findMany({ where: { draftId: roleChangeDraft.draftId }, orderBy: { email: "asc" } });
+  const firstRoleInvitation = roleInvitations.find(({ email }) => email === emails[9]);
+  const finalRoleInvitation = roleInvitations.find(({ email }) => email === emails[7]);
+  if (!firstRoleInvitation || !finalRoleInvitation) throw new Error("역할 변경 검증 초대 조회 실패");
+  if (await repository.respond(firstRoleInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "PENDING") throw new Error("역할 변경 전 첫 수락 실패");
+  await prisma.user.update({ where: { id: studentIds[9] }, data: { role: "PROFESSOR" } });
+  const roleChangePromotion = await repository.respond(finalRoleInvitation.id, { id: studentIds[7], email: emails[7] }, "ACCEPT", appliedAt);
+  if (roleChangePromotion !== "MEMBER_UNAVAILABLE" || await prisma.topicApplication.count({ where: { topicId: roleChangeTopic.id } })) {
+    throw new Error("승격 시 학생 역할 재검증에 실패했습니다.");
+  }
+  await prisma.user.update({ where: { id: studentIds[9] }, data: { role: "STUDENT" } });
+  await repository.cancelDraft(roleChangeDraft.draftId, studentIds[8]);
+
   const individualTopic = await createTopic(program.id, "INDIVIDUAL_ONLY");
   const individual = await repository.createIndividualIfAvailable({
     topicId: individualTopic.id,
@@ -160,6 +196,31 @@ async function main() {
   const rejection = await repository.reject(rejectedLeader.id, { id: professorId, isAdmin: false }, appliedAt);
   const rejectedCount = await prisma.topicApplication.count({ where: { topicId: rejectedTopic.id, status: "REJECTED" } });
   if (rejection !== "REJECTED" || rejectedCount !== 2) throw new Error("팀 지원 전체 거절에 실패했습니다.");
+
+  const conflictingTeamTopic = await createTopic(program.id, "TEAM_ONLY", 2);
+  const conflictingDraft = await repository.createTeamDraftIfAvailable({
+    topicId: conflictingTeamTopic.id,
+    studentId: studentIds[8],
+    studentEmail: emails[8],
+    kind: "TEAM",
+    answers: [{ questionId: conflictingTeamTopic.applicationQuestions[0].id, value: "교차 주제 팀 지원 충돌 검증" }],
+    inviteeEmails: [emails[9]],
+    appliedAt,
+  });
+  if (conflictingDraft.outcome !== "INVITATIONS_PENDING") throw new Error("교차 주제 팀 지원 초안 생성 실패");
+  const conflictingInvitation = await prisma.teamApplicationInvitation.findFirstOrThrow({ where: { draftId: conflictingDraft.draftId } });
+  if (await repository.respond(conflictingInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "APPLICATION_CREATED") {
+    throw new Error("교차 주제 팀 지원 승격 실패");
+  }
+  const legacyAcceptedTopic = await createTopic(program.id, "INDIVIDUAL_ONLY", 1);
+  const legacyAcceptedApplication = await prisma.topicApplication.create({
+    data: { topicId: legacyAcceptedTopic.id, studentId: studentIds[8], message: "교차 주제 기존 지원 수락" },
+  });
+  if (await repository.accept(legacyAcceptedApplication.id, { id: professorId, isAdmin: false }, appliedAt) !== "ACCEPTED") {
+    throw new Error("교차 주제 기존 지원 수락 실패");
+  }
+  const rejectedConflictingGroupCount = await prisma.topicApplication.count({ where: { topicId: conflictingTeamTopic.id, status: "REJECTED" } });
+  if (rejectedConflictingGroupCount !== 2) throw new Error("기존 지원 수락 시 충돌 팀 지원 전체를 거절하지 못했습니다.");
 
   const recruitmentTopic = await createTopic(program.id, "INDIVIDUAL_ONLY", 3);
   const recruitmentLeaderApplication = await prisma.topicApplication.create({
@@ -249,7 +310,7 @@ async function main() {
     throw new Error("승격 실패 후 팀원 초대를 재시도 가능한 상태로 보존하지 못했습니다.");
   }
 
-  console.log(JSON.stringify({ individual: individual.outcome, teamPromotion: finalAcceptance, acceptedTeamMembers: memberCount, legacyConflict: legacyConflictAfterDecision.status, rejectedTeamMembers: rejectedCount, recruitmentCompatibility: recruitmentDecision, staleDraftCleanup: true, programDraftCleanup: true, failedPromotionInvitation: invitationAfterFailure.status }));
+  console.log(JSON.stringify({ invalidRoleInvite: invalidRoleInvite.outcome, roleChangeBlocked: roleChangePromotion, individual: individual.outcome, teamPromotion: finalAcceptance, acceptedTeamMembers: memberCount, legacyConflict: legacyConflictAfterDecision.status, rejectedTeamMembers: rejectedCount, conflictingTeamRejection: rejectedConflictingGroupCount, recruitmentCompatibility: recruitmentDecision, staleDraftCleanup: true, programDraftCleanup: true, failedPromotionInvitation: invitationAfterFailure.status }));
 }
 
 main()

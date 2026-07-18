@@ -88,4 +88,59 @@ describe("Prisma 지원 결정 저장소", () => {
       ),
     ).resolves.toBe("CONFLICT");
   });
+
+  it("거절 시 프로그램·주제·팀·사용자를 잠근 뒤 지원 상태를 변경한다", async () => {
+    const order: string[] = [];
+    let rawCall = 0;
+    const transaction = {
+      $queryRaw: vi.fn(async () => {
+        rawCall += 1;
+        order.push(`lock-${rawCall}`);
+        if (rawCall === 2) return [{ authorId: "professor-1", title: "주제" }];
+        return [];
+      }),
+      topicApplication: {
+        findUnique: vi.fn(async () => ({ id: "application-1", topicId: "topic-1", studentId: "student-1", groupId: null })),
+        findMany: vi.fn(async () => [{ id: "application-1", studentId: "student-1", status: "PENDING" }]),
+        updateMany: vi.fn(async () => { order.push("application-updated"); return { count: 1 }; }),
+      },
+      recruitmentApplication: {
+        findUnique: vi.fn(async () => null),
+        updateMany: vi.fn(async () => ({ count: 0 })),
+      },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
+    const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApplicationRepository(client).reject(
+      "application-1",
+      { id: "professor-1", isAdmin: false },
+      new Date("2026-07-19T00:00:00Z"),
+    )).resolves.toBe("REJECTED");
+
+    expect(order).toEqual(["lock-1", "lock-2", "lock-3", "lock-4", "application-updated"]);
+  });
+
+  it("수락과 거절의 PostgreSQL 쓰기 충돌을 제한 횟수만큼 재시도한다", async () => {
+    const acceptTransaction = vi.fn()
+      .mockRejectedValueOnce(knownError("P2034"))
+      .mockResolvedValueOnce("ACCEPTED");
+    const rejectTransaction = vi.fn()
+      .mockRejectedValueOnce(knownError("P2034"))
+      .mockResolvedValueOnce("REJECTED");
+
+    await expect(new PrismaTopicApplicationRepository({ $transaction: acceptTransaction } as unknown as PrismaClient).accept(
+      "application-1",
+      { id: "professor-1", isAdmin: false },
+      new Date(),
+    )).resolves.toBe("ACCEPTED");
+    await expect(new PrismaTopicApplicationRepository({ $transaction: rejectTransaction } as unknown as PrismaClient).reject(
+      "application-1",
+      { id: "professor-1", isAdmin: false },
+      new Date(),
+    )).resolves.toBe("REJECTED");
+
+    expect(acceptTransaction).toHaveBeenCalledTimes(2);
+    expect(rejectTransaction).toHaveBeenCalledTimes(2);
+  });
 });

@@ -14,7 +14,7 @@ if (process.env.ALLOW_LOCAL_CONCURRENCY_TEST !== "true") {
 const academicYear = 9000 + Math.floor(Math.random() * 1000);
 const term = "SECOND" as const;
 const professorId = randomUUID();
-const studentIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+const studentIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
 let createdCycleId: string | null = null;
 let createdProgramId: string | null = null;
 
@@ -211,6 +211,25 @@ async function main() {
     );
   }
 
+  const oppositeDecisionTopic = await createTopic(cycle.id, "수락 거절 경합", 1);
+  const oppositeDecisionApplication = await createApplication(oppositeDecisionTopic.id, studentIds[4]);
+  await Promise.all([
+    repository.accept(oppositeDecisionApplication.id, actor, new Date()),
+    repository.reject(oppositeDecisionApplication.id, actor, new Date()),
+  ]);
+  const oppositeDecisionState = await prisma.topicApplication.findUniqueOrThrow({
+    where: { id: oppositeDecisionApplication.id },
+    select: { status: true },
+  });
+  const oppositeDecisionMembers = await prisma.teamMember.count({ where: { topicId: oppositeDecisionTopic.id } });
+  if (
+    oppositeDecisionState.status === "PENDING" ||
+    (oppositeDecisionState.status === "ACCEPTED" && oppositeDecisionMembers !== 1) ||
+    (oppositeDecisionState.status === "REJECTED" && oppositeDecisionMembers !== 0)
+  ) {
+    throw new Error(`수락과 거절 경합 불변식이 깨졌습니다: status=${oppositeDecisionState.status}, members=${oppositeDecisionMembers}`);
+  }
+
   console.log(
     JSON.stringify({
       capacity: { accepted: capacityAccepted, members: capacityMembers },
@@ -221,6 +240,10 @@ async function main() {
       acceptApplyRace: {
         memberships: decisionRaceMemberships,
         pending: decisionRacePending,
+      },
+      oppositeDecisionRace: {
+        status: oppositeDecisionState.status,
+        members: oppositeDecisionMembers,
       },
     }),
   );

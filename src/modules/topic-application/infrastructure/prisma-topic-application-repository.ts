@@ -136,7 +136,10 @@ export class PrismaTopicApplicationRepository
         SELECT "status" FROM "team" WHERE "topicId" = ${input.topicId} FOR UPDATE
       `);
       if (teams[0] && teams[0].status !== "FORMING") return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      await transaction.$queryRaw(Prisma.sql`SELECT "id" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE`);
+      const students = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
+        SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE
+      `);
+      if (!areActiveStudents(students, 1)) return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const membership = await transaction.teamMember.findUnique({
         where: {
@@ -226,7 +229,10 @@ export class PrismaTopicApplicationRepository
         SELECT "status" FROM "team" WHERE "topicId" = ${input.topicId} FOR UPDATE
       `);
       if (teams[0] && teams[0].status !== "FORMING") return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      await transaction.$queryRaw(Prisma.sql`SELECT "id" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE`);
+      const leaders = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
+        SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE
+      `);
+      if (!areActiveStudents(leaders, 1)) return { outcome: "TOPIC_UNAVAILABLE" } as const;
       const membership = await transaction.teamMember.findUnique({ where: { academicCycleId_studentId: { academicCycleId: topic.academicCycleId, studentId: input.studentId } }, select: { id: true } });
       const existing = await transaction.topicApplication.findUnique({ where: { topicId_studentId: { topicId: input.topicId, studentId: input.studentId } }, select: { id: true } });
       const existingDraft = await transaction.teamApplicationDraft.findUnique({ where: { topicId_leaderId: { topicId: input.topicId, leaderId: input.studentId } }, select: { id: true } });
@@ -236,8 +242,12 @@ export class PrismaTopicApplicationRepository
       if (existing || existingDraft) return { outcome: "ALREADY_APPLIED" } as const;
       if ((team?._count.members ?? 0) + input.inviteeEmails.length + 1 > topic.capacity || questionCount !== input.answers.length) return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
-      const registeredInvitees = await transaction.user.findMany({ where: { email: { in: input.inviteeEmails, mode: "insensitive" } }, select: { id: true } });
+      const registeredInvitees = await transaction.user.findMany({
+        where: { email: { in: input.inviteeEmails, mode: "insensitive" } },
+        select: { id: true, role: true, isActive: true },
+      });
       if (registeredInvitees.length) {
+        if (!areActiveStudents(registeredInvitees, registeredInvitees.length)) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
         const unavailableCount = await transaction.user.count({ where: { id: { in: registeredInvitees.map(({ id }) => id) }, OR: [
           { teamMemberships: { some: { academicCycleId: topic.academicCycleId } } },
           { topicApplications: { some: { topicId: input.topicId } } },
@@ -356,9 +366,10 @@ export class PrismaTopicApplicationRepository
       const memberIds = invitations.map(({ inviteeId }) => inviteeId).filter((id): id is string => Boolean(id));
       if (memberIds.length !== invitations.length) return "MEMBER_UNAVAILABLE";
       const participantIds = [draft.leaderId, ...memberIds];
-      await transaction.$queryRaw(Prisma.sql`
-        SELECT "id" FROM "user" WHERE "id" IN (${Prisma.join(participantIds)}) ORDER BY "id" FOR UPDATE
+      const participants = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
+        SELECT "id", "role", "isActive" FROM "user" WHERE "id" IN (${Prisma.join(participantIds)}) ORDER BY "id" FOR UPDATE
       `);
+      if (!areActiveStudents(participants, participantIds.length)) return "MEMBER_UNAVAILABLE";
       const membershipCount = await transaction.teamMember.count({ where: { academicCycleId: topic.academicCycleId, studentId: { in: participantIds } } });
       const existingApplicationCount = await transaction.topicApplication.count({ where: { topicId: topic.id, studentId: { in: participantIds } } });
       const team = await transaction.team.findUnique({ where: { topicId: topic.id }, select: { _count: { select: { members: true } } } });
@@ -492,22 +503,29 @@ export class PrismaTopicApplicationRepository
     actor: TopicApplicationDecisionActor,
     decidedAt: Date,
   ): Promise<AcceptTopicApplicationOutcome> {
-    try {
-      return await this.acceptOnce(id, actor, decidedAt);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        return isStudentCycleUniqueConflict(error)
-          ? "STUDENT_ALREADY_ASSIGNED"
-          : "CONFLICT";
+    for (let attempt = 1; attempt <= DECISION_TRANSACTION_ATTEMPTS; attempt += 1) {
+      try {
+        return await this.acceptOnce(id, actor, decidedAt);
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          return isStudentCycleUniqueConflict(error)
+            ? "STUDENT_ALREADY_ASSIGNED"
+            : "CONFLICT";
+        }
+        if (error instanceof DecisionWriteConflictError) {
+          return "CONFLICT";
+        }
+        if (isRetryableDecisionConflict(error)) {
+          if (attempt < DECISION_TRANSACTION_ATTEMPTS) continue;
+          return "CONFLICT";
+        }
+        throw error;
       }
-      if (error instanceof DecisionWriteConflictError) {
-        return "CONFLICT";
-      }
-      throw error;
     }
+    return "CONFLICT";
   }
 
   async reject(
@@ -515,28 +533,77 @@ export class PrismaTopicApplicationRepository
     actor: TopicApplicationDecisionActor,
     decidedAt: Date,
   ): Promise<RejectTopicApplicationOutcome> {
-    return this.client.$transaction(async (transaction) => {
-      const application = await transaction.topicApplication.findUnique({
-        where: { id },
-        select: { id: true, topicId: true, studentId: true, groupId: true, status: true },
-      });
-      if (!application || application.status !== "PENDING") return "CONFLICT";
-      const topic = await transaction.topic.findUnique({ where: { id: application.topicId }, select: { authorId: true, title: true } });
-      if (!topic) return "CONFLICT";
-      let recruiterAllowed = false;
-      if (application.groupId === null) {
-        const recruitment = await transaction.recruitmentApplication.findUnique({ where: { topicApplicationId: application.id }, select: { postId: true } });
-        if (recruitment) {
-          const post = await transaction.recruitmentPost.findUnique({ where: { id: recruitment.postId }, select: { authorId: true, status: true, teamId: true } });
-          const team = post ? await transaction.team.findUnique({ where: { id: post.teamId }, select: { status: true } }) : null;
-          recruiterAllowed = post?.authorId === actor.id && post.status === "OPEN" && team?.status === "FORMING";
+    for (let attempt = 1; attempt <= DECISION_TRANSACTION_ATTEMPTS; attempt += 1) {
+      try {
+        return await this.rejectOnce(id, actor, decidedAt);
+      } catch (error) {
+        if (isRetryableDecisionConflict(error)) {
+          if (attempt < DECISION_TRANSACTION_ATTEMPTS) continue;
+          return "CONFLICT";
         }
+        throw error;
       }
+    }
+    return "CONFLICT";
+  }
+
+  private rejectOnce(
+    id: string,
+    actor: TopicApplicationDecisionActor,
+    decidedAt: Date,
+  ): Promise<RejectTopicApplicationOutcome> {
+    return this.client.$transaction(async (transaction) => {
+      const initial = await transaction.topicApplication.findUnique({
+        where: { id },
+        select: { id: true, topicId: true, studentId: true, groupId: true },
+      });
+      if (!initial) return "CONFLICT";
+      const initialTargets = initial.groupId
+        ? await transaction.topicApplication.findMany({ where: { groupId: initial.groupId }, select: { id: true, studentId: true } })
+        : [{ id: initial.id, studentId: initial.studentId }];
+      if (!initialTargets.length) return "CONFLICT";
+
+      await transaction.$queryRaw(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${initial.topicId}
+        FOR UPDATE OF "project_program"
+      `);
+      const topicRows = await transaction.$queryRaw<Array<{ authorId: string; title: string }>>(Prisma.sql`
+        SELECT "authorId", "title" FROM "topic" WHERE "id" = ${initial.topicId} FOR UPDATE
+      `);
+      const topic = topicRows[0];
+      if (!topic) return "CONFLICT";
+
+      const teamRows = await transaction.$queryRaw<Array<{ id: string; status: "FORMING" | "CONFIRMED" | "CLOSED" }>>(Prisma.sql`
+        SELECT "id", "status" FROM "team" WHERE "topicId" = ${initial.topicId} FOR UPDATE
+      `);
+      const team = teamRows[0];
+
+      const recruitment = initial.groupId === null
+        ? await transaction.recruitmentApplication.findUnique({ where: { topicApplicationId: initial.id }, select: { postId: true } })
+        : null;
+      const postRows = recruitment
+        ? await transaction.$queryRaw<Array<{ authorId: string; status: "OPEN" | "CLOSED"; teamId: string }>>(Prisma.sql`
+            SELECT "authorId", "status", "teamId" FROM "recruitment_post" WHERE "id" = ${recruitment.postId} FOR UPDATE
+          `)
+        : [];
+
+      const studentIds = initialTargets.map(({ studentId }) => studentId).sort();
+      await transaction.$queryRaw(Prisma.sql`
+        SELECT "id" FROM "user" WHERE "id" IN (${Prisma.join(studentIds)}) ORDER BY "id" FOR UPDATE
+      `);
+
+      const targets = await transaction.topicApplication.findMany({
+        where: { id: { in: initialTargets.map(({ id: targetId }) => targetId) } },
+        select: { id: true, studentId: true, status: true },
+      });
+      if (targets.length !== initialTargets.length || targets.some(({ status }) => status !== "PENDING")) return "CONFLICT";
+
+      let recruiterAllowed = false;
+      const post = postRows[0];
+      recruiterAllowed = post?.authorId === actor.id && post.status === "OPEN" && post.teamId === team?.id && team.status === "FORMING";
       if (!actor.isAdmin && topic.authorId !== actor.id && !recruiterAllowed) return "FORBIDDEN";
-      const targets = application.groupId
-        ? await transaction.topicApplication.findMany({ where: { groupId: application.groupId }, select: { id: true, studentId: true, status: true } })
-        : [{ id: application.id, studentId: application.studentId, status: application.status }];
-      if (targets.some(({ status }) => status !== "PENDING")) return "CONFLICT";
       const result = await transaction.topicApplication.updateMany({ where: { id: { in: targets.map(({ id: targetId }) => targetId) }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       if (result.count !== targets.length) return "CONFLICT";
       await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: { in: targets.map(({ id: targetId }) => targetId) }, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
@@ -599,9 +666,10 @@ export class PrismaTopicApplicationRepository
         const existingTeam = existingTeams[0];
         if (existingTeam && existingTeam.status !== "FORMING") return "CONFLICT";
 
-        await transaction.$queryRaw(Prisma.sql`
-          SELECT "id" FROM "user" WHERE "id" = ${target.studentId} FOR UPDATE
+        const participants = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
+          SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${target.studentId} FOR UPDATE
         `);
+        if (!areActiveStudents(participants, 1)) return "CONFLICT";
 
         const application = await transaction.topicApplication.findUnique({
           where: { id },
@@ -680,7 +748,7 @@ export class PrismaTopicApplicationRepository
         await transaction.recruitmentApplication.updateMany({ where: { topicApplicationId: application.id, status: "PENDING" }, data: { status: "ACCEPTED", decidedAt } });
 
         const reachesCapacity = memberCount + 1 === application.topic.capacity;
-        const automaticallyRejected = await transaction.topicApplication.findMany({
+        const directlyConflicting = await transaction.topicApplication.findMany({
           where: {
             id: { not: application.id },
             status: "PENDING",
@@ -689,38 +757,32 @@ export class PrismaTopicApplicationRepository
               ...(reachesCapacity ? [{ topicId: application.topicId }] : []),
             ],
           },
-          select: { id: true, studentId: true, topic: { select: { title: true } } },
+          select: { id: true, groupId: true },
         });
-
-        await transaction.topicApplication.updateMany({
-          where: {
-            id: { not: application.id },
-            studentId: application.studentId,
-            status: "PENDING",
-            topic: {
-              academicCycleId: application.topic.academicCycleId,
-            },
-          },
-          data: { status: "REJECTED", decidedAt },
-        });
-        await transaction.recruitmentApplication.updateMany({
-          where: { status: "PENDING", topicApplication: { studentId: application.studentId, status: "REJECTED", topic: { academicCycleId: application.topic.academicCycleId } } },
-          data: { status: "REJECTED", decidedAt },
-        });
-
-        if (reachesCapacity) {
+        const conflictingIds = directlyConflicting.map(({ id: conflictingId }) => conflictingId);
+        const conflictingGroupIds = directlyConflicting.flatMap(({ groupId }) => groupId ? [groupId] : []);
+        const automaticallyRejected = conflictingIds.length || conflictingGroupIds.length
+          ? await transaction.topicApplication.findMany({
+              where: {
+                status: "PENDING",
+                OR: [{ id: { in: conflictingIds } }, { groupId: { in: conflictingGroupIds } }],
+              },
+              select: { id: true, studentId: true, topic: { select: { title: true } } },
+            })
+          : [];
+        if (automaticallyRejected.length) {
+          const rejectedIds = automaticallyRejected.map(({ id: rejectedId }) => rejectedId);
           await transaction.topicApplication.updateMany({
-            where: {
-              id: { not: application.id },
-              topicId: application.topicId,
-              status: "PENDING",
-            },
+            where: { id: { in: rejectedIds }, status: "PENDING" },
             data: { status: "REJECTED", decidedAt },
           });
           await transaction.recruitmentApplication.updateMany({
-            where: { status: "PENDING", topicApplication: { topicId: application.topicId, status: "REJECTED" } },
+            where: { topicApplicationId: { in: rejectedIds }, status: "PENDING" },
             data: { status: "REJECTED", decidedAt },
           });
+        }
+
+        if (reachesCapacity) {
           await transaction.recruitmentPost.updateMany({ where: { teamId: team.id, status: "OPEN" }, data: { status: "CLOSED" } });
         }
 
@@ -800,9 +862,10 @@ export class PrismaTopicApplicationRepository
       SELECT "id", "status" FROM "team" WHERE "topicId" = ${group.topicId} FOR UPDATE
     `);
     if (existingTeams[0] && existingTeams[0].status !== "FORMING") return "CONFLICT";
-    await transaction.$queryRaw(Prisma.sql`
-      SELECT "id" FROM "user" WHERE "id" IN (${Prisma.join(studentIds)}) ORDER BY "id" FOR UPDATE
+    const participants = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
+      SELECT "id", "role", "isActive" FROM "user" WHERE "id" IN (${Prisma.join(studentIds)}) ORDER BY "id" FOR UPDATE
     `);
+    if (!areActiveStudents(participants, studentIds.length)) return "CONFLICT";
 
     const existingMemberships = await transaction.teamMember.count({
       where: { academicCycleId: topic.academicCycleId, studentId: { in: studentIds } },
@@ -908,4 +971,17 @@ function isStudentCycleUniqueConflict(
     target.includes("academicCycleId") &&
     target.includes("studentId")
   );
+}
+
+function areActiveStudents(
+  users: Array<{ role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>,
+  expectedCount: number,
+): boolean {
+  return users.length === expectedCount && users.every(({ role, isActive }) => role === "STUDENT" && isActive);
+}
+
+const DECISION_TRANSACTION_ATTEMPTS = 3;
+
+function isRetryableDecisionConflict(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
 }

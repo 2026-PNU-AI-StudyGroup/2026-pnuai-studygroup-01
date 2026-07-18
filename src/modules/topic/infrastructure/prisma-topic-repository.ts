@@ -179,15 +179,15 @@ export class PrismaTopicRepository
   async closePublished(id: string): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const decidedAt = new Date();
-      const applications = await transaction.topicApplication.findMany({
-        where: { topicId: id, status: "PENDING" },
-        select: { id: true, studentId: true, topic: { select: { title: true } } },
-      });
       const result = await transaction.topic.updateMany({
         where: { id, status: "PUBLISHED" },
         data: { status: "CLOSED" },
       });
       if (result.count !== 1) return false;
+      const applications = await transaction.topicApplication.findMany({
+        where: { topicId: id, status: "PENDING" },
+        select: { id: true, studentId: true, topic: { select: { title: true } } },
+      });
       await transaction.teamApplicationDraft.deleteMany({ where: { topicId: id } });
       await transaction.topicApplication.updateMany({ where: { topicId: id, status: "PENDING" }, data: { status: "REJECTED", decidedAt } });
       await transaction.recruitmentPost.updateMany({ where: { team: { topicId: id }, status: "OPEN" }, data: { status: "CLOSED" } });
