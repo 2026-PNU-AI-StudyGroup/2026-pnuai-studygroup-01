@@ -16,7 +16,7 @@ export function AcademicCycleForm() {
   );
 
   return (
-    <form action={action} className="grid gap-4 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-6 sm:grid-cols-3 sm:px-6">
+    <form action={action} className="grid gap-4 border-t-2 border-[var(--ink)] pt-6 sm:grid-cols-3">
       <label className="grid gap-2 text-sm font-medium">
         학년도
         <input

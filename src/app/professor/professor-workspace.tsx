@@ -1,0 +1,33 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+const items = [
+  ["/professor/topics", "1. 주제 준비", "작성·공개·일정"],
+  ["/professor/applications", "2. 지원 검토", "지원서·팀 확인"],
+  ["/dashboard", "3. 팀 운영", "확정 팀·진행 기록"],
+] as const;
+
+export function ProfessorWorkspace({ currentPath, eyebrow = "지도 프로젝트", title, description, actions, children }: { currentPath: string; eyebrow?: string; title: string; description: string; actions?: ReactNode; children: ReactNode }) {
+  return <main className="content-shell lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-14">
+    <aside className="mb-10 border-b border-[var(--line)] pb-5 lg:mb-0 lg:border-b-0 lg:border-r lg:pr-7">
+      <p className="text-sm font-extrabold">교수 업무 흐름</p>
+      <nav aria-label="교수 업무 흐름" className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1">
+        {items.map(([href, label, hint]) => {
+          const active = href === "/dashboard" ? currentPath === href : currentPath === href || currentPath.startsWith(`${href}/`);
+          return <Link key={href} href={href} aria-current={active ? "step" : undefined} className={`min-w-max border-l-2 px-4 py-3 text-sm transition-colors motion-reduce:transition-none lg:min-w-0 ${active ? "border-[var(--primary)] bg-[var(--primary-subtle)] font-extrabold text-[var(--primary-hover)]" : "border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:text-[var(--ink)]"}`}><span className="block">{label}</span><span className="mt-1 hidden text-xs font-normal text-[var(--muted)] lg:block">{hint}</span></Link>;
+        })}
+      </nav>
+      <p className="mt-8 hidden border-l-2 border-[var(--accent)] pl-4 text-xs leading-5 text-[var(--muted)] lg:block">주제를 공개하고 지원을 결정하면 확정된 팀의 운영 화면으로 이어집니다.</p>
+    </aside>
+    <div className="min-w-0">
+      <header className="border-b border-[var(--line)] pb-8">
+        <p className="text-xs font-extrabold tracking-[0.14em] text-[var(--primary)]">{eyebrow}</p>
+        <div className="mt-3 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl"><h1 className="editorial-title">{title}</h1><p className="muted mt-3 text-base leading-7">{description}</p></div>
+          {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+        </div>
+      </header>
+      <div className="space-y-10 pt-8">{children}</div>
+    </div>
+  </main>;
+}

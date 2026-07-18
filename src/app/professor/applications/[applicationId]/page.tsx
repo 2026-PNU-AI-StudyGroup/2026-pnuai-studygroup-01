@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/received-application-detail";
+import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   GetReceivedTopicApplicationService,
@@ -11,7 +12,6 @@ import {
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/shared/ui/app-shell";
-import { PageHeader } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "지원서 상세" };
 
@@ -42,19 +42,13 @@ export default async function ProfessorApplicationDetailPage({
       userName={actor.name}
       currentPath="/professor/applications"
     >
-      <main className="content-shell space-y-10">
-        <PageHeader
-          eyebrow="지원 검토"
-          title="지원서 상세"
-          description="지원자 정보와 지원 동기를 충분히 확인한 뒤 팀 참여 여부를 결정하세요."
-          actions={
+      <ProfessorWorkspace currentPath="/professor/applications" eyebrow="지원 검토 · 지원서" title="지원서 상세" description="지원자와 팀 구성, 문항별 답변을 차례로 확인한 뒤 참여 여부를 결정합니다." actions={
             <Link href="/professor/applications" className="button-secondary">
               목록으로
             </Link>
-          }
-        />
+          }>
         <ReceivedApplicationDetail application={application} />
-      </main>
+      </ProfessorWorkspace>
     </AppShell>
   );
 }
