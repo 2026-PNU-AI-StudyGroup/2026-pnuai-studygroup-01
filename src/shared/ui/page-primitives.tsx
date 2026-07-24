@@ -1,23 +1,25 @@
 import type { ReactNode } from "react";
 
-export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: string; title: ReactNode; description?: string; actions?: ReactNode }) {
+export function PageHeader({ eyebrow, title, description, actions, compact = false }: { eyebrow: string; title: ReactNode; description?: string; actions?: ReactNode; compact?: boolean }) {
   return (
-    <header className="flex flex-col gap-6 border-b border-[var(--line)] pb-8 sm:flex-row sm:items-end sm:justify-between">
+    <header className={`flex flex-col border-b border-[var(--line)] sm:flex-row sm:items-end sm:justify-between ${compact ? "gap-4 pb-6" : "gap-6 pb-8"}`}>
       <div className="max-w-3xl">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-2 text-[clamp(2rem,4vw,2.5rem)] font-black leading-tight tracking-[-0.04em] text-[var(--ink)]">{title}</h1>
-        {description ? <p className="muted mt-3 max-w-2xl text-[0.9375rem] leading-6">{description}</p> : null}
+        <h1 className={`${compact ? "mt-1 text-[clamp(1.75rem,3vw,2rem)]" : "mt-2 text-[clamp(2rem,4vw,2.5rem)]"} font-black leading-tight tracking-[-0.04em] text-[var(--ink)]`}>{title}</h1>
+        {description ? <p className={`muted max-w-2xl text-[0.9375rem] leading-6 ${compact ? "mt-2" : "mt-3"}`}>{description}</p> : null}
       </div>
-      {actions ? <div className="shrink-0">{actions}</div> : null}
+      {actions ? <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
     </header>
   );
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
-    <div className="grid min-h-56 place-items-center border-y border-[var(--line)] px-6 py-10 text-center">
+    <div className="grid min-h-56 place-items-center rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-subtle)] px-6 py-10 text-center">
       <div className="max-w-sm">
-        <span aria-hidden="true" className="mx-auto block size-2 rounded-full bg-[var(--accent)]" />
+        <span aria-hidden="true" className="mx-auto grid size-11 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)] shadow-sm">
+          <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+        </span>
         <h2 className="mt-4 font-bold text-[var(--ink)]">{title}</h2>
         <p className="muted mt-2 text-sm leading-6">{description}</p>
         {action ? <div className="mt-5">{action}</div> : null}

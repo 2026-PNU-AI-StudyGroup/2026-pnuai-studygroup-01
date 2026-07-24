@@ -15,6 +15,8 @@
   --ink: #172033;
   --muted: #626c7f;
   --line: #dfe3ea;
+  --line-strong: #7c8799;
+  --field-border: #7c8799;
   --primary: #2f5bea;
   --primary-hover: #2449c4;
   --primary-subtle: #edf1ff;
@@ -92,23 +94,127 @@ textarea {
   }
 
   .field {
-    min-height: 2.75rem;
+    min-height: 3rem;
     width: 100%;
-    border: 1px solid #7c8799;
+    border: 1px solid var(--field-border);
     border-radius: var(--radius-control);
-    background: var(--surface);
-    padding: 0.625rem 0.75rem;
+    background: var(--surface-subtle);
+    padding: 0.6875rem 0.875rem;
     color: var(--ink);
-    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
   }
 
   .field:hover {
-    border-color: #8d98aa;
+    border-color: #7f8a9d;
+    background: var(--surface);
   }
 
   .field:focus {
     border-color: var(--focus);
+    background: var(--surface);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 12%, transparent);
+  }
+
+  .field:user-invalid {
+    border-color: var(--danger);
+    background: var(--danger-subtle);
+  }
+
+  .field:user-invalid:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
+  }
+
+  .field::placeholder {
+    color: var(--muted);
+    opacity: 1;
+  }
+
+  textarea.field {
+    resize: vertical;
+  }
+
+  .field:disabled,
+  .field[readonly] {
+    cursor: not-allowed;
+    background: #eef0f4;
+    color: var(--muted);
+  }
+
+  .email-chip-field {
+    display: flex;
+    min-height: 3.25rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--field-border);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+    padding: 0.4375rem 0.5rem;
+    cursor: text;
+    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
+  }
+
+  .email-chip-field:hover {
+    border-color: #657186;
+  }
+
+  .email-chip-field:focus-within {
+    border-color: var(--focus);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 12%, transparent);
+  }
+
+  .email-chip {
+    display: inline-flex;
+    min-height: 2.75rem;
+    max-width: 100%;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--line));
+    border-radius: 0.5rem;
+    background: var(--primary-subtle);
+    padding-left: 0.625rem;
+    color: var(--primary-hover);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .email-chip > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .email-chip-remove {
+    display: inline-grid;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    place-items: center;
+    border-radius: 0.375rem;
+    color: var(--primary-hover);
+    font-size: 1.125rem;
+    line-height: 1;
+  }
+
+  .email-chip-remove:hover {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+  }
+
+  .email-chip-input {
+    min-height: 2.125rem;
+    min-width: min(15rem, 100%);
+    flex: 1 1 15rem;
+    border: 0;
+    background: transparent;
+    padding-inline: 0.25rem;
+    color: var(--ink);
+    outline: 0;
+  }
+
+  .email-chip-input::placeholder {
+    color: var(--muted);
   }
 
   .skip-link {
@@ -237,6 +343,21 @@ textarea {
     animation: page-enter var(--silk-duration) var(--silk-ease) both;
   }
 
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: #e9edf5;
+  }
+
+  .skeleton::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.72), transparent);
+    content: "";
+    transform: translateX(-100%);
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  }
+
   .record-row {
     transition: background-color var(--snap-duration) var(--snap-ease), padding-inline var(--snap-duration) var(--snap-ease);
   }
@@ -260,6 +381,24 @@ textarea {
     animation: portal-focus 320ms var(--silk-ease) 50ms both;
   }
 
+  .recruitment-hero {
+    background:
+      radial-gradient(circle at 78% 20%, rgb(255 255 255 / 0.95), transparent 30%),
+      linear-gradient(112deg, #f4f7ff 0%, #ffffff 48%, #eaf1ff 100%);
+    box-shadow: 0 18px 50px rgb(47 91 234 / 0.08);
+  }
+
+  .recruitment-card {
+    box-shadow: 0 8px 24px rgb(23 32 51 / 0.055);
+    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), transform var(--snap-duration) var(--snap-ease);
+  }
+
+  .recruitment-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 42%, var(--line));
+    box-shadow: 0 13px 30px rgb(23 32 51 / 0.09);
+    transform: translateY(-2px);
+  }
+
   .portal-tab::after {
     position: absolute;
     inset-inline: 0;
@@ -269,6 +408,21 @@ textarea {
     content: "";
     transform-origin: center;
     transition: transform var(--silk-duration) var(--silk-ease);
+  }
+
+  .project-view-tab {
+    transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), border-color var(--snap-duration) var(--snap-ease);
+  }
+
+  .project-view-tab[aria-current="page"]::after {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    width: min(11rem, 72%);
+    height: 3px;
+    background: var(--primary);
+    content: "";
+    transform: translateX(-50%);
   }
 
   .program-choice {
@@ -281,7 +435,7 @@ textarea {
   }
 
   .program-choice:hover {
-    transform: translateY(-2px);
+    transform: none;
   }
 
   .program-mark {
@@ -400,6 +554,10 @@ dialog::backdrop {
     opacity: 1;
     transform: none;
   }
+}
+
+@keyframes skeleton-shimmer {
+  to { transform: translateX(100%); }
 }
 
 @media (min-width: 1024px) {
