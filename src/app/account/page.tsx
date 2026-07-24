@@ -6,11 +6,11 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 
-import { AccountControls } from "./account-controls";
-import { AccountSectionLayout } from "./account-section-layout";
+import { AccountControls } from "@/app/account/_components/account-controls";
+import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 
 export const metadata: Metadata = { title: "마이페이지" };
 

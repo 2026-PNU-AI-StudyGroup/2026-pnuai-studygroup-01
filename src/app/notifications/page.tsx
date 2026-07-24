@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { markAllNotificationsReadAction, openNotificationAction } from "@/app/notifications/actions";
+import { markAllNotificationsReadAction, openNotificationAction } from "@/app/notifications/_actions/notification-actions";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { NotificationService } from "@/modules/notification/application/manage-notifications";
 import type { NotificationType } from "@/modules/notification/domain/notification";
 import { PrismaNotificationRepository } from "@/modules/notification/infrastructure/prisma-notification-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { AccountSectionLayout } from "@/app/account/account-section-layout";
+import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 
 export const metadata: Metadata = { title: "알림" };
 

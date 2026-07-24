@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { StudentProfileForm } from "@/app/account/student-profile-form";
+import { StudentProfileForm } from "@/app/account/_components/student-profile-form";
 import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { PageHeader } from "@/shared/ui/page-primitives";
-import { AccountSectionLayout } from "@/app/account/account-section-layout";
+import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 
 export const metadata: Metadata = { title: "프로젝트 프로필" };
 
