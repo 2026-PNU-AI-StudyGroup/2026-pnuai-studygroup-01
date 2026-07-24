@@ -28,19 +28,19 @@ export function PastProjectsView({ projects, total, page, totalPages, programs, 
       selectedId={programId}
       options={programs.map((program) => ({ ...program, href: pastHref({ query, programId: program.id }) }))}
     />
-    <section aria-labelledby="past-filter-title" className="grid gap-5 border-b border-[var(--line)] pb-7 lg:grid-cols-[minmax(0,1fr)_minmax(30rem,.82fr)] lg:items-end">
-      <div><h2 id="past-filter-title" className="muted text-xs font-bold">지난 프로젝트 검색</h2><p className="mt-2 text-lg font-extrabold">검색 결과 {total}개</p></div>
-      <form action="/topics" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_3rem_auto] sm:items-end">
+    <section aria-labelledby="past-filter-title" className="grid gap-5 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(30rem,.82fr)] lg:items-end">
+      <div><h2 id="past-filter-title" className="text-xs font-extrabold text-[var(--muted)]">지난 프로젝트</h2><p className="mt-2 text-lg font-extrabold">검색 결과 {total}개</p></div>
+      <form action="/topics" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
         <input type="hidden" name="view" value="past" />{programId ? <input type="hidden" name="programId" value={programId} /> : null}
-        <label><span className="sr-only">지난 프로젝트 검색</span><input className="field" type="search" name="q" defaultValue={query} maxLength={100} placeholder="주제, 팀, 교수, 기술, 결과물" /></label>
-        <button className="button-secondary min-w-12 px-0" type="submit" aria-label="지난 프로젝트 검색"><svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg></button>
+        <label className="grid gap-2 text-xs font-extrabold text-[var(--muted)]">프로젝트 검색<input className="field" type="search" name="q" defaultValue={query} maxLength={100} placeholder="주제, 팀, 교수, 기술, 결과물" /></label>
+        <button className="button-primary min-w-12 gap-2 sm:px-4" type="submit"><svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span>검색</span></button>
         {hasFilters ? <Link className="button-quiet" href="/topics?view=past">초기화</Link> : null}
       </form>
     </section>
 
     <section aria-labelledby="past-list-title">
       <div className="mb-4 flex items-end justify-between gap-4"><h2 id="past-list-title" className="text-2xl font-extrabold tracking-[-0.035em]">프로젝트 목록</h2><p className="muted text-sm">{page} / {totalPages} 페이지</p></div>
-      {projects.length === 0 ? <EmptyState title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 지난 프로젝트가 없습니다"} description={hasFilters ? "검색어, 학년도 또는 프로그램 분류를 바꿔 다시 찾아보세요." : "최종 보고서 승인 후 팀이 종료되면 선배 프로젝트와 결과물이 이곳에 쌓입니다."} action={hasFilters ? <Link className="button-secondary" href="/topics?view=past">전체 프로젝트 보기</Link> : undefined} /> : <>
+      {projects.length === 0 ? <EmptyState title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 지난 프로젝트가 없습니다"} description={hasFilters ? "검색어, 학년도 또는 프로그램 분류를 바꿔 다시 찾아보세요." : "완료된 프로젝트와 결과물이 차곡차곡 쌓일 예정입니다."} action={hasFilters ? <Link className="button-secondary" href="/topics?view=past">전체 프로젝트 보기</Link> : undefined} /> : <>
         <div aria-hidden="true" className="hidden border-y border-[var(--line)] py-3 text-xs font-extrabold text-[var(--muted)] lg:grid lg:grid-cols-[5rem_minmax(16rem,1.5fr)_minmax(10rem,.8fr)_minmax(8rem,.6fr)_7rem] lg:gap-5"><span>연도</span><span>프로젝트</span><span>팀 · 지도교수</span><span>프로그램</span><span>결과물</span></div>
         <ol className="divide-y divide-[var(--line)] border-b border-[var(--line)]">{projects.map((project) => {
           const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];

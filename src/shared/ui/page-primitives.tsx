@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 
 export function PageHeader({ eyebrow, title, description, actions, compact = false }: { eyebrow: string; title: ReactNode; description?: string; actions?: ReactNode; compact?: boolean }) {
   return (
-    <header className={`flex flex-col border-b border-[var(--line)] sm:flex-row sm:items-end sm:justify-between ${compact ? "gap-4 pb-6" : "gap-6 pb-8"}`}>
+    <header className={`visual-page-header relative isolate flex flex-col overflow-hidden rounded-[var(--radius-panel)] border border-white/10 bg-[#0b1740] text-white shadow-[0_22px_55px_rgba(7,17,47,.18)] sm:flex-row sm:items-end sm:justify-between ${compact ? "gap-4 px-6 py-6" : "gap-6 px-6 py-8 sm:px-8 sm:py-9"}`}>
       <div className="max-w-3xl">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className={`${compact ? "mt-1 text-[clamp(1.75rem,3vw,2rem)]" : "mt-2 text-[clamp(2rem,4vw,2.5rem)]"} font-black leading-tight tracking-[-0.04em] text-[var(--ink)]`}>{title}</h1>
-        {description ? <p className={`muted max-w-2xl text-[0.9375rem] leading-6 ${compact ? "mt-2" : "mt-3"}`}>{description}</p> : null}
+        <p className="text-xs font-black tracking-[0.16em] text-[#f0bd54]">{eyebrow}</p>
+        <h1 className={`${compact ? "mt-2 text-[clamp(1.75rem,3vw,2rem)]" : "mt-3 text-[clamp(2rem,4vw,2.75rem)]"} font-black leading-tight tracking-[-0.045em] text-white`}>{title}</h1>
+        {description ? <p className={`max-w-2xl text-[0.9375rem] leading-6 text-white/62 ${compact ? "mt-2" : "mt-3"}`}>{description}</p> : null}
       </div>
       {actions ? <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
     </header>
@@ -15,7 +15,7 @@ export function PageHeader({ eyebrow, title, description, actions, compact = fal
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
-    <div className="grid min-h-56 place-items-center rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-subtle)] px-6 py-10 text-center">
+    <div className="grid min-h-56 place-items-center rounded-[var(--radius-panel)] border border-white bg-white/80 px-6 py-10 text-center shadow-[0_18px_45px_rgba(23,32,51,.08)] backdrop-blur">
       <div className="max-w-sm">
         <span aria-hidden="true" className="mx-auto grid size-11 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)] shadow-sm">
           <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>

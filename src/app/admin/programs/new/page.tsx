@@ -21,8 +21,8 @@ export default async function NewProgramPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/programs/new">
-      <AdminWorkspace currentPath="/admin/programs/new" eyebrow="프로그램 · 새 등록" title="새 프로젝트 프로그램" description="학기와 운영 기간을 연결하고 학생과 교수가 사용할 프로그램을 초안으로 등록합니다." actions={<Link className="button-secondary" href="/admin/programs">등록 취소</Link>}>
-        {cycles.length ? <ProgramForm cycles={cycles} successHref="/admin/programs" /> : <EmptyState title="등록된 학기가 없습니다" description="프로그램을 만들기 전에 운영 학기를 등록해 주세요." action={<Link className="button-secondary" href="/admin/academic-cycles">학기 등록</Link>} />}
+      <AdminWorkspace currentPath="/admin/programs/new" eyebrow="프로그램 · 새로 만들기" title="새 프로그램" description="운영 학기와 기간을 정해 프로젝트가 시작될 무대를 만듭니다." actions={<Link className="button-secondary" href="/admin/programs">프로그램 목록</Link>}>
+        {cycles.length ? <ProgramForm cycles={cycles} successHref="/admin/programs" /> : <EmptyState title="설정된 학기가 없습니다" description="프로그램보다 먼저 운영 학기를 설정해 주세요." action={<Link className="button-secondary" href="/admin/academic-cycles">학기 설정</Link>} />}
       </AdminWorkspace>
     </AppShell>
   );

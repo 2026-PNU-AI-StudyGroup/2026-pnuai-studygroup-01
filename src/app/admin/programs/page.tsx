@@ -26,9 +26,9 @@ export default async function ProgramsAdminPage() {
   ]);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/programs">
-      <AdminWorkspace currentPath="/admin/programs" title="프로젝트 프로그램" description="캡스톤, 교내외 프로젝트와 교육 프로그램의 개설 기간과 공개 상태를 관리합니다." actions={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램 등록</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 먼저 등록</Link>}>
+      <AdminWorkspace currentPath="/admin/programs" title="프로그램" description="캡스톤과 대회, 교육 프로그램의 운영 기간과 공개 상태를 설정합니다." actions={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 먼저 설정</Link>}>
         {programs.length === 0 ? (
-          <EmptyState title="등록된 프로그램이 없습니다" description={cycles.length ? "새 프로그램 등록에서 첫 운영 프로그램을 개설하세요." : "프로그램을 만들기 전에 운영 학기를 등록해 주세요."} action={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램 등록</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 등록</Link>} />
+          <EmptyState title="아직 만든 프로그램이 없습니다" description={cycles.length ? "첫 프로그램을 만들어 프로젝트 운영을 시작하세요." : "프로그램보다 먼저 운영 학기를 설정해 주세요."} action={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 설정</Link>} />
         ) : (
           <ol className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] border-t-2 border-t-[var(--ink)] bg-white">
             {programs.map((program) => (

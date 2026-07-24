@@ -9,12 +9,12 @@
 }
 
 :root {
-  --canvas: #ffffff;
+  --canvas: #f3f5fb;
   --surface: #ffffff;
-  --surface-subtle: #f7f8fa;
+  --surface-subtle: #eef2fb;
   --ink: #172033;
   --muted: #626c7f;
-  --line: #dfe3ea;
+  --line: #d9e0ef;
   --line-strong: #7c8799;
   --field-border: #7c8799;
   --primary: #2f5bea;
@@ -32,8 +32,8 @@
   --warning-subtle: #fff7df;
   --danger: #b42318;
   --danger-subtle: #fff0ee;
-  --radius-control: 0.625rem;
-  --radius-panel: 0.75rem;
+  --radius-control: 0.75rem;
+  --radius-panel: 1rem;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
@@ -51,7 +51,11 @@ html {
 
 body {
   margin: 0;
-  background: var(--canvas);
+  background:
+    radial-gradient(circle at 8% 12%, rgb(47 91 234 / 0.08), transparent 24rem),
+    radial-gradient(circle at 92% 38%, rgb(213 138 0 / 0.06), transparent 22rem),
+    var(--canvas);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
   font-size: 1rem;
@@ -91,15 +95,16 @@ textarea {
     border: 1px solid var(--line);
     border-radius: var(--radius-panel);
     background: var(--surface);
+    box-shadow: 0 14px 38px rgb(23 32 51 / 0.07);
   }
 
   .field {
-    min-height: 3rem;
+    min-height: 3.25rem;
     width: 100%;
-    border: 1px solid var(--field-border);
+    border: 1px solid #cfd5df;
     border-radius: var(--radius-control);
-    background: var(--surface-subtle);
-    padding: 0.6875rem 0.875rem;
+    background-color: rgb(255 255 255 / 0.92);
+    padding: 0.75rem 1rem;
     color: var(--ink);
     font-size: 1rem;
     line-height: 1.5;
@@ -107,14 +112,13 @@ textarea {
   }
 
   .field:hover {
-    border-color: #7f8a9d;
-    background: var(--surface);
+    border-color: #9aa4b5;
   }
 
   .field:focus {
     border-color: var(--focus);
     background: var(--surface);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 12%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 11%, transparent);
   }
 
   .field:user-invalid {
@@ -127,12 +131,40 @@ textarea {
   }
 
   .field::placeholder {
-    color: var(--muted);
+    color: #7a8496;
     opacity: 1;
+  }
+
+  select.field {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23626c7f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.875rem center;
+    background-repeat: no-repeat;
+    background-size: 1.125rem;
+    padding-right: 2.75rem;
   }
 
   textarea.field {
     resize: vertical;
+  }
+
+  input[type="file"].field {
+    padding: 0.4375rem;
+  }
+
+  input[type="file"].field::file-selector-button {
+    min-height: 2.25rem;
+    margin-right: 0.75rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: var(--primary-subtle);
+    padding: 0.4375rem 0.75rem;
+    color: var(--primary-hover);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   .field:disabled,
@@ -254,6 +286,7 @@ textarea {
     border: 1px solid var(--primary);
     background: var(--primary);
     color: white;
+    box-shadow: 0 10px 24px rgb(47 91 234 / 0.22);
   }
 
   .button-primary:hover {
@@ -265,6 +298,7 @@ textarea {
     border: 1px solid #c4cad5;
     background: white;
     color: var(--ink);
+    box-shadow: 0 6px 16px rgb(23 32 51 / 0.06);
   }
 
   .button-secondary:hover {
@@ -366,6 +400,60 @@ textarea {
     background: linear-gradient(90deg, var(--primary-subtle), transparent 72%);
   }
 
+  .app-shell #main-content {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .app-shell #main-content::before {
+    position: fixed;
+    z-index: -1;
+    top: 5rem;
+    right: -8rem;
+    width: 28rem;
+    height: 28rem;
+    border-radius: 999px;
+    background: rgb(47 91 234 / 0.07);
+    filter: blur(70px);
+    content: "";
+    pointer-events: none;
+  }
+
+  .app-shell .content-shell {
+    animation: portal-rise 280ms var(--silk-ease) both;
+  }
+
+  .visual-page-header::before {
+    position: absolute;
+    z-index: -1;
+    top: -8rem;
+    right: -3rem;
+    width: 24rem;
+    height: 24rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgb(71 112 255 / 0.85), transparent 68%);
+    content: "";
+  }
+
+  .visual-page-header::after {
+    position: absolute;
+    z-index: -1;
+    right: 3rem;
+    bottom: -4rem;
+    width: 12rem;
+    height: 8rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 50%;
+    content: "";
+    rotate: -18deg;
+  }
+
+  .app-shell form.rounded-\[var\(--radius-panel\)\],
+  .app-shell ol.rounded-\[var\(--radius-panel\)\],
+  .app-shell ul.rounded-\[var\(--radius-panel\)\] {
+    box-shadow: 0 14px 36px rgb(23 32 51 / 0.07);
+  }
+
 
   .portal-hero-copy {
     animation: portal-rise 280ms var(--silk-ease) both;
@@ -373,8 +461,9 @@ textarea {
 
   .portal-hero {
     background:
-      radial-gradient(circle at 62% 22%, rgb(237 241 255 / 0.92), transparent 34%),
-      linear-gradient(90deg, #ffffff 0%, #ffffff 42%, #f5f8ff 100%);
+      radial-gradient(circle at 72% 12%, rgb(63 103 244 / 0.62), transparent 38%),
+      linear-gradient(112deg, #07112f 0%, #0b1740 55%, #142862 100%);
+    box-shadow: 0 22px 58px rgb(7 17 47 / 0.2);
   }
 
   .portal-hero-visual {
@@ -383,9 +472,9 @@ textarea {
 
   .recruitment-hero {
     background:
-      radial-gradient(circle at 78% 20%, rgb(255 255 255 / 0.95), transparent 30%),
-      linear-gradient(112deg, #f4f7ff 0%, #ffffff 48%, #eaf1ff 100%);
-    box-shadow: 0 18px 50px rgb(47 91 234 / 0.08);
+      radial-gradient(circle at 78% 20%, rgb(68 109 255 / 0.55), transparent 34%),
+      linear-gradient(112deg, #07112f 0%, #0b1740 48%, #142862 100%);
+    box-shadow: 0 22px 58px rgb(7 17 47 / 0.2);
   }
 
   .recruitment-card {

@@ -13,7 +13,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
   const destinations = [
     ["마일스톤", "목표와 완료 예정일", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
     ["진행 기록", "수행 내용과 다음 행동", `/teams/${teamId}/progress`, `${workspace.progressTotal}개 기록`],
-    ["팀 토론", "팀원과 지도교수의 의견", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
+    ["팀 대화", "아이디어와 피드백", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
     ["보고서", "제출 버전과 교수 승인", `/teams/${teamId}/reports`, "제출·승인 관리"],
     ["결과물", "발표 자료와 소스 코드", `/teams/${teamId}/artifacts`, "최종 산출물"],
   ] as const;
@@ -36,7 +36,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
 
       {actor.role === "PROFESSOR" && workspace.status !== "CLOSED" ? (
         <section aria-labelledby="professor-actions-title" className="rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
-          <div><p className="eyebrow">지도교수 작업</p><h2 id="professor-actions-title" className="mt-1 text-xl font-extrabold">팀에 의견을 남기거나 제출 기준을 설정하세요</h2><p className="muted mt-2 text-sm">토론 의견은 팀 전체에 공유되고, 보고서 화면에서 요구사항과 승인 의견을 관리할 수 있습니다.</p></div>
+          <div><p className="eyebrow">지도교수 작업</p><h2 id="professor-actions-title" className="mt-1 text-xl font-extrabold">팀에 피드백을 남기고 다음 단계를 이끌어 주세요</h2><p className="muted mt-2 text-sm">팀 대화는 모두에게 공유되며, 보고서에서 일정과 승인 의견을 정할 수 있습니다.</p></div>
           <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0"><Link href={`/teams/${teamId}/discussion`} className="button-primary">지도 의견 남기기</Link><Link href={`/teams/${teamId}/reports`} className="button-secondary">보고서 관리</Link></div>
         </section>
       ) : null}

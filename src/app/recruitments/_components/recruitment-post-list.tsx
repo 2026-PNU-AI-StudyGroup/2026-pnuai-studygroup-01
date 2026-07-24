@@ -30,7 +30,7 @@ export function RecruitmentPostList({
   profile: StudentProfile | null;
 }) {
   if (data.posts.length === 0) {
-    return <EmptyState title="열린 모집 글이 없습니다" description="지원 가능한 모집 글이 생기면 이곳에 표시됩니다." />;
+    return <EmptyState title="지금은 열린 모집이 없습니다" description="새로운 팀이 동료를 찾기 시작하면 여기에서 만날 수 있습니다." />;
   }
 
   return (

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "부산대학교 학과 프로젝트 관리",
     template: "%s · 부산대학교 학과 프로젝트 관리",
   },
-  description: "부산대학교 학과의 프로젝트 주제, 팀, 진행 과정, 보고서와 결과물을 한곳에서 관리합니다.",
+  description: "부산대학교의 아이디어와 팀, 과정과 결과를 하나의 프로젝트 경험으로 연결합니다.",
   robots: { index: false, follow: false },
 };
 

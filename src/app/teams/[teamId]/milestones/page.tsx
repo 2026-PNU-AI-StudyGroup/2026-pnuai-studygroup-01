@@ -11,12 +11,12 @@ const milestoneStatus = { TODO: ["할 일", "neutral"], IN_PROGRESS: ["진행 �
 export default async function TeamMilestonesPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(teamId);
-  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 등록된 마일스톤이 없습니다." : actor.role === "PROFESSOR" ? "팀원이 마일스톤을 등록하면 이곳에서 진행 상태를 확인할 수 있습니다." : "첫 목표와 완료 예정일을 등록해 프로젝트의 리듬을 만드세요.";
+  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 만든 마일스톤이 없습니다." : actor.role === "PROFESSOR" ? "팀원이 첫 마일스톤을 만들면 진행 흐름을 볼 수 있습니다." : "첫 목표와 완료 예정일을 정해 프로젝트의 리듬을 만드세요.";
   return (
     <section aria-labelledby="milestones-title" className="space-y-8">
       <header className="border-b border-[var(--line)] pb-7">
         <p className="eyebrow">계획</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h1 id="milestones-title" className="text-3xl font-black tracking-[-0.04em]">마일스톤</h1><p className="muted mt-2">목표와 완료 예정일을 정하고 진행 상태를 관리합니다.</p></div><p className="text-sm"><strong className="text-[var(--primary)]">{workspace.completedMilestoneCount}</strong> / {workspace.milestoneCount} 완료</p></div>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h1 id="milestones-title" className="text-3xl font-black tracking-[-0.04em]">마일스톤</h1><p className="muted mt-2">큰 목표를 실행 가능한 단계로 나누고 하나씩 완성하세요.</p></div><p className="text-sm"><strong className="text-[var(--primary)]">{workspace.completedMilestoneCount}</strong> / {workspace.milestoneCount} 완료</p></div>
       </header>
       {workspace.status !== "CLOSED" && actor.role !== "PROFESSOR" ? <MilestoneForm teamId={workspace.id} /> : null}
       {workspace.milestones.length === 0 ? <EmptyState title="마일스톤이 없습니다" description={emptyDescription} /> : (

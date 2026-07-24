@@ -25,7 +25,7 @@ export function ReportDecisionForm({
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="reportVersionId" value={reportVersionId} />
       <label className="grid gap-2 text-sm font-semibold">
-        검토 결정
+        검토 결과
         <select name="decision" className="field" defaultValue="APPROVED">
           <option value="APPROVED">승인</option>
           <option value="REVISION_REQUESTED">수정 요청</option>
@@ -41,7 +41,7 @@ export function ReportDecisionForm({
         />
       </label>
       <button disabled={pending} className="button-quiet">
-        {pending ? "저장 중" : "결정 저장"}
+        {pending ? "저장 중" : "검토 완료"}
       </button>
       {state.message ? (
         <p

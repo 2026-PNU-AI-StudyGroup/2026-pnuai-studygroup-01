@@ -25,7 +25,7 @@ describe("Home", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "학과 프로젝트 관리 시스템",
+        name: "가능성을 프로젝트로",
       }),
     ).toBeInTheDocument();
   });

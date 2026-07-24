@@ -15,7 +15,7 @@ export function ProgressUpdateForm({ teamId }: { teamId: string }) {
   return (
     <>
       <button type="button" className="button-primary" onClick={() => dialogRef.current?.showModal()}>진행 기록 추가</button>
-      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]">
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]">
         <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7"><div><p className="eyebrow">수행 과정</p><h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">진행 기록 추가</h3><p className="muted mt-2 text-sm">완료한 내용과 위험 요소, 다음 행동을 한 기록으로 남깁니다.</p></div><button type="button" aria-label="진행 기록 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button></div>
         <form action={action} className="grid gap-5 px-5 py-6 sm:px-7">
           <input type="hidden" name="teamId" value={teamId} />

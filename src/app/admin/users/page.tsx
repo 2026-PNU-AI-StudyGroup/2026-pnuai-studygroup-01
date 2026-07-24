@@ -29,9 +29,9 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/users">
       <AdminWorkspace currentPath="/admin/users" title="사용자" description="가입한 구성원의 역할과 계정 상태를 확인하고, 접근 중단이 필요한 계정의 세션까지 종료합니다.">
-        <form role="search" className="grid gap-3 border-y border-[var(--line)] py-6 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <form role="search" className="grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-5">
           <label className="grid gap-2 text-sm font-semibold">이름 또는 이메일 검색<input className="field" type="search" name="q" maxLength={100} defaultValue={query} placeholder="예: 홍길동 또는 user@pusan.ac.kr" /></label>
-          <button type="submit" className="button-primary self-end">검색</button>
+          <button type="submit" className="button-primary self-end max-sm:w-full">검색</button>
         </form>
         <section aria-labelledby="user-list-title">
           <div className="mb-4 flex items-center justify-between gap-4"><h2 id="user-list-title" className="text-lg font-extrabold">가입 사용자</h2><p className="muted text-sm">총 {data.total}명</p></div>

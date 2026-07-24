@@ -11,7 +11,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
-export const metadata: Metadata = { title: "모집 글 등록" };
+export const metadata: Metadata = { title: "새 모집" };
 
 export default async function NewRecruitmentPage() {
   const actor = await getCurrentActor();
@@ -26,8 +26,8 @@ export default async function NewRecruitmentPage() {
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/new">
       <main className="content-shell">
         <RecruitmentSectionLayout currentPath="/recruitments/new"><div className="space-y-8">
-          <RecruitmentPageIntro label="새 모집" title="모집 글 등록" description="프로젝트 소개보다 필요한 역할과 실제 협업 조건이 먼저 보이도록 작성합니다. 등록한 뒤에는 ‘작성한 모집’에서 지원자를 검토할 수 있습니다." />
-          {teams.length ? <RecruitmentPostForm teams={teams} successHref="/recruitments/mine" /> : <EmptyState title="모집 글을 등록할 팀이 없습니다" description="모집 기간 중인 구성 단계 팀에 먼저 참여해야 모집 글을 작성할 수 있습니다." />}
+          <RecruitmentPageIntro label="새 모집" title="함께할 동료 찾기" description="필요한 역할과 기술, 함께할 시간을 분명하게 알려주세요." />
+          {teams.length ? <RecruitmentPostForm teams={teams} successHref="/recruitments/mine" /> : <EmptyState title="새 모집을 만들 수 있는 팀이 없습니다" description="모집 기간 중인 팀에 참여하면 동료 찾기를 시작할 수 있습니다." />}
         </div></RecruitmentSectionLayout>
       </main>
     </AppShell>

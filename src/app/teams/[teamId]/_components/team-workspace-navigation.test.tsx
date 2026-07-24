@@ -15,7 +15,7 @@ describe("TeamWorkspaceNavigation", () => {
     expect(screen.getByRole("link", { name: "개요" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.getByRole("link", { name: "마일스톤" })).toHaveAttribute("href", "/teams/team-1/milestones");
     expect(screen.getByRole("link", { name: "진행 기록" })).toHaveAttribute("href", "/teams/team-1/progress");
-    expect(screen.getByRole("link", { name: "토론" })).toHaveAttribute("href", "/teams/team-1/discussion");
+    expect(screen.getByRole("link", { name: "팀 대화" })).toHaveAttribute("href", "/teams/team-1/discussion");
     expect(screen.getByRole("link", { name: "보고서" })).toHaveAttribute("href", "/teams/team-1/reports");
     expect(screen.getByRole("link", { name: "결과물" })).toHaveAttribute("href", "/teams/team-1/artifacts");
   });

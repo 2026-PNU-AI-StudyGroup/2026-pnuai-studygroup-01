@@ -1,14 +1,14 @@
 .hero {
   background:
-    radial-gradient(circle at 82% 12%, rgb(255 255 255 / 0.98), transparent 24%),
-    radial-gradient(circle at 58% 110%, rgb(133 161 255 / 0.2), transparent 35%),
-    linear-gradient(112deg, #f8faff 0%, #eef3ff 55%, #e4ecff 100%);
-  box-shadow: 0 20px 55px rgb(47 91 234 / 0.1);
+    radial-gradient(circle at 82% 12%, rgb(68 109 255 / 0.62), transparent 30%),
+    radial-gradient(circle at 58% 110%, rgb(213 138 0 / 0.2), transparent 35%),
+    linear-gradient(112deg, #07112f 0%, #0b1740 55%, #142862 100%);
+  box-shadow: 0 24px 65px rgb(7 17 47 / 0.24);
 }
 
 .orbit {
   position: absolute;
-  border: 1px solid rgb(47 91 234 / 0.14);
+  border: 1px solid rgb(255 255 255 / 0.16);
   border-radius: 999px;
 }
 
@@ -20,7 +20,7 @@
 .orbitSmall {
   width: 16rem;
   height: 16rem;
-  border-color: rgb(47 91 234 / 0.22);
+  border-color: rgb(229 167 45 / 0.38);
 }
 
 .snapshot {

@@ -49,7 +49,7 @@ export function ApplyTopicForm({ topicId, topicTitle, applicationMode, applicati
 
   return (
     <>
-      <button type="button" onClick={() => dialogRef.current?.showModal()} disabled={state.status === "success"} className="button-secondary w-full">
+      <button type="button" onClick={() => dialogRef.current?.showModal()} disabled={state.status === "success"} className="button-primary w-full">
         {state.status === "success" ? "지원 접수됨" : "지원하기"}
       </button>
 
@@ -58,7 +58,7 @@ export function ApplyTopicForm({ topicId, topicTitle, applicationMode, applicati
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         onCancel={(event) => { if (pending) event.preventDefault(); }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]"
       >
         <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7">
           <div className="min-w-0">

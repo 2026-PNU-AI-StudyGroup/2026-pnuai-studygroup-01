@@ -40,7 +40,7 @@ export function RecruitmentApplicationsView({
           <p className="muted max-w-sm text-sm leading-6">기술만 보지 말고 희망 역할과 실제 활동 가능 시간을 함께 확인하세요.</p>
         </div>
         {post.applications.length === 0 ? (
-          <EmptyState title="아직 지원자가 없습니다" description="지원이 들어오면 지원자의 기술, 희망 역할, 활동 가능 시간을 이곳에서 검토할 수 있습니다." />
+          <EmptyState title="아직 지원자가 없습니다" description="지원이 도착하면 기술과 희망 역할, 함께할 시간을 한눈에 볼 수 있습니다." />
         ) : (
           <ol className="border-y border-[var(--line)]">
             {post.applications.map((application) => (

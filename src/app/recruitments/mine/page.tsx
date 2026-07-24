@@ -12,7 +12,7 @@ import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
-export const metadata: Metadata = { title: "작성한 모집" };
+export const metadata: Metadata = { title: "내 모집" };
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 
@@ -35,9 +35,9 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
           <div className="space-y-8">
             <RecruitmentPageIntro
               label="내 모집 · 지원"
-              title="작성한 모집"
+              title="내 모집"
               description="내가 연 모집의 팀 충원 상태와 검토 대기 인원을 한 줄에서 확인하고, 지원자 검토는 별도 화면에서 진행합니다."
-              action={<Link className="button-primary" href="/recruitments/new">모집 글 등록</Link>}
+              action={<Link className="button-primary" href="/recruitments/new">새 모집</Link>}
             />
 
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -46,7 +46,7 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
             </div>
 
             {data.posts.length === 0 ? (
-              <EmptyState title="작성한 모집 글이 없습니다" description="구성 중인 팀에 필요한 역할을 정리해 첫 모집 글을 등록해 보세요." action={<Link className="button-primary" href="/recruitments/new">모집 글 등록</Link>} />
+              <EmptyState title="아직 만든 모집이 없습니다" description="팀에 필요한 역할과 함께할 방식을 알려 동료를 찾아보세요." action={<Link className="button-primary" href="/recruitments/new">새 모집</Link>} />
             ) : (
               <ol className="border-y border-[var(--line)]">
                 {data.posts.map((post) => (

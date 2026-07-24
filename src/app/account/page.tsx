@@ -31,7 +31,7 @@ export default async function AccountPage() {
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
       <AccountSectionLayout role={actor.role} currentPath="/account">
         <div className="max-w-3xl">
-          <PageHeader eyebrow="계정" title="마이페이지" description="현재 로그인한 부산대학교 계정과 서비스 역할을 확인합니다." />
+          <PageHeader eyebrow="계정" title="마이페이지" description="내 계정과 프로젝트 활동을 한눈에 모아봅니다." />
           <section aria-labelledby="account-summary-heading" className="mt-10 border-y border-[var(--line)] py-8">
             <div className="flex items-start gap-5">
               <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-xl font-extrabold text-[var(--primary-hover)]">{actor.name.trim().charAt(0) || "나"}</span>
@@ -49,7 +49,7 @@ export default async function AccountPage() {
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-3"><h2 id="project-profile-heading" className="text-xl font-extrabold">프로젝트 프로필</h2><StatusBadge tone={profile ? "success" : "warning"}>{profile ? "작성 완료" : "작성 필요"}</StatusBadge></div>
-                {profile ? <><p className="muted mt-3 text-sm leading-6">{profile.desiredRole} · {profile.availability}</p><ul aria-label="관심 분야와 보유 기술" className="mt-3 flex flex-wrap gap-2">{[...profile.interests, ...profile.skills].slice(0, 6).map((item) => <li key={item} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{item}</li>)}</ul></> : <p className="muted mt-3 max-w-xl text-sm leading-6">관심 분야와 보유 기술, 활동 가능 시간을 저장하면 프로젝트와 팀원 모집 지원서에 활용할 수 있습니다.</p>}
+                {profile ? <><p className="muted mt-3 text-sm leading-6">{profile.desiredRole} · {profile.availability}</p><ul aria-label="관심 분야와 보유 기술" className="mt-3 flex flex-wrap gap-2">{[...profile.interests, ...profile.skills].slice(0, 6).map((item) => <li key={item} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{item}</li>)}</ul></> : <p className="muted mt-3 max-w-xl text-sm leading-6">내 관심과 기술, 함께할 시간을 정리하면 지원서를 더 빠르게 완성할 수 있습니다.</p>}
               </div>
               <Link className={profile ? "button-secondary" : "button-primary"} href="/account/profile">{profile ? "프로필 수정" : "프로필 작성"}</Link>
             </div>

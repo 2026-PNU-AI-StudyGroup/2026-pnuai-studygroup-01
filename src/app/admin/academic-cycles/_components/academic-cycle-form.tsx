@@ -16,7 +16,7 @@ export function AcademicCycleForm() {
   );
 
   return (
-    <form action={action} className="grid gap-4 border-t-2 border-[var(--ink)] pt-6 sm:grid-cols-3">
+    <form action={action} className="grid gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-5 sm:grid-cols-3 sm:p-6">
       <label className="grid gap-2 text-sm font-medium">
         학년도
         <input
@@ -39,7 +39,7 @@ export function AcademicCycleForm() {
       <button
         type="submit"
         disabled={pending}
-        className="button-primary self-end"
+        className="button-primary self-end max-sm:w-full"
       >
         {pending ? "등록 중" : "학기 등록"}
       </button>

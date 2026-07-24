@@ -15,7 +15,7 @@ export default async function NewProfessorPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors/new">
-      <AdminWorkspace currentPath="/admin/professors/new" eyebrow="교수 권한 · 새 등록" title="교수 이메일 등록" description="교수 기능을 사용할 부산대학교 이메일을 사전에 허용합니다." actions={<Link className="button-secondary" href="/admin/professors">등록 취소</Link>}>
+      <AdminWorkspace currentPath="/admin/professors/new" eyebrow="교수 권한 · 새로 추가" title="교수 이메일 추가" description="교수 기능을 사용할 부산대학교 계정을 미리 허용합니다." actions={<Link className="button-secondary" href="/admin/professors">권한 목록</Link>}>
         <ProfessorAccessForm />
       </AdminWorkspace>
     </AppShell>

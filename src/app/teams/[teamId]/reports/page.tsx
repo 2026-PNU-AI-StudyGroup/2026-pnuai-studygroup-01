@@ -24,7 +24,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   return (
     <section aria-labelledby="reports-title" className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--line)] pb-7">
-        <div><p className="eyebrow">보고서</p><h1 id="reports-title" className="mt-2 text-3xl font-black tracking-[-0.04em]">보고서 제출 및 승인</h1><p className="muted mt-2">요구사항과 제출 기한, 버전별 검토 결정을 한 흐름에서 확인합니다.</p></div>
+        <div><p className="eyebrow">프로젝트 문서</p><h1 id="reports-title" className="mt-2 text-3xl font-black tracking-[-0.04em]">보고서</h1><p className="muted mt-2">제출 일정부터 버전별 피드백과 승인까지 한 흐름으로 이어집니다.</p></div>
         {canManageRequirements || canSubmit ? <div className="flex flex-wrap gap-2">{canManageRequirements ? <ReportRequirementForm teamId={workspace.id} executionStartsAt={earliestDueAt} submissionEndsAt={workspace.schedule.submissionEndsAt} /> : null}{canSubmit ? <ReportSubmissionForm teamId={workspace.id} requirements={submittableReports} /> : null}</div> : null}
       </header>
 
@@ -32,7 +32,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
 
       {workspace.status === "CONFIRMED" && actor.role === "STUDENT" && reportWorkspace.reports.length > 0 && submittableReports.length === 0 ? <EmptyState title="현재 제출 가능한 보고서가 없습니다" description="기존 제출·검토 이력은 아래에서 확인할 수 있습니다." /> : null}
       {workspace.status === "FORMING" ? <EmptyState title="팀 확정 후 제출할 수 있습니다" description="지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." /> : workspace.status === "CLOSED" ? <EmptyState title="종료된 프로젝트입니다" description="새 보고서를 제출할 수 없으며 기존 제출·승인 이력만 확인할 수 있습니다." /> : null}
-      {reportWorkspace.reports.length === 0 ? workspace.status === "CONFIRMED" ? <EmptyState title="설정된 보고서가 없습니다" description={actor.role === "STUDENT" ? "지도교수의 보고서 요구사항 설정을 기다려 주세요." : "첫 제출 보고서 종류와 기한을 설정해 주세요."} /> : null : (
+      {reportWorkspace.reports.length === 0 ? workspace.status === "CONFIRMED" ? <EmptyState title="아직 예정된 보고서가 없습니다" description={actor.role === "STUDENT" ? "지도교수가 보고서 종류와 마감을 정하면 여기에서 시작할 수 있습니다." : "첫 보고서 종류와 마감을 정해 주세요."} /> : null : (
         <div>
           <div className="hidden grid-cols-[9rem_minmax(0,1fr)_9rem_7rem] border-b border-[var(--primary)] px-2 pb-3 text-xs font-bold text-[var(--muted)] md:grid"><span>보고서</span><span>제출 이력</span><span>마감 기한</span><span className="text-right">관리</span></div>
           <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">

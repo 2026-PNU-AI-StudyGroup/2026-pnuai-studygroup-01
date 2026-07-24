@@ -10,7 +10,7 @@ export function DevelopmentRoleSignIn({ seedRequired = false }: { seedRequired?:
         </div>
         <span className="rounded bg-[var(--primary-subtle)] px-2 py-1 text-xs font-bold text-[var(--primary-hover)]">LOCAL</span>
       </div>
-      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">데모 데이터에 연결된 계정으로 바로 확인합니다.</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">역할별 화면을 데모 계정으로 바로 엽니다.</p>
       {seedRequired ? (
         <p role="alert" className="mt-3 rounded-lg bg-[var(--warning-subtle)] px-3 py-2 text-sm font-semibold text-[var(--warning-ink)]">
           목 계정이 없습니다. 먼저 <code>ALLOW_LOCAL_DEMO_SEED=true npm run db:seed-demo</code>를 실행해 주세요.

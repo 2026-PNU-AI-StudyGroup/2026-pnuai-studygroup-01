@@ -53,7 +53,7 @@ describe("보고서 요구사항 화면", () => {
       />,
     );
 
-    const openButton = screen.getByRole("button", { name: "보고서 요구사항 설정" });
+    const openButton = screen.getByRole("button", { name: "보고서 일정 설정" });
     fireEvent.click(openButton);
     const dialog = screen.getByRole("dialog");
     fireEvent.submit(dialog.querySelector("form")!);
@@ -76,7 +76,7 @@ describe("보고서 요구사항 화면", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "보고서 요구사항 설정" }));
+    fireEvent.click(screen.getByRole("button", { name: "보고서 일정 설정" }));
     expect(screen.getByRole("combobox", { name: "제출 보고서" })).toHaveValue("START");
     expect(screen.getByLabelText("제출 기한")).toHaveAttribute("min", "2026-08-01T00:00");
     expect(screen.getByLabelText("제출 기한")).toHaveAttribute("max", "2026-12-15T23:59");

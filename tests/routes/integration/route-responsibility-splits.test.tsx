@@ -73,12 +73,12 @@ describe("화면 책임 분리", () => {
     listCyclesMock.mockResolvedValue([]);
     render(await AcademicCyclesPage());
 
-    expect(screen.getByRole("link", { name: "새 학기 등록" })).toHaveAttribute("href", "/admin/academic-cycles/new");
+    expect(screen.getByRole("link", { name: "새 학기" })).toHaveAttribute("href", "/admin/academic-cycles/new");
     expect(screen.queryByRole("spinbutton", { name: "학년도" })).not.toBeInTheDocument();
 
     render(await NewAcademicCyclePage());
     expect(screen.getByRole("spinbutton", { name: "학년도" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "학기 목록으로" })).toHaveAttribute("href", "/admin/academic-cycles");
+    expect(screen.getByRole("link", { name: "학기 목록" })).toHaveAttribute("href", "/admin/academic-cycles");
   });
 
   it("교수 권한 목록에서 등록과 변경 이력을 독립 화면으로 연결한다", async () => {
@@ -114,6 +114,6 @@ describe("화면 책임 분리", () => {
 
     render(await StudentProfilePage());
     expect(screen.getByRole("textbox", { name: "관심 분야" })).toHaveValue("접근성");
-    expect(screen.getByRole("link", { name: "마이페이지로" })).toHaveAttribute("href", "/account");
+    expect(screen.getByRole("link", { name: "마이페이지" })).toHaveAttribute("href", "/account");
   });
 });

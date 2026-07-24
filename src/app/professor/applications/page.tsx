@@ -22,7 +22,7 @@ export default async function ProfessorApplicationsPage() {
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications">
       <ProfessorWorkspace currentPath="/professor/applications" title="지원 검토" description="대기 중인 지원부터 확인하고, 지원서와 팀 구성을 근거로 프로젝트 참여 여부를 결정합니다." actions={<Link href="/professor/topics" className="button-secondary">주제 관리로</Link>}>
-        {applications.length === 0 ? <EmptyState title="받은 지원서가 없습니다" description="학생이 공개 주제에 지원하면 이곳에 지원서가 표시됩니다." /> : <ReceivedApplicationList applications={applications} />}
+        {applications.length === 0 ? <EmptyState title="아직 받은 지원서가 없습니다" description="학생의 첫 지원을 기다리고 있습니다." /> : <ReceivedApplicationList applications={applications} />}
       </ProfessorWorkspace>
     </AppShell>
   );

@@ -21,8 +21,8 @@ export default async function NewTopicPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
-      <ProfessorWorkspace currentPath="/professor/topics/new" eyebrow="주제 준비 · 새 주제" title="새 프로젝트 주제" description="학생이 지원을 결정하는 데 필요한 내용과 교수님의 검토 기준을 순서대로 작성합니다." actions={<Link className="button-secondary" href="/professor/topics">작성 취소</Link>}>
-        {programs.length ? <TopicForm programs={programs} successHref="/professor/topics" /> : <EmptyState title="공개된 프로그램이 없습니다" description="관리자가 프로젝트 프로그램을 공개한 뒤 주제를 등록할 수 있습니다." action={<Link className="button-secondary" href="/professor/topics">주제 목록으로</Link>} />}
+      <ProfessorWorkspace currentPath="/professor/topics/new" eyebrow="주제 설계 · 새로 만들기" title="새 프로젝트 주제" description="학생이 목표와 기대 역할을 한눈에 이해할 수 있도록 핵심부터 작성합니다." actions={<Link className="button-secondary" href="/professor/topics">주제 목록</Link>}>
+        {programs.length ? <TopicForm programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 공개된 프로그램이 없습니다" description="프로그램이 공개되면 새 프로젝트 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics">주제 목록</Link>} />}
       </ProfessorWorkspace>
     </AppShell>
   );

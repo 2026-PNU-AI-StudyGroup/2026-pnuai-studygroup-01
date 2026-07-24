@@ -41,7 +41,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             <RecruitmentPageIntro
               label="내 모집 · 지원"
               title="보낸 지원"
-              description="팀원 모집에 보낸 지원과 처리 결과를 시간순으로 확인합니다. 검토가 끝난 지원도 지우지 않고 활동 기록으로 남깁니다."
+              description="보낸 지원과 결과를 시간순으로 모아봅니다."
               action={<Link className="button-secondary" href="/recruitments">모집 글 탐색</Link>}
             />
 
@@ -51,7 +51,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             </div>
 
             {data.applications.length === 0 ? (
-              <EmptyState title="보낸 지원이 없습니다" description="함께하고 싶은 팀의 모집 글에서 지원서를 보내면 처리 상태가 이곳에 남습니다." action={<Link className="button-primary" href="/recruitments">모집 글 찾아보기</Link>} />
+              <EmptyState title="아직 보낸 지원이 없습니다" description="함께하고 싶은 팀을 발견하면 내 역할과 가능 시간을 전해보세요." action={<Link className="button-primary" href="/recruitments">모집 둘러보기</Link>} />
             ) : (
               <ol className="border-y border-[var(--line)]">
                 {data.applications.map((application) => (

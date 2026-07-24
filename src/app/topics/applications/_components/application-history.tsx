@@ -63,7 +63,7 @@ function CurrentApplicationCard({ application }: { application: TopicApplication
           </svg>
           <div>
             <p className="font-extrabold">현재 교수님이 지원 내용을 검토하고 있어요.</p>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">결정이 등록되면 이 페이지와 알림에서 바로 확인할 수 있습니다.</p>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">결정이 나면 알림으로 바로 알려드릴게요.</p>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ export function ApplicationHistory({ page, hasDrafts }: { page: TopicApplication
         <h2 id="application-list-title" className="sr-only">지원 내역</h2>
         <EmptyState
           title="접수된 지원서가 없습니다"
-          description={hasDrafts ? "팀원 전원이 수락하면 이곳에 실제 지원으로 표시됩니다." : "진행 중 프로젝트를 비교하고 개인 또는 팀으로 지원해 보세요."}
+          description={hasDrafts ? "초대한 팀원이 모두 수락하면 프로젝트 지원이 완료됩니다." : "진행 중 프로젝트를 비교하고 개인 또는 팀으로 지원해 보세요."}
           action={<Link href="/topics" className="button-primary">프로젝트 둘러보기</Link>}
         />
       </section>

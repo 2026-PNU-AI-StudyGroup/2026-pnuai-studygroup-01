@@ -10,7 +10,7 @@ export function MilestoneForm({ teamId }: { teamId: string }) {
   const [state, action, pending] = useActionState(createMilestoneAction, initialTeamActionState);
 
   return (
-    <form action={action} className="grid gap-3 border-y border-[var(--line)] py-5 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
       <input type="hidden" name="teamId" value={teamId} />
       <input name="title" aria-label="마일스톤 제목" required maxLength={200} placeholder="마일스톤 제목" className="field" />
       <input name="dueAt" aria-label="완료 예정일" type="date" required className="field" />
@@ -36,7 +36,7 @@ export function MilestoneStatusForm({ teamId, milestoneId, status }: {
         <option value="IN_PROGRESS">진행 중</option>
         <option value="DONE">완료</option>
       </select>
-      <button disabled={pending} className="button-quiet px-2 text-sm">저장</button>
+      <button disabled={pending} className="button-secondary px-3 text-sm">저장</button>
       {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]">{state.message}</span> : null}
     </form>
   );

@@ -68,12 +68,12 @@ export function ProjectDashboardHero({ role, teams }: { role: UserRole; teams: T
     : "진행 중인 프로젝트와 완료한 기록을 한눈에 확인하고 다음 작업을 이어가세요.";
 
   return (
-    <header className={`${styles.hero} overflow-hidden rounded-[var(--radius-panel)] border border-[#dbe3fb]`}>
+    <header className={`${styles.hero} overflow-hidden rounded-[var(--radius-panel)] border border-white/10 text-white`}>
       <div className="grid min-h-[19rem] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,.8fr)]">
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-12">
-          <p className="text-sm font-extrabold tracking-[0.08em] text-[var(--primary)]">PROJECT WORKSPACE</p>
-          <h1 className="mt-3 text-[clamp(2.25rem,5vw,3.5rem)] font-black leading-[1.08] tracking-[-0.05em] text-[var(--ink)]">{title}</h1>
-          <p className="muted mt-5 max-w-xl text-base leading-7 sm:text-lg">{description}</p>
+          <p className="text-sm font-extrabold tracking-[0.08em] text-[#f0bd54]">PROJECT WORKSPACE</p>
+          <h1 className="mt-3 text-[clamp(2.25rem,5vw,3.5rem)] font-black leading-[1.08] tracking-[-0.05em] text-white">{title}</h1>
+          <p className="mt-5 max-w-xl text-base leading-7 text-white/62 sm:text-lg">{description}</p>
           <div className="mt-7"><DashboardActions role={role} /></div>
         </div>
 

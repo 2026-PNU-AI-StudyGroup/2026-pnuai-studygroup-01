@@ -7,7 +7,7 @@ const sections = [
   { label: "개요", suffix: "", icon: "overview" },
   { label: "마일스톤", suffix: "/milestones", icon: "milestone" },
   { label: "진행 기록", suffix: "/progress", icon: "progress" },
-  { label: "토론", suffix: "/discussion", icon: "discussion" },
+  { label: "팀 대화", suffix: "/discussion", icon: "discussion" },
   { label: "보고서", suffix: "/reports", icon: "report" },
   { label: "결과물", suffix: "/artifacts", icon: "artifact" },
 ] as const;
@@ -23,14 +23,35 @@ function NavigationIcon({ name }: { name: WorkspaceIcon }) {
     report: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></>,
     artifact: <><path d="M4 7h6l2 2h8v10H4z" /></>,
   };
-  return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.7]">{paths[name]}</svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.8]">{paths[name]}</svg>;
 }
 
 export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
   const pathname = usePathname();
+  const currentSection = sections.find(({ suffix }) => {
+    const href = `/teams/${teamId}${suffix}`;
+    return suffix ? pathname.startsWith(href) : pathname === href;
+  }) ?? sections[0];
+
   return (
-    <nav aria-label="프로젝트 공간" className="-mx-5 overflow-x-auto px-5 sm:-mx-8 sm:px-8 lg:mx-0 lg:overflow-visible lg:px-0">
-      <ul className="flex min-w-max gap-1 border-b border-[var(--line)] lg:min-w-0 lg:flex-col lg:border-0">
+    <>
+      <details className="group lg:hidden">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+          <span className="flex min-w-0 items-center gap-3 text-sm font-extrabold text-[var(--primary-hover)]"><NavigationIcon name={currentSection.icon} />{currentSection.label}</span>
+          <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
+        </summary>
+        <nav aria-label="프로젝트 공간" className="mt-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-white p-2">
+          <ul className="grid grid-cols-2 gap-1">
+            {sections.map(({ label, suffix, icon }) => {
+              const href = `/teams/${teamId}${suffix}`;
+              const selected = suffix ? pathname.startsWith(href) : pathname === href;
+              return <li key={suffix || "overview"}><Link href={href} aria-label={`${label} 모바일 메뉴`} aria-current={selected ? "page" : undefined} className={`flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-bold ${selected ? "bg-[var(--primary-subtle)] text-[var(--primary-hover)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}><NavigationIcon name={icon} />{label}</Link></li>;
+            })}
+          </ul>
+        </nav>
+      </details>
+      <nav aria-label="프로젝트 공간" className="hidden lg:block">
+      <ul className="flex flex-col gap-1">
         {sections.map(({ label, suffix, icon }) => {
           const href = `/teams/${teamId}${suffix}`;
           const selected = suffix ? pathname.startsWith(href) : pathname === href;
@@ -48,6 +69,7 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
           );
         })}
       </ul>
-    </nav>
+      </nav>
+    </>
   );
 }
