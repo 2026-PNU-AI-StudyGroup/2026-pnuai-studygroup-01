@@ -5,6 +5,7 @@ export type ArchivedProject = {
   academicYear: number;
   term: "FIRST" | "SECOND";
   teamName: string;
+  programId: string;
   programName: string;
   programCategory: string;
   topicTitle: string;
@@ -25,13 +26,19 @@ export type ArchivedProject = {
 
 export type ArchiveFilters = {
   query?: string;
-  academicYear?: number;
+  programId?: string;
   programCategory?: string;
 };
 
+export type ArchivedProgramOption = {
+  id: string;
+  name: string;
+  category: string;
+};
+
 export interface ArchivedProjectReader {
-  listAcademicYears(): Promise<number[]>;
   listProgramCategories(): Promise<string[]>;
+  listPrograms(): Promise<ArchivedProgramOption[]>;
   countClosed(filters: ArchiveFilters): Promise<number>;
   listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]>;
   findClosed(id: string): Promise<ArchivedProject | null>;
@@ -67,15 +74,13 @@ export class ListArchivedProjectsService {
       : 20;
     const normalizedFilters: ArchiveFilters = {
       query: filters.query?.trim().slice(0, 100) || undefined,
-      academicYear: Number.isInteger(filters.academicYear) && (filters.academicYear ?? 0) >= 2000 && (filters.academicYear ?? 0) <= 9999
-        ? filters.academicYear
-        : undefined,
+      programId: filters.programId?.trim().slice(0, 200) || undefined,
       programCategory: filters.programCategory?.trim().slice(0, 100) || undefined,
     };
-    const [total, academicYears, programCategories] = await Promise.all([
+    const [total, programCategories, programs] = await Promise.all([
       this.reader.countClosed(normalizedFilters),
-      this.reader.listAcademicYears(),
       this.reader.listProgramCategories(),
+      this.reader.listPrograms(),
     ]);
     const totalPages = Math.max(1, Math.ceil(total / normalizedPageSize));
     const requestedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
@@ -90,8 +95,8 @@ export class ListArchivedProjectsService {
       total,
       page: normalizedPage,
       totalPages,
-      academicYears,
       programCategories,
+      programs,
     };
   }
 

@@ -6,7 +6,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { PageHeader } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
 

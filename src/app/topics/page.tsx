@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { ActiveProjectsView } from "@/app/topics/active-projects-view";
-import { PastProjectsView } from "@/app/topics/past-projects-view";
-import { ProjectPortalHero, ProjectStatusNavigation } from "@/app/topics/project-portal-chrome";
-import { ProjectExplorerLayout, type ProjectView } from "@/app/topics/project-explorer-layout";
+import { ActiveProjectsView } from "@/app/topics/_components/active-projects-view";
+import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
+import { ProjectPortalHero } from "@/app/topics/_components/project-portal-chrome";
+import { ProjectExplorerLayout, type ProjectView } from "@/app/topics/_components/project-explorer-layout";
+import { ProjectViewTabs } from "@/app/topics/_components/project-view-tabs";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -18,7 +19,7 @@ import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/applicat
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export const metadata: Metadata = { title: "프로젝트 탐색" };
@@ -28,7 +29,6 @@ type TopicsSearchParams = {
   programId?: SearchParamValue;
   page?: SearchParamValue;
   q?: SearchParamValue;
-  year?: SearchParamValue;
   category?: SearchParamValue;
   phase?: SearchParamValue;
   sort?: SearchParamValue;
@@ -53,13 +53,10 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
 
   if (view === "past") {
     const category = firstSearchParam(params.category)?.trim().slice(0, 100) ?? "";
-    const requestedYear = Number(firstSearchParam(params.year));
-    const academicYear = Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 9999 ? requestedYear : undefined;
-    const [archive, topicSummary] = await Promise.all([
-      new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).execute(requestedPage, 20, { query, academicYear, programCategory: category }),
-      topicService.execute({ now }),
-    ]);
-    content = <><ProjectStatusNavigation view="past" phase={phase} counts={topicSummary.counts} query={query} /><PastProjectsView {...archive} query={query} academicYear={academicYear} category={category} /></>;
+    const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
+    const archive = await new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, programCategory: category });
+    const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
+    content = <div className="pt-7"><PastProjectsView {...archive} query={query} programId={programId} /></div>;
   } else {
     const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen();
     const requestedProgramId = firstSearchParam(params.programId);
@@ -72,5 +69,5 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     content = <ActiveProjectsView programs={programs} programId={programId} topics={topics} applications={applications} pendingTeamTopicIds={teamApplicationState?.drafts.map(({ topicId }) => topicId) ?? []} phase={phase} query={query} sort={sort} now={now} />;
   }
 
-  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout><ProjectPortalHero view={view} />{content}</ProjectExplorerLayout></AppShell>;
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><ProjectExplorerLayout><ProjectPortalHero view={view} /><ProjectViewTabs view={view} query={query} />{content}</ProjectExplorerLayout></AppShell>;
 }

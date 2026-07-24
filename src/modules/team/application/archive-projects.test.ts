@@ -29,8 +29,8 @@ describe("팀 종료", () => {
 describe("아카이브 페이지", () => {
   it("페이지 번호를 offset과 제한으로 변환한다", async () => {
     const reader = {
-      listAcademicYears: vi.fn(async () => [2026, 2025]),
       listProgramCategories: vi.fn(async () => ["캡스톤", "대회"]),
+      listPrograms: vi.fn(async () => [{ id: "program-1", name: "캡스톤 2026", category: "캡스톤" }]),
       countClosed: vi.fn(async () => 41),
       listClosed: vi.fn(async () => []),
       findClosed: vi.fn(async () => null),
@@ -38,14 +38,14 @@ describe("아카이브 페이지", () => {
     const result = await new ListArchivedProjectsService(reader).execute(2, 20);
     expect(reader.listClosed).toHaveBeenCalledWith({ offset: 20, limit: 20, filters: {} });
     expect(result.totalPages).toBe(3);
-    expect(result.academicYears).toEqual([2026, 2025]);
     expect(result.programCategories).toEqual(["캡스톤", "대회"]);
+    expect(result.programs).toEqual([{ id: "program-1", name: "캡스톤 2026", category: "캡스톤" }]);
   });
 
   it("범위를 벗어나거나 안전하지 않은 페이지를 유효 범위로 제한한다", async () => {
     const reader = {
-      listAcademicYears: vi.fn(async () => [2026]),
       listProgramCategories: vi.fn(async () => ["캡스톤"]),
+      listPrograms: vi.fn(async () => []),
       countClosed: vi.fn(async () => 41),
       listClosed: vi.fn(async () => []),
       findClosed: vi.fn(async () => null),
@@ -58,15 +58,15 @@ describe("아카이브 페이지", () => {
   });
 
   it("검색어와 학년도를 정규화해 개수와 목록에 동일하게 적용한다", async () => {
-    const reader = { listAcademicYears: vi.fn(async () => [2026]), listProgramCategories: vi.fn(async () => ["캡스톤"]), countClosed: vi.fn(async () => 0), listClosed: vi.fn(async () => []), findClosed: vi.fn(async () => null) };
-    await new ListArchivedProjectsService(reader).execute(1, 20, { query: "  TypeScript  ", academicYear: 2026, programCategory: "  캡스톤  " });
-    expect(reader.countClosed).toHaveBeenCalledWith({ query: "TypeScript", academicYear: 2026, programCategory: "캡스톤" });
-    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 0, limit: 20, filters: { query: "TypeScript", academicYear: 2026, programCategory: "캡스톤" } });
+    const reader = { listProgramCategories: vi.fn(async () => ["캡스톤"]), listPrograms: vi.fn(async () => []), countClosed: vi.fn(async () => 0), listClosed: vi.fn(async () => []), findClosed: vi.fn(async () => null) };
+    await new ListArchivedProjectsService(reader).execute(1, 20, { query: "  TypeScript  ", programId: "  program-1  ", programCategory: "  캡스톤  " });
+    expect(reader.countClosed).toHaveBeenCalledWith({ query: "TypeScript", programId: "program-1", programCategory: "캡스톤" });
+    expect(reader.listClosed).toHaveBeenCalledWith({ offset: 0, limit: 20, filters: { query: "TypeScript", programId: "program-1", programCategory: "캡스톤" } });
   });
 
   it("지난 프로젝트 상세를 독립 식별자로 조회한다", async () => {
     const findClosed = vi.fn(async () => null);
-    const reader = { listAcademicYears: vi.fn(), listProgramCategories: vi.fn(), countClosed: vi.fn(), listClosed: vi.fn(), findClosed };
+    const reader = { listProgramCategories: vi.fn(), listPrograms: vi.fn(), countClosed: vi.fn(), listClosed: vi.fn(), findClosed };
     await new ListArchivedProjectsService(reader).find("team-1");
     expect(findClosed).toHaveBeenCalledWith("team-1");
   });

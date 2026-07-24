@@ -16,7 +16,7 @@ const archivedProjectSelect = {
     description: true,
     requiredSkills: true,
     preferredSkills: true,
-    program: { select: { name: true, category: true } },
+    program: { select: { id: true, name: true, category: true } },
     author: { select: { name: true } },
     academicCycle: { select: { academicYear: true, term: true } },
   } },
@@ -39,6 +39,7 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     academicYear: team.topic.academicCycle.academicYear,
     term: team.topic.academicCycle.term,
     teamName: team.name,
+    programId: team.topic.program.id,
     programName: team.topic.program.name,
     programCategory: team.topic.program.category,
     topicTitle: team.topic.title,
@@ -61,16 +62,6 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
 export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamCloser {
   constructor(private readonly client: PrismaClient) {}
 
-  async listAcademicYears(): Promise<number[]> {
-    const cycles = await this.client.academicCycle.findMany({
-      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
-      distinct: ["academicYear"],
-      orderBy: { academicYear: "desc" },
-      select: { academicYear: true },
-    });
-    return cycles.map(({ academicYear }) => academicYear);
-  }
-
   async listProgramCategories(): Promise<string[]> {
     const programs = await this.client.projectProgram.findMany({
       where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
@@ -79,6 +70,14 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
       select: { category: true },
     });
     return programs.map(({ category }) => category);
+  }
+
+  async listPrograms() {
+    return this.client.projectProgram.findMany({
+      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
+      orderBy: [{ academicCycle: { academicYear: "desc" } }, { name: "asc" }],
+      select: { id: true, name: true, category: true },
+    });
   }
 
   close(teamId: string, actor: CurrentActor): Promise<boolean> {
@@ -217,7 +216,7 @@ export class PrismaTeamArchiveRepository implements ArchivedProjectReader, TeamC
 
 function closedProjectWhere(filters: ArchiveFilters, skillTeamIds?: string[]): Prisma.TeamWhereInput {
   const conditions: Prisma.TeamWhereInput[] = [];
-  if (filters.academicYear) conditions.push({ topic: { academicCycle: { academicYear: filters.academicYear } } });
+  if (filters.programId) conditions.push({ topic: { programId: filters.programId } });
   if (filters.programCategory) conditions.push({ topic: { program: { category: filters.programCategory } } });
   if (filters.query) {
     const query = filters.query;

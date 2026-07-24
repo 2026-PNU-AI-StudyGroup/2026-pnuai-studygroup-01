@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { ApplyTopicForm } from "@/app/topics/apply-topic-form";
+import { ApplyTopicForm } from "@/app/topics/_components/apply-topic-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { TeamApplicationInvitationService } from "@/modules/topic-application/application/manage-team-application-invitations";
@@ -10,7 +10,7 @@ import { PrismaTopicApplicationRepository } from "@/modules/topic-application/in
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
