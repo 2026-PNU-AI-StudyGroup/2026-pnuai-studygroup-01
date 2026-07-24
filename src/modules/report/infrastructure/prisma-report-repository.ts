@@ -12,79 +12,20 @@ import type {
   ArtifactType,
   ReportType,
 } from "@/modules/report/domain/report-policy";
+import { PrismaReportQueryRepository } from "@/modules/report/infrastructure/prisma-report-query-repository";
 
 export class PrismaReportRepository implements ReportRepository {
-  constructor(private readonly client: PrismaClient) {}
+  private readonly queryRepository: PrismaReportQueryRepository;
 
-  async findWorkspace(teamId: string, actor: CurrentActor): Promise<ReportWorkspace | null> {
-    const team = await this.client.team.findFirst({
-      where: { id: teamId, ...teamActorWhere(actor) },
-      select: {
-        reports: {
-          orderBy: [{ dueAt: "asc" }, { type: "asc" }],
-          select: {
-            id: true,
-            type: true,
-            dueAt: true,
-            versions: {
-              orderBy: { version: "desc" },
-              select: {
-                id: true,
-                version: true,
-                fileId: true,
-                description: true,
-                submittedAt: true,
-                file: { select: { originalName: true } },
-                submitter: { select: { name: true } },
-                decision: {
-                  select: {
-                    decision: true,
-                    comment: true,
-                    decidedAt: true,
-                    reviewer: { select: { name: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        artifacts: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            type: true,
-            title: true,
-            fileId: true,
-            externalUrl: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
-    if (!team) return null;
-    return {
-      reports: team.reports.map((report) => ({
-        id: report.id,
-        type: report.type,
-        dueAt: report.dueAt,
-        versions: report.versions.map(({ file, submitter, decision, ...version }) => ({
-          ...version,
-          fileName: file.originalName,
-          submitterName: submitter.name,
-          decision: decision ? {
-            decision: decision.decision,
-            comment: decision.comment,
-            decidedAt: decision.decidedAt,
-            reviewerName: decision.reviewer.name,
-          } : undefined,
-        })),
-      })),
-      artifacts: team.artifacts.map((artifact) => ({
-        ...artifact,
-        fileId: artifact.fileId ?? undefined,
-        externalUrl: artifact.externalUrl ?? undefined,
-      })),
-    };
+  constructor(private readonly client: PrismaClient) {
+    this.queryRepository = new PrismaReportQueryRepository(client);
+  }
+
+  findWorkspace(
+    teamId: string,
+    actor: CurrentActor,
+  ): Promise<ReportWorkspace | null> {
+    return this.queryRepository.findWorkspace(teamId, actor);
   }
 
   setRequirement(input: {
@@ -399,10 +340,4 @@ export class PrismaReportRepository implements ReportRepository {
 
 function reportTypeLabel(type: ReportType) {
   return type === "START" ? "착수 보고서" : type === "MIDTERM" ? "중간 보고서" : "결과 보고서";
-}
-
-function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
-  if (actor.role === "ADMIN") return {};
-  if (actor.role === "PROFESSOR") return { professorId: actor.id };
-  return { members: { some: { studentId: actor.id } } };
 }
