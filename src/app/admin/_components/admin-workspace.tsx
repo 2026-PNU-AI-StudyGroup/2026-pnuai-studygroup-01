@@ -28,7 +28,7 @@ export function AdminWorkspace({ currentPath, eyebrow = "학과 운영", title, 
         <p className="text-xs font-extrabold tracking-[0.14em] text-[var(--primary)]">{eyebrow}</p>
         <div className="mt-3 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl"><h1 className="editorial-title">{title}</h1><p className="muted mt-3 text-base leading-7">{description}</p></div>
-          {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+          {actions ? <div className="flex w-full flex-wrap gap-2 xl:w-auto xl:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
         </div>
       </header>
       <div className="space-y-10 pt-8">{children}</div>

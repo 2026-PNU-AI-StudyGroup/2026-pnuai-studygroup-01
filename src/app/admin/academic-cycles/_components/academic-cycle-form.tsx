@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import {
   createAcademicCycleAction,
   type AcademicCycleActionState,
-} from "@/app/admin/academic-cycles/actions";
+} from "@/app/admin/academic-cycles/_actions/academic-cycle-actions";
 
 const initialState: AcademicCycleActionState = { status: "idle", message: "" };
 

@@ -3,11 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "학기 관리" };

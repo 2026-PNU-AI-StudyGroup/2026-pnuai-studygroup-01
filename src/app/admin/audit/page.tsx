@@ -6,7 +6,7 @@ import { ListAuditLogService, type AuditAction } from "@/modules/audit/applicati
 import { PrismaAuditLogReader } from "@/modules/audit/infrastructure/prisma-audit-log-reader";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
@@ -44,4 +44,4 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     </AppShell>
   );
 }
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";

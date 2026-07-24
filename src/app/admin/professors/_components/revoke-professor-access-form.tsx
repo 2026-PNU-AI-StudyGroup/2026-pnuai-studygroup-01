@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import {
   revokeProfessorAccessAction,
   type ProfessorAccessActionState,
-} from "@/app/admin/professors/actions";
+} from "@/app/admin/professors/_actions/professor-actions";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: ProfessorAccessActionState = { status: "idle", message: "" };

@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ProgramForm } from "@/app/admin/programs/program-forms";
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { ProgramForm } from "@/app/admin/programs/_components/program-form";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "새 프로그램 등록" };

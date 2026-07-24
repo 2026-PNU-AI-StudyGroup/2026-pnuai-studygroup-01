@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { RevokeProfessorAccessForm } from "@/app/admin/professors/revoke-professor-access-form";
+import { RevokeProfessorAccessForm } from "@/app/admin/professors/_components/revoke-professor-access-form";
 import { ProfessorAccessService } from "@/modules/identity/application/manage-professor-access";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaProfessorAccessRepository } from "@/modules/identity/infrastructure/prisma-professor-access-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "교수 권한 관리" };
@@ -33,4 +33,4 @@ export default async function ProfessorsPage() {
     </AppShell>
   );
 }
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";

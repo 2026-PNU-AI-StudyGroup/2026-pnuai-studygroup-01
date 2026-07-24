@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ProfessorAccessForm } from "@/app/admin/professors/professor-access-form";
+import { ProfessorAccessForm } from "@/app/admin/professors/_components/professor-access-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 
 export const metadata: Metadata = { title: "교수 이메일 등록" };
 
@@ -21,4 +21,4 @@ export default async function NewProfessorPage() {
     </AppShell>
   );
 }
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";

@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ProgramStatusForm } from "@/app/admin/programs/program-forms";
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { ProgramStatusForm } from "@/app/admin/programs/_components/program-status-form";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "프로그램 관리" };
@@ -30,12 +30,12 @@ export default async function ProgramsAdminPage() {
         {programs.length === 0 ? (
           <EmptyState title="등록된 프로그램이 없습니다" description={cycles.length ? "새 프로그램 등록에서 첫 운영 프로그램을 개설하세요." : "프로그램을 만들기 전에 운영 학기를 등록해 주세요."} action={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램 등록</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 등록</Link>} />
         ) : (
-          <ol className="divide-y divide-[var(--line)] border-y-2 border-[var(--ink)]">
+          <ol className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] border-t-2 border-t-[var(--ink)] bg-white">
             {programs.map((program) => (
-              <li key={program.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto]">
+              <li key={program.id} className="record-row grid gap-5 px-5 py-6 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="font-bold">{program.name}</h2>
+                    <h2 className="text-lg font-extrabold tracking-[-0.02em]">{program.name}</h2>
                     <StatusBadge tone={status[program.status][1]}>{status[program.status][0]}</StatusBadge>
                   </div>
                   <p className="muted mt-1 text-sm">{program.category} · {program.academicYear}학년도 {program.term === "FIRST" ? "1" : "2"}학기</p>

@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import {
   grantProfessorAccessAction,
   type ProfessorAccessActionState,
-} from "@/app/admin/professors/actions";
+} from "@/app/admin/professors/_actions/professor-actions";
 
 const initialState: ProfessorAccessActionState = { status: "idle", message: "" };
 

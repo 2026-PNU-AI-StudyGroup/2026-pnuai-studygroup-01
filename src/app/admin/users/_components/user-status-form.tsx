@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 
-import { changeUserStatusAction, type UserStatusActionState } from "@/app/admin/users/actions";
+import { changeUserStatusAction, type UserStatusActionState } from "@/app/admin/users/_actions/user-actions";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: UserStatusActionState = { status: "idle", message: "" };

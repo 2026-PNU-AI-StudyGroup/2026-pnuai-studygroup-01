@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AcademicCycleForm } from "@/app/admin/academic-cycles/academic-cycle-form";
-import { AdminWorkspace } from "@/app/admin/admin-workspace";
+import { AcademicCycleForm } from "@/app/admin/academic-cycles/_components/academic-cycle-form";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 
 export const metadata: Metadata = { title: "새 학기 등록" };
 
