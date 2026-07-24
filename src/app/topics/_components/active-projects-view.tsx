@@ -20,15 +20,11 @@ export function ActiveProjectsView({ programs, programId, topics, applications, 
   const selectedProgramName = programs.find((program) => program.id === programId)?.name;
 
   return (
-    <div className="grid items-start gap-6 pt-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-7">
-      <aside className="lg:sticky lg:top-24">
-        <ProgramSelection programs={programs} programId={programId} phase={phase} query={query} sort={sort} />
-      </aside>
-      <div className="min-w-0 space-y-7">
-        <ActiveProjectFilters phase={phase} counts={topics.counts} programId={programId} query={query} sort={sort} />
-        <ActiveProjectResults selectedProgramName={selectedProgramName} topics={topics} applications={applications} pendingTeamTopicIds={pendingTeamTopicIds} programId={programId} phase={phase} query={query} sort={sort} now={now} />
-        {applications ? <ApplicationSummary applications={applications} /> : null}
-      </div>
+    <div className="min-w-0 space-y-8 pt-6 lg:space-y-10">
+      <ActiveProjectFilters phase={phase} counts={topics.counts} programId={programId} query={query} sort={sort} />
+      <ProgramSelection programs={programs} programId={programId} phase={phase} query={query} sort={sort} />
+      <ActiveProjectResults selectedProgramName={selectedProgramName} topics={topics} applications={applications} pendingTeamTopicIds={pendingTeamTopicIds} programId={programId} phase={phase} query={query} sort={sort} now={now} />
+      {applications ? <ApplicationSummary applications={applications} /> : null}
     </div>
   );
 }

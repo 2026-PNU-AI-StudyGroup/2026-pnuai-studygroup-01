@@ -1,16 +1,23 @@
 import Link from "next/link";
 
-import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { ApplyTopicForm } from "@/app/topics/_components/apply-topic-form";
+import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
+import styles from "@/app/topics/_components/project-gallery.module.css";
+import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import type { TopicApplicationPage } from "@/modules/topic-application/application/topic-application-ports";
 import type { PublicTopicPage, PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
-const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+const koreanDate = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "short",
+  day: "numeric",
+});
+
 const applicationStatus = {
-  PENDING: { label: "검토 중", tone: "info" },
-  ACCEPTED: { label: "수락", tone: "success" },
-  REJECTED: { label: "거절", tone: "danger" },
+  PENDING: { label: "지원서 검토 중", tone: "info" },
+  ACCEPTED: { label: "프로젝트 참여 확정", tone: "success" },
+  REJECTED: { label: "지원 결과 확인", tone: "neutral" },
 } as const;
 
 function daysUntil(deadline: Date, now: Date) {
@@ -30,32 +37,118 @@ export function ActiveProjectResults({ selectedProgramName, topics, applications
 }) {
   return (
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">프로젝트 목록</p><h2 id="project-results-title" className="mt-2 text-2xl font-black tracking-[-0.03em]">{selectedProgramName ?? "전체 프로그램"}</h2></div><p className="muted text-sm">총 {topics.total}개 주제</p></div>
-      {!topics.items.length ? <EmptyState title="조건에 맞는 프로젝트가 없습니다" description="상태나 프로그램 태그를 바꾸거나 검색어를 지워 다시 확인해 주세요." action={<Link href="/topics" className="button-secondary">필터 초기화</Link>} /> : <ul className="project-card-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">{topics.items.map((topic) => {
-        const recruiting = topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
-        const application = topic.ownApplicationStatus;
-        const awaitingTeam = pendingTeamTopicIds.includes(topic.id);
-        const skills = [...topic.requiredSkills, ...topic.preferredSkills].slice(0, 4);
-        const deadlineSoon = recruiting && daysUntil(topic.recruitmentEndsAt, now) <= 7;
-        const availability = topic.memberCount >= topic.capacity
-          ? { label: "정원 마감", tone: "neutral" as const }
-          : topic.recruitmentStartsAt > now
-            ? { label: "모집 예정", tone: "neutral" as const }
-            : topic.recruitmentEndsAt <= now
-              ? { label: "모집 종료", tone: "neutral" as const }
-              : deadlineSoon
-                ? { label: "마감 임박", tone: "warning" as const }
-                : { label: "모집 중", tone: "success" as const };
-        return <li key={topic.id} className="project-card flex min-h-[25rem] flex-col border border-[var(--line)] bg-white p-5 sm:p-6"><article aria-labelledby={`topic-${topic.id}`} className="flex h-full flex-col">
-          <div className="flex items-start justify-between gap-3"><span className="rounded bg-[var(--primary-subtle)] px-2.5 py-1 text-xs font-bold text-[var(--primary-hover)]">{topic.programName}</span><StatusBadge tone={availability.tone}>{availability.label}</StatusBadge></div>
-          <h3 id={`topic-${topic.id}`} className="mt-4 text-xl font-black leading-7 tracking-[-0.025em]">{topic.title}</h3>
-          <p className="muted mt-3 line-clamp-3 text-base leading-7">{topic.description}</p>
-          <ul aria-label="필요 기술" className="mt-4 flex flex-wrap gap-2">{skills.map((skill) => <li key={skill} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{skill}</li>)}</ul>
-          <dl className="mt-auto grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--line)] pt-5 text-sm"><div><dt className="muted text-xs">지도교수</dt><dd className="mt-1 font-bold">{topic.authorName}</dd></div><div><dt className="muted text-xs">모집 인원</dt><dd className="mt-1 font-bold">{topic.memberCount} / {topic.capacity}명</dd></div><div className="col-span-2"><dt className="muted text-xs">모집 마감</dt><dd className="mt-1 flex items-center justify-between gap-3 font-semibold"><time dateTime={topic.recruitmentEndsAt.toISOString()}>{koreanDate.format(topic.recruitmentEndsAt)}</time>{topic.recruitmentEndsAt > now ? <span className="text-xs font-bold text-[var(--ink)]">D-{daysUntil(topic.recruitmentEndsAt, now)}</span> : null}</dd></div></dl>
-          <div className="mt-5 grid grid-cols-2 gap-2"><Link href={`/topics/${topic.id}`} className="button-secondary">상세 보기</Link>{application ? <span className="flex min-h-11 items-center justify-center"><StatusBadge tone={applicationStatus[application].tone}>{applicationStatus[application].label}</StatusBadge></span> : awaitingTeam ? <Link href="/topics/applications" className="button-quiet">팀원 수락 대기</Link> : applications && recruiting ? <ApplyTopicForm topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} /> : <span className="muted flex min-h-11 items-center justify-center text-xs">{applications ? "지원 불가" : "상세 확인"}</span>}</div>
-        </article></li>;
-      })}</ul>}
-      {topics.totalPages > 1 ? <nav aria-label="프로젝트 페이지" className="mt-6 flex items-center justify-between"><span className="muted text-sm">{topics.page} / {topics.totalPages} 페이지</span><div className="flex gap-2">{topics.page > 1 ? <Link className="button-quiet" href={activeProjectsHref({ phase, programId, query, sort, page: topics.page - 1 })}>이전</Link> : null}{topics.page < topics.totalPages ? <Link className="button-quiet" href={activeProjectsHref({ phase, programId, query, sort, page: topics.page + 1 })}>다음</Link> : null}</div></nav> : null}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-[var(--primary)]">{selectedProgramName ?? "모든 프로그램"}</p>
+          <h2 id="project-results-title" className="mt-1.5 text-[clamp(1.65rem,3vw,2.2rem)] font-black tracking-[-0.045em]">함께할 프로젝트</h2>
+        </div>
+        <p className="text-sm font-bold text-[var(--muted)]">{topics.total}개</p>
+      </div>
+
+      {!topics.items.length ? (
+        <EmptyState
+          title="조건에 맞는 프로젝트가 없습니다"
+          description="상태나 프로그램을 바꾸거나 검색어를 지워 다시 확인해 주세요."
+          action={<Link href="/topics" className="button-secondary">필터 초기화</Link>}
+        />
+      ) : (
+        <ul className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+          {topics.items.map((topic) => {
+            const href = `/topics/${topic.id}`;
+            const recruiting = topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
+            const application = topic.ownApplicationStatus;
+            const awaitingTeam = pendingTeamTopicIds.includes(topic.id);
+            const skills = [...new Set([...topic.requiredSkills, ...topic.preferredSkills])];
+            const visibleSkills = skills.slice(0, 2);
+            const remainingSkillCount = Math.max(0, skills.length - visibleSkills.length);
+            const deadlineDays = daysUntil(topic.recruitmentEndsAt, now);
+            const availability = topic.memberCount >= topic.capacity
+              ? { label: "정원 마감", tone: "neutral" as const }
+              : topic.recruitmentStartsAt > now
+                ? { label: "모집 예정", tone: "neutral" as const }
+                : topic.recruitmentEndsAt <= now
+                  ? { label: "모집 종료", tone: "neutral" as const }
+                  : deadlineDays <= 7
+                    ? { label: "마감 임박", tone: "warning" as const }
+                    : { label: "모집 중", tone: "success" as const };
+
+            return (
+              <li key={topic.id} className="min-w-0">
+                <article aria-labelledby={`topic-${topic.id}`} className={styles.card}>
+                  <ProjectGalleryCover
+                    id={topic.id}
+                    href={href}
+                    label={`${topic.programCategory} · ${topic.programName}`}
+                    title={topic.title}
+                    professorName={topic.authorName}
+                  />
+                  <div className={styles.body}>
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
+                        <Link href={href} className={styles.titleLink}>{topic.title}</Link>
+                      </h3>
+                      <StatusBadge tone={availability.tone}>{availability.label}</StatusBadge>
+                    </div>
+
+                    <dl className="mt-5 grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
+                      <div>
+                        <dt className="text-[0.7rem] font-bold text-[var(--muted)]">현재 인원</dt>
+                        <dd className="mt-1 font-black">{topic.memberCount} / {topic.capacity}명</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[0.7rem] font-bold text-[var(--muted)]">모집 마감</dt>
+                        <dd className="mt-1 font-black">
+                          <time dateTime={topic.recruitmentEndsAt.toISOString()}>{koreanDate.format(topic.recruitmentEndsAt)}</time>
+                          {recruiting ? <span className="ml-1.5 text-[var(--primary)]">D-{deadlineDays}</span> : null}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {visibleSkills.length ? (
+                      <ul aria-label="필요 기술" className="mt-4 flex min-w-0 flex-wrap items-center gap-1.5">
+                        {visibleSkills.map((skill) => (
+                          <li key={skill} className="max-w-[9rem] truncate rounded-md bg-[var(--surface-subtle)] px-2 py-1 text-xs font-bold text-[var(--muted)]">{skill}</li>
+                        ))}
+                        {remainingSkillCount ? <li className="text-xs font-bold text-[var(--muted)]">외 {remainingSkillCount}</li> : null}
+                      </ul>
+                    ) : null}
+
+                    <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
+                      {application ? (
+                        <Link href="/topics/applications" className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
+                          {applicationStatus[application].label} <span aria-hidden="true" className="ml-2">→</span>
+                        </Link>
+                      ) : awaitingTeam ? (
+                        <Link href="/topics/applications" className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
+                          팀원 수락 대기 <span aria-hidden="true" className="ml-2">→</span>
+                        </Link>
+                      ) : applications && recruiting ? (
+                        <ApplyTopicForm
+                          topicId={topic.id}
+                          topicTitle={topic.title}
+                          applicationMode={topic.applicationMode}
+                          applicationQuestions={topic.applicationQuestions}
+                          capacity={topic.capacity}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {topics.totalPages > 1 ? (
+        <nav aria-label="프로젝트 페이지" className="mt-7 flex items-center justify-between">
+          <span className="text-sm font-semibold text-[var(--muted)]">{topics.page} / {topics.totalPages} 페이지</span>
+          <div className="flex gap-2">
+            {topics.page > 1 ? <Link className="button-quiet" href={activeProjectsHref({ phase, programId, query, sort, page: topics.page - 1 })}>이전</Link> : null}
+            {topics.page < topics.totalPages ? <Link className="button-quiet" href={activeProjectsHref({ phase, programId, query, sort, page: topics.page + 1 })}>다음</Link> : null}
+          </div>
+        </nav>
+      ) : null}
     </section>
   );
 }
