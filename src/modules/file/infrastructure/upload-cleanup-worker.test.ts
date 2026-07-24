@@ -16,7 +16,7 @@ vi.mock("@/modules/file/infrastructure/s3-object-storage", () => ({
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/shared/infrastructure/object-storage/s3", () => ({ objectStorageBucket: "test", s3: {} }));
 
-import { startUploadCleanupWorker } from "@/shared/infrastructure/upload-cleanup-worker";
+import { startUploadCleanupWorker } from "@/modules/file/infrastructure/upload-cleanup-worker";
 
 const workerGlobal = globalThis as typeof globalThis & {
   pmsUploadCleanupTimer?: ReturnType<typeof setInterval>;

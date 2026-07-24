@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { uploadService } from "@/app/api/uploads/service";
+import { uploadService } from "@/app/api/uploads/_lib/upload-service";
 import { UploadNotFoundError } from "@/modules/file/application/manage-upload";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { readLimitedJson, RequestBodyTooLargeError } from "@/shared/http/read-limited-json";

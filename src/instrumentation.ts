@@ -3,7 +3,7 @@ export async function register(): Promise<void> {
     return;
   }
   const { startUploadCleanupWorker } = await import(
-    "@/shared/infrastructure/upload-cleanup-worker"
+    "@/modules/file/infrastructure/upload-cleanup-worker"
   );
   startUploadCleanupWorker();
 }
