@@ -60,7 +60,7 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
               <Link
                 href={href}
                 aria-current={selected ? "page" : undefined}
-                className={`snap-color relative flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-bold lg:w-full ${selected ? "bg-[var(--primary)] text-white" : "text-[var(--muted)] hover:bg-[var(--primary-subtle)] hover:text-[var(--primary-hover)]"}`}
+                className={`snap-color relative flex min-h-12 items-center gap-3 rounded-2xl px-3 text-sm font-bold lg:w-full ${selected ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}
               >
                 <NavigationIcon name={icon} />
                 {label}

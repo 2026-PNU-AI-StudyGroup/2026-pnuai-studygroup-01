@@ -9,9 +9,12 @@ export function ActiveProjectFilters({ phase, counts, programId, query, sort }: 
   sort: PublicTopicSort;
 }) {
   return (
-    <section aria-label="프로젝트 검색과 필터" className="grid gap-5 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(30rem,.82fr)] lg:items-end">
-      <div><p className="mb-2 text-xs font-extrabold text-[var(--muted)]">진행 상태</p><ProjectStatusNavigation phase={phase} counts={counts} programId={programId} query={query} sort={sort} /></div>
-      <form className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end" action="/topics" role="search">
+    <section aria-label="프로젝트 검색과 필터" className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-[0_10px_30px_rgb(23_32_51_/_0.045)] sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-4 xl:flex-row xl:items-center xl:justify-between">
+        <div><p className="mb-2 text-xs font-extrabold text-[var(--muted)]">진행 상태</p><ProjectStatusNavigation phase={phase} counts={counts} programId={programId} query={query} sort={sort} /></div>
+        <p className="hidden text-xs font-semibold text-[var(--muted)] xl:block">공개된 주제를 상태별로 확인할 수 있습니다.</p>
+      </div>
+      <form className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end" action="/topics" role="search">
         <input type="hidden" name="phase" value={phase} />
         {programId ? <input type="hidden" name="programId" value={programId} /> : null}
         <label className="grid gap-2 text-xs font-extrabold text-[var(--muted)]">프로젝트 검색<input type="search" name="q" defaultValue={query} maxLength={100} placeholder="주제명·기술 키워드" className="field" /></label>

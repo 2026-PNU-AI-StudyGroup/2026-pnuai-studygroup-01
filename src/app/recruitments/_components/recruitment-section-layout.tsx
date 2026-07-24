@@ -1,7 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-import styles from "@/app/recruitments/_components/recruitment-hero.module.css";
 
 const navigation = [
   { href: "/recruitments", label: "모집 찾기", group: "browse", icon: "shield" },
@@ -40,24 +39,16 @@ function NavigationLink({ href, label, icon, active }: { href: string; label: st
 
 export function RecruitmentSectionLayout({ currentPath, children }: { currentPath: string; children: ReactNode }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-10">
-      <aside className="self-start overflow-hidden rounded-[var(--radius-panel)] border border-white bg-white/86 shadow-[0_18px_48px_rgba(23,32,51,.1)] backdrop-blur lg:sticky lg:top-24">
-        <div className="p-4">
-          <Link className="button-primary flex w-full justify-between px-5" href="/recruitments/new" aria-current={currentPath === "/recruitments/new" ? "page" : undefined}>
-            <span>새 모집</span>
-            <RecruitmentIcon name="plus" />
-          </Link>
-        </div>
-
-        <nav aria-label="팀원 모집 메뉴" className="grid grid-cols-3 gap-1 border-t border-[var(--line)] p-3 lg:block lg:space-y-1">
+    <div>
+      <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-2 shadow-[var(--shadow-card)] sm:flex-row sm:items-center">
+        <nav aria-label="팀원 모집 메뉴" className="grid flex-1 grid-cols-3 gap-1">
           {navigation.map((item) => <NavigationLink key={item.href} {...item} active={currentPath === item.href} />)}
         </nav>
-
-        <div className="hidden border-t border-[var(--line)] bg-[var(--surface-subtle)] p-5 lg:block">
-          <p className="flex items-center gap-2 text-sm font-extrabold text-[var(--ink)]"><span className="size-2 rounded-full bg-[var(--accent)]" aria-hidden="true" /> 지원 전 체크</p>
-          <p className="muted mt-2 text-sm leading-6">프로필의 기술과 활동 가능 시간을 최신으로 정리해 두세요.</p>
-        </div>
-      </aside>
+        <Link className="button-primary shrink-0 gap-2 max-sm:w-full" href="/recruitments/new" aria-current={currentPath === "/recruitments/new" ? "page" : undefined}>
+          <RecruitmentIcon name="plus" />
+          <span>새 모집</span>
+        </Link>
+      </div>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -65,20 +56,14 @@ export function RecruitmentSectionLayout({ currentPath, children }: { currentPat
 
 export function RecruitmentHero() {
   return (
-    <header className="recruitment-hero visual-page-header relative isolate overflow-hidden rounded-[var(--radius-panel)] border border-white/10 bg-[#0b1740] px-6 py-9 text-white shadow-[0_22px_55px_rgba(7,17,47,.18)] sm:px-10 sm:py-11 lg:px-16">
-      <div className="portal-hero-copy relative z-10 max-w-xl">
-        <p className="text-sm font-extrabold text-[#f0bd54]">PROJECT TEAMWORK</p>
-        <h1 className="mt-3 text-[clamp(2.5rem,5vw,3.75rem)] font-black leading-[1.05] tracking-[-0.055em] text-white">팀원 모집</h1>
-        <p className="mt-4 max-w-md text-base leading-7 text-white/65 sm:text-lg sm:leading-8">프로젝트의 역할과 필요 역량, 협업 방식을 비교하고 나에게 맞는 팀에 지원해 보세요.</p>
+    <header className="recruitment-hero grid min-h-[18rem] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white lg:grid-cols-[minmax(0,.9fr)_minmax(23rem,1.1fr)]">
+      <div className="flex flex-col justify-center px-6 py-8 sm:px-10 lg:px-12">
+        <p className="text-xs font-black tracking-[0.14em] text-[var(--primary)]">함께할 동료 찾기</p>
+        <h1 className="mt-3 text-[clamp(2.4rem,5vw,3.5rem)] font-black leading-[1.05] tracking-[-0.06em] text-[var(--ink)]">팀원 모집</h1>
+        <p className="mt-4 max-w-md text-base leading-7 text-[var(--muted)]">프로젝트의 역할과 필요 역량, 협업 방식을 비교하고 나에게 맞는 팀에 지원해 보세요.</p>
       </div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] hidden w-[47%] items-center justify-center lg:flex" aria-hidden="true">
-        <div className={styles.art}>
-          <span className={styles.bubble}>•••</span>
-          <span className={`${styles.person} ${styles.personLeft}`} />
-          <span className={`${styles.person} ${styles.personRight}`} />
-          <span className={`${styles.person} ${styles.personMain}`} />
-          <span className={styles.magnifier} />
-        </div>
+      <div className="relative hidden min-h-[18rem] overflow-hidden bg-[#f5f6f8] lg:block" aria-hidden="true">
+        <Image src="/illustrations/project-collaboration-3d.png" alt="" fill priority sizes="46vw" className="object-cover object-center" />
       </div>
     </header>
   );
@@ -86,11 +71,11 @@ export function RecruitmentHero() {
 
 export function RecruitmentPageIntro({ label, title, description, action }: { label: string; title: string; description: string; action?: ReactNode }) {
   return (
-    <header className="visual-page-header relative isolate flex flex-col gap-6 overflow-hidden rounded-[var(--radius-panel)] border border-white/10 bg-[#0b1740] px-6 py-8 text-white shadow-[0_22px_55px_rgba(7,17,47,.18)] sm:flex-row sm:items-end sm:justify-between sm:px-8">
+    <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-3xl">
-        <p className="text-sm font-extrabold text-[#f0bd54]">{label}</p>
-        <h1 className="mt-2 text-[clamp(2rem,4vw,2.75rem)] font-black leading-tight tracking-[-0.045em] text-white">{title}</h1>
-        <p className="mt-3 text-base leading-7 text-white/62">{description}</p>
+        <p className="text-xs font-black tracking-[0.14em] text-[var(--primary)]">{label}</p>
+        <h1 className="mt-2 text-[clamp(2rem,4vw,2.75rem)] font-black leading-tight tracking-[-0.05em] text-[var(--ink)]">{title}</h1>
+        <p className="mt-3 text-base leading-7 text-[var(--muted)]">{description}</p>
       </div>
       {action ? <div className="flex w-full sm:w-auto sm:shrink-0 [&>*]:max-sm:w-full">{action}</div> : null}
     </header>

@@ -54,41 +54,63 @@ function NavIcon({ name }: { name: NavigationItem["icon"] }) {
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-4 2-6 6-6s6 2 6 6M16 5c3 0 4 2 4 4s-1 3-3 3M17 14c3 0 4 2 4 5" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 15 6l-.3-2.6h-4L10.4 6A8 8 0 0 0 8.8 7L6.4 6 4.5 9.5 6.6 11a7 7 0 0 0 0 2L4.5 14.5 6.4 18l2.4-1a8 8 0 0 0 1.6 1l.3 2.6h4L15 18a8 8 0 0 0 1.6-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z" /></>,
   };
-  return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.8] lg:hidden">{paths[name]}</svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.8]">{paths[name]}</svg>;
 }
 
 export function AppShell({ role, userId, userName, currentPath, children }: { role: UserRole; userId: string; userName: string; currentPath: string; children: ReactNode }) {
   const navigation = navigationFor(role);
   const roleLabel = role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자";
   return (
-    <div className="app-shell min-h-screen bg-[var(--canvas)]">
+    <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07112f]/96 text-white shadow-[0_10px_35px_rgba(7,17,47,.18)] backdrop-blur-xl">
-        <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between gap-8 px-5 sm:px-8">
-          <Brand href="/topics" inverse />
-          <nav aria-label="주요 메뉴" className="hidden h-full items-center gap-9 lg:flex">
+      <div className="app-shell min-h-screen bg-white lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
+        <aside className="sticky top-0 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-white px-2 py-6 lg:flex">
+          <Brand href="/topics" compact />
+          <nav aria-label="주요 메뉴" className="mt-9 flex w-full flex-col gap-2">
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
-              return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color relative flex h-full items-center text-sm font-semibold ${active ? "text-white after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#e5a72d]" : "text-white/55 hover:text-white"}`}>{item.label}</Link>;
+              return (
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-bold leading-tight transition-colors ${active ? "text-[var(--primary)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>
+                  <span className={`grid size-9 place-items-center rounded-[var(--radius-control)] transition-colors ${active ? "bg-[var(--primary-subtle)]" : "group-hover:bg-[var(--surface-subtle)]"}`}><NavIcon name={item.icon} /></span>
+                  <span>{item.label}</span>
+                </Link>
+              );
             })}
           </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
-            <Link href="/account" aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className="snap-color flex min-h-11 min-w-11 items-center justify-end gap-3 rounded-lg text-right hover:text-white" aria-label={`${userName} 마이페이지`}>
-              <span className="hidden min-w-0 sm:block"><span className="block truncate text-sm font-semibold text-white">{userName}</span><span className="block text-xs text-white/45">마이페이지</span></span>
-              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full border border-white/20 bg-white/10 text-sm font-extrabold text-white">{userName.trim().charAt(0) || "나"}</span>
-              <span className="sr-only">{roleLabel}</span>
+          <div className="mt-auto flex w-full flex-col items-center gap-2 border-t border-[var(--line)] pt-4">
+            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${currentPath === "/notifications" ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}>
+              <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
+              <span aria-hidden="true">알림</span>
+            </div>
+            <Link href="/account" aria-label={`${userName} 마이페이지`} aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className={`flex min-h-[4rem] w-full flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[0.7rem] font-bold ${isSectionActive("/account", currentPath) ? "text-[var(--primary)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>
+              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-[#e8ebf2] text-[var(--muted)]">
+                <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" /></svg>
+              </span>
+              <span>{roleLabel}</span>
             </Link>
           </div>
+        </aside>
+        <div className="min-w-0 bg-[var(--workspace)]">
+          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/94 backdrop-blur-xl lg:hidden">
+            <div className="flex h-[4.5rem] items-center justify-between gap-5 px-5 sm:px-8">
+              <div><Brand href="/topics" ariaLabel="부산대학교 학과 프로젝트 탐색 모바일" /></div>
+              <div className="flex items-center gap-2">
+                <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
+                <Link href="/account" aria-label={`${userName} 마이페이지 모바일`} aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className="grid size-10 place-items-center rounded-full bg-[#e8ebf2] text-[var(--muted)]">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" /></svg>
+                </Link>
+              </div>
+            </div>
+          </header>
+          <div id="main-content" tabIndex={-1}>{children}</div>
         </div>
-      </header>
-      <div id="main-content" tabIndex={-1}>{children}</div>
-      <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-white/10 bg-[#07112f]/96 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(7,17,47,.2)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
-        {navigation.map((item) => {
-          const active = isNavigationActive(item, currentPath, role);
-          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-bold ${active ? "bg-white/12 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,.08)]" : "text-white/45"}`}><NavIcon name={item.icon} />{item.label}</Link>;
-        })}
-      </nav>
+        <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white/94 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
+          {navigation.map((item) => {
+            const active = isNavigationActive(item, currentPath, role);
+            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] px-1 text-xs font-bold ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} />{item.label}</Link>;
+          })}
+        </nav>
+      </div>
     </div>
   );
 }

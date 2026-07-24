@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import type { PublicTopicPage, PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
@@ -11,16 +10,23 @@ const phaseLabel: Record<PublicTopicPhase, string> = {
 
 export function ProjectPortalHero({ view }: { view: "active" | "past" }) {
   return (
-    <section aria-labelledby="project-portal-title" className="portal-hero -mx-6 -mt-6 overflow-hidden border-b border-[var(--line)] px-6 py-7 lg:-mx-10 lg:-mt-8 lg:grid lg:min-h-52 lg:grid-cols-[minmax(30rem,.9fr)_minmax(28rem,1.1fr)] lg:items-center lg:gap-8 lg:px-10 lg:py-5">
-      <div className="portal-hero-copy relative z-10 max-w-xl">
-        <p className="text-xs font-black tracking-[0.16em] text-[#f0bd54]">학과 프로젝트 포털</p>
-        <h1 id="project-portal-title" className="mt-3 flex items-start gap-3 text-[clamp(2.5rem,3.8vw,3.35rem)] font-black leading-[1.04] tracking-[-0.05em] text-white lg:whitespace-nowrap">
-          <span>{view === "past" ? "지난 프로젝트" : "진행 중 프로젝트"}</span>
-          <svg aria-hidden="true" viewBox="0 0 32 32" className="mt-1 size-8 shrink-0 fill-[var(--accent)]"><path d="M16 1.5c.9 7.3 4.2 10.6 11.5 11.5C20.2 13.9 16.9 17.2 16 24.5 15.1 17.2 11.8 13.9 4.5 13 11.8 12.1 15.1 8.8 16 1.5Z"/><path d="M26.5 21c.4 3.1 1.9 4.6 5 5-3.1.4-4.6 1.9-5 5-.4-3.1-1.9-4.6-5-5 3.1-.4 4.6-1.9 5-5Z"/></svg>
+    <section aria-labelledby="project-portal-title" className="flex flex-col gap-5 border-b border-[var(--line)] pb-6 sm:flex-row sm:items-end sm:justify-between lg:pb-7">
+      <div className="min-w-0">
+        <div className="mb-4 flex items-center gap-3">
+          <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary)] text-white shadow-[0_10px_24px_rgb(45_94_218_/_0.2)]">
+            <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z"/><path d="m6 10.5 6 3.5 6-3.5v5L12 19l-6-3.5v-5Z"/></svg>
+          </span>
+          <p className="text-sm font-bold text-[var(--muted)]">프로젝트 탐색</p>
+        </div>
+        <h1 id="project-portal-title" className="text-[clamp(2rem,4vw,3rem)] font-black leading-[1.08] tracking-[-0.045em] text-[var(--ink)]">
+          {view === "past" ? "지난 프로젝트" : "진행 중 프로젝트"}
         </h1>
-        <p className="mt-4 max-w-lg text-base leading-7 text-white/62">{view === "past" ? "선배들이 수행한 프로젝트를 프로그램별로 찾아보고 결과물을 참고해 보세요." : "다양한 프로그램의 주제를 비교하고 관심 있는 프로젝트에 지원해 보세요."}</p>
+        <p className="mt-3 max-w-2xl text-[0.95rem] leading-7 text-[var(--muted)]">{view === "past" ? "완료된 프로젝트의 과정과 결과물을 프로그램별로 살펴보세요." : "공개된 주제를 비교하고 함께하고 싶은 프로젝트를 찾아보세요."}</p>
       </div>
-      <div className="portal-hero-visual relative -mb-5 hidden min-h-48 overflow-hidden rounded-tl-[3rem] lg:block" aria-hidden="true"><Image src="/illustrations/platform-vision-hero.png" alt="" fill priority sizes="50vw" className="object-cover object-[78%_center] opacity-80" /><span className="absolute inset-0 bg-gradient-to-r from-[#0b1740] via-transparent to-transparent" /></div>
+      <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--line)] bg-white px-4 py-2 text-sm font-bold text-[var(--muted)] shadow-[0_8px_24px_rgb(23_32_51_/_0.05)]">
+        <span aria-hidden="true" className="size-2 rounded-full bg-[var(--primary)]" />
+        {view === "past" ? "완료 기록" : "현재 모집"}
+      </div>
     </section>
   );
 }
@@ -34,10 +40,10 @@ export function ProjectStatusNavigation({ phase, counts, programId, query, sort 
     return `/topics?${params.toString()}`;
   };
   return (
-    <nav aria-label="프로젝트 상태" className="flex gap-2 overflow-x-auto pb-1">
+    <nav aria-label="프로젝트 상태" className="flex gap-1.5 overflow-x-auto">
       {(Object.keys(phaseLabel) as PublicTopicPhase[]).map((item) => {
         const selected = phase === item;
-        return <Link key={item} href={activeUrl(item)} aria-current={selected ? "page" : undefined} className={`flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-extrabold transition-colors ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"}`}>{phaseLabel[item]} <span className="ml-1.5 text-xs font-semibold">{counts[item]}</span></Link>;
+        return <Link key={item} href={activeUrl(item)} aria-current={selected ? "page" : undefined} className={`flex min-h-10 shrink-0 items-center rounded-xl px-3.5 text-sm font-bold transition-colors ${selected ? "bg-[var(--ink)] text-white shadow-[0_7px_18px_rgb(23_32_51_/_0.14)]" : "text-[var(--muted)] hover:bg-white hover:text-[var(--ink)]"}`}>{phaseLabel[item]} <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[0.68rem] font-bold ${selected ? "bg-white/16 text-white" : "bg-white text-[var(--muted)]"}`}>{counts[item]}</span></Link>;
       })}
     </nav>
   );

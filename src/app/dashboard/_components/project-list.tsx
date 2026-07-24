@@ -68,39 +68,39 @@ export function ProjectDashboardHero({ role, teams }: { role: UserRole; teams: T
     : "진행 중인 프로젝트와 완료한 기록을 한눈에 확인하고 다음 작업을 이어가세요.";
 
   return (
-    <header className={`${styles.hero} overflow-hidden rounded-[var(--radius-panel)] border border-white/10 text-white`}>
-      <div className="grid min-h-[19rem] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,.8fr)]">
-        <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-12">
-          <p className="text-sm font-extrabold tracking-[0.08em] text-[#f0bd54]">PROJECT WORKSPACE</p>
-          <h1 className="mt-3 text-[clamp(2.25rem,5vw,3.5rem)] font-black leading-[1.08] tracking-[-0.05em] text-white">{title}</h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-white/62 sm:text-lg">{description}</p>
-          <div className="mt-7"><DashboardActions role={role} /></div>
+    <header className={styles.overview}>
+      <div className={styles.overviewHeading}>
+        <div>
+          <h1 className={styles.pageTitle}>{title}</h1>
+          <p className={styles.pageDescription}>{description}</p>
         </div>
+        <DashboardActions role={role} />
+      </div>
 
-        <div className="relative hidden min-h-[19rem] items-center justify-center overflow-hidden px-10 lg:flex" aria-hidden="true">
-          <span className={`${styles.orbit} ${styles.orbitLarge}`} />
-          <span className={`${styles.orbit} ${styles.orbitSmall}`} />
-          <span className="absolute left-[9%] top-[22%] size-9 rotate-12 rounded-lg bg-white/80 shadow-[0_10px_22px_rgb(47_91_234_/_0.14)]" />
-          <span className="absolute bottom-[16%] right-[7%] size-12 -rotate-6 rounded-xl bg-[#b8c8ff] shadow-[0_12px_25px_rgb(47_91_234_/_0.2)]" />
-          <div className={`${styles.snapshot} relative z-10 w-full max-w-sm rounded-[var(--radius-panel)] border border-[#cbd7fb] bg-white p-6`}>
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="text-sm font-bold text-[var(--primary)]">전체 진행률</p>
-                <p className="mt-2 text-4xl font-black tracking-[-0.04em] text-[var(--ink)]">{summary.progress}<span className="ml-1 text-xl">%</span></p>
-              </div>
-              <div className="grid size-14 place-items-center rounded-full border-[7px] border-[var(--primary-subtle)] text-sm font-black text-[var(--primary)]">{summary.activeCount}</div>
-            </div>
-            <div className="mt-6 h-2 overflow-hidden rounded-full bg-[var(--primary-subtle)]">
-              <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${summary.progress}%` }} />
-            </div>
-            <div className="mt-6 grid grid-cols-3 divide-x divide-[var(--line)] border-t border-[var(--line)] pt-5 text-center">
-              <div><strong className="block text-xl">{summary.activeCount}</strong><span className="muted mt-1 block text-xs">진행 중</span></div>
-              <div><strong className="block text-xl">{summary.completedMilestoneCount}</strong><span className="muted mt-1 block text-xs">완료 단계</span></div>
-              <div><strong className="block text-xl">{summary.closedCount}</strong><span className="muted mt-1 block text-xs">완료 기록</span></div>
-            </div>
+      <dl className={styles.summaryGrid}>
+        <div className={`${styles.summaryCard} ${styles.summaryCardPrimary}`}>
+          <dt>진행 프로젝트</dt>
+          <dd>{summary.activeCount}<span>개</span></dd>
+          <p>지금 참여하고 있는 프로젝트</p>
+        </div>
+        <div className={styles.summaryCard}>
+          <dt>마일스톤</dt>
+          <dd>{summary.completedMilestoneCount}<span> / {summary.milestoneCount}</span></dd>
+          <p>완료한 단계와 전체 단계</p>
+        </div>
+        <div className={styles.summaryCard}>
+          <dt>전체 진행률</dt>
+          <dd>{summary.progress}<span>%</span></dd>
+          <div className={styles.summaryTrack} aria-hidden="true">
+            <span style={{ width: `${summary.progress}%` }} />
           </div>
         </div>
-      </div>
+        <div className={styles.summaryCard}>
+          <dt>완료 기록</dt>
+          <dd>{summary.closedCount}<span>개</span></dd>
+          <p>마무리한 프로젝트</p>
+        </div>
+      </dl>
     </header>
   );
 }
@@ -129,34 +129,33 @@ function ActiveProjectItem({ role, team }: { role: UserRole; team: TeamListItem 
   const presentation = statusPresentation[team.status];
 
   return (
-    <li className={`${styles.activeProject} rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-8`}>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,.85fr)_minmax(22rem,1fr)] lg:items-center">
-        <div>
-          <StatusBadge tone={presentation.tone}>{presentation.label}</StatusBadge>
-          <h3 className="mt-4 text-2xl font-black tracking-[-0.035em] text-[var(--ink)]">{team.name}</h3>
-          <p className="muted mt-2 text-base leading-6">{team.topicTitle} <span aria-hidden="true">·</span> 팀원 {team.memberCount}명</p>
+    <li className={styles.activeProject}>
+      <div className={styles.projectIdentity}>
+        <div className={styles.projectMark} aria-hidden="true">
+          {team.name.trim().slice(0, 1)}
         </div>
-
-        <div>
-          <div className="mb-3 flex items-end justify-between gap-4">
-            <div>
-              <p className="muted text-sm font-semibold">마일스톤</p>
-              <p className="mt-1 text-base font-bold">{team.completedMilestoneCount}/{team.milestoneCount} 완료</p>
-            </div>
-            <strong className="text-xl font-black text-[var(--primary)]">{progress}%</strong>
+        <div className={styles.projectTitle}>
+          <div className={styles.projectStatusRow}>
+            <StatusBadge tone={presentation.tone}>{presentation.label}</StatusBadge>
+            <span>팀원 {team.memberCount}명</span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-[var(--primary-subtle)]" role="progressbar" aria-label={`${team.name} 마일스톤 진행률`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-            <div className="h-full rounded-full bg-[var(--primary)] transition-[width] duration-300" style={{ width: `${progress}%` }} />
-          </div>
+          <h3>{team.name}</h3>
+          <p>{team.topicTitle}</p>
         </div>
+        <div className={styles.projectActions}><ProjectActions role={role} team={team} /></div>
       </div>
 
-      <div className="mt-7 flex flex-col gap-5 border-t border-[var(--line)] pt-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className={styles.projectDetail}>
         <div>
-          <p className="text-sm font-extrabold text-[var(--ink)]">다음 안내</p>
-          <p className="muted mt-1 text-sm leading-6">{projectGuidance(team, progress)}</p>
+          <div className={styles.progressLabel}>
+            <span>마일스톤 {team.completedMilestoneCount}/{team.milestoneCount}</span>
+            <strong>{progress}%</strong>
+          </div>
+          <div className={styles.progressTrack} role="progressbar" aria-label={`${team.name} 마일스톤 진행률`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div style={{ width: `${progress}%` }} />
+          </div>
         </div>
-        <div className="shrink-0"><ProjectActions role={role} team={team} /></div>
+        <p className={styles.projectGuidance}>{projectGuidance(team, progress)}</p>
       </div>
     </li>
   );
@@ -164,12 +163,15 @@ function ActiveProjectItem({ role, team }: { role: UserRole; team: TeamListItem 
 
 function ClosedProjectItem({ role, team }: { role: UserRole; team: TeamListItem }) {
   return (
-    <li className={`${styles.closedProject} grid gap-4 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6`}>
-      <div>
-        <h3 className="text-lg font-extrabold tracking-[-0.02em] text-[var(--ink)]">{team.name}</h3>
-        <p className="muted mt-1 text-sm">{team.topicTitle} <span aria-hidden="true">·</span> 팀원 {team.memberCount}명</p>
+    <li className={styles.closedProject}>
+      <div className={styles.closedIdentity}>
+        <span className={styles.closedMark} aria-hidden="true">{team.name.trim().slice(0, 1)}</span>
+        <div>
+          <h3>{team.name}</h3>
+          <p>{team.topicTitle} <span aria-hidden="true">·</span> 팀원 {team.memberCount}명</p>
+        </div>
       </div>
-      <div className="flex items-center gap-2 text-sm font-bold text-[var(--success)]">
+      <div className={styles.completedStatus}>
         <span className="size-1.5 rounded-full bg-[var(--success)]" aria-hidden="true" />
         완료
       </div>
@@ -183,20 +185,20 @@ export function ProjectList({ role, teams }: { role: UserRole; teams: TeamListIt
   const closedTeams = teams.filter((team) => team.status === "CLOSED");
 
   return (
-    <div className="space-y-12">
+    <div className={styles.projectSections}>
       {activeTeams.length > 0 ? (
-        <section aria-labelledby="active-project-list-heading">
+        <section className={styles.projectSection} aria-labelledby="active-project-list-heading">
           <SectionHeading heading="진행 중 프로젝트" count={activeTeams.length} headingId="active-project-list-heading" />
-          <ul className="space-y-5">
+          <ul className={styles.activeList}>
             {activeTeams.map((team) => <ActiveProjectItem key={team.id} role={role} team={team} />)}
           </ul>
         </section>
       ) : null}
 
       {closedTeams.length > 0 ? (
-        <section aria-labelledby="closed-project-list-heading">
+        <section className={styles.projectSection} aria-labelledby="closed-project-list-heading">
           <SectionHeading heading="완료한 프로젝트" count={closedTeams.length} headingId="closed-project-list-heading" />
-          <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+          <ul className={styles.closedList}>
             {closedTeams.map((team) => <ClosedProjectItem key={team.id} role={role} team={team} />)}
           </ul>
         </section>
@@ -207,9 +209,9 @@ export function ProjectList({ role, teams }: { role: UserRole; teams: TeamListIt
 
 function SectionHeading({ heading, count, headingId }: { heading: string; count: number; headingId: string }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
-      <h2 id={headingId} className="text-2xl font-black tracking-[-0.035em] text-[var(--ink)]">{heading}</h2>
-      <span className="grid min-h-7 min-w-7 place-items-center rounded-md bg-[var(--surface-subtle)] px-2 text-sm font-extrabold text-[var(--muted)]">{count}</span>
+    <div className={styles.sectionHeading}>
+      <h2 id={headingId}>{heading}</h2>
+      <span>{count}</span>
     </div>
   );
 }

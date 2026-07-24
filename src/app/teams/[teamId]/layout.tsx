@@ -21,12 +21,12 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <main className="mx-auto grid w-full max-w-[1280px] grid-cols-[minmax(0,1fr)] gap-0 px-5 pb-28 pt-6 sm:px-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-10 lg:pb-16 lg:pt-0">
-        <aside aria-label="프로젝트 정보와 메뉴" className="min-w-0 rounded-[var(--radius-panel)] border border-white bg-white/84 p-5 shadow-[0_18px_48px_rgba(23,32,51,.1)] backdrop-blur lg:mt-8 lg:self-start lg:sticky lg:top-24">
+      <main className="mx-auto grid w-full max-w-[1380px] grid-cols-[minmax(0,1fr)] gap-0 px-5 pb-28 pt-6 sm:px-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8 lg:pb-16">
+        <aside aria-label="프로젝트 정보와 메뉴" className="min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-card)] lg:mt-8 lg:self-start lg:sticky lg:top-24">
           <div className="lg:sticky lg:top-24">
             <div className="border-b border-[var(--line)] pb-5">
               <div className="flex items-start gap-3">
-                <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-lg bg-[var(--primary)] text-lg font-black text-white">P</span>
+                <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-lg font-black text-[var(--primary)]">P</span>
                 <div className="min-w-0">
                   <p className="truncate text-base font-extrabold tracking-[-0.02em]">{workspace.name}</p>
                   <p className="muted mt-1 line-clamp-2 text-xs leading-5">{workspace.topicTitle}</p>
@@ -61,7 +61,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             </div>
           </div>
         </aside>
-        <div className="portal-hero-copy my-8 min-w-0 rounded-[var(--radius-panel)] border border-white bg-white/76 p-5 shadow-[0_20px_55px_rgba(23,32,51,.08)] backdrop-blur sm:p-8 lg:ml-8 lg:p-10 xl:ml-10">{children}</div>
+        <div className="portal-hero-copy my-8 min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-card)] sm:p-8 lg:ml-8 lg:p-10">{children}</div>
       </main>
     </AppShell>
   );

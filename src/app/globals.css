@@ -9,21 +9,22 @@
 }
 
 :root {
-  --canvas: #f3f5fb;
+  --canvas: #dde5ff;
+  --workspace: #f3f5f8;
   --surface: #ffffff;
-  --surface-subtle: #eef2fb;
-  --ink: #172033;
-  --muted: #626c7f;
-  --line: #d9e0ef;
-  --line-strong: #7c8799;
-  --field-border: #7c8799;
-  --primary: #2f5bea;
-  --primary-hover: #2449c4;
-  --primary-subtle: #edf1ff;
-  --accent: #d58a00;
-  --accent-hover: #8b5a00;
-  --accent-ink: #704800;
-  --accent-subtle: #fff6dc;
+  --surface-subtle: #f7f8fa;
+  --ink: #171921;
+  --muted: #6f7480;
+  --line: #e5e7eb;
+  --line-strong: #cfd3da;
+  --field-border: #d8dbe2;
+  --primary: #506ef5;
+  --primary-hover: #3d5bdc;
+  --primary-subtle: #eaf1ff;
+  --accent: #9d73e7;
+  --accent-hover: #8058c9;
+  --accent-ink: #5f3d9d;
+  --accent-subtle: #f3edff;
   --focus: var(--primary);
   --success: #18794e;
   --success-subtle: #eaf7f0;
@@ -32,8 +33,11 @@
   --warning-subtle: #fff7df;
   --danger: #b42318;
   --danger-subtle: #fff0ee;
-  --radius-control: 0.75rem;
-  --radius-panel: 1rem;
+  --lime: #d8ff68;
+  --radius-control: 0.6875rem;
+  --radius-panel: 1.25rem;
+  --shadow-card: none;
+  --shadow-float: 0 18px 48px rgb(31 35 48 / 0.12);
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
@@ -51,11 +55,7 @@ html {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 8% 12%, rgb(47 91 234 / 0.08), transparent 24rem),
-    radial-gradient(circle at 92% 38%, rgb(213 138 0 / 0.06), transparent 22rem),
-    var(--canvas);
-  background-attachment: fixed;
+  background: var(--canvas);
   color: var(--ink);
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
   font-size: 1rem;
@@ -87,23 +87,22 @@ textarea {
   .content-shell {
     margin-inline: auto;
     width: 100%;
-    max-width: 1280px;
-    padding: 2.5rem 1.5rem 7rem;
+    max-width: 1500px;
+    padding: 2rem 1.5rem 7rem;
   }
 
   .panel {
     border: 1px solid var(--line);
     border-radius: var(--radius-panel);
     background: var(--surface);
-    box-shadow: 0 14px 38px rgb(23 32 51 / 0.07);
   }
 
   .field {
     min-height: 3.25rem;
     width: 100%;
-    border: 1px solid #cfd5df;
+    border: 1px solid var(--field-border);
     border-radius: var(--radius-control);
-    background-color: rgb(255 255 255 / 0.92);
+    background-color: #fbfcfe;
     padding: 0.75rem 1rem;
     color: var(--ink);
     font-size: 1rem;
@@ -112,13 +111,13 @@ textarea {
   }
 
   .field:hover {
-    border-color: #9aa4b5;
+    border-color: #aeb4bf;
   }
 
   .field:focus {
     border-color: var(--focus);
     background: var(--surface);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 11%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 12%, transparent);
   }
 
   .field:user-invalid {
@@ -182,7 +181,7 @@ textarea {
     gap: 0.5rem;
     border: 1px solid var(--field-border);
     border-radius: var(--radius-control);
-    background: var(--surface-subtle);
+    background: #fbfcfe;
     padding: 0.4375rem 0.5rem;
     cursor: text;
     transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
@@ -272,11 +271,11 @@ textarea {
   .button-danger,
   .button-quiet {
     display: inline-flex;
-    min-height: 2.75rem;
+    min-height: 2.875rem;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-control);
-    padding: 0.625rem 1rem;
+    padding: 0.65rem 1.125rem;
     font-weight: 700;
     transition: background-color var(--snap-duration) var(--snap-ease), border-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease), transform var(--snap-duration) var(--snap-ease);
     will-change: transform;
@@ -286,7 +285,7 @@ textarea {
     border: 1px solid var(--primary);
     background: var(--primary);
     color: white;
-    box-shadow: 0 10px 24px rgb(47 91 234 / 0.22);
+    box-shadow: 0 9px 20px rgb(61 115 246 / 0.2);
   }
 
   .button-primary:hover {
@@ -295,14 +294,14 @@ textarea {
   }
 
   .button-secondary {
-    border: 1px solid #c4cad5;
+    border: 1px solid var(--line);
     background: white;
     color: var(--ink);
-    box-shadow: 0 6px 16px rgb(23 32 51 / 0.06);
+    box-shadow: 0 5px 14px rgb(31 35 48 / 0.045);
   }
 
   .button-secondary:hover {
-    border-color: #8994a6;
+    border-color: #b8bdc7;
     background: var(--surface-subtle);
   }
 
@@ -397,61 +396,21 @@ textarea {
   }
 
   .record-row:hover {
-    background: linear-gradient(90deg, var(--primary-subtle), transparent 72%);
+    background: var(--surface-subtle);
   }
 
   .app-shell #main-content {
-    position: relative;
-    isolation: isolate;
-  }
-
-  .app-shell #main-content::before {
-    position: fixed;
-    z-index: -1;
-    top: 5rem;
-    right: -8rem;
-    width: 28rem;
-    height: 28rem;
-    border-radius: 999px;
-    background: rgb(47 91 234 / 0.07);
-    filter: blur(70px);
-    content: "";
-    pointer-events: none;
+    min-height: calc(100vh - 4.5rem);
   }
 
   .app-shell .content-shell {
     animation: portal-rise 280ms var(--silk-ease) both;
   }
 
-  .visual-page-header::before {
-    position: absolute;
-    z-index: -1;
-    top: -8rem;
-    right: -3rem;
-    width: 24rem;
-    height: 24rem;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgb(71 112 255 / 0.85), transparent 68%);
-    content: "";
-  }
-
-  .visual-page-header::after {
-    position: absolute;
-    z-index: -1;
-    right: 3rem;
-    bottom: -4rem;
-    width: 12rem;
-    height: 8rem;
-    border: 1px solid rgb(255 255 255 / 0.16);
-    border-radius: 50%;
-    content: "";
-    rotate: -18deg;
-  }
-
   .app-shell form.rounded-\[var\(--radius-panel\)\],
   .app-shell ol.rounded-\[var\(--radius-panel\)\],
   .app-shell ul.rounded-\[var\(--radius-panel\)\] {
-    box-shadow: 0 14px 36px rgb(23 32 51 / 0.07);
+    box-shadow: var(--shadow-card);
   }
 
 
@@ -460,10 +419,8 @@ textarea {
   }
 
   .portal-hero {
-    background:
-      radial-gradient(circle at 72% 12%, rgb(63 103 244 / 0.62), transparent 38%),
-      linear-gradient(112deg, #07112f 0%, #0b1740 55%, #142862 100%);
-    box-shadow: 0 22px 58px rgb(7 17 47 / 0.2);
+    background: white;
+    box-shadow: var(--shadow-card);
   }
 
   .portal-hero-visual {
@@ -471,14 +428,12 @@ textarea {
   }
 
   .recruitment-hero {
-    background:
-      radial-gradient(circle at 78% 20%, rgb(68 109 255 / 0.55), transparent 34%),
-      linear-gradient(112deg, #07112f 0%, #0b1740 48%, #142862 100%);
-    box-shadow: 0 22px 58px rgb(7 17 47 / 0.2);
+    background: white;
+    box-shadow: var(--shadow-card);
   }
 
   .recruitment-card {
-    box-shadow: 0 8px 24px rgb(23 32 51 / 0.055);
+    box-shadow: var(--shadow-card);
     transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), transform var(--snap-duration) var(--snap-ease);
   }
 
@@ -539,11 +494,14 @@ textarea {
   .project-card {
     border-radius: var(--radius-panel);
     animation: project-card-enter 180ms var(--silk-ease) both;
-    transition: border-color var(--snap-duration) var(--snap-ease);
+    box-shadow: var(--shadow-card);
+    transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), transform var(--snap-duration) var(--snap-ease);
   }
 
   .project-card:hover {
     border-color: color-mix(in srgb, var(--primary) 58%, var(--line));
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
   }
 
   .project-card:nth-child(2),

@@ -69,8 +69,8 @@ export function RecruitmentPostForm({
           <input name="availability" maxLength={500} required className="field" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
         </label>
       </fieldset>
-      <div className="flex flex-col gap-3 rounded-[var(--radius-panel)] border border-white bg-[#0b1740] p-5 text-white shadow-[0_18px_45px_rgba(7,17,47,.18)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <p className="text-sm text-white/62">지원자는 ‘내 모집’에서 확인할 수 있습니다.</p>
+      <div className="flex flex-col gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <p className="text-sm text-[var(--muted)]">지원자는 ‘내 모집’에서 확인할 수 있습니다.</p>
         <button type="submit" className="button-primary max-sm:w-full" disabled={pending}>{pending ? "공개 중" : "모집 시작하기"}</button>
       </div>
       {state.message ? (

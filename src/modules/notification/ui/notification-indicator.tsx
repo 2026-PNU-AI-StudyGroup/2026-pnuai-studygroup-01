@@ -12,7 +12,7 @@ export async function NotificationIndicator({ userId, active }: { userId: string
       href="/notifications"
       aria-current={active ? "page" : undefined}
       aria-label={unreadCount ? `읽지 않은 알림 ${accessibleCount}` : "알림함"}
-      className={`snap-color relative grid size-11 shrink-0 place-items-center rounded-xl ${active ? "bg-white/14 text-white" : "text-white/55 hover:bg-white/10 hover:text-white"}`}
+      className={`snap-color relative grid size-11 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" /><path d="M10 21h4" /></svg>
       {unreadCount ? <span aria-hidden="true" className="absolute right-1 top-1 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-black leading-4 text-white">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}

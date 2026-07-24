@@ -1,61 +1,176 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PublicHeader } from "@/shared/ui/public-header";
 
+const projectFlow = [
+  {
+    number: "01",
+    title: "주제를 발견하고",
+    description: "관심 분야와 진행 조건을 살펴보며 시작점을 찾습니다.",
+    color: "bg-[#e8efff] text-[#315ee7]",
+  },
+  {
+    number: "02",
+    title: "동료와 연결하고",
+    description: "모집과 지원을 통해 함께할 팀을 완성합니다.",
+    color: "bg-[#ecf8ef] text-[#26864f]",
+  },
+  {
+    number: "03",
+    title: "과정을 쌓고",
+    description: "일정과 피드백을 한곳에서 확인하며 프로젝트를 이어갑니다.",
+    color: "bg-[#fff2dc] text-[#a56600]",
+  },
+  {
+    number: "04",
+    title: "결과를 남깁니다",
+    description: "보고서와 결과물을 다음 프로젝트를 위한 기록으로 남깁니다.",
+    color: "bg-[#f4eaff] text-[#7e4bb5]",
+  },
+];
+
+function ArrowIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-5" fill="none">
+      <path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SparkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6" fill="none">
+      <path d="M12 3.5c.5 4.7 3.3 7.5 8 8-4.7.5-7.5 3.3-8 8-.5-4.7-3.3-7.5-8-8 4.7-.5 7.5-3.3 8-8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default async function Home() {
   if (await getCurrentActor()) redirect("/topics");
 
-  const flow = [
-    ["01", "발견", "진행 중인 주제와 지난 결과물을 탐색합니다."],
-    ["02", "연결", "동료를 만나고 교수와 함께 팀을 완성합니다."],
-    ["03", "몰입", "마일스톤과 피드백으로 프로젝트를 전진시킵니다."],
-    ["04", "기록", "보고서와 결과물을 다음 도전으로 남깁니다."],
-  ];
-
   return (
-    <main className="min-h-screen bg-[#07112f] text-white">
-      <PublicHeader>
-        <nav className="flex items-center gap-5" aria-label="랜딩 메뉴">
-          <a href="#workflow" className="hidden text-sm font-semibold text-white/65 hover:text-white sm:block">프로젝트 여정</a>
-          <Link href="/sign-in" className="inline-flex min-h-11 items-center rounded-full border border-white/20 bg-white px-5 text-sm font-extrabold text-[#07112f] transition hover:bg-[#e8edff]">로그인</Link>
-        </nav>
-      </PublicHeader>
-      <section className="relative isolate min-h-[calc(100svh-4.5rem)] overflow-hidden border-b border-white/10">
-        <Image src="/illustrations/platform-vision-hero.png" alt="" fill priority sizes="100vw" className="pointer-events-none -z-20 object-cover object-[68%_center] opacity-90" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#07112f_0%,rgba(7,17,47,.98)_26%,rgba(7,17,47,.58)_58%,rgba(7,17,47,.12)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-52 bg-gradient-to-t from-[#07112f] to-transparent" />
-        <div className="mx-auto flex min-h-[calc(100svh-4.5rem)] w-full max-w-[1440px] flex-col justify-between px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
-          <div className="portal-hero-copy max-w-[48rem]">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/[.07] px-4 py-2 text-xs font-extrabold tracking-[0.16em] text-[#b9c9ff] backdrop-blur-md">
-              <span className="size-2 rounded-full bg-[#e5a72d] shadow-[0_0_16px_#e5a72d]" />
-              PNU PROJECT COLLECTIVE
+    <main className="min-h-screen overflow-hidden bg-[#e8f0ff] text-[#111827]">
+      <div className="pointer-events-none fixed -left-32 top-1/4 size-[30rem] rounded-full bg-[#cfe0ff] blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none fixed -right-32 bottom-0 size-[34rem] rounded-full bg-[#dce7ff] blur-3xl" aria-hidden="true" />
+
+      <div className="relative mx-auto min-h-screen w-full max-w-[1600px] p-0 sm:p-5 lg:p-7">
+        <div className="min-h-[calc(100vh-3.5rem)] overflow-hidden bg-[#f7f8fb] shadow-[0_28px_90px_rgba(49,73,125,.16)] sm:rounded-[2rem]">
+          <PublicHeader>
+            <nav className="flex items-center gap-3" aria-label="랜딩 메뉴">
+              <a href="#journey" className="hidden min-h-11 items-center px-3 text-sm font-semibold text-[#647087] transition hover:text-[#17213a] sm:inline-flex">
+                프로젝트 여정
+              </a>
+              <Link href="/sign-in" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#111827] px-5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(17,24,39,.16)] transition hover:-translate-y-0.5 hover:bg-[#315ee7]">
+                로그인
+              </Link>
+            </nav>
+          </PublicHeader>
+
+          <section className="mx-auto grid w-full max-w-[1440px] gap-10 px-5 pb-12 pt-8 sm:px-8 sm:pt-12 lg:grid-cols-[minmax(0,.86fr)_minmax(32rem,1.14fr)] lg:items-center lg:gap-16 lg:px-12 lg:pb-16 lg:pt-14">
+            <div className="page-enter max-w-[42rem]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#d8dfeb] bg-white px-3.5 py-2 text-xs font-bold text-[#315ee7] shadow-[0_6px_20px_rgba(40,58,100,.06)]">
+                <SparkIcon />
+                부산대학교 프로젝트 허브
+              </div>
+              <h1 aria-label="가능성을 프로젝트로" className="mt-7 text-[clamp(3.1rem,7.4vw,6.7rem)] font-black leading-[.92] tracking-[-0.075em] text-[#101827]">
+                가능성을
+                <br />
+                <span className="text-[#315ee7]">함께 완성하다.</span>
+              </h1>
+              <p className="mt-7 max-w-[37rem] text-base font-medium leading-7 text-[#667085] sm:text-lg sm:leading-8">
+                흩어진 아이디어와 사람, 진행 과정과 결과를 하나의 프로젝트 경험으로 연결합니다.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Link href="/sign-in" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#315ee7] px-7 text-base font-bold text-white shadow-[0_16px_38px_rgba(49,94,231,.28)] transition hover:-translate-y-0.5 hover:bg-[#244ed0]">
+                  프로젝트 시작하기
+                  <ArrowIcon />
+                </Link>
+                <a href="#journey" className="inline-flex min-h-14 items-center justify-center rounded-full border border-[#d9dee8] bg-white px-7 text-base font-bold text-[#27324a] transition hover:border-[#b8c5dd] hover:bg-[#f9fbff]">
+                  여정 살펴보기
+                </a>
+              </div>
             </div>
-            <h1 aria-label="가능성을 프로젝트로" className="mt-7 text-[clamp(3.4rem,9vw,7.8rem)] font-black leading-[.88] tracking-[-0.075em]">
-              가능성을<br /><span className="bg-gradient-to-r from-white via-[#cbd6ff] to-[#7fa0ff] bg-clip-text text-transparent">프로젝트로.</span>
-            </h1>
-            <p className="mt-8 max-w-[39rem] text-base font-medium leading-7 text-white/72 sm:text-xl sm:leading-8">아이디어가 동료를 만나고, 도전이 기록이 되는 곳. 부산대학교의 프로젝트를 발견하고 함께 완성하세요.</p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/sign-in" className="inline-flex min-h-14 items-center justify-center rounded-full bg-[#3867ff] px-7 text-base font-extrabold text-white shadow-[0_18px_50px_rgba(56,103,255,.38)] transition hover:-translate-y-0.5 hover:bg-[#4d76ff]">프로젝트 시작하기 <span aria-hidden="true" className="ml-3">↗</span></Link>
-              <a href="#workflow" className="inline-flex min-h-14 items-center justify-center rounded-full border border-white/20 bg-white/[.06] px-7 font-bold text-white backdrop-blur-md transition hover:bg-white/[.12]">어떻게 이어지는지 보기</a>
+
+            <div className="relative min-h-[31rem] overflow-hidden rounded-[2rem] border border-white bg-[#e8eef9] p-4 shadow-[0_24px_70px_rgba(39,61,108,.14)] sm:min-h-[36rem] sm:p-6">
+              <div className="absolute -right-20 -top-24 size-80 rounded-full bg-[#6f8fff]/25 blur-3xl" aria-hidden="true" />
+              <div className="relative h-full min-h-[29rem] overflow-hidden rounded-[1.5rem] bg-white shadow-[0_12px_38px_rgba(38,55,91,.1)] sm:min-h-[33rem]">
+                <div className="flex items-center justify-between border-b border-[#edf0f5] px-5 py-4 sm:px-7">
+                  <div>
+                    <p className="text-xs font-bold text-[#8791a4]">이번 학기</p>
+                    <p className="mt-1 text-lg font-extrabold tracking-[-0.02em]">프로젝트 한눈에 보기</p>
+                  </div>
+                  <span className="rounded-full bg-[#eef3ff] px-3 py-1.5 text-xs font-bold text-[#315ee7]">진행 중</span>
+                </div>
+
+                <div className="grid gap-4 p-5 sm:p-7">
+                  <div className="rounded-[1.35rem] bg-[#17213a] p-5 text-white sm:p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-bold text-white/55">나의 프로젝트</p>
+                        <h2 className="mt-2 text-xl font-extrabold tracking-[-0.03em] sm:text-2xl">아이디어에서 결과까지</h2>
+                      </div>
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-[#9eb4ff]"><SparkIcon /></span>
+                    </div>
+                    <div className="mt-8 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[68%] rounded-full bg-[#7ea1ff]" /></div>
+                      <span className="text-xs font-bold text-white/65">68%</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <article className="rounded-[1.25rem] border border-[#edf0f5] bg-[#fafbfc] p-4 sm:p-5">
+                      <div className="grid size-10 place-items-center rounded-xl bg-[#e7efff] text-[#315ee7]">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none"><path d="M5 19V8l7-4 7 4v11H5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><path d="M9 19v-5h6v5" stroke="currentColor" strokeWidth="1.8" /></svg>
+                      </div>
+                      <p className="mt-5 text-xs font-semibold text-[#8a94a6]">새로운 시작</p>
+                      <p className="mt-1 text-base font-extrabold">주제 탐색</p>
+                    </article>
+                    <article className="rounded-[1.25rem] border border-[#edf0f5] bg-[#fafbfc] p-4 sm:p-5">
+                      <div className="grid size-10 place-items-center rounded-xl bg-[#eaf8ee] text-[#278454]">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none"><path d="M8.5 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.5 19c.3-3.1 2-5 5-5s4.7 1.9 5 5m.5-4c.5-.3 1-.4 1.5-.4 2.6 0 4.1 1.6 4.5 4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                      </div>
+                      <p className="mt-5 text-xs font-semibold text-[#8a94a6]">함께할 사람</p>
+                      <p className="mt-1 text-base font-extrabold">팀 연결</p>
+                    </article>
+                  </div>
+
+                  <div className="flex items-center gap-4 rounded-[1.25rem] border border-[#edf0f5] bg-white p-4 sm:p-5">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff1d8] text-[#a56600]">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6" fill="none"><path d="M7 4v3m10-3v3M4.5 9h15M6 6h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-extrabold">다음 마일스톤</p>
+                      <p className="mt-1 text-sm text-[#7a8496]">팀의 다음 목표를 확인하세요</p>
+                    </div>
+                    <ArrowIcon />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="mt-16 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-[1.25rem] border border-white/10 bg-white/10 backdrop-blur-xl sm:grid-cols-4">
-            {["주제 탐색", "팀 빌딩", "진행 기록", "결과 아카이브"].map((item, index) => <div key={item} className="bg-[#0b1740]/75 px-4 py-4 sm:px-5"><span className="text-xs font-black text-[#e5a72d]">0{index + 1}</span><p className="mt-1 text-sm font-bold text-white/85">{item}</p></div>)}
-          </div>
+          </section>
+
+          <section id="journey" className="mx-auto w-full max-w-[1440px] px-5 pb-14 sm:px-8 lg:px-12 lg:pb-20" aria-labelledby="journey-title">
+            <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-xs font-extrabold tracking-[0.14em] text-[#315ee7]">ONE CONNECTED JOURNEY</p>
+                <h2 id="journey-title" className="mt-2 text-3xl font-black tracking-[-0.045em] sm:text-4xl">프로젝트의 모든 순간</h2>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-[#737d90]">발견부터 기록까지, 필요한 흐름을 끊김 없이 이어갑니다.</p>
+            </div>
+            <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {projectFlow.map((item) => (
+                <li key={item.number} className="group rounded-[1.5rem] border border-[#e4e8ef] bg-white p-5 shadow-[0_10px_32px_rgba(42,58,92,.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(42,58,92,.1)] sm:p-6">
+                  <div className={`grid size-11 place-items-center rounded-[.9rem] text-xs font-black ${item.color}`}>{item.number}</div>
+                  <h3 className="mt-7 text-xl font-extrabold tracking-[-0.03em]">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-[#737d90]">{item.description}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
         </div>
-      </section>
-      <section id="workflow" className="relative overflow-hidden bg-[#f2f5ff] text-[#101a36]" aria-labelledby="workflow-title">
-        <div className="absolute -right-32 top-16 size-96 rounded-full bg-[#dbe4ff] blur-3xl" aria-hidden="true" />
-        <div className="relative mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
-          <div className="grid gap-10 lg:grid-cols-[minmax(17rem,.55fr)_minmax(0,1.45fr)] lg:gap-16">
-            <div><p className="text-xs font-black tracking-[0.18em] text-[#2f5bea]">ONE CONNECTED JOURNEY</p><h2 id="workflow-title" className="mt-5 text-[clamp(2.5rem,5vw,4.8rem)] font-black leading-[.98] tracking-[-0.06em]">발견에서<br />기록까지.</h2><p className="mt-6 max-w-sm text-base leading-7 text-[#5c6780]">프로젝트의 순간들이 흩어지지 않도록, 모든 여정을 하나의 경험으로 연결합니다.</p></div>
-            <ol className="grid gap-4 sm:grid-cols-2">{flow.map(([number, title, description], index) => <li key={title} className={`group relative min-h-56 overflow-hidden rounded-[1.5rem] border p-6 shadow-[0_18px_50px_rgba(20,38,92,.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(20,38,92,.14)] sm:p-7 ${index === 0 ? "border-[#315ee7] bg-[#315ee7] text-white" : "border-white bg-white/88"}`}><span className={`text-sm font-black ${index === 0 ? "text-[#ffd477]" : "text-[#315ee7]"}`}>{number}</span><h3 className="mt-14 text-2xl font-black tracking-[-0.04em]">{title}</h3><p className={`mt-3 text-sm leading-6 ${index === 0 ? "text-white/72" : "text-[#657089]"}`}>{description}</p><span aria-hidden="true" className={`absolute right-5 top-5 text-3xl transition group-hover:translate-x-1 ${index === 0 ? "text-white/35" : "text-[#315ee7]/25"}`}>↗</span></li>)}</ol>
-          </div>
-        </div>
-      </section>
+      </div>
     </main>
   );
 }
