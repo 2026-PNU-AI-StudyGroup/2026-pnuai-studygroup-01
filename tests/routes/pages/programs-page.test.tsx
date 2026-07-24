@@ -8,7 +8,7 @@ const { redirect } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ redirect }));
 
-import ProgramsPage from "./page";
+import ProgramsPage from "@/app/programs/page";
 
 describe("ProgramsPage", () => {
   it("별도 프로그램 화면 대신 주제 탐색으로 이동한다", async () => {

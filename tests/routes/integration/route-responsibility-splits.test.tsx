@@ -38,8 +38,8 @@ vi.mock("@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repositor
 vi.mock("@/modules/identity/infrastructure/prisma-professor-access-repository", () => ({ PrismaProfessorAccessRepository: class {} }));
 vi.mock("@/modules/identity/infrastructure/prisma-student-profile-repository", () => ({ PrismaStudentProfileRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
-vi.mock("@/shared/ui/app-shell", () => ({ AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-vi.mock("@/app/account/account-controls", () => ({ AccountControls: () => <div>계정 제어</div> }));
+vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock("@/app/account/_components/account-controls", () => ({ AccountControls: () => <div>계정 제어</div> }));
 
 import AccountPage from "@/app/account/page";
 import StudentProfilePage from "@/app/account/profile/page";

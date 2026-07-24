@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({
   getCurrentActor: vi.fn(async () => ({ id: "student-1", role: "STUDENT" })),
 }));
-vi.mock("@/app/api/uploads/service", () => ({
+vi.mock("@/app/api/uploads/_lib/upload-service", () => ({
   uploadService: vi.fn(() => ({ create: vi.fn(), complete: vi.fn() })),
 }));
 

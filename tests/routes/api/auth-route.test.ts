@@ -5,7 +5,7 @@ const { delegatedPost } = vi.hoisted(() => ({ delegatedPost: vi.fn(async () => n
 vi.mock("better-auth/next-js", () => ({ toNextJsHandler: () => ({ GET: vi.fn(), POST: delegatedPost }) }));
 vi.mock("@/modules/identity/infrastructure/auth", () => ({ auth: {} }));
 
-import { POST } from "./[...all]/route";
+import { POST } from "@/app/api/auth/[...all]/route";
 
 describe("인증 API 노출 범위", () => {
   beforeEach(() => delegatedPost.mockClear());

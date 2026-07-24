@@ -11,7 +11,7 @@ vi.mock("@/modules/identity/infrastructure/current-actor", () => ({
 }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
-import Home from "./page";
+import Home from "@/app/page";
 
 describe("Home", () => {
   beforeEach(() => {
