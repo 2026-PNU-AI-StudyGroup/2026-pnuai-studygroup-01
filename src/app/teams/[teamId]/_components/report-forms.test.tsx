@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ArtifactRegistrationForm, ReportRequirementForm, ReportSubmissionForm } from "./report-forms";
+import { ArtifactRegistrationForm } from "./artifact-registration-form";
+import { ReportRequirementForm } from "./report-requirement-forms";
+import { ReportSubmissionForm } from "./report-submission-form";
 
 const { refresh, registerArtifact, setRequirement, submitReport } = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -14,7 +16,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh }),
 }));
 
-vi.mock("@/app/teams/[teamId]/report-actions", () => ({
+vi.mock("@/app/teams/[teamId]/_actions/team-report-actions", () => ({
   decideReportAction: vi.fn(),
   registerArtifactAction: registerArtifact,
   removeReportRequirementAction: vi.fn(),

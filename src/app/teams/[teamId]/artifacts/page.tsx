@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/report-forms";
-import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
+import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
+import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "프로젝트 결과물" };

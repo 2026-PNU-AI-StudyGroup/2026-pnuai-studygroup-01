@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/team-workspace-navigation";
+import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-workspace-navigation";
 
 const usePathname = vi.fn();
 vi.mock("next/navigation", () => ({ usePathname: () => usePathname() }));

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
+import { ProgressUpdateForm } from "@/app/teams/[teamId]/_components/progress-update-form";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("@/app/teams/[teamId]/actions", () => ({
+vi.mock("@/app/teams/[teamId]/_actions/team-workspace-actions", () => ({
   closeTeamAction: vi.fn(),
   createDiscussionPostAction: vi.fn(),
   createMilestoneAction: vi.fn(),

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { loadTeamWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
+import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "프로젝트 개요" };
@@ -9,7 +9,7 @@ const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", da
 
 export default async function TeamOverviewPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { workspace } = await loadTeamWorkspace(teamId);
+  const { actor, workspace } = await loadTeamWorkspace(teamId);
   const destinations = [
     ["마일스톤", "목표와 완료 예정일", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
     ["진행 기록", "수행 내용과 다음 행동", `/teams/${teamId}/progress`, `${workspace.progressTotal}개 기록`],
@@ -33,6 +33,13 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
           <StatusBadge tone={workspace.status === "CLOSED" ? "neutral" : "info"}>{workspace.status === "CLOSED" ? "읽기 전용" : "프로젝트 운영 중"}</StatusBadge>
         </div>
       </header>
+
+      {actor.role === "PROFESSOR" && workspace.status !== "CLOSED" ? (
+        <section aria-labelledby="professor-actions-title" className="rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+          <div><p className="eyebrow">지도교수 작업</p><h2 id="professor-actions-title" className="mt-1 text-xl font-extrabold">팀에 의견을 남기거나 제출 기준을 설정하세요</h2><p className="muted mt-2 text-sm">토론 의견은 팀 전체에 공유되고, 보고서 화면에서 요구사항과 승인 의견을 관리할 수 있습니다.</p></div>
+          <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0"><Link href={`/teams/${teamId}/discussion`} className="button-primary">지도 의견 남기기</Link><Link href={`/teams/${teamId}/reports`} className="button-secondary">보고서 관리</Link></div>
+        </section>
+      ) : null}
 
       <section aria-labelledby="next-action-title" className="border-l-2 border-[var(--accent)] py-1 pl-5">
         <p className="text-xs font-extrabold text-[var(--accent-ink)]">다음 일정</p>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { loadTeamWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
-import { MilestoneForm, MilestoneStatusForm } from "@/app/teams/[teamId]/workspace-forms";
+import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { MilestoneForm, MilestoneStatusForm } from "@/app/teams/[teamId]/_components/milestone-forms";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "프로젝트 마일스톤" };

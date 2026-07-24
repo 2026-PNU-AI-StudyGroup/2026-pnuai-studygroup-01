@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { loadTeamWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
-import { ProgressUpdateForm } from "@/app/teams/[teamId]/workspace-forms";
+import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { ProgressUpdateForm } from "@/app/teams/[teamId]/_components/progress-update-form";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 

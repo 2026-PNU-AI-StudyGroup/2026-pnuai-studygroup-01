@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 
-import { confirmTeamAction } from "@/app/teams/[teamId]/actions";
-import { loadTeamWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
-import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/team-workspace-navigation";
-import { CloseTeamForm } from "@/app/teams/[teamId]/workspace-forms";
-import { AppShell } from "@/shared/ui/app-shell";
+import { confirmTeamAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
+import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-workspace-navigation";
+import { CloseTeamForm } from "@/app/teams/[teamId]/_components/close-team-form";
+import { AppShell } from "@/app/_components/app-shell";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 const workspaceStatus = {
@@ -20,8 +21,8 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <main className="mx-auto grid w-full max-w-[1280px] gap-0 px-5 pb-28 pt-6 sm:px-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-10 lg:pb-16 lg:pt-0">
-        <aside aria-label="프로젝트 정보와 메뉴" className="border-b border-[var(--line)] pb-5 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:pb-10 lg:pr-6 lg:pt-10">
+      <main className="mx-auto grid w-full max-w-[1280px] grid-cols-[minmax(0,1fr)] gap-0 px-5 pb-28 pt-6 sm:px-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-10 lg:pb-16 lg:pt-0">
+        <aside aria-label="프로젝트 정보와 메뉴" className="min-w-0 border-b border-[var(--line)] pb-5 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:pb-10 lg:pr-6 lg:pt-10">
           <div className="lg:sticky lg:top-24">
             <div className="border-b border-[var(--line)] pb-5">
               <div className="flex items-start gap-3">
@@ -42,7 +43,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
                 <form action={confirmTeamAction}>
                   <input type="hidden" name="teamId" value={workspace.id} />
-                  <button className="button-primary">팀 확정</button>
+                  <ConfirmSubmitButton className="button-primary" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?">팀 확정</ConfirmSubmitButton>
                 </form>
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}
@@ -53,7 +54,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
                 <form action={confirmTeamAction} className="mt-4">
                   <input type="hidden" name="teamId" value={workspace.id} />
-                  <button className="button-primary w-full">팀 확정</button>
+                  <ConfirmSubmitButton className="button-primary w-full" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?">팀 확정</ConfirmSubmitButton>
                 </form>
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <div className="mt-4"><CloseTeamForm teamId={workspace.id} /></div> : null}

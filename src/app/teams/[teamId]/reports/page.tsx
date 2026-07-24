@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
-import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/team-workspace-data";
-import { ReportDecisionForm, RemoveReportRequirementForm, ReportRequirementForm, ReportSubmissionForm } from "@/app/teams/[teamId]/report-forms";
+import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-decision-form";
+import { RemoveReportRequirementForm, ReportRequirementForm } from "@/app/teams/[teamId]/_components/report-requirement-forms";
+import { ReportSubmissionForm } from "@/app/teams/[teamId]/_components/report-submission-form";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "프로젝트 보고서" };
