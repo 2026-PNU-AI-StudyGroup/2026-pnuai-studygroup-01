@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { TopicForm } from "@/app/professor/topics/topic-form";
-import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
+import { TopicForm } from "@/app/professor/topics/_components/topic-form";
+import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "새 주제 등록" };

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 
-import { type TopicScheduleActionState, updateTopicScheduleAction } from "@/app/professor/topics/actions";
+import { type TopicScheduleActionState, updateTopicScheduleAction } from "@/app/professor/topics/_actions/topic-management-actions";
 
 const initialState: TopicScheduleActionState = { status: "idle", message: "" };
 const fields = [["모집 시작", "recruitmentStartsAt"], ["모집 종료", "recruitmentEndsAt"], ["수행 시작", "executionStartsAt"], ["수행 종료", "executionEndsAt"], ["제출 시작", "submissionStartsAt"], ["제출 종료", "submissionEndsAt"]] as const;

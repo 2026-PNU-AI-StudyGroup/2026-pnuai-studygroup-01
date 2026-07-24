@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { TopicStatusButton } from "@/app/professor/topics/topic-status-button";
-import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
+import { TopicStatusButton } from "@/app/professor/topics/_components/topic-status-button";
+import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { GetManagedTopicService, ManagedTopicNotFoundError } from "@/modules/topic/application/get-managed-topic";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
 

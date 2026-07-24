@@ -6,7 +6,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import {
   createTopicAction,
   type CreateTopicActionState,
-} from "@/app/professor/topics/actions";
+} from "@/app/professor/topics/_actions/topic-management-actions";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 
 const initialState: CreateTopicActionState = { status: "idle", message: "" };
@@ -35,7 +35,7 @@ export function TopicForm({ programs, successHref }: TopicFormProps) {
   }, [router, state.status, successHref]);
 
   return (
-    <form action={action} className="grid gap-10">
+    <form action={action} aria-busy={pending} className="grid gap-10">
       <div className="grid gap-5 border-t-2 border-[var(--ink)] pt-6">
       <div><p className="text-xs font-extrabold text-[var(--primary)]">01</p><h2 className="mt-1 text-xl font-extrabold">기본 정보</h2></div>
       <label className="grid gap-2 text-sm font-medium">
@@ -107,7 +107,7 @@ export function TopicForm({ programs, successHref }: TopicFormProps) {
         {pending ? "저장 중" : "초안 저장"}
       </button></div>
       {state.message ? (
-        <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>
+        <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>
           {state.message}
         </p>
       ) : null}

@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import {
   changeTopicStatusAction,
   type TopicStatusActionState,
-} from "@/app/professor/topics/actions";
+} from "@/app/professor/topics/_actions/topic-management-actions";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: TopicStatusActionState = { status: "idle", message: "" };

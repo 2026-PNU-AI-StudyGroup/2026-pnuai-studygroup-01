@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { TopicStatusButton } from "@/app/professor/topics/topic-status-button";
-import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
+import { TopicStatusButton } from "@/app/professor/topics/_components/topic-status-button";
+import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ListOwnTopicsService } from "@/modules/topic/application/list-own-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "주제 관리" };
@@ -33,8 +33,8 @@ export default async function ProfessorTopicsPage() {
         <section aria-labelledby="topic-list-title" className="border-t-2 border-[var(--ink)]">
           <div className="flex items-end justify-between border-b border-[var(--line)] py-4"><h2 id="topic-list-title" className="text-lg font-bold">{actor.role === "ADMIN" ? "전체 주제" : "내 주제"}</h2><span className="muted text-sm">{topics.length}개</span></div>
           {topics.length === 0 ? <div className="mt-6"><EmptyState title={actor.role === "ADMIN" ? "등록된 주제가 없습니다" : "등록한 주제가 없습니다"} description={programs.length ? "새 주제 등록에서 첫 번째 프로젝트 주제를 작성하세요." : "공개된 프로그램이 생기면 프로젝트 주제를 등록할 수 있습니다."} action={programs.length ? <Link className="button-primary" href="/professor/topics/new">새 주제 등록</Link> : undefined} /></div> : (
-            <ul className="divide-y divide-[var(--line)]">
-              {topics.map((topic) => <li key={topic.id} className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><div className="flex flex-wrap items-center gap-3"><h3 className="font-bold">{topic.title}</h3><StatusBadge tone={statusPresentation[topic.status][1]}>{statusPresentation[topic.status][0]}</StatusBadge></div><p className="muted mt-1 text-xs">{topic.programName} · {topic.programCategory}{actor.role === "ADMIN" ? ` · ${topic.authorName} 교수` : ""}</p><p className="muted mt-2 text-sm">모집 정원 {topic.capacity}명 · {koreanDateTime.format(topic.recruitmentEndsAt)} 마감</p></div><div className="flex flex-wrap justify-end gap-2"><Link href={`/professor/topics/${topic.id}`} className="button-secondary">상세 관리</Link><TopicStatusButton topicId={topic.id} status={topic.status} programStatus={topic.programStatus} /></div></li>)}
+            <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+              {topics.map((topic) => <li key={topic.id} className="record-row grid gap-5 px-5 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6"><div><div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-extrabold tracking-[-0.02em]">{topic.title}</h3><StatusBadge tone={statusPresentation[topic.status][1]}>{statusPresentation[topic.status][0]}</StatusBadge></div><p className="muted mt-1 text-sm">{topic.programName} · {topic.programCategory}{actor.role === "ADMIN" ? ` · ${topic.authorName} 교수` : ""}</p><p className="muted mt-3 text-sm">모집 정원 {topic.capacity}명 · {koreanDateTime.format(topic.recruitmentEndsAt)} 마감</p></div><div className="flex flex-wrap gap-2 sm:justify-end"><Link href={`/professor/topics/${topic.id}`} className="button-secondary">상세 관리</Link><TopicStatusButton topicId={topic.id} status={topic.status} programStatus={topic.programStatus} /></div></li>)}
             </ul>
           )}
         </section>

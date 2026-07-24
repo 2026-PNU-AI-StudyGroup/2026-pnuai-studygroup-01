@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { TopicScheduleForm } from "@/app/professor/topics/topic-schedule-form";
+import { TopicScheduleForm } from "@/app/professor/topics/_components/topic-schedule-form";
 
-vi.mock("@/app/professor/topics/actions", () => ({ updateTopicScheduleAction: vi.fn() }));
+vi.mock("@/app/professor/topics/_actions/topic-management-actions", () => ({ updateTopicScheduleAction: vi.fn() }));
 
 describe("주제 일정 변경 흐름", () => {
   it("독립 일정 페이지에서 여섯 기간을 한 흐름으로 편집한다", () => {
