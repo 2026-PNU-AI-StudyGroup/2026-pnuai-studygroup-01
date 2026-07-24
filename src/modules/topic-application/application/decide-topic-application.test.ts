@@ -31,13 +31,29 @@ describe("주제 지원 결정", () => {
     await service.accept(
       { id: "professor-1", role: "PROFESSOR" },
       "application-1",
+      "  선정 근거  ",
     );
 
     expect(applications.accept).toHaveBeenCalledWith(
       "application-1",
       { id: "professor-1", isAdmin: false },
       decidedAt,
+      "선정 근거",
     );
+  });
+
+  it("거절할 때 학생에게 전달할 검토 의견을 요구한다", async () => {
+    const applications = repository();
+    const service = new DecideTopicApplicationService(applications);
+
+    await expect(
+      service.reject(
+        { id: "professor-1", role: "PROFESSOR" },
+        "application-1",
+        "   ",
+      ),
+    ).rejects.toThrow("거절 사유를 검토 의견에 입력해 주세요.");
+    expect(applications.reject).not.toHaveBeenCalled();
   });
 
   it("다른 교수의 결정을 거절한다", async () => {

@@ -1,3 +1,7 @@
+import type { TopicApplicationConfiguration } from "@/modules/topic-application/domain/topic-application-configuration";
+
+export type { TopicApplicationConfiguration } from "@/modules/topic-application/domain/topic-application-configuration";
+
 export type CreateTopicApplicationInput = {
   topicId: string;
   studentId: string;
@@ -15,13 +19,6 @@ export type CreateTopicApplicationResult =
   | { outcome: "STUDENT_ALREADY_ASSIGNED" }
   | { outcome: "TEAM_MEMBER_UNAVAILABLE" }
   | { outcome: "TOPIC_UNAVAILABLE" };
-
-export type TopicApplicationConfiguration = {
-  topicId: string;
-  mode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
-  capacity: number;
-  questions: Array<{ id: string; label: string; maxLength: number; required: boolean }>;
-};
 
 export interface TopicApplicationCreator {
   findConfiguration(topicId: string, appliedAt: Date): Promise<TopicApplicationConfiguration | null>;
@@ -87,6 +84,7 @@ export type TopicApplicationSummary = {
   programName: string;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   status: "PENDING" | "ACCEPTED" | "REJECTED";
+  reviewComment: string;
   message: string;
   skills: string[];
   desiredRole: string;
@@ -166,10 +164,12 @@ export interface TopicApplicationDecisionRepository {
     id: string,
     actor: TopicApplicationDecisionActor,
     decidedAt: Date,
+    reviewComment?: string,
   ): Promise<AcceptTopicApplicationOutcome>;
   reject(
     id: string,
     actor: TopicApplicationDecisionActor,
     decidedAt: Date,
+    reviewComment?: string,
   ): Promise<RejectTopicApplicationOutcome>;
 }

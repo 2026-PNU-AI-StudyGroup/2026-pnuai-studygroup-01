@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { ReceivedApplicationDetail } from "@/app/professor/applications/received-application-detail";
-import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
+import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
+import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   GetReceivedTopicApplicationService,
@@ -11,7 +11,7 @@ import {
 } from "@/modules/topic-application/application/get-received-topic-application";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 
 export const metadata: Metadata = { title: "지원서 상세" };
 

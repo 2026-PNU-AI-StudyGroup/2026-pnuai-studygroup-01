@@ -23,18 +23,38 @@ export class TopicApplicationDecisionConflictError extends Error {
   }
 }
 
+export class TopicApplicationReviewCommentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TopicApplicationReviewCommentError";
+  }
+}
+
+function normalizeReviewComment(comment: string, required: boolean): string {
+  const normalized = comment.trim();
+  if (normalized.length > 2_000) {
+    throw new TopicApplicationReviewCommentError("검토 의견은 2,000자 이내로 입력해 주세요.");
+  }
+  if (required && !normalized) {
+    throw new TopicApplicationReviewCommentError("거절 사유를 검토 의견에 입력해 주세요.");
+  }
+  return normalized;
+}
+
 export class DecideTopicApplicationService {
   constructor(
     private readonly repository: TopicApplicationDecisionRepository,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async accept(actor: CurrentActor, applicationId: string): Promise<void> {
+  async accept(actor: CurrentActor, applicationId: string, reviewComment = ""): Promise<void> {
     await this.requirePendingAndManageable(actor, applicationId);
+    const normalizedComment = normalizeReviewComment(reviewComment, false);
     const outcome = await this.repository.accept(
       applicationId,
       { id: actor.id, isAdmin: actor.role === "ADMIN" },
       this.now(),
+      normalizedComment,
     );
 
     if (outcome === "CAPACITY_REACHED") {
@@ -55,12 +75,14 @@ export class DecideTopicApplicationService {
     }
   }
 
-  async reject(actor: CurrentActor, applicationId: string): Promise<void> {
+  async reject(actor: CurrentActor, applicationId: string, reviewComment: string): Promise<void> {
     await this.requirePendingAndManageable(actor, applicationId);
+    const normalizedComment = normalizeReviewComment(reviewComment, true);
     const outcome = await this.repository.reject(
       applicationId,
       { id: actor.id, isAdmin: actor.role === "ADMIN" },
       this.now(),
+      normalizedComment,
     );
     if (outcome === "FORBIDDEN") {
       throw new TopicApplicationDecisionForbiddenError();

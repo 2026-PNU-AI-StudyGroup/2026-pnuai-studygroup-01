@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ReceivedApplicationList } from "@/app/professor/applications/received-application-list";
-import { ProfessorWorkspace } from "@/app/professor/professor-workspace";
+import { ReceivedApplicationList } from "@/app/professor/applications/_components/received-application-list";
+import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListReceivedTopicApplicationsService } from "@/modules/topic-application/application/list-received-topic-applications";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { AppShell } from "@/shared/ui/app-shell";
+import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export const metadata: Metadata = { title: "지원 검토" };

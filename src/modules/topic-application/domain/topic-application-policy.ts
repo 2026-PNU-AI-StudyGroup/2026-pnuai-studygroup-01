@@ -1,5 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { TopicApplicationConfiguration } from "@/modules/topic-application/application/topic-application-ports";
+import type { TopicApplicationConfiguration } from "@/modules/topic-application/domain/topic-application-configuration";
 
 export class TopicApplicationForbiddenError extends Error {
   constructor() {

@@ -19,6 +19,7 @@ const application: ProfessorTopicApplicationSummary = {
   studentName: "김학생",
   studentEmail: "student@pusan.ac.kr",
   status: "PENDING",
+  reviewComment: "",
   message: "지원합니다.",
   skills: ["Next.js"],
   desiredRole: "프론트엔드",

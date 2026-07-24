@@ -10,6 +10,7 @@ import {
   TopicApplicationDecisionConflictError,
   TopicApplicationDecisionForbiddenError,
   TopicApplicationNotFoundError,
+  TopicApplicationReviewCommentError,
 } from "@/modules/topic-application/application/decide-topic-application";
 import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -32,6 +33,7 @@ export async function decideTopicApplicationAction(
     .object({
       applicationId: z.string().uuid(),
       decision: z.enum(["accept", "reject"]),
+      reviewComment: z.string().max(2_000),
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -43,15 +45,16 @@ export async function decideTopicApplicationAction(
   );
   try {
     if (parsed.data.decision === "accept") {
-      await service.accept(actor, parsed.data.applicationId);
+      await service.accept(actor, parsed.data.applicationId, parsed.data.reviewComment);
     } else {
-      await service.reject(actor, parsed.data.applicationId);
+      await service.reject(actor, parsed.data.applicationId, parsed.data.reviewComment);
     }
   } catch (error) {
     if (
       error instanceof TopicApplicationNotFoundError ||
       error instanceof TopicApplicationDecisionForbiddenError ||
-      error instanceof TopicApplicationDecisionConflictError
+      error instanceof TopicApplicationDecisionConflictError ||
+      error instanceof TopicApplicationReviewCommentError
     ) {
       return { status: "error", message: error.message };
     }

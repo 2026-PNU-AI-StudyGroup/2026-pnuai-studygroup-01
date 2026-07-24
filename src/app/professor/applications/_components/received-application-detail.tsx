@@ -1,4 +1,4 @@
-import { DecisionButtons } from "@/app/professor/applications/decision-buttons";
+import { ApplicationDecisionForm } from "@/app/professor/applications/_components/decision-form";
 import type { ProfessorTopicApplicationSummary } from "@/modules/topic-application/application/topic-application-ports";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
@@ -39,9 +39,6 @@ export function ReceivedApplicationDetail({
             {application.topicTitle}
           </h2>
         </div>
-        {application.status === "PENDING" ? (
-          <DecisionButtons applicationId={application.id} />
-        ) : null}
       </div>
 
       <section aria-labelledby="student-profile-title">
@@ -67,7 +64,10 @@ export function ReceivedApplicationDetail({
           <ol className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {application.answers.map((answer, index) => (
               <li key={answer.questionId} className="py-6">
-                <p className="text-sm font-extrabold"><span className="mr-2 text-[var(--primary)]">{index + 1}.</span>{answer.label}</p>
+                <p className="text-sm font-extrabold">
+                  <span className="mr-2 text-[var(--primary)]">{index + 1}.</span>
+                  {answer.label}
+                </p>
                 <TranslatedText text={answer.value} className="mt-3 max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
               </li>
             ))}
@@ -75,14 +75,41 @@ export function ReceivedApplicationDetail({
         ) : (
           <div className="mt-5 space-y-7 border-y border-[var(--line)] py-6">
             <dl className="grid gap-5 sm:grid-cols-3">
-              <div><dt className="muted text-xs font-bold">희망 역할</dt><dd className="mt-2">{application.desiredRole || "미입력"}</dd></div>
-              <div><dt className="muted text-xs font-bold">활동 가능 시간</dt><dd className="mt-2">{application.availability || "미입력"}</dd></div>
-              <div><dt className="muted text-xs font-bold">보유 기술</dt><dd className="mt-2">{application.skills.join(", ") || "미입력"}</dd></div>
+              <ApplicationProfileItem label="희망 역할" value={application.desiredRole} />
+              <ApplicationProfileItem label="활동 가능 시간" value={application.availability} />
+              <ApplicationProfileItem label="보유 기술" value={application.skills.join(", ")} />
             </dl>
             <TranslatedText text={application.message} className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
           </div>
         )}
       </section>
+
+      {application.status === "PENDING" ? (
+        <section aria-labelledby="review-decision-title" className="rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-5 sm:p-6">
+          <div className="mb-5 border-b border-[var(--line)] pb-4">
+            <p className="eyebrow">지원 검토</p>
+            <h3 id="review-decision-title" className="mt-1 text-xl font-extrabold">결정과 의견 전달</h3>
+            <p className="muted mt-2 text-sm leading-6">수락 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다.</p>
+          </div>
+          <ApplicationDecisionForm applicationId={application.id} />
+        </section>
+      ) : null}
+
+      {application.status !== "PENDING" ? (
+        <section aria-labelledby="review-result-title" className="border-l-2 border-[var(--primary)] bg-[var(--primary-subtle)] px-5 py-5">
+          <h3 id="review-result-title" className="text-sm font-extrabold">전달한 검토 의견</h3>
+          <p className="mt-2 whitespace-pre-wrap leading-7">{application.reviewComment || "별도 의견 없이 결정했습니다."}</p>
+        </section>
+      ) : null}
     </article>
+  );
+}
+
+function ApplicationProfileItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="muted text-xs font-bold">{label}</dt>
+      <dd className="mt-2">{value || "미입력"}</dd>
+    </div>
   );
 }

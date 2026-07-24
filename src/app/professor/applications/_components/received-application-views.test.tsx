@@ -3,14 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ProfessorTopicApplicationSummary } from "@/modules/topic-application/application/topic-application-ports";
 
-vi.mock("@/app/professor/applications/decision-buttons", () => ({
-  DecisionButtons: ({ applicationId }: { applicationId: string }) => (
+vi.mock("@/app/professor/applications/_components/decision-form", () => ({
+  ApplicationDecisionForm: ({ applicationId }: { applicationId: string }) => (
     <button type="button">{applicationId} 결정</button>
   ),
 }));
 
-import { ReceivedApplicationDetail } from "@/app/professor/applications/received-application-detail";
-import { ReceivedApplicationList } from "@/app/professor/applications/received-application-list";
+import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
+import { ReceivedApplicationList } from "@/app/professor/applications/_components/received-application-list";
 
 const application: ProfessorTopicApplicationSummary = {
   id: "application-1",
@@ -21,6 +21,7 @@ const application: ProfessorTopicApplicationSummary = {
   studentName: "김학생",
   studentEmail: "student@pusan.ac.kr",
   status: "PENDING",
+  reviewComment: "",
   message: "영문 자료를 함께 읽고 제품 품질을 높이겠습니다.",
   skills: ["Next.js", "UX 리서치"],
   desiredRole: "프론트엔드",
@@ -57,6 +58,7 @@ describe("교수 지원서 목록과 상세", () => {
     expect(screen.getByText(application.answers[0].value)).toBeInTheDocument();
     expect(screen.queryByText(application.desiredRole)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "영어" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "결정과 의견 전달" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "application-1 결정" })).toBeInTheDocument();
   });
 });

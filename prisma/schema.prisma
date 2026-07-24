@@ -357,6 +357,7 @@ model TopicApplication {
   desiredRole            String                          @default("기존 지원서 미입력")
   availability           String                          @default("기존 지원서 미입력")
   status                 TopicApplicationStatus          @default(PENDING)
+  reviewComment          String                          @default("")
   decidedAt              DateTime?
   createdAt              DateTime                        @default(now())
   updatedAt              DateTime                        @updatedAt
