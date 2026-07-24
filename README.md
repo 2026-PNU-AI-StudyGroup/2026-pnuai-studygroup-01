@@ -164,6 +164,7 @@ npm run dev
 ```bash
 npm run lint
 npm run typecheck
+npm run test:architecture
 npm test
 npm run build
 ```
@@ -186,8 +187,13 @@ Docker 기반 운영 배포, 상태 확인, 정기 작업과 백업·복구 절�
 
 ```text
 src/
-├── app/                    # Next.js 페이지, Server Action, Route Handler
-├── modules/                # 업무 모듈별 domain/application/infrastructure
+├── app/                    # Next.js 라우트와 화면 조립
+│   └── <route>/
+│       ├── page.tsx        # 인증·서비스 조립·렌더링 위임
+│       ├── _components/    # 해당 라우트 트리 전용 UI
+│       ├── _actions/       # Server Action 입력 경계
+│       └── _lib/           # 화면 조회 조립과 상태 모델
+├── modules/                # 업무 모듈별 domain/application/infrastructure/ui
 │   ├── identity/           # 인증과 역할
 │   ├── notification/       # 사용자 알림과 마감 생성
 │   ├── audit/              # 중요 운영 행위 감사 기록
@@ -199,11 +205,17 @@ src/
 │   ├── report/             # 보고서 승인과 결과물
 │   ├── file/               # 무결성 업로드
 │   └── translation/        # 로컬 LLM 번역
-└── shared/                 # 공통 UI와 인프라
+├── shared/                 # 도메인 비종속 공통 UI와 인프라
+└── generated/              # Prisma 생성 코드, 직접 수정 금지
+tests/
+├── architecture/           # 폴더와 의존 방향 자동 검증
+└── routes/                 # 라우트 단위 통합 테스트
 prisma/                     # 스키마와 마이그레이션
 scripts/                    # 통합 검증과 운영 스크립트
 docs/                       # 개발·디자인 문서
 ```
+
+파일 배치 기준과 계층별 의존 방향은 [프로덕션 폴더 구조 문서](docs/architecture/folder-structure.md)를 따릅니다.
 
 ## 7. 디자인
 

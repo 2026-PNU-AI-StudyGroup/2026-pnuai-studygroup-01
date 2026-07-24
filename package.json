@@ -22,6 +22,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:architecture": "vitest run tests/architecture",
     "test:watch": "vitest",
     "verify:team-concurrency": "tsx scripts/verify-team-concurrency.ts",
     "verify:team-application-flow": "tsx scripts/verify-team-application-flow.ts",
