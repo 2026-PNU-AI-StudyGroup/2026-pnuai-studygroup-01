@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
+import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
 import { Brand } from "@/shared/ui/brand";
 
 export const metadata: Metadata = { title: "로그인" };
 
-export default function SignInPage() {
+export default async function SignInPage({ searchParams }: { searchParams?: Promise<{ mockLogin?: string }> }) {
+  const params = await searchParams;
+  const showDevelopmentLogin = process.env.NODE_ENV === "development";
+
   return (
     <main className="min-h-screen bg-white">
       <header className="mx-auto flex h-[4.5rem] max-w-[1280px] items-center border-b border-[var(--line)] px-6"><Brand /></header>
@@ -16,6 +20,7 @@ export default function SignInPage() {
           <p className="eyebrow">계정 인증</p><h2 className="mt-2 text-3xl font-extrabold tracking-tight">로그인</h2>
           <p className="muted mt-4 leading-7">부산대학교 Google Workspace 계정으로 안전하게 인증합니다.</p>
           <div className="mt-8 border-y border-[var(--line)] py-7"><GoogleSignInButton /></div>
+          {showDevelopmentLogin ? <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} /> : null}
           <div className="mt-6 min-w-0 break-words border-l-2 border-[var(--accent)] py-1 pl-4 text-sm leading-6 text-[var(--muted)]">인증된 <strong className="text-[var(--ink)]">@pusan.ac.kr</strong> 계정만 이용할 수 있습니다. 다른 Google 계정으로는 가입되지 않습니다.</div>
           <Link href="/" className="button-quiet mt-7 px-0">← 서비스 소개로 돌아가기</Link>
         </div>

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { testUtils } from "better-auth/plugins";
 
 import { Prisma } from "@/generated/prisma/client";
 import {
@@ -68,6 +69,7 @@ export const auth = betterAuth({
       prompt: "select_account",
     },
   },
+  plugins: authEnvironment.NODE_ENV === "development" ? [testUtils()] : [],
   databaseHooks: {
     user: {
       create: {
