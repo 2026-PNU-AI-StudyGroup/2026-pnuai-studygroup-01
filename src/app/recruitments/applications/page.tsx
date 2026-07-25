@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
-import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import {
   StudentTeamPageIntro,
   StudentTeamPagination,
@@ -30,8 +30,8 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
   if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const data = await new StudentTeamRecruitmentService(
-    new PrismaStudentTeamRecruitmentRepository(prisma),
+  const data = await new StudentTeamRecruitmentQueryService(
+    new PrismaStudentTeamRecruitmentQueryRepository(prisma),
   ).listApplicationHistory(actor, requestedPage);
   const pageHref = (page: number) => page > 1 ? `/recruitments/applications?page=${page}` : "/recruitments/applications";
 

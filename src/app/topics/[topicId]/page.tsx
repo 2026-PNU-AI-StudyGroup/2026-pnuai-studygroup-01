@@ -13,7 +13,7 @@ import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-applicati
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { AppShell } from "@/app/_components/app-shell";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
@@ -43,7 +43,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
     new TeamApplicationInvitationService(
       new PrismaTeamApplicationInvitationRepository(prisma),
     ).list(actor),
-    new PrismaStudentTeamRecruitmentRepository(prisma).listLeaderTeams(actor.id),
+    new PrismaStudentTeamRecruitmentQueryRepository(prisma).listLeaderTeams(actor.id),
   ]) : [null, null, []];
   const awaitingTeam = teamApplicationState?.drafts.some((draft) => draft.topicId === topic.id) ?? false;
   const now = new Date();

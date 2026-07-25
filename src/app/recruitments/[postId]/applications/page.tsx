@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { RecruitmentApplicationsView } from "@/app/recruitments/_components/recruitment-applications-view";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
-import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
@@ -16,8 +16,8 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
   if (!actor) redirect("/sign-in");
   if (actor.role !== "STUDENT" && actor.role !== "ADMIN") redirect("/topics");
   const { postId } = await params;
-  const post = await new StudentTeamRecruitmentService(
-    new PrismaStudentTeamRecruitmentRepository(prisma),
+  const post = await new StudentTeamRecruitmentQueryService(
+    new PrismaStudentTeamRecruitmentQueryRepository(prisma),
   ).getPostApplications(actor, postId);
   if (!post) notFound();
 

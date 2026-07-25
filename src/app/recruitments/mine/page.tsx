@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 
 import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
-import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import {
   StudentTeamPageIntro,
   StudentTeamPagination,
@@ -27,8 +27,8 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
   if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const service = new StudentTeamRecruitmentService(
-    new PrismaStudentTeamRecruitmentRepository(prisma),
+  const service = new StudentTeamRecruitmentQueryService(
+    new PrismaStudentTeamRecruitmentQueryRepository(prisma),
   );
   const [data, leaderTeams] = await Promise.all([
     service.listAuthoredPosts(actor, requestedPage),

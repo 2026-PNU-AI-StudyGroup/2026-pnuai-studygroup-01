@@ -5,8 +5,8 @@ import { RecruitmentPostList } from "@/app/recruitments/_components/recruitment-
 import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
-import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
-import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import {
   StudentTeamPageIntro,
   StudentTeamPagination,
@@ -25,7 +25,9 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const [data, profile] = await Promise.all([
-    new StudentTeamRecruitmentService(new PrismaStudentTeamRecruitmentRepository(prisma)).listPosts(actor, requestedPage),
+    new StudentTeamRecruitmentQueryService(
+      new PrismaStudentTeamRecruitmentQueryRepository(prisma),
+    ).listPosts(actor, requestedPage),
     new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor),
   ]);
   const pageHref = (page: number) => page > 1 ? `/recruitments?page=${page}` : "/recruitments";
