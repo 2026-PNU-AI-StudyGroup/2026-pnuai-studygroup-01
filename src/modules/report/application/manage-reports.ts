@@ -1,5 +1,11 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { ReportRepository } from "@/modules/report/application/report-ports";
+import type {
+  ArtifactWriter,
+  ReportDecisionWriter,
+  ReportRequirementWriter,
+  ReportSubmissionWriter,
+  ReportWorkspaceReader,
+} from "@/modules/report/application/report-ports";
 import {
   type ApprovalDecision,
   type ArtifactType,
@@ -18,14 +24,18 @@ export class ReportOperationNotAllowedError extends Error {
   }
 }
 
-export class ReportService {
-  constructor(private readonly repository: ReportRepository) {}
+export class ReportQueryService {
+  constructor(private readonly workspaceReader: ReportWorkspaceReader) {}
 
   async get(actor: CurrentActor, teamId: string) {
-    const workspace = await this.repository.findWorkspace(teamId, actor);
+    const workspace = await this.workspaceReader.findWorkspace(teamId, actor);
     if (!workspace) throw new ReportOperationNotAllowedError();
     return workspace;
   }
+}
+
+export class ReportRequirementService {
+  constructor(private readonly requirementWriter: ReportRequirementWriter) {}
 
   async setRequirement(actor: CurrentActor, input: {
     teamId: string;
@@ -33,7 +43,7 @@ export class ReportService {
     dueAt: Date;
   }, now = new Date()) {
     if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
-    const result = await this.repository.setRequirement({
+    const result = await this.requirementWriter.setRequirement({
       ...input,
       actor,
       dueAt: validateReportDueAt(input.dueAt, now),
@@ -48,13 +58,17 @@ export class ReportService {
     type: ReportType;
   }, now = new Date()) {
     if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
-    const removed = await this.repository.removeRequirement({
+    const removed = await this.requirementWriter.removeRequirement({
       ...input,
       actor,
       removedAt: now,
     });
     if (!removed) throw new ReportOperationNotAllowedError();
   }
+}
+
+export class ReportSubmissionService {
+  constructor(private readonly submissionWriter: ReportSubmissionWriter) {}
 
   async submit(actor: CurrentActor, input: {
     teamId: string;
@@ -63,7 +77,7 @@ export class ReportService {
     description: string;
   }, now = new Date()) {
     if (actor.role === "PROFESSOR") throw new ReportOperationNotAllowedError();
-    const result = await this.repository.submit({
+    const result = await this.submissionWriter.submit({
       ...input,
       actor,
       description: normalizeDescription(input.description),
@@ -72,6 +86,10 @@ export class ReportService {
     if (!result) throw new ReportOperationNotAllowedError();
     return result;
   }
+}
+
+export class ReportDecisionService {
+  constructor(private readonly decisionWriter: ReportDecisionWriter) {}
 
   async decide(actor: CurrentActor, input: {
     reportVersionId: string;
@@ -79,7 +97,7 @@ export class ReportService {
     comment: string;
   }, now = new Date()) {
     if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
-    const decided = await this.repository.decide({
+    const decided = await this.decisionWriter.decide({
       ...input,
       actor,
       comment: normalizeDecisionComment(input.decision, input.comment),
@@ -87,6 +105,10 @@ export class ReportService {
     });
     if (!decided) throw new ReportOperationNotAllowedError();
   }
+}
+
+export class ArtifactRegistrationService {
+  constructor(private readonly artifactWriter: ArtifactWriter) {}
 
   async registerArtifact(actor: CurrentActor, input: {
     teamId: string;
@@ -99,7 +121,7 @@ export class ReportService {
       throw new ReportOperationNotAllowedError();
     }
     const normalized = normalizeArtifact(input);
-    const result = await this.repository.registerArtifact({
+    const result = await this.artifactWriter.registerArtifact({
       ...input,
       ...normalized,
       actor,

@@ -4,8 +4,19 @@ import { createHash, randomUUID } from "node:crypto";
 import { UploadNotFoundError, UploadService } from "../src/modules/file/application/manage-upload";
 import { PrismaUploadIntentRepository } from "../src/modules/file/infrastructure/prisma-upload-intent-repository";
 import { S3ObjectStorage } from "../src/modules/file/infrastructure/s3-object-storage";
-import { ReportOperationNotAllowedError, ReportService } from "../src/modules/report/application/manage-reports";
-import { PrismaReportRepository } from "../src/modules/report/infrastructure/prisma-report-repository";
+import {
+  ArtifactRegistrationService,
+  ReportDecisionService,
+  ReportOperationNotAllowedError,
+  ReportQueryService,
+  ReportRequirementService,
+  ReportSubmissionService,
+} from "../src/modules/report/application/manage-reports";
+import { PrismaArtifactRepository } from "../src/modules/report/infrastructure/prisma-artifact-repository";
+import { PrismaReportDecisionRepository } from "../src/modules/report/infrastructure/prisma-report-decision-repository";
+import { PrismaReportQueryRepository } from "../src/modules/report/infrastructure/prisma-report-query-repository";
+import { PrismaReportRequirementRepository } from "../src/modules/report/infrastructure/prisma-report-requirement-repository";
+import { PrismaReportSubmissionRepository } from "../src/modules/report/infrastructure/prisma-report-submission-repository";
 import {
   CloseTeamService,
   ListArchivedProjectsService,
@@ -101,29 +112,43 @@ async function main() {
     teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId, applicationId: application.id,
   } });
 
-  const service = new ReportService(new PrismaReportRepository(prisma));
+  const reportQuery = new ReportQueryService(
+    new PrismaReportQueryRepository(prisma),
+  );
+  const reportRequirements = new ReportRequirementService(
+    new PrismaReportRequirementRepository(prisma),
+  );
+  const reportSubmissions = new ReportSubmissionService(
+    new PrismaReportSubmissionRepository(prisma),
+  );
+  const reportDecisions = new ReportDecisionService(
+    new PrismaReportDecisionRepository(prisma),
+  );
+  const artifactRegistration = new ArtifactRegistrationService(
+    new PrismaArtifactRepository(prisma),
+  );
   const student = { id: studentId, role: "STUDENT" as const };
   const professor = { id: professorId, role: "PROFESSOR" as const };
   for (const type of ["START", "MIDTERM", "FINAL"] as const) {
-    await service.setRequirement(
+    await reportRequirements.setRequirement(
       professor,
       { teamId: team.id, type, dueAt: new Date("2026-12-31T14:59:00Z") },
       new Date("2026-07-13T00:00:00Z"),
     );
   }
   const reportV1File = await upload(team.id, "REPORT", "start-v1.pdf", "start report version one");
-  const v1 = await service.submit(student, {
+  const v1 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "START", fileId: reportV1File, description: "착수 보고서 1차",
   }, new Date("2026-07-14T00:00:00Z"));
   const v1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: v1.reportId, version: 1 }, select: { id: true },
   });
-  await service.decide(professor, {
+  await reportDecisions.decide(professor, {
     reportVersionId: v1Row.id, decision: "APPROVED", comment: "착수 승인",
   });
 
   const reportV2File = await upload(team.id, "REPORT", "start-v2.pdf", "start report version two");
-  const v2 = await service.submit(student, {
+  const v2 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "START", fileId: reportV2File, description: "승인 후 변경 버전",
   }, new Date("2026-07-15T00:00:00Z"));
   if (v2.version !== 2) throw new Error("보고서 버전 번호가 증가하지 않았습니다.");
@@ -132,7 +157,7 @@ async function main() {
   });
   let unrelatedProfessorDenied = false;
   try {
-    await service.decide(
+    await reportDecisions.decide(
       { id: otherProfessorId, role: "PROFESSOR" },
       { reportVersionId: v2Row.id, decision: "APPROVED", comment: "권한 없음" },
     );
@@ -140,19 +165,19 @@ async function main() {
     unrelatedProfessorDenied = error instanceof ReportOperationNotAllowedError;
   }
   if (!unrelatedProfessorDenied) throw new Error("다른 교수가 보고서를 승인했습니다.");
-  await service.decide(professor, {
+  await reportDecisions.decide(professor, {
     reportVersionId: v2Row.id, decision: "REVISION_REQUESTED", comment: "표 보완 필요",
   });
 
   const midtermV1File = await upload(team.id, "REPORT", "midterm-v1.pdf", "midterm report version one");
-  const midtermV1 = await service.submit(student, {
+  const midtermV1 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "MIDTERM", fileId: midtermV1File, description: "중간 보고서 1차",
   }, new Date("2026-07-15T01:00:00Z"));
   const midtermV1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: midtermV1.reportId, version: 1 }, select: { id: true },
   });
   const midtermV2File = await upload(team.id, "REPORT", "midterm-v2.pdf", "midterm report version two");
-  const midtermV2 = await service.submit(student, {
+  const midtermV2 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "MIDTERM", fileId: midtermV2File, description: "중간 보고서 2차",
   }, new Date("2026-07-15T02:00:00Z"));
   const midtermV2Row = await prisma.reportVersion.findFirstOrThrow({
@@ -160,7 +185,7 @@ async function main() {
   });
   let staleVersionDecisionDenied = false;
   try {
-    await service.decide(professor, {
+    await reportDecisions.decide(professor, {
       reportVersionId: midtermV1Row.id, decision: "APPROVED", comment: "과거 버전 승인 시도",
     });
   } catch (error) {
@@ -169,17 +194,17 @@ async function main() {
   if (!staleVersionDecisionDenied) throw new Error("최신 버전이 아닌 보고서가 승인되었습니다.");
 
   const finalFile = await upload(team.id, "REPORT", "final-v1.pdf", "final report version one");
-  const finalV1 = await service.submit(student, {
+  const finalV1 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "FINAL", fileId: finalFile, description: "최종 보고서 1차",
   }, new Date("2026-07-15T03:00:00Z"));
   const finalV1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: finalV1.reportId, version: 1 }, select: { id: true },
   });
   const concurrentDecisions = await Promise.allSettled([
-    service.decide(professor, {
+    reportDecisions.decide(professor, {
       reportVersionId: finalV1Row.id, decision: "APPROVED", comment: "동시 승인",
     }),
-    service.decide(professor, {
+    reportDecisions.decide(professor, {
       reportVersionId: finalV1Row.id, decision: "APPROVED", comment: "동시 중복 승인",
     }),
   ]);
@@ -191,24 +216,24 @@ async function main() {
   if (!concurrentDecisionConverged) throw new Error("동시 보고서 결정이 단일 결과로 수렴하지 않았습니다.");
 
   const startV3File = await upload(team.id, "REPORT", "start-v3.pdf", "start report final revision");
-  const startV3 = await service.submit(student, {
+  const startV3 = await reportSubmissions.submit(student, {
     teamId: team.id, type: "START", fileId: startV3File, description: "수정 요청 반영본",
   }, new Date("2026-07-15T04:00:00Z"));
   const startV3Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: startV3.reportId, version: 3 }, select: { id: true },
   });
-  await service.decide(professor, {
+  await reportDecisions.decide(professor, {
     reportVersionId: startV3Row.id, decision: "APPROVED", comment: "수정 반영 확인",
   });
-  await service.decide(professor, {
+  await reportDecisions.decide(professor, {
     reportVersionId: midtermV2Row.id, decision: "APPROVED", comment: "중간 보고서 승인",
   });
 
-  await service.registerArtifact(student, {
+  await artifactRegistration.registerArtifact(student, {
     teamId: team.id, type: "SOURCE_CODE", title: "GitHub 저장소", externalUrl: "https://github.com/pnu/project",
   }, new Date("2026-07-16T00:00:00Z"));
   const artifactFile = await upload(team.id, "ARTIFACT", "poster.pdf", "project poster");
-  await service.registerArtifact(student, {
+  await artifactRegistration.registerArtifact(student, {
     teamId: team.id, type: "POSTER", title: "결과 포스터", fileId: artifactFile,
   }, new Date("2026-07-16T00:00:00Z"));
 
@@ -245,7 +270,7 @@ async function main() {
   }
   if (!attachedFileStatusMutationDenied) throw new Error("ATTACHED 파일이 READY 상태로 되돌아갔습니다.");
 
-  const workspace = await service.get(student, team.id);
+  const workspace = await reportQuery.get(student, team.id);
   const start = workspace.reports.find(({ type }) => type === "START");
   if (
     start?.versions.length !== 3 ||
@@ -260,7 +285,7 @@ async function main() {
   const lateFile = await upload(team.id, "REPORT", "late.pdf", "late report");
   let submissionPeriodDenied = false;
   try {
-    await service.submit(student, {
+    await reportSubmissions.submit(student, {
       teamId: team.id, type: "FINAL", fileId: lateFile, description: "기간 외 제출",
     }, new Date("2027-01-01T00:00:00Z"));
   } catch (error) {
@@ -299,7 +324,7 @@ async function main() {
   }
   let closedTeamSubmissionDenied = false;
   try {
-    await service.submit(student, {
+    await reportSubmissions.submit(student, {
       teamId: team.id, type: "FINAL", fileId: lateFile, description: "종료 후 제출",
     }, new Date("2026-07-17T00:00:00Z"));
   } catch (error) {
@@ -317,7 +342,7 @@ async function main() {
   if (!closedTeamDiscussionDenied) throw new Error("종료 팀에 토론 글이 추가되었습니다.");
   let closedTeamDecisionDenied = false;
   try {
-    await service.decide(professor, {
+    await reportDecisions.decide(professor, {
       reportVersionId: midtermV2Row.id, decision: "APPROVED", comment: "종료 후 승인",
     });
   } catch (error) {

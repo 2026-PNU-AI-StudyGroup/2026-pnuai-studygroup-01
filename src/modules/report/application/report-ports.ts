@@ -36,8 +36,11 @@ export type ReportWorkspace = {
   }>;
 };
 
-export interface ReportRepository {
+export interface ReportWorkspaceReader {
   findWorkspace(teamId: string, actor: CurrentActor): Promise<ReportWorkspace | null>;
+}
+
+export interface ReportRequirementWriter {
   setRequirement(input: {
     teamId: string;
     actor: CurrentActor;
@@ -51,6 +54,9 @@ export interface ReportRepository {
     type: ReportType;
     removedAt: Date;
   }): Promise<boolean>;
+}
+
+export interface ReportSubmissionWriter {
   submit(input: {
     teamId: string;
     actor: CurrentActor;
@@ -59,6 +65,9 @@ export interface ReportRepository {
     description: string;
     submittedAt: Date;
   }): Promise<{ reportId: string; version: number } | null>;
+}
+
+export interface ReportDecisionWriter {
   decide(input: {
     reportVersionId: string;
     actor: CurrentActor;
@@ -66,6 +75,9 @@ export interface ReportRepository {
     comment: string;
     decidedAt: Date;
   }): Promise<boolean>;
+}
+
+export interface ArtifactWriter {
   registerArtifact(input: {
     teamId: string;
     actor: CurrentActor;

@@ -5,11 +5,17 @@ import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
+  ArtifactRegistrationService,
   InvalidReportInputError,
+  ReportDecisionService,
   ReportOperationNotAllowedError,
-  ReportService,
+  ReportRequirementService,
+  ReportSubmissionService,
 } from "@/modules/report/application/manage-reports";
-import { PrismaReportRepository } from "@/modules/report/infrastructure/prisma-report-repository";
+import { PrismaArtifactRepository } from "@/modules/report/infrastructure/prisma-artifact-repository";
+import { PrismaReportDecisionRepository } from "@/modules/report/infrastructure/prisma-report-decision-repository";
+import { PrismaReportRequirementRepository } from "@/modules/report/infrastructure/prisma-report-requirement-repository";
+import { PrismaReportSubmissionRepository } from "@/modules/report/infrastructure/prisma-report-submission-repository";
 import {
   artifactRegistrationSchema,
   reportDecisionSchema,
@@ -20,10 +26,6 @@ import {
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type ReportActionState = { status: "idle" | "error" | "success"; message: string };
-
-function reportService() {
-  return new ReportService(new PrismaReportRepository(prisma));
-}
 
 function message(error: unknown) {
   return error instanceof InvalidReportInputError ||
@@ -38,7 +40,9 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
   const parsed = reportSubmissionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "보고서 입력을 확인해 주세요." };
   try {
-    const result = await reportService().submit(actor, {
+    const result = await new ReportSubmissionService(
+      new PrismaReportSubmissionRepository(prisma),
+    ).submit(actor, {
       teamId: parsed.data.teamId,
       type: parsed.data.type,
       fileId: parsed.data.uploadId,
@@ -62,7 +66,9 @@ export async function setReportRequirementAction(
   const parsed = reportRequirementSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "보고서 종류와 기한을 확인해 주세요." };
   try {
-    await reportService().setRequirement(actor, parsed.data);
+    await new ReportRequirementService(
+      new PrismaReportRequirementRepository(prisma),
+    ).setRequirement(actor, parsed.data);
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "보고서 요구사항과 기한을 저장했습니다." };
   } catch (error) {
@@ -81,7 +87,9 @@ export async function removeReportRequirementAction(
   const parsed = reportRequirementRemovalSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "해제할 보고서 요구사항을 확인해 주세요." };
   try {
-    await reportService().removeRequirement(actor, parsed.data);
+    await new ReportRequirementService(
+      new PrismaReportRequirementRepository(prisma),
+    ).removeRequirement(actor, parsed.data);
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "보고서 요구사항을 해제했습니다." };
   } catch (error) {
@@ -100,7 +108,9 @@ export async function decideReportAction(
   const parsed = reportDecisionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "결정 입력을 확인해 주세요." };
   try {
-    await reportService().decide(actor, parsed.data);
+    await new ReportDecisionService(
+      new PrismaReportDecisionRepository(prisma),
+    ).decide(actor, parsed.data);
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "검토 결정을 저장했습니다." };
   } catch (error) {
@@ -119,7 +129,9 @@ export async function registerArtifactAction(formData: FormData): Promise<Report
   const parsed = artifactRegistrationSchema.safeParse(values);
   if (!parsed.success) return { status: "error", message: "결과물 입력을 확인해 주세요." };
   try {
-    await reportService().registerArtifact(actor, {
+    await new ArtifactRegistrationService(
+      new PrismaArtifactRepository(prisma),
+    ).registerArtifact(actor, {
       teamId: parsed.data.teamId,
       type: parsed.data.type,
       title: parsed.data.title,

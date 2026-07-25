@@ -1,8 +1,11 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { ReportWorkspace } from "@/modules/report/application/report-ports";
+import type {
+  ReportWorkspace,
+  ReportWorkspaceReader,
+} from "@/modules/report/application/report-ports";
 
-export class PrismaReportQueryRepository {
+export class PrismaReportQueryRepository implements ReportWorkspaceReader {
   constructor(private readonly client: PrismaClient) {}
 
   async findWorkspace(
