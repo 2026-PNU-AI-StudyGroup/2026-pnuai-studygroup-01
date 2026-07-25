@@ -8,7 +8,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ListOwnTopicsService } from "@/modules/topic/application/list-own-topics";
-import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
@@ -23,7 +23,7 @@ export default async function ProfessorTopicsPage() {
   if (!actor) redirect("/sign-in");
   if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
   const programRepository = new PrismaProjectProgramRepository(prisma);
-  const topicRepository = new PrismaTopicRepository(prisma);
+  const topicRepository = new PrismaTopicQueryRepository(prisma);
   const [programs, topics] = await Promise.all([new ProjectProgramService(programRepository).listOpen(), new ListOwnTopicsService(topicRepository).execute(actor)]);
 
   return (

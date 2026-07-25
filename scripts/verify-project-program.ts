@@ -6,7 +6,8 @@ import { ProjectProgramService } from "../src/modules/project-program/applicatio
 import { PrismaProjectProgramRepository } from "../src/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "../src/modules/topic/application/create-topic";
 import { UpdateTopicScheduleService } from "../src/modules/topic/application/update-topic-schedule";
-import { PrismaTopicRepository } from "../src/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
+import { PrismaTopicQueryRepository } from "../src/modules/topic/infrastructure/prisma-topic-query-repository";
 import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
@@ -58,8 +59,9 @@ async function main() {
   const program = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "OPEN", now);
 
-  const topics = new PrismaTopicRepository(prisma);
-  const topic = await new CreateTopicService(topics, programs).execute({ id: professorId, role: "PROFESSOR" }, {
+  const topicCommands = new PrismaTopicCommandRepository(prisma);
+  const topicQueries = new PrismaTopicQueryRepository(prisma);
+  const topic = await new CreateTopicService(topicCommands, programs).execute({ id: professorId, role: "PROFESSOR" }, {
     programId: program.id,
     title: "동적 프로그램 주제",
     description: "프로그램과 주제 연결 검증",
@@ -77,8 +79,8 @@ async function main() {
     submissionStartsAt: new Date(now.getTime() + 60 * day),
     submissionEndsAt: new Date(now.getTime() + 80 * day),
   });
-  if (!(await topics.publishDraft(topic.id, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
-  const filtered = await topics.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  if (!(await topicCommands.publishDraft(topic.id, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
+  const filtered = await topicQueries.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
     recruitmentStartsAt: new Date(now.getTime() - 30 * 60_000),
@@ -88,7 +90,7 @@ async function main() {
     submissionStartsAt: new Date(now.getTime() + 65 * day),
     submissionEndsAt: new Date(now.getTime() + 85 * day),
   };
-  await new UpdateTopicScheduleService(topics).execute(
+  await new UpdateTopicScheduleService(topicCommands).execute(
     { id: professorId, role: "PROFESSOR" },
     topic.id,
     changedSchedule,
@@ -100,11 +102,11 @@ async function main() {
 
   const accepted = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: leaderId, message: "팀장", status: "ACCEPTED", decidedAt: now } });
   const pending = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: applicantId, message: "지원", status: "PENDING" } });
-  const searched = await topics.listPublished({ viewerId: applicantId, programId: program.id, query: "typescript", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  const searched = await topicQueries.listPublished({ viewerId: applicantId, programId: program.id, query: "typescript", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (searched.total !== 1 || searched.items[0]?.ownApplicationStatus !== "PENDING") {
     throw new Error("기술 검색 또는 현재 학생의 지원 상태 조회가 일치하지 않습니다.");
   }
-  const escapedSearch = await topics.listPublished({ programId: program.id, query: "%", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  const escapedSearch = await topicQueries.listPublished({ programId: program.id, query: "%", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (escapedSearch.total !== 0) throw new Error("검색 와일드카드가 일반 문자로 처리되지 않았습니다.");
   const team = await prisma.team.create({ data: { academicCycleId: cycle.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
   await prisma.teamMember.create({ data: { teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
@@ -131,7 +133,7 @@ async function main() {
   if (recruitmentHistory.applications[0]?.status !== "REJECTED") {
     throw new Error("마감된 팀원 모집 지원 이력을 학생이 조회할 수 없습니다.");
   }
-  if (await topics.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
+  if (await topicCommands.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
 
   const raceName = `마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
@@ -141,7 +143,7 @@ async function main() {
   const raceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id, name: raceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "OPEN", now);
   const race = await Promise.allSettled([
-    new CreateTopicService(topics, programs).execute({ id: professorId, role: "PROFESSOR" }, {
+    new CreateTopicService(topicCommands, programs).execute({ id: professorId, role: "PROFESSOR" }, {
       programId: raceProgram.id, title: "마감 경합 주제", description: "원자적 생성 검증", requiredSkills: ["TypeScript"], preferredSkills: [],
       roleExpectations: "구현", availabilityRequirement: "주 1회", capacity: 2,
       applicationMode: "INDIVIDUAL_ONLY", applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],

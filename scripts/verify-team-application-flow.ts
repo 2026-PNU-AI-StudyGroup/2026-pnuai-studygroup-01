@@ -7,7 +7,7 @@ import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastr
 import { PrismaTeamApplicationInvitationRepository } from "../src/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
 import { PrismaTopicApplicationDecisionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
 import { PrismaTopicApplicationSubmissionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-submission-repository";
-import { PrismaTopicRepository } from "../src/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_TEAM_APPLICATION_TEST !== "true") {
@@ -259,7 +259,7 @@ async function main() {
     appliedAt,
   });
   if (closingDraft.outcome !== "INVITATIONS_PENDING") throw new Error("마감 정리 검증 팀 초안 생성 실패");
-  const topicRepository = new PrismaTopicRepository(prisma);
+  const topicRepository = new PrismaTopicCommandRepository(prisma);
   if (!(await topicRepository.closePublished(closingTopic.id))) throw new Error("검증 주제 마감 실패");
   if (await prisma.teamApplicationDraft.count({ where: { id: closingDraft.draftId } })) {
     throw new Error("주제 마감 후 미완료 팀 지원 초안이 남았습니다.");

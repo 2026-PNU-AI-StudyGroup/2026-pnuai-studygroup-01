@@ -10,7 +10,7 @@ import {
   TopicManagementForbiddenError,
   TopicNotFoundError,
 } from "@/modules/topic/application/change-topic-status";
-import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
 import {
   TopicScheduleUpdateForbiddenError,
   TopicScheduleUpdateUnavailableError,
@@ -58,7 +58,7 @@ export async function changeTopicStatusAction(
   }
 
   const service = new ChangeTopicStatusService(
-    new PrismaTopicRepository(prisma),
+    new PrismaTopicCommandRepository(prisma),
   );
 
   try {
@@ -96,7 +96,9 @@ export async function updateTopicScheduleAction(
   if (!parsed.success) return { status: "error", message: "모집·수행·제출 기간을 확인해 주세요." };
   const { topicId, ...schedule } = parsed.data;
   try {
-    await new UpdateTopicScheduleService(new PrismaTopicRepository(prisma)).execute(actor, topicId, schedule);
+    await new UpdateTopicScheduleService(
+      new PrismaTopicCommandRepository(prisma),
+    ).execute(actor, topicId, schedule);
   } catch (error) {
     if (
       error instanceof TopicScheduleUpdateForbiddenError ||

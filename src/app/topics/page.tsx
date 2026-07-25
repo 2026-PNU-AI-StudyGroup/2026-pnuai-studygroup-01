@@ -15,7 +15,7 @@ import { TeamApplicationInvitationService } from "@/modules/topic-application/ap
 import { PrismaTeamApplicationInvitationRepository } from "@/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
-import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
@@ -47,7 +47,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const sort: PublicTopicSort = firstSearchParam(params.sort) === "DEADLINE" ? "DEADLINE" : "LATEST";
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
-  const topicRepository = new PrismaTopicRepository(prisma);
+  const topicRepository = new PrismaTopicQueryRepository(prisma);
   const topicService = new ListPublishedTopicsService(topicRepository);
   const applicationService = new ListOwnTopicApplicationsService(new PrismaTopicApplicationQueryRepository(prisma));
   let content: ReactNode;

@@ -11,7 +11,7 @@ import { TeamApplicationInvitationService } from "@/modules/topic-application/ap
 import { PrismaTeamApplicationInvitationRepository } from "@/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
-import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
 import { AppShell } from "@/app/_components/app-shell";
@@ -31,7 +31,9 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { topicId } = await params;
-  const topic = await new ListPublishedTopicsService(new PrismaTopicRepository(prisma)).find(topicId);
+  const topic = await new ListPublishedTopicsService(
+    new PrismaTopicQueryRepository(prisma),
+  ).find(topicId);
   if (!topic) notFound();
   const applicationService = new ListOwnTopicApplicationsService(
     new PrismaTopicApplicationQueryRepository(prisma),

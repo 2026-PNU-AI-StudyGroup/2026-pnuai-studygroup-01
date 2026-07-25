@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "@/modules/topic/application/create-topic";
-import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
 import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
 import { createTopicInputSchema } from "@/modules/topic/ui/create-topic-input";
 import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
@@ -70,7 +70,7 @@ export async function createTopicAction(
 
   try {
     await new CreateTopicService(
-      new PrismaTopicRepository(prisma),
+      new PrismaTopicCommandRepository(prisma),
       new PrismaProjectProgramRepository(prisma),
     ).execute(actor, parsed.data);
   } catch (error) {
