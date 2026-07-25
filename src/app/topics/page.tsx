@@ -18,7 +18,7 @@ import { ListPublishedTopicsService } from "@/modules/topic/application/list-pub
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
-import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
+import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -55,7 +55,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   if (view === "past") {
     const category = firstSearchParam(params.category)?.trim().slice(0, 100) ?? "";
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const archive = await new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, programCategory: category });
+    const archive = await new ListArchivedProjectsService(
+      new PrismaTeamArchiveQueryRepository(prisma),
+    ).execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, programCategory: category });
     const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
     content = <div className="pt-7"><PastProjectsView {...archive} query={query} category={category} programId={programId} /></div>;
   } else {

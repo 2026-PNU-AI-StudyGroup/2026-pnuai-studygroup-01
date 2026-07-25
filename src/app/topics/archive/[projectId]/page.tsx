@@ -6,7 +6,7 @@ import { EditorialProjectCover } from "@/app/topics/[topicId]/_components/editor
 import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
-import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
+import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { TranslatedText } from "@/shared/ui/translated-text";
@@ -18,7 +18,9 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { projectId } = await params;
-  const project = await new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).find(projectId);
+  const project = await new ListArchivedProjectsService(
+    new PrismaTeamArchiveQueryRepository(prisma),
+  ).find(projectId);
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><main className="content-shell">

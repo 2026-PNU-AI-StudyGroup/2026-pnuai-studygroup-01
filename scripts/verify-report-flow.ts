@@ -22,7 +22,8 @@ import {
   ListArchivedProjectsService,
   TeamCloseNotAllowedError,
 } from "../src/modules/team/application/archive-projects";
-import { PrismaTeamArchiveRepository } from "../src/modules/team/infrastructure/prisma-team-archive-repository";
+import { PrismaTeamArchiveQueryRepository } from "../src/modules/team/infrastructure/prisma-team-archive-query-repository";
+import { PrismaTeamCloseRepository } from "../src/modules/team/infrastructure/prisma-team-close-repository";
 import { TeamDiscussionService, TeamNotFoundError } from "../src/modules/team/application/manage-team-workspace";
 import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
@@ -293,8 +294,10 @@ async function main() {
   }
   if (!submissionPeriodDenied) throw new Error("제출 기간 밖 보고서가 접수되었습니다.");
 
-  const archiveRepository = new PrismaTeamArchiveRepository(prisma);
-  const closeTeam = new CloseTeamService(archiveRepository);
+  const archiveRepository = new PrismaTeamArchiveQueryRepository(prisma);
+  const closeTeam = new CloseTeamService(
+    new PrismaTeamCloseRepository(prisma),
+  );
   let unrelatedProfessorCloseDenied = false;
   try {
     await closeTeam.close({ id: otherProfessorId, role: "PROFESSOR" }, team.id);

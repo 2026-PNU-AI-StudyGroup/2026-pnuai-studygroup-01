@@ -22,7 +22,7 @@ import {
   InvalidDiscussionPostError,
   InvalidMilestoneError,
 } from "@/modules/team/domain/team-workspace-policy";
-import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
+import { PrismaTeamCloseRepository } from "@/modules/team/infrastructure/prisma-team-close-repository";
 import { PrismaTeamConfirmationRepository } from "@/modules/team/infrastructure/prisma-team-confirmation-repository";
 import { PrismaTeamDiscussionRepository } from "@/modules/team/infrastructure/prisma-team-discussion-repository";
 import { PrismaTeamMilestoneRepository } from "@/modules/team/infrastructure/prisma-team-milestone-repository";
@@ -66,7 +66,7 @@ export async function closeTeamAction(
     return { status: "error", message: "팀 종료 요청을 확인해 주세요." };
   }
   try {
-    await new CloseTeamService(new PrismaTeamArchiveRepository(prisma)).close(actor, teamId);
+    await new CloseTeamService(new PrismaTeamCloseRepository(prisma)).close(actor, teamId);
   } catch (error) {
     if (error instanceof TeamCloseNotAllowedError) {
       return { status: "error", message: error.message };
