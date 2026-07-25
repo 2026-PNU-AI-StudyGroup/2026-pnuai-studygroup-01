@@ -2,7 +2,8 @@ import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
 
-import { PrismaTopicApplicationRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationDecisionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
+import { PrismaTopicApplicationSubmissionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-submission-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_CONCURRENCY_TEST !== "true") {
@@ -106,7 +107,8 @@ async function main() {
     startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   createdProgramId = program.id;
-  const repository = new PrismaTopicApplicationRepository(prisma);
+  const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
+  const submissionRepository = new PrismaTopicApplicationSubmissionRepository(prisma);
   const actor = { id: professorId, isAdmin: false };
 
   const capacityTopic = await createTopic(cycle.id, "정원 경합", 1);
@@ -116,7 +118,7 @@ async function main() {
   ]);
   await Promise.all(
     capacityApplications.map(({ id }) =>
-      repository.accept(id, actor, new Date()),
+      decisionRepository.accept(id, actor, new Date()),
     ),
   );
   const capacityAccepted = await prisma.topicApplication.count({
@@ -135,9 +137,9 @@ async function main() {
   ) {
     throw new Error("정원 동시 수락 불변식이 깨졌습니다.");
   }
-  const fullTopicConfiguration = await repository.findConfiguration(capacityTopic.id, new Date("2026-07-13T00:00:00Z"));
+  const fullTopicConfiguration = await submissionRepository.findConfiguration(capacityTopic.id, new Date("2026-07-13T00:00:00Z"));
   if (!fullTopicConfiguration) throw new Error("정원 검증 주제 설정을 찾지 못했습니다.");
-  const fullTopicApplication = await repository.createIndividualIfAvailable({
+  const fullTopicApplication = await submissionRepository.createIndividualIfAvailable({
     topicId: capacityTopic.id,
     studentId: studentIds[2],
     studentEmail: `verification+${studentIds[2]}@pusan.ac.kr`,
@@ -158,7 +160,7 @@ async function main() {
   ]);
   await Promise.all(
     duplicateApplications.map(({ id }) =>
-      repository.accept(id, actor, new Date()),
+      decisionRepository.accept(id, actor, new Date()),
     ),
   );
   const studentMemberships = await prisma.teamMember.count({
@@ -185,10 +187,10 @@ async function main() {
     studentIds[3],
   );
   await Promise.all([
-    repository.accept(decisionApplication.id, actor, new Date()),
-    repository.findConfiguration(applyingTopic.id, new Date("2026-07-13T00:00:00Z")).then((configuration) => {
+    decisionRepository.accept(decisionApplication.id, actor, new Date()),
+    submissionRepository.findConfiguration(applyingTopic.id, new Date("2026-07-13T00:00:00Z")).then((configuration) => {
       if (!configuration) throw new Error("지원 경합 검증 주제 설정을 찾지 못했습니다.");
-      return repository.createIndividualIfAvailable({
+      return submissionRepository.createIndividualIfAvailable({
       topicId: applyingTopic.id,
       studentId: studentIds[3],
       studentEmail: `verification+${studentIds[3]}@pusan.ac.kr`,
@@ -214,8 +216,8 @@ async function main() {
   const oppositeDecisionTopic = await createTopic(cycle.id, "수락 거절 경합", 1);
   const oppositeDecisionApplication = await createApplication(oppositeDecisionTopic.id, studentIds[4]);
   await Promise.all([
-    repository.accept(oppositeDecisionApplication.id, actor, new Date()),
-    repository.reject(oppositeDecisionApplication.id, actor, new Date()),
+    decisionRepository.accept(oppositeDecisionApplication.id, actor, new Date()),
+    decisionRepository.reject(oppositeDecisionApplication.id, actor, new Date()),
   ]);
   const oppositeDecisionState = await prisma.topicApplication.findUniqueOrThrow({
     where: { id: oppositeDecisionApplication.id },

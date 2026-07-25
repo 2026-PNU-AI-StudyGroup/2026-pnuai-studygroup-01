@@ -18,7 +18,7 @@ import {
   TopicApplicationKindForbiddenError,
   TopicApplicationForbiddenError,
 } from "@/modules/topic-application/domain/topic-application-policy";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationSubmissionRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-submission-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type ApplyTopicActionState = {
@@ -53,7 +53,7 @@ export async function applyTopicAction(
     .filter(([name]) => name.startsWith("answer:"))
     .map(([name, value]) => ({ questionId: name.slice("answer:".length), value: String(value) }));
   const service = new ApplyToTopicService(
-    new PrismaTopicApplicationRepository(prisma),
+    new PrismaTopicApplicationSubmissionRepository(prisma),
   );
   try {
     const result = await service.execute(actor, { ...parsed.data, answers });

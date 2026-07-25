@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationDecisionRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 
 function knownError(code: string, target?: string[]) {
   return new Prisma.PrismaClientKnownRequestError("transaction conflict", {
@@ -14,7 +15,7 @@ function knownError(code: string, target?: string[]) {
 describe("Prisma 지원 결정 저장소", () => {
   it("교수 상세 조회에 지원서와 주제 소유자 조건을 함께 적용한다", async () => {
     const findFirst = vi.fn().mockResolvedValue(null);
-    const repository = new PrismaTopicApplicationRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
+    const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
 
     await repository.findVisibleById("application-1", {
       actorId: "professor-1",
@@ -32,7 +33,7 @@ describe("Prisma 지원 결정 저장소", () => {
 
   it("관리자 상세 조회에는 지원서 식별자만 적용한다", async () => {
     const findFirst = vi.fn().mockResolvedValue(null);
-    const repository = new PrismaTopicApplicationRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
+    const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
 
     await repository.findVisibleById("application-1", {
       actorId: "admin-1",
@@ -51,7 +52,7 @@ describe("Prisma 지원 결정 저장소", () => {
       { id: "rejected", topicId: "topic-3", studentId: "student-3", status: "REJECTED", message: "이력", skills: [], desiredRole: "분석", availability: "평일", createdAt: new Date("2026-07-15"), topic: { title: "지난 주제", authorId: "professor-1" }, student: { name: "박학생", email: "student3@pusan.ac.kr" } },
       { id: "pending-old", topicId: "topic-4", studentId: "student-4", status: "PENDING", message: "대기", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-14"), topic: { title: "현재 주제", authorId: "professor-1" }, student: { name: "최학생", email: "student4@pusan.ac.kr" } },
     ]);
-    const repository = new PrismaTopicApplicationRepository({ topicApplication: { findMany } } as unknown as PrismaClient);
+    const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findMany } } as unknown as PrismaClient);
 
     const applications = await repository.listAll();
 
@@ -60,14 +61,14 @@ describe("Prisma 지원 결정 저장소", () => {
   });
 
   it("학생-학기 유니크 충돌만 중복 소속으로 분류한다", async () => {
-    const studentConflict = new PrismaTopicApplicationRepository({
+    const studentConflict = new PrismaTopicApplicationDecisionRepository({
       $transaction: vi
         .fn()
         .mockRejectedValue(
           knownError("P2002", ["academicCycleId", "studentId"]),
         ),
     } as unknown as PrismaClient);
-    const otherConflict = new PrismaTopicApplicationRepository({
+    const otherConflict = new PrismaTopicApplicationDecisionRepository({
       $transaction: vi
         .fn()
         .mockRejectedValue(knownError("P2002", ["topicId"])),
@@ -112,7 +113,7 @@ describe("Prisma 지원 결정 저장소", () => {
     };
     const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
 
-    await expect(new PrismaTopicApplicationRepository(client).reject(
+    await expect(new PrismaTopicApplicationDecisionRepository(client).reject(
       "application-1",
       { id: "professor-1", isAdmin: false },
       new Date("2026-07-19T00:00:00Z"),
@@ -129,12 +130,12 @@ describe("Prisma 지원 결정 저장소", () => {
       .mockRejectedValueOnce(knownError("P2034"))
       .mockResolvedValueOnce("REJECTED");
 
-    await expect(new PrismaTopicApplicationRepository({ $transaction: acceptTransaction } as unknown as PrismaClient).accept(
+    await expect(new PrismaTopicApplicationDecisionRepository({ $transaction: acceptTransaction } as unknown as PrismaClient).accept(
       "application-1",
       { id: "professor-1", isAdmin: false },
       new Date(),
     )).resolves.toBe("ACCEPTED");
-    await expect(new PrismaTopicApplicationRepository({ $transaction: rejectTransaction } as unknown as PrismaClient).reject(
+    await expect(new PrismaTopicApplicationDecisionRepository({ $transaction: rejectTransaction } as unknown as PrismaClient).reject(
       "application-1",
       { id: "professor-1", isAdmin: false },
       new Date(),

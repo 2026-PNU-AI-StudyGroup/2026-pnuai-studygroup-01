@@ -6,7 +6,7 @@ import { ReceivedApplicationList } from "@/app/professor/applications/_component
 import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListReceivedTopicApplicationsService } from "@/modules/topic-application/application/list-received-topic-applications";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
@@ -17,7 +17,7 @@ export default async function ProfessorApplicationsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
-  const applications = await new ListReceivedTopicApplicationsService(new PrismaTopicApplicationRepository(prisma)).execute(actor);
+  const applications = await new ListReceivedTopicApplicationsService(new PrismaTopicApplicationQueryRepository(prisma)).execute(actor);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications">

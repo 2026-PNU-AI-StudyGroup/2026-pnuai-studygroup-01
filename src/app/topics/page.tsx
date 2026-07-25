@@ -12,7 +12,8 @@ import { ProjectProgramService } from "@/modules/project-program/application/man
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { TeamApplicationInvitationService } from "@/modules/topic-application/application/manage-team-application-invitations";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTeamApplicationInvitationRepository } from "@/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
@@ -48,7 +49,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
   const topicRepository = new PrismaTopicRepository(prisma);
   const topicService = new ListPublishedTopicsService(topicRepository);
-  const applicationService = new ListOwnTopicApplicationsService(new PrismaTopicApplicationRepository(prisma));
+  const applicationService = new ListOwnTopicApplicationsService(new PrismaTopicApplicationQueryRepository(prisma));
   let content: ReactNode;
 
   if (view === "past") {
@@ -64,7 +65,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const [topics, applications, teamApplicationState] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, query, phase, sort, page: requestedPage, now }),
       actor.role === "STUDENT" ? applicationService.execute(actor, 1, 2) : Promise.resolve(undefined),
-      actor.role === "STUDENT" ? new TeamApplicationInvitationService(new PrismaTopicApplicationRepository(prisma)).list(actor) : Promise.resolve(undefined),
+      actor.role === "STUDENT" ? new TeamApplicationInvitationService(new PrismaTeamApplicationInvitationRepository(prisma)).list(actor) : Promise.resolve(undefined),
     ]);
     content = <ActiveProjectsView programs={programs} programId={programId} topics={topics} applications={applications} pendingTeamTopicIds={teamApplicationState?.drafts.map(({ topicId }) => topicId) ?? []} phase={phase} query={query} sort={sort} now={now} />;
   }

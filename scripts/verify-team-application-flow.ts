@@ -4,7 +4,9 @@ import { randomUUID } from "node:crypto";
 
 import { PrismaProjectProgramRepository } from "../src/modules/project-program/infrastructure/prisma-project-program-repository";
 import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
-import { PrismaTopicApplicationRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTeamApplicationInvitationRepository } from "../src/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
+import { PrismaTopicApplicationDecisionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
+import { PrismaTopicApplicationSubmissionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-submission-repository";
 import { PrismaTopicRepository } from "../src/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
@@ -86,11 +88,13 @@ async function main() {
       openedAt: new Date("2026-01-01T00:00:00Z"),
     },
   });
-  const repository = new PrismaTopicApplicationRepository(prisma);
+  const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
+  const invitationRepository = new PrismaTeamApplicationInvitationRepository(prisma);
+  const submissionRepository = new PrismaTopicApplicationSubmissionRepository(prisma);
   const appliedAt = new Date("2026-07-17T00:00:00Z");
 
   const invalidInviteTopic = await createTopic(program.id, "TEAM_ONLY");
-  const invalidRoleInvite = await repository.createTeamDraftIfAvailable({
+  const invalidRoleInvite = await submissionRepository.createTeamDraftIfAvailable({
     topicId: invalidInviteTopic.id,
     studentId: studentIds[8],
     studentEmail: emails[8],
@@ -102,7 +106,7 @@ async function main() {
   if (invalidRoleInvite.outcome !== "TEAM_MEMBER_UNAVAILABLE") throw new Error("학생이 아닌 등록 계정의 팀 초대를 차단하지 못했습니다.");
 
   const roleChangeTopic = await createTopic(program.id, "TEAM_ONLY", 3);
-  const roleChangeDraft = await repository.createTeamDraftIfAvailable({
+  const roleChangeDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: roleChangeTopic.id,
     studentId: studentIds[8],
     studentEmail: emails[8],
@@ -116,17 +120,17 @@ async function main() {
   const firstRoleInvitation = roleInvitations.find(({ email }) => email === emails[9]);
   const finalRoleInvitation = roleInvitations.find(({ email }) => email === emails[7]);
   if (!firstRoleInvitation || !finalRoleInvitation) throw new Error("역할 변경 검증 초대 조회 실패");
-  if (await repository.respond(firstRoleInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "PENDING") throw new Error("역할 변경 전 첫 수락 실패");
+  if (await invitationRepository.respond(firstRoleInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "PENDING") throw new Error("역할 변경 전 첫 수락 실패");
   await prisma.user.update({ where: { id: studentIds[9] }, data: { role: "PROFESSOR" } });
-  const roleChangePromotion = await repository.respond(finalRoleInvitation.id, { id: studentIds[7], email: emails[7] }, "ACCEPT", appliedAt);
+  const roleChangePromotion = await invitationRepository.respond(finalRoleInvitation.id, { id: studentIds[7], email: emails[7] }, "ACCEPT", appliedAt);
   if (roleChangePromotion !== "MEMBER_UNAVAILABLE" || await prisma.topicApplication.count({ where: { topicId: roleChangeTopic.id } })) {
     throw new Error("승격 시 학생 역할 재검증에 실패했습니다.");
   }
   await prisma.user.update({ where: { id: studentIds[9] }, data: { role: "STUDENT" } });
-  await repository.cancelDraft(roleChangeDraft.draftId, studentIds[8]);
+  await invitationRepository.cancelDraft(roleChangeDraft.draftId, studentIds[8]);
 
   const individualTopic = await createTopic(program.id, "INDIVIDUAL_ONLY");
-  const individual = await repository.createIndividualIfAvailable({
+  const individual = await submissionRepository.createIndividualIfAvailable({
     topicId: individualTopic.id,
     studentId: studentIds[0],
     studentEmail: emails[0],
@@ -138,7 +142,7 @@ async function main() {
   if (individual.outcome !== "CREATED") throw new Error(`개인 지원 생성 실패: ${individual.outcome}`);
 
   const teamTopic = await createTopic(program.id, "TEAM_ONLY");
-  const draft = await repository.createTeamDraftIfAvailable({
+  const draft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: teamTopic.id,
     studentId: studentIds[1],
     studentEmail: emails[1],
@@ -153,12 +157,12 @@ async function main() {
   const firstActor = actorByEmail.get(invitations[0].email);
   const secondActor = actorByEmail.get(invitations[1].email);
   if (!firstActor || !secondActor) throw new Error("팀원 초대 대상 매핑 실패");
-  const firstAcceptance = await repository.respond(invitations[0].id, firstActor, "ACCEPT", appliedAt);
+  const firstAcceptance = await invitationRepository.respond(invitations[0].id, firstActor, "ACCEPT", appliedAt);
   const applicationCountBeforeAllAccepted = await prisma.topicApplication.count({ where: { topicId: teamTopic.id } });
   if (firstAcceptance !== "PENDING" || applicationCountBeforeAllAccepted !== 0) {
     throw new Error("모든 팀원 수락 전에 실제 지원서가 생성되었습니다.");
   }
-  const finalAcceptance = await repository.respond(invitations[1].id, secondActor, "ACCEPT", appliedAt);
+  const finalAcceptance = await invitationRepository.respond(invitations[1].id, secondActor, "ACCEPT", appliedAt);
   const teamApplications = await prisma.topicApplication.findMany({ where: { topicId: teamTopic.id }, orderBy: { participantRole: "asc" } });
   if (finalAcceptance !== "APPLICATION_CREATED" || teamApplications.length !== 3) {
     throw new Error("마지막 팀원 수락 후 팀 지원서 생성에 실패했습니다.");
@@ -168,7 +172,7 @@ async function main() {
   const legacyConflict = await prisma.topicApplication.create({
     data: { topicId: teamTopic.id, studentId: studentIds[0], message: "정원 충족 시 자동 거절할 기존 지원" },
   });
-  const decision = await repository.accept(leaderApplication.id, { id: professorId, isAdmin: false }, appliedAt);
+  const decision = await decisionRepository.accept(leaderApplication.id, { id: professorId, isAdmin: false }, appliedAt);
   const [acceptedCount, memberCount, legacyConflictAfterDecision] = await Promise.all([
     prisma.topicApplication.count({ where: { topicId: teamTopic.id, status: "ACCEPTED" } }),
     prisma.teamMember.count({ where: { topicId: teamTopic.id } }),
@@ -179,7 +183,7 @@ async function main() {
   }
 
   const rejectedTopic = await createTopic(program.id, "TEAM_ONLY");
-  const rejectedDraft = await repository.createTeamDraftIfAvailable({
+  const rejectedDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: rejectedTopic.id,
     studentId: studentIds[4],
     studentEmail: emails[4],
@@ -190,15 +194,15 @@ async function main() {
   });
   if (rejectedDraft.outcome !== "INVITATIONS_PENDING") throw new Error("거절 검증 팀 초안 생성 실패");
   const rejectedInvitation = await prisma.teamApplicationInvitation.findFirstOrThrow({ where: { draftId: rejectedDraft.draftId } });
-  const promoted = await repository.respond(rejectedInvitation.id, { id: studentIds[5], email: emails[5] }, "ACCEPT", appliedAt);
+  const promoted = await invitationRepository.respond(rejectedInvitation.id, { id: studentIds[5], email: emails[5] }, "ACCEPT", appliedAt);
   if (promoted !== "APPLICATION_CREATED") throw new Error("거절 검증 팀 지원 승격 실패");
   const rejectedLeader = await prisma.topicApplication.findFirstOrThrow({ where: { topicId: rejectedTopic.id, participantRole: "LEADER" } });
-  const rejection = await repository.reject(rejectedLeader.id, { id: professorId, isAdmin: false }, appliedAt);
+  const rejection = await decisionRepository.reject(rejectedLeader.id, { id: professorId, isAdmin: false }, appliedAt);
   const rejectedCount = await prisma.topicApplication.count({ where: { topicId: rejectedTopic.id, status: "REJECTED" } });
   if (rejection !== "REJECTED" || rejectedCount !== 2) throw new Error("팀 지원 전체 거절에 실패했습니다.");
 
   const conflictingTeamTopic = await createTopic(program.id, "TEAM_ONLY", 2);
-  const conflictingDraft = await repository.createTeamDraftIfAvailable({
+  const conflictingDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: conflictingTeamTopic.id,
     studentId: studentIds[8],
     studentEmail: emails[8],
@@ -209,14 +213,14 @@ async function main() {
   });
   if (conflictingDraft.outcome !== "INVITATIONS_PENDING") throw new Error("교차 주제 팀 지원 초안 생성 실패");
   const conflictingInvitation = await prisma.teamApplicationInvitation.findFirstOrThrow({ where: { draftId: conflictingDraft.draftId } });
-  if (await repository.respond(conflictingInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "APPLICATION_CREATED") {
+  if (await invitationRepository.respond(conflictingInvitation.id, { id: studentIds[9], email: emails[9] }, "ACCEPT", appliedAt) !== "APPLICATION_CREATED") {
     throw new Error("교차 주제 팀 지원 승격 실패");
   }
   const legacyAcceptedTopic = await createTopic(program.id, "INDIVIDUAL_ONLY", 1);
   const legacyAcceptedApplication = await prisma.topicApplication.create({
     data: { topicId: legacyAcceptedTopic.id, studentId: studentIds[8], message: "교차 주제 기존 지원 수락" },
   });
-  if (await repository.accept(legacyAcceptedApplication.id, { id: professorId, isAdmin: false }, appliedAt) !== "ACCEPTED") {
+  if (await decisionRepository.accept(legacyAcceptedApplication.id, { id: professorId, isAdmin: false }, appliedAt) !== "ACCEPTED") {
     throw new Error("교차 주제 기존 지원 수락 실패");
   }
   const rejectedConflictingGroupCount = await prisma.topicApplication.count({ where: { topicId: conflictingTeamTopic.id, status: "REJECTED" } });
@@ -241,11 +245,11 @@ async function main() {
   if (recruitmentApplication !== "CREATED" || storedRecruitmentApplication.topicApplication.groupId !== null) {
     throw new Error("기존 팀원 모집 지원이 독립 레거시 지원서로 생성되지 않았습니다.");
   }
-  const recruitmentDecision = await repository.accept(storedRecruitmentApplication.topicApplication.id, { id: studentIds[6], isAdmin: false }, appliedAt);
+  const recruitmentDecision = await decisionRepository.accept(storedRecruitmentApplication.topicApplication.id, { id: studentIds[6], isAdmin: false }, appliedAt);
   if (recruitmentDecision !== "ACCEPTED") throw new Error(`기존 팀원 모집 수락 호환 실패: ${recruitmentDecision}`);
 
   const closingTopic = await createTopic(program.id, "TEAM_ONLY");
-  const closingDraft = await repository.createTeamDraftIfAvailable({
+  const closingDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: closingTopic.id,
     studentId: studentIds[4],
     studentEmail: emails[4],
@@ -275,7 +279,7 @@ async function main() {
     },
   });
   const programClosingTopic = await createTopic(closingProgram.id, "TEAM_ONLY");
-  const programClosingDraft = await repository.createTeamDraftIfAvailable({
+  const programClosingDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: programClosingTopic.id,
     studentId: studentIds[4],
     studentEmail: emails[4],
@@ -292,7 +296,7 @@ async function main() {
   }
 
   const retryTopic = await createTopic(program.id, "TEAM_ONLY");
-  const retryDraft = await repository.createTeamDraftIfAvailable({
+  const retryDraft = await submissionRepository.createTeamDraftIfAvailable({
     topicId: retryTopic.id,
     studentId: studentIds[4],
     studentEmail: emails[4],
@@ -304,7 +308,7 @@ async function main() {
   if (retryDraft.outcome !== "INVITATIONS_PENDING") throw new Error("승격 재시도 팀 초안 생성 실패");
   const retryInvitation = await prisma.teamApplicationInvitation.findFirstOrThrow({ where: { draftId: retryDraft.draftId } });
   await prisma.projectProgram.update({ where: { id: program.id }, data: { status: "CLOSED" } });
-  const unavailablePromotion = await repository.respond(retryInvitation.id, { id: studentIds[5], email: emails[5] }, "ACCEPT", appliedAt);
+  const unavailablePromotion = await invitationRepository.respond(retryInvitation.id, { id: studentIds[5], email: emails[5] }, "ACCEPT", appliedAt);
   const invitationAfterFailure = await prisma.teamApplicationInvitation.findUniqueOrThrow({ where: { id: retryInvitation.id } });
   if (unavailablePromotion !== "TOPIC_UNAVAILABLE" || invitationAfterFailure.status !== "PENDING") {
     throw new Error("승격 실패 후 팀원 초대를 재시도 가능한 상태로 보존하지 못했습니다.");

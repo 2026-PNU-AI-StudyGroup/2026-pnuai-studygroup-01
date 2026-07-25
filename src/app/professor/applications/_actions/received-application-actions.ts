@@ -12,7 +12,7 @@ import {
   TopicApplicationNotFoundError,
   TopicApplicationReviewCommentError,
 } from "@/modules/topic-application/application/decide-topic-application";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationDecisionRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type DecisionActionState = {
@@ -41,7 +41,7 @@ export async function decideTopicApplicationAction(
   }
 
   const service = new DecideTopicApplicationService(
-    new PrismaTopicApplicationRepository(prisma),
+    new PrismaTopicApplicationDecisionRepository(prisma),
   );
   try {
     if (parsed.data.decision === "accept") {

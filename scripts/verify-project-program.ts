@@ -7,7 +7,7 @@ import { PrismaProjectProgramRepository } from "../src/modules/project-program/i
 import { CreateTopicService } from "../src/modules/topic/application/create-topic";
 import { UpdateTopicScheduleService } from "../src/modules/topic/application/update-topic-schedule";
 import { PrismaTopicRepository } from "../src/modules/topic/infrastructure/prisma-topic-repository";
-import { PrismaTopicApplicationRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
@@ -122,7 +122,7 @@ async function main() {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
   }
   const [topicHistory, recruitmentHistory] = await Promise.all([
-    new PrismaTopicApplicationRepository(prisma).listByStudent(applicantId, 1, 20),
+    new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20),
     new PrismaRecruitmentRepository(prisma).listApplicationHistory(applicantId, 1),
   ]);
   if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {

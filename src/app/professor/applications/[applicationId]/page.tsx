@@ -9,7 +9,7 @@ import {
   GetReceivedTopicApplicationService,
   ReceivedTopicApplicationNotFoundError,
 } from "@/modules/topic-application/application/get-received-topic-application";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
@@ -28,7 +28,7 @@ export default async function ProfessorApplicationDetailPage({
   let application;
   try {
     application = await new GetReceivedTopicApplicationService(
-      new PrismaTopicApplicationRepository(prisma),
+      new PrismaTopicApplicationQueryRepository(prisma),
     ).execute(actor, applicationId);
   } catch (error) {
     if (error instanceof ReceivedTopicApplicationNotFoundError) notFound();

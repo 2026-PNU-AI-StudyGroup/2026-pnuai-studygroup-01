@@ -8,7 +8,8 @@ import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shel
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { TeamApplicationInvitationService } from "@/modules/topic-application/application/manage-team-application-invitations";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTeamApplicationInvitationRepository } from "@/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -32,11 +33,14 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const { topicId } = await params;
   const topic = await new ListPublishedTopicsService(new PrismaTopicRepository(prisma)).find(topicId);
   if (!topic) notFound();
-  const applicationRepository = new PrismaTopicApplicationRepository(prisma);
-  const applicationService = new ListOwnTopicApplicationsService(applicationRepository);
+  const applicationService = new ListOwnTopicApplicationsService(
+    new PrismaTopicApplicationQueryRepository(prisma),
+  );
   const [application, teamApplicationState, leaderTeams] = actor.role === "STUDENT" ? await Promise.all([
     applicationService.findForTopic(actor, topic.id),
-    new TeamApplicationInvitationService(applicationRepository).list(actor),
+    new TeamApplicationInvitationService(
+      new PrismaTeamApplicationInvitationRepository(prisma),
+    ).list(actor),
     new PrismaStudentTeamRecruitmentRepository(prisma).listLeaderTeams(actor.id),
   ]) : [null, null, []];
   const awaitingTeam = teamApplicationState?.drafts.some((draft) => draft.topicId === topic.id) ?? false;

@@ -9,7 +9,8 @@ import { buildApplicationFlowModel } from "@/app/topics/applications/_lib/applic
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { TeamApplicationInvitationService } from "@/modules/topic-application/application/manage-team-application-invitations";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { PrismaTeamApplicationInvitationRepository } from "@/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
+import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -22,10 +23,13 @@ export default async function TopicApplicationsPage({ searchParams }: { searchPa
   if (actor.role !== "STUDENT") redirect("/topics");
 
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
-  const repository = new PrismaTopicApplicationRepository(prisma);
   const [applicationPage, teamApplications] = await Promise.all([
-    new ListOwnTopicApplicationsService(repository).execute(actor, requestedPage, 20),
-    new TeamApplicationInvitationService(repository).list(actor),
+    new ListOwnTopicApplicationsService(
+      new PrismaTopicApplicationQueryRepository(prisma),
+    ).execute(actor, requestedPage, 20),
+    new TeamApplicationInvitationService(
+      new PrismaTeamApplicationInvitationRepository(prisma),
+    ).list(actor),
   ]);
   const flowModel = buildApplicationFlowModel({
     counts: applicationPage.counts,
