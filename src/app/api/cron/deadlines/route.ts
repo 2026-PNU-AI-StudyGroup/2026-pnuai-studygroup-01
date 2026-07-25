@@ -1,6 +1,6 @@
 import { GenerateDeadlineNotificationsService } from "@/modules/notification/application/manage-notifications";
 import { getDeadlineCronSecret, isAuthorizedCronRequest } from "@/modules/notification/infrastructure/deadline-environment";
-import { PrismaNotificationRepository } from "@/modules/notification/infrastructure/prisma-notification-repository";
+import { PrismaDeadlineNotificationGenerator } from "@/modules/notification/infrastructure/prisma-deadline-notification-generator";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export const runtime = "nodejs";
@@ -15,6 +15,8 @@ export async function POST(request: Request) {
   if (!isAuthorizedCronRequest(request.headers.get("authorization"), secret)) {
     return Response.json({ error: "인증되지 않은 요청입니다." }, { status: 401 });
   }
-  const created = await new GenerateDeadlineNotificationsService(new PrismaNotificationRepository(prisma)).execute();
+  const created = await new GenerateDeadlineNotificationsService(
+    new PrismaDeadlineNotificationGenerator(prisma),
+  ).execute();
   return Response.json({ created });
 }
