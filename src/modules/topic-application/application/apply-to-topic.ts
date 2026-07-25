@@ -4,7 +4,6 @@ import {
   assertApplicationKindAllowed,
   assertCanApplyToTopic,
   normalizeApplicationAnswers,
-  normalizeTeamMemberEmails,
 } from "@/modules/topic-application/domain/topic-application-policy";
 
 export class TopicAlreadyAppliedError extends Error {
@@ -35,6 +34,13 @@ export class TeamMemberUnavailableError extends Error {
   }
 }
 
+export class TeamLeaderRequiredError extends Error {
+  constructor() {
+    super("프로젝트 팀 지원은 지속형 팀의 팀장만 할 수 있습니다.");
+    this.name = "TeamLeaderRequiredError";
+  }
+}
+
 export class ApplyToTopicService {
   constructor(
     private readonly repository: TopicApplicationCreator,
@@ -43,7 +49,7 @@ export class ApplyToTopicService {
 
   async execute(
     actor: CurrentUser,
-    input: { topicId: string; kind: "INDIVIDUAL" | "TEAM"; answers: Array<{ questionId: string; value: string }>; inviteeEmails: string[] },
+    input: { topicId: string; kind: "INDIVIDUAL" | "TEAM"; answers: Array<{ questionId: string; value: string }>; inviteeEmails?: string[]; studentTeamId?: string },
   ): Promise<{ outcome: "CREATED"; id: string } | { outcome: "INVITATIONS_PENDING"; draftId: string }> {
     assertCanApplyToTopic(actor);
     const appliedAt = this.now();
@@ -51,9 +57,7 @@ export class ApplyToTopicService {
     if (!configuration) throw new TopicUnavailableForApplicationError();
     assertApplicationKindAllowed(configuration.mode, input.kind);
     const answers = normalizeApplicationAnswers(configuration.questions, input.answers);
-    const inviteeEmails = input.kind === "TEAM"
-      ? normalizeTeamMemberEmails(input.inviteeEmails, actor.email, configuration.capacity)
-      : [];
+    if (input.kind === "TEAM" && !input.studentTeamId) throw new TeamLeaderRequiredError();
 
     const common = {
       topicId: input.topicId,
@@ -63,7 +67,7 @@ export class ApplyToTopicService {
       appliedAt,
     };
     const result = input.kind === "TEAM"
-      ? await this.repository.createTeamDraftIfAvailable({ ...common, kind: "TEAM", inviteeEmails })
+      ? await this.repository.createTeamFromStudentTeam({ ...common, kind: "TEAM", inviteeEmails: [], studentTeamId: input.studentTeamId! })
       : await this.repository.createIndividualIfAvailable({ ...common, kind: "INDIVIDUAL", inviteeEmails: [] });
 
     if (result.outcome === "ALREADY_APPLIED") {

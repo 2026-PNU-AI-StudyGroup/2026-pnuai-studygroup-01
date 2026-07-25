@@ -1,0 +1,84 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { CreateTopicService } from "@/modules/topic/application/create-topic";
+import { PrismaTopicRepository } from "@/modules/topic/infrastructure/prisma-topic-repository";
+import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
+import { createTopicInputSchema } from "@/modules/topic/ui/create-topic-input";
+import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
+import { TopicApprovalOperationError, TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
+import { prisma } from "@/shared/infrastructure/database/prisma";
+
+export async function createTopicAction(
+  _previousState: TopicFormActionState,
+  formData: FormData,
+): Promise<TopicFormActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+
+  const questionLabels = formData.getAll("questionLabel");
+  const questionMaxLengths = formData.getAll("questionMaxLength");
+  const questionRequiredValues = formData.getAll("questionRequired");
+  const parsed = createTopicInputSchema.safeParse({
+    ...Object.fromEntries(formData),
+    applicationQuestions: questionLabels.map((label, index) => ({
+      label,
+      maxLength: questionMaxLengths[index],
+      required: questionRequiredValues[index] === "true",
+    })),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
+  }
+
+  if (actor.role === "STUDENT") {
+    const approval = z.object({
+      approvalRoute: z.enum(["PROFESSOR", "ADMIN"]),
+      requestedProfessorId: z.string().uuid().optional(),
+    }).safeParse({
+      approvalRoute: formData.get("approvalRoute"),
+      requestedProfessorId: formData.get("requestedProfessorId") || undefined,
+    });
+    if (!approval.success) {
+      return { status: "error", message: "승인 요청 방식을 확인해 주세요." };
+    }
+    try {
+      await new TopicApprovalService(
+        new PrismaTopicApprovalRepository(prisma),
+        new PrismaProjectProgramRepository(prisma),
+      ).createStudentProposal(actor, {
+        ...parsed.data,
+        route: approval.data.approvalRoute,
+        requestedProfessorId: approval.data.requestedProfessorId,
+      });
+    } catch (error) {
+      if (error instanceof TopicApprovalOperationError) {
+        return { status: "error", message: error.message };
+      }
+      throw error;
+    }
+    revalidatePath("/project-approvals");
+    revalidatePath("/topics");
+    return { status: "success", message: "프로젝트 승인 요청을 보냈습니다." };
+  }
+
+  try {
+    await new CreateTopicService(
+      new PrismaTopicRepository(prisma),
+      new PrismaProjectProgramRepository(prisma),
+    ).execute(actor, parsed.data);
+  } catch (error) {
+    const message = getCreateTopicErrorMessage(error);
+    if (message) return { status: "error", message };
+    throw error;
+  }
+
+  revalidatePath("/professor/topics");
+  return { status: "success", message: "주제 초안이 저장되었습니다." };
+}

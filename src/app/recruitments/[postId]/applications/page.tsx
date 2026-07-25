@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { RecruitmentApplicationsView } from "@/app/recruitments/_components/recruitment-applications-view";
-import { RecruitmentSectionLayout } from "@/app/recruitments/_components/recruitment-section-layout";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { RecruitmentService } from "@/modules/recruitment/application/manage-recruitment";
-import { PrismaRecruitmentRepository } from "@/modules/recruitment/infrastructure/prisma-recruitment-repository";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
@@ -17,9 +16,8 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
   if (!actor) redirect("/sign-in");
   if (actor.role !== "STUDENT" && actor.role !== "ADMIN") redirect("/topics");
   const { postId } = await params;
-  const post = await new RecruitmentService(
-    new PrismaRecruitmentRepository(prisma),
-    new PrismaTopicApplicationRepository(prisma),
+  const post = await new StudentTeamRecruitmentService(
+    new PrismaStudentTeamRecruitmentRepository(prisma),
   ).getPostApplications(actor, postId);
   if (!post) notFound();
 
@@ -27,8 +25,8 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={actor.role === "STUDENT" ? "/recruitments/mine" : "/dashboard"}>
-      <main className="content-shell">
-        {actor.role === "STUDENT" ? <RecruitmentSectionLayout currentPath="/recruitments/mine">{content}</RecruitmentSectionLayout> : content}
+      <main className={actor.role === "STUDENT" ? "pb-28 lg:min-h-screen lg:pb-0" : "content-shell"}>
+        {actor.role === "STUDENT" ? <StudentTeamSectionLayout currentPath="/recruitments/mine">{content}</StudentTeamSectionLayout> : content}
       </main>
     </AppShell>
   );

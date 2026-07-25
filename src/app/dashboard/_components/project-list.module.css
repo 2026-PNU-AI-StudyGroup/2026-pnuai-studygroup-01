@@ -1,387 +1,490 @@
 .overview {
-  display: grid;
-  gap: 2rem;
-  padding-top: 0.25rem;
-}
-
-.overviewHeading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 2rem;
+  padding-top: 0.5rem;
 }
 
 .pageTitle {
   color: var(--ink);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.3rem, 5vw, 3.65rem);
   font-weight: 900;
-  letter-spacing: -0.055em;
-  line-height: 1.08;
+  letter-spacing: -0.065em;
+  line-height: 0.98;
 }
 
-.pageDescription {
-  max-width: 46rem;
-  margin-top: 0.75rem;
-  color: var(--muted);
-  font-size: 0.975rem;
-  line-height: 1.7;
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.summaryGrid {
+.projectSections {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.875rem;
+  gap: 2.5rem;
 }
 
-.summaryCard {
-  min-height: 9.5rem;
-  padding: 1.35rem 1.4rem;
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.sectionHeading h2 {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: -0.025em;
+}
+
+.sectionHeading > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.projectStrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+}
+
+.projectTab {
+  display: grid;
+  min-width: 0;
+  min-height: 8.5rem;
+  align-content: start;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  background: rgb(255 255 255 / 0.88);
-  box-shadow: 0 10px 28px rgb(23 32 51 / 0.045);
-}
-
-.summaryCardPrimary {
-  border-color: rgb(47 91 234 / 0.16);
-  background:
-    radial-gradient(circle at 105% -20%, rgb(47 91 234 / 0.2), transparent 55%),
-    #f4f7ff;
-}
-
-.summaryCard dt {
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 750;
-}
-
-.summaryCard dd {
-  margin-top: 0.85rem;
+  background: white;
+  padding: 1.15rem 1.2rem;
   color: var(--ink);
-  font-size: 2rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--snap-duration) var(--snap-ease),
+    background-color var(--snap-duration) var(--snap-ease),
+    transform var(--snap-duration) var(--snap-ease);
+}
+
+.projectTab:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.projectTab[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-subtle);
+}
+
+.projectTabStatus {
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.projectTab strong {
+  overflow: hidden;
+  margin-top: 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectTabTopic {
+  overflow: hidden;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectTabMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.projectTabMeta i {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.board {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: white;
+}
+
+.boardHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.boardHeading > div > span {
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.boardHeading h2 {
+  margin-top: 0.4rem;
+  color: var(--ink);
+  font-size: clamp(1.45rem, 2vw, 1.9rem);
   font-weight: 900;
   letter-spacing: -0.045em;
-  line-height: 1;
+  line-height: 1.1;
 }
 
-.summaryCard dd span {
-  margin-left: 0.2rem;
+.boardHeading p {
+  margin-top: 0.35rem;
   color: var(--muted);
   font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
 }
 
-.summaryCard p {
-  margin-top: 0.75rem;
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(13rem, 1fr));
+  overflow-x: auto;
+  background: var(--surface-subtle);
+}
+
+.lane {
+  min-width: 0;
+  padding: 1.1rem;
+}
+
+.lane + .lane {
+  border-left: 1px solid var(--line);
+}
+
+.laneHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.6rem;
+}
+
+.laneHeading h3 {
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.laneHeading p {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.laneHeading > span {
+  display: grid;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 999px;
+  background: white;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.laneCards {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-height: 15rem;
+  margin-top: 0.8rem;
+}
+
+.milestoneCard {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+  min-height: 7.7rem;
+  align-content: space-between;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: white;
+  padding: 1rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--snap-duration) var(--snap-ease),
+    transform var(--snap-duration) var(--snap-ease),
+    box-shadow var(--snap-duration) var(--snap-ease);
+}
+
+.milestoneCard:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.milestoneCard[aria-pressed="true"] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.milestoneCard strong {
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.cardMeta time {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.emptyLaneMessage {
+  padding: 0.65rem 0.15rem;
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.5;
 }
 
-.summaryTrack,
-.progressTrack {
-  overflow: hidden;
+.boardEmpty {
+  min-height: 20rem;
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.boardEmpty strong {
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.boardEmpty p {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.inspector {
+  position: sticky;
+  top: 1.5rem;
+  display: flex;
+  min-height: 31rem;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: white;
+  padding: 1.4rem;
+}
+
+.inspectorEyebrow {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.inspectorStatus {
+  display: inline-flex;
+  margin-top: 1.2rem;
   border-radius: 999px;
   background: var(--primary-subtle);
-}
-
-.summaryTrack {
-  height: 0.35rem;
-  margin-top: 0.85rem;
-}
-
-.summaryTrack span,
-.progressTrack div {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--primary);
-  transition: width 300ms var(--snap-ease);
-}
-
-.projectSections {
-  display: grid;
-  gap: 3.5rem;
-}
-
-.projectSection {
-  min-width: 0;
-}
-
-.sectionHeading {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 1rem;
-}
-
-.sectionHeading h2 {
-  color: var(--ink);
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -0.035em;
-}
-
-.sectionHeading > span {
-  display: grid;
-  min-width: 1.65rem;
-  min-height: 1.65rem;
-  place-items: center;
-  padding: 0 0.35rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: white;
-  color: var(--muted);
+  padding: 0.35rem 0.65rem;
+  color: var(--primary);
   font-size: 0.72rem;
   font-weight: 800;
 }
 
-.activeList {
+.inspector h2 {
+  margin-top: 0.75rem;
+  color: var(--ink);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.35;
+}
+
+.inspectorFacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  margin-top: 1.5rem;
+  border-block: 1px solid var(--line);
 }
 
-.activeProject {
-  min-width: 0;
-  padding: 1.4rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: rgb(255 255 255 / 0.9);
-  box-shadow: 0 12px 34px rgb(23 32 51 / 0.05);
-  transition:
-    border-color var(--snap-duration) var(--snap-ease),
-    box-shadow var(--snap-duration) var(--snap-ease),
-    transform var(--snap-duration) var(--snap-ease);
+.inspectorFacts > div {
+  padding: 1rem 0;
 }
 
-.activeProject:hover {
-  border-color: rgb(47 91 234 / 0.32);
-  box-shadow: 0 18px 42px rgb(23 32 51 / 0.08);
-  transform: translateY(-2px);
+.inspectorFacts > div + div {
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
 }
 
-.projectIdentity {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.projectMark,
-.closedMark {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  color: var(--primary);
-  font-weight: 900;
-}
-
-.projectMark {
-  width: 3.25rem;
-  height: 3.25rem;
-  border: 1px solid rgb(47 91 234 / 0.14);
-  border-radius: 1rem;
-  background: var(--primary-subtle);
-  font-size: 1.15rem;
-}
-
-.projectStatusRow {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.projectStatusRow > span:last-child {
+.inspectorFacts dt {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
-.projectTitle {
-  min-width: 0;
-}
-
-.projectTitle h3 {
-  overflow: hidden;
-  margin-top: 0.7rem;
+.inspectorFacts dd {
+  margin-top: 0.35rem;
   color: var(--ink);
-  font-size: 1.2rem;
-  font-weight: 900;
-  letter-spacing: -0.035em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.projectTitle > p {
-  overflow: hidden;
-  margin-top: 0.3rem;
-  color: var(--muted);
-  font-size: 0.82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.projectActions {
-  grid-column: 1 / -1;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
-}
-
-.projectDetail {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1.1rem;
-  padding: 1rem;
-  border-radius: calc(var(--radius-panel) - 0.25rem);
-  background: var(--surface-subtle);
-}
-
-.progressLabel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.65rem;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 750;
-}
-
-.progressLabel strong {
-  color: var(--primary);
-  font-size: 0.8rem;
-  font-weight: 900;
-}
-
-.progressTrack {
-  height: 0.45rem;
-}
-
-.projectGuidance {
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
-.closedList {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: rgb(255 255 255 / 0.88);
-  box-shadow: 0 10px 30px rgb(23 32 51 / 0.04);
-}
-
-.closedProject {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 1.5rem;
-  align-items: center;
-  padding: 1.1rem 1.3rem;
-  transition: background-color var(--snap-duration) var(--snap-ease);
-}
-
-.closedProject + .closedProject {
-  border-top: 1px solid var(--line);
-}
-
-.closedProject:hover {
-  background: var(--surface-subtle);
-}
-
-.closedIdentity {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.closedMark {
-  width: 2.45rem;
-  height: 2.45rem;
-  border-radius: 0.8rem;
-  background: var(--surface-subtle);
-  font-size: 0.85rem;
-}
-
-.closedIdentity h3 {
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 0.95rem;
-  font-weight: 850;
-  letter-spacing: -0.02em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.closedIdentity p {
-  overflow: hidden;
-  margin-top: 0.25rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.completedStatus {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--success);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   font-weight: 800;
 }
 
-@media (max-width: 64rem) {
-  .summaryGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.inspectorEmpty {
+  margin-top: 0.8rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.quickLinks {
+  display: grid;
+  margin: 1.4rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.quickLinks a {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.quickLinks a:hover {
+  color: var(--primary);
+}
+
+.inspector > :last-child {
+  margin-top: auto;
+}
+
+.completed {
+  border-top: 1px solid var(--line);
+  padding-top: 1.4rem;
+}
+
+.completedRows {
+  border-block: 1px solid var(--line);
+  background: white;
+}
+
+.completedRows li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 4.7rem;
+  padding: 0.85rem 1.1rem;
+}
+
+.completedRows li + li {
+  border-top: 1px solid var(--line);
+}
+
+.completedRows div {
+  display: grid;
+  min-width: 0;
+}
+
+.completedRows strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.completedRows div span,
+.completedRows > li > span {
+  overflow: hidden;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.completedRows a {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+@media (max-width: 80rem) {
+  .workspaceGrid {
+    grid-template-columns: 1fr;
   }
 
-  .activeList {
-    grid-template-columns: 1fr;
+  .inspector {
+    position: static;
+    min-height: 0;
   }
 }
 
-@media (max-width: 40rem) {
-  .overviewHeading {
+@media (max-width: 48rem) {
+  .overview {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .summaryGrid {
-    grid-template-columns: 1fr 1fr;
+  .pageTitle {
+    font-size: 2.4rem;
   }
 
-  .summaryCard {
-    min-height: 8.8rem;
-    padding: 1.1rem;
+  .boardHeading {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  .summaryCard p {
+  .completedRows li {
+    align-items: start;
+    grid-template-columns: 1fr auto;
+  }
+
+  .completedRows > li > span {
     display: none;
-  }
-
-  .activeProject {
-    padding: 1.1rem;
-  }
-
-  .projectMark {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 0.8rem;
-  }
-
-  .closedProject {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1rem;
-  }
-
-  .completedStatus {
-    display: none;
-  }
-
-  .closedProject > :last-child {
-    grid-column: 1 / -1;
   }
 }

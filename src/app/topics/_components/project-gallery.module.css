@@ -8,17 +8,11 @@
   border: 1px solid var(--line);
   border-radius: 1.1rem;
   background: #fff;
-  box-shadow: 0 14px 36px rgb(23 32 51 / 0.055);
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  transition: border-color 180ms ease;
 }
 
 .card:hover {
   border-color: color-mix(in srgb, var(--primary) 38%, var(--line));
-  box-shadow: 0 20px 46px rgb(23 32 51 / 0.09);
-  transform: translateY(-3px);
 }
 
 .card:focus-within {
@@ -158,8 +152,6 @@
   background: #20283a;
   box-shadow: 0 7px 18px rgb(23 32 51 / 0.16);
   color: #fff;
-  font-size: 0.85rem;
-  font-weight: 900;
 }
 
 .professorName {
@@ -193,11 +185,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
-    transition: none;
-  }
-
-  .card:hover {
-    transform: none;
-  }
+  .card { transition: none; }
 }

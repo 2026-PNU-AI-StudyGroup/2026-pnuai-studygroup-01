@@ -138,7 +138,7 @@ async function main() {
   });
 
   const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const service = new TeamWorkspaceService(repository, repository, repository, repository);
+  const service = new TeamWorkspaceService(repository, repository, repository);
   const professor = { id: professorId, role: "PROFESSOR" as const };
   const student = { id: studentId, role: "STUDENT" as const };
   const outsider = { id: outsiderId, role: "STUDENT" as const };
@@ -157,21 +157,6 @@ async function main() {
     title: "  중간 발표  ",
     dueAt: new Date("2026-08-01T00:00:00Z"),
   });
-  await service.createProgressUpdate(student, {
-    teamId: team.id,
-    content: "  요구사항 분석 완료  ",
-    risk: "",
-    nextAction: "도메인 모델 구현",
-  });
-  await expectRejected(
-    () => service.createProgressUpdate(professor, {
-      teamId: team.id,
-      content: "교수의 진행 기록 변경",
-      risk: "",
-      nextAction: "",
-    }),
-    TeamNotFoundError,
-  );
   await service.createDiscussionPost(student, {
     teamId: team.id,
     content: "  Can we meet on Friday?  ",
@@ -211,7 +196,6 @@ async function main() {
   if (
     workspace.milestoneCount !== 1 ||
     workspace.completedMilestoneCount !== 1 ||
-    workspace.progressUpdates.length !== 1 ||
     workspace.discussionPosts[0]?.content !== "Can we meet on Friday?" ||
     workspace.members[0]?.email !== `verification+${studentId}@pusan.ac.kr`
   ) {
@@ -219,16 +203,6 @@ async function main() {
   }
 
   const olderCreatedAt = new Date("2026-07-01T00:00:00.000Z");
-  await prisma.progressUpdate.createMany({
-    data: Array.from({ length: 30 }, (_, index) => ({
-      teamId: team.id,
-      authorId: student.id,
-      content: `이전 진행 기록 ${index + 1}`,
-      risk: "",
-      nextAction: "",
-      createdAt: olderCreatedAt,
-    })),
-  });
   await prisma.discussionPost.createMany({
     data: Array.from({ length: 50 }, (_, index) => ({
       teamId: team.id,
@@ -237,19 +211,16 @@ async function main() {
       createdAt: olderCreatedAt,
     })),
   });
-  const secondHistoryPage = await service.get(student, team.id, 2, 2);
+  const secondHistoryPage = await service.get(student, team.id, 2);
   if (
     secondHistoryPage.discussionPage !== 2 ||
     secondHistoryPage.discussionTotal !== 51 ||
-    secondHistoryPage.discussionPosts.length !== 1 ||
-    secondHistoryPage.progressPage !== 2 ||
-    secondHistoryPage.progressTotal !== 31 ||
-    secondHistoryPage.progressUpdates.length !== 1
+    secondHistoryPage.discussionPosts.length !== 1
   ) {
-    throw new Error("토론 또는 진행 기록의 이전 이력 페이지를 조회할 수 없습니다.");
+    throw new Error("대화의 이전 이력 페이지를 조회할 수 없습니다.");
   }
-  const boundedHistoryPage = await service.get(student, team.id, 999, 999);
-  if (boundedHistoryPage.discussionPage !== 2 || boundedHistoryPage.progressPage !== 2) {
+  const boundedHistoryPage = await service.get(student, team.id, 999);
+  if (boundedHistoryPage.discussionPage !== 2) {
     throw new Error("범위를 벗어난 이력 페이지가 마지막 페이지로 정규화되지 않았습니다.");
   }
 
@@ -260,10 +231,8 @@ async function main() {
       unauthorizedWrite: "NOT_FOUND",
       demotedProfessorRead: "NOT_FOUND",
       professorTeamConfirmation: true,
-      professorProgressMutation: "NOT_FOUND",
       milestones: workspace.milestoneCount,
       completedMilestones: workspace.completedMilestoneCount,
-      progressHistory: { total: secondHistoryPage.progressTotal, pages: secondHistoryPage.progressTotalPages },
       discussionHistory: { total: secondHistoryPage.discussionTotal, pages: secondHistoryPage.discussionTotalPages },
     }),
   );

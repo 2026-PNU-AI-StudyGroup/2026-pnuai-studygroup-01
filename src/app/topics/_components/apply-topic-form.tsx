@@ -66,7 +66,11 @@ export function ApplyTopicForm({ topicId, topicTitle, applicationMode, applicati
             <h2 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">지원서 작성</h2>
             <p id={descriptionId} className="muted mt-2 [overflow-wrap:anywhere]">{topicTitle}</p>
           </div>
-          <button type="button" onClick={closeDialog} disabled={pending} aria-label="지원서 닫기" className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button>
+          <button type="button" onClick={closeDialog} disabled={pending} aria-label="지원서 닫기" className="button-quiet grid min-w-11 shrink-0 place-items-center px-0">
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+              <path d="m5 5 10 10M15 5 5 15" />
+            </svg>
+          </button>
         </div>
 
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">

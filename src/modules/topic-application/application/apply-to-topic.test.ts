@@ -28,6 +28,7 @@ function repository(
     findConfiguration: vi.fn(async () => configuration),
     createIndividualIfAvailable: vi.fn(async () => outcome),
     createTeamDraftIfAvailable: vi.fn(async () => ({ outcome: "INVITATIONS_PENDING" as const, draftId: "draft-1" })),
+    createTeamFromStudentTeam: vi.fn(async () => outcome),
   };
 }
 
@@ -54,17 +55,17 @@ describe("주제 지원", () => {
     });
   });
 
-  it("팀 지원은 팀원 수락 대기 초안을 생성한다", async () => {
+  it("팀 지원은 팀장이 지속형 팀 구성으로 즉시 접수한다", async () => {
     const store = repository();
     await expect(new ApplyToTopicService(store).execute(student, {
       topicId: "topic-1",
       kind: "TEAM",
       answers: [{ questionId: "question-1", value: "함께 지원합니다." }],
-      inviteeEmails: [" teammate@pusan.ac.kr "],
-    })).resolves.toEqual({ outcome: "INVITATIONS_PENDING", draftId: "draft-1" });
-    expect(store.createTeamDraftIfAvailable).toHaveBeenCalledWith(expect.objectContaining({
+      studentTeamId: "team-1",
+    })).resolves.toEqual({ outcome: "CREATED", id: "app-1" });
+    expect(store.createTeamFromStudentTeam).toHaveBeenCalledWith(expect.objectContaining({
       kind: "TEAM",
-      inviteeEmails: ["teammate@pusan.ac.kr"],
+      studentTeamId: "team-1",
     }));
   });
 

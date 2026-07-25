@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { openNotificationAction } from "@/app/_actions/notification-actions";
+import { NotificationIndicatorContainer } from "@/app/_components/notification-indicator-container";
 import type { UserRole } from "@/modules/identity/domain/user-role";
-import { NotificationIndicator } from "@/modules/notification/ui/notification-indicator";
+import { AccountPopover } from "@/modules/identity/ui/account-popover";
 import { Brand } from "@/shared/ui/brand";
 
 type NavigationItem = {
@@ -17,7 +19,7 @@ function navigationFor(role: UserRole): NavigationItem[] {
       { href: "/topics", label: "프로젝트 탐색", icon: "search" },
       { href: "/topics/applications", label: "내 지원", icon: "file" },
       { href: "/dashboard", label: "내 프로젝트", icon: "home" },
-      { href: "/recruitments", label: "팀원 모집", icon: "users" },
+      { href: "/teams", label: "팀 관리", icon: "users" },
     ];
   }
   if (role === "ADMIN") {
@@ -36,7 +38,9 @@ function navigationFor(role: UserRole): NavigationItem[] {
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
   if (item.href === "/topics" && currentPath.startsWith("/topics/applications")) return false;
+  if (role === "STUDENT" && item.href === "/teams" && currentPath.startsWith("/recruitments")) return true;
   if (item.label !== "관리") return isSectionActive(item.href, currentPath);
+  if (currentPath.startsWith("/project-approvals")) return true;
   return role === "ADMIN"
     ? currentPath.startsWith("/admin/") || currentPath.startsWith("/professor/")
     : currentPath.startsWith("/professor/");
@@ -61,7 +65,7 @@ function NavIcon({ name, active = false }: { name: NavigationItem["icon"]; activ
     users: <path d="M9 3.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM1.8 21c.2-5.1 2.6-7.6 7.2-7.6s7 2.5 7.2 7.6H1.8Zm14-9.2c2.8-.4 5.2-2.1 5.2-5 0-2.3-1.6-3.8-4.1-3.8-.5 0-1 .1-1.4.2a5.6 5.6 0 0 1 .1 7.5l.2 1.1Zm1.8 1.7c3.1.8 4.6 3.3 4.6 7.5h-4.1a9.8 9.8 0 0 0-2.2-6.4c.5-.5 1.1-.8 1.7-1.1Z" />,
     settings: <path d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6-2-3.5-2.6 1a7.4 7.4 0 0 0-1.7-1L14.8 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.6-1-2 3.5L6.2 11a7.7 7.7 0 0 0-.1 1 7.7 7.7 0 0 0 .1 1l-2.1 1.6 2 3.5 2.6-1a7.4 7.4 0 0 0 1.7 1l.4 2.9h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.6 1 2-3.5-2.1-1.6ZM12.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" />,
   };
-  return <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-5 shrink-0 ${active ? "fill-current" : "fill-none stroke-current stroke-[1.8]"}`}>{active ? filledPaths[name] : outlinePaths[name]}</svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-5 shrink-0 ${active ? "fill-current" : "fill-none stroke-current stroke-[1.75]"}`}>{active ? filledPaths[name] : outlinePaths[name]}</svg>;
 }
 
 export function AppShell({ role, userId, userName, currentPath, children }: { role: UserRole; userId: string; userName: string; currentPath: string; children: ReactNode }) {
@@ -71,13 +75,13 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
       <div className="app-shell min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 hidden h-screen min-h-[42rem] flex-col items-center bg-transparent px-2 py-6 lg:flex">
-          <Brand href="/topics" compact />
+        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center bg-[var(--sidebar)] px-2 py-6 lg:flex">
+          <Brand href="/topics" variant="sidebar" inverse />
           <nav aria-label="주요 메뉴" className="mt-9 flex w-full flex-col gap-2">
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-bold leading-tight transition-colors ${active ? "text-[var(--primary)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-bold leading-tight transition-colors ${active ? "bg-white/14 text-white" : "text-[#cbd6ff] hover:bg-white/8 hover:text-white"}`}>
                   <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
                   <span>{item.label}</span>
                 </Link>
@@ -85,16 +89,19 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
             })}
           </nav>
           <div className="mt-auto flex w-full flex-col items-center gap-2 pt-4">
-            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${currentPath === "/notifications" ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}>
-              <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
+            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${currentPath === "/notifications" ? "text-white" : "text-[#cbd6ff]"}`}>
+              <NotificationIndicatorContainer
+                userId={userId}
+                active={currentPath === "/notifications"}
+                inverse
+                openNotification={openNotificationAction}
+              />
               <span aria-hidden="true">알림</span>
             </div>
-            <Link href="/account" aria-label={`${userName} 마이페이지`} aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className={`flex min-h-[4rem] w-full flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[0.7rem] font-bold ${isSectionActive("/account", currentPath) ? "text-[var(--primary)]" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}>
-              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-[#e8ebf2] text-[var(--muted)]">
-                <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" /></svg>
-              </span>
-              <span>{roleLabel}</span>
-            </Link>
+            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${isSectionActive("/account", currentPath) ? "text-white" : "text-[#cbd6ff]"}`}>
+              <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} inverse />
+              <span aria-hidden="true">{roleLabel}</span>
+            </div>
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">
@@ -102,10 +109,13 @@ export function AppShell({ role, userId, userName, currentPath, children }: { ro
             <div className="flex h-[4.5rem] items-center justify-between gap-5 px-5 sm:px-8">
               <div><Brand href="/topics" ariaLabel="부산대학교 학과 프로젝트 탐색 모바일" /></div>
               <div className="flex items-center gap-2">
-                <NotificationIndicator userId={userId} active={currentPath === "/notifications"} />
-                <Link href="/account" aria-label={`${userName} 마이페이지 모바일`} aria-current={isSectionActive("/account", currentPath) ? "page" : undefined} className="grid size-10 place-items-center rounded-full bg-[#e8ebf2] text-[var(--muted)]">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" /></svg>
-                </Link>
+                <NotificationIndicatorContainer
+                  userId={userId}
+                  active={currentPath === "/notifications"}
+                  placement="below"
+                  openNotification={openNotificationAction}
+                />
+                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} placement="below" />
               </div>
             </div>
           </header>

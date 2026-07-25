@@ -9,6 +9,7 @@ export type CreateTopicApplicationInput = {
   kind: "INDIVIDUAL" | "TEAM";
   answers: Array<{ questionId: string; value: string }>;
   inviteeEmails: string[];
+  studentTeamId?: string;
   appliedAt: Date;
 };
 
@@ -27,6 +28,9 @@ export interface TopicApplicationCreator {
   ): Promise<CreateTopicApplicationResult>;
   createTeamDraftIfAvailable(
     input: CreateTopicApplicationInput & { kind: "TEAM" },
+  ): Promise<CreateTopicApplicationResult>;
+  createTeamFromStudentTeam(
+    input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
   ): Promise<CreateTopicApplicationResult>;
 }
 

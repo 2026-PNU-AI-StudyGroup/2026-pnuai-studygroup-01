@@ -77,7 +77,9 @@ describe("보고서 요구사항 화면", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 일정 설정" }));
-    expect(screen.getByRole("combobox", { name: "제출 보고서" })).toHaveValue("START");
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.querySelector('input[name="type"]')).toHaveValue("START");
+    expect(screen.getByRole("button", { name: "제출 보고서" })).toHaveTextContent("착수 보고서");
     expect(screen.getByLabelText("제출 기한")).toHaveAttribute("min", "2026-08-01T00:00");
     expect(screen.getByLabelText("제출 기한")).toHaveAttribute("max", "2026-12-15T23:59");
   });
@@ -94,8 +96,10 @@ describe("보고서 요구사항 화면", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
-    const reportType = screen.getByRole("combobox", { name: "보고서 종류" });
-    expect(reportType).toHaveValue("MIDTERM");
+    const dialog = screen.getByRole("dialog");
+    const reportType = screen.getByRole("button", { name: "보고서 종류" });
+    expect(dialog.querySelector('input[name="type"]')).toHaveValue("MIDTERM");
+    fireEvent.click(reportType);
     expect(screen.queryByRole("option", { name: /착수 보고서/ })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: /중간 보고서/ })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /결과 보고서/ })).toBeInTheDocument();

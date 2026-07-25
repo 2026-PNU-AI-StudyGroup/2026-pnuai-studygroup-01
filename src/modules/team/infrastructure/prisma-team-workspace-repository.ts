@@ -8,7 +8,6 @@ import type {
   DiscussionPostWriter,
   MilestoneStatus,
   MilestoneWriter,
-  ProgressUpdateWriter,
   TeamListItem,
   TeamWorkspace,
   TeamWorkspaceReader,
@@ -17,16 +16,26 @@ import type {
 const teamListInclude = {
   topic: { select: { title: true } },
   members: { select: { id: true } },
-  milestones: { select: { status: true } },
+  milestones: {
+    orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      title: true,
+      dueAt: true,
+      status: true,
+      assignees: {
+        orderBy: { assignedAt: "asc" },
+        select: { user: { select: { id: true, name: true } } },
+      },
+    },
+  },
 } satisfies Prisma.TeamInclude;
 const DISCUSSION_PAGE_SIZE = 50;
-const PROGRESS_PAGE_SIZE = 30;
 
 export class PrismaTeamWorkspaceRepository
   implements
     TeamWorkspaceReader,
     MilestoneWriter,
-    ProgressUpdateWriter,
     DiscussionPostWriter,
     TeamConfirmationWriter
 {
@@ -75,10 +84,8 @@ export class PrismaTeamWorkspaceRepository
     teamId: string,
     actor: CurrentActor,
     discussionPage = 1,
-    progressPage = 1,
   ): Promise<TeamWorkspace | null> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
-    const normalizedProgressPage = Number.isSafeInteger(progressPage) && progressPage > 0 ? progressPage : 1;
     const team = await this.client.team.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       include: {
@@ -100,19 +107,15 @@ export class PrismaTeamWorkspaceRepository
         },
         milestones: {
           orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
-          select: { id: true, title: true, dueAt: true, status: true },
-        },
-        progressUpdates: {
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          skip: (normalizedProgressPage - 1) * PROGRESS_PAGE_SIZE,
-          take: PROGRESS_PAGE_SIZE,
           select: {
             id: true,
-            content: true,
-            risk: true,
-            nextAction: true,
-            createdAt: true,
-            author: { select: { name: true } },
+            title: true,
+            dueAt: true,
+            status: true,
+            assignees: {
+              orderBy: { assignedAt: "asc" },
+              select: { user: { select: { id: true, name: true } } },
+            },
           },
         },
         discussionPosts: {
@@ -121,6 +124,7 @@ export class PrismaTeamWorkspaceRepository
           take: DISCUSSION_PAGE_SIZE,
           select: {
             id: true,
+            authorId: true,
             content: true,
             createdAt: true,
             author: { select: { name: true } },
@@ -135,7 +139,7 @@ export class PrismaTeamWorkspaceRepository
             },
           },
         },
-        _count: { select: { discussionPosts: true, progressUpdates: true } },
+        _count: { select: { discussionPosts: true } },
       },
     });
     if (!team) {
@@ -145,24 +149,6 @@ export class PrismaTeamWorkspaceRepository
     const completedMilestoneCount = team.milestones.filter(
       ({ status }) => status === "DONE",
     ).length;
-    const progressTotalPages = Math.max(1, Math.ceil(team._count.progressUpdates / PROGRESS_PAGE_SIZE));
-    const resolvedProgressPage = Math.min(normalizedProgressPage, progressTotalPages);
-    const progressUpdates = resolvedProgressPage === normalizedProgressPage
-      ? team.progressUpdates
-      : await this.client.progressUpdate.findMany({
-        where: { teamId: team.id },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        skip: (resolvedProgressPage - 1) * PROGRESS_PAGE_SIZE,
-        take: PROGRESS_PAGE_SIZE,
-        select: {
-          id: true,
-          content: true,
-          risk: true,
-          nextAction: true,
-          createdAt: true,
-          author: { select: { name: true } },
-        },
-      });
     const discussionTotalPages = Math.max(1, Math.ceil(team._count.discussionPosts / DISCUSSION_PAGE_SIZE));
     const resolvedDiscussionPage = Math.min(normalizedDiscussionPage, discussionTotalPages);
     const discussionPosts = resolvedDiscussionPage === normalizedDiscussionPage
@@ -174,6 +160,7 @@ export class PrismaTeamWorkspaceRepository
         take: DISCUSSION_PAGE_SIZE,
         select: {
           id: true,
+          authorId: true,
           content: true,
           createdAt: true,
           author: { select: { name: true } },
@@ -200,14 +187,10 @@ export class PrismaTeamWorkspaceRepository
       milestoneCount: team.milestones.length,
       completedMilestoneCount,
       members: team.members.map(({ student }) => student),
-      milestones: team.milestones,
-      progressUpdates: progressUpdates.map(({ author, ...update }) => ({
-        ...update,
-        authorName: author.name,
+      milestones: team.milestones.map((milestone) => ({
+        ...milestone,
+        assignees: milestone.assignees.map(({ user }) => user),
       })),
-      progressPage: resolvedProgressPage,
-      progressTotalPages,
-      progressTotal: team._count.progressUpdates,
       discussionPosts: discussionPosts.reverse().map(({ author, ...post }) => ({
         ...post,
         authorName: author.name,
@@ -235,68 +218,66 @@ export class PrismaTeamWorkspaceRepository
     actor: CurrentActor;
     title: string;
     dueAt: Date;
+    assigneeIds: string[];
   }): Promise<{ id: string } | null> {
     const id = randomUUID();
     const now = new Date();
-    return this.client
-      .$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        INSERT INTO "milestone" (
-          "id", "teamId", "createdById", "title", "dueAt",
-          "status", "createdAt", "updatedAt"
-        )
-        SELECT ${id}, "team"."id", ${input.actor.id}, ${input.title},
-          ${input.dueAt}, 'TODO'::"MilestoneStatus", ${now}, ${now}
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
-          AND ${teamRecordActorSql(input.actor)}
-        RETURNING "id"
-      `)
-      .then((rows) => rows[0] ?? null);
+    const assigneeIds = [...new Set(input.assigneeIds)];
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+          INSERT INTO "milestone" (
+            "id", "teamId", "createdById", "title", "dueAt",
+            "status", "createdAt", "updatedAt"
+          )
+          SELECT ${id}, "team"."id", ${input.actor.id}, ${input.title},
+            ${input.dueAt}, 'TODO'::"MilestoneStatus", ${now}, ${now}
+          FROM "team"
+          WHERE "team"."id" = ${input.teamId}
+            AND "team"."status" <> 'CLOSED'
+            AND ${teamRecordActorSql(input.actor)}
+            AND ${validTeamAssigneesSql(assigneeIds)}
+          RETURNING "id"
+        `);
+      if (!rows[0]) return null;
+      if (assigneeIds.length > 0) {
+        await transaction.milestoneAssignee.createMany({
+          data: assigneeIds.map((userId) => ({ milestoneId: id, userId })),
+        });
+      }
+      return rows[0];
+    });
   }
 
   updateMilestoneStatus(
     id: string,
     status: MilestoneStatus,
+    assigneeIds: string[],
     actor: CurrentActor,
   ): Promise<{ teamId: string } | null> {
-    return this.client
-      .$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
+    const uniqueAssigneeIds = [...new Set(assigneeIds)];
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
         UPDATE "milestone"
-        SET "status" = ${status}::"MilestoneStatus", "updatedAt" = ${new Date()}
+        SET "status" = ${status}::"MilestoneStatus",
+          "updatedAt" = ${new Date()}
         FROM "team"
         WHERE "milestone"."id" = ${id}
           AND "team"."id" = "milestone"."teamId"
           AND "team"."status" <> 'CLOSED'
           AND ${teamRecordActorSql(actor)}
+          AND ${validTeamAssigneesSql(uniqueAssigneeIds)}
         RETURNING "milestone"."teamId"
-      `)
-      .then((rows) => rows[0] ?? null);
-  }
-
-  createProgressUpdate(input: {
-    teamId: string;
-    actor: CurrentActor;
-    content: string;
-    risk: string;
-    nextAction: string;
-  }): Promise<{ id: string } | null> {
-    const id = randomUUID();
-    const now = new Date();
-    return this.client
-      .$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        INSERT INTO "progress_update" (
-          "id", "teamId", "authorId", "content", "risk", "nextAction", "createdAt"
-        )
-        SELECT ${id}, "team"."id", ${input.actor.id}, ${input.content},
-          ${input.risk}, ${input.nextAction}, ${now}
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
-          AND ${teamRecordActorSql(input.actor)}
-        RETURNING "id"
-      `)
-      .then((rows) => rows[0] ?? null);
+      `);
+      const milestone = rows[0];
+      if (!milestone) return null;
+      await transaction.milestoneAssignee.deleteMany({ where: { milestoneId: id } });
+      if (uniqueAssigneeIds.length > 0) {
+        await transaction.milestoneAssignee.createMany({
+          data: uniqueAssigneeIds.map((userId) => ({ milestoneId: id, userId })),
+        });
+      }
+      return milestone;
+    });
   }
 
   createDiscussionPost(input: {
@@ -332,6 +313,10 @@ export class PrismaTeamWorkspaceRepository
       completedMilestoneCount: team.milestones.filter(
         ({ status }) => status === "DONE",
       ).length,
+      milestones: team.milestones.map((milestone) => ({
+        ...milestone,
+        assignees: milestone.assignees.map(({ user }) => user),
+      })),
     }));
   }
 }
@@ -362,4 +347,14 @@ function teamRecordActorSql(actor: CurrentActor): Prisma.Sql {
     WHERE "team_member"."teamId" = "team"."id"
       AND "team_member"."studentId" = ${actor.id}
   )`;
+}
+
+function validTeamAssigneesSql(assigneeIds: string[]): Prisma.Sql {
+  if (assigneeIds.length === 0) return Prisma.sql`TRUE`;
+  return Prisma.sql`(
+    SELECT COUNT(DISTINCT "team_member"."studentId")
+    FROM "team_member"
+    WHERE "team_member"."teamId" = "team"."id"
+      AND "team_member"."studentId" IN (${Prisma.join(assigneeIds)})
+  ) = ${assigneeIds.length}`;
 }

@@ -8,7 +8,6 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { PageHeader } from "@/shared/ui/page-primitives";
 import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 
 export const metadata: Metadata = { title: "프로젝트 프로필" };
@@ -24,8 +23,18 @@ export default async function StudentProfilePage() {
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account/profile">
       <AccountSectionLayout role={actor.role} currentPath="/account/profile">
-        <div className="max-w-3xl space-y-10">
-          <PageHeader eyebrow="계정" title="프로젝트 프로필" description="관심 분야와 기술, 함께할 수 있는 시간을 한 번 정리해 지원에 활용하세요." actions={<Link className="button-secondary" href="/account">마이페이지</Link>} />
+        <div>
+          <div className="grid gap-6 border-b border-[var(--line)] pb-9 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+            <div>
+              <h2 className="text-lg font-extrabold tracking-[-0.02em]">프로필 편집</h2>
+            </div>
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
+                관심 분야와 기여할 수 있는 역량, 함께할 수 있는 시간을 최신 상태로 유지하세요.
+              </p>
+              <Link className="button-secondary" href="/account">계정 정보</Link>
+            </div>
+          </div>
           <StudentProfileForm profile={profile} />
         </div>
       </AccountSectionLayout>

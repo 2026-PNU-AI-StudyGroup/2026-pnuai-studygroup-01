@@ -10,8 +10,8 @@ describe("지원 흐름 표시 모델", () => {
       draftCount: 1,
     });
 
-    expect(model.currentStage).toMatchObject({ step: 0, title: "팀 준비 2건" });
-    expect(model.steps[0].copy).toBe("2건의 확인이 필요합니다.");
+    expect(model.currentStep).toBe(0);
+    expect(model.steps[0]).toMatchObject({ count: 2, label: "팀 준비" });
   });
 
   it("준비 작업이 없으면 대기 중인 교수 검토를 현재 단계로 표시한다", () => {
@@ -21,7 +21,8 @@ describe("지원 흐름 표시 모델", () => {
       draftCount: 0,
     });
 
-    expect(model.currentStage).toMatchObject({ step: 1, title: "교수 검토 2건" });
+    expect(model.currentStep).toBe(1);
+    expect(model.steps[1].count).toBe(2);
     expect(model.decidedCount).toBe(2);
   });
 
@@ -32,6 +33,7 @@ describe("지원 흐름 표시 모델", () => {
       draftCount: 0,
     });
 
-    expect(model.currentStage).toMatchObject({ step: -1, title: "새 주제를 찾아보세요" });
+    expect(model.currentStep).toBe(-1);
+    expect(model.steps.every(({ count }) => count === 0)).toBe(true);
   });
 });

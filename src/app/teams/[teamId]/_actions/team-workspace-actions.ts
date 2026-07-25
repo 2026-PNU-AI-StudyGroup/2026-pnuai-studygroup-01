@@ -20,7 +20,6 @@ import {
 import {
   InvalidDiscussionPostError,
   InvalidMilestoneError,
-  InvalidProgressUpdateError,
 } from "@/modules/team/domain/team-workspace-policy";
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
@@ -28,7 +27,6 @@ import {
   discussionPostInputSchema,
   milestoneInputSchema,
   milestoneStatusInputSchema,
-  progressUpdateInputSchema,
 } from "@/modules/team/ui/team-workspace-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -83,7 +81,6 @@ function service() {
     repository,
     repository,
     repository,
-    repository,
   );
 }
 
@@ -91,8 +88,7 @@ function expectedMessage(error: unknown): string | null {
   return error instanceof TeamNotFoundError ||
     error instanceof MilestoneNotFoundError ||
     error instanceof InvalidDiscussionPostError ||
-    error instanceof InvalidMilestoneError ||
-    error instanceof InvalidProgressUpdateError
+    error instanceof InvalidMilestoneError
     ? error.message
     : null;
 }
@@ -103,7 +99,10 @@ export async function createMilestoneAction(
 ): Promise<TeamActionState> {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  const parsed = milestoneInputSchema.safeParse(Object.fromEntries(formData));
+  const parsed = milestoneInputSchema.safeParse({
+    ...Object.fromEntries(formData),
+    assigneeIds: formData.getAll("assigneeIds"),
+  });
   if (!parsed.success) {
     return { status: "error", message: "마일스톤 입력을 확인해 주세요." };
   }
@@ -126,7 +125,10 @@ export async function updateMilestoneStatusAction(
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const parsed = milestoneStatusInputSchema.safeParse(
-    Object.fromEntries(formData),
+    {
+      ...Object.fromEntries(formData),
+      assigneeIds: formData.getAll("assigneeIds"),
+    },
   );
   if (!parsed.success) {
     return { status: "error", message: "잘못된 상태 변경 요청입니다." };
@@ -143,29 +145,6 @@ export async function updateMilestoneStatusAction(
   return { status: "success", message: "마일스톤 상태를 변경했습니다." };
 }
 
-export async function createProgressUpdateAction(
-  _state: TeamActionState,
-  formData: FormData,
-): Promise<TeamActionState> {
-  const actor = await getCurrentActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = progressUpdateInputSchema.safeParse(
-    Object.fromEntries(formData),
-  );
-  if (!parsed.success) {
-    return { status: "error", message: "진행 기록 입력을 확인해 주세요." };
-  }
-  try {
-    await service().createProgressUpdate(actor, parsed.data);
-  } catch (error) {
-    const message = expectedMessage(error);
-    if (message) return { status: "error", message };
-    throw error;
-  }
-  revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-  return { status: "success", message: "진행 기록을 추가했습니다." };
-}
-
 export async function createDiscussionPostAction(
   _state: TeamActionState,
   formData: FormData,
@@ -173,7 +152,7 @@ export async function createDiscussionPostAction(
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const parsed = discussionPostInputSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "토론 내용을 확인해 주세요." };
+  if (!parsed.success) return { status: "error", message: "메시지 내용을 확인해 주세요." };
   try {
     await service().createDiscussionPost(actor, parsed.data);
   } catch (error) {
@@ -182,5 +161,5 @@ export async function createDiscussionPostAction(
     throw error;
   }
   revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-  return { status: "success", message: "토론 글을 등록했습니다." };
+  return { status: "success", message: "메시지를 보냈습니다." };
 }

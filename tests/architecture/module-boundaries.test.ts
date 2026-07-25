@@ -51,7 +51,11 @@ describe("production module boundaries", () => {
 
     for (const file of applicationFiles) {
       for (const importedPath of await importsIn(file)) {
-        if (/^@\/app\//.test(importedPath) || /^@\/modules\/[^/]+\/infrastructure\//.test(importedPath)) {
+        if (
+          /^@\/app\//.test(importedPath) ||
+          /^@\/shared\/infrastructure\//.test(importedPath) ||
+          /^@\/modules\/[^/]+\/infrastructure\//.test(importedPath)
+        ) {
           violations.push(location(file, importedPath));
         }
       }
@@ -71,6 +75,23 @@ describe("production module boundaries", () => {
     for (const file of await sourceFiles(SHARED_ROOT)) {
       for (const importedPath of await importsIn(file)) {
         if (importedPath.startsWith("@/modules/")) violations.push(location(file, importedPath));
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it("UI 계층은 shared 인프라 구현을 직접 조립하지 않는다", async () => {
+    const violations: string[] = [];
+    const uiFiles = (await sourceFiles(MODULE_ROOT)).filter((file) =>
+      file.includes(`${path.sep}ui${path.sep}`),
+    );
+
+    for (const file of uiFiles) {
+      for (const importedPath of await importsIn(file)) {
+        if (importedPath.startsWith("@/shared/infrastructure/")) {
+          violations.push(location(file, importedPath));
+        }
       }
     }
 

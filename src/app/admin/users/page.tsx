@@ -29,15 +29,15 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/users">
       <AdminWorkspace currentPath="/admin/users" title="사용자" description="가입한 구성원의 역할과 계정 상태를 확인하고, 접근 중단이 필요한 계정의 세션까지 종료합니다.">
-        <form role="search" className="grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-5">
+        <form role="search" className="grid gap-3 border-y border-[var(--line)] py-5 sm:grid-cols-[minmax(0,1fr)_auto]">
           <label className="grid gap-2 text-sm font-semibold">이름 또는 이메일 검색<input className="field" type="search" name="q" maxLength={100} defaultValue={query} placeholder="예: 홍길동 또는 user@pusan.ac.kr" /></label>
           <button type="submit" className="button-primary self-end max-sm:w-full">검색</button>
         </form>
         <section aria-labelledby="user-list-title">
-          <div className="mb-4 flex items-center justify-between gap-4"><h2 id="user-list-title" className="text-lg font-extrabold">가입 사용자</h2><p className="muted text-sm">총 {data.total}명</p></div>
-          {data.items.length === 0 ? <EmptyState title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." action={query ? <Link href="/admin/users" className="button-secondary">검색 초기화</Link> : undefined} /> : <ol className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">{data.items.map((user) => <li key={user.id} className="record-row grid gap-5 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_12rem_13rem] lg:items-center lg:px-6">
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h3 className="font-extrabold">{user.name}</h3><StatusBadge>{roleLabel[user.role]}</StatusBadge><StatusBadge tone={user.isActive ? "neutral" : "danger"}>{user.isActive ? "활성" : "비활성"}</StatusBadge></div><p className="muted mt-2 break-all text-sm">{user.email}</p></div>
-            <p className="muted text-sm">가입일 {date.format(user.createdAt)}</p>
+          <div className="mb-4 flex items-center justify-between gap-4"><h2 id="user-list-title" className="text-lg font-semibold">가입 사용자</h2><p className="muted text-sm">총 {data.total}명</p></div>
+          {data.items.length === 0 ? <EmptyState title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." action={query ? <Link href="/admin/users" className="button-secondary">검색 초기화</Link> : undefined} /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white">{data.items.map((user) => <li key={user.id} className="record-row grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_12rem_13rem] lg:items-center">
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h3 className="font-semibold">{user.name}</h3><StatusBadge>{roleLabel[user.role]}</StatusBadge><StatusBadge tone={user.isActive ? "neutral" : "danger"}>{user.isActive ? "활성" : "비활성"}</StatusBadge></div><p className="muted mt-2 break-all text-sm">{user.email}</p></div>
+            <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs">가입일</dt><dd className="lg:mt-1">{date.format(user.createdAt)}</dd></dl>
             <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} disabled={user.id === actor.id} />
           </li>)}</ol>}
         </section>

@@ -31,10 +31,10 @@ export function ReceivedApplicationDetail({
               {dateTime.format(application.createdAt)} 지원
             </time>
           </div>
-          <p className="muted mt-6 text-sm font-bold">지원 주제</p>
+          <p className="muted mt-6 text-sm font-medium">지원 주제</p>
           <h2
             id="application-topic-title"
-            className="mt-2 text-3xl font-black tracking-[-0.04em]"
+            className="mt-2 text-2xl font-semibold tracking-[-0.035em]"
           >
             {application.topicTitle}
           </h2>
@@ -42,7 +42,7 @@ export function ReceivedApplicationDetail({
       </div>
 
       <section aria-labelledby="student-profile-title">
-        <h3 id="student-profile-title" className="text-lg font-extrabold">
+        <h3 id="student-profile-title" className="text-lg font-semibold">
           {application.applicationKind === "TEAM" ? "지원 팀" : "지원자 정보"}
         </h3>
         <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
@@ -57,14 +57,14 @@ export function ReceivedApplicationDetail({
       </section>
 
       <section aria-labelledby="application-answer-title">
-        <h3 id="application-answer-title" className="text-lg font-extrabold">
+        <h3 id="application-answer-title" className="text-lg font-semibold">
           지원서 답변
         </h3>
         {application.answers.length ? (
           <ol className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {application.answers.map((answer, index) => (
               <li key={answer.questionId} className="py-6">
-                <p className="text-sm font-extrabold">
+                <p className="text-sm font-semibold">
                   <span className="mr-2 text-[var(--primary)]">{index + 1}.</span>
                   {answer.label}
                 </p>
@@ -85,10 +85,9 @@ export function ReceivedApplicationDetail({
       </section>
 
       {application.status === "PENDING" ? (
-        <section aria-labelledby="review-decision-title" className="rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-5 sm:p-6">
+        <section aria-labelledby="review-decision-title" className="border-y border-[var(--line)] py-6">
           <div className="mb-5 border-b border-[var(--line)] pb-4">
-            <p className="eyebrow">지원 검토</p>
-            <h3 id="review-decision-title" className="mt-1 text-xl font-extrabold">결정과 의견 전달</h3>
+            <h3 id="review-decision-title" className="text-lg font-semibold">결정과 의견 전달</h3>
             <p className="muted mt-2 text-sm leading-6">수락 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다.</p>
           </div>
           <ApplicationDecisionForm applicationId={application.id} />
@@ -97,7 +96,7 @@ export function ReceivedApplicationDetail({
 
       {application.status !== "PENDING" ? (
         <section aria-labelledby="review-result-title" className="border-l-2 border-[var(--primary)] bg-[var(--primary-subtle)] px-5 py-5">
-          <h3 id="review-result-title" className="text-sm font-extrabold">전달한 검토 의견</h3>
+          <h3 id="review-result-title" className="text-sm font-semibold">전달한 검토 의견</h3>
           <p className="mt-2 whitespace-pre-wrap leading-7">{application.reviewComment || "별도 의견 없이 결정했습니다."}</p>
         </section>
       ) : null}

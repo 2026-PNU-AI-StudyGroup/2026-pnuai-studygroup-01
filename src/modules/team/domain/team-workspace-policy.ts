@@ -7,16 +7,9 @@ export class InvalidMilestoneError extends Error {
   }
 }
 
-export class InvalidProgressUpdateError extends Error {
-  constructor() {
-    super("진행 내용과 입력 길이를 확인해 주세요.");
-    this.name = "InvalidProgressUpdateError";
-  }
-}
-
 export class InvalidDiscussionPostError extends Error {
   constructor() {
-    super("토론 내용은 1자 이상 2,000자 이하여야 합니다.");
+    super("메시지는 1자 이상 2,000자 이하여야 합니다.");
     this.name = "InvalidDiscussionPostError";
   }
 }
@@ -42,27 +35,6 @@ export function normalizeMilestoneTitle(title: string): string {
   const normalized = title.trim();
   if (normalized.length < 1 || normalized.length > 200) {
     throw new InvalidMilestoneError();
-  }
-  return normalized;
-}
-
-export function normalizeProgressUpdate(input: {
-  content: string;
-  risk: string;
-  nextAction: string;
-}) {
-  const normalized = {
-    content: input.content.trim(),
-    risk: input.risk.trim(),
-    nextAction: input.nextAction.trim(),
-  };
-  if (
-    normalized.content.length < 1 ||
-    normalized.content.length > 5_000 ||
-    normalized.risk.length > 2_000 ||
-    normalized.nextAction.length > 2_000
-  ) {
-    throw new InvalidProgressUpdateError();
   }
   return normalized;
 }

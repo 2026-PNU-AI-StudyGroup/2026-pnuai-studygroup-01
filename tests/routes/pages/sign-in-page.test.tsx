@@ -25,12 +25,12 @@ describe("SignInPage", () => {
     expect(screen.getByText("@pusan.ac.kr")).toBeInTheDocument();
   });
 
-  it("개발 환경에서는 역할별 목 로그인을 제공한다", async () => {
+  it("개발 환경에서는 역할별 화면 미리보기를 제공한다", async () => {
     vi.stubEnv("NODE_ENV", "development");
     render(await SignInPage({}));
 
-    expect(screen.getByRole("button", { name: /학생으로 로그인/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /교수로 로그인/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /관리자로 로그인/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /학생 화면 열기/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /교수 화면 열기/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /관리자 화면 열기/ })).toBeInTheDocument();
   });
 });

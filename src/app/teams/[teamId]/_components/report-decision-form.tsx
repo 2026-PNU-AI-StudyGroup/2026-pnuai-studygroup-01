@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { decideReportAction } from "@/app/teams/[teamId]/_actions/team-report-actions";
 import { initialReportActionState } from "@/app/teams/[teamId]/_lib/report-form-shared";
+import { CustomSelect } from "@/shared/ui/custom-select";
 
 export function ReportDecisionForm({
   teamId,
@@ -26,10 +27,10 @@ export function ReportDecisionForm({
       <input type="hidden" name="reportVersionId" value={reportVersionId} />
       <label className="grid gap-2 text-sm font-semibold">
         검토 결과
-        <select name="decision" className="field" defaultValue="APPROVED">
-          <option value="APPROVED">승인</option>
-          <option value="REVISION_REQUESTED">수정 요청</option>
-        </select>
+        <CustomSelect name="decision" defaultValue="APPROVED" options={[
+          { value: "APPROVED", label: "승인" },
+          { value: "REVISION_REQUESTED", label: "수정 요청" },
+        ]} />
       </label>
       <label className="grid gap-2 text-sm font-semibold">
         검토 의견

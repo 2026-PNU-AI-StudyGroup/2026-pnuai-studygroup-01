@@ -21,24 +21,22 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <main className="mx-auto grid w-full max-w-[1380px] grid-cols-[minmax(0,1fr)] gap-0 px-5 pb-28 pt-6 sm:px-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8 lg:pb-16">
-        <aside aria-label="프로젝트 정보와 메뉴" className="min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-card)] lg:mt-8 lg:self-start lg:sticky lg:top-24">
-          <div className="lg:sticky lg:top-24">
-            <div className="border-b border-[var(--line)] pb-5">
-              <div className="flex items-start gap-3">
-                <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-lg font-black text-[var(--primary)]">P</span>
+      <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:pb-0">
+        <aside aria-label="프로젝트 정보와 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
+          <div className="lg:sticky lg:top-8">
+            <div className="lg:border-b lg:border-[var(--line)] lg:pb-6">
+              <div className="flex min-w-0 items-start justify-between gap-4 lg:block">
                 <div className="min-w-0">
-                  <p className="truncate text-base font-extrabold tracking-[-0.02em]">{workspace.name}</p>
-                  <p className="muted mt-1 line-clamp-2 text-xs leading-5">{workspace.topicTitle}</p>
+                  <p className="truncate text-base font-extrabold tracking-[-0.025em]">{workspace.name}</p>
+                  <p className="muted mt-1 line-clamp-1 text-xs leading-5 lg:line-clamp-2">{workspace.topicTitle}</p>
                 </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between gap-3">
                 <StatusBadge tone={workspace.status === "CONFIRMED" ? "info" : "neutral"}>{workspaceStatus[workspace.status]}</StatusBadge>
-                <span className="muted text-xs">팀원 {workspace.members.length}명</span>
               </div>
-              <div className="mt-5"><ProgressBar value={progress} label="마일스톤 진행" /></div>
+              <div className="mt-4 hidden lg:block">
+                <ProgressBar value={progress} label={`마일스톤 ${workspace.completedMilestoneCount}/${workspace.milestoneCount}`} />
+              </div>
             </div>
-            <div className="mt-4"><TeamWorkspaceNavigation teamId={workspace.id} /></div>
+            <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} /></div>
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
                 <form action={confirmTeamAction}>
@@ -48,9 +46,10 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}
             </div>
-            <div className="mt-6 hidden border-t border-[var(--line)] pt-5 lg:block">
-              <p className="muted text-xs">지도교수</p>
-              <p className="mt-1 text-sm font-semibold">{workspace.professorName}</p>
+            <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">
+              <p className="muted text-[0.6875rem] font-bold uppercase tracking-[0.08em]">지도교수</p>
+              <p className="mt-1.5 text-sm font-semibold">{workspace.professorName}</p>
+              <p className="muted mt-1 text-xs">팀원 {workspace.members.length}명</p>
               {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
                 <form action={confirmTeamAction} className="mt-4">
                   <input type="hidden" name="teamId" value={workspace.id} />
@@ -61,7 +60,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             </div>
           </div>
         </aside>
-        <div className="portal-hero-copy my-8 min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-card)] sm:p-8 lg:ml-8 lg:p-10">{children}</div>
+        <div className="min-w-0 px-5 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10 lg:py-10 xl:px-12">{children}</div>
       </main>
     </AppShell>
   );

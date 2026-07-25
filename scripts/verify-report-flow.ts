@@ -313,7 +313,6 @@ async function main() {
       workspaceRepository,
       workspaceRepository,
       workspaceRepository,
-      workspaceRepository,
     ).createDiscussionPost(student, { teamId: team.id, content: "종료 후 토론" });
   } catch (error) {
     closedTeamDiscussionDenied = error instanceof TeamNotFoundError;

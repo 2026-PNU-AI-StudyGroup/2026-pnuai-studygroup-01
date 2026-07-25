@@ -216,6 +216,74 @@ export class PrismaTopicApplicationRepository
     });
   }
 
+  async createTeamFromStudentTeam(
+    input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
+  ): Promise<CreateTopicApplicationResult> {
+    return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
+        SELECT "project_program"."status"
+        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        WHERE "topic"."id" = ${input.topicId}
+        FOR UPDATE OF "project_program"
+      `);
+      const topics = await transaction.$queryRaw<Array<{ id: string; academicCycleId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
+        SELECT "id", "academicCycleId", "capacity", "applicationMode" FROM "topic"
+        WHERE "id" = ${input.topicId} AND "status" = 'PUBLISHED'
+          AND "recruitmentStartsAt" <= ${input.appliedAt} AND "recruitmentEndsAt" > ${input.appliedAt}
+        FOR UPDATE
+      `);
+      const topic = topics[0];
+      if (programs[0]?.status !== "OPEN" || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
+
+      const studentTeams = await transaction.$queryRaw<Array<{ id: string; leaderId: string }>>(Prisma.sql`
+        SELECT "id", "leaderId" FROM "student_team"
+        WHERE "id" = ${input.studentTeamId} AND "deletedAt" IS NULL
+        FOR UPDATE
+      `);
+      const studentTeam = studentTeams[0];
+      if (!studentTeam || studentTeam.leaderId !== input.studentId) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
+
+      const members = await transaction.studentTeamMember.findMany({
+        where: { teamId: input.studentTeamId },
+        orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+        select: { studentId: true, role: true, student: { select: { role: true, isActive: true } } },
+      });
+      if (members.length === 0 || members.length > topic.capacity || !areActiveStudents(members.map(({ student, studentId }) => ({ id: studentId, ...student })), members.length)) {
+        return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
+      }
+      const memberIds = members.map(({ studentId }) => studentId);
+      const unavailable = await transaction.user.count({ where: { id: { in: memberIds }, OR: [
+        { teamMemberships: { some: { academicCycleId: topic.academicCycleId } } },
+        { topicApplications: { some: { topicId: input.topicId } } },
+      ] } });
+      if (unavailable) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
+      const questionCount = await transaction.topicApplicationQuestion.count({ where: { topicId: input.topicId, id: { in: input.answers.map(({ questionId }) => questionId) } } });
+      if (questionCount !== input.answers.length) return { outcome: "TOPIC_UNAVAILABLE" } as const;
+
+      const group = await transaction.topicApplicationGroup.create({
+        data: { topicId: input.topicId, leaderId: input.studentId, studentTeamId: input.studentTeamId, kind: "TEAM", createdAt: input.appliedAt },
+        select: { id: true },
+      });
+      await transaction.topicApplicationAnswer.createMany({ data: input.answers.map((answer) => ({ groupId: group.id, ...answer })) });
+      const applications = members.map((member) => ({
+        id: randomUUID(),
+        topicId: input.topicId,
+        studentId: member.studentId,
+        groupId: group.id,
+        participantRole: member.studentId === input.studentId ? "LEADER" as const : "MEMBER" as const,
+        message: "지속형 팀 지원서",
+        skills: ["지속형 팀 지원서"],
+        desiredRole: "팀 내 역할 협의",
+        availability: "팀 일정에 따름",
+        status: "PENDING" as const,
+        createdAt: input.appliedAt,
+        updatedAt: input.appliedAt,
+      }));
+      await transaction.topicApplication.createMany({ data: applications });
+      return { outcome: "CREATED", id: applications.find(({ studentId }) => studentId === input.studentId)!.id } as const;
+    });
+  }
+
   async listForInvitee(email: string): Promise<TeamApplicationInvitationSummary[]> {
     const invitations = await this.client.teamApplicationInvitation.findMany({
       where: { email: email.trim().toLowerCase() },

@@ -39,7 +39,6 @@ vi.mock("@/modules/identity/infrastructure/prisma-professor-access-repository", 
 vi.mock("@/modules/identity/infrastructure/prisma-student-profile-repository", () => ({ PrismaStudentProfileRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-vi.mock("@/app/account/_components/account-controls", () => ({ AccountControls: () => <div>계정 제어</div> }));
 
 import AccountPage from "@/app/account/page";
 import StudentProfilePage from "@/app/account/profile/page";
@@ -110,10 +109,12 @@ describe("화면 책임 분리", () => {
 
     expect(screen.getByRole("link", { name: "프로필 수정" })).toHaveAttribute("href", "/account/profile");
     expect(screen.queryByRole("textbox", { name: "관심 분야" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "바로가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "로그인 세션" })).not.toBeInTheDocument();
     account.unmount();
 
     render(await StudentProfilePage());
     expect(screen.getByRole("textbox", { name: "관심 분야" })).toHaveValue("접근성");
-    expect(screen.getByRole("link", { name: "마이페이지" })).toHaveAttribute("href", "/account");
+    expect(screen.getAllByRole("link", { name: "계정 정보" }).some((link) => link.getAttribute("href") === "/account")).toBe(true);
   });
 });

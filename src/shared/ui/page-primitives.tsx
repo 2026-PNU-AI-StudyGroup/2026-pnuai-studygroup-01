@@ -13,17 +13,23 @@ export function PageHeader({ eyebrow, title, description, actions, compact = fal
   );
 }
 
-export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
+export function EmptyState({ title, description, action, variant = "page" }: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+  variant?: "page" | "embedded";
+}) {
+  const containerClassName = variant === "embedded"
+    ? "grid min-h-28 gap-5 py-6 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+    : "grid min-h-36 gap-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-6 py-7 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7";
+
   return (
-    <div className="grid min-h-56 place-items-center rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-white/70 px-6 py-10 text-center">
-      <div className="max-w-sm">
-        <span aria-hidden="true" className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-[var(--primary)]">
-          <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
-        </span>
-        <h2 className="mt-4 font-bold text-[var(--ink)]">{title}</h2>
-        <p className="muted mt-2 text-sm leading-6">{description}</p>
-        {action ? <div className="mt-5">{action}</div> : null}
+    <div className={containerClassName} data-empty-state={variant}>
+      <div className="max-w-2xl">
+        <h2 className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">{title}</h2>
+        <p className="muted mt-2 text-[0.9375rem] leading-6">{description}</p>
       </div>
+      {action ? <div className="flex sm:justify-end">{action}</div> : null}
     </div>
   );
 }

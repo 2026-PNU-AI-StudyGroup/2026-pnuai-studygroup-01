@@ -1,5 +1,7 @@
 "use client";
 
+import { CloseIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
+
 export const reportDialogClassName = "fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]";
 
 export function ReportFormDialogHeader({ eyebrow, title, description, titleId, closeLabel, pending, onClose }: {
@@ -18,7 +20,7 @@ export function ReportFormDialogHeader({ eyebrow, title, description, titleId, c
         <h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]">{title}</h3>
         <p className="muted mt-2 text-sm">{description}</p>
       </div>
-      <button type="button" onClick={onClose} disabled={pending} aria-label={closeLabel} className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button>
+      <button type="button" onClick={onClose} disabled={pending} aria-label={closeLabel} className="button-quiet min-w-11 shrink-0 px-0"><CloseIcon /></button>
     </div>
   );
 }

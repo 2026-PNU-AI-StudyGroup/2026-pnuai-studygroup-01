@@ -15,7 +15,7 @@ export function CloseTeamForm({ teamId }: { teamId: string }) {
       <ConfirmSubmitButton
         disabled={pending}
         className="button-danger"
-        confirmMessage="팀을 종료하면 진행 기록과 보고서를 더 이상 수정할 수 없습니다. 승인된 최종 보고서를 확인하고 종료하시겠습니까?"
+        confirmMessage="팀을 종료하면 마일스톤과 보고서를 더 이상 수정할 수 없습니다. 승인된 최종 보고서를 확인하고 종료하시겠습니까?"
       >
         {pending ? "종료 중" : "팀 종료"}
       </ConfirmSubmitButton>

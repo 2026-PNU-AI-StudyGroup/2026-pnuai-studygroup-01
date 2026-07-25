@@ -56,7 +56,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const archive = await new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, programCategory: category });
     const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
-    content = <div className="pt-7"><PastProjectsView {...archive} query={query} programId={programId} /></div>;
+    content = <div className="pt-7"><PastProjectsView {...archive} query={query} category={category} programId={programId} /></div>;
   } else {
     const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen();
     const requestedProgramId = firstSearchParam(params.programId);

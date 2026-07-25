@@ -17,19 +17,14 @@ export const milestoneInputSchema = z.object({
   teamId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   dueAt: calendarDate,
+  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
 });
 
 export const milestoneStatusInputSchema = z.object({
   teamId: z.string().uuid(),
   milestoneId: z.string().uuid(),
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
-});
-
-export const progressUpdateInputSchema = z.object({
-  teamId: z.string().uuid(),
-  content: z.string().trim().min(1).max(5_000),
-  risk: z.string().trim().max(2_000),
-  nextAction: z.string().trim().max(2_000),
+  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
 });
 
 export const discussionPostInputSchema = z.object({

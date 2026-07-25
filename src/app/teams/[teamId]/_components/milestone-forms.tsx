@@ -1,42 +1,84 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 import { createMilestoneAction, updateMilestoneStatusAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import { initialTeamActionState } from "@/app/teams/[teamId]/_lib/team-form-state";
 import type { MilestoneStatus } from "@/modules/team/application/team-workspace-ports";
+import { CustomMultiSelect, CustomSelect } from "@/shared/ui/custom-select";
 
-export function MilestoneForm({ teamId }: { teamId: string }) {
+type AssignableMember = { id: string; name: string };
+
+export function MilestoneForm({ teamId, members }: { teamId: string; members: AssignableMember[] }) {
   const [state, action, pending] = useActionState(createMilestoneAction, initialTeamActionState);
 
   return (
-    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+    <form action={action} className="grid gap-3 border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-5 lg:grid-cols-[minmax(0,1fr)_12rem_11rem_auto] lg:items-end">
       <input type="hidden" name="teamId" value={teamId} />
-      <input name="title" aria-label="마일스톤 제목" required maxLength={200} placeholder="마일스톤 제목" className="field" />
-      <input name="dueAt" aria-label="완료 예정일" type="date" required className="field" />
+      <label className="grid gap-1.5 text-xs font-bold text-[var(--muted)]">마일스톤 제목<input name="title" required maxLength={200} placeholder="예: 사용자 인터뷰 완료" className="field text-[var(--ink)]" /></label>
+      <label className="grid gap-1.5 text-xs font-bold text-[var(--muted)]">담당자
+        <CustomMultiSelect
+          name="assigneeIds"
+          options={members.map((member) => ({ value: member.id, label: member.name }))}
+        />
+      </label>
+      <label className="grid gap-1.5 text-xs font-bold text-[var(--muted)]">완료 예정일<input name="dueAt" type="date" required className="field text-[var(--ink)]" /></label>
       <button disabled={pending} className="button-primary">{pending ? "추가 중" : "마일스톤 추가"}</button>
-      {state.message ? <p aria-live="polite" className={`sm:col-span-3 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+      {state.message ? <p aria-live="polite" className={`lg:col-span-4 ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
     </form>
   );
 }
 
-export function MilestoneStatusForm({ teamId, milestoneId, status }: {
+export function MilestoneStatusForm({ teamId, milestoneId, status, assigneeIds, members }: {
   teamId: string;
   milestoneId: string;
   status: MilestoneStatus;
+  assigneeIds: string[];
+  members: AssignableMember[];
 }) {
   const [state, action, pending] = useActionState(updateMilestoneStatusAction, initialTeamActionState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+  }, []);
+
+  function scheduleAutosave() {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      formRef.current?.requestSubmit();
+    }, 250);
+  }
 
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
+    <form ref={formRef} action={action} className="flex flex-wrap items-end gap-2" aria-busy={pending}>
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="milestoneId" value={milestoneId} />
-      <select name="status" aria-label="마일스톤 상태" defaultValue={status} className="field text-sm">
-        <option value="TODO">할 일</option>
-        <option value="IN_PROGRESS">진행 중</option>
-        <option value="DONE">완료</option>
-      </select>
-      <button disabled={pending} className="button-secondary px-3 text-sm">저장</button>
+      <label className="grid gap-1 text-[0.6875rem] font-bold text-[var(--muted)]">담당자
+        <CustomMultiSelect
+          name="assigneeIds"
+          defaultValues={assigneeIds}
+          options={members.map((member) => ({ value: member.id, label: member.name }))}
+          className="min-w-44 text-sm"
+          disabled={pending}
+          onValuesChange={scheduleAutosave}
+        />
+      </label>
+      <label className="grid gap-1 text-[0.6875rem] font-bold text-[var(--muted)]">상태
+        <CustomSelect
+          name="status"
+          defaultValue={status}
+          options={[
+            { value: "TODO", label: "할 일" },
+            { value: "IN_PROGRESS", label: "진행 중" },
+            { value: "DONE", label: "완료" },
+          ]}
+          className="min-w-28 text-sm"
+          disabled={pending}
+          onValueChange={scheduleAutosave}
+        />
+      </label>
       {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]">{state.message}</span> : null}
     </form>
   );

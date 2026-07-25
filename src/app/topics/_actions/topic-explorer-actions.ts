@@ -7,6 +7,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import {
   ApplyToTopicService,
   StudentAlreadyAssignedError,
+  TeamLeaderRequiredError,
   TeamMemberUnavailableError,
   TopicAlreadyAppliedError,
   TopicUnavailableForApplicationError,
@@ -29,6 +30,7 @@ export type ApplyTopicActionState = {
 const inputSchema = z.object({
   topicId: z.string().uuid(),
   kind: z.enum(["INDIVIDUAL", "TEAM"]),
+  studentTeamId: z.string().uuid().optional(),
 });
 
 export async function applyTopicAction(
@@ -50,13 +52,11 @@ export async function applyTopicAction(
   const answers = [...formData.entries()]
     .filter(([name]) => name.startsWith("answer:"))
     .map(([name, value]) => ({ questionId: name.slice("answer:".length), value: String(value) }));
-  const inviteeEmails = String(formData.get("inviteeEmails") ?? "").split(/[\s,;]+/);
-
   const service = new ApplyToTopicService(
     new PrismaTopicApplicationRepository(prisma),
   );
   try {
-    const result = await service.execute(actor, { ...parsed.data, answers, inviteeEmails });
+    const result = await service.execute(actor, { ...parsed.data, answers });
     return result.outcome === "INVITATIONS_PENDING"
       ? { status: "success", outcome: result.outcome, message: "팀원 초대를 보냈습니다. 전원이 수락하면 교수에게 지원서가 접수됩니다." }
       : { status: "success", outcome: result.outcome, message: "주제 지원이 접수되었습니다." };
@@ -66,6 +66,7 @@ export async function applyTopicAction(
       error instanceof TopicUnavailableForApplicationError ||
       error instanceof StudentAlreadyAssignedError ||
       error instanceof TeamMemberUnavailableError ||
+      error instanceof TeamLeaderRequiredError ||
       error instanceof TopicApplicationForbiddenError ||
       error instanceof InvalidTeamApplicationMembersError ||
       error instanceof InvalidTopicApplicationAnswersError ||

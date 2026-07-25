@@ -8,12 +8,12 @@ import { TeamNotFoundError, TeamWorkspaceService } from "@/modules/team/applicat
 import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export const loadTeamWorkspace = cache(async (teamId: string, discussionPage = 1, progressPage = 1) => {
+export const loadTeamWorkspace = cache(async (teamId: string, discussionPage = 1) => {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const repository = new PrismaTeamWorkspaceRepository(prisma);
   try {
-    const workspace = await new TeamWorkspaceService(repository, repository, repository, repository).get(actor, teamId, discussionPage, progressPage);
+    const workspace = await new TeamWorkspaceService(repository, repository, repository).get(actor, teamId, discussionPage);
     return { actor, workspace };
   } catch (error) {
     if (error instanceof TeamNotFoundError) notFound();

@@ -3,17 +3,17 @@ import { USER_ROLES, type UserRole } from "@/modules/identity/domain/user-role";
 export const DEVELOPMENT_MOCK_ACCOUNTS = {
   STUDENT: {
     id: "20000000-0000-4000-8000-000000000001",
-    label: "학생으로 로그인",
+    label: "학생 화면 열기",
     description: "주제 탐색, 지원과 팀 활동 화면을 확인합니다.",
   },
   PROFESSOR: {
     id: "10000000-0000-4000-8000-000000000001",
-    label: "교수로 로그인",
+    label: "교수 화면 열기",
     description: "주제 관리와 학생 지원 검토 화면을 확인합니다.",
   },
   ADMIN: {
     id: "00000000-0000-4000-8000-000000000001",
-    label: "관리자로 로그인",
+    label: "관리자 화면 열기",
     description: "프로그램, 사용자와 운영 설정을 확인합니다.",
   },
 } as const satisfies Record<UserRole, { id: string; label: string; description: string }>;

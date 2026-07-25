@@ -47,7 +47,7 @@ export function PastProjectsView({ projects, total, page, totalPages, programCat
           {programId ? <input type="hidden" name="programId" value={programId} /> : null}
           <label className="relative block">
             <span className="sr-only">지난 프로젝트 검색</span>
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 fill-none stroke-[var(--muted)] stroke-[1.8]">
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 fill-none stroke-[var(--muted)] stroke-[1.75]">
               <circle cx="11" cy="11" r="7" />
               <path d="m16.5 16.5 4 4" />
             </svg>

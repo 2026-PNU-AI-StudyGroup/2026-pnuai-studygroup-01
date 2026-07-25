@@ -40,7 +40,7 @@ export function ReceivedApplicationList({
                 </StatusBadge>
                 <span className="muted text-xs">{application.applicationKind === "TEAM" ? `팀 지원 · ${application.teamMembers.length}명` : "개인 지원"}</span>
               </div>
-              <h2 className="mt-3 truncate text-lg font-extrabold tracking-[-0.025em]">
+              <h2 className="mt-3 truncate text-lg font-semibold tracking-[-0.025em]">
                 {application.topicTitle}
               </h2>
             </div>

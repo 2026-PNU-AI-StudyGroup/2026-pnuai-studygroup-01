@@ -1,5 +1,6 @@
 import { koreanDateTime, reportTypeLabel } from "@/app/teams/[teamId]/_lib/report-form-shared";
 import type { ReportType } from "@/modules/report/domain/report-policy";
+import { CustomSelect } from "@/shared/ui/custom-select";
 
 export function ReportSubmissionFields({
   requirements,
@@ -10,13 +11,11 @@ export function ReportSubmissionFields({
     <>
       <label className="grid gap-2 text-sm font-semibold">
         보고서 종류
-        <select name="type" className="field" defaultValue={requirements[0]?.type}>
-          {requirements.map((requirement) => (
-            <option key={requirement.type} value={requirement.type}>
-              {reportTypeLabel[requirement.type]} · {koreanDateTime.format(requirement.dueAt)}까지
-            </option>
-          ))}
-        </select>
+        <CustomSelect name="type" defaultValue={requirements[0]?.type} options={requirements.map((requirement) => ({
+          value: requirement.type,
+          label: reportTypeLabel[requirement.type],
+          description: `${koreanDateTime.format(requirement.dueAt)}까지`,
+        }))} />
       </label>
       <label className="grid gap-2 text-sm font-semibold">
         보고서 파일

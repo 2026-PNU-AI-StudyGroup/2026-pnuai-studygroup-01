@@ -75,7 +75,6 @@ const ids = {
   recruitments: Array.from({ length: 2 }, (_, index) => `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   recruitmentApplications: Array.from({ length: 2 }, (_, index) => `91000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   milestones: Array.from({ length: 7 }, (_, index) => `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  progress: Array.from({ length: 4 }, (_, index) => `b0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   discussions: Array.from({ length: 4 }, (_, index) => `c0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   artifacts: Array.from({ length: 12 }, (_, index) => `d0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   storedFiles: Array.from({ length: 24 }, (_, index) => `e0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -157,7 +156,6 @@ async function seed() {
     await tx.recruitmentPost.deleteMany({ where: { id: { in: ids.recruitments } } });
     await tx.teamMember.deleteMany({ where: { id: { in: ids.members } } });
     await tx.milestone.deleteMany({ where: { id: { in: ids.milestones } } });
-    await tx.progressUpdate.deleteMany({ where: { id: { in: ids.progress } } });
     await tx.discussionPost.deleteMany({ where: { id: { in: ids.discussions } } });
     await tx.team.deleteMany({ where: { id: { in: ids.teams } } });
     await tx.topicApplication.deleteMany({ where: { id: { in: [...ids.applications, ids.localViewerApplication] } } });
@@ -540,7 +538,7 @@ async function seed() {
       },
       {
         id: ids.recruitments[1], teamId: ids.teams[1], authorId: recruitmentAuthorId, title: "프로젝트 기록 구조를 다듬을 백엔드 팀원 모집",
-        content: "주제 지원, 팀 진행 기록, 보고서 승인과 결과물 공개가 끊기지 않도록 데이터 모델과 서버 로직을 함께 설계합니다.", requiredSkills: ["TypeScript", "PostgreSQL"],
+        content: "주제 지원부터 팀 대화, 보고서 승인, 결과물 공개까지 끊기지 않도록 데이터 모델과 서버 로직을 함께 설계합니다.", requiredSkills: ["TypeScript", "PostgreSQL"],
         roleNeeded: "백엔드 개발과 테스트 자동화", availability: "주 1회 온라인 회의, 비동기 코드 리뷰", status: "OPEN",
         createdAt: new Date("2026-07-14T20:00:00+09:00"),
       },
@@ -573,11 +571,17 @@ async function seed() {
       { id: ids.milestones[5], teamId: ids.teams[1], createdById: ids.students[2], title: "프로젝트 탐색 화면 반응형 구현", dueAt: new Date("2026-08-26T18:00:00+09:00"), status: "TODO" },
       { id: ids.milestones[6], teamId: ids.teams[1], createdById: ids.students[2], title: "지원·승인 통합 시나리오 테스트", dueAt: new Date("2026-09-09T18:00:00+09:00"), status: "TODO" },
     ] });
-    await tx.progressUpdate.createMany({ data: [
-      { id: ids.progress[0], teamId: ids.teams[0], authorId: ids.students[0], content: "제1공학관과 중앙도서관의 무장애 출입구 18곳을 확인했습니다.", risk: "일부 엘리베이터 운행 시간 데이터가 공개되어 있지 않습니다.", nextAction: "시설과에 운영 시간 확인 요청", createdAt: new Date("2026-07-16T20:00:00+09:00") },
-      { id: ids.progress[1], teamId: ids.teams[1], authorId: ids.students[2], content: "학생 3명과 지도교수 2명의 인터뷰를 정리하고 프로젝트 탐색 단계의 공통 불편 7가지를 도출했습니다.", risk: "교수와 학생이 같은 용어를 서로 다르게 이해하는 항목이 있습니다.", nextAction: "주제·프로그램·프로젝트 용어 정의 검토", createdAt: new Date("2026-07-13T21:00:00+09:00") },
-      { id: ids.progress[2], teamId: ids.teams[1], authorId: ids.students[2], content: "주제 탐색과 지난 프로젝트를 한 화면에서 전환하는 프로토타입을 완성했습니다.", risk: "모바일에서 필터 항목이 길어질 때 탐색 흐름이 끊길 수 있습니다.", nextAction: "모바일 필터 사용성 테스트 3건 진행", createdAt: new Date("2026-07-15T22:00:00+09:00") },
-      { id: ids.progress[3], teamId: ids.teams[1], authorId: recruitmentAuthorId, content: "프로젝트 프로필 정보를 지원서에 자동 반영하고 수정 가능한 흐름까지 연결했습니다.", risk: "프로필이 비어 있는 신규 사용자의 첫 지원 경험을 추가로 확인해야 합니다.", nextAction: "신규 사용자 빈 상태와 오류 문구 점검", createdAt: new Date("2026-07-17T00:30:00+09:00") },
+    await tx.milestoneAssignee.createMany({ data: [
+      { milestoneId: ids.milestones[0], userId: ids.students[0] },
+      { milestoneId: ids.milestones[1], userId: ids.students[0] },
+      { milestoneId: ids.milestones[1], userId: ids.students[1] },
+      { milestoneId: ids.milestones[2], userId: ids.students[1] },
+      { milestoneId: ids.milestones[3], userId: ids.students[2] },
+      { milestoneId: ids.milestones[4], userId: ids.students[2] },
+      { milestoneId: ids.milestones[4], userId: ids.students[3] },
+      { milestoneId: ids.milestones[5], userId: ids.students[3] },
+      { milestoneId: ids.milestones[6], userId: ids.students[2] },
+      { milestoneId: ids.milestones[6], userId: ids.students[3] },
     ] });
     await tx.discussionPost.createMany({ data: [
       { id: ids.discussions[0], teamId: ids.teams[0], authorId: ids.professors[0], content: "경로 정확도보다 접근 불가능한 구간을 명확히 설명하는 것을 우선해 주세요.", createdAt: new Date("2026-07-17T10:00:00+09:00") },
@@ -610,7 +614,7 @@ async function seed() {
           recipientId: localViewer.id,
           type: "DEADLINE",
           title: "프로젝트 모아 마일스톤 마감 임박",
-          body: "교수·학생 인터뷰 정리 마감이 가까워졌습니다. 진행 기록과 다음 행동을 확인해 주세요.",
+          body: "교수·학생 인터뷰 정리 마감이 가까워졌습니다. 마일스톤과 다음 할 일을 확인해 주세요.",
           href: `/teams/${ids.teams[1]}`,
           dedupeKey: `demo:viewer:milestone-deadline:${localViewer.id}`,
           createdAt: new Date("2026-07-16T09:00:00+09:00"),

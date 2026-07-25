@@ -1,3 +1,5 @@
+import { CustomSelect } from "@/shared/ui/custom-select";
+
 export type ArtifactMethod = "LINK" | "FILE";
 
 export function ArtifactMethodSelector({
@@ -32,12 +34,12 @@ export function ArtifactRegistrationFields({ method }: { method: ArtifactMethod 
     <>
       <label className="grid gap-2 text-sm font-semibold">
         결과물 종류
-        <select name="type" className="field" defaultValue={method === "LINK" ? "SOURCE_CODE" : "PRESENTATION_VIDEO"}>
-          <option value="SOURCE_CODE">소스 코드</option>
-          <option value="PRESENTATION_VIDEO">발표 영상</option>
-          <option value="POSTER">포스터</option>
-          <option value="OTHER">기타</option>
-        </select>
+        <CustomSelect key={method} name="type" defaultValue={method === "LINK" ? "SOURCE_CODE" : "PRESENTATION_VIDEO"} options={[
+          { value: "SOURCE_CODE", label: "소스 코드" },
+          { value: "PRESENTATION_VIDEO", label: "발표 영상" },
+          { value: "POSTER", label: "포스터" },
+          { value: "OTHER", label: "기타" },
+        ]} />
       </label>
       <label className="grid gap-2 text-sm font-semibold">
         결과물 제목

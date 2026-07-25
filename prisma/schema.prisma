@@ -104,6 +104,29 @@ enum RecruitmentApplicationStatus {
   REJECTED
 }
 
+enum StudentTeamMemberRole {
+  LEADER
+  MEMBER
+}
+
+enum StudentTeamInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELED
+}
+
+enum TopicApprovalRoute {
+  PROFESSOR
+  ADMIN
+}
+
+enum TopicApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ProjectProgramStatus {
   DRAFT
   OPEN
@@ -131,37 +154,47 @@ enum NotificationType {
 }
 
 model User {
-  id                         String                      @id
-  name                       String
-  email                      String                      @unique
-  emailVerified              Boolean                     @default(false)
-  image                      String?
-  role                       UserRole                    @default(STUDENT)
-  isActive                   Boolean                     @default(true)
-  createdAt                  DateTime                    @default(now())
-  updatedAt                  DateTime                    @updatedAt
-  sessions                   Session[]
-  accounts                   Account[]
-  allowlistEntriesCreated    ProfessorAllowlist[]        @relation("AllowlistCreator")
-  topics                     Topic[]
-  topicApplications          TopicApplication[]
-  teamMemberships            TeamMember[]
-  milestonesCreated          Milestone[]
-  progressUpdates            ProgressUpdate[]
-  discussionPosts            DiscussionPost[]
-  storedFiles                StoredFile[]
-  reportVersionsSubmitted    ReportVersion[]
-  approvalDecisions          ApprovalDecision[]
-  artifactsRegistered        Artifact[]
-  recruitmentPosts           RecruitmentPost[]
-  recruitmentApplications    RecruitmentApplication[]
-  projectProgramsCreated     ProjectProgram[]
-  auditLogsCreated           AuditLog[]
-  notifications              Notification[]
-  studentProfile             StudentProfile?
-  topicApplicationGroupsLed  TopicApplicationGroup[]     @relation("TopicApplicationGroupLeader")
-  teamApplicationDraftsLed   TeamApplicationDraft[]      @relation("TeamApplicationDraftLeader")
-  teamApplicationInvitations TeamApplicationInvitation[] @relation("TeamApplicationInvitationUser")
+  id                                 String                              @id
+  name                               String
+  email                              String                              @unique
+  emailVerified                      Boolean                             @default(false)
+  image                              String?
+  role                               UserRole                            @default(STUDENT)
+  isActive                           Boolean                             @default(true)
+  createdAt                          DateTime                            @default(now())
+  updatedAt                          DateTime                            @updatedAt
+  sessions                           Session[]
+  accounts                           Account[]
+  allowlistEntriesCreated            ProfessorAllowlist[]                @relation("AllowlistCreator")
+  topics                             Topic[]
+  topicApplications                  TopicApplication[]
+  teamMemberships                    TeamMember[]
+  milestonesCreated                  Milestone[]                         @relation("MilestoneCreator")
+  milestoneAssignments               MilestoneAssignee[]
+  progressUpdates                    ProgressUpdate[]
+  discussionPosts                    DiscussionPost[]
+  storedFiles                        StoredFile[]
+  reportVersionsSubmitted            ReportVersion[]
+  approvalDecisions                  ApprovalDecision[]
+  artifactsRegistered                Artifact[]
+  recruitmentPosts                   RecruitmentPost[]
+  recruitmentApplications            RecruitmentApplication[]
+  projectProgramsCreated             ProjectProgram[]
+  auditLogsCreated                   AuditLog[]
+  notifications                      Notification[]
+  studentProfile                     StudentProfile?
+  topicApplicationGroupsLed          TopicApplicationGroup[]             @relation("TopicApplicationGroupLeader")
+  teamApplicationDraftsLed           TeamApplicationDraft[]              @relation("TeamApplicationDraftLeader")
+  teamApplicationInvitations         TeamApplicationInvitation[]         @relation("TeamApplicationInvitationUser")
+  studentTeamsLed                    StudentTeam[]                       @relation("StudentTeamLeader")
+  studentTeamMemberships             StudentTeamMember[]
+  studentTeamInvitations             StudentTeamInvitation[]             @relation("StudentTeamInvitee")
+  studentTeamInvitationsSent         StudentTeamInvitation[]             @relation("StudentTeamInviter")
+  topicApprovalsRequested            TopicApprovalRequest[]              @relation("TopicApprovalRequester")
+  topicApprovalsAssigned             TopicApprovalRequest[]              @relation("TopicApprovalProfessor")
+  topicApprovalsDecided              TopicApprovalRequest[]              @relation("TopicApprovalDecider")
+  studentTeamRecruitments            StudentTeamRecruitmentPost[]        @relation("StudentTeamRecruitmentAuthor")
+  studentTeamRecruitmentApplications StudentTeamRecruitmentApplication[] @relation("StudentTeamRecruitmentApplicant")
 
   @@map("user")
 }
@@ -338,6 +371,7 @@ model Topic {
   applicationGroups       TopicApplicationGroup[]
   teamApplicationDrafts   TeamApplicationDraft[]
   team                    Team?
+  approvalRequest         TopicApprovalRequest?
 
   @@unique([id, academicCycleId, authorId])
   @@index([academicCycleId, status])
@@ -391,19 +425,45 @@ model TopicApplicationQuestion {
 }
 
 model TopicApplicationGroup {
-  id           String                   @id @default(uuid())
-  topicId      String
-  leaderId     String
-  kind         TopicApplicationKind
-  createdAt    DateTime                 @default(now())
-  topic        Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  leader       User                     @relation("TopicApplicationGroupLeader", fields: [leaderId], references: [id])
-  applications TopicApplication[]
-  answers      TopicApplicationAnswer[]
+  id            String                   @id @default(uuid())
+  topicId       String
+  leaderId      String
+  kind          TopicApplicationKind
+  createdAt     DateTime                 @default(now())
+  topic         Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  leader        User                     @relation("TopicApplicationGroupLeader", fields: [leaderId], references: [id])
+  studentTeamId String?
+  studentTeam   StudentTeam?             @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
+  applications  TopicApplication[]
+  answers       TopicApplicationAnswer[]
 
   @@index([topicId, createdAt])
   @@index([leaderId, createdAt])
+  @@index([studentTeamId, createdAt])
   @@map("topic_application_group")
+}
+
+model TopicApprovalRequest {
+  id                   String              @id @default(uuid())
+  topicId              String              @unique
+  requesterId          String
+  route                TopicApprovalRoute
+  requestedProfessorId String?
+  status               TopicApprovalStatus @default(PENDING)
+  reviewComment        String              @default("")
+  decidedById          String?
+  decidedAt            DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  topic                Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  requester            User                @relation("TopicApprovalRequester", fields: [requesterId], references: [id])
+  requestedProfessor   User?               @relation("TopicApprovalProfessor", fields: [requestedProfessorId], references: [id])
+  decidedBy            User?               @relation("TopicApprovalDecider", fields: [decidedById], references: [id])
+
+  @@index([status, route, createdAt])
+  @@index([requestedProfessorId, status])
+  @@index([requesterId, createdAt])
+  @@map("topic_approval_request")
 }
 
 model TopicApplicationAnswer {
@@ -491,6 +551,101 @@ model Team {
   @@map("team")
 }
 
+model StudentTeam {
+  id                String                       @id @default(uuid())
+  name              String
+  description       String                       @default("")
+  leaderId          String
+  deletedAt         DateTime?
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  leader            User                         @relation("StudentTeamLeader", fields: [leaderId], references: [id])
+  members           StudentTeamMember[]
+  invitations       StudentTeamInvitation[]
+  recruitmentPosts  StudentTeamRecruitmentPost[]
+  applicationGroups TopicApplicationGroup[]
+
+  @@index([leaderId, deletedAt])
+  @@index([deletedAt, updatedAt])
+  @@map("student_team")
+}
+
+model StudentTeamMember {
+  id        String                @id @default(uuid())
+  teamId    String
+  studentId String
+  role      StudentTeamMemberRole @default(MEMBER)
+  joinedAt  DateTime              @default(now())
+  team      StudentTeam           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  student   User                  @relation(fields: [studentId], references: [id])
+
+  @@unique([teamId, studentId])
+  @@index([studentId, joinedAt])
+  @@map("student_team_member")
+}
+
+model StudentTeamInvitation {
+  id          String                      @id @default(uuid())
+  teamId      String
+  email       String
+  inviteeId   String?
+  invitedById String
+  status      StudentTeamInvitationStatus @default(PENDING)
+  respondedAt DateTime?
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+  team        StudentTeam                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitee     User?                       @relation("StudentTeamInvitee", fields: [inviteeId], references: [id])
+  invitedBy   User                        @relation("StudentTeamInviter", fields: [invitedById], references: [id])
+
+  @@unique([teamId, email])
+  @@index([email, status, createdAt])
+  @@index([inviteeId, status])
+  @@map("student_team_invitation")
+}
+
+model StudentTeamRecruitmentPost {
+  id             String                              @id @default(uuid())
+  teamId         String
+  authorId       String
+  title          String
+  content        String
+  requiredSkills String[]                            @default([])
+  roleNeeded     String
+  availability   String
+  capacity       Int
+  status         RecruitmentPostStatus               @default(OPEN)
+  createdAt      DateTime                            @default(now())
+  updatedAt      DateTime                            @updatedAt
+  team           StudentTeam                         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author         User                                @relation("StudentTeamRecruitmentAuthor", fields: [authorId], references: [id])
+  applications   StudentTeamRecruitmentApplication[]
+
+  @@index([status, createdAt])
+  @@index([teamId, status])
+  @@map("student_team_recruitment_post")
+}
+
+model StudentTeamRecruitmentApplication {
+  id           String                       @id @default(uuid())
+  postId       String
+  studentId    String
+  message      String
+  skills       String[]                     @default([])
+  desiredRole  String
+  availability String
+  status       RecruitmentApplicationStatus @default(PENDING)
+  decidedAt    DateTime?
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+  post         StudentTeamRecruitmentPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  student      User                         @relation("StudentTeamRecruitmentApplicant", fields: [studentId], references: [id])
+
+  @@unique([postId, studentId])
+  @@index([studentId, status])
+  @@map("student_team_recruitment_application")
+}
+
 model RecruitmentPost {
   id             String                   @id @default(uuid())
   teamId         String
@@ -550,19 +705,32 @@ model TeamMember {
 }
 
 model Milestone {
-  id          String          @id @default(uuid())
+  id          String              @id @default(uuid())
   teamId      String
   createdById String
   title       String
   dueAt       DateTime
-  status      MilestoneStatus @default(TODO)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  team        Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  createdBy   User            @relation(fields: [createdById], references: [id])
+  status      MilestoneStatus     @default(TODO)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  team        Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy   User                @relation("MilestoneCreator", fields: [createdById], references: [id])
+  assignees   MilestoneAssignee[]
 
   @@index([teamId, dueAt])
   @@map("milestone")
+}
+
+model MilestoneAssignee {
+  milestoneId String
+  userId      String
+  assignedAt  DateTime  @default(now())
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([milestoneId, userId])
+  @@index([userId])
+  @@map("milestone_assignee")
 }
 
 model ProgressUpdate {

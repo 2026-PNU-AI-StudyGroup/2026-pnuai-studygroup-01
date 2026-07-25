@@ -4,7 +4,6 @@ import {
   canAccessTeam,
   normalizeDiscussionPost,
   normalizeMilestoneTitle,
-  normalizeProgressUpdate,
 } from "@/modules/team/domain/team-workspace-policy";
 
 describe("팀 워크스페이스 권한", () => {
@@ -46,19 +45,8 @@ describe("팀 워크스페이스 권한", () => {
 });
 
 describe("팀 기록 정규화", () => {
-  it("마일스톤과 진행 기록의 앞뒤 공백을 제거한다", () => {
+  it("마일스톤과 대화의 앞뒤 공백을 제거한다", () => {
     expect(normalizeMilestoneTitle("  중간 발표  ")).toBe("중간 발표");
-    expect(
-      normalizeProgressUpdate({
-        content: "  모델 학습 완료  ",
-        risk: "  데이터 부족  ",
-        nextAction: "  추가 수집  ",
-      }),
-    ).toEqual({
-      content: "모델 학습 완료",
-      risk: "데이터 부족",
-      nextAction: "추가 수집",
-    });
     expect(normalizeDiscussionPost("  이번 주 회의는 금요일입니다.  ")).toBe(
       "이번 주 회의는 금요일입니다.",
     );

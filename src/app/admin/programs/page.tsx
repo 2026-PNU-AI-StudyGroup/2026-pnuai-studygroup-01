@@ -30,18 +30,19 @@ export default async function ProgramsAdminPage() {
         {programs.length === 0 ? (
           <EmptyState title="아직 만든 프로그램이 없습니다" description={cycles.length ? "첫 프로그램을 만들어 프로젝트 운영을 시작하세요." : "프로그램보다 먼저 운영 학기를 설정해 주세요."} action={cycles.length ? <Link className="button-primary" href="/admin/programs/new">새 프로그램</Link> : <Link className="button-secondary" href="/admin/academic-cycles">학기 설정</Link>} />
         ) : (
-          <ol className="divide-y divide-[var(--line)] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] border-t-2 border-t-[var(--ink)] bg-white">
+          <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white">
             {programs.map((program) => (
-              <li key={program.id} className="record-row grid gap-5 px-5 py-6 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
+              <li key={program.id} className="record-row grid gap-5 py-6 lg:grid-cols-[minmax(0,1.5fr)_12rem_10rem_auto] lg:items-center">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-lg font-extrabold tracking-[-0.02em]">{program.name}</h2>
+                    <h2 className="text-lg font-semibold tracking-[-0.02em]">{program.name}</h2>
                     <StatusBadge tone={status[program.status][1]}>{status[program.status][0]}</StatusBadge>
                   </div>
                   <p className="muted mt-1 text-sm">{program.category} · {program.academicYear}학년도 {program.term === "FIRST" ? "1" : "2"}학기</p>
-                  <p className="mt-2 text-sm">{program.description}</p>
-                  <p className="muted mt-2 text-xs">{date.format(program.startsAt)} – {date.format(program.endsAt)} · 공개 주제 {program.topicCount}개 · 팀 {program.teamCount}개</p>
+                  <p className="mt-2 line-clamp-2 text-sm">{program.description}</p>
                 </div>
+                <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs">운영 기간</dt><dd className="lg:mt-1">{date.format(program.startsAt)}<br className="hidden lg:block" /> – {date.format(program.endsAt)}</dd></dl>
+                <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs">운영 현황</dt><dd className="lg:mt-1">주제 {program.topicCount} · 팀 {program.teamCount}</dd></dl>
                 <ProgramStatusForm id={program.id} status={program.status} />
               </li>
             ))}

@@ -9,6 +9,7 @@ import { initialReportActionState, koreanDateTimeInput, reportTypeLabel } from "
 import type { ReportType } from "@/modules/report/domain/report-policy";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { SUCCESS_TOAST_DURATION_MS, useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
+import { CustomSelect } from "@/shared/ui/custom-select";
 
 export function ReportRequirementForm({ teamId, executionStartsAt, submissionEndsAt }: {
   teamId: string;
@@ -28,11 +29,11 @@ export function ReportRequirementForm({ teamId, executionStartsAt, submissionEnd
           <input type="hidden" name="teamId" value={teamId} />
           <label className="grid gap-2 text-sm font-semibold">
             제출 보고서
-            <select name="type" className="field" defaultValue="START">
-              <option value="START">착수 보고서</option>
-              <option value="MIDTERM">중간 보고서</option>
-              <option value="FINAL">결과 보고서</option>
-            </select>
+            <CustomSelect name="type" defaultValue="START" options={[
+              { value: "START", label: "착수 보고서" },
+              { value: "MIDTERM", label: "중간 보고서" },
+              { value: "FINAL", label: "결과 보고서" },
+            ]} />
           </label>
           <label className="grid gap-2 text-sm font-semibold">
             제출 기한

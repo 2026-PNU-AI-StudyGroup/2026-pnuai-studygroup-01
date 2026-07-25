@@ -19,7 +19,7 @@ import type {
 import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
 
 const publicTopicInclude = {
-  author: { select: { name: true } },
+  author: { select: { name: true, role: true } },
   academicCycle: { select: { academicYear: true, term: true } },
   program: { select: { name: true, category: true, status: true } },
   team: { select: { _count: { select: { members: true } } } },
@@ -30,7 +30,7 @@ const managedTopicSelect = {
   id: true,
   academicCycleId: true,
   authorId: true,
-  author: { select: { name: true } },
+  author: { select: { name: true, role: true } },
   title: true,
   description: true,
   programId: true,
@@ -55,7 +55,7 @@ const managedTopicSelect = {
 type ManagedTopicRow = Prisma.TopicGetPayload<{ select: typeof managedTopicSelect }>;
 
 function toTopicSummary({ author, program, ...topic }: ManagedTopicRow): TopicSummary {
-  return { ...topic, authorName: author.name, programName: program.name, programCategory: program.category, programStatus: program.status };
+  return { ...topic, authorName: author.name, authorRole: author.role, programName: program.name, programCategory: program.category, programStatus: program.status };
 }
 
 type PublicTopicRow = Prisma.TopicGetPayload<{ include: typeof publicTopicInclude }>;
@@ -67,6 +67,7 @@ function toPublicTopic(
   return {
     ...topic,
     authorName: author.name,
+    authorRole: author.role,
     academicYear: academicCycle.academicYear,
     term: academicCycle.term,
     programName: program.name,

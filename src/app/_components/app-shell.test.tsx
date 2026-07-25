@@ -1,8 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/modules/notification/ui/notification-indicator", () => ({
-  NotificationIndicator: () => <a href="/notifications">알림함</a>,
+vi.mock("@/app/_actions/notification-actions", () => ({
+  openNotificationAction: vi.fn(),
+}));
+vi.mock("@/app/_components/notification-indicator-container", () => ({
+  NotificationIndicatorContainer: () => <a href="/notifications">알림함</a>,
+}));
+vi.mock("@/modules/identity/ui/account-popover", () => ({
+  AccountPopover: ({ userName, active, placement }: { userName: string; active: boolean; placement?: string }) => (
+    <a href="/account" aria-current={active ? "page" : undefined}>{userName} 내 계정{placement === "below" ? " 모바일" : ""}</a>
+  ),
 }));
 
 import { AppShell } from "@/app/_components/app-shell";
@@ -14,7 +22,7 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).toHaveAttribute("href", "/topics");
     expect(screen.getByRole("link", { name: "부산대학교 학과 프로젝트 탐색" })).toHaveAttribute("href", "/topics");
-    expect(screen.getByRole("link", { name: "테스트 마이페이지" })).toHaveAttribute("href", "/account");
+    expect(screen.getByRole("link", { name: "테스트 내 계정" })).toHaveAttribute("href", "/account");
     expect(screen.getByRole("link", { name: "본문으로 건너뛰기" })).toHaveAttribute("href", "#main-content");
     expect(screen.queryByRole("link", { name: "지원 검토" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).toHaveAttribute("aria-current", "page");
@@ -29,10 +37,17 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "프로젝트 탐색" })[0]).not.toHaveAttribute("aria-current");
   });
 
-  it("프로필 편집 화면에서도 마이페이지를 현재 위치로 표시한다", () => {
+  it("팀 찾기에서도 전역 팀 관리 메뉴를 현재 영역으로 유지한다", () => {
+    render(<AppShell role="STUDENT" userId="student-1" userName="테스트" currentPath="/recruitments"><p>본문</p></AppShell>);
+
+    expect(screen.getAllByRole("link", { name: "팀 관리" })[0]).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: "팀 관리" })[1]).toHaveAttribute("aria-current", "page");
+  });
+
+  it("프로필 편집 화면에서도 내 계정을 현재 위치로 표시한다", () => {
     render(<AppShell role="STUDENT" userId="student-1" userName="테스트" currentPath="/account/profile"><p>본문</p></AppShell>);
 
-    expect(screen.getByRole("link", { name: "테스트 마이페이지" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "테스트 내 계정" })).toHaveAttribute("aria-current", "page");
   });
 
   it("모든 역할의 공개 프로그램 진입점을 주제 탐색으로 통합한다", () => {

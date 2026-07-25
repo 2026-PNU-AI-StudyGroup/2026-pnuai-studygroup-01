@@ -4,7 +4,7 @@ import { Brand } from "@/shared/ui/brand";
 
 export default function NotFound() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[var(--canvas)] px-6 py-12">
+    <main className="grid min-h-screen place-items-center bg-[var(--workspace)] px-6 py-12">
       <section className="w-full max-w-xl border-y border-[var(--line)] py-12 text-center">
         <div className="flex justify-center"><Brand /></div>
         <p className="eyebrow mt-10">404</p>

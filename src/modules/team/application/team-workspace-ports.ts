@@ -10,6 +10,13 @@ export type TeamListItem = {
   memberCount: number;
   milestoneCount: number;
   completedMilestoneCount: number;
+  milestones: Array<{
+    id: string;
+    title: string;
+    dueAt: Date;
+    status: MilestoneStatus;
+    assignees: Array<{ id: string; name: string }>;
+  }>;
 };
 
 export type TeamWorkspace = TeamListItem & {
@@ -24,25 +31,9 @@ export type TeamWorkspace = TeamListItem & {
     submissionEndsAt: Date;
   };
   members: Array<{ id: string; name: string; email: string }>;
-  milestones: Array<{
-    id: string;
-    title: string;
-    dueAt: Date;
-    status: MilestoneStatus;
-  }>;
-  progressUpdates: Array<{
-    id: string;
-    authorName: string;
-    content: string;
-    risk: string;
-    nextAction: string;
-    createdAt: Date;
-  }>;
-  progressPage: number;
-  progressTotalPages: number;
-  progressTotal: number;
   discussionPosts: Array<{
     id: string;
+    authorId: string;
     authorName: string;
     content: string;
     createdAt: Date;
@@ -57,7 +48,6 @@ export interface TeamWorkspaceReader {
     teamId: string,
     actor: CurrentActor,
     discussionPage?: number,
-    progressPage?: number,
   ): Promise<TeamWorkspace | null>;
   listForStudent(studentId: string): Promise<TeamListItem[]>;
   listForProfessor(professorId: string): Promise<TeamListItem[]>;
@@ -70,22 +60,14 @@ export interface MilestoneWriter {
     actor: CurrentActor;
     title: string;
     dueAt: Date;
+    assigneeIds: string[];
   }): Promise<{ id: string } | null>;
   updateMilestoneStatus(
     id: string,
     status: MilestoneStatus,
+    assigneeIds: string[],
     actor: CurrentActor,
   ): Promise<{ teamId: string } | null>;
-}
-
-export interface ProgressUpdateWriter {
-  createProgressUpdate(input: {
-    teamId: string;
-    actor: CurrentActor;
-    content: string;
-    risk: string;
-    nextAction: string;
-  }): Promise<{ id: string } | null>;
 }
 
 export interface DiscussionPostWriter {

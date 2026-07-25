@@ -30,6 +30,7 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   id: string;
   applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
+  authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   publishedAt: Date | null;
   programName: string;

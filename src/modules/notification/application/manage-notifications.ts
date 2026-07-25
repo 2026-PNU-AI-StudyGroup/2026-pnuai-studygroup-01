@@ -2,6 +2,7 @@ import type { DeadlineNotificationGenerator, NotificationRepository } from "@/mo
 import { normalizeNotificationHref } from "@/modules/notification/domain/notification";
 
 const PAGE_SIZE = 30;
+const PREVIEW_SIZE = 3;
 const DEADLINE_HORIZON_DAYS = 7;
 
 export class NotificationNotFoundError extends Error {
@@ -20,6 +21,10 @@ export class NotificationService {
   list(recipientId: string, requestedPage = 1) {
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     return this.repository.list(recipientId, page, PAGE_SIZE);
+  }
+
+  preview(recipientId: string) {
+    return this.repository.preview(recipientId, PREVIEW_SIZE);
   }
 
   countUnread(recipientId: string) {

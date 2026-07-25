@@ -4,6 +4,13 @@ import { GenerateDeadlineNotificationsService, NotificationNotFoundError, Notifi
 import type { DeadlineNotificationGenerator, NotificationRepository } from "@/modules/notification/application/notification-ports";
 
 describe("알림 관리", () => {
+  it("알림 미리보기는 최신 3개 조회를 요청한다", async () => {
+    const repository = { preview: vi.fn().mockResolvedValue({ items: [], unreadCount: 0 }) } as unknown as NotificationRepository;
+
+    await expect(new NotificationService(repository).preview("user-1")).resolves.toEqual({ items: [], unreadCount: 0 });
+    expect(repository.preview).toHaveBeenCalledWith("user-1", 3);
+  });
+
   it("본인 알림을 읽음 처리하고 내부 경로를 반환한다", async () => {
     const repository = { markRead: vi.fn().mockResolvedValue("/teams/team-1") } as unknown as NotificationRepository;
     await expect(new NotificationService(repository).open("user-1", "notification-1")).resolves.toBe("/teams/team-1");

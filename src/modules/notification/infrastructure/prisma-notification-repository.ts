@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
-import type { DeadlineNotificationGenerator, NotificationPage, NotificationRepository } from "@/modules/notification/application/notification-ports";
+import type { DeadlineNotificationGenerator, NotificationPage, NotificationPreview, NotificationRepository } from "@/modules/notification/application/notification-ports";
 
 type NotificationCreateInput = {
   recipientId: string;
@@ -29,6 +29,19 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
       this.countUnread(recipientId),
     ]);
     return { items, unreadCount, page, totalPages, total };
+  }
+
+  async preview(recipientId: string, limit: number): Promise<NotificationPreview> {
+    const [items, unreadCount] = await Promise.all([
+      this.client.notification.findMany({
+        where: { recipientId },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: limit,
+        select: { id: true, type: true, title: true, body: true, href: true, readAt: true, createdAt: true },
+      }),
+      this.countUnread(recipientId),
+    ]);
+    return { items, unreadCount };
   }
 
   countUnread(recipientId: string) {
@@ -111,7 +124,7 @@ export class PrismaNotificationRepository implements NotificationRepository, Dea
             type: "DEADLINE",
             title: `${team.name} ${label} 마감 임박`,
             body: `${formatKoreanDate(dueAt)}까지입니다. 남은 작업과 제출 상태를 확인해 주세요.`,
-            href: kind === "execution" ? `/teams/${team.id}/progress` : `/teams/${team.id}/artifacts`,
+            href: kind === "execution" ? `/teams/${team.id}` : `/teams/${team.id}/artifacts`,
             dedupeKey: `deadline:team:${team.id}:${kind}:${dueAt.toISOString()}:${recipientId}`,
             createdAt: now,
           });

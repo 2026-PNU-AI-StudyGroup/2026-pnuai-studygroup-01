@@ -24,6 +24,10 @@ function daysUntil(deadline: Date, now: Date) {
   return Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (24 * 60 * 60 * 1_000)));
 }
 
+function ArrowIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-2 size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
 export function ActiveProjectResults({ selectedProgramName, topics, applications, pendingTeamTopicIds, programId, phase, query, sort, now }: {
   selectedProgramName?: string;
   topics: PublicTopicPage;
@@ -81,6 +85,7 @@ export function ActiveProjectResults({ selectedProgramName, topics, applications
                     label={`${topic.programCategory} · ${topic.programName}`}
                     title={topic.title}
                     professorName={topic.authorName}
+                    authorSuffix={topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}
                   />
                   <div className={styles.body}>
                     <div className="flex items-start justify-between gap-3">
@@ -116,11 +121,11 @@ export function ActiveProjectResults({ selectedProgramName, topics, applications
                     <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
                       {application ? (
                         <Link href="/topics/applications" className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
-                          {applicationStatus[application].label} <span aria-hidden="true" className="ml-2">→</span>
+                          {applicationStatus[application].label} <ArrowIcon />
                         </Link>
                       ) : awaitingTeam ? (
                         <Link href="/topics/applications" className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
-                          팀원 수락 대기 <span aria-hidden="true" className="ml-2">→</span>
+                          팀원 수락 대기 <ArrowIcon />
                         </Link>
                       ) : applications && recruiting ? (
                         <ApplyTopicForm

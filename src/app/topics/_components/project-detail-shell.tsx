@@ -1,0 +1,61 @@
+import type { ReactNode } from "react";
+
+export function ProjectDetailShell({
+  cover,
+  marker,
+  heading,
+  headerAside,
+  children,
+  rail,
+  railLabelledBy,
+}: {
+  cover: ReactNode;
+  marker: ReactNode;
+  heading: ReactNode;
+  headerAside?: ReactNode;
+  children: ReactNode;
+  rail: ReactNode;
+  railLabelledBy: string;
+}) {
+  return (
+    <article className="min-w-0">
+      <div className="overflow-hidden border-y border-[var(--line)] [&>*]:!min-h-64 lg:[&>*]:!min-h-72">
+        {cover}
+      </div>
+
+      <div className="relative pt-9">
+        <div
+          aria-hidden="true"
+          className="absolute -top-7 left-0 grid size-14 place-items-center rounded-full border-4 border-[var(--workspace)] bg-[var(--ink)] text-white"
+        >
+          {marker}
+        </div>
+
+        <header
+          className={`grid gap-8 border-b border-[var(--line)] pb-9 pt-5 ${
+            headerAside
+              ? "lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end"
+              : ""
+          }`}
+        >
+          {heading}
+          {headerAside ? (
+            <div className="border-t border-[var(--line)] pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+              {headerAside}
+            </div>
+          ) : null}
+        </header>
+
+        <div className="grid gap-12 pt-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+          <div className="min-w-0">{children}</div>
+          <aside
+            aria-labelledby={railLabelledBy}
+            className="border-t border-[var(--line)] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"
+          >
+            {rail}
+          </aside>
+        </div>
+      </div>
+    </article>
+  );
+}

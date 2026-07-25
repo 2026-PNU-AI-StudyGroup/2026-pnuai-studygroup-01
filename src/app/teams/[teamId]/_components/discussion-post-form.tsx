@@ -5,15 +5,42 @@ import { useActionState } from "react";
 import { createDiscussionPostAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import { initialTeamActionState } from "@/app/teams/[teamId]/_lib/team-form-state";
 
-export function DiscussionPostForm({ teamId }: { teamId: string }) {
+export function DiscussionPostForm({ teamId, authorName }: { teamId: string; authorName: string }) {
   const [state, action, pending] = useActionState(createDiscussionPostAction, initialTeamActionState);
 
   return (
-    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-4 sm:p-5">
+    <form action={action} className="border-t border-[var(--line)] bg-white px-5 py-5 lg:px-7">
       <input type="hidden" name="teamId" value={teamId} />
-      <textarea name="content" aria-label="토론 내용" required maxLength={2000} rows={3} placeholder="팀에 질문이나 의견을 남기세요" className="field" />
-      <button disabled={pending} className="button-primary justify-self-start max-sm:w-full">{pending ? "등록 중" : "의견 남기기"}</button>
-      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>{state.message}</p> : null}
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-white">
+          <svg viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
+            <circle cx="12" cy="8" r="3.25" />
+            <path d="M5.5 20c.4-4.2 2.6-6.2 6.5-6.2s6.1 2 6.5 6.2" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <label htmlFor="discussion-message" className="sr-only">메시지</label>
+          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--focus-ring)]">
+            <textarea
+              id="discussion-message"
+              name="content"
+              required
+              maxLength={2000}
+              rows={2}
+              placeholder={`${authorName}님의 메시지 입력`}
+              className="min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+            />
+            <button disabled={pending} className="button-primary min-h-11 shrink-0 px-4" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
+              <span className="hidden sm:inline">{pending ? "전송 중" : "보내기"}</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m4 5 16 7-16 7 3-7-3-7Z" />
+                <path d="M7 12h13" />
+              </svg>
+            </button>
+          </div>
+          {state.message ? <p aria-live="polite" className={`mt-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+        </div>
+      </div>
     </form>
   );
 }

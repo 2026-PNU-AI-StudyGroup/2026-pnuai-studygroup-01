@@ -8,8 +8,16 @@ describe("마일스톤 폼 입력", () => {
       teamId: "1c845ddb-523c-4119-a054-91bfb928b78d",
       title: "중간 발표",
       dueAt: "2026-05-01",
+      assigneeIds: [
+        "c728bb33-e62b-47fb-b86f-c5efe9967061",
+        "d728bb33-e62b-47fb-b86f-c5efe9967062",
+      ],
     });
     expect(input.dueAt.toISOString()).toBe("2026-05-01T14:59:00.000Z");
+    expect(input.assigneeIds).toEqual([
+      "c728bb33-e62b-47fb-b86f-c5efe9967061",
+      "d728bb33-e62b-47fb-b86f-c5efe9967062",
+    ]);
   });
 
   it("실제 달력에 없는 날짜를 거절한다", () => {

@@ -29,8 +29,11 @@ export function RecruitmentApplyForm({
 
   return (
     <>
-      <button type="button" className="button-primary mt-5 w-full" onClick={() => dialogRef.current?.showModal()}>
+      <button type="button" className="button-primary w-full gap-2" onClick={() => dialogRef.current?.showModal()}>
         이 팀에 지원하기
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9.5 5 7 7-7 7" />
+        </svg>
       </button>
       <dialog
         ref={dialogRef}
@@ -45,7 +48,11 @@ export function RecruitmentApplyForm({
             <h3 id={titleId} className="mt-1 text-2xl font-black tracking-[-0.035em]">{postTitle} 지원</h3>
             <p id={descriptionId} className="muted mt-2 text-sm leading-6">팀에 전달할 내 역할과 협업 가능 시간을 확인해 주세요.</p>
           </div>
-          <button type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0 text-xl">×</button>
+          <button type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0">
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
         </div>
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">
           <input type="hidden" name="postId" value={postId} />

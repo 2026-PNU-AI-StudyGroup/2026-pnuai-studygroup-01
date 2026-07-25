@@ -3,7 +3,6 @@ import type {
   DiscussionPostWriter,
   MilestoneStatus,
   MilestoneWriter,
-  ProgressUpdateWriter,
   TeamListItem,
   TeamWorkspace,
   TeamWorkspaceReader,
@@ -12,7 +11,6 @@ import {
   assertValidMilestoneDueAt,
   normalizeDiscussionPost,
   normalizeMilestoneTitle,
-  normalizeProgressUpdate,
 } from "@/modules/team/domain/team-workspace-policy";
 
 export class TeamNotFoundError extends Error {
@@ -33,18 +31,15 @@ export class TeamWorkspaceService {
   constructor(
     private readonly workspaceReader: TeamWorkspaceReader,
     private readonly milestoneWriter: MilestoneWriter,
-    private readonly progressWriter: ProgressUpdateWriter,
     private readonly discussionWriter: DiscussionPostWriter,
   ) {}
 
-  async get(actor: CurrentActor, teamId: string, discussionPage = 1, progressPage = 1): Promise<TeamWorkspace> {
+  async get(actor: CurrentActor, teamId: string, discussionPage = 1): Promise<TeamWorkspace> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
-    const normalizedProgressPage = Number.isSafeInteger(progressPage) && progressPage > 0 ? progressPage : 1;
     const workspace = await this.workspaceReader.findWorkspaceForActor(
       teamId,
       actor,
       normalizedDiscussionPage,
-      normalizedProgressPage,
     );
     if (!workspace) {
       throw new TeamNotFoundError();
@@ -64,7 +59,7 @@ export class TeamWorkspaceService {
 
   async createMilestone(
     actor: CurrentActor,
-    input: { teamId: string; title: string; dueAt: Date },
+    input: { teamId: string; title: string; dueAt: Date; assigneeIds?: string[] },
   ): Promise<{ id: string }> {
     if (actor.role === "PROFESSOR") throw new TeamNotFoundError();
     assertValidMilestoneDueAt(input.dueAt);
@@ -72,6 +67,7 @@ export class TeamWorkspaceService {
       ...input,
       actor,
       title: normalizeMilestoneTitle(input.title),
+      assigneeIds: [...new Set(input.assigneeIds ?? [])],
     });
     if (!milestone) {
       throw new TeamNotFoundError();
@@ -81,39 +77,19 @@ export class TeamWorkspaceService {
 
   async updateMilestoneStatus(
     actor: CurrentActor,
-    input: { milestoneId: string; status: MilestoneStatus },
+    input: { milestoneId: string; status: MilestoneStatus; assigneeIds?: string[] },
   ): Promise<{ teamId: string }> {
     if (actor.role === "PROFESSOR") throw new MilestoneNotFoundError();
     const result = await this.milestoneWriter.updateMilestoneStatus(
       input.milestoneId,
       input.status,
+      [...new Set(input.assigneeIds ?? [])],
       actor,
     );
     if (!result) {
       throw new MilestoneNotFoundError();
     }
     return result;
-  }
-
-  async createProgressUpdate(
-    actor: CurrentActor,
-    input: {
-      teamId: string;
-      content: string;
-      risk: string;
-      nextAction: string;
-    },
-  ): Promise<{ id: string }> {
-    if (actor.role === "PROFESSOR") throw new TeamNotFoundError();
-    const progress = await this.progressWriter.createProgressUpdate({
-      teamId: input.teamId,
-      actor,
-      ...normalizeProgressUpdate(input),
-    });
-    if (!progress) {
-      throw new TeamNotFoundError();
-    }
-    return progress;
   }
 
   async createDiscussionPost(

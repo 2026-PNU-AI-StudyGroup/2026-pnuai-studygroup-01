@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { EditorialProjectCover } from "@/app/topics/[topicId]/_components/editorial-project-cover";
+import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { PageHeader } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/shared/ui/translated-text";
 
 export const metadata: Metadata = { title: "지난 프로젝트 상세" };
@@ -20,11 +21,72 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const project = await new ListArchivedProjectsService(new PrismaTeamArchiveRepository(prisma)).find(projectId);
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
-  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><main className="content-shell space-y-10">
-    <PageHeader eyebrow={`${project.academicYear} · ${project.programName}`} title={project.topicTitle} description={`${project.teamName} · ${project.professorName} 교수`} actions={<Link href="/topics?view=past" className="button-secondary">지난 프로젝트 목록</Link>} />
-    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="space-y-10"><section aria-labelledby="archive-description"><h2 id="archive-description" className="text-xl font-extrabold">프로젝트 설명</h2><TranslatedText text={project.topicDescription} className="muted mt-4 whitespace-pre-wrap leading-8" /></section><section aria-labelledby="archive-team"><h2 id="archive-team" className="text-xl font-extrabold">참여 정보</h2><dl className="mt-5 grid gap-5 border-y border-[var(--line)] py-6 sm:grid-cols-2"><div><dt className="muted text-xs">참여자</dt><dd className="mt-2 font-semibold leading-7">{project.memberNames.join(", ")}</dd></div><div><dt className="muted text-xs">기술</dt><dd className="mt-2 flex flex-wrap gap-2">{skills.map((skill) => <span key={skill} className="rounded bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold">{skill}</span>)}</dd></div></dl></section></div>
-      <aside aria-labelledby="archive-artifacts" className="border-t border-[var(--line)] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0"><h2 id="archive-artifacts" className="text-xl font-extrabold">공개 결과물</h2>{project.artifacts.length ? <ul className="mt-4 divide-y divide-[var(--line)] border-y border-[var(--line)]">{project.artifacts.map((artifact) => <li key={artifact.id}>{artifact.fileId ? <a className="button-quiet min-h-14 w-full justify-start px-0 text-left text-[var(--primary)]" href={`/api/files/${artifact.fileId}`}>{artifactType[artifact.type]} · {artifact.title}</a> : artifact.externalUrl ? <a className="button-quiet min-h-14 w-full justify-start px-0 text-left text-[var(--primary)]" href={artifact.externalUrl} target="_blank" rel="noreferrer">{artifactType[artifact.type]} · {artifact.title}<span className="sr-only"> 새 창</span></a> : <span className="muted flex min-h-14 items-center text-sm">{artifactType[artifact.type]} · {artifact.title}</span>}</li>)}</ul> : <p className="muted mt-4 text-sm">공개된 결과물이 없습니다.</p>}</aside>
-    </div>
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics"><main className="content-shell">
+    <nav aria-label="이전 위치" className="mb-5">
+      <Link href="/topics?view=past" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--ink)]">
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        지난 프로젝트
+      </Link>
+    </nav>
+
+    <ProjectDetailShell
+      cover={<EditorialProjectCover id={project.id} label={`${project.academicYear} · ${project.programName}`} />}
+      marker={
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6 fill-none stroke-current stroke-[1.75]"><path d="M4 7h16v12H4zM8 7V4h8v3M9 12h6" /></svg>
+      }
+      heading={
+        <div>
+          <p className="text-sm font-bold text-[var(--muted)]">{project.teamName} · {project.professorName} 교수</p>
+          <h1 className="mt-4 max-w-5xl text-[clamp(2.45rem,5vw,4.25rem)] font-black leading-[1.03] tracking-[-0.055em]">{project.topicTitle}</h1>
+        </div>
+      }
+      railLabelledBy="archive-artifacts"
+      rail={
+        <>
+          <h2 id="archive-artifacts" className="text-xl font-black">공개 결과물</h2>
+          {project.artifacts.length ? (
+            <ul className="mt-5 border-y border-[var(--line)]">
+              {project.artifacts.map((artifact) => {
+                const content = (
+                  <>
+                    <span className="grid size-9 shrink-0 place-items-center bg-[var(--surface-subtle)] text-[var(--primary)]">
+                      <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M5 2.5h6l4 4v11H5zM11 2.5v4h4" /></svg>
+                    </span>
+                    <span className="min-w-0"><span className="block text-xs text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate font-bold">{artifact.title}</span></span>
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto size-4 shrink-0 fill-none stroke-current stroke-[1.75]"><path d="M7 5h8v8M15 5 6 14" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </>
+                );
+                return <li key={artifact.id} className="border-t border-[var(--line)] first:border-t-0">
+                  {artifact.fileId ? <a className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--primary-hover)]" href={`/api/files/${artifact.fileId}`}>{content}</a>
+                    : artifact.externalUrl ? <a className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--primary-hover)]" href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> 새 창</span></a>
+                      : <span className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--muted)]">{content}</span>}
+                </li>;
+              })}
+            </ul>
+          ) : <p className="mt-4 text-sm leading-6 text-[var(--muted)]">공개된 결과물이 없습니다.</p>}
+        </>
+      }
+    >
+      <div className="space-y-12">
+        <section aria-labelledby="archive-description">
+          <h2 id="archive-description" className="text-2xl font-black tracking-[-0.035em]">프로젝트 이야기</h2>
+          <TranslatedText text={project.topicDescription} className="mt-5 max-w-3xl whitespace-pre-wrap text-[1.05rem] leading-8 text-[var(--muted)]" />
+        </section>
+
+        <section aria-labelledby="archive-team">
+          <h2 id="archive-team" className="text-2xl font-black tracking-[-0.035em]">함께 만든 사람들</h2>
+          <dl className="mt-5 border-y border-[var(--line)]">
+            <div className="grid gap-2 py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
+              <dt className="text-sm font-bold text-[var(--muted)]">참여자</dt>
+              <dd className="font-semibold leading-7">{project.memberNames.join(", ")}</dd>
+            </div>
+            <div className="grid gap-2 border-t border-[var(--line)] py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
+              <dt className="text-sm font-bold text-[var(--muted)]">사용 기술</dt>
+              <dd className="font-semibold leading-7">{skills.join(", ") || "공개된 기술 정보 없음"}</dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+    </ProjectDetailShell>
   </main></AppShell>;
 }

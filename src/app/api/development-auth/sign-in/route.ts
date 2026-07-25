@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const requestedRole = formData.get("role");
   if (typeof requestedRole !== "string" || !isUserRole(requestedRole)) {
-    return NextResponse.json({ message: "지원하지 않는 목 로그인 역할입니다." }, { status: 400 });
+    return NextResponse.json({ message: "지원하지 않는 데모 계정 역할입니다." }, { status: 400 });
   }
 
   const account = DEVELOPMENT_MOCK_ACCOUNTS[requestedRole];

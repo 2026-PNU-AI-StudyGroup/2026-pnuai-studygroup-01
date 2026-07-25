@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { RecruitmentPageIntro, RecruitmentPagination, RecruitmentSectionLayout } from "@/app/recruitments/_components/recruitment-section-layout";
+import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { RecruitmentService } from "@/modules/recruitment/application/manage-recruitment";
-import { PrismaRecruitmentRepository } from "@/modules/recruitment/infrastructure/prisma-recruitment-repository";
-import { PrismaTopicApplicationRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-repository";
+import { StudentTeamRecruitmentService } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { PrismaStudentTeamRecruitmentRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-repository";
+import {
+  StudentTeamPageIntro,
+  StudentTeamPagination,
+  StudentTeamSectionLayout,
+} from "@/modules/student-team/ui/student-team-section-layout";
+import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
@@ -16,64 +21,98 @@ export const metadata: Metadata = { title: "내 모집" };
 
 const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
 
-export default async function MyRecruitmentPostsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
+export default async function MyRecruitmentPostsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue; modal?: SearchParamValue; teamId?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const data = await new RecruitmentService(
-    new PrismaRecruitmentRepository(prisma),
-    new PrismaTopicApplicationRepository(prisma),
-  ).listAuthoredPosts(actor, requestedPage);
+  const service = new StudentTeamRecruitmentService(
+    new PrismaStudentTeamRecruitmentRepository(prisma),
+  );
+  const [data, leaderTeams] = await Promise.all([
+    service.listAuthoredPosts(actor, requestedPage),
+    service.listLeaderTeams(actor),
+  ]);
+  const modal = firstSearchParam(params.modal);
+  const selectedTeamId = firstSearchParam(params.teamId);
   const pageHref = (page: number) => page > 1 ? `/recruitments/mine?page=${page}` : "/recruitments/mine";
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/mine">
-      <main className="content-shell">
-        <RecruitmentSectionLayout currentPath="/recruitments/mine">
+      <main className="pb-28 lg:min-h-screen lg:pb-0">
+        <StudentTeamSectionLayout currentPath="/recruitments/mine">
           <div className="space-y-8">
-            <RecruitmentPageIntro
-              label="내 모집 · 지원"
+            <StudentTeamPageIntro
               title="내 모집"
-              description="내가 연 모집의 팀 충원 상태와 검토 대기 인원을 한 줄에서 확인하고, 지원자 검토는 별도 화면에서 진행합니다."
-              action={<Link className="button-primary" href="/recruitments/new">새 모집</Link>}
+              description="열어 둔 역할의 충원 상태와 검토할 지원자를 관리합니다."
+              meta={<span>등록한 모집 {data.total}개</span>}
+              action={<Link className="button-primary" href="/recruitments/mine?modal=new">새 모집</Link>}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-black tracking-[-0.02em] text-[var(--ink)]">모집 글</h2>
-              <p className="muted text-sm">전체 {data.total}개</p>
-            </div>
-
             {data.posts.length === 0 ? (
-              <EmptyState title="아직 만든 모집이 없습니다" description="팀에 필요한 역할과 함께할 방식을 알려 동료를 찾아보세요." action={<Link className="button-primary" href="/recruitments/new">새 모집</Link>} />
+              <EmptyState title="등록한 모집이 없습니다" description="팀에 필요한 역할과 협업 조건을 정리해 모집을 시작하세요." action={<Link className="button-primary" href="/recruitments/mine?modal=new">새 모집</Link>} />
             ) : (
-              <ol className="border-y border-[var(--line)]">
+              <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+                <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-bold text-[var(--muted)] lg:grid">
+                  <span>모집</span>
+                  <span>팀 구성</span>
+                  <span>지원 현황</span>
+                  <span className="text-right">관리</span>
+                </div>
+                <ol>
                 {data.posts.map((post) => (
-                  <li key={post.id} className="grid gap-5 border-b border-[var(--line)] py-6 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                  <li key={post.id} className="grid gap-5 border-b border-[var(--line)] px-6 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] lg:items-center lg:gap-6">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge tone={post.status === "OPEN" ? "success" : undefined}>{post.status === "OPEN" ? "모집 중" : "모집 종료"}</StatusBadge>
-                        <span className="muted text-sm">{post.topicTitle} · {post.teamName}</span>
+                        <span className="text-xs font-semibold text-[var(--muted)]">{koreanDate.format(post.createdAt)}</span>
                       </div>
-                      <h3 className="mt-3 text-xl font-black tracking-[-0.025em] text-[var(--ink)]">{post.title}</h3>
-                      <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                        <div className="flex gap-2"><dt className="muted">지원</dt><dd className="font-extrabold">{post.applicationCount}명</dd></div>
-                        <div className="flex gap-2"><dt className="muted">검토 대기</dt><dd className={post.pendingApplicationCount ? "font-extrabold text-[var(--primary)]" : "font-extrabold"}>{post.pendingApplicationCount}명</dd></div>
-                        <div className="flex gap-2"><dt className="muted">팀원</dt><dd className="font-extrabold">{post.memberCount}/{post.capacity}명</dd></div>
-                        <div className="flex gap-2"><dt className="muted">작성</dt><dd>{koreanDate.format(post.createdAt)}</dd></div>
-                      </dl>
+                      <h3 className="mt-2 truncate text-lg font-black tracking-[-0.02em] text-[var(--ink)]">{post.title}</h3>
+                      <p className="mt-1 truncate text-sm text-[var(--muted)]">{post.topicTitle} · {post.teamName}</p>
+                    </div>
+                    <p className="text-sm font-bold text-[var(--ink)]"><span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden">팀 구성</span>{post.memberCount}/{post.capacity}명</p>
+                    <div className="text-sm">
+                      <p className={post.pendingApplicationCount ? "font-black text-[var(--primary)]" : "font-bold text-[var(--ink)]"}>
+                        <span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden">지원</span>{post.applicationCount}명
+                      </p>
+                      <p className="mt-0.5 text-xs text-[var(--muted)]">검토 대기 {post.pendingApplicationCount}명</p>
                     </div>
                     <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}>
                       {post.pendingApplicationCount ? `${post.pendingApplicationCount}명 검토` : "지원자 보기"}
                     </Link>
                   </li>
                 ))}
-              </ol>
+                </ol>
+              </div>
             )}
-            <RecruitmentPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />
+            <StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />
           </div>
-        </RecruitmentSectionLayout>
+          {modal === "new" ? (
+            <TeamModal
+              title="새 모집"
+              description="팀에 필요한 역할과 협업 조건을 작성합니다."
+              closeHref="/recruitments/mine"
+              size="wide"
+            >
+              {leaderTeams.length ? (
+                <RecruitmentPostForm
+                  teams={leaderTeams}
+                  selectedTeamId={selectedTeamId}
+                  successHref="/recruitments/mine"
+                  surface="embedded"
+                />
+              ) : (
+                <EmptyState
+                  variant="embedded"
+                  title="팀장으로 관리 중인 팀이 없습니다"
+                  description="팀 관리에서 내 팀을 만든 뒤 필요한 역할을 공개 모집할 수 있습니다."
+                  action={<Link className="button-primary" href="/teams?modal=create">팀 만들기</Link>}
+                />
+              )}
+            </TeamModal>
+          ) : null}
+        </StudentTeamSectionLayout>
       </main>
     </AppShell>
   );

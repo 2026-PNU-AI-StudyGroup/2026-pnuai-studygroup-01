@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ProfessorAccessForm } from "@/app/admin/professors/_components/professor-access-form";
+import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { AppShell } from "@/app/_components/app-shell";
 
@@ -21,4 +22,3 @@ export default async function NewProfessorPage() {
     </AppShell>
   );
 }
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";

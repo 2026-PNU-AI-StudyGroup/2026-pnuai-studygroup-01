@@ -71,7 +71,14 @@ export function TeamMemberEmailField({ capacity }: { capacity: number }) {
       </div>
       <div className="email-chip-field" onClick={(event) => event.currentTarget.querySelector("input")?.focus()}>
         {emails.map((email) => (
-          <span key={email} className="email-chip"><span>{email}</span><button type="button" onClick={() => removeEmail(email)} aria-label={`${email} 삭제`} className="email-chip-remove">×</button></span>
+          <span key={email} className="email-chip">
+            <span>{email}</span>
+            <button type="button" onClick={() => removeEmail(email)} aria-label={`${email} 삭제`} className="email-chip-remove">
+              <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <path d="m4 4 8 8M12 4l-8 8" />
+              </svg>
+            </button>
+          </span>
         ))}
         <input
           id={inputId}

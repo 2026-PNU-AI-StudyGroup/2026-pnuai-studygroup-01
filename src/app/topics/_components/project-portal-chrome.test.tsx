@@ -25,6 +25,6 @@ describe("ProjectViewTabs", () => {
 describe("ProjectPortalHero", () => {
   it("현재 탐색 화면의 히어로를 유지한다", () => {
     render(<ProjectPortalHero view="active" />);
-    expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "프로젝트" })).toBeInTheDocument();
   });
 });

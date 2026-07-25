@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
-import { CreateTopicService } from "@/modules/topic/application/create-topic";
 import {
   ChangeTopicStatusService,
   InvalidTopicStatusTransitionError,
@@ -19,17 +17,16 @@ import {
   UpdateTopicScheduleService,
 } from "@/modules/topic/application/update-topic-schedule";
 import { InvalidTopicScheduleError } from "@/modules/topic/domain/topic-policy";
-import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
-import { createTopicInputSchema, koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
+import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export type CreateTopicActionState = {
+type TopicManagementActionState = {
   status: "idle" | "error" | "success";
   message: string;
 };
 
-export type TopicStatusActionState = CreateTopicActionState;
-export type TopicScheduleActionState = CreateTopicActionState;
+export type TopicStatusActionState = TopicManagementActionState;
+export type TopicScheduleActionState = TopicManagementActionState;
 
 const topicScheduleInputSchema = z.object({
   topicId: z.string().uuid(),
@@ -40,47 +37,6 @@ const topicScheduleInputSchema = z.object({
   submissionStartsAt: koreanLocalDateTime,
   submissionEndsAt: koreanLocalDateTime,
 });
-
-export async function createTopicAction(
-  _previousState: CreateTopicActionState,
-  formData: FormData,
-): Promise<CreateTopicActionState> {
-  const actor = await getCurrentActor();
-  if (!actor) {
-    redirect("/sign-in");
-  }
-
-  const questionLabels = formData.getAll("questionLabel");
-  const questionMaxLengths = formData.getAll("questionMaxLength");
-  const questionRequiredValues = formData.getAll("questionRequired");
-  const parsed = createTopicInputSchema.safeParse({
-    ...Object.fromEntries(formData),
-    applicationQuestions: questionLabels.map((label, index) => ({
-      label,
-      maxLength: questionMaxLengths[index],
-      required: questionRequiredValues[index] === "true",
-    })),
-  });
-  if (!parsed.success) {
-    return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
-  }
-
-  const topicRepository = new PrismaTopicRepository(prisma);
-  const service = new CreateTopicService(topicRepository, new PrismaProjectProgramRepository(prisma));
-
-  try {
-    await service.execute(actor, parsed.data);
-  } catch (error) {
-    const message = getCreateTopicErrorMessage(error);
-    if (message) {
-      return { status: "error", message };
-    }
-    throw error;
-  }
-
-  revalidatePath("/professor/topics");
-  return { status: "success", message: "주제 초안이 저장되었습니다." };
-}
 
 export async function changeTopicStatusAction(
   _previousState: TopicStatusActionState,
