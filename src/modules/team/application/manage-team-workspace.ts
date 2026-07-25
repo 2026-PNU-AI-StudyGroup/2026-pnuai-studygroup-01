@@ -27,12 +27,8 @@ export class MilestoneNotFoundError extends Error {
   }
 }
 
-export class TeamWorkspaceService {
-  constructor(
-    private readonly workspaceReader: TeamWorkspaceReader,
-    private readonly milestoneWriter: MilestoneWriter,
-    private readonly discussionWriter: DiscussionPostWriter,
-  ) {}
+export class TeamWorkspaceQueryService {
+  constructor(private readonly workspaceReader: TeamWorkspaceReader) {}
 
   async get(actor: CurrentActor, teamId: string, discussionPage = 1): Promise<TeamWorkspace> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
@@ -56,6 +52,10 @@ export class TeamWorkspaceService {
     }
     return this.workspaceReader.listForStudent(actor.id);
   }
+}
+
+export class TeamMilestoneService {
+  constructor(private readonly milestoneWriter: MilestoneWriter) {}
 
   async createMilestone(
     actor: CurrentActor,
@@ -91,6 +91,10 @@ export class TeamWorkspaceService {
     }
     return result;
   }
+}
+
+export class TeamDiscussionService {
+  constructor(private readonly discussionWriter: DiscussionPostWriter) {}
 
   async createDiscussionPost(
     actor: CurrentActor,

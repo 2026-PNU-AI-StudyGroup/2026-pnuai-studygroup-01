@@ -12,8 +12,8 @@ import {
   TeamCloseNotAllowedError,
 } from "../src/modules/team/application/archive-projects";
 import { PrismaTeamArchiveRepository } from "../src/modules/team/infrastructure/prisma-team-archive-repository";
-import { TeamNotFoundError, TeamWorkspaceService } from "../src/modules/team/application/manage-team-workspace";
-import { PrismaTeamWorkspaceRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-repository";
+import { TeamDiscussionService, TeamNotFoundError } from "../src/modules/team/application/manage-team-workspace";
+import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
 
@@ -306,13 +306,10 @@ async function main() {
     closedTeamSubmissionDenied = error instanceof ReportOperationNotAllowedError;
   }
   if (!closedTeamSubmissionDenied) throw new Error("종료 팀에 보고서가 추가되었습니다.");
-  const workspaceRepository = new PrismaTeamWorkspaceRepository(prisma);
   let closedTeamDiscussionDenied = false;
   try {
-    await new TeamWorkspaceService(
-      workspaceRepository,
-      workspaceRepository,
-      workspaceRepository,
+    await new TeamDiscussionService(
+      new PrismaTeamDiscussionRepository(prisma),
     ).createDiscussionPost(student, { teamId: team.id, content: "종료 후 토론" });
   } catch (error) {
     closedTeamDiscussionDenied = error instanceof TeamNotFoundError;

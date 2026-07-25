@@ -7,11 +7,16 @@ import {
   TeamConfirmationNotAllowedError,
 } from "../src/modules/team/application/confirm-team";
 import {
+  TeamDiscussionService,
+  TeamMilestoneService,
   MilestoneNotFoundError,
   TeamNotFoundError,
-  TeamWorkspaceService,
+  TeamWorkspaceQueryService,
 } from "../src/modules/team/application/manage-team-workspace";
-import { PrismaTeamWorkspaceRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-repository";
+import { PrismaTeamConfirmationRepository } from "../src/modules/team/infrastructure/prisma-team-confirmation-repository";
+import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
+import { PrismaTeamMilestoneRepository } from "../src/modules/team/infrastructure/prisma-team-milestone-repository";
+import { PrismaTeamWorkspaceQueryRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_WORKSPACE_TEST !== "true") {
@@ -137,12 +142,21 @@ async function main() {
     },
   });
 
-  const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const service = new TeamWorkspaceService(repository, repository, repository);
+  const queryService = new TeamWorkspaceQueryService(
+    new PrismaTeamWorkspaceQueryRepository(prisma),
+  );
+  const milestoneService = new TeamMilestoneService(
+    new PrismaTeamMilestoneRepository(prisma),
+  );
+  const discussionService = new TeamDiscussionService(
+    new PrismaTeamDiscussionRepository(prisma),
+  );
   const professor = { id: professorId, role: "PROFESSOR" as const };
   const student = { id: studentId, role: "STUDENT" as const };
   const outsider = { id: outsiderId, role: "STUDENT" as const };
-  const confirmation = new ConfirmTeamService(repository);
+  const confirmation = new ConfirmTeamService(
+    new PrismaTeamConfirmationRepository(prisma),
+  );
 
   try {
     await confirmation.confirm(student, team.id);
@@ -152,24 +166,24 @@ async function main() {
   }
   await confirmation.confirm(professor, team.id);
 
-  const milestone = await service.createMilestone(student, {
+  const milestone = await milestoneService.createMilestone(student, {
     teamId: team.id,
     title: "  중간 발표  ",
     dueAt: new Date("2026-08-01T00:00:00Z"),
   });
-  await service.createDiscussionPost(student, {
+  await discussionService.createDiscussionPost(student, {
     teamId: team.id,
     content: "  Can we meet on Friday?  ",
   });
   await expectRejected(
-    () => service.createDiscussionPost(outsider, {
+    () => discussionService.createDiscussionPost(outsider, {
       teamId: team.id,
       content: "권한 없는 토론",
     }),
     TeamNotFoundError,
   );
   await expectRejected(
-    () => service.createMilestone(outsider, {
+    () => milestoneService.createMilestone(outsider, {
       teamId: team.id,
       title: "권한 없는 마일스톤",
       dueAt: new Date("2026-08-02T00:00:00Z"),
@@ -177,22 +191,22 @@ async function main() {
     TeamNotFoundError,
   );
   await expectRejected(
-    () => service.updateMilestoneStatus(outsider, {
+    () => milestoneService.updateMilestoneStatus(outsider, {
       milestoneId: milestone.id,
       status: "DONE",
     }),
     MilestoneNotFoundError,
   );
   await expectRejected(
-    () => service.get({ id: professorId, role: "STUDENT" }, team.id),
+    () => queryService.get({ id: professorId, role: "STUDENT" }, team.id),
     TeamNotFoundError,
   );
-  await service.updateMilestoneStatus(student, {
+  await milestoneService.updateMilestoneStatus(student, {
     milestoneId: milestone.id,
     status: "DONE",
   });
 
-  const workspace = await service.get(student, team.id);
+  const workspace = await queryService.get(student, team.id);
   if (
     workspace.milestoneCount !== 1 ||
     workspace.completedMilestoneCount !== 1 ||
@@ -211,7 +225,7 @@ async function main() {
       createdAt: olderCreatedAt,
     })),
   });
-  const secondHistoryPage = await service.get(student, team.id, 2);
+  const secondHistoryPage = await queryService.get(student, team.id, 2);
   if (
     secondHistoryPage.discussionPage !== 2 ||
     secondHistoryPage.discussionTotal !== 51 ||
@@ -219,7 +233,7 @@ async function main() {
   ) {
     throw new Error("대화의 이전 이력 페이지를 조회할 수 없습니다.");
   }
-  const boundedHistoryPage = await service.get(student, team.id, 999);
+  const boundedHistoryPage = await queryService.get(student, team.id, 999);
   if (boundedHistoryPage.discussionPage !== 2) {
     throw new Error("범위를 벗어난 이력 페이지가 마지막 페이지로 정규화되지 않았습니다.");
   }

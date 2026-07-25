@@ -14,15 +14,18 @@ import {
 } from "@/modules/team/application/confirm-team";
 import {
   MilestoneNotFoundError,
+  TeamDiscussionService,
+  TeamMilestoneService,
   TeamNotFoundError,
-  TeamWorkspaceService,
 } from "@/modules/team/application/manage-team-workspace";
 import {
   InvalidDiscussionPostError,
   InvalidMilestoneError,
 } from "@/modules/team/domain/team-workspace-policy";
-import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
 import { PrismaTeamArchiveRepository } from "@/modules/team/infrastructure/prisma-team-archive-repository";
+import { PrismaTeamConfirmationRepository } from "@/modules/team/infrastructure/prisma-team-confirmation-repository";
+import { PrismaTeamDiscussionRepository } from "@/modules/team/infrastructure/prisma-team-discussion-repository";
+import { PrismaTeamMilestoneRepository } from "@/modules/team/infrastructure/prisma-team-milestone-repository";
 import {
   discussionPostInputSchema,
   milestoneInputSchema,
@@ -40,9 +43,10 @@ export async function confirmTeamAction(formData: FormData) {
   if (!actor) redirect("/sign-in");
   const teamId = formData.get("teamId");
   if (typeof teamId !== "string") return;
-  const repository = new PrismaTeamWorkspaceRepository(prisma);
   try {
-    await new ConfirmTeamService(repository).confirm(actor, teamId);
+    await new ConfirmTeamService(
+      new PrismaTeamConfirmationRepository(prisma),
+    ).confirm(actor, teamId);
   } catch (error) {
     if (error instanceof TeamConfirmationNotAllowedError) return;
     throw error;
@@ -75,13 +79,12 @@ export async function closeTeamAction(
   return { status: "success", message: "팀을 종료하고 지난 프로젝트에 보관했습니다." };
 }
 
-function service() {
-  const repository = new PrismaTeamWorkspaceRepository(prisma);
-  return new TeamWorkspaceService(
-    repository,
-    repository,
-    repository,
-  );
+function milestoneService() {
+  return new TeamMilestoneService(new PrismaTeamMilestoneRepository(prisma));
+}
+
+function discussionService() {
+  return new TeamDiscussionService(new PrismaTeamDiscussionRepository(prisma));
 }
 
 function expectedMessage(error: unknown): string | null {
@@ -107,7 +110,7 @@ export async function createMilestoneAction(
     return { status: "error", message: "마일스톤 입력을 확인해 주세요." };
   }
   try {
-    await service().createMilestone(actor, parsed.data);
+    await milestoneService().createMilestone(actor, parsed.data);
   } catch (error) {
     const message = expectedMessage(error);
     if (message) return { status: "error", message };
@@ -134,7 +137,7 @@ export async function updateMilestoneStatusAction(
     return { status: "error", message: "잘못된 상태 변경 요청입니다." };
   }
   try {
-    const result = await service().updateMilestoneStatus(actor, parsed.data);
+    const result = await milestoneService().updateMilestoneStatus(actor, parsed.data);
     revalidatePath(`/teams/${result.teamId}`, "layout");
   } catch (error) {
     const message = expectedMessage(error);
@@ -154,7 +157,7 @@ export async function createDiscussionPostAction(
   const parsed = discussionPostInputSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "메시지 내용을 확인해 주세요." };
   try {
-    await service().createDiscussionPost(actor, parsed.data);
+    await discussionService().createDiscussionPost(actor, parsed.data);
   } catch (error) {
     const message = expectedMessage(error);
     if (message) return { status: "error", message };

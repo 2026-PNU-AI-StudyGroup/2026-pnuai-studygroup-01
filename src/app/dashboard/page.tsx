@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashboard-hero";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
-import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
+import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
+import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
@@ -16,8 +16,9 @@ export const metadata: Metadata = { title: "프로젝트" };
 export default async function DashboardPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  const repository = new PrismaTeamWorkspaceRepository(prisma);
-  const teams = await new TeamWorkspaceService(repository, repository, repository).list(actor);
+  const teams = await new TeamWorkspaceQueryService(
+    new PrismaTeamWorkspaceQueryRepository(prisma),
+  ).list(actor);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">

@@ -4,16 +4,17 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ReportOperationNotAllowedError, ReportService } from "@/modules/report/application/manage-reports";
 import { PrismaReportRepository } from "@/modules/report/infrastructure/prisma-report-repository";
-import { TeamNotFoundError, TeamWorkspaceService } from "@/modules/team/application/manage-team-workspace";
-import { PrismaTeamWorkspaceRepository } from "@/modules/team/infrastructure/prisma-team-workspace-repository";
+import { TeamNotFoundError, TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
+import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export const loadTeamWorkspace = cache(async (teamId: string, discussionPage = 1) => {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  const repository = new PrismaTeamWorkspaceRepository(prisma);
   try {
-    const workspace = await new TeamWorkspaceService(repository, repository, repository).get(actor, teamId, discussionPage);
+    const workspace = await new TeamWorkspaceQueryService(
+      new PrismaTeamWorkspaceQueryRepository(prisma),
+    ).get(actor, teamId, discussionPage);
     return { actor, workspace };
   } catch (error) {
     if (error instanceof TeamNotFoundError) notFound();
