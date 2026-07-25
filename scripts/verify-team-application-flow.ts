@@ -3,7 +3,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 
 import { PrismaProjectProgramRepository } from "../src/modules/project-program/infrastructure/prisma-project-program-repository";
-import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
+import { PrismaRecruitmentCommandRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-command-repository";
 import { PrismaTeamApplicationInvitationRepository } from "../src/modules/topic-application/infrastructure/prisma-team-application-invitation-repository";
 import { PrismaTopicApplicationDecisionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-decision-repository";
 import { PrismaTopicApplicationSubmissionRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-submission-repository";
@@ -239,7 +239,7 @@ async function main() {
   const post = await prisma.recruitmentPost.create({
     data: { teamId: recruitmentTeam.id, authorId: studentIds[6], title: "기존 팀원 모집 호환", content: "팀원을 모집합니다.", requiredSkills: ["TypeScript"], roleNeeded: "개발", availability: "평일" },
   });
-  const recruitmentRepository = new PrismaRecruitmentRepository(prisma);
+  const recruitmentRepository = new PrismaRecruitmentCommandRepository(prisma);
   const recruitmentApplication = await recruitmentRepository.apply({ postId: post.id, studentId: studentIds[7], message: "모집 지원", skills: ["TypeScript"], desiredRole: "개발", availability: "평일", appliedAt });
   const storedRecruitmentApplication = await prisma.recruitmentApplication.findFirstOrThrow({ where: { postId: post.id, studentId: studentIds[7] }, include: { topicApplication: { select: { id: true, groupId: true } } } });
   if (recruitmentApplication !== "CREATED" || storedRecruitmentApplication.topicApplication.groupId !== null) {

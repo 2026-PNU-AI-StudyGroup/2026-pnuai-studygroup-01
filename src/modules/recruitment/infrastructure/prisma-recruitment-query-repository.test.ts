@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PrismaClient } from "@/generated/prisma/client";
-import { PrismaRecruitmentRepository } from "@/modules/recruitment/infrastructure/prisma-recruitment-repository";
+import { PrismaRecruitmentQueryRepository } from "@/modules/recruitment/infrastructure/prisma-recruitment-query-repository";
 
 describe("Prisma 팀원 모집 권한 조회", () => {
   it("일반 작성자의 지원자 조회에 작성자 소유 조건을 포함한다", async () => {
     const findFirst = vi.fn(async () => null);
     const client = { recruitmentPost: { findFirst } } as unknown as PrismaClient;
 
-    await new PrismaRecruitmentRepository(client).findPostApplications("post", { actorId: "author", isAdmin: false });
+    await new PrismaRecruitmentQueryRepository(client).findPostApplications("post", { actorId: "author", isAdmin: false });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "post", authorId: "author" } }));
   });
@@ -17,7 +17,7 @@ describe("Prisma 팀원 모집 권한 조회", () => {
     const findFirst = vi.fn(async () => null);
     const client = { recruitmentPost: { findFirst } } as unknown as PrismaClient;
 
-    await new PrismaRecruitmentRepository(client).findPostApplications("post", { actorId: "admin", isAdmin: true });
+    await new PrismaRecruitmentQueryRepository(client).findPostApplications("post", { actorId: "admin", isAdmin: true });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "post" } }));
   });
@@ -26,7 +26,7 @@ describe("Prisma 팀원 모집 권한 조회", () => {
     const findFirst = vi.fn(async () => null);
     const client = { recruitmentApplication: { findFirst } } as unknown as PrismaClient;
 
-    await new PrismaRecruitmentRepository(client).findDecisionTarget("application", { actorId: "author", isAdmin: false });
+    await new PrismaRecruitmentQueryRepository(client).findDecisionTarget("application", { actorId: "author", isAdmin: false });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ post: expect.objectContaining({ authorId: "author" }) }),
@@ -37,7 +37,7 @@ describe("Prisma 팀원 모집 권한 조회", () => {
     const findFirst = vi.fn<(input: unknown) => Promise<null>>().mockResolvedValue(null);
     const client = { recruitmentApplication: { findFirst } } as unknown as PrismaClient;
 
-    await new PrismaRecruitmentRepository(client).findDecisionTarget("application", { actorId: "admin", isAdmin: true });
+    await new PrismaRecruitmentQueryRepository(client).findDecisionTarget("application", { actorId: "admin", isAdmin: true });
 
     const call = findFirst.mock.calls[0]?.[0] as { where: { post: Record<string, unknown>; id: string; status: string } };
     expect(call.where.post).not.toHaveProperty("authorId");

@@ -9,7 +9,7 @@ import { UpdateTopicScheduleService } from "../src/modules/topic/application/upd
 import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
 import { PrismaTopicQueryRepository } from "../src/modules/topic/infrastructure/prisma-topic-query-repository";
 import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
-import { PrismaRecruitmentRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-repository";
+import { PrismaRecruitmentQueryRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-query-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_PROGRAM_TEST !== "true") {
@@ -125,7 +125,7 @@ async function main() {
   }
   const [topicHistory, recruitmentHistory] = await Promise.all([
     new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20),
-    new PrismaRecruitmentRepository(prisma).listApplicationHistory(applicantId, 1),
+    new PrismaRecruitmentQueryRepository(prisma).listApplicationHistory(applicantId, 1),
   ]);
   if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
