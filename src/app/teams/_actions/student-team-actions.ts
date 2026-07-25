@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamOperationError, StudentTeamService } from "@/modules/student-team/application/manage-student-teams";
-import { PrismaStudentTeamRepository } from "@/modules/student-team/infrastructure/prisma-student-team-repository";
+import { StudentTeamCommandService, StudentTeamOperationError } from "@/modules/student-team/application/manage-student-teams";
+import { PrismaStudentTeamCommandRepository } from "@/modules/student-team/infrastructure/prisma-student-team-command-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type StudentTeamActionState = { status: "idle" | "success" | "error"; message: string };
@@ -13,7 +13,12 @@ export type StudentTeamActionState = { status: "idle" | "success" | "error"; mes
 async function serviceAndActor() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  return { actor, service: new StudentTeamService(new PrismaStudentTeamRepository(prisma)) };
+  return {
+    actor,
+    service: new StudentTeamCommandService(
+      new PrismaStudentTeamCommandRepository(prisma),
+    ),
+  };
 }
 
 async function run(operation: () => Promise<void>, success: string): Promise<StudentTeamActionState> {

@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/app/_components/app-shell";
 import { StudentTeamManagementSections } from "@/app/teams/manage/[teamId]/_components/student-team-management-sections";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamService } from "@/modules/student-team/application/manage-student-teams";
-import { PrismaStudentTeamRepository } from "@/modules/student-team/infrastructure/prisma-student-team-repository";
+import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
+import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-query-repository";
 import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -20,8 +20,8 @@ export default async function StudentTeamManagePage({
   if (!actor) redirect("/sign-in");
   if (actor.role !== "STUDENT") redirect("/dashboard");
   const { teamId } = await params;
-  const { teams } = await new StudentTeamService(
-    new PrismaStudentTeamRepository(prisma),
+  const { teams } = await new StudentTeamQueryService(
+    new PrismaStudentTeamQueryRepository(prisma),
   ).listWorkspace(actor);
   const team = teams.find((candidate) => candidate.id === teamId);
   if (!team) notFound();

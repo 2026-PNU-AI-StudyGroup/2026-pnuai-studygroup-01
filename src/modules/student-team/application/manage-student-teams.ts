@@ -1,5 +1,8 @@
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
-import type { StudentTeamRepository } from "@/modules/student-team/application/student-team-ports";
+import type {
+  StudentTeamReader,
+  StudentTeamWriter,
+} from "@/modules/student-team/application/student-team-ports";
 
 const PNU_EMAIL = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@pusan\.ac\.kr$/i;
 
@@ -15,24 +18,28 @@ function normalizedText(value: string, maxLength: number, label: string) {
   return text;
 }
 
-export class StudentTeamService {
-  constructor(
-    private readonly repository: StudentTeamRepository,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+export class StudentTeamQueryService {
+  constructor(private readonly reader: StudentTeamReader) {}
 
   async listWorkspace(actor: CurrentUser) {
     assertStudent(actor);
     const [teams, invitations] = await Promise.all([
-      this.repository.listMine(actor.id),
-      this.repository.listInvitations(actor.email.toLowerCase()),
+      this.reader.listMine(actor.id),
+      this.reader.listInvitations(actor.email.toLowerCase()),
     ]);
     return { teams, invitations };
   }
+}
+
+export class StudentTeamCommandService {
+  constructor(
+    private readonly writer: StudentTeamWriter,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
 
   async create(actor: CurrentUser, input: { name: string; description: string }) {
     assertStudent(actor);
-    return this.repository.create({
+    return this.writer.create({
       leaderId: actor.id,
       name: normalizedText(input.name, 80, "팀 이름"),
       description: input.description.trim().slice(0, 1_000),
@@ -46,7 +53,7 @@ export class StudentTeamService {
     if (!PNU_EMAIL.test(email) || email === actor.email.toLowerCase()) {
       throw new StudentTeamOperationError("본인을 제외한 부산대학교 이메일을 입력해 주세요.");
     }
-    const result = await this.repository.invite({ teamId: input.teamId, leaderId: actor.id, email, invitedAt: this.now() });
+    const result = await this.writer.invite({ teamId: input.teamId, leaderId: actor.id, email, invitedAt: this.now() });
     if (result !== "INVITED") {
       throw new StudentTeamOperationError(result === "ALREADY_MEMBER" ? "이미 팀에 참여 중인 사용자입니다." : "팀장만 활성 팀에 초대할 수 있습니다.");
     }
@@ -54,7 +61,7 @@ export class StudentTeamService {
 
   async respond(actor: CurrentUser, invitationId: string, decision: "ACCEPT" | "DECLINE") {
     assertStudent(actor);
-    const result = await this.repository.respond({
+    const result = await this.writer.respond({
       invitationId,
       studentId: actor.id,
       email: actor.email.toLowerCase(),
@@ -68,21 +75,21 @@ export class StudentTeamService {
 
   async transferLeadership(actor: CurrentUser, teamId: string, nextLeaderId: string) {
     assertStudent(actor);
-    if (!await this.repository.transferLeadership({ teamId, leaderId: actor.id, nextLeaderId })) {
+    if (!await this.writer.transferLeadership({ teamId, leaderId: actor.id, nextLeaderId })) {
       throw new StudentTeamOperationError("팀장 권한은 현재 팀원에게만 이전할 수 있습니다.");
     }
   }
 
   async removeMember(actor: CurrentUser, teamId: string, studentId: string) {
     assertStudent(actor);
-    if (!await this.repository.removeMember({ teamId, leaderId: actor.id, studentId })) {
+    if (!await this.writer.removeMember({ teamId, leaderId: actor.id, studentId })) {
       throw new StudentTeamOperationError("팀장 본인은 내보낼 수 없으며, 팀장만 팀원을 관리할 수 있습니다.");
     }
   }
 
   async delete(actor: CurrentUser, teamId: string) {
     assertStudent(actor);
-    if (!await this.repository.delete({ teamId, leaderId: actor.id, deletedAt: this.now() })) {
+    if (!await this.writer.delete({ teamId, leaderId: actor.id, deletedAt: this.now() })) {
       throw new StudentTeamOperationError("팀장만 활성 팀을 삭제할 수 있습니다.");
     }
   }

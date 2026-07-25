@@ -11,8 +11,8 @@ import { StudentTeamLedger } from "@/app/teams/_components/student-team-ledger";
 import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { StudentTeamService } from "@/modules/student-team/application/manage-student-teams";
-import { PrismaStudentTeamRepository } from "@/modules/student-team/infrastructure/prisma-student-team-repository";
+import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
+import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
@@ -28,8 +28,8 @@ export default async function StudentTeamsPage({
   if (actor.role !== "STUDENT") redirect("/dashboard");
   const { modal } = await searchParams;
 
-  const { teams, invitations } = await new StudentTeamService(
-    new PrismaStudentTeamRepository(prisma),
+  const { teams, invitations } = await new StudentTeamQueryService(
+    new PrismaStudentTeamQueryRepository(prisma),
   ).listWorkspace(actor);
 
   return (

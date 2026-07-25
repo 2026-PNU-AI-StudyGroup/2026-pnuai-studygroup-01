@@ -35,9 +35,12 @@ export type ReceivedStudentTeamInvitation = {
   createdAt: Date;
 };
 
-export interface StudentTeamRepository {
+export interface StudentTeamReader {
   listMine(studentId: string): Promise<StudentTeamSummary[]>;
   listInvitations(email: string): Promise<ReceivedStudentTeamInvitation[]>;
+}
+
+export interface StudentTeamWriter {
   create(input: { leaderId: string; name: string; description: string; createdAt: Date }): Promise<string>;
   invite(input: { teamId: string; leaderId: string; email: string; invitedAt: Date }): Promise<"INVITED" | "NOT_FOUND" | "FORBIDDEN" | "ALREADY_MEMBER">;
   respond(input: { invitationId: string; studentId: string; email: string; decision: "ACCEPT" | "DECLINE"; respondedAt: Date }): Promise<"ACCEPTED" | "DECLINED" | "NOT_FOUND" | "CONFLICT">;
