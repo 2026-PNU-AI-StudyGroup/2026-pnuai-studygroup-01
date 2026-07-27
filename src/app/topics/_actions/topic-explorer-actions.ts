@@ -13,7 +13,6 @@ import {
   TopicUnavailableForApplicationError,
 } from "@/modules/topic-application/application/apply-to-topic";
 import {
-  InvalidTeamApplicationMembersError,
   InvalidTopicApplicationAnswersError,
   TopicApplicationKindForbiddenError,
   TopicApplicationForbiddenError,
@@ -24,7 +23,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export type ApplyTopicActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  outcome?: "CREATED" | "INVITATIONS_PENDING";
+  outcome?: "CREATED";
 };
 
 const inputSchema = z.object({
@@ -57,9 +56,7 @@ export async function applyTopicAction(
   );
   try {
     const result = await service.execute(actor, { ...parsed.data, answers });
-    return result.outcome === "INVITATIONS_PENDING"
-      ? { status: "success", outcome: result.outcome, message: "팀원 초대를 보냈습니다. 전원이 수락하면 교수에게 지원서가 접수됩니다." }
-      : { status: "success", outcome: result.outcome, message: "주제 지원이 접수되었습니다." };
+    return { status: "success", outcome: result.outcome, message: "주제 지원이 접수되었습니다." };
   } catch (error) {
     if (
       error instanceof TopicAlreadyAppliedError ||
@@ -68,7 +65,6 @@ export async function applyTopicAction(
       error instanceof TeamMemberUnavailableError ||
       error instanceof TeamLeaderRequiredError ||
       error instanceof TopicApplicationForbiddenError ||
-      error instanceof InvalidTeamApplicationMembersError ||
       error instanceof InvalidTopicApplicationAnswersError ||
       error instanceof TopicApplicationKindForbiddenError
     ) {
