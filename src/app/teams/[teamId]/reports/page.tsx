@@ -3,6 +3,7 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiAside } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-decision-form";
@@ -25,23 +26,81 @@ function ReportStatusStrip({ title, description }: { title: string; description:
   );
 }
 
+function ReportReviewFeedback({
+  versionId,
+  decision,
+  showRevisionGuidance,
+  canResubmit,
+  revisionAction,
+}: {
+  versionId: string;
+  decision: {
+    decision: "APPROVED" | "REVISION_REQUESTED";
+    comment: string;
+    decidedAt: Date;
+    reviewerName: string;
+  };
+  showRevisionGuidance: boolean;
+  canResubmit: boolean;
+  revisionAction?: ReactNode;
+}) {
+  const revisionRequested = decision.decision === "REVISION_REQUESTED";
+  const title = revisionRequested ? "수정 요청 사항" : "승인 의견";
+  return (
+    <aside
+      aria-labelledby={`report-feedback-title-${versionId}`}
+      className={`mt-4 rounded-[var(--radius-control)] border px-4 py-4 ${
+        revisionRequested
+          ? "border-[var(--warning)] bg-[var(--warning-subtle)]"
+          : "border-[var(--success)] bg-[var(--success-subtle)]"
+      }`}
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <h3 id={`report-feedback-title-${versionId}`} className="text-sm font-extrabold text-[var(--ink)]">
+          <UiText>{title}</UiText>
+        </h3>
+        <p className="text-xs leading-5 text-[var(--muted)]">
+          <span className="font-semibold text-[var(--ink)]">{decision.reviewerName}</span>
+          <span aria-hidden="true"> · </span>
+          <time dateTime={decision.decidedAt.toISOString()}>
+            <UiDate value={decision.decidedAt} mode="dateTime" />
+          </time>
+        </p>
+      </div>
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[var(--ink)]">
+        <UiText>{decision.comment || "등록된 검토 의견이 없습니다."}</UiText>
+      </p>
+      {revisionRequested && showRevisionGuidance ? (
+        <div className="mt-3 flex flex-col gap-3 border-t border-[var(--warning)] pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold leading-6 text-[var(--warning-ink)]">
+            <UiText>{canResubmit
+              ? "요청 사항을 반영한 새 버전을 제출해 주세요."
+              : "제출 기한이 지났습니다. 새 버전 제출 일정은 지도교수에게 확인해 주세요."}</UiText>
+          </p>
+          {canResubmit && revisionAction ? <div className="shrink-0">{revisionAction}</div> : null}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 export default async function TeamReportsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { actor, workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
+  const { workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
   const now = new Date();
   const submittableReports = reportWorkspace.reports.filter((report) => report.dueAt >= now).map(({ type, dueAt }) => ({ type, dueAt }));
-  const canManageRequirements = workspace.status !== "CLOSED" && actor.role !== "STUDENT";
-  const canSubmit = workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" && submittableReports.length > 0;
+  const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
+  const canSubmit = workspace.status === "CONFIRMED" && workspace.access.canContribute && submittableReports.length > 0;
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
   const nextReport = [...reportWorkspace.reports].filter((report) => report.dueAt >= now).sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime())[0];
   const hasNoSubmittableReports = workspace.status === "CONFIRMED"
-    && actor.role === "STUDENT"
+    && workspace.access.canContribute
     && reportWorkspace.reports.length > 0
     && submittableReports.length === 0;
   const emptyDescription = workspace.status === "CLOSED"
     ? "프로젝트 종료 전에 설정된 보고서 일정이 없습니다."
-    : actor.role === "STUDENT"
-      ? "지도교수가 보고서 종류와 마감을 정하면 여기에서 시작할 수 있습니다."
+    : workspace.access.canContribute
+      ? workspace.advisorEnabled ? "지도교수가 보고서 종류와 마감을 정하면 여기에서 시작할 수 있습니다." : "프로젝트 관리자가 보고서 종류와 마감을 정하면 여기에서 시작할 수 있습니다."
       : "첫 보고서 종류와 마감을 정해 주세요.";
 
   return (
@@ -57,7 +116,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
       {nextReport ? <UiAside aria-label="다음 보고서 기한" className="grid gap-2 border-b border-[var(--line)] pb-6 sm:grid-cols-[9rem_minmax(0,1fr)_auto] sm:items-center"><p className="text-xs font-extrabold text-[var(--accent-ink)]"><UiText>{"다음 마감"}</UiText></p><strong className="text-lg">{reportTypeLabel[nextReport.type]}</strong><time className="font-bold text-[var(--accent-ink)]" dateTime={nextReport.dueAt.toISOString()}><UiDate value={nextReport.dueAt} mode="dateTime" /></time></UiAside> : null}
 
       {hasNoSubmittableReports ? <ReportStatusStrip title="현재 제출 가능한 보고서가 없습니다" description="기존 제출·검토 이력은 아래에서 확인할 수 있습니다." /> : null}
-      {workspace.status === "FORMING" ? <ReportStatusStrip title="팀 확정 후 제출할 수 있습니다" description="지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." /> : workspace.status === "CLOSED" ? <ReportStatusStrip title="종료된 프로젝트입니다" description="새 보고서를 제출할 수 없으며 기존 제출·승인 이력만 확인할 수 있습니다." /> : null}
+      {workspace.status === "FORMING" ? <ReportStatusStrip title="팀 확정 후 제출할 수 있습니다" description={workspace.advisorEnabled ? "지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." : "프로젝트 관리자가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다."} /> : workspace.status === "CLOSED" ? <ReportStatusStrip title="종료된 프로젝트입니다" description="새 보고서를 제출할 수 없으며 기존 제출·승인 이력만 확인할 수 있습니다." /> : null}
       {reportWorkspace.reports.length === 0 ? <EmptyState title="보고서 일정이 없습니다" description={emptyDescription} /> : (
         <div>
           <div className="hidden grid-cols-[9rem_minmax(0,1fr)_9rem_7rem] border-b border-[var(--line-strong)] px-2 pb-3 text-xs font-bold text-[var(--muted)] md:grid"><span><UiText>{"보고서"}</UiText></span><span><UiText>{"제출 이력"}</UiText></span><span><UiText>{"마감 기한"}</UiText></span><span className="text-right"><UiText>{"관리"}</UiText></span></div>
@@ -77,7 +136,24 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                             {version.decision ? <StatusBadge tone={version.decision.decision === "APPROVED" ? "success" : "warning"}><UiText>{version.decision.decision === "APPROVED" ? "승인" : "수정 요청"}</UiText></StatusBadge> : <StatusBadge tone="neutral"><UiText>{index === 0 ? "검토 대기" : "이전 버전"}</UiText></StatusBadge>}
                           </div>
                           {version.description ? <p className="mt-2 text-sm leading-6"><UiText>{version.description}</UiText></p> : null}
-                          {version.decision ? <p className="muted mt-2 text-sm">{version.decision.reviewerName} · <UiText>{version.decision.comment || "의견 없음"}</UiText></p> : workspace.status === "CONFIRMED" && actor.role !== "STUDENT" && index === 0 ? <ReportDecisionForm teamId={workspace.id} reportVersionId={version.id} /> : null}
+                          {version.decision ? (
+                            <ReportReviewFeedback
+                              versionId={version.id}
+                              decision={version.decision}
+                              showRevisionGuidance={workspace.access.isTeamMember && index === 0}
+                              canResubmit={workspace.status === "CONFIRMED" && report.dueAt >= now}
+                              revisionAction={workspace.access.isTeamMember && index === 0 ? (
+                                <ReportSubmissionForm
+                                  teamId={workspace.id}
+                                  requirements={[{ type: report.type, dueAt: report.dueAt }]}
+                                  triggerLabel="수정본 제출"
+                                  triggerClassName="button-secondary"
+                                />
+                              ) : undefined}
+                            />
+                          ) : workspace.status === "CONFIRMED" && workspace.access.canSupervise && index === 0 ? (
+                            <ReportDecisionForm teamId={workspace.id} reportVersionId={version.id} />
+                          ) : null}
                         </li>
                       ))}
                     </ol>

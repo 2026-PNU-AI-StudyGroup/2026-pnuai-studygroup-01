@@ -24,11 +24,15 @@ import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 type ReportSubmissionFormProps = {
   teamId: string;
   requirements: Array<{ type: ReportType; dueAt: Date }>;
+  triggerLabel?: string;
+  triggerClassName?: string;
 };
 
 export function ReportSubmissionForm({
   teamId,
   requirements,
+  triggerLabel = "보고서 제출",
+  triggerClassName = "button-primary",
 }: ReportSubmissionFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -41,9 +45,9 @@ export function ReportSubmissionForm({
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="button-primary"
+        className={triggerClassName}
       >
-        <UiText>{"보고서 제출"}</UiText></button>
+        <UiText>{triggerLabel}</UiText></button>
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}

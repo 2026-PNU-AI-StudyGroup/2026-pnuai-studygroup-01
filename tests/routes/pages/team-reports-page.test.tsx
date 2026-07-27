@@ -33,6 +33,7 @@ const actor = {
 
 const workspace = {
   id: "team-1",
+  topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
@@ -41,7 +42,15 @@ const workspace = {
   completedMilestoneCount: 0,
   milestones: [],
   professorName: "김교수",
+  advisorEnabled: true,
   canClose: false,
+  access: {
+    isPrimaryAdvisor: false,
+    isAssistant: false,
+    isTeamMember: true,
+    canSupervise: false,
+    canContribute: true,
+  },
   schedule: {
     recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
     recruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
@@ -58,6 +67,43 @@ const workspace = {
 };
 
 describe("TeamReportsPage feedback states", () => {
+  it("학생에게 검토자, 검토 시각, 수정 요청과 다음 행동을 분리해 보여준다", async () => {
+    loadTeamReportWorkspace.mockResolvedValue({
+      actor,
+      workspace,
+      reportWorkspace: {
+        reports: [{
+          id: "report-1",
+          type: "MIDTERM",
+          dueAt: new Date("2026-10-15T14:59:59Z"),
+          versions: [{
+            id: "version-1",
+            version: 1,
+            fileId: "file-1",
+            fileName: "중간보고서.pdf",
+            description: "중간 결과를 정리했습니다.",
+            submittedAt: new Date("2026-07-20T00:00:00Z"),
+            submitterName: "정하늘",
+            decision: {
+              decision: "REVISION_REQUESTED",
+              comment: "근거 자료를 보완해 주세요.",
+              decidedAt: new Date("2026-07-21T03:30:00Z"),
+              reviewerName: "김도윤",
+            },
+          }],
+        }],
+        artifacts: [],
+      },
+    });
+
+    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    expect(screen.getByRole("heading", { name: "수정 요청 사항" })).toBeInTheDocument();
+    expect(screen.getByText("근거 자료를 보완해 주세요.")).toBeInTheDocument();
+    expect(screen.getByText("김도윤")).toBeInTheDocument();
+    expect(screen.getByText("요청 사항을 반영한 새 버전을 제출해 주세요.")).toBeInTheDocument();
+  });
+
   it("보고서 이력이 있으면 제출 불가 안내를 빈 상태가 아닌 compact status로 보여준다", async () => {
     loadTeamReportWorkspace.mockResolvedValue({
       actor,

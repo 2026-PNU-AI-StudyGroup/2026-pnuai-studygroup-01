@@ -1,11 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ArtifactRegistrationForm } from "./artifact-registration-form";
+import { ReportDecisionForm } from "./report-decision-form";
 import { ReportRequirementForm } from "./report-requirement-forms";
 import { ReportSubmissionForm } from "./report-submission-form";
 
-const { refresh, registerArtifact, setRequirement, submitReport } = vi.hoisted(() => ({
+const { decideReport, refresh, registerArtifact, setRequirement, submitReport } = vi.hoisted(() => ({
+  decideReport: vi.fn(),
   refresh: vi.fn(),
   registerArtifact: vi.fn(),
   setRequirement: vi.fn(),
@@ -17,7 +19,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/teams/[teamId]/_actions/team-report-actions", () => ({
-  decideReportAction: vi.fn(),
+  decideReportAction: decideReport,
   registerArtifactAction: registerArtifact,
   removeReportRequirementAction: vi.fn(),
   setReportRequirementAction: setRequirement,
@@ -28,6 +30,7 @@ describe("보고서 요구사항 화면", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
+    decideReport.mockReset();
     refresh.mockClear();
     registerArtifact.mockReset();
     setRequirement.mockReset();
@@ -38,6 +41,38 @@ describe("보고서 요구사항 화면", () => {
     HTMLDialogElement.prototype.close = function close() {
       this.removeAttribute("open");
     };
+  });
+
+  it("교수 검토에서 결정을 명시적으로 선택하고 학생에게 전달할 장문 의견을 작성한다", () => {
+    render(
+      <ReportDecisionForm
+        teamId="70000000-0000-4000-8000-000000000001"
+        reportVersionId="f4000000-0000-4000-8000-000000000001"
+      />,
+    );
+
+    const comment = screen.getByRole("textbox", { name: "학생에게 전달할 검토 의견" });
+    const approve = screen.getByRole("button", { name: "승인하기" });
+    const requestRevision = screen.getByRole("button", { name: "수정 요청하기" });
+
+    expect(comment.tagName).toBe("TEXTAREA");
+    expect(comment).toHaveAttribute("maxlength", "2000");
+    expect(requestRevision).toBeDisabled();
+    expect(screen.queryByText("검토 완료")).not.toBeInTheDocument();
+
+    fireEvent.change(comment, { target: { value: "표의 근거와 조사 일자를 보완해 주세요." } });
+
+    expect(requestRevision).toBeEnabled();
+    expect(screen.getByText("22 / 2000자")).toBeInTheDocument();
+
+    fireEvent.click(approve);
+
+    const dialog = screen.getByRole("dialog", { name: "보고서 승인 확인" });
+    expect(dialog).toHaveAttribute("open");
+    const confirm = screen.getByRole("button", { name: "승인 확정" });
+    expect(confirm).toHaveAttribute("name", "decision");
+    expect(confirm).toHaveAttribute("value", "APPROVED");
+    expect(within(dialog).getByText("표의 근거와 조사 일자를 보완해 주세요.")).toBeInTheDocument();
   });
 
   it("같은 화면에서 요구사항을 연속 저장해도 모달 종료와 성공 피드백을 반복한다", async () => {
