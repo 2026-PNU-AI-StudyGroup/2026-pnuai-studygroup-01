@@ -10,6 +10,9 @@
 https://<운영 도메인>/api/auth/callback/google
 ```
 
+같은 호스트의 `3000` 포트를 이미 사용 중이면 `.env.production`의 `APP_PORT`를
+비어 있는 호스트 포트로 변경한다. 컨테이너 내부 포트는 항상 `3000`이다.
+
 `BETTER_AUTH_SECRET`과 `CRON_SECRET`은 서로 다른 값이어야 한다. 다음 명령으로 각각 생성한다.
 
 ```bash

@@ -1,4 +1,6 @@
 .git
+.DS_Store
+._*
 .next
 node_modules
 npm-debug.log*
@@ -6,4 +8,5 @@ npm-debug.log*
 .env.*
 !.env.example
 !.env.production.example
+client_secret_*.json
 docs/design/*.png
