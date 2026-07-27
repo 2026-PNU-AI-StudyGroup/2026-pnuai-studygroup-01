@@ -422,13 +422,13 @@ async function seed() {
       await tx.topic.upsert({
         where: { id: ids.topics[index] },
         update: {
-          academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex],
+          academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           ...schedule,
           status: "PUBLISHED", publishedAt: new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`),
         },
         create: {
-          id: ids.topics[index], academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex],
+          id: ids.topics[index], academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           applicationQuestions: { create: applicationQuestions },
           ...schedule,
@@ -467,7 +467,7 @@ async function seed() {
       await tx.topic.upsert({
         where: { id: ids.topics[topicIndex] },
         update: {
-          academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, advisorRole, title, description,
+          academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
           capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
@@ -475,7 +475,7 @@ async function seed() {
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
         create: {
-          id: ids.topics[topicIndex], academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, advisorRole, title, description,
+          id: ids.topics[topicIndex], academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
           capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
