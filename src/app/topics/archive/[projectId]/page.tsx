@@ -37,7 +37,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
     new ListArchivedProjectsService(
       new PrismaTeamArchiveQueryRepository(prisma),
     ).find(projectId),
-    loadProgramSidebarItems(),
+    loadProgramSidebarItems("past"),
   ]);
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
@@ -70,7 +70,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
       }
       heading={
         <div>
-          <p className="text-sm font-bold text-[var(--muted)]">{project.teamName} · {project.professorName} {project.advisorRole}</p>
+          <p className="text-sm font-bold text-[var(--muted)]">{project.teamName}{project.advisorEnabled ? ` · ${project.professorName} ${project.advisorRole}` : ""}</p>
           <h1 className="mt-4 max-w-5xl text-[clamp(2.45rem,5vw,4.25rem)] font-black leading-[1.03] tracking-[-0.055em]"><UiText>{project.topicTitle}</UiText></h1>
         </div>
       }

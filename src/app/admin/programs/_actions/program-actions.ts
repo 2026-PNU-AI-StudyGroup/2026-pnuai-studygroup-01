@@ -14,11 +14,23 @@ async function actor() { const value = await getCurrentActor(); if (!value) redi
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
 export async function createProgramAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ academicCycleId: z.string().uuid(), name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ academicCycleId: z.string().uuid(), name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
+    ...Object.fromEntries(formData),
+    studentProjectCreationEnabled: formData.get("studentProjectCreationEnabled") === "true",
+  });
   if (!parsed.success) return { status: "error", message: "프로그램 내용과 운영 기간을 확인해 주세요." };
   try { await service().create(await actor(), parsed.data); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/admin/programs"); return { status: "success", message: "프로그램 초안을 등록했습니다." };
+}
+
+export async function changeStudentProjectCreationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "잘못된 학생 프로젝트 생성 설정입니다." };
+  try { await service().changeStudentProjectCreation(await actor(), parsed.data.programId, parsed.data.enabled === "true"); }
+  catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
+  revalidatePath("/admin/programs"); revalidatePath("/topics"); revalidatePath("/projects/new");
+  return { status: "success", message: parsed.data.enabled === "true" ? "학생 프로젝트 생성을 허용했습니다." : "학생 프로젝트 생성을 중지했습니다." };
 }
 
 export async function changeProgramStatusAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {

@@ -75,7 +75,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       heading={
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm font-bold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p>
+            {topic.advisorEnabled ? <p className="text-sm font-bold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
             <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruiting ? `모집 중 · D-${daysUntilDeadline}` : topic.recruitmentEnabled ? "모집 전·종료" : "기존 팀 참여"}</UiText></StatusBadge>
           </div>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.45rem,5vw,4.25rem)] font-black leading-[1.03] tracking-[-0.055em]"><UiText>{topic.title}</UiText></h1>

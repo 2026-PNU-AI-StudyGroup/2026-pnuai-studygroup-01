@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProgramStatusForm } from "@/app/admin/programs/_components/program-status-form";
+import { StudentProjectCreationForm } from "@/app/admin/programs/_components/student-project-creation-form";
 import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
@@ -47,7 +48,15 @@ export default async function ProgramsAdminPage() {
                 </div>
                 <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs"><UiText>{"운영 기간"}</UiText></dt><dd className="lg:mt-1"><UiDate value={program.startsAt} mode="date" /><br className="hidden lg:block" /> – <UiDate value={program.endsAt} mode="date" /></dd></dl>
                 <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs"><UiText>{"운영 현황"}</UiText></dt><dd className="lg:mt-1"><UiText>{"주제"}</UiText>{" "}{program.topicCount} {" "}<UiText>{"· 팀"}</UiText>{" "}{program.teamCount}</dd></dl>
-                <ProgramStatusForm id={program.id} status={program.status} />
+                <div className="text-right">
+                  <p className="text-xs font-bold text-[var(--muted)]">
+                    <UiText>{program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}</UiText>
+                    {" · "}
+                    <UiText>{program.studentProjectCreationEnabled ? "학생 프로젝트 생성 허용" : "학생 프로젝트 생성 미허용"}</UiText>
+                  </p>
+                  <StudentProjectCreationForm id={program.id} enabled={program.studentProjectCreationEnabled} disabled={program.status === "CLOSED"} />
+                  <ProgramStatusForm id={program.id} status={program.status} />
+                </div>
               </li>
             ))}
           </ol>

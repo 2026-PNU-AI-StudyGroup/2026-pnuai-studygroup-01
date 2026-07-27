@@ -26,7 +26,7 @@ export function ProjectGalleryCover({ id, href, label, title, professorName, aut
   href: string;
   label: string;
   title: string;
-  professorName: string;
+  professorName?: string;
   authorSuffix?: string;
   imagePath?: string;
 }) {
@@ -45,12 +45,12 @@ export function ProjectGalleryCover({ id, href, label, title, professorName, aut
         <span className={styles.programLabel}><UiText>{label}</UiText></span>
         <UiLink href={href} aria-label={`${title} 보기`} className={styles.coverLink} />
       </div>
-      <div className={styles.professor}>
+      {professorName ? <div className={styles.professor}>
         <span aria-hidden="true" className={styles.professorMark}>
           <AccountIcon className="size-5" />
         </span>
         <span className={styles.professorName}>{professorName} {authorSuffix}</span>
-      </div>
+      </div> : null}
     </>
   );
 }

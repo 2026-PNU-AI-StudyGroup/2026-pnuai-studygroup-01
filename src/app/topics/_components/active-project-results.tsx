@@ -18,7 +18,6 @@ const koreanDate = new Intl.DateTimeFormat("ko-KR", {
 
 const applicationStatus = {
   PENDING: { label: "지원서 검토 중", tone: "info", href: "/dashboard?view=pending" },
-  ACCEPTED: { label: "프로젝트 참여 확정", tone: "success", href: "/dashboard?view=active" },
   REJECTED: { label: "지원 결과 확인", tone: "neutral", href: "/dashboard?view=rejected" },
 } as const;
 
@@ -83,7 +82,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
                     href={href}
                     label={`${topic.programCategory} · ${topic.programName}`}
                     title={topic.title}
-                    professorName={topic.authorName}
+                    professorName={topic.advisorEnabled ? topic.authorName : undefined}
                     authorSuffix={topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}
                   />
                   <div className={styles.body}>
@@ -118,7 +117,11 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
                     ) : null}
 
                     <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
-                      {application ? (
+                      {application === "ACCEPTED" ? (
+                        <button type="button" disabled className="button-secondary w-full cursor-not-allowed border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted)] opacity-100">
+                          <UiText>{"참여 중"}</UiText>
+                        </button>
+                      ) : application ? (
                         <Link href={applicationStatus[application].href} className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
                           <UiText>{applicationStatus[application].label}</UiText> <ArrowIcon />
                         </Link>

@@ -65,7 +65,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                         href={href}
                         label={`${project.programCategory} · ${project.programName}`}
                         title={project.topicTitle}
-                        professorName={project.professorName}
+                        professorName={project.advisorEnabled ? project.professorName : undefined}
                         authorSuffix={project.advisorRole}
                         imagePath={project.thumbnailPath}
                       />

@@ -6,6 +6,8 @@ export type ProjectProgramDetails = {
   description: string;
   startsAt: Date;
   endsAt: Date;
+  advisorEnabled: boolean;
+  studentProjectCreationEnabled: boolean;
 };
 
 export class InvalidProjectProgramError extends Error {}

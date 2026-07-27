@@ -24,6 +24,7 @@ const initialState: TopicFormActionState = { status: "idle", message: "" };
 type TopicFormProps = {
   action: TopicFormAction;
   programs: ProjectProgramRecord[];
+  defaultProgramId?: string;
   successHref?: string;
   studentApproval?: {
     professors: Array<{ id: string; name: string; email: string }>;
@@ -40,12 +41,15 @@ const periodFields = [
   ["제출 종료", "submissionEndsAt"],
 ] as const;
 
-export function TopicForm({ action: createTopic, programs, successHref, studentApproval }: TopicFormProps) {
+export function TopicForm({ action: createTopic, programs, defaultProgramId, successHref, studentApproval }: TopicFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createTopic, initialState);
   const nextQuestionId = useRef(2);
   const [questions, setQuestions] = useState([{ id: 1 }]);
+  const [selectedProgramId, setSelectedProgramId] = useState(defaultProgramId ?? "");
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
+  const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
+  const advisorEnabled = selectedProgram?.advisorEnabled;
   useEffect(() => {
     if (state.status === "success" && successHref) router.replace(successHref);
   }, [router, state.status, successHref]);
@@ -58,7 +62,12 @@ export function TopicForm({ action: createTopic, programs, successHref, studentA
         <UiText>{"프로그램"}</UiText><CustomSelect
           name="programId"
           required
+          defaultValue={defaultProgramId}
           placeholder="프로그램을 선택하세요"
+          onValueChange={(value) => {
+            setSelectedProgramId(value);
+            if (!programs.find(({ id }) => id === value)?.advisorEnabled) setApprovalRoute("ADMIN");
+          }}
           options={programs.map((program) => ({
             value: program.id,
             label: program.name,
@@ -120,12 +129,20 @@ export function TopicForm({ action: createTopic, programs, successHref, studentA
       {studentApproval ? <section className="grid gap-5 border-t border-[var(--line)] py-7">
         <div><h2 className="text-base font-semibold"><UiText>{"참여 팀"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"기존 팀을 선택하면 현재 팀원 전원이 승인과 동시에 참여하며 추가 모집은 받지 않습니다."}</UiText></p></div>
         <label className="grid gap-2 text-sm font-medium"><UiText>{"기존 팀 (선택)"}</UiText><CustomSelect name="studentTeamId" placeholder="선택하지 않고 새 팀원 모집" options={[{ value: "", label: "선택하지 않고 새 팀원 모집" }, ...studentApproval.studentTeams.map((team) => ({ value: team.id, label: team.name, description: `${team.memberCount}명 · 추가 모집 없음` }))]} /></label>
-        <div><h2 className="text-base font-semibold"><UiText>{"승인 요청"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"지정 교수 한 명 또는 관리자 그룹에 검토를 요청합니다."}</UiText></p></div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} /><span><strong className="block"><UiText>{"교수에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"검토할 교수를 반드시 지정합니다."}</UiText></span></span></label>
-          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} /><span><strong className="block"><UiText>{"관리자에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"특정 관리자를 지정하지 않습니다."}</UiText></span></span></label>
-        </div>
-        {approvalRoute === "PROFESSOR" ? <label className="grid gap-2 text-sm font-medium"><UiText>{"승인 교수"}</UiText><CustomSelect name="requestedProfessorId" required placeholder="교수를 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></label> : null}
+        <div><h2 className="text-base font-semibold"><UiText>{"승인 요청"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{advisorEnabled === false ? "지도교수가 없는 프로그램이므로 관리자 그룹에 검토를 요청합니다." : "지정 교수 한 명 또는 관리자 그룹에 검토를 요청합니다."}</UiText></p></div>
+        {advisorEnabled === false ? (
+          <input type="hidden" name="approvalRoute" value="ADMIN" />
+        ) : advisorEnabled === true ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} /><span><strong className="block"><UiText>{"교수에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"검토할 교수를 반드시 지정합니다."}</UiText></span></span></label>
+              <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} /><span><strong className="block"><UiText>{"관리자에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"특정 관리자를 지정하지 않습니다."}</UiText></span></span></label>
+            </div>
+            {approvalRoute === "PROFESSOR" ? <label className="grid gap-2 text-sm font-medium"><UiText>{"승인 교수"}</UiText><CustomSelect name="requestedProfessorId" required placeholder="교수를 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></label> : null}
+          </>
+        ) : (
+          <p className="muted text-sm"><UiText>{"프로그램을 선택하면 승인 요청 방식이 표시됩니다."}</UiText></p>
+        )}
       </section> : null}
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line)] py-5"><p className="muted text-sm"><UiText>{studentApproval ? "승인 전까지 공개되지 않습니다." : "저장 후 목록에서 공개할 수 있습니다."}</UiText></p><button type="submit" disabled={pending || programs.length === 0} className="button-primary">
         <UiText>{pending ? "저장 중" : studentApproval ? "승인 요청 보내기" : "초안 저장"}</UiText>

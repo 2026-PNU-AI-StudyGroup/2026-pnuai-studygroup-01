@@ -54,6 +54,8 @@ async function main() {
     description: "하드코딩 없는 동적 프로그램 검증",
     startsAt: new Date(now.getTime() - day),
     endsAt: new Date(now.getTime() + 90 * day),
+    advisorEnabled: true,
+    studentProjectCreationEnabled: false,
   });
   const program = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "OPEN", now);
@@ -78,7 +80,7 @@ async function main() {
     submissionStartsAt: new Date(now.getTime() + 60 * day),
     submissionEndsAt: new Date(now.getTime() + 80 * day),
   });
-  if (!(await topicCommands.publishDraft(topic.id, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
+  if (!(await topicCommands.publishDraft(topic.id, { id: professorId, role: "PROFESSOR" }, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
   const filtered = await topicQueries.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
@@ -126,12 +128,14 @@ async function main() {
   if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
   }
-  if (await topicCommands.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
+  if (await topicCommands.publishDraft(topic.id, { id: professorId, role: "PROFESSOR" }, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
 
   const raceName = `마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
     academicCycleId: cycle.id, name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
+    advisorEnabled: true,
+    studentProjectCreationEnabled: false,
   });
   const raceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id, name: raceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "OPEN", now);

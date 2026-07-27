@@ -11,7 +11,8 @@ export interface ProjectProgramRepository {
   listAll(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedAt: Date): Promise<boolean>;
-  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date } | null>;
+  changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean>;
+  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null>;
 }
 
 export class ProjectProgramOperationError extends Error {}
@@ -19,6 +20,9 @@ export class ProjectProgramOperationError extends Error {}
 export class ProjectProgramService {
   constructor(private readonly repository: ProjectProgramRepository) {}
   listOpen() { return this.repository.listOpen(); }
+  async listStudentCreatableOpen() {
+    return (await this.repository.listOpen()).filter(({ studentProjectCreationEnabled }) => studentProjectCreationEnabled);
+  }
   async listAll(actor: CurrentActor) { assertProgramAdmin(actor); return this.repository.listAll(); }
   async create(actor: CurrentActor, input: ProjectProgramDetails & { academicCycleId: string }) {
     assertProgramAdmin(actor);
@@ -28,5 +32,11 @@ export class ProjectProgramService {
   async changeStatus(actor: CurrentActor, id: string, status: "OPEN" | "CLOSED", now = new Date()) {
     assertProgramAdmin(actor);
     if (!(await this.repository.changeStatus(id, status, now))) throw new ProjectProgramOperationError("변경할 수 없는 프로그램 상태입니다.");
+  }
+  async changeStudentProjectCreation(actor: CurrentActor, id: string, enabled: boolean) {
+    assertProgramAdmin(actor);
+    if (!(await this.repository.changeStudentProjectCreation(id, enabled))) {
+      throw new ProjectProgramOperationError("학생 프로젝트 생성 설정을 변경할 프로그램이 없습니다.");
+    }
   }
 }

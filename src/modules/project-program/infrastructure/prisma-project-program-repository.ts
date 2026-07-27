@@ -76,7 +76,18 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     });
   }
 
-  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date } | null> {
-    return this.client.projectProgram.findFirst({ where: { id, status: "OPEN" }, select: { id: true, academicCycleId: true, startsAt: true, endsAt: true } });
+  async changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean> {
+    const result = await this.client.projectProgram.updateMany({
+      where: { id, status: { not: "CLOSED" } },
+      data: { studentProjectCreationEnabled: enabled },
+    });
+    return result.count === 1;
+  }
+
+  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null> {
+    return this.client.projectProgram.findFirst({
+      where: { id, status: "OPEN" },
+      select: { id: true, academicCycleId: true, startsAt: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true },
+    });
   }
 }
