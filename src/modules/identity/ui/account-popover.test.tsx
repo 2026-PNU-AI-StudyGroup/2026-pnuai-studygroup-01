@@ -14,7 +14,7 @@ import { AccountPopover } from "@/modules/identity/ui/account-popover";
 
 describe("AccountPopover", () => {
   it("계정 버튼에서 내 계정 이동과 로그아웃을 바로 제공한다", async () => {
-    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} />);
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} locale="ko" />);
 
     fireEvent.click(screen.getByRole("button", { name: "정하늘 계정 메뉴" }));
 
@@ -28,7 +28,7 @@ describe("AccountPopover", () => {
   });
 
   it("Esc를 누르면 계정 말풍선을 닫고 버튼으로 초점을 돌린다", () => {
-    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} placement="below" />);
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} placement="below" locale="ko" />);
 
     const trigger = screen.getByRole("button", { name: "정하늘 계정 메뉴" });
     fireEvent.click(trigger);

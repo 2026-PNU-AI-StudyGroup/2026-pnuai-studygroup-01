@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { UiDate } from "@/modules/translation/ui/i18n-provider";
+import { UiButton } from "@/modules/translation/ui/localized-elements";
+import { UiSection } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useEffect, useId, useRef, useState } from "react";
 
 import type { NotificationType } from "@/modules/notification/domain/notification";
@@ -20,14 +24,6 @@ const typeLabel: Record<NotificationType, string> = {
   DEADLINE: "마감",
   SYSTEM: "안내",
 };
-
-const dateTime = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul",
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 export function NotificationPopover({
   active,
@@ -72,7 +68,7 @@ export function NotificationPopover({
 
   return (
     <div ref={rootRef} className="relative">
-      <button
+      <UiButton
         ref={buttonRef}
         type="button"
         aria-current={active ? "page" : undefined}
@@ -105,10 +101,10 @@ export function NotificationPopover({
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
-      </button>
+      </UiButton>
 
       {open ? (
-        <section
+        <UiSection
           id={panelId}
           role="dialog"
           aria-label="최근 알림"
@@ -123,14 +119,14 @@ export function NotificationPopover({
             className={`absolute z-10 size-3 rotate-45 bg-white ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
-                : "-top-1.5 right-[5.875rem] border-l border-t border-[var(--line-strong)]"
+                : "-top-1.5 right-[7.75rem] border-l border-t border-[var(--line-strong)] sm:right-[8.5rem]"
             }`}
           />
           <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
             <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4">
-              <h2 className="text-base font-extrabold tracking-[-0.025em]">알림</h2>
+              <h2 className="text-base font-extrabold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
               <span className="text-xs font-semibold text-[var(--muted)]">
-                {unreadCount ? `읽지 않음 ${accessibleCount}` : "모두 확인함"}
+                <UiText>{unreadCount ? `읽지 않음 ${accessibleCount}` : "모두 확인함"}</UiText>
               </span>
             </header>
 
@@ -154,12 +150,12 @@ export function NotificationPopover({
                               {typeLabel[item.type]}
                             </span>
                             <time className="shrink-0 text-[11px] font-medium text-[var(--muted)]" dateTime={item.createdAt}>
-                              {dateTime.format(new Date(item.createdAt))}
+                              <UiDate value={new Date(item.createdAt)} mode="dateTime" />
                             </time>
                           </span>
-                          <strong className="mt-1.5 block truncate text-sm font-extrabold">{item.title}</strong>
-                          <span className="mt-1 line-clamp-1 block text-xs leading-5 text-[var(--muted)]">{item.body}</span>
-                          {!item.read ? <span className="sr-only">읽지 않은 알림</span> : null}
+                          <strong className="mt-1.5 block truncate text-sm font-extrabold"><UiText>{item.title}</UiText></strong>
+                          <span className="mt-1 line-clamp-1 block text-xs leading-5 text-[var(--muted)]"><UiText>{item.body}</UiText></span>
+                          {!item.read ? <span className="sr-only"><UiText>{"읽지 않은 알림"}</UiText></span> : null}
                         </span>
                       </button>
                     </form>
@@ -168,8 +164,8 @@ export function NotificationPopover({
               </ol>
             ) : (
               <div className="px-5 py-10 text-center">
-                <p className="text-sm font-extrabold">새로운 알림이 없습니다</p>
-                <p className="mt-1 text-xs leading-5 text-[var(--muted)]">프로젝트 활동이 생기면 여기에 표시됩니다.</p>
+                <p className="text-sm font-extrabold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
+                <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"프로젝트 활동이 생기면 여기에 표시됩니다."}</UiText></p>
               </div>
             )}
 
@@ -178,13 +174,12 @@ export function NotificationPopover({
               onClick={() => setOpen(false)}
               className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-extrabold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
             >
-              전체 알림 보기
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
+              <UiText>{"전체 알림 보기"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
                 <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
           </div>
-        </section>
+        </UiSection>
       ) : null}
     </div>
   );

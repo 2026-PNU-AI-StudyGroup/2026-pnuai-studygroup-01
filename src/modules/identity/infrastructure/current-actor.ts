@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
+import { cache } from "react";
 
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import { auth } from "@/modules/identity/infrastructure/auth";
 
-export async function getCurrentActor(): Promise<CurrentUser | null> {
+export const getCurrentActor = cache(async (): Promise<CurrentUser | null> => {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session || session.user.isActive === false) {
@@ -17,4 +18,4 @@ export async function getCurrentActor(): Promise<CurrentUser | null> {
     email: session.user.email,
     image: session.user.image ?? null,
   };
-}
+});

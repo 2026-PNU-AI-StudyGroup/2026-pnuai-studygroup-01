@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { UiButton, UiSection } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useSignOut } from "@/modules/identity/ui/use-sign-out";
+import type { SiteLocale } from "@/modules/translation/domain/site-locale";
 
 export function AccountPopover({
   userName,
@@ -11,18 +14,23 @@ export function AccountPopover({
   active,
   placement = "side",
   inverse = false,
+  locale,
 }: {
   userName: string;
   roleLabel: string;
   active: boolean;
   placement?: "side" | "below";
   inverse?: boolean;
+  locale: SiteLocale;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { signOut, isPending, message } = useSignOut();
+  const copy = locale === "ko"
+    ? { accountMenu: "계정 메뉴", myAccount: "내 계정", signingOut: "로그아웃 중…", signOut: "로그아웃" }
+    : { accountMenu: "Account menu", myAccount: "My account", signingOut: "Signing out…", signOut: "Sign out" };
 
   useEffect(() => {
     if (!open) return;
@@ -46,11 +54,11 @@ export function AccountPopover({
 
   return (
     <div ref={rootRef} className="relative">
-      <button
+      <UiButton
         ref={buttonRef}
         type="button"
         aria-current={active ? "page" : undefined}
-        aria-label={`${userName} 계정 메뉴`}
+        aria-label={`${userName} ${copy.accountMenu}`}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
@@ -70,13 +78,13 @@ export function AccountPopover({
             <path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" />
           </svg>
         </span>
-      </button>
+      </UiButton>
 
       {open ? (
-        <section
+        <UiSection
           id={panelId}
           role="dialog"
-          aria-label="계정 메뉴"
+          aria-label={copy.accountMenu}
           className={`absolute z-50 text-left text-[var(--ink)] ${
             placement === "side"
               ? "bottom-0 left-[calc(100%+0.75rem)] w-72"
@@ -88,7 +96,7 @@ export function AccountPopover({
             className={`absolute z-10 size-3 rotate-45 bg-white ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
-                : "-top-1.5 right-[2.875rem] border-l border-t border-[var(--line-strong)]"
+                : "-top-1.5 right-5 border-l border-t border-[var(--line-strong)] sm:right-8"
             }`}
           />
           <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
@@ -101,7 +109,7 @@ export function AccountPopover({
               </span>
               <span className="min-w-0">
                 <strong className="block truncate text-sm font-extrabold">{userName}</strong>
-                <span className="mt-0.5 block text-xs font-semibold text-[var(--muted)]">{roleLabel}</span>
+                <span className="mt-0.5 block text-xs font-semibold text-[var(--muted)]"><UiText>{roleLabel}</UiText></span>
               </span>
             </header>
 
@@ -110,7 +118,7 @@ export function AccountPopover({
               onClick={() => setOpen(false)}
               className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-bold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
             >
-              내 계정
+              {copy.myAccount}
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
                 <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -121,15 +129,15 @@ export function AccountPopover({
               disabled={isPending}
               className="flex min-h-12 w-full items-center px-5 text-left text-sm font-bold text-[var(--muted)] hover:bg-[var(--danger-subtle)] hover:text-[var(--danger)] disabled:cursor-wait disabled:opacity-60"
             >
-              {isPending ? "로그아웃 중…" : "로그아웃"}
+              {isPending ? copy.signingOut : copy.signOut}
             </button>
             {message ? (
               <p role="status" aria-live="polite" className="border-t border-[var(--line)] px-5 py-3 text-xs font-semibold text-[var(--danger)]">
-                {message}
+                <UiText>{message}</UiText>
               </p>
             ) : null}
           </div>
-        </section>
+        </UiSection>
       ) : null}
     </div>
   );

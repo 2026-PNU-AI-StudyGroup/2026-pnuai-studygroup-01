@@ -1,9 +1,12 @@
 "use client";
 
+import { UiText } from "@/shared/i18n/i18n-provider";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-export type SelectOption = {
+import { useI18n } from "@/shared/i18n/i18n-provider";
+
+type SelectOption = {
   value: string;
   label: string;
   description?: string;
@@ -30,6 +33,7 @@ export function CustomSelect({
   className = "",
   onValueChange,
 }: CustomSelectProps) {
+  const { t } = useI18n();
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -65,7 +69,7 @@ export function CustomSelect({
         }}
       >
         <span className={selected ? "" : "text-[var(--muted)]"}>
-          {selected?.label ?? placeholder}
+          {t(selected?.label ?? placeholder)}
         </span>
         <Chevron open={open} />
       </button>
@@ -81,8 +85,8 @@ export function CustomSelect({
               onClick={() => choose(option.value)}
             >
               <span>
-                <strong>{option.label}</strong>
-                {option.description ? <small>{option.description}</small> : null}
+                <strong>{t(option.label)}</strong>
+                {option.description ? <small>{t(option.description)}</small> : null}
               </span>
               {value === option.value ? <Check /> : null}
             </button>
@@ -113,6 +117,7 @@ export function CustomMultiSelect({
   className = "",
   onValuesChange,
 }: CustomMultiSelectProps) {
+  const { t } = useI18n();
   const [values, setValues] = useState(() => [...new Set(defaultValues)]);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -147,19 +152,19 @@ export function CustomMultiSelect({
           {selectedOptions.length ? (
             <>
               {selectedOptions.slice(0, 2).map((option) => (
-                <span key={option.value} className="custom-multi-select__chip">{option.label}</span>
+                <span key={option.value} className="custom-multi-select__chip">{t(option.label)}</span>
               ))}
               {selectedOptions.length > 2 ? <span className="custom-multi-select__count">+{selectedOptions.length - 2}</span> : null}
             </>
-          ) : placeholder}
+          ) : t(placeholder)}
         </span>
         <Chevron open={open} />
       </button>
       {open ? createPortal(
         <div ref={menuRef} id={listboxId} role="listbox" aria-multiselectable="true" className="custom-select__menu" style={floatingStyle}>
           <div className="custom-select__menu-heading">
-            <span>담당자 선택</span>
-            <span>{values.length}명</span>
+            <span>{t("담당자 선택")}</span>
+            <span>{values.length}<UiText>{"명"}</UiText></span>
           </div>
           {options.map((option) => {
             const checked = values.includes(option.value);
@@ -174,14 +179,14 @@ export function CustomMultiSelect({
               >
                 <span className="custom-multi-select__avatar" aria-hidden="true">{option.label.slice(0, 1)}</span>
                 <span className="min-w-0 flex-1">
-                  <strong>{option.label}</strong>
-                  {option.description ? <small>{option.description}</small> : null}
+                  <strong>{t(option.label)}</strong>
+                  {option.description ? <small>{t(option.description)}</small> : null}
                 </span>
                 <span className="custom-multi-select__checkbox" aria-hidden="true">{checked ? <Check /> : null}</span>
               </button>
             );
           })}
-          {options.length === 0 ? <p className="custom-select__empty">선택할 수 있는 팀원이 없습니다.</p> : null}
+          {options.length === 0 ? <p className="custom-select__empty">{t("선택할 수 있는 팀원이 없습니다.")}</p> : null}
         </div>,
         document.body,
       ) : null}

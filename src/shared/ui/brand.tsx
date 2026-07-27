@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { UiLink } from "@/shared/i18n/localized-elements";
+import { UiText } from "@/shared/i18n/i18n-provider";
 
 export function Brand({
   inverse = false,
@@ -14,7 +15,7 @@ export function Brand({
   const isSidebar = variant === "sidebar";
 
   return (
-    <Link
+    <UiLink
       href={href}
       className={`inline-flex min-h-11 shrink-0 items-center ${isSidebar ? "w-full flex-col justify-center text-center" : ""}`}
       aria-label={ariaLabel ?? (href === "/" ? "부산대학교 학과 프로젝트 관리 홈" : "부산대학교 학과 프로젝트 탐색")}
@@ -31,10 +32,10 @@ export function Brand({
             inverse ? "text-white" : "text-[var(--ink)]"
           }`}
         >
-          <span className="block">부산대학교</span>
-          <span className={`block ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}>프로젝트관리 시스템</span>
+          <span className="block"><UiText>{"부산대학교"}</UiText></span>
+          <span className={`block ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}><UiText>{"프로젝트관리 시스템"}</UiText></span>
         </span>
       ) : null}
-    </Link>
+    </UiLink>
   );
 }

@@ -1,3 +1,4 @@
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -10,7 +11,9 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
-export const metadata: Metadata = { title: "알림" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("알림");
+}
 
 export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();

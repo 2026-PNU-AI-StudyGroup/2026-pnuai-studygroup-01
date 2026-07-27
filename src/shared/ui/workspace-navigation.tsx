@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { UiText } from "@/shared/i18n/i18n-provider";
+import { UiNav } from "@/shared/i18n/localized-elements";
 
 type WorkspaceNavigationItem = {
   href: string;
@@ -17,12 +19,12 @@ export function WorkspaceNavigation({
   const current = items.find((item) => item.active) ?? items[0];
 
   return (
-    <nav aria-label={label} className="mt-5 border-b border-[var(--line)]">
+    <UiNav aria-label={label} className="mt-5 border-b border-[var(--line)]">
       <details className="group relative pb-3 md:hidden">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-0 [&::-webkit-details-marker]:hidden">
           <span className="min-w-0">
-            <strong className="block truncate text-sm font-semibold">{current.label}</strong>
-            <span className="sr-only">{current.hint}</span>
+            <strong className="block truncate text-sm font-semibold"><UiText>{current.label}</UiText></strong>
+            <span className="sr-only"><UiText>{current.hint}</UiText></span>
           </span>
           <svg
             aria-hidden="true"
@@ -47,8 +49,8 @@ export function WorkspaceNavigation({
                   : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
               }`}
             >
-              <span className="block">{item.label}</span>
-              <span className="sr-only">{item.hint}</span>
+              <span className="block"><UiText>{item.label}</UiText></span>
+              <span className="sr-only"><UiText>{item.hint}</UiText></span>
             </Link>
           ))}
         </div>
@@ -66,11 +68,11 @@ export function WorkspaceNavigation({
                 : "text-[var(--muted)] after:bg-transparent hover:text-[var(--ink)]"
             }`}
           >
-            <span className="block truncate">{item.label}</span>
-            <span className="sr-only">{item.hint}</span>
+            <span className="block truncate"><UiText>{item.label}</UiText></span>
+            <span className="sr-only"><UiText>{item.hint}</UiText></span>
           </Link>
         ))}
       </div>
-    </nav>
+    </UiNav>
   );
 }
