@@ -12,6 +12,9 @@ https://<운영 도메인>/api/auth/callback/google
 
 같은 호스트의 `3000` 포트를 이미 사용 중이면 `.env.production`의 `APP_PORT`를
 비어 있는 호스트 포트로 변경한다. 컨테이너 내부 포트는 항상 `3000`이다.
+Reverse Proxy가 다른 호스트에서 접근해야 한다면 `APP_HOST=0.0.0.0`으로 설정하고,
+방화벽에서 해당 포트를 신뢰하는 내부 네트워크에만 허용한다. 같은 호스트의
+Reverse Proxy를 사용할 때는 기본값인 `127.0.0.1`을 유지한다.
 
 `BETTER_AUTH_SECRET`과 `CRON_SECRET`은 서로 다른 값이어야 한다. 다음 명령으로 각각 생성한다.
 
