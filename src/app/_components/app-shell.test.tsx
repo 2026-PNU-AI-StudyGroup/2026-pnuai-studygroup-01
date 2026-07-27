@@ -1,8 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findUniqueMock, redirectMock } = vi.hoisted(() => ({
+const { findUniqueMock, projectAssistantCountMock, redirectMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn(),
+  projectAssistantCountMock: vi.fn(async () => 0),
   redirectMock: vi.fn(),
 }));
 
@@ -33,6 +34,9 @@ vi.mock("@/shared/infrastructure/database/prisma", () => ({
     storedTranslation: {
       findMany: vi.fn(async () => []),
     },
+    projectAssistant: {
+      count: projectAssistantCountMock,
+    },
   },
 }));
 vi.mock("@/modules/identity/ui/account-popover", () => ({
@@ -47,6 +51,8 @@ describe("AppShell", () => {
   beforeEach(() => {
     redirectMock.mockReset();
     findUniqueMock.mockReset();
+    projectAssistantCountMock.mockReset();
+    projectAssistantCountMock.mockResolvedValue(0);
     findUniqueMock.mockResolvedValue({
       onboardingRequired: false,
       onboardingCompletedAt: null,
@@ -78,6 +84,25 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "프로그램" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "내 지원" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).toHaveAttribute("href", "/dashboard");
+    expect(screen.getAllByRole("link", { name: "공지사항" })[0]).toHaveAttribute("href", "/announcements");
+  });
+
+  it("학생 조교에게 프로젝트 운영 메뉴를 제공한다", async () => {
+    projectAssistantCountMock.mockResolvedValue(1);
+
+    render(await AppShell({
+      role: "STUDENT",
+      userId: "assistant-1",
+      userName: "학생 조교",
+      currentPath: "/professor/topics",
+      preferredLocale: "ko",
+      children: <p>본문</p>,
+    }));
+
+    const links = screen.getAllByRole("link", { name: "조교 관리" });
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute("href", "/professor/topics");
+    expect(links[0]).toHaveAttribute("aria-current", "page");
   });
 
   it("학생 프로젝트 화면에서는 통합된 내 프로젝트 메뉴를 현재 위치로 표시한다", async () => {
@@ -116,10 +141,11 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "프로그램" })).not.toBeInTheDocument();
   });
 
-  it("관리자 전역 메뉴를 세 개로 제한하고 세부 관리는 화면 내부 내비게이션에 맡긴다", async () => {
+  it("관리자 전역 메뉴에 공지사항을 제공하고 세부 관리는 화면 내부 내비게이션에 맡긴다", async () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/admin/academic-cycles", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "관리" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "공지사항" })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: "학기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("navigation")).toHaveLength(2);
   });

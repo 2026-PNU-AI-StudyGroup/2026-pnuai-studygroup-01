@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { openNotificationAction } from "@/app/_actions/notification-actions";
@@ -8,6 +7,7 @@ import { updateLanguageAction } from "@/app/_actions/language-actions";
 import { NotificationIndicatorContainer } from "@/app/_components/notification-indicator-container";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import { AccountPopover } from "@/modules/identity/ui/account-popover";
+import { requireCompletedStudentOnboarding } from "@/modules/identity/infrastructure/student-onboarding-guard";
 import type { SiteLocale } from "@/modules/translation/domain/site-locale";
 import { readStoredContentTranslations } from "@/modules/translation/application/localize-stored-content";
 import { ReadStoredTranslationService } from "@/modules/translation/application/read-stored-translation";
@@ -21,7 +21,7 @@ import { Brand } from "@/shared/ui/brand";
 type NavigationItem = {
   href: string;
   label: string;
-  icon: "home" | "search" | "users" | "settings";
+  icon: "home" | "search" | "users" | "notice" | "settings";
 };
 
 function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
@@ -30,6 +30,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         explore: "프로젝트 탐색",
         projects: "내 프로젝트",
         teams: "팀 관리",
+        announcements: "공지사항",
         allProjects: "전체 프로젝트",
         mentoredProjects: "지도 프로젝트",
         manage: "관리",
@@ -38,6 +39,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         explore: "Explore",
         projects: "Projects",
         teams: "Teams",
+        announcements: "Notices",
         allProjects: "All projects",
         mentoredProjects: "Mentoring",
         manage: "Manage",
@@ -47,18 +49,21 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.projects, icon: "home" },
       { href: "/recruitments", label: label.teams, icon: "users" },
+      { href: "/announcements", label: label.announcements, icon: "notice" },
     ];
   }
   if (role === "ADMIN") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.allProjects, icon: "home" },
+      { href: "/announcements", label: label.announcements, icon: "notice" },
       { href: "/admin/programs", label: label.manage, icon: "settings" },
     ];
   }
   return [
     { href: "/topics", label: label.explore, icon: "search" },
     { href: "/dashboard", label: label.mentoredProjects, icon: "home" },
+    { href: "/announcements", label: label.announcements, icon: "notice" },
     { href: "/professor/topics", label: label.manage, icon: "settings" },
   ];
 }
@@ -83,29 +88,22 @@ function NavIcon({ name, active = false }: { name: NavigationItem["icon"]; activ
     home: <><path d="m3 11 9-8 9 8" /><path d="M5 10v10h14V10M9 20v-6h6v6" /></>,
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-4 2-6 6-6s6 2 6 6M16 5c3 0 4 2 4 4s-1 3-3 3M17 14c3 0 4 2 4 5" /></>,
+    notice: <><path d="M6 4h12v16H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 15 6l-.3-2.6h-4L10.4 6A8 8 0 0 0 8.8 7L6.4 6 4.5 9.5 6.6 11a7 7 0 0 0 0 2L4.5 14.5 6.4 18l2.4-1a8 8 0 0 0 1.6 1l.3 2.6h4L15 18a8 8 0 0 0 1.6-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z" /></>,
   };
   const filledPaths = {
     home: <path d="M2.8 11.2 12 3l9.2 8.2-1.5 1.7-1.2-1.1V21H14v-6H10v6H5.5v-9.2l-1.2 1.1-1.5-1.7Z" />,
     search: <path fillRule="evenodd" d="M10.5 2.5a8 8 0 1 0 4.9 14.3l4.5 4.5 1.4-1.4-4.5-4.5a8 8 0 0 0-6.3-12.9Zm0 2.2a5.8 5.8 0 1 1 0 11.6 5.8 5.8 0 0 1 0-11.6Z" />,
     users: <path d="M9 3.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM1.8 21c.2-5.1 2.6-7.6 7.2-7.6s7 2.5 7.2 7.6H1.8Zm14-9.2c2.8-.4 5.2-2.1 5.2-5 0-2.3-1.6-3.8-4.1-3.8-.5 0-1 .1-1.4.2a5.6 5.6 0 0 1 .1 7.5l.2 1.1Zm1.8 1.7c3.1.8 4.6 3.3 4.6 7.5h-4.1a9.8 9.8 0 0 0-2.2-6.4c.5-.5 1.1-.8 1.7-1.1Z" />,
+    notice: <path d="M5 3h14v18H5V3Zm3 4v2h8V7H8Zm0 4v2h8v-2H8Zm0 4v2h5v-2H8Z" />,
     settings: <path d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6-2-3.5-2.6 1a7.4 7.4 0 0 0-1.7-1L14.8 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.6-1-2 3.5L6.2 11a7.7 7.7 0 0 0-.1 1 7.7 7.7 0 0 0 .1 1l-2.1 1.6 2 3.5 2.6-1a7.4 7.4 0 0 0 1.7 1l.4 2.9h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.6 1 2-3.5-2.1-1.6ZM12.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" />,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-5 shrink-0 ${active ? "fill-current" : "fill-none stroke-current stroke-[1.75]"}`}>{active ? filledPaths[name] : outlinePaths[name]}</svg>;
 }
 
 export async function AppShell({ role, userId, userName, currentPath, children, preferredLocale }: { role: UserRole; userId: string; userName: string; currentPath: string; children: ReactNode; preferredLocale?: SiteLocale }) {
-  if (role === "STUDENT" && currentPath !== "/onboarding") {
-    const registration = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        onboardingRequired: true,
-        onboardingCompletedAt: true,
-      },
-    });
-    if (registration?.onboardingRequired && !registration.onboardingCompletedAt) {
-      redirect("/onboarding");
-    }
+  if (currentPath !== "/onboarding") {
+    await requireCompletedStudentOnboarding({ id: userId, role });
   }
   const locale = preferredLocale ?? await getUserLocale(userId);
   const storedTranslations = await readStoredContentTranslations(
@@ -114,6 +112,16 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     new ReadStoredTranslationService(new PrismaStoredTranslationReader(prisma)),
   );
   const navigation = navigationFor(role, locale);
+  if (
+    role === "STUDENT" &&
+    await prisma.projectAssistant.count({ where: { userId } }) > 0
+  ) {
+    navigation.splice(2, 0, {
+      href: "/professor/topics",
+      label: locale === "ko" ? "조교 관리" : "Assistant",
+      icon: "settings",
+    });
+  }
   const roleLabel = locale === "ko"
     ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자"
     : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : "Administrator";
