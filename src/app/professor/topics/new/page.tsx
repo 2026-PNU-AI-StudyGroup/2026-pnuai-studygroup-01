@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createTopicAction } from "@/app/_actions/create-topic-action";
@@ -12,7 +14,9 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
-export const metadata: Metadata = { title: "새 주제 등록" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("새 주제 등록");
+}
 
 export default async function NewTopicPage() {
   const actor = await getCurrentActor();
@@ -22,8 +26,8 @@ export default async function NewTopicPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
-      <ProfessorWorkspace currentPath="/professor/topics/new" eyebrow="주제 설계 · 새로 만들기" title="새 프로젝트 주제" description="학생이 목표와 기대 역할을 바로 이해할 수 있도록 핵심부터 작성합니다." actions={<Link className="button-secondary" href="/professor/topics">주제 목록</Link>}>
-        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 공개된 프로그램이 없습니다" description="프로그램이 공개되면 새 프로젝트 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics">주제 목록</Link>} />}
+      <ProfessorWorkspace currentPath="/professor/topics/new" eyebrow="주제 설계 · 새로 만들기" title="새 프로젝트 주제" description="학생이 목표와 기대 역할을 바로 이해할 수 있도록 핵심부터 작성합니다." actions={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>}>
+        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 공개된 프로그램이 없습니다" description="프로그램이 공개되면 새 프로젝트 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>} />}
       </ProfessorWorkspace>
     </AppShell>
   );

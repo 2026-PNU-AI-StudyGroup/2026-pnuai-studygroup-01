@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
 import { AccountIcon, ProfileIcon } from "@/shared/ui/workspace-icons";
@@ -15,8 +17,8 @@ export function AccountSectionLayout({ role, currentPath, children }: { role: Us
     <div className="w-full px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
       <header className="border-b border-[var(--line)]">
         <div className="flex flex-wrap items-end justify-between gap-5">
-          <h1 className="pb-3 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--ink)]">내 계정</h1>
-          {items.length ? <nav aria-label="계정 메뉴" className="flex min-w-0 gap-7 overflow-x-auto">
+          <h1 className="pb-3 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"내 계정"}</UiText></h1>
+          {items.length ? <UiNav aria-label="계정 메뉴" className="flex min-w-0 gap-7 overflow-x-auto">
             {items.map((item) => {
               const active = currentPath === item.href;
               const Icon = item.icon;
@@ -32,14 +34,14 @@ export function AccountSectionLayout({ role, currentPath, children }: { role: Us
                   }`}
                 >
                   <Icon className="size-[18px]" />
-                  {item.label}
+                  <UiText>{item.label}</UiText>
                 </Link>
               );
             })}
-          </nav> : null}
+          </UiNav> : null}
         </div>
       </header>
-      <main className="page-enter min-w-0 pb-24 pt-10 lg:pb-10 lg:pt-12">{children}</main>
+      <main className="page-enter min-w-0 pb-24 pt-10 lg:pb-10 lg:pt-12"><UiText>{children}</UiText></main>
     </div>
   );
 }

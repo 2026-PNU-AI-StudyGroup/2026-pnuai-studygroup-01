@@ -1,7 +1,7 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
-export type ManagedUser = {
+type ManagedUser = {
   id: string;
   name: string;
   email: string;

@@ -8,6 +8,9 @@ vi.mock("@/app/professor/applications/_components/decision-form", () => ({
     <button type="button">{applicationId} 결정</button>
   ),
 }));
+vi.mock("@/app/_components/translated-text", () => ({
+  TranslatedText: ({ text }: { text: string }) => <p>{text}</p>,
+}));
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
 import { ReceivedApplicationList } from "@/app/professor/applications/_components/received-application-list";
@@ -57,7 +60,7 @@ describe("교수 지원서 목록과 상세", () => {
     expect(screen.getByText("지원 동기")).toBeInTheDocument();
     expect(screen.getByText(application.answers[0].value)).toBeInTheDocument();
     expect(screen.queryByText(application.desiredRole)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "영어" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "영어" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "결정과 의견 전달" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "application-1 결정" })).toBeInTheDocument();
   });

@@ -12,7 +12,7 @@ export type AuditAction =
   | "REPORT_APPROVED"
   | "REPORT_REVISION_REQUESTED";
 
-export type AuditEntry = {
+type AuditEntry = {
   id: string;
   action: AuditAction;
   actorName: string;

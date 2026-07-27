@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
@@ -13,7 +15,9 @@ import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-applicati
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
-export const metadata: Metadata = { title: "지원서 상세" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("지원서 상세");
+}
 
 export default async function ProfessorApplicationDetailPage({
   params,
@@ -44,8 +48,7 @@ export default async function ProfessorApplicationDetailPage({
     >
       <ProfessorWorkspace currentPath="/professor/applications" eyebrow="지원 검토 · 지원서" title="지원서 상세" description="지원자와 팀 구성, 문항별 답변을 차례로 확인한 뒤 참여 여부를 결정합니다." actions={
             <Link href="/professor/applications" className="button-secondary">
-              목록으로
-            </Link>
+              <UiText>{"목록으로"}</UiText></Link>
           }>
         <ReceivedApplicationDetail application={application} />
       </ProfessorWorkspace>

@@ -1,4 +1,4 @@
-export const ACADEMIC_TERMS = ["FIRST", "SECOND"] as const;
+const ACADEMIC_TERMS = ["FIRST", "SECOND"] as const;
 
 export type AcademicTerm = (typeof ACADEMIC_TERMS)[number];
 
