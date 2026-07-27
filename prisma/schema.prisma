@@ -46,12 +46,6 @@ enum TopicApplicationParticipantRole {
   MEMBER
 }
 
-enum TeamApplicationInvitationStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-}
-
 enum TeamStatus {
   FORMING
   CONFIRMED
@@ -153,6 +147,13 @@ enum NotificationType {
   SYSTEM
 }
 
+enum TranslationJobStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
 model User {
   id                                 String                              @id
   name                               String
@@ -161,6 +162,14 @@ model User {
   image                              String?
   role                               UserRole                            @default(STUDENT)
   isActive                           Boolean                             @default(true)
+  preferredLocale                    String                              @default("ko")
+  department                         String?
+  studentNumber                      String?                             @unique
+  grade                              Int?
+  phoneNumber                        String?
+  contactEmail                       String?
+  onboardingRequired                 Boolean                             @default(false)
+  onboardingCompletedAt              DateTime?
   createdAt                          DateTime                            @default(now())
   updatedAt                          DateTime                            @updatedAt
   sessions                           Session[]
@@ -184,8 +193,6 @@ model User {
   notifications                      Notification[]
   studentProfile                     StudentProfile?
   topicApplicationGroupsLed          TopicApplicationGroup[]             @relation("TopicApplicationGroupLeader")
-  teamApplicationDraftsLed           TeamApplicationDraft[]              @relation("TeamApplicationDraftLeader")
-  teamApplicationInvitations         TeamApplicationInvitation[]         @relation("TeamApplicationInvitationUser")
   studentTeamsLed                    StudentTeam[]                       @relation("StudentTeamLeader")
   studentTeamMemberships             StudentTeamMember[]
   studentTeamInvitations             StudentTeamInvitation[]             @relation("StudentTeamInvitee")
@@ -197,6 +204,48 @@ model User {
   studentTeamRecruitmentApplications StudentTeamRecruitmentApplication[] @relation("StudentTeamRecruitmentApplicant")
 
   @@map("user")
+}
+
+model TranslationSource {
+  hash         String               @id
+  text         String
+  createdAt    DateTime             @default(now())
+  translations StoredTranslation[]
+  jobs         TranslationJob[]
+
+  @@map("translation_source")
+}
+
+model StoredTranslation {
+  id           String            @id @default(uuid())
+  sourceHash   String
+  targetLocale String
+  text         String
+  model        String
+  translatedAt DateTime          @default(now())
+  source       TranslationSource @relation(fields: [sourceHash], references: [hash], onDelete: Cascade)
+
+  @@unique([sourceHash, targetLocale])
+  @@index([targetLocale, sourceHash])
+  @@map("stored_translation")
+}
+
+model TranslationJob {
+  id           String               @id @default(uuid())
+  sourceHash   String
+  targetLocale String
+  status       TranslationJobStatus @default(PENDING)
+  attempts     Int                  @default(0)
+  availableAt  DateTime             @default(now())
+  lockedAt     DateTime?
+  lastError    String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  source       TranslationSource    @relation(fields: [sourceHash], references: [hash], onDelete: Cascade)
+
+  @@unique([sourceHash, targetLocale])
+  @@index([status, availableAt, createdAt])
+  @@map("translation_job")
 }
 
 model Notification {
@@ -347,11 +396,13 @@ model Topic {
   authorId                String
   title                   String
   description             String
+  advisorRole             String                     @default("교수")
   requiredSkills          String[]                   @default(["별도 협의"])
   preferredSkills         String[]                   @default([])
   roleExpectations        String                     @default("세부 역할 별도 협의")
   availabilityRequirement String                     @default("활동 가능 시간 별도 협의")
   applicationMode         TopicApplicationMode       @default(INDIVIDUAL_ONLY)
+  recruitmentEnabled      Boolean                    @default(true)
   capacity                Int
   recruitmentStartsAt     DateTime
   recruitmentEndsAt       DateTime
@@ -369,7 +420,6 @@ model Topic {
   applications            TopicApplication[]
   applicationQuestions    TopicApplicationQuestion[]
   applicationGroups       TopicApplicationGroup[]
-  teamApplicationDrafts   TeamApplicationDraft[]
   team                    Team?
   approvalRequest         TopicApprovalRequest?
 
@@ -417,7 +467,6 @@ model TopicApplicationQuestion {
   position     Int
   topic        Topic                        @relation(fields: [topicId], references: [id], onDelete: Cascade)
   answers      TopicApplicationAnswer[]
-  draftAnswers TeamApplicationDraftAnswer[]
 
   @@unique([topicId, position])
   @@index([topicId])
@@ -449,6 +498,7 @@ model TopicApprovalRequest {
   requesterId          String
   route                TopicApprovalRoute
   requestedProfessorId String?
+  studentTeamId        String?
   status               TopicApprovalStatus @default(PENDING)
   reviewComment        String              @default("")
   decidedById          String?
@@ -458,11 +508,13 @@ model TopicApprovalRequest {
   topic                Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
   requester            User                @relation("TopicApprovalRequester", fields: [requesterId], references: [id])
   requestedProfessor   User?               @relation("TopicApprovalProfessor", fields: [requestedProfessorId], references: [id])
+  studentTeam          StudentTeam?         @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
   decidedBy            User?               @relation("TopicApprovalDecider", fields: [decidedById], references: [id])
 
   @@index([status, route, createdAt])
   @@index([requestedProfessorId, status])
   @@index([requesterId, createdAt])
+  @@index([studentTeamId])
   @@map("topic_approval_request")
 }
 
@@ -479,58 +531,15 @@ model TopicApplicationAnswer {
   @@map("topic_application_answer")
 }
 
-model TeamApplicationDraft {
-  id          String                       @id @default(uuid())
-  topicId     String
-  leaderId    String
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
-  topic       Topic                        @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  leader      User                         @relation("TeamApplicationDraftLeader", fields: [leaderId], references: [id], onDelete: Cascade)
-  answers     TeamApplicationDraftAnswer[]
-  invitations TeamApplicationInvitation[]
-
-  @@unique([topicId, leaderId])
-  @@index([leaderId, createdAt])
-  @@map("team_application_draft")
-}
-
-model TeamApplicationDraftAnswer {
-  id         String                   @id @default(uuid())
-  draftId    String
-  questionId String
-  value      String
-  draft      TeamApplicationDraft     @relation(fields: [draftId], references: [id], onDelete: Cascade)
-  question   TopicApplicationQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@unique([draftId, questionId])
-  @@index([questionId])
-  @@map("team_application_draft_answer")
-}
-
-model TeamApplicationInvitation {
-  id          String                          @id @default(uuid())
-  draftId     String
-  email       String
-  inviteeId   String?
-  status      TeamApplicationInvitationStatus @default(PENDING)
-  respondedAt DateTime?
-  createdAt   DateTime                        @default(now())
-  draft       TeamApplicationDraft            @relation(fields: [draftId], references: [id], onDelete: Cascade)
-  invitee     User?                           @relation("TeamApplicationInvitationUser", fields: [inviteeId], references: [id])
-
-  @@unique([draftId, email])
-  @@index([email, status, createdAt])
-  @@index([inviteeId, status])
-  @@map("team_application_invitation")
-}
-
 model Team {
   id               String            @id @default(uuid())
   academicCycleId  String
   topicId          String            @unique
   professorId      String
   name             String
+  sourceUrl        String?
+  thumbnailPath    String?
+  posterPath       String?
   status           TeamStatus        @default(FORMING)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -564,6 +573,7 @@ model StudentTeam {
   invitations       StudentTeamInvitation[]
   recruitmentPosts  StudentTeamRecruitmentPost[]
   applicationGroups TopicApplicationGroup[]
+  proposalRequests  TopicApprovalRequest[]
 
   @@index([leaderId, deletedAt])
   @@index([deletedAt, updatedAt])
