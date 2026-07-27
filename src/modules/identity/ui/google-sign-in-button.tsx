@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useState } from "react";
 
 import { authClient } from "@/modules/identity/infrastructure/auth-client";
@@ -31,11 +32,11 @@ export function GoogleSignInButton() {
         disabled={isPending}
         className="button-primary w-full"
       >
-        {isPending ? "Google로 이동 중" : "부산대학교 Google 계정으로 로그인"}
+        <UiText>{isPending ? "Google로 이동 중" : "부산대학교 Google 계정으로 로그인"}</UiText>
       </button>
       {errorMessage ? (
         <p role="alert" className="text-sm text-[var(--danger)]">
-          {errorMessage}
+          <UiText>{errorMessage}</UiText>
         </p>
       ) : null}
     </div>

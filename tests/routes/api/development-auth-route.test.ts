@@ -63,7 +63,7 @@ describe("개발용 역할 로그인", () => {
     const response = await POST(request("PROFESSOR"));
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("http://localhost:3000/sign-in?mockLogin=seed-required");
+    expect(response.headers.get("location")).toBe("http://localhost:3000/?mockLogin=seed-required");
     expect(login).not.toHaveBeenCalled();
   });
 });

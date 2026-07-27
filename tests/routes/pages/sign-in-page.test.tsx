@@ -1,36 +1,27 @@
-import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { redirectMock } = vi.hoisted(() => ({
+  redirectMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+}));
 
 import SignInPage from "@/app/sign-in/page";
 
-vi.mock("@/modules/identity/infrastructure/auth-client", () => ({
-  authClient: {
-    signIn: {
-      social: vi.fn(),
-    },
-  },
-}));
-
 describe("SignInPage", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  beforeEach(() => redirectMock.mockReset());
 
-  it("부산대학교 계정 제한과 로그인 동작을 안내한다", async () => {
-    render(await SignInPage({}));
-
-    expect(
-      screen.getByRole("button", {
-        name: "부산대학교 Google 계정으로 로그인",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("@pusan.ac.kr")).toBeInTheDocument();
+  it("별도 로그인 화면 대신 사이트 루트로 연결한다", async () => {
+    await SignInPage({});
+    expect(redirectMock).toHaveBeenCalledWith("/");
   });
 
-  it("개발 환경에서는 역할별 화면 미리보기를 제공한다", async () => {
-    vi.stubEnv("NODE_ENV", "development");
-    render(await SignInPage({}));
-
-    expect(screen.getByRole("button", { name: /학생 화면 열기/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /교수 화면 열기/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /관리자 화면 열기/ })).toBeInTheDocument();
+  it("로컬 데모 데이터 오류 상태를 통합 로그인 화면으로 전달한다", async () => {
+    await SignInPage({
+      searchParams: Promise.resolve({ mockLogin: "seed-required" }),
+    });
+    expect(redirectMock).toHaveBeenCalledWith("/?mockLogin=seed-required");
   });
 });

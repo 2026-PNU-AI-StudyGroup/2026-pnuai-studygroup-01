@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     select: { id: true },
   });
   if (!user) {
-    return NextResponse.redirect(new URL("/sign-in?mockLogin=seed-required", request.url), 303);
+    return NextResponse.redirect(new URL("/?mockLogin=seed-required", request.url), 303);
   }
 
   const context = await auth.$context as Awaited<typeof auth.$context> & { test?: TestHelpers };

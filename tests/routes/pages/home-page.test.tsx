@@ -19,21 +19,24 @@ describe("Home", () => {
     redirectMock.mockReset();
   });
 
-  it("비로그인 사용자에게 서비스 목적을 안내한다", async () => {
+  it("비로그인 사용자에게 단순한 통합 로그인 화면을 제공한다", async () => {
     getCurrentActorMock.mockResolvedValue(null);
-    render(await Home());
+    render(await Home({}));
 
     expect(
       screen.getByRole("heading", {
-        name: "프로젝트는이어져야 합니다.",
+        name: "로그인",
       }),
     ).toBeInTheDocument();
+    expect(screen.getByText("부산대학교 계정으로 로그인하세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "부산대학교 Google 계정으로 로그인" })).toBeInTheDocument();
+    expect(screen.queryByText("프로젝트 흐름")).not.toBeInTheDocument();
   });
 
   it("로그인 사용자를 프로젝트 탐색으로 보낸다", async () => {
     getCurrentActorMock.mockResolvedValue({ id: "user" });
 
-    await Home();
+    await Home({});
 
     expect(redirectMock).toHaveBeenCalledWith("/topics");
   });

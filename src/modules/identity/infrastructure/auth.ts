@@ -59,6 +59,47 @@ export const auth = betterAuth({
         defaultValue: true,
         input: false,
       },
+      department: {
+        type: "string",
+        required: false,
+        input: false,
+        returned: false,
+      },
+      studentNumber: {
+        type: "string",
+        required: false,
+        input: false,
+        returned: false,
+      },
+      grade: {
+        type: "number",
+        required: false,
+        input: false,
+        returned: false,
+      },
+      phoneNumber: {
+        type: "string",
+        required: false,
+        input: false,
+        returned: false,
+      },
+      contactEmail: {
+        type: "string",
+        required: false,
+        input: false,
+        returned: false,
+      },
+      onboardingRequired: {
+        type: "boolean",
+        required: true,
+        defaultValue: false,
+        input: false,
+      },
+      onboardingCompletedAt: {
+        type: "date",
+        required: false,
+        input: false,
+      },
     },
   },
   socialProviders: {
@@ -83,6 +124,7 @@ export const auth = betterAuth({
               ...user,
               email: normalizeEmail(user.email),
               role: "STUDENT",
+              onboardingRequired: true,
             },
           };
         },
