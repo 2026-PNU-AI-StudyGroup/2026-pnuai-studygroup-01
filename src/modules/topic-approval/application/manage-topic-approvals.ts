@@ -21,7 +21,7 @@ export type TopicApprovalRequestSummary = {
 
 export interface TopicApprovalRepository {
   listProfessors(): Promise<Array<{ id: string; name: string; email: string }>>;
-  create(input: TopicDraft & { route: TopicApprovalRoute; requestedProfessorId: string | null; requestedAt: Date }): Promise<string | null>;
+  create(input: TopicDraft & { route: TopicApprovalRoute; requestedProfessorId: string | null; studentTeamId?: string; requestedAt: Date }): Promise<string | null>;
   listVisible(actor: CurrentUser): Promise<TopicApprovalRequestSummary[]>;
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE">;
 }
@@ -39,7 +39,7 @@ export class TopicApprovalService {
 
   async createStudentProposal(
     actor: CurrentUser,
-    input: Omit<TopicDraft, "authorId" | "academicCycleId"> & { route: TopicApprovalRoute; requestedProfessorId?: string },
+    input: Omit<TopicDraft, "authorId" | "academicCycleId"> & { route: TopicApprovalRoute; requestedProfessorId?: string; studentTeamId?: string },
   ) {
     if (actor.role !== "STUDENT") throw new TopicApprovalOperationError("학생만 학생 프로젝트 승인 요청을 만들 수 있습니다.");
     if (input.route === "PROFESSOR" && !input.requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");

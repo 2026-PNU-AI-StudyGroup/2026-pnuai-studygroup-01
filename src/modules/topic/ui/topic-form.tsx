@@ -1,5 +1,8 @@
 "use client";
 
+import { UiButton } from "@/modules/translation/ui/localized-elements";
+import { UiDiv, UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 
@@ -11,7 +14,7 @@ export type TopicFormActionState = {
   message: string;
 };
 
-export type TopicFormAction = (
+type TopicFormAction = (
   previousState: TopicFormActionState,
   formData: FormData,
 ) => Promise<TopicFormActionState>;
@@ -22,7 +25,10 @@ type TopicFormProps = {
   action: TopicFormAction;
   programs: ProjectProgramRecord[];
   successHref?: string;
-  studentApproval?: { professors: Array<{ id: string; name: string; email: string }> };
+  studentApproval?: {
+    professors: Array<{ id: string; name: string; email: string }>;
+    studentTeams: Array<{ id: string; name: string; memberCount: number }>;
+  };
 };
 
 const periodFields = [
@@ -47,10 +53,9 @@ export function TopicForm({ action: createTopic, programs, successHref, studentA
   return (
     <form action={action} aria-busy={pending} className="border-y border-[var(--line)] bg-white">
       <section className="grid gap-5 py-7">
-      <div><h2 className="text-base font-semibold">기본 정보</h2><p className="muted mt-1 text-sm">학생이 목록과 상세에서 가장 먼저 확인하는 내용입니다.</p></div>
+      <div><h2 className="text-base font-semibold"><UiText>{"기본 정보"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"학생이 목록과 상세에서 가장 먼저 확인하는 내용입니다."}</UiText></p></div>
       <label className="grid gap-2 text-sm font-medium">
-        프로그램
-        <CustomSelect
+        <UiText>{"프로그램"}</UiText><CustomSelect
           name="programId"
           required
           placeholder="프로그램을 선택하세요"
@@ -62,73 +67,72 @@ export function TopicForm({ action: createTopic, programs, successHref, studentA
         />
       </label>
       <label className="grid gap-2 text-sm font-medium">
-        주제명
-        <input name="title" maxLength={200} required className="field" />
+        <UiText>{"주제명"}</UiText><input name="title" maxLength={200} required className="field" />
       </label>
       <label className="grid gap-2 text-sm font-medium">
-        설명
-        <textarea name="description" maxLength={10000} required rows={6} className="field" />
+        <UiText>{"설명"}</UiText><textarea name="description" maxLength={10000} required rows={6} className="field" />
       </label>
       </section>
       <section className="grid gap-4 border-t border-[var(--line)] py-7 sm:grid-cols-2">
-        <div className="sm:col-span-2"><h2 className="text-base font-semibold">지원 조건</h2><p className="muted mt-1 text-sm">선발 판단에 실제로 필요한 기술과 참여 조건을 적습니다.</p></div>
-        <label className="grid gap-2 text-sm font-medium">필수 기술<input name="requiredSkills" maxLength={1000} required className="field" placeholder="예: TypeScript, Python" /><span className="muted text-xs">쉼표로 구분해 입력합니다.</span></label>
-        <label className="grid gap-2 text-sm font-medium">우대 기술<input name="preferredSkills" maxLength={1000} className="field" placeholder="예: Docker, Figma" /><span className="muted text-xs">없으면 비워둘 수 있습니다.</span></label>
-        <label className="grid gap-2 text-sm font-medium">기대 역할<textarea name="roleExpectations" maxLength={500} required rows={3} className="field" placeholder="예: 프론트엔드 구현과 사용자 테스트" /></label>
-        <label className="grid gap-2 text-sm font-medium">활동 가능 시간 조건<textarea name="availabilityRequirement" maxLength={500} required rows={3} className="field" placeholder="예: 매주 수요일 18시 정기 회의 참여" /></label>
+        <div className="sm:col-span-2"><h2 className="text-base font-semibold"><UiText>{"지원 조건"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"선발 판단에 실제로 필요한 기술과 참여 조건을 적습니다."}</UiText></p></div>
+        <label className="grid gap-2 text-sm font-medium"><UiText>{"필수 기술"}</UiText><UiInput name="requiredSkills" maxLength={1000} required className="field" placeholder="예: TypeScript, Python" /><span className="muted text-xs"><UiText>{"쉼표로 구분해 입력합니다."}</UiText></span></label>
+        <label className="grid gap-2 text-sm font-medium"><UiText>{"우대 기술"}</UiText><UiInput name="preferredSkills" maxLength={1000} className="field" placeholder="예: Docker, Figma" /><span className="muted text-xs"><UiText>{"없으면 비워둘 수 있습니다."}</UiText></span></label>
+        <label className="grid gap-2 text-sm font-medium"><UiText>{"기대 역할"}</UiText><UiTextarea name="roleExpectations" maxLength={500} required rows={3} className="field" placeholder="예: 프론트엔드 구현과 사용자 테스트" /></label>
+        <label className="grid gap-2 text-sm font-medium"><UiText>{"활동 가능 시간 조건"}</UiText><UiTextarea name="availabilityRequirement" maxLength={500} required rows={3} className="field" placeholder="예: 매주 수요일 18시 정기 회의 참여" /></label>
       </section>
       <section className="grid gap-5 border-t border-[var(--line)] py-7">
-        <div><h2 className="text-base font-semibold">지원 방식과 지원서</h2><p className="muted mt-1 text-sm">지원 단위와 검토에 사용할 질문을 함께 설정합니다.</p></div>
-        <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]" role="radiogroup" aria-label="프로젝트 지원 방식">
+        <div><h2 className="text-base font-semibold"><UiText>{"지원 방식과 지원서"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"지원 단위와 검토에 사용할 질문을 함께 설정합니다."}</UiText></p></div>
+        <UiDiv className="divide-y divide-[var(--line)] border-y border-[var(--line)]" role="radiogroup" aria-label="프로젝트 지원 방식">
           {[
             ["INDIVIDUAL_ONLY", "개인 지원만", "학생이 혼자 지원합니다."],
             ["TEAM_ONLY", "팀 지원만", "팀장이 구성된 지속형 팀으로 지원합니다."],
             ["INDIVIDUAL_OR_TEAM", "개인·팀 모두", "학생이 개인 또는 지속형 팀 지원을 선택합니다."],
-          ].map(([value, label, description], index) => <label key={value} className="grid cursor-pointer gap-2 px-1 py-4 has-[:checked]:border-l-2 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)] has-[:checked]:pl-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center"><span className="flex items-center gap-3"><input type="radio" name="applicationMode" value={value} defaultChecked={index === 0} required /><strong>{label}</strong></span><span className="muted text-sm leading-6">{description}</span></label>)}
-        </div>
+          ].map(([value, label, description], index) => <label key={value} className="grid cursor-pointer gap-2 px-1 py-4 has-[:checked]:border-l-2 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)] has-[:checked]:pl-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center"><span className="flex items-center gap-3"><input type="radio" name="applicationMode" value={value} defaultChecked={index === 0} required /><strong><UiText>{label}</UiText></strong></span><span className="muted text-sm leading-6"><UiText>{description}</UiText></span></label>)}
+        </UiDiv>
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div><h2 className="font-semibold">지원서 문항</h2><p className="muted mt-1 text-sm">프로젝트에 꼭 필요한 질문만 직접 구성하세요.</p></div>
-          <button type="button" className="button-secondary" onClick={() => setQuestions((current) => [...current, { id: nextQuestionId.current++ }])} disabled={questions.length >= 20}>문항 추가</button>
+          <div><h2 className="font-semibold"><UiText>{"지원서 문항"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"프로젝트에 꼭 필요한 질문만 직접 구성하세요."}</UiText></p></div>
+          <button type="button" className="button-secondary" onClick={() => setQuestions((current) => [...current, { id: nextQuestionId.current++ }])} disabled={questions.length >= 20}><UiText>{"문항 추가"}</UiText></button>
         </div>
         <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
           {questions.map((question, index) => <li key={question.id} className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_auto] sm:items-end">
-            <label className="grid gap-2 text-sm font-medium">문항 {index + 1}<input name="questionLabel" maxLength={200} required className="field" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
-            <label className="grid gap-2 text-sm font-medium">글자 수 제한<input name="questionMaxLength" type="number" min="1" max="5000" defaultValue="500" required className="field" /></label>
-            <label className="grid gap-2 text-sm font-medium">응답 조건<CustomSelect name="questionRequired" defaultValue="true" options={[{ value: "true", label: "필수" }, { value: "false", label: "선택" }]} /></label>
-            <button type="button" className="button-quiet" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ id }) => id !== question.id))} aria-label={`문항 ${index + 1} 삭제`}>삭제</button>
+            <label className="grid gap-2 text-sm font-medium"><UiText>{"문항"}</UiText>{" "}{index + 1}<UiInput name="questionLabel" maxLength={200} required className="field" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
+            <label className="grid gap-2 text-sm font-medium"><UiText>{"글자 수 제한"}</UiText><input name="questionMaxLength" type="number" min="1" max="5000" defaultValue="500" required className="field" /></label>
+            <label className="grid gap-2 text-sm font-medium"><UiText>{"응답 조건"}</UiText><CustomSelect name="questionRequired" defaultValue="true" options={[{ value: "true", label: "필수" }, { value: "false", label: "선택" }]} /></label>
+            <UiButton type="button" className="button-quiet" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ id }) => id !== question.id))} aria-label={`문항 ${index + 1} 삭제`}><UiText>{"삭제"}</UiText></UiButton>
           </li>)}
         </ol>
-        <p className="muted text-sm">문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다.</p>
+        <p className="muted text-sm"><UiText>{"문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다."}</UiText></p>
       </section>
-      <section className="grid gap-6 border-t border-[var(--line)] py-7"><div><h2 className="text-base font-semibold">정원과 운영 기간</h2><p className="muted mt-1 text-sm">모집 규모와 프로젝트 진행 일정을 정합니다.</p></div><label className="grid gap-2 text-sm font-medium sm:max-w-xs">
-        모집 인원
-        <input name="capacity" type="number" min="1" max="100" defaultValue="4" required className="field" />
+      <section className="grid gap-6 border-t border-[var(--line)] py-7"><div><h2 className="text-base font-semibold"><UiText>{"정원과 운영 기간"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"모집 규모와 프로젝트 진행 일정을 정합니다."}</UiText></p></div><label className="grid gap-2 text-sm font-medium sm:max-w-xs">
+        <UiText>{"모집 인원"}</UiText><input name="capacity" type="number" min="1" max="100" defaultValue="4" required className="field" />
       </label>
       <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-3 font-semibold">기간 설정</legend>
+        <legend className="mb-3 font-semibold"><UiText>{"기간 설정"}</UiText></legend>
         {periodFields.map(([label, name]) => (
           <label key={name} className="grid gap-2 text-sm font-medium">
-            {label}
+            <UiText>{label}</UiText>
             <input name={name} type="datetime-local" required className="field" />
           </label>
         ))}
       </fieldset>
-      <p className="muted text-sm">모집·수행·제출 기간은 서로 겹칠 수 있습니다.</p>
+      <p className="muted text-sm"><UiText>{"모집·수행·제출 기간은 서로 겹칠 수 있습니다."}</UiText></p>
       </section>
       {studentApproval ? <section className="grid gap-5 border-t border-[var(--line)] py-7">
-        <div><h2 className="text-base font-semibold">승인 요청</h2><p className="muted mt-1 text-sm">지정 교수 한 명 또는 관리자 그룹에 검토를 요청합니다.</p></div>
+        <div><h2 className="text-base font-semibold"><UiText>{"참여 팀"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"기존 팀을 선택하면 현재 팀원 전원이 승인과 동시에 참여하며 추가 모집은 받지 않습니다."}</UiText></p></div>
+        <label className="grid gap-2 text-sm font-medium"><UiText>{"기존 팀 (선택)"}</UiText><CustomSelect name="studentTeamId" placeholder="선택하지 않고 새 팀원 모집" options={[{ value: "", label: "선택하지 않고 새 팀원 모집" }, ...studentApproval.studentTeams.map((team) => ({ value: team.id, label: team.name, description: `${team.memberCount}명 · 추가 모집 없음` }))]} /></label>
+        <div><h2 className="text-base font-semibold"><UiText>{"승인 요청"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"지정 교수 한 명 또는 관리자 그룹에 검토를 요청합니다."}</UiText></p></div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} /><span><strong className="block">교수에게 요청</strong><span className="mt-1 block text-sm text-[var(--muted)]">검토할 교수를 반드시 지정합니다.</span></span></label>
-          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} /><span><strong className="block">관리자에게 요청</strong><span className="mt-1 block text-sm text-[var(--muted)]">특정 관리자를 지정하지 않습니다.</span></span></label>
+          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} /><span><strong className="block"><UiText>{"교수에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"검토할 교수를 반드시 지정합니다."}</UiText></span></span></label>
+          <label className="flex cursor-pointer gap-3 rounded-[var(--radius-control)] border border-[var(--line)] p-4 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"><input type="radio" name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} /><span><strong className="block"><UiText>{"관리자에게 요청"}</UiText></strong><span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{"특정 관리자를 지정하지 않습니다."}</UiText></span></span></label>
         </div>
-        {approvalRoute === "PROFESSOR" ? <label className="grid gap-2 text-sm font-medium">승인 교수<CustomSelect name="requestedProfessorId" required placeholder="교수를 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></label> : null}
+        {approvalRoute === "PROFESSOR" ? <label className="grid gap-2 text-sm font-medium"><UiText>{"승인 교수"}</UiText><CustomSelect name="requestedProfessorId" required placeholder="교수를 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></label> : null}
       </section> : null}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line)] py-5"><p className="muted text-sm">{studentApproval ? "승인 전까지 공개되지 않습니다." : "저장 후 목록에서 공개할 수 있습니다."}</p><button type="submit" disabled={pending || programs.length === 0} className="button-primary">
-        {pending ? "저장 중" : studentApproval ? "승인 요청 보내기" : "초안 저장"}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line)] py-5"><p className="muted text-sm"><UiText>{studentApproval ? "승인 전까지 공개되지 않습니다." : "저장 후 목록에서 공개할 수 있습니다."}</UiText></p><button type="submit" disabled={pending || programs.length === 0} className="button-primary">
+        <UiText>{pending ? "저장 중" : studentApproval ? "승인 요청 보내기" : "초안 저장"}</UiText>
       </button></div>
       {state.message ? (
         <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}>
-          {state.message}
+          <UiText>{state.message}</UiText>
         </p>
       ) : null}
     </form>

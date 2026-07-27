@@ -26,7 +26,7 @@ export type TopicDetails = {
   capacity: number;
 };
 
-export type TopicApplicationQuestionDraft = {
+type TopicApplicationQuestionDraft = {
   label: string;
   maxLength: number;
   required: boolean;
@@ -100,10 +100,6 @@ export function assertValidTopicDetails(details: TopicDetails): void {
 
   if (!Number.isSafeInteger(details.capacity) || details.capacity < 1) {
     throw new InvalidTopicDetailsError("모집 인원은 1명 이상의 정수여야 합니다.");
-  }
-
-  if (details.applicationMode === "TEAM_ONLY" && details.capacity < 2) {
-    throw new InvalidTopicDetailsError("팀 지원만 받는 주제의 모집 인원은 2명 이상이어야 합니다.");
   }
 
   if (

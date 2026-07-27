@@ -7,6 +7,7 @@ const input = {
   programId: "program-1", title: "학생 제안", description: "설명",
   requiredSkills: ["TypeScript"], preferredSkills: [], roleExpectations: "개발", availabilityRequirement: "주 1회",
   applicationMode: "TEAM_ONLY" as const, applicationQuestions: [{ label: "동기", maxLength: 500, required: true }], capacity: 4,
+  studentTeamId: "8f9c8d60-1e5c-4c6a-90e7-3a8c0e1f9c51",
   recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"), recruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
   executionStartsAt: new Date("2026-08-11T00:00:00Z"), executionEndsAt: new Date("2026-09-10T00:00:00Z"),
   submissionStartsAt: new Date("2026-09-01T00:00:00Z"), submissionEndsAt: new Date("2026-09-20T00:00:00Z"),
@@ -33,7 +34,7 @@ describe("학생 프로젝트 승인", () => {
   it("관리자 경로는 특정 관리자를 저장하지 않는다", async () => {
     const { repository, programs } = dependencies();
     await new TopicApprovalService(repository, programs).createStudentProposal(actor, { ...input, route: "ADMIN" });
-    expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ authorId: actor.id, route: "ADMIN", requestedProfessorId: null }));
+    expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ authorId: actor.id, route: "ADMIN", requestedProfessorId: null, studentTeamId: input.studentTeamId }));
   });
 
   it("교수는 지정 요청만 처리하도록 저장소에 역할과 신원을 전달한다", async () => {

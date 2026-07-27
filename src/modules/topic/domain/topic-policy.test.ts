@@ -50,9 +50,12 @@ describe("주제 내용 정책", () => {
     { ...valid, applicationQuestions: [] },
     { ...valid, applicationQuestions: [{ label: " ", maxLength: 500, required: true }] },
     { ...valid, applicationQuestions: [{ label: "참여 동기", maxLength: 5_001, required: true }] },
-    { ...valid, applicationMode: "TEAM_ONLY" as const, capacity: 1 },
   ])("유효하지 않은 주제 내용 $title/$description/$capacity 을 거절한다", (details) => {
     expect(() => assertValidTopicDetails(details)).toThrow();
+  });
+
+  it("추가 모집이 없는 기존 팀 프로젝트를 위해 1인 팀 지원 정원을 허용한다", () => {
+    expect(() => assertValidTopicDetails({ ...valid, applicationMode: "TEAM_ONLY", capacity: 1 })).not.toThrow();
   });
 });
 

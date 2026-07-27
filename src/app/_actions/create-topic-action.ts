@@ -41,9 +41,11 @@ export async function createTopicAction(
     const approval = z.object({
       approvalRoute: z.enum(["PROFESSOR", "ADMIN"]),
       requestedProfessorId: z.string().uuid().optional(),
+      studentTeamId: z.string().uuid().optional(),
     }).safeParse({
       approvalRoute: formData.get("approvalRoute"),
       requestedProfessorId: formData.get("requestedProfessorId") || undefined,
+      studentTeamId: formData.get("studentTeamId") || undefined,
     });
     if (!approval.success) {
       return { status: "error", message: "승인 요청 방식을 확인해 주세요." };
@@ -56,6 +58,7 @@ export async function createTopicAction(
         ...parsed.data,
         route: approval.data.approvalRoute,
         requestedProfessorId: approval.data.requestedProfessorId,
+        studentTeamId: approval.data.studentTeamId,
       });
     } catch (error) {
       if (error instanceof TopicApprovalOperationError) {

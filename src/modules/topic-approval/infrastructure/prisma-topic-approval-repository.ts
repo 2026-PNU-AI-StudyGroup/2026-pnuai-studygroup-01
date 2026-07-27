@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import type { TopicApprovalRepository, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -11,7 +12,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     return this.client.user.findMany({ where: { role: "PROFESSOR", isActive: true }, orderBy: [{ name: "asc" }, { email: "asc" }], select: { id: true, name: true, email: true } });
   }
 
-  create(input: TopicDraft & { route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; requestedAt: Date }): Promise<string | null> {
+  create(input: TopicDraft & { route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId?: string; requestedAt: Date }): Promise<string | null> {
     return this.client.$transaction(async (transaction) => {
       const program = await transaction.projectProgram.findFirst({ where: { id: input.programId, academicCycleId: input.academicCycleId, status: "OPEN" }, select: { id: true } });
       if (!program) return null;
@@ -19,15 +20,57 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         const professor = await transaction.user.findFirst({ where: { id: input.requestedProfessorId!, role: "PROFESSOR", isActive: true }, select: { id: true } });
         if (!professor) return null;
       }
-      const { applicationQuestions, route, requestedProfessorId, requestedAt, ...topic } = input;
+      const studentTeam = input.studentTeamId
+        ? await transaction.studentTeam.findFirst({
+          where: { id: input.studentTeamId, leaderId: input.authorId, deletedAt: null },
+          select: {
+            id: true,
+            members: {
+              select: { studentId: true, student: { select: { role: true, isActive: true } } },
+            },
+          },
+        })
+        : null;
+      if (input.studentTeamId) {
+        if (
+          !studentTeam ||
+          studentTeam.members.length === 0 ||
+          studentTeam.members.some(({ student }) => student.role !== "STUDENT" || !student.isActive)
+        ) return null;
+        const alreadyAssigned = await transaction.teamMember.count({
+          where: {
+            academicCycleId: input.academicCycleId,
+            studentId: { in: studentTeam.members.map(({ studentId }) => studentId) },
+          },
+        });
+        if (alreadyAssigned) return null;
+      }
+      const { applicationQuestions, route, requestedProfessorId, studentTeamId, requestedAt, ...topic } = input;
       const id = randomUUID();
       await transaction.topic.create({
         data: {
-          id, ...topic, status: "DRAFT", publishedAt: null, createdAt: requestedAt, updatedAt: requestedAt,
+          id,
+          ...topic,
+          applicationMode: studentTeam ? "TEAM_ONLY" : topic.applicationMode,
+          recruitmentEnabled: !studentTeam,
+          capacity: studentTeam ? studentTeam.members.length : topic.capacity,
+          status: "DRAFT",
+          publishedAt: null,
+          createdAt: requestedAt,
+          updatedAt: requestedAt,
           applicationQuestions: { create: applicationQuestions.map((question, position) => ({ id: randomUUID(), ...question, position })) },
-          approvalRequest: { create: { id: randomUUID(), requesterId: input.authorId, route, requestedProfessorId, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
+          approvalRequest: { create: { id: randomUUID(), requesterId: input.authorId, route, requestedProfessorId, studentTeamId: studentTeam ? studentTeamId : undefined, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
         },
       });
+      await enqueueTranslations(transaction, [
+        topic.title,
+        topic.description,
+        ...topic.requiredSkills,
+        ...topic.preferredSkills,
+        topic.roleExpectations,
+        topic.availabilityRequirement,
+        ...applicationQuestions.map(({ label }) => label),
+      ]);
       return id;
     });
   }
@@ -57,8 +100,8 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
 
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE"> {
     return this.client.$transaction(async (transaction) => {
-      const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; status: string }>>(Prisma.sql`
-        SELECT "id", "topicId", "route", "requestedProfessorId", "status"
+      const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId: string | null; status: string }>>(Prisma.sql`
+        SELECT "id", "topicId", "route", "requestedProfessorId", "studentTeamId", "status"
         FROM "topic_approval_request" WHERE "id" = ${input.requestId} FOR UPDATE
       `);
       const request = rows[0];
@@ -68,9 +111,91 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         : input.actorRole === "ADMIN";
       if (!permitted) return "FORBIDDEN";
       if (input.decision === "APPROVE") {
-        const topic = await transaction.topic.findFirst({ where: { id: request.topicId, status: "DRAFT", recruitmentEndsAt: { gt: input.decidedAt }, program: { status: "OPEN" } }, select: { id: true } });
+        const topic = await transaction.topic.findFirst({
+          where: { id: request.topicId, status: "DRAFT", recruitmentEndsAt: { gt: input.decidedAt }, program: { status: "OPEN" } },
+          select: { id: true, academicCycleId: true, authorId: true, title: true, capacity: true, recruitmentEnabled: true },
+        });
         if (!topic) return "UNAVAILABLE";
-        await transaction.topic.update({ where: { id: topic.id }, data: { status: "PUBLISHED", publishedAt: input.decidedAt } });
+        if (topic.recruitmentEnabled) {
+          await transaction.topic.update({ where: { id: topic.id }, data: { status: "PUBLISHED", publishedAt: input.decidedAt } });
+        } else {
+          if (!request.studentTeamId) return "UNAVAILABLE";
+        const teamRows = await transaction.$queryRaw<Array<{ id: string; leaderId: string; name: string }>>(Prisma.sql`
+          SELECT "id", "leaderId", "name"
+          FROM "student_team"
+          WHERE "id" = ${request.studentTeamId} AND "deletedAt" IS NULL
+          FOR UPDATE
+        `);
+        const studentTeam = teamRows[0];
+        if (!studentTeam || studentTeam.leaderId !== topic.authorId) return "UNAVAILABLE";
+        const members = await transaction.studentTeamMember.findMany({
+          where: { teamId: studentTeam.id },
+          orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+          select: { studentId: true, student: { select: { role: true, isActive: true } } },
+        });
+        if (
+          members.length === 0 ||
+          members.length !== topic.capacity ||
+          members.some(({ student }) => student.role !== "STUDENT" || !student.isActive)
+        ) return "UNAVAILABLE";
+        const studentIds = members.map(({ studentId }) => studentId);
+        const alreadyAssigned = await transaction.teamMember.count({
+          where: { academicCycleId: topic.academicCycleId, studentId: { in: studentIds } },
+        });
+        if (alreadyAssigned) return "UNAVAILABLE";
+
+        const groupId = randomUUID();
+        await transaction.topicApplicationGroup.create({
+          data: {
+            id: groupId,
+            topicId: topic.id,
+            leaderId: topic.authorId,
+            studentTeamId: studentTeam.id,
+            kind: "TEAM",
+            createdAt: input.decidedAt,
+          },
+        });
+        const applications = members.map(({ studentId }) => ({
+          id: randomUUID(),
+          topicId: topic.id,
+          studentId,
+          groupId,
+          participantRole: studentId === topic.authorId ? "LEADER" as const : "MEMBER" as const,
+          message: "학생 제안 프로젝트 기존 팀 참여",
+          skills: ["기존 팀 참여"],
+          desiredRole: "팀 내 역할 협의",
+          availability: "팀 일정에 따름",
+          status: "ACCEPTED" as const,
+          reviewComment: "프로젝트 승인과 동시에 참여 확정",
+          decidedAt: input.decidedAt,
+          createdAt: input.decidedAt,
+          updatedAt: input.decidedAt,
+        }));
+        await transaction.topicApplication.createMany({ data: applications });
+        const executionTeam = await transaction.team.create({
+          data: {
+            academicCycleId: topic.academicCycleId,
+            topicId: topic.id,
+            professorId: topic.authorId,
+            name: studentTeam.name,
+            status: "CONFIRMED",
+            createdAt: input.decidedAt,
+            updatedAt: input.decidedAt,
+          },
+          select: { id: true },
+        });
+        await transaction.teamMember.createMany({
+          data: applications.map((application) => ({
+            teamId: executionTeam.id,
+            academicCycleId: topic.academicCycleId,
+            topicId: topic.id,
+            studentId: application.studentId,
+            applicationId: application.id,
+            joinedAt: input.decidedAt,
+          })),
+        });
+          await transaction.topic.update({ where: { id: topic.id }, data: { status: "PUBLISHED", publishedAt: input.decidedAt } });
+        }
       }
       const status = input.decision === "APPROVE" ? "APPROVED" : "REJECTED";
       await transaction.topicApprovalRequest.update({ where: { id: request.id }, data: { status, reviewComment: input.reviewComment, decidedById: input.actorId, decidedAt: input.decidedAt } });

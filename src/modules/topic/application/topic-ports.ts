@@ -19,7 +19,7 @@ export interface TopicScheduleUpdater {
   updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
 }
 
-export type TopicApplicationQuestionSummary = {
+type TopicApplicationQuestionSummary = {
   id: string;
   label: string;
   maxLength: number;
@@ -28,6 +28,7 @@ export type TopicApplicationQuestionSummary = {
 
 export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   id: string;
+  recruitmentEnabled: boolean;
   applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
   authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";

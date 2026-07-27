@@ -41,6 +41,7 @@ const managedTopicSelect = {
   roleExpectations: true,
   availabilityRequirement: true,
   applicationMode: true,
+  recruitmentEnabled: true,
   applicationQuestions: {
     orderBy: { position: "asc" },
     select: {
@@ -232,6 +233,7 @@ function phaseWhere(
 ): Prisma.TopicWhereInput {
   if (phase === "RECRUITING") {
     return {
+      recruitmentEnabled: true,
       recruitmentStartsAt: { lte: now },
       recruitmentEndsAt: { gt: now },
     };
@@ -239,6 +241,7 @@ function phaseWhere(
   if (phase === "CLOSING_SOON") {
     const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1_000);
     return {
+      recruitmentEnabled: true,
       recruitmentStartsAt: { lte: now },
       recruitmentEndsAt: { gt: now, lte: sevenDaysLater },
     };
