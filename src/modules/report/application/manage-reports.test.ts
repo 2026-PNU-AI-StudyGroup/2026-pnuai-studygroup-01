@@ -48,15 +48,16 @@ describe("보고서 관리", () => {
     });
   });
 
-  it("학생의 승인 결정을 영속화 전에 거부한다", async () => {
+  it("감독 권한이 없는 사용자의 승인 결정을 저장소 경계에서 거부한다", async () => {
     const dependencies = writers();
+    vi.mocked(dependencies.decisions.decide).mockResolvedValue(false);
     await expect(
       new ReportDecisionService(dependencies.decisions).decide(
         { id: "student-1", role: "STUDENT" },
         { reportVersionId: "version-1", decision: "APPROVED", comment: "" },
       ),
     ).rejects.toBeInstanceOf(ReportOperationNotAllowedError);
-    expect(dependencies.decisions.decide).not.toHaveBeenCalled();
+    expect(dependencies.decisions.decide).toHaveBeenCalledOnce();
   });
 
   it("교수의 보고서 요구사항 설정을 지도 범위 포트로 전달한다", async () => {
@@ -80,12 +81,13 @@ describe("보고서 관리", () => {
     });
   });
 
-  it("학생의 보고서 요구사항 변경을 영속화 전에 거부한다", async () => {
+  it("감독 권한이 없는 사용자의 보고서 요구사항 변경을 저장소 경계에서 거부한다", async () => {
     const dependencies = writers();
+    vi.mocked(dependencies.requirements.removeRequirement).mockResolvedValue(false);
     await expect(new ReportRequirementService(dependencies.requirements).removeRequirement(
       { id: "student-1", role: "STUDENT" },
       { teamId: "team-1", type: "START" },
     )).rejects.toBeInstanceOf(ReportOperationNotAllowedError);
-    expect(dependencies.requirements.removeRequirement).not.toHaveBeenCalled();
+    expect(dependencies.requirements.removeRequirement).toHaveBeenCalledOnce();
   });
 });

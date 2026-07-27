@@ -23,21 +23,19 @@ export class PrismaReportSubmissionRepository
       const authorized = await transaction.$queryRaw<Array<{
         id: string;
         professorId: string;
+        topicId: string;
         name: string;
       }>>(Prisma.sql`
-        SELECT "team"."id", "team"."professorId", "team"."name"
+        SELECT "team"."id", "team"."professorId", "team"."topicId", "team"."name"
         FROM "team"
         JOIN "topic" ON "topic"."id" = "team"."topicId"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" = 'CONFIRMED'
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
-            OR (
-              ${input.actor.role}::"UserRole" = 'STUDENT'
-              AND EXISTS (
-                SELECT 1 FROM "team_member"
-                WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
-              )
+            OR EXISTS (
+              SELECT 1 FROM "team_member"
+              WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
             )
           )
         FOR UPDATE OF "team"
@@ -80,14 +78,25 @@ export class PrismaReportSubmissionRepository
           submittedAt: input.submittedAt,
         },
       });
-      await createReportActivityNotifications(transaction, [{
-        dedupeKey: `report-submitted:${reportVersionId}`,
-        recipientId: authorized[0].professorId,
-        title: `${authorized[0].name} 보고서가 제출되었습니다`,
-        body: `${reportTypeLabel(input.type)} ${version}버전이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
-        href: `/teams/${input.teamId}/reports`,
-        createdAt: input.submittedAt,
-      }]);
+      const assistants = await transaction.projectAssistant.findMany({
+        where: { topicId: authorized[0].topicId },
+        select: { userId: true },
+      });
+      const supervisorIds = [...new Set([
+        authorized[0].professorId,
+        ...assistants.map(({ userId }) => userId),
+      ])];
+      await createReportActivityNotifications(
+        transaction,
+        supervisorIds.map((recipientId) => ({
+          dedupeKey: `report-submitted:${reportVersionId}:${recipientId}`,
+          recipientId,
+          title: `${authorized[0].name} 보고서가 제출되었습니다`,
+          body: `${reportTypeLabel(input.type)} ${version}버전이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
+          href: `/teams/${input.teamId}/reports`,
+          createdAt: input.submittedAt,
+        })),
+      );
       return { reportId: report.id, version };
     });
   }

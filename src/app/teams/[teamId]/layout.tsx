@@ -7,6 +7,7 @@ import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data
 import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-workspace-navigation";
 import { CloseTeamForm } from "@/app/teams/[teamId]/_components/close-team-form";
 import { AppShell } from "@/app/_components/app-shell";
+import { calculateProjectProgress } from "@/modules/team/domain/project-progress";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -19,7 +20,10 @@ const workspaceStatus = {
 export default async function TeamWorkspaceLayout({ children, params }: { children: ReactNode; params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(teamId);
-  const progress = workspace.milestoneCount === 0 ? 0 : Math.round((workspace.completedMilestoneCount / workspace.milestoneCount) * 100);
+  const progress = calculateProjectProgress(
+    workspace.submittedReportCount,
+    workspace.reportCount,
+  );
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
@@ -45,30 +49,32 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
                 <StatusBadge tone={workspace.status === "CONFIRMED" ? "info" : "neutral"}><UiText>{workspaceStatus[workspace.status]}</UiText></StatusBadge>
               </div>
               <div className="mt-4 hidden lg:block">
-                <ProgressBar value={progress} label={`마일스톤 ${workspace.completedMilestoneCount}/${workspace.milestoneCount}`} />
+                <ProgressBar value={progress} label={`보고서 제출 ${workspace.submittedReportCount}/${workspace.reportCount}`} />
               </div>
             </div>
             <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} /></div>
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
-              {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
+              {workspace.status === "FORMING" && workspace.access.canSupervise ? (
                 <form action={confirmTeamAction}>
                   <input type="hidden" name="teamId" value={workspace.id} />
                   <ConfirmSubmitButton className="button-primary" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?"><UiText>{"팀 확정"}</UiText></ConfirmSubmitButton>
                 </form>
               ) : null}
-              {workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <CloseTeamForm teamId={workspace.id} /> : null}
+              {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <CloseTeamForm teamId={workspace.id} /> : null}
             </div>
             <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">
-              <p className="muted text-[0.6875rem] font-bold uppercase tracking-[0.08em]"><UiText>{"지도교수"}</UiText></p>
-              <p className="mt-1.5 text-sm font-semibold">{workspace.professorName}</p>
+              {workspace.advisorEnabled ? <>
+                <p className="muted text-[0.6875rem] font-bold uppercase tracking-[0.08em]"><UiText>{"지도교수"}</UiText></p>
+                <p className="mt-1.5 text-sm font-semibold">{workspace.professorName}</p>
+              </> : null}
               <p className="muted mt-1 text-xs"><UiText>{"팀원"}</UiText>{" "}{workspace.members.length}<UiText>{"명"}</UiText></p>
-              {workspace.status === "FORMING" && actor.role !== "STUDENT" ? (
+              {workspace.status === "FORMING" && workspace.access.canSupervise ? (
                 <form action={confirmTeamAction} className="mt-4">
                   <input type="hidden" name="teamId" value={workspace.id} />
                   <ConfirmSubmitButton className="button-primary w-full" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?"><UiText>{"팀 확정"}</UiText></ConfirmSubmitButton>
                 </form>
               ) : null}
-              {workspace.status === "CONFIRMED" && workspace.canClose && actor.role !== "STUDENT" ? <div className="mt-4"><CloseTeamForm teamId={workspace.id} /></div> : null}
+              {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <div className="mt-4"><CloseTeamForm teamId={workspace.id} /></div> : null}
             </div>
           </div>
         </UiAside>

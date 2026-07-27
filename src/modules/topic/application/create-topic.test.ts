@@ -37,6 +37,8 @@ function repositories(programExists = true) {
       academicCycleId: "cycle-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
+      advisorEnabled: true,
+      studentProjectCreationEnabled: false,
     } : null),
   };
   return { topics, programs };

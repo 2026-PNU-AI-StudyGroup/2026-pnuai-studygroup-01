@@ -10,6 +10,8 @@ import type {
   TopicStateRepository,
 } from "@/modules/topic/application/topic-ports";
 import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
+import { topicSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
+import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaTopicCommandRepository
   implements TopicCreator, TopicStateRepository, TopicScheduleUpdater
@@ -28,6 +30,7 @@ export class PrismaTopicCommandRepository
       const created = await transaction.topic.create({
         data: {
           ...topicData,
+          managerId: topic.authorId,
           applicationQuestions: {
             create: applicationQuestions.map((question, position) => ({
               ...question,
@@ -58,13 +61,18 @@ export class PrismaTopicCommandRepository
       select: {
         id: true,
         authorId: true,
+        managerId: true,
+        assistants: { select: { userId: true } },
         status: true,
         recruitmentEndsAt: true,
       },
-    });
+    }).then((topic) => topic ? {
+      ...topic,
+      assistantIds: topic.assistants.map(({ userId }) => userId),
+    } : null);
   }
 
-  async publishDraft(id: string, publishedAt: Date): Promise<boolean> {
+  async publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "project_program"."id"
@@ -83,6 +91,8 @@ export class PrismaTopicCommandRepository
           roleExpectations: { not: "" },
           availabilityRequirement: { not: "" },
           applicationQuestions: { some: {} },
+          managerId: { not: null },
+          ...topicSupervisorWhere(actor),
         },
         data: { status: "PUBLISHED", publishedAt },
       });
@@ -90,11 +100,11 @@ export class PrismaTopicCommandRepository
     });
   }
 
-  async closePublished(id: string): Promise<boolean> {
+  async closePublished(id: string, actor: CurrentActor): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const decidedAt = new Date();
       const result = await transaction.topic.updateMany({
-        where: { id, status: "PUBLISHED" },
+        where: { id, status: "PUBLISHED", ...topicSupervisorWhere(actor) },
         data: { status: "CLOSED" },
       });
       if (result.count !== 1) return false;
@@ -152,7 +162,7 @@ export class PrismaTopicCommandRepository
         AND "topic"."programId" = "project_program"."id"
         AND "topic"."status" <> 'CLOSED'::"TopicStatus"
         AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
-        AND (${actor.role}::"UserRole" = 'ADMIN'::"UserRole" OR "topic"."authorId" = ${actor.id})
+        AND ${topicSupervisorSql(actor)}
         AND ${schedule.recruitmentStartsAt} >= "project_program"."startsAt"
         AND ${schedule.recruitmentEndsAt} <= "project_program"."endsAt"
         AND ${schedule.executionStartsAt} >= "project_program"."startsAt"

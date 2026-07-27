@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  TopicScheduleUpdateForbiddenError,
   TopicScheduleUpdateUnavailableError,
   UpdateTopicScheduleService,
 } from "@/modules/topic/application/update-topic-schedule";
@@ -30,11 +29,11 @@ describe("주제 일정 변경", () => {
     );
   });
 
-  it("학생과 저장 불가능한 주제를 거절한다", async () => {
+  it("감독 관계가 없거나 저장 불가능한 주제를 거절한다", async () => {
     const updater = { updateSchedule: vi.fn(async () => false) };
     const service = new UpdateTopicScheduleService(updater);
     await expect(service.execute({ id: "student-1", role: "STUDENT" }, "topic-1", schedule))
-      .rejects.toBeInstanceOf(TopicScheduleUpdateForbiddenError);
+      .rejects.toBeInstanceOf(TopicScheduleUpdateUnavailableError);
     await expect(service.execute({ id: "professor-1", role: "PROFESSOR" }, "topic-1", schedule))
       .rejects.toBeInstanceOf(TopicScheduleUpdateUnavailableError);
   });

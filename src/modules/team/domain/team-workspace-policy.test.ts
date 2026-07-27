@@ -42,6 +42,15 @@ describe("팀 워크스페이스 권한", () => {
       ),
     ).toBe(false);
   });
+
+  it("계정 역할과 무관하게 프로젝트 조교의 접근을 허용한다", () => {
+    expect(
+      canAccessTeam(
+        { id: "assistant", role: "STUDENT" },
+        { isMember: false, isProfessor: false, isAssistant: true },
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("팀 기록 정규화", () => {

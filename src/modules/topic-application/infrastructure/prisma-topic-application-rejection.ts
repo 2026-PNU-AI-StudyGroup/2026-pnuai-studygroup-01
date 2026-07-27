@@ -58,13 +58,19 @@ export class PrismaTopicApplicationRejection {
         FOR UPDATE OF "project_program"
       `);
       const topicRows = await transaction.$queryRaw<Array<{
-        authorId: string;
+        managerId: string | null;
         title: string;
       }>>(Prisma.sql`
-        SELECT "authorId", "title" FROM "topic" WHERE "id" = ${initial.topicId} FOR UPDATE
+        SELECT "managerId", "title" FROM "topic" WHERE "id" = ${initial.topicId} FOR UPDATE
       `);
       const topic = topicRows[0];
       if (!topic) return "CONFLICT";
+      const assistantAllowed = await transaction.projectAssistant.findUnique({
+        where: {
+          topicId_userId: { topicId: initial.topicId, userId: actor.id },
+        },
+        select: { id: true },
+      });
 
       const teamRows = await transaction.$queryRaw<Array<{
         id: string;
@@ -112,7 +118,7 @@ export class PrismaTopicApplicationRejection {
         post.status === "OPEN" &&
         post.teamId === team?.id &&
         team.status === "FORMING";
-      if (!actor.isAdmin && topic.authorId !== actor.id && !recruiterAllowed) {
+      if (!actor.isAdmin && topic.managerId !== actor.id && !assistantAllowed && !recruiterAllowed) {
         return "FORBIDDEN";
       }
 

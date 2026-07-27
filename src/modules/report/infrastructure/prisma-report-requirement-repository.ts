@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { ReportRequirementWriter } from "@/modules/report/application/report-ports";
 import type { ReportType } from "@/modules/report/domain/report-policy";
+import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaReportRequirementRepository
   implements ReportRequirementWriter
@@ -26,10 +27,7 @@ export class PrismaReportRequirementRepository
         JOIN "topic" ON "topic"."id" = "team"."topicId"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" <> 'CLOSED'
-          AND (
-            ${input.actor.role}::"UserRole" = 'ADMIN'
-            OR (${input.actor.role}::"UserRole" = 'PROFESSOR' AND "team"."professorId" = ${input.actor.id})
-          )
+          AND ${teamSupervisorSql(input.actor)}
         FOR UPDATE OF "team"
       `);
       const team = teams[0];
@@ -73,10 +71,7 @@ export class PrismaReportRequirementRepository
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" <> 'CLOSED'
-          AND (
-            ${input.actor.role}::"UserRole" = 'ADMIN'
-            OR (${input.actor.role}::"UserRole" = 'PROFESSOR' AND "team"."professorId" = ${input.actor.id})
-          )
+          AND ${teamSupervisorSql(input.actor)}
         FOR UPDATE OF "team"
       `);
       if (teams.length !== 1) return false;

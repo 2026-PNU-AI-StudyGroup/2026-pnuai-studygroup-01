@@ -280,6 +280,14 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         },
         data: { status: "REJECTED", decidedAt: input.deletedAt },
       });
+      await transaction.topicApprovalRequest.updateMany({
+        where: { studentTeamId: input.teamId, status: "PENDING" },
+        data: {
+          status: "REJECTED",
+          reviewComment: "팀 삭제로 승인 요청이 자동 종료되었습니다.",
+          decidedAt: input.deletedAt,
+        },
+      });
       return true;
     });
   }

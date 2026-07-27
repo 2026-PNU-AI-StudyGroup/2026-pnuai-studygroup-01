@@ -10,11 +10,12 @@ import type {
   TopicLister,
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
+import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   academicCycle: { select: { academicYear: true, term: true } },
-  program: { select: { name: true, category: true, status: true } },
+  program: { select: { name: true, category: true, status: true, advisorEnabled: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -61,7 +62,7 @@ const managedTopicSelect = {
   submissionEndsAt: true,
   status: true,
   publishedAt: true,
-  program: { select: { name: true, category: true, status: true } },
+  program: { select: { name: true, category: true, status: true, advisorEnabled: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -76,12 +77,16 @@ export class PrismaTopicQueryRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
-  listByAuthor(authorId: string): Promise<TopicSummary[]> {
-    return this.list({ authorId });
+  listByManager(managerId: string): Promise<TopicSummary[]> {
+    return this.list({ managerId });
   }
 
   listAll(): Promise<TopicSummary[]> {
     return this.list({});
+  }
+
+  listForActor(actor: CurrentActor): Promise<TopicSummary[]> {
+    return this.list(topicSupervisorWhere(actor));
   }
 
   private list(where: Prisma.TopicWhereInput): Promise<TopicSummary[]> {
@@ -99,7 +104,7 @@ export class PrismaTopicQueryRepository
     const topic = await this.client.topic.findFirst({
       where: {
         id,
-        ...(actor.role === "ADMIN" ? {} : { authorId: actor.id }),
+        ...topicSupervisorWhere(actor),
       },
       select: managedTopicSelect,
     });
@@ -119,7 +124,10 @@ export class PrismaTopicQueryRepository
       { title: { contains: escapedQuery, mode: "insensitive" } },
       { description: { contains: escapedQuery, mode: "insensitive" } },
       { id: { in: skillTopicIds.map(({ id }) => id) } },
-      { author: { name: { contains: escapedQuery, mode: "insensitive" } } },
+      {
+        author: { name: { contains: escapedQuery, mode: "insensitive" } },
+        program: { advisorEnabled: true },
+      },
       { program: { name: { contains: escapedQuery, mode: "insensitive" } } },
     ] } : {};
     const baseWhere: Prisma.TopicWhereInput = {
@@ -206,6 +214,7 @@ function toTopicSummary(
     programName: program.name,
     programCategory: program.category,
     programStatus: program.status,
+    advisorEnabled: program.advisorEnabled,
   };
 }
 
@@ -222,6 +231,7 @@ function toPublicTopic(
     programName: program.name,
     programCategory: program.category,
     programStatus: program.status,
+    advisorEnabled: program.advisorEnabled,
     memberCount: team?._count.members ?? 0,
     ownApplicationStatus,
   };

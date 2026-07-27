@@ -10,9 +10,12 @@ describe("관리 주제 상세 조회", () => {
     expect(reader.findManaged).toHaveBeenCalledWith("topic-1", { id: "professor-1", role: "PROFESSOR" });
   });
 
-  it("학생과 보이지 않는 주제를 동일하게 숨긴다", async () => {
+  it("감독 관계가 없는 학생과 보이지 않는 주제를 동일하게 숨긴다", async () => {
     const reader: ManagedTopicReader = { findManaged: vi.fn(async () => null) };
     await expect(new GetManagedTopicService(reader).execute({ id: "student-1", role: "STUDENT" }, "topic-1")).rejects.toBeInstanceOf(ManagedTopicNotFoundError);
-    expect(reader.findManaged).not.toHaveBeenCalled();
+    expect(reader.findManaged).toHaveBeenCalledWith(
+      "topic-1",
+      { id: "student-1", role: "STUDENT" },
+    );
   });
 });

@@ -20,7 +20,6 @@ export class UpdateTopicScheduleService {
   constructor(private readonly updater: TopicScheduleUpdater) {}
 
   async execute(actor: CurrentActor, topicId: string, schedule: TopicSchedule): Promise<void> {
-    if (actor.role === "STUDENT") throw new TopicScheduleUpdateForbiddenError();
     assertValidTopicSchedule(schedule);
     if (!(await this.updater.updateSchedule(topicId, actor, schedule))) {
       throw new TopicScheduleUpdateUnavailableError();

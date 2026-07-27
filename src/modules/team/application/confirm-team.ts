@@ -15,7 +15,7 @@ export class ConfirmTeamService {
   constructor(private readonly writer: TeamConfirmationWriter) {}
 
   async confirm(actor: CurrentActor, teamId: string) {
-    if (actor.role === "STUDENT" || !(await this.writer.confirm(teamId, actor))) {
+    if (!(await this.writer.confirm(teamId, actor))) {
       throw new TeamConfirmationNotAllowedError();
     }
   }

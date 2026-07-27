@@ -12,7 +12,8 @@ function repository(): TopicApplicationDecisionRepository {
     findDecisionState: vi.fn(async () => ({
       id: "application-1",
       status: "PENDING" as const,
-      topicAuthorId: "professor-1",
+      topicManagerId: "professor-1",
+      topicAssistantIds: [],
     })),
     accept: vi.fn(async () => "ACCEPTED" as const),
     reject: vi.fn(async () => "REJECTED" as const),

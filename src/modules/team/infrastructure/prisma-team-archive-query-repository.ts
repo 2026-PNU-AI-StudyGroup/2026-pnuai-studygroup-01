@@ -17,9 +17,9 @@ const archivedProjectSelect = {
     advisorRole: true,
     requiredSkills: true,
     preferredSkills: true,
-    program: { select: { id: true, name: true, category: true } },
-    author: { select: { name: true } },
+    program: { select: { id: true, name: true, category: true, advisorEnabled: true } },
     academicCycle: { select: { academicYear: true, term: true } },
+    manager: { select: { name: true } },
   } },
   members: {
     orderBy: { joinedAt: "asc" as const },
@@ -143,8 +143,9 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     topicDescription: team.topic.description,
     requiredSkills: team.topic.requiredSkills,
     preferredSkills: team.topic.preferredSkills,
-    professorName: team.topic.author.name,
+    professorName: team.topic.manager!.name,
     advisorRole: team.topic.advisorRole,
+    advisorEnabled: team.topic.program.advisorEnabled,
     memberNames: team.members.map(({ student }) => student.name),
     sourceUrl: team.sourceUrl ?? undefined,
     thumbnailPath: team.thumbnailPath ?? undefined,
@@ -177,7 +178,12 @@ function closedProjectWhere(
     const query = filters.query;
     conditions.push({ OR: [
       { name: { contains: query, mode: "insensitive" } },
-      { topic: { author: { name: { contains: query, mode: "insensitive" } } } },
+      {
+        topic: {
+          author: { name: { contains: query, mode: "insensitive" } },
+          program: { advisorEnabled: true },
+        },
+      },
       { topic: { title: { contains: query, mode: "insensitive" } } },
       { topic: { description: { contains: query, mode: "insensitive" } } },
       { id: { in: skillTeamIds ?? [] } },

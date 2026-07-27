@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   ArtifactRegistrationService,
   InvalidReportInputError,
@@ -35,7 +35,7 @@ function message(error: unknown) {
 }
 
 export async function submitReportVersionAction(formData: FormData): Promise<ReportActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = reportSubmissionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "보고서 입력을 확인해 주세요." };
@@ -61,7 +61,7 @@ export async function setReportRequirementAction(
   _state: ReportActionState,
   formData: FormData,
 ): Promise<ReportActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = reportRequirementSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "보고서 종류와 기한을 확인해 주세요." };
@@ -82,7 +82,7 @@ export async function removeReportRequirementAction(
   _state: ReportActionState,
   formData: FormData,
 ): Promise<ReportActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = reportRequirementRemovalSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "해제할 보고서 요구사항을 확인해 주세요." };
@@ -103,7 +103,7 @@ export async function decideReportAction(
   _state: ReportActionState,
   formData: FormData,
 ): Promise<ReportActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = reportDecisionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "결정 입력을 확인해 주세요." };
@@ -121,7 +121,7 @@ export async function decideReportAction(
 }
 
 export async function registerArtifactAction(formData: FormData): Promise<ReportActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const values = Object.fromEntries(formData);
   if (values.uploadId === "") delete values.uploadId;

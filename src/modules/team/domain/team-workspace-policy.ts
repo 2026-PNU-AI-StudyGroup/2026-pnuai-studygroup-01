@@ -16,12 +16,13 @@ export class InvalidDiscussionPostError extends Error {
 
 export function canAccessTeam(
   actor: CurrentActor,
-  access: { isMember: boolean; isProfessor: boolean },
+  access: { isMember: boolean; isProfessor: boolean; isAssistant?: boolean },
 ): boolean {
   return (
     actor.role === "ADMIN" ||
     (actor.role === "STUDENT" && access.isMember) ||
-    (actor.role === "PROFESSOR" && access.isProfessor)
+    (actor.role === "PROFESSOR" && access.isProfessor) ||
+    access.isAssistant === true
   );
 }
 

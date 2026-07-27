@@ -88,17 +88,19 @@ export interface TopicApplicationLister {
 }
 
 export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "programStatus" | "decidedAt"> & {
-  topicAuthorId: string;
+  topicManagerId: string | null;
+  topicAssistantIds: string[];
   studentId: string;
   studentName: string;
   studentEmail: string;
 };
 
 export interface ProfessorTopicApplicationLister {
-  listByTopicAuthor(
-    authorId: string,
+  listByTopicManager(
+    managerId: string,
   ): Promise<ProfessorTopicApplicationSummary[]>;
   listAll(): Promise<ProfessorTopicApplicationSummary[]>;
+  listForActor(actorId: string, isAdmin: boolean): Promise<ProfessorTopicApplicationSummary[]>;
 }
 
 export type ProfessorTopicApplicationViewer = {
@@ -116,7 +118,8 @@ export interface ProfessorTopicApplicationReader {
 export type TopicApplicationDecisionState = {
   id: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
-  topicAuthorId: string;
+  topicManagerId: string | null;
+  topicAssistantIds: string[];
 };
 
 export type AcceptTopicApplicationOutcome =

@@ -32,7 +32,11 @@ export class PrismaDeadlineNotificationGenerator
           professorId: true,
           members: { select: { studentId: true } },
           topic: {
-            select: { executionEndsAt: true, submissionEndsAt: true },
+            select: {
+              executionEndsAt: true,
+              submissionEndsAt: true,
+              assistants: { select: { userId: true } },
+            },
           },
         },
       }),
@@ -52,6 +56,9 @@ export class PrismaDeadlineNotificationGenerator
               name: true,
               professorId: true,
               members: { select: { studentId: true } },
+              topic: {
+                select: { assistants: { select: { userId: true } } },
+              },
             },
           },
         },
@@ -76,6 +83,9 @@ export class PrismaDeadlineNotificationGenerator
               name: true,
               professorId: true,
               members: { select: { studentId: true } },
+              topic: {
+                select: { assistants: { select: { userId: true } } },
+              },
             },
           },
         },
@@ -86,6 +96,7 @@ export class PrismaDeadlineNotificationGenerator
     for (const team of teams) {
       const recipients = new Set([
         team.professorId,
+        ...team.topic.assistants.map(({ userId }) => userId),
         ...team.members.map(({ studentId }) => studentId),
       ]);
       const deadlines = [
@@ -113,6 +124,7 @@ export class PrismaDeadlineNotificationGenerator
     for (const milestone of milestones) {
       const recipients = new Set([
         milestone.team.professorId,
+        ...milestone.team.topic.assistants.map(({ userId }) => userId),
         ...milestone.team.members.map(({ studentId }) => studentId),
       ]);
       for (const recipientId of recipients) {
@@ -133,6 +145,7 @@ export class PrismaDeadlineNotificationGenerator
       if (report.versions[0]?.decision?.decision === "APPROVED") continue;
       const recipients = new Set([
         report.team.professorId,
+        ...report.team.topic.assistants.map(({ userId }) => userId),
         ...report.team.members.map(({ studentId }) => studentId),
       ]);
       const label = report.type === "START"

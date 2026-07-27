@@ -14,6 +14,7 @@ export type ArchivedProject = {
   preferredSkills: string[];
   professorName: string;
   advisorRole: string;
+  advisorEnabled: boolean;
   memberNames: string[];
   sourceUrl?: string;
   thumbnailPath?: string;
@@ -64,7 +65,7 @@ export class CloseTeamService {
   constructor(private readonly closer: TeamCloser) {}
 
   async close(actor: CurrentActor, teamId: string): Promise<void> {
-    if (actor.role === "STUDENT" || !(await this.closer.close(teamId, actor))) {
+    if (!(await this.closer.close(teamId, actor))) {
       throw new TeamCloseNotAllowedError();
     }
   }

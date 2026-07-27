@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { StudentTeamRecruitmentCommandService, StudentTeamRecruitmentError } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentCommandRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-command-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -12,7 +12,7 @@ const list = z.string().transform((value) => value.split(",").map((item) => item
 const service = () => new StudentTeamRecruitmentCommandService(
   new PrismaStudentTeamRecruitmentCommandRepository(prisma),
 );
-async function actor() { const value = await getCurrentActor(); if (!value) redirect("/sign-in"); return value; }
+async function actor() { const value = await getCurrentOperationalActor(); if (!value) redirect("/sign-in"); return value; }
 
 export async function createRecruitmentPostAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
   const parsed = z.object({ teamId: z.string().uuid(), title: z.string(), content: z.string(), requiredSkills: list, roleNeeded: z.string(), availability: z.string(), capacity: z.coerce.number().int() }).safeParse(Object.fromEntries(formData));

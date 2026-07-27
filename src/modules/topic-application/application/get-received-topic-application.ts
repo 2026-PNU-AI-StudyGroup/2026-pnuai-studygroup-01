@@ -3,7 +3,6 @@ import type {
   ProfessorTopicApplicationReader,
   ProfessorTopicApplicationSummary,
 } from "@/modules/topic-application/application/topic-application-ports";
-import { canCreateTopic } from "@/modules/topic/domain/topic-policy";
 
 export class ReceivedTopicApplicationReadingForbiddenError extends Error {
   constructor() {
@@ -26,10 +25,6 @@ export class GetReceivedTopicApplicationService {
     actor: CurrentActor,
     applicationId: string,
   ): Promise<ProfessorTopicApplicationSummary> {
-    if (!canCreateTopic(actor)) {
-      throw new ReceivedTopicApplicationReadingForbiddenError();
-    }
-
     const application = await this.repository.findVisibleById(applicationId, {
       actorId: actor.id,
       isAdmin: actor.role === "ADMIN",

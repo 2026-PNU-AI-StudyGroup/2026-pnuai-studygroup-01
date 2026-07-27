@@ -1,6 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { ManagedTopicReader, TopicSummary } from "@/modules/topic/application/topic-ports";
-import { canCreateTopic } from "@/modules/topic/domain/topic-policy";
 
 export class ManagedTopicNotFoundError extends Error {
   constructor() {
@@ -13,7 +12,6 @@ export class GetManagedTopicService {
   constructor(private readonly reader: ManagedTopicReader) {}
 
   async execute(actor: CurrentActor, id: string): Promise<TopicSummary> {
-    if (!canCreateTopic(actor)) throw new ManagedTopicNotFoundError();
     const topic = await this.reader.findManaged(id, actor);
     if (!topic) throw new ManagedTopicNotFoundError();
     return topic;

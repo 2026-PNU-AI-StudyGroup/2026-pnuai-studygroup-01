@@ -5,6 +5,9 @@ import type {
   TeamWorkspace,
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
+import {
+  teamSupervisorWhere,
+} from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 const teamListInclude = {
   topic: { select: { title: true } },
@@ -19,6 +22,14 @@ const teamListInclude = {
       assignees: {
         orderBy: { assignedAt: "asc" },
         select: { user: { select: { id: true, name: true } } },
+      },
+    },
+  },
+  reports: {
+    select: {
+      versions: {
+        take: 1,
+        select: { id: true },
       },
     },
   },
@@ -40,6 +51,7 @@ export class PrismaTeamWorkspaceQueryRepository
       where: { id: teamId, ...teamActorWhere(actor) },
       include: {
         topic: { select: {
+          id: true,
           title: true,
           recruitmentStartsAt: true,
           recruitmentEndsAt: true,
@@ -47,7 +59,12 @@ export class PrismaTeamWorkspaceQueryRepository
           executionEndsAt: true,
           submissionStartsAt: true,
           submissionEndsAt: true,
-          author: { select: { name: true } },
+          program: { select: { advisorEnabled: true } },
+          manager: { select: { name: true } },
+          assistants: {
+            where: { userId: actor.id },
+            select: { id: true },
+          },
         } },
         members: {
           orderBy: { joinedAt: "asc" },
@@ -118,10 +135,22 @@ export class PrismaTeamWorkspaceQueryRepository
       });
     return {
       id: team.id,
+      topicId: team.topic.id,
       name: team.name,
       topicTitle: team.topic.title,
       status: team.status,
-      professorName: team.topic.author.name,
+      professorName: team.topic.manager!.name,
+      advisorEnabled: team.topic.program.advisorEnabled,
+      access: {
+        isPrimaryAdvisor: team.professorId === actor.id,
+        isAssistant: team.topic.assistants.length > 0,
+        isTeamMember: team.members.some(({ student }) => student.id === actor.id),
+        canSupervise: actor.role === "ADMIN" ||
+          team.professorId === actor.id ||
+          team.topic.assistants.length > 0,
+        canContribute: actor.role === "ADMIN" ||
+          team.members.some(({ student }) => student.id === actor.id),
+      },
       schedule: {
         recruitmentStartsAt: team.topic.recruitmentStartsAt,
         recruitmentEndsAt: team.topic.recruitmentEndsAt,
@@ -136,6 +165,10 @@ export class PrismaTeamWorkspaceQueryRepository
       memberCount: team.members.length,
       milestoneCount: team.milestones.length,
       completedMilestoneCount,
+      reportCount: team.reports.length,
+      submittedReportCount: team.reports.filter(
+        (report) => report.versions.length > 0,
+      ).length,
       members: team.members.map(({ student }) => student),
       milestones: team.milestones.map((milestone) => ({
         ...milestone,
@@ -163,6 +196,16 @@ export class PrismaTeamWorkspaceQueryRepository
     return this.list({});
   }
 
+  listForActor(actor: CurrentActor): Promise<TeamListItem[]> {
+    if (actor.role === "ADMIN") return this.listAll();
+    return this.list({
+      OR: [
+        teamSupervisorWhere(actor),
+        { members: { some: { studentId: actor.id } } },
+      ],
+    });
+  }
+
   private async list(where: Prisma.TeamWhereInput): Promise<TeamListItem[]> {
     const teams = await this.client.team.findMany({
       where,
@@ -179,6 +222,10 @@ export class PrismaTeamWorkspaceQueryRepository
       completedMilestoneCount: team.milestones.filter(
         ({ status }) => status === "DONE",
       ).length,
+      reportCount: team.reports.length,
+      submittedReportCount: team.reports.filter(
+        (report) => report.versions.length > 0,
+      ).length,
       milestones: team.milestones.map((milestone) => ({
         ...milestone,
         assignees: milestone.assignees.map(({ user }) => user),
@@ -189,6 +236,10 @@ export class PrismaTeamWorkspaceQueryRepository
 
 function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
   if (actor.role === "ADMIN") return {};
-  if (actor.role === "PROFESSOR") return { professorId: actor.id };
-  return { members: { some: { studentId: actor.id } } };
+  return {
+    OR: [
+      teamSupervisorWhere(actor),
+      { members: { some: { studentId: actor.id } } },
+    ],
+  };
 }

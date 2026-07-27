@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { TeamConfirmationWriter } from "@/modules/team/application/confirm-team";
+import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaTeamConfirmationRepository
   implements TeamConfirmationWriter
@@ -18,7 +19,7 @@ export class PrismaTeamConfirmationRepository
         UPDATE "team" SET "status" = 'CONFIRMED', "updatedAt" = ${decidedAt}
         WHERE "id" = ${teamId} AND "status" = 'FORMING'
           AND EXISTS (SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id")
-          AND (${actor.role}::"UserRole" = 'ADMIN' OR (${actor.role}::"UserRole" = 'PROFESSOR' AND "professorId" = ${actor.id}))
+          AND ${teamSupervisorSql(actor)}
         RETURNING "id", "topicId"
       `);
       const team = rows[0];

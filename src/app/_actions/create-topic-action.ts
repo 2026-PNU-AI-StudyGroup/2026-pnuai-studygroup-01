@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "@/modules/topic/application/create-topic";
 import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
@@ -19,7 +19,7 @@ export async function createTopicAction(
   _previousState: TopicFormActionState,
   formData: FormData,
 ): Promise<TopicFormActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
 
   const questionLabels = formData.getAll("questionLabel");

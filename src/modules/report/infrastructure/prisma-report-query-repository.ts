@@ -4,6 +4,7 @@ import type {
   ReportWorkspace,
   ReportWorkspaceReader,
 } from "@/modules/report/application/report-ports";
+import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaReportQueryRepository implements ReportWorkspaceReader {
   constructor(private readonly client: PrismaClient) {}
@@ -90,6 +91,10 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
 
 function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
   if (actor.role === "ADMIN") return {};
-  if (actor.role === "PROFESSOR") return { professorId: actor.id };
-  return { members: { some: { studentId: actor.id } } };
+  return {
+    OR: [
+      teamSupervisorWhere(actor),
+      { members: { some: { studentId: actor.id } } },
+    ],
+  };
 }

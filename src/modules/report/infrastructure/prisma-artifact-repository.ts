@@ -27,8 +27,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
             OR (
-              ${input.actor.role}::"UserRole" = 'STUDENT'
-              AND EXISTS (
+              EXISTS (
                 SELECT 1 FROM "team_member"
                 WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
               )

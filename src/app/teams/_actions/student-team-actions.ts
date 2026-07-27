@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { StudentTeamCommandService, StudentTeamOperationError } from "@/modules/student-team/application/manage-student-teams";
 import { PrismaStudentTeamCommandRepository } from "@/modules/student-team/infrastructure/prisma-student-team-command-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -11,7 +11,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export type StudentTeamActionState = { status: "idle" | "success" | "error"; message: string };
 
 async function serviceAndActor() {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   return {
     actor,

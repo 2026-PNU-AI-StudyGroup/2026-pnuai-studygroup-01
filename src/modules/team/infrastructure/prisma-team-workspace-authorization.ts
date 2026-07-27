@@ -1,21 +1,21 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export function teamActorSql(actor: CurrentActor): Prisma.Sql {
   if (actor.role === "ADMIN") return Prisma.sql`TRUE`;
-  if (actor.role === "PROFESSOR") {
-    return Prisma.sql`"team"."professorId" = ${actor.id}`;
-  }
-  return Prisma.sql`EXISTS (
-    SELECT 1 FROM "team_member"
-    WHERE "team_member"."teamId" = "team"."id"
-      AND "team_member"."studentId" = ${actor.id}
+  return Prisma.sql`(
+    ${teamSupervisorSql(actor)}
+    OR EXISTS (
+      SELECT 1 FROM "team_member"
+      WHERE "team_member"."teamId" = "team"."id"
+        AND "team_member"."studentId" = ${actor.id}
+    )
   )`;
 }
 
 export function teamRecordActorSql(actor: CurrentActor): Prisma.Sql {
   if (actor.role === "ADMIN") return Prisma.sql`TRUE`;
-  if (actor.role === "PROFESSOR") return Prisma.sql`FALSE`;
   return Prisma.sql`EXISTS (
     SELECT 1 FROM "team_member"
     WHERE "team_member"."teamId" = "team"."id"

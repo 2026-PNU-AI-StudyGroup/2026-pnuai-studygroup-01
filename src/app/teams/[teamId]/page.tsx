@@ -8,6 +8,10 @@ import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data
 import { ChevronRightIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+import { ProjectAssistantManagementPanel } from "@/modules/project-assistant/ui/project-assistant-management";
+import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
+import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
+import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 개요");
@@ -17,10 +21,15 @@ const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", da
 export default async function TeamOverviewPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(teamId);
+  const assistantManagement = workspace.access.canSupervise
+    ? await new ProjectAssistantQueryService(
+        new PrismaProjectAssistantRepository(prisma),
+      ).getManagement(actor, workspace.topicId)
+    : null;
   const destinations = [
     ["마일스톤", "목표와 완료 예정일", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
     ["팀 대화", "아이디어와 피드백", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
-    ["보고서", "제출 버전과 교수 승인", `/teams/${teamId}/reports`, "제출·승인 관리"],
+    ["보고서", workspace.advisorEnabled ? "제출 버전과 교수 승인" : "제출 버전과 승인", `/teams/${teamId}/reports`, "제출·승인 관리"],
     ["결과물", "발표 자료와 소스 코드", `/teams/${teamId}/artifacts`, "최종 산출물"],
   ] as const;
   const nextMilestone = workspace.milestones
@@ -49,14 +58,14 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
         </time>
       </section>
 
-      {actor.role === "PROFESSOR" && workspace.status !== "CLOSED" ? (
+      {workspace.access.canSupervise && workspace.status !== "CLOSED" ? (
         <section aria-labelledby="professor-actions-title" className="grid gap-5 border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div>
-            <p className="eyebrow"><UiText>{"지도교수 작업"}</UiText></p>
+            <p className="eyebrow"><UiText>{workspace.advisorEnabled ? "지도교수 작업" : "프로젝트 관리"}</UiText></p>
             <h2 id="professor-actions-title" className="mt-1 text-lg font-extrabold"><UiText>{"팀 피드백과 보고서 검토"}</UiText></h2>
             <p className="muted mt-1 text-sm"><UiText>{"팀 대화에 의견을 남기거나 제출된 보고서를 검토할 수 있습니다."}</UiText></p>
           </div>
-          <div className="flex flex-wrap gap-2"><Link href={`/teams/${teamId}/discussion`} className="button-primary"><UiText>{"지도 의견 남기기"}</UiText></Link><Link href={`/teams/${teamId}/reports`} className="button-secondary"><UiText>{"보고서 관리"}</UiText></Link></div>
+          <div className="flex flex-wrap gap-2"><Link href={`/teams/${teamId}/discussion`} className="button-primary"><UiText>{workspace.advisorEnabled ? "지도 의견 남기기" : "의견 남기기"}</UiText></Link><Link href={`/teams/${teamId}/reports`} className="button-secondary"><UiText>{"보고서 관리"}</UiText></Link></div>
         </section>
       ) : null}
 
@@ -94,6 +103,9 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
           {workspace.members.map((member) => <li key={member.id} className="border-b border-[var(--line)] py-4 last:border-b-0 sm:border-r sm:px-4 sm:odd:pl-0 sm:even:border-r-0"><strong className="block">{member.name}</strong><span className="muted mt-1 block text-sm [overflow-wrap:anywhere]">{member.email}</span></li>)}
         </ul>
       </section>
+      {assistantManagement ? (
+        <ProjectAssistantManagementPanel management={assistantManagement} />
+      ) : null}
     </div>
   );
 }

@@ -56,7 +56,13 @@ const professorSummarySelect = {
   desiredRole: true,
   availability: true,
   createdAt: true,
-  topic: { select: { title: true, authorId: true } },
+  topic: {
+    select: {
+      title: true,
+      managerId: true,
+      assistants: { select: { userId: true } },
+    },
+  },
   student: { select: { name: true, email: true } },
   group: {
     select: {
@@ -96,7 +102,8 @@ function toProfessorSummary(application: ProfessorSummaryRow): ProfessorTopicApp
   return {
     ...record,
     topicTitle: topic.title,
-    topicAuthorId: topic.authorId,
+    topicManagerId: topic.managerId,
+    topicAssistantIds: topic.assistants.map(({ userId }) => userId),
     studentName: student.name,
     studentEmail: student.email,
     applicationKind: group?.kind ?? "INDIVIDUAL",
@@ -155,14 +162,28 @@ export class PrismaTopicApplicationQueryRepository implements
     return application ? toStudentSummary(application) : null;
   }
 
-  async listByTopicAuthor(
-    authorId: string,
+  async listByTopicManager(
+    managerId: string,
   ): Promise<ProfessorTopicApplicationSummary[]> {
-    return this.listForProfessor({ topic: { authorId } });
+    return this.listForProfessor({ topic: { managerId } });
   }
 
   listAll(): Promise<ProfessorTopicApplicationSummary[]> {
     return this.listForProfessor({});
+  }
+
+  listForActor(
+    actorId: string,
+    isAdmin: boolean,
+  ): Promise<ProfessorTopicApplicationSummary[]> {
+    return this.listForProfessor(isAdmin ? {} : {
+      topic: {
+        OR: [
+          { managerId: actorId },
+          { assistants: { some: { userId: actorId } } },
+        ],
+      },
+    });
   }
 
   async findVisibleById(
@@ -170,7 +191,18 @@ export class PrismaTopicApplicationQueryRepository implements
     viewer: ProfessorTopicApplicationViewer,
   ): Promise<ProfessorTopicApplicationSummary | null> {
     const application = await this.client.topicApplication.findFirst({
-      where: { id, ...(viewer.isAdmin ? {} : { topic: { authorId: viewer.actorId } }), OR: [{ groupId: null }, { participantRole: "LEADER" }] },
+      where: {
+        id,
+        ...(viewer.isAdmin ? {} : {
+          topic: {
+            OR: [
+              { managerId: viewer.actorId },
+              { assistants: { some: { userId: viewer.actorId } } },
+            ],
+          },
+        }),
+        OR: [{ groupId: null }, { participantRole: "LEADER" }],
+      },
       select: professorSummarySelect,
     });
     return application ? toProfessorSummary(application) : null;

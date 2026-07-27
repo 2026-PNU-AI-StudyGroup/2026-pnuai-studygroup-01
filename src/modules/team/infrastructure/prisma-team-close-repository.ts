@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { TeamCloser } from "@/modules/team/application/archive-projects";
+import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaTeamCloseRepository implements TeamCloser {
   constructor(private readonly client: PrismaClient) {}
@@ -31,13 +32,7 @@ export class PrismaTeamCloseRepository implements TeamCloser {
         FROM "team"
         WHERE "team"."id" = ${teamId}
           AND "team"."status" = 'CONFIRMED'
-          AND (
-            ${actor.role}::"UserRole" = 'ADMIN'
-            OR (
-              ${actor.role}::"UserRole" = 'PROFESSOR'
-              AND "team"."professorId" = ${actor.id}
-            )
-          )
+          AND ${teamSupervisorSql(actor)}
         FOR UPDATE
       `);
       const team = teams[0];

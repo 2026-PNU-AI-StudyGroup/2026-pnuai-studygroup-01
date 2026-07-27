@@ -36,6 +36,7 @@
     "verify:translation": "tsx scripts/verify-translation.ts",
     "verify:project-program": "tsx scripts/verify-project-program.ts",
     "verify:user-administration": "tsx scripts/verify-user-administration.ts",
+    "verify:project-assistant": "tsx scripts/verify-project-assistant.ts",
     "cleanup:uploads": "tsx scripts/cleanup-uploads.ts"
   },
   "dependencies": {

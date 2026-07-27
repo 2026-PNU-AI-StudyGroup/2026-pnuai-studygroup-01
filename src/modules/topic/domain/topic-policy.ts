@@ -143,9 +143,14 @@ export function canCreateTopic(actor: CurrentActor): boolean {
   return actor.role === "PROFESSOR" || actor.role === "ADMIN";
 }
 
-export function canManageTopic(actor: CurrentActor, authorId: string): boolean {
+export function canManageTopic(
+  actor: CurrentActor,
+  managerId: string | null,
+  assistantIds: string[] = [],
+): boolean {
   return (
     actor.role === "ADMIN" ||
-    (actor.role === "PROFESSOR" && actor.id === authorId)
+    (actor.role === "PROFESSOR" && actor.id === managerId) ||
+    assistantIds.includes(actor.id)
   );
 }

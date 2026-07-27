@@ -37,11 +37,13 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programName: string;
   programCategory: string;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
+  advisorEnabled: boolean;
 };
 
 export interface TopicLister {
-  listByAuthor(authorId: string): Promise<TopicSummary[]>;
+  listByManager(managerId: string): Promise<TopicSummary[]>;
   listAll(): Promise<TopicSummary[]>;
+  listForActor(actor: CurrentActor): Promise<TopicSummary[]>;
 }
 
 export interface ManagedTopicReader {
@@ -51,14 +53,16 @@ export interface ManagedTopicReader {
 export type TopicStateRecord = {
   id: string;
   authorId: string;
+  managerId: string | null;
+  assistantIds: string[];
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   recruitmentEndsAt: Date;
 };
 
 export interface TopicStateRepository {
   findState(id: string): Promise<TopicStateRecord | null>;
-  publishDraft(id: string, publishedAt: Date): Promise<boolean>;
-  closePublished(id: string): Promise<boolean>;
+  publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean>;
+  closePublished(id: string, actor: CurrentActor): Promise<boolean>;
 }
 
 export type PublicTopicSummary = TopicSummary & {

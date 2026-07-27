@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { StudentProfileForbiddenError, StudentProfileService } from "@/modules/identity/application/manage-student-profile";
 import { InvalidStudentProfileError } from "@/modules/identity/domain/student-profile";
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -25,7 +25,7 @@ function tags(value: string) {
 }
 
 export async function saveStudentProfileAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "입력 길이와 형식을 확인해 주세요." };

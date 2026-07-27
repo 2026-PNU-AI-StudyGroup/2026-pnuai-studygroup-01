@@ -100,7 +100,11 @@ export class DecideTopicApplicationService {
     if (!application) {
       throw new TopicApplicationNotFoundError();
     }
-    if (!canManageTopic(actor, application.topicAuthorId)) {
+    if (!canManageTopic(
+      actor,
+      application.topicManagerId,
+      application.topicAssistantIds,
+    )) {
       throw new TopicApplicationDecisionForbiddenError();
     }
     if (application.status !== "PENDING") {

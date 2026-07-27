@@ -42,7 +42,7 @@ export class ChangeTopicStatusService {
       );
     }
 
-    if (!(await this.repository.publishDraft(topic.id, publishedAt))) {
+    if (!(await this.repository.publishDraft(topic.id, actor, publishedAt))) {
       throw new InvalidTopicStatusTransitionError();
     }
   }
@@ -53,7 +53,7 @@ export class ChangeTopicStatusService {
       throw new InvalidTopicStatusTransitionError();
     }
 
-    if (!(await this.repository.closePublished(topic.id))) {
+    if (!(await this.repository.closePublished(topic.id, actor))) {
       throw new InvalidTopicStatusTransitionError();
     }
   }
@@ -63,7 +63,7 @@ export class ChangeTopicStatusService {
     if (!topic) {
       throw new TopicNotFoundError();
     }
-    if (!canManageTopic(actor, topic.authorId)) {
+    if (!canManageTopic(actor, topic.managerId, topic.assistantIds)) {
       throw new TopicManagementForbiddenError();
     }
     return topic;

@@ -16,14 +16,14 @@ describe("팀 확정", () => {
     expect(writer.confirm).toHaveBeenCalled();
   });
 
-  it("학생의 팀 확정을 영속화 전에 거부한다", async () => {
-    const writer: TeamConfirmationWriter = { confirm: vi.fn(async () => true) };
+  it("감독 권한이 없는 학생의 팀 확정을 저장소 경계에서 거부한다", async () => {
+    const writer: TeamConfirmationWriter = { confirm: vi.fn(async () => false) };
     await expect(
       new ConfirmTeamService(writer).confirm(
         { id: "student-1", role: "STUDENT" },
         "team-1",
       ),
     ).rejects.toBeInstanceOf(TeamConfirmationNotAllowedError);
-    expect(writer.confirm).not.toHaveBeenCalled();
+    expect(writer.confirm).toHaveBeenCalledOnce();
   });
 });

@@ -20,7 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProfessorApplicationsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
   const applications = await new ListReceivedTopicApplicationsService(new PrismaTopicApplicationQueryRepository(prisma)).execute(actor);
 
   return (

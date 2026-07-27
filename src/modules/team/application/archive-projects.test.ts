@@ -8,13 +8,13 @@ import {
 } from "@/modules/team/application/archive-projects";
 
 describe("팀 종료", () => {
-  it("학생 요청은 저장소 호출 전에 거부한다", async () => {
-    const closer: TeamCloser = { close: vi.fn(async () => true) };
+  it("감독 권한이 없는 학생 요청은 저장소 경계에서 거부한다", async () => {
+    const closer: TeamCloser = { close: vi.fn(async () => false) };
     await expect(new CloseTeamService(closer).close(
       { id: "student", role: "STUDENT" },
       "team-1",
     )).rejects.toBeInstanceOf(TeamCloseNotAllowedError);
-    expect(closer.close).not.toHaveBeenCalled();
+    expect(closer.close).toHaveBeenCalledOnce();
   });
 
   it("승인 조건을 충족한 지도교수 요청을 완료한다", async () => {

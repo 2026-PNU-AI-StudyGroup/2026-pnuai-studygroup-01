@@ -41,7 +41,7 @@ describe("Prisma 지원 결정 저장소", () => {
     });
   });
 
-  it("교수 상세 조회에 지원서와 주제 소유자 조건을 함께 적용한다", async () => {
+  it("교수 상세 조회에 지원서와 주제 담당자 조건을 함께 적용한다", async () => {
     const findFirst = vi.fn().mockResolvedValue(null);
     const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
 
@@ -53,7 +53,12 @@ describe("Prisma 지원 결정 저장소", () => {
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         id: "application-1",
-        topic: { authorId: "professor-1" },
+        topic: {
+          OR: [
+            { managerId: "professor-1" },
+            { assistants: { some: { userId: "professor-1" } } },
+          ],
+        },
         OR: [{ groupId: null }, { participantRole: "LEADER" }],
       },
     }));
@@ -75,10 +80,10 @@ describe("Prisma 지원 결정 저장소", () => {
 
   it("교수 검토 목록에서 최신 대기 지원을 처리 이력보다 먼저 반환한다", async () => {
     const findMany = vi.fn().mockResolvedValue([
-      { id: "accepted", topicId: "topic-1", studentId: "student-1", status: "ACCEPTED", message: "완료", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-17"), topic: { title: "지난 주제", authorId: "professor-1" }, student: { name: "김학생", email: "student1@pusan.ac.kr" } },
-      { id: "pending-new", topicId: "topic-2", studentId: "student-2", status: "PENDING", message: "신규", skills: [], desiredRole: "기획", availability: "주말", createdAt: new Date("2026-07-16"), topic: { title: "현재 주제", authorId: "professor-1" }, student: { name: "이학생", email: "student2@pusan.ac.kr" } },
-      { id: "rejected", topicId: "topic-3", studentId: "student-3", status: "REJECTED", message: "이력", skills: [], desiredRole: "분석", availability: "평일", createdAt: new Date("2026-07-15"), topic: { title: "지난 주제", authorId: "professor-1" }, student: { name: "박학생", email: "student3@pusan.ac.kr" } },
-      { id: "pending-old", topicId: "topic-4", studentId: "student-4", status: "PENDING", message: "대기", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-14"), topic: { title: "현재 주제", authorId: "professor-1" }, student: { name: "최학생", email: "student4@pusan.ac.kr" } },
+      { id: "accepted", topicId: "topic-1", studentId: "student-1", status: "ACCEPTED", message: "완료", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-17"), topic: { title: "지난 주제", managerId: "professor-1", assistants: [] }, student: { name: "김학생", email: "student1@pusan.ac.kr" } },
+      { id: "pending-new", topicId: "topic-2", studentId: "student-2", status: "PENDING", message: "신규", skills: [], desiredRole: "기획", availability: "주말", createdAt: new Date("2026-07-16"), topic: { title: "현재 주제", managerId: "professor-1", assistants: [] }, student: { name: "이학생", email: "student2@pusan.ac.kr" } },
+      { id: "rejected", topicId: "topic-3", studentId: "student-3", status: "REJECTED", message: "이력", skills: [], desiredRole: "분석", availability: "평일", createdAt: new Date("2026-07-15"), topic: { title: "지난 주제", managerId: "professor-1", assistants: [] }, student: { name: "박학생", email: "student3@pusan.ac.kr" } },
+      { id: "pending-old", topicId: "topic-4", studentId: "student-4", status: "PENDING", message: "대기", skills: [], desiredRole: "개발", availability: "저녁", createdAt: new Date("2026-07-14"), topic: { title: "현재 주제", managerId: "professor-1", assistants: [] }, student: { name: "최학생", email: "student4@pusan.ac.kr" } },
     ]);
     const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findMany } } as unknown as PrismaClient);
 
@@ -118,6 +123,51 @@ describe("Prisma 지원 결정 저장소", () => {
     ).resolves.toBe("CONFLICT");
   });
 
+  it("담당자가 없는 공개 주제는 실행 팀으로 전환하지 않는다", async () => {
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{ status: "PUBLISHED" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "student-1", role: "STUDENT", isActive: true }]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      topicApplication: {
+        findUnique: vi.fn()
+          .mockResolvedValueOnce({
+            studentId: "student-1",
+            topicId: "topic-1",
+            groupId: null,
+          })
+          .mockResolvedValueOnce({
+            id: "application-1",
+            topicId: "topic-1",
+            studentId: "student-1",
+            status: "PENDING",
+            topic: {
+              id: "topic-1",
+              title: "학생 제안",
+              authorId: "student-1",
+              managerId: null,
+              assistants: [],
+              academicCycleId: "cycle-1",
+              capacity: 4,
+              status: "PUBLISHED",
+            },
+            recruitmentApplication: null,
+          }),
+      },
+    };
+    const client = {
+      $transaction: vi.fn(async (operation: (tx: typeof transaction) => unknown) => operation(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApplicationDecisionRepository(client).accept(
+      "application-1",
+      { id: "admin-1", isAdmin: true },
+      new Date(),
+    )).resolves.toBe("CONFLICT");
+  });
+
   it("거절 시 프로그램·주제·팀·사용자를 잠근 뒤 지원 상태를 변경한다", async () => {
     const order: string[] = [];
     let rawCall = 0;
@@ -125,7 +175,7 @@ describe("Prisma 지원 결정 저장소", () => {
       $queryRaw: vi.fn(async () => {
         rawCall += 1;
         order.push(`lock-${rawCall}`);
-        if (rawCall === 2) return [{ authorId: "professor-1", title: "주제" }];
+        if (rawCall === 2) return [{ managerId: "professor-1", title: "주제" }];
         return [];
       }),
       topicApplication: {
@@ -137,6 +187,7 @@ describe("Prisma 지원 결정 저장소", () => {
         findUnique: vi.fn(async () => null),
         updateMany: vi.fn(async () => ({ count: 0 })),
       },
+      projectAssistant: { findUnique: vi.fn(async () => null) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;

@@ -34,7 +34,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
   const { actor, workspace } = await loadTeamWorkspace(teamId, requestedPage);
   const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 나눈 대화가 없습니다." : "첫 질문이나 의견을 남겨 프로젝트 대화를 시작하세요.";
   const participants = [
-    { id: `professor-${workspace.professorName}`, name: workspace.professorName, role: "지도교수" },
+    ...(workspace.advisorEnabled ? [{ id: `professor-${workspace.professorName}`, name: workspace.professorName, role: "지도교수" }] : []),
     ...workspace.members.map((member) => ({ id: member.id, name: member.name, role: "팀원" })),
   ];
 

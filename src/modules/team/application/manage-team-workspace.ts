@@ -44,13 +44,7 @@ export class TeamWorkspaceQueryService {
   }
 
   list(actor: CurrentActor): Promise<TeamListItem[]> {
-    if (actor.role === "ADMIN") {
-      return this.workspaceReader.listAll();
-    }
-    if (actor.role === "PROFESSOR") {
-      return this.workspaceReader.listForProfessor(actor.id);
-    }
-    return this.workspaceReader.listForStudent(actor.id);
+    return this.workspaceReader.listForActor(actor);
   }
 }
 
@@ -61,7 +55,6 @@ export class TeamMilestoneService {
     actor: CurrentActor,
     input: { teamId: string; title: string; dueAt: Date; assigneeIds?: string[] },
   ): Promise<{ id: string }> {
-    if (actor.role === "PROFESSOR") throw new TeamNotFoundError();
     assertValidMilestoneDueAt(input.dueAt);
     const milestone = await this.milestoneWriter.createMilestone({
       ...input,
@@ -79,7 +72,6 @@ export class TeamMilestoneService {
     actor: CurrentActor,
     input: { milestoneId: string; status: MilestoneStatus; assigneeIds?: string[] },
   ): Promise<{ teamId: string }> {
-    if (actor.role === "PROFESSOR") throw new MilestoneNotFoundError();
     const result = await this.milestoneWriter.updateMilestoneStatus(
       input.milestoneId,
       input.status,

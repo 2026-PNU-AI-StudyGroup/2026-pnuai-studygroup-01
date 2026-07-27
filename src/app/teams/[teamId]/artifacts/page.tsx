@@ -16,8 +16,8 @@ const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "�
 
 export default async function TeamArtifactsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { actor, workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
-  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 공개한 결과물이 없습니다." : actor.role === "PROFESSOR" ? "팀원이 첫 결과물을 공개하면 바로 볼 수 있습니다." : workspace.status === "FORMING" ? "팀이 확정되면 결과물을 공개할 수 있습니다." : "소스 코드와 발표 영상, 포스터를 파일 또는 링크로 공개해 보세요.";
+  const { workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
+  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 공개한 결과물이 없습니다." : !workspace.access.canContribute ? "팀원이 첫 결과물을 공개하면 바로 볼 수 있습니다." : workspace.status === "FORMING" ? "팀이 확정되면 결과물을 공개할 수 있습니다." : "소스 코드와 발표 영상, 포스터를 파일 또는 링크로 공개해 보세요.";
 
   return (
     <section aria-labelledby="artifacts-title" className="space-y-8">
@@ -26,7 +26,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         title="프로젝트 결과물"
         titleId="artifacts-title"
         description="발표 자료와 소스 코드 등 공개 가능한 결과물을 관리합니다."
-        actions={workspace.status === "CONFIRMED" && actor.role !== "PROFESSOR" ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
+        actions={workspace.status === "CONFIRMED" && workspace.access.canContribute ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
       />
       {reportWorkspace.artifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
         <ul className="grid gap-x-6 gap-y-0 border-t border-[var(--line)] sm:grid-cols-2 xl:grid-cols-3">

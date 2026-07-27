@@ -19,6 +19,7 @@ function dependencies() {
     listForStudent: vi.fn(),
     listForProfessor: vi.fn(),
     listAll: vi.fn(),
+    listForActor: vi.fn(),
   };
   const milestones: MilestoneWriter = {
     createMilestone: vi.fn(async () => ({ id: "milestone-1" })),
@@ -58,13 +59,14 @@ describe("팀 워크스페이스 기록", () => {
     });
   });
 
-  it("지도교수의 마일스톤 변경을 저장소 호출 전에 거절한다", async () => {
+  it("기여 권한이 없는 사용자의 마일스톤 요청은 저장소 판정으로 거절한다", async () => {
     const deps = dependencies();
+    vi.mocked(deps.milestones.createMilestone).mockResolvedValue(null);
     const service = new TeamMilestoneService(deps.milestones);
     const professor = { id: "professor-1", role: "PROFESSOR" as const };
 
     await expect(service.createMilestone(professor, { teamId: "team-1", title: "교수 작성", dueAt: new Date("2026-05-01T00:00:00Z") })).rejects.toBeInstanceOf(TeamNotFoundError);
-    expect(deps.milestones.createMilestone).not.toHaveBeenCalled();
+    expect(deps.milestones.createMilestone).toHaveBeenCalledOnce();
   });
 
   it("유효하지 않은 마감일을 영속화 전에 거부한다", async () => {

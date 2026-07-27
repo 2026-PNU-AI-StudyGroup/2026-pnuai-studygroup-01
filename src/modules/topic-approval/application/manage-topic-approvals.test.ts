@@ -19,7 +19,7 @@ function dependencies() {
     listVisible: vi.fn(async () => []), decide: vi.fn(async () => "APPROVED" as const),
   };
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
-    findOpen: vi.fn(async () => ({ id: "program-1", academicCycleId: "cycle-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z") })),
+    findOpen: vi.fn(async () => ({ id: "program-1", academicCycleId: "cycle-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
   };
   return { repository, programs };
 }
@@ -37,10 +37,54 @@ describe("학생 프로젝트 승인", () => {
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ authorId: actor.id, route: "ADMIN", requestedProfessorId: null, studentTeamId: input.studentTeamId }));
   });
 
+  it("프로그램에서 학생 프로젝트 생성을 허용하지 않으면 저장하지 않는다", async () => {
+    const { repository, programs } = dependencies();
+    vi.mocked(programs.findOpen).mockResolvedValue({
+      id: "program-1",
+      academicCycleId: "cycle-1",
+      startsAt: new Date("2026-01-01T00:00:00Z"),
+      endsAt: new Date("2026-12-31T00:00:00Z"),
+      advisorEnabled: true,
+      studentProjectCreationEnabled: false,
+    });
+
+    await expect(new TopicApprovalService(repository, programs).createStudentProposal(actor, { ...input, route: "ADMIN" }))
+      .rejects.toThrow("이 프로그램은 학생 프로젝트 생성을 허용하지 않습니다.");
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it("지도교수가 없는 프로그램은 교수 승인 경로를 거부한다", async () => {
+    const { repository, programs } = dependencies();
+    vi.mocked(programs.findOpen).mockResolvedValue({
+      id: "program-1",
+      academicCycleId: "cycle-1",
+      startsAt: new Date("2026-01-01T00:00:00Z"),
+      endsAt: new Date("2026-12-31T00:00:00Z"),
+      advisorEnabled: false,
+      studentProjectCreationEnabled: true,
+    });
+
+    await expect(new TopicApprovalService(repository, programs).createStudentProposal(actor, {
+      ...input,
+      route: "PROFESSOR",
+      requestedProfessorId: "11111111-1111-4111-8111-111111111111",
+    })).rejects.toThrow("지도교수가 없는 프로그램은 관리자에게만 승인을 요청할 수 있습니다.");
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
   it("교수는 지정 요청만 처리하도록 저장소에 역할과 신원을 전달한다", async () => {
     const { repository, programs } = dependencies();
     const professor = { ...actor, id: "professor-1", role: "PROFESSOR" as const };
     await new TopicApprovalService(repository, programs).decide(professor, { requestId: "request-1", decision: "APPROVE", reviewComment: " 승인 " });
     expect(repository.decide).toHaveBeenCalledWith(expect.objectContaining({ actorId: "professor-1", actorRole: "PROFESSOR", reviewComment: "승인" }));
+  });
+
+  it("교수 지도 화면에는 승인 대기 요청만 조회한다", async () => {
+    const { repository, programs } = dependencies();
+    const professor = { ...actor, id: "professor-1", role: "PROFESSOR" as const };
+
+    await new TopicApprovalService(repository, programs).listPendingForReview(professor);
+
+    expect(repository.listVisible).toHaveBeenCalledWith(professor, "PENDING");
   });
 });

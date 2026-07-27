@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   GetReceivedTopicApplicationService,
   ReceivedTopicApplicationNotFoundError,
-  ReceivedTopicApplicationReadingForbiddenError,
 } from "@/modules/topic-application/application/get-received-topic-application";
 import type {
   ProfessorTopicApplicationReader,
@@ -14,7 +13,8 @@ const application: ProfessorTopicApplicationSummary = {
   id: "application-1",
   topicId: "topic-1",
   topicTitle: "프로젝트 관리 시스템",
-  topicAuthorId: "professor-1",
+  topicManagerId: "professor-1",
+  topicAssistantIds: [],
   studentId: "student-1",
   studentName: "김학생",
   studentEmail: "student@pusan.ac.kr",
@@ -75,15 +75,18 @@ describe("받은 지원서 상세 조회", () => {
     });
   });
 
-  it("학생의 교수 지원서 조회를 저장소 호출 전에 거절한다", async () => {
-    const repository = reader(application);
+  it("감독 관계가 없는 학생의 지원서를 저장소 조회 조건으로 숨긴다", async () => {
+    const repository = reader(null);
 
     await expect(
       new GetReceivedTopicApplicationService(repository).execute(
         { id: "student-1", role: "STUDENT" },
         "application-1",
       ),
-    ).rejects.toBeInstanceOf(ReceivedTopicApplicationReadingForbiddenError);
-    expect(repository.findVisibleById).not.toHaveBeenCalled();
+    ).rejects.toBeInstanceOf(ReceivedTopicApplicationNotFoundError);
+    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", {
+      actorId: "student-1",
+      isAdmin: false,
+    });
   });
 });

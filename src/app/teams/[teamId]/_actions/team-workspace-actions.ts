@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   CloseTeamService,
   TeamCloseNotAllowedError,
@@ -39,7 +39,7 @@ export type TeamActionState = {
 };
 
 export async function confirmTeamAction(formData: FormData) {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const teamId = formData.get("teamId");
   if (typeof teamId !== "string") return;
@@ -59,7 +59,7 @@ export async function closeTeamAction(
   _state: TeamActionState,
   formData: FormData,
 ): Promise<TeamActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const teamId = formData.get("teamId");
   if (typeof teamId !== "string") {
@@ -100,7 +100,7 @@ export async function createMilestoneAction(
   _state: TeamActionState,
   formData: FormData,
 ): Promise<TeamActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = milestoneInputSchema.safeParse({
     ...Object.fromEntries(formData),
@@ -125,7 +125,7 @@ export async function updateMilestoneStatusAction(
   _state: TeamActionState,
   formData: FormData,
 ): Promise<TeamActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = milestoneStatusInputSchema.safeParse(
     {
@@ -152,7 +152,7 @@ export async function createDiscussionPostAction(
   _state: TeamActionState,
   formData: FormData,
 ): Promise<TeamActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const parsed = discussionPostInputSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "메시지 내용을 확인해 주세요." };

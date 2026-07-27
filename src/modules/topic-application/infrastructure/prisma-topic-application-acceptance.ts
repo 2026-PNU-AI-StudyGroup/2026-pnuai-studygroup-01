@@ -100,6 +100,8 @@ export class PrismaTopicApplicationAcceptance {
                 id: true,
                 title: true,
                 authorId: true,
+                managerId: true,
+                assistants: { select: { userId: true } },
                 academicCycleId: true,
                 capacity: true,
                 status: true,
@@ -111,8 +113,12 @@ export class PrismaTopicApplicationAcceptance {
         if (!application || application.status !== "PENDING") {
           return "CONFLICT";
         }
+        if (!application.topic.managerId) return "CONFLICT";
         const recruiterAllowed = application.topic.status === "PUBLISHED" && application.recruitmentApplication?.post.authorId === actor.id && application.recruitmentApplication.post.status === "OPEN" && application.recruitmentApplication.post.team.status === "FORMING";
-        if (!actor.isAdmin && application.topic.authorId !== actor.id && !recruiterAllowed) {
+        const assistantAllowed = application.topic.assistants.some(
+          ({ userId }) => userId === actor.id,
+        );
+        if (!actor.isAdmin && application.topic.managerId !== actor.id && !assistantAllowed && !recruiterAllowed) {
           return "FORBIDDEN";
         }
 
@@ -144,7 +150,7 @@ export class PrismaTopicApplicationAcceptance {
           create: {
             academicCycleId: application.topic.academicCycleId,
             topicId: application.topicId,
-            professorId: application.topic.authorId,
+            professorId: application.topic.managerId,
             name: application.topic.title,
           },
           select: { id: true },
@@ -257,11 +263,12 @@ export class PrismaTopicApplicationAcceptance {
       id: string;
       title: string;
       authorId: string;
+      managerId: string | null;
       academicCycleId: string;
       capacity: number;
       status: "DRAFT" | "PUBLISHED" | "CLOSED";
     }>>(Prisma.sql`
-      SELECT "topic"."id", "topic"."title", "topic"."authorId", "topic"."academicCycleId", "topic"."capacity",
+      SELECT "topic"."id", "topic"."title", "topic"."authorId", "topic"."managerId", "topic"."academicCycleId", "topic"."capacity",
              "topic"."status"
       FROM "topic"
       WHERE "topic"."id" = ${group.topicId}
@@ -277,7 +284,14 @@ export class PrismaTopicApplicationAcceptance {
     ) {
       return "CONFLICT";
     }
-    if (!actor.isAdmin && topic.authorId !== actor.id) return "FORBIDDEN";
+    if (!topic.managerId) return "CONFLICT";
+    const assistantAllowed = await transaction.projectAssistant.findUnique({
+      where: {
+        topicId_userId: { topicId: topic.id, userId: actor.id },
+      },
+      select: { id: true },
+    });
+    if (!actor.isAdmin && topic.managerId !== actor.id && !assistantAllowed) return "FORBIDDEN";
 
     const studentIds = applications.map(({ studentId }) => studentId);
     const existingTeams = await transaction.$queryRaw<Array<{ id: string; status: "FORMING" | "CONFIRMED" | "CLOSED" }>>(Prisma.sql`
@@ -305,7 +319,7 @@ export class PrismaTopicApplicationAcceptance {
       create: {
         academicCycleId: topic.academicCycleId,
         topicId: group.topicId,
-        professorId: topic.authorId,
+        professorId: topic.managerId,
         name: topic.title,
       },
       select: { id: true },

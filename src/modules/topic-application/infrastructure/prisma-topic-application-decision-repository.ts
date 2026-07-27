@@ -28,14 +28,20 @@ export class PrismaTopicApplicationDecisionRepository
       select: {
         id: true,
         status: true,
-        topic: { select: { authorId: true } },
+        topic: {
+          select: {
+            managerId: true,
+            assistants: { select: { userId: true } },
+          },
+        },
       },
     }).then((application) =>
       application
         ? {
             id: application.id,
             status: application.status,
-            topicAuthorId: application.topic.authorId,
+            topicManagerId: application.topic.managerId,
+            topicAssistantIds: application.topic.assistants.map(({ userId }) => userId),
           }
         : null,
     );

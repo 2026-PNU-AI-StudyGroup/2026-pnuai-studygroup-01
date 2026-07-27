@@ -30,6 +30,9 @@ const actionLabel: Record<AuditAction, string> = {
   REPORT_REQUIREMENT_REMOVED: "보고서 일정 삭제",
   REPORT_APPROVED: "보고서 승인",
   REPORT_REVISION_REQUESTED: "보고서 수정 요청",
+  PROJECT_ASSISTANT_INVITED: "프로젝트 조교 초대",
+  PROJECT_ASSISTANT_ACCEPTED: "프로젝트 조교 수락",
+  PROJECT_ASSISTANT_REMOVED: "프로젝트 조교 권한 해제",
 };
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {

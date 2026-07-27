@@ -6,6 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
+import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export async function GET(
   _request: Request,
@@ -36,6 +37,10 @@ export async function GET(
 
 function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {
   if (actor.role === "ADMIN") return {};
-  if (actor.role === "PROFESSOR") return { professorId: actor.id };
-  return { members: { some: { studentId: actor.id } } };
+  return {
+    OR: [
+      teamSupervisorWhere(actor),
+      { members: { some: { studentId: actor.id } } },
+    ],
+  };
 }

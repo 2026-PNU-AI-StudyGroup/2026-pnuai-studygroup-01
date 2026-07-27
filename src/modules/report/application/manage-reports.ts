@@ -42,7 +42,6 @@ export class ReportRequirementService {
     type: ReportType;
     dueAt: Date;
   }, now = new Date()) {
-    if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
     const result = await this.requirementWriter.setRequirement({
       ...input,
       actor,
@@ -57,7 +56,6 @@ export class ReportRequirementService {
     teamId: string;
     type: ReportType;
   }, now = new Date()) {
-    if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
     const removed = await this.requirementWriter.removeRequirement({
       ...input,
       actor,
@@ -76,7 +74,6 @@ export class ReportSubmissionService {
     fileId: string;
     description: string;
   }, now = new Date()) {
-    if (actor.role === "PROFESSOR") throw new ReportOperationNotAllowedError();
     const result = await this.submissionWriter.submit({
       ...input,
       actor,
@@ -96,7 +93,6 @@ export class ReportDecisionService {
     decision: ApprovalDecision;
     comment: string;
   }, now = new Date()) {
-    if (actor.role === "STUDENT") throw new ReportOperationNotAllowedError();
     const decided = await this.decisionWriter.decide({
       ...input,
       actor,
@@ -117,7 +113,7 @@ export class ArtifactRegistrationService {
     fileId?: string;
     externalUrl?: string;
   }, now = new Date()) {
-    if (actor.role === "PROFESSOR" || (!!input.fileId === !!input.externalUrl)) {
+    if (!!input.fileId === !!input.externalUrl) {
       throw new ReportOperationNotAllowedError();
     }
     const normalized = normalizeArtifact(input);

@@ -24,7 +24,7 @@ export function ProfessorWorkspace({ currentPath, title, description, actions, c
       </div>
       {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
     </header>
-    <WorkspaceNavigation label="교수 업무 흐름" items={navigationItems} />
+    <WorkspaceNavigation label="프로젝트 운영 흐름" items={navigationItems} />
     <div className="space-y-8 pt-7"><UiText>{children}</UiText></div>
   </main>;
 }

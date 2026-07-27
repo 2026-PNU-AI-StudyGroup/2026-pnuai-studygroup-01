@@ -3,7 +3,6 @@ import type {
   TopicLister,
   TopicSummary,
 } from "@/modules/topic/application/topic-ports";
-import { canCreateTopic } from "@/modules/topic/domain/topic-policy";
 
 export class TopicListingForbiddenError extends Error {
   constructor() {
@@ -16,12 +15,6 @@ export class ListOwnTopicsService {
   constructor(private readonly repository: TopicLister) {}
 
   async execute(actor: CurrentActor): Promise<TopicSummary[]> {
-    if (!canCreateTopic(actor)) {
-      throw new TopicListingForbiddenError();
-    }
-
-    return actor.role === "ADMIN"
-      ? this.repository.listAll()
-      : this.repository.listByAuthor(actor.id);
+    return this.repository.listForActor(actor);
   }
 }

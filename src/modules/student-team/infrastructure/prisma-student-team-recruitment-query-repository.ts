@@ -81,7 +81,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
   }
 
   async listAuthoredPosts(actorId: string, requested: number) {
-    const where = { authorId: actorId };
+    const where = { team: { leaderId: actorId, deletedAt: null } };
     const total = await this.client.studentTeamRecruitmentPost.count({ where });
     const { page, totalPages } = pageOf(requested, total);
     const posts = await this.client.studentTeamRecruitmentPost.findMany({

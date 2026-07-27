@@ -21,6 +21,8 @@ export async function decideTopicApprovalAction(_state: TopicApprovalActionState
     if (error instanceof TopicApprovalOperationError) return { status: "error", message: error.message };
     throw error;
   }
-  revalidatePath("/project-approvals"); revalidatePath("/topics");
+  revalidatePath("/project-approvals");
+  revalidatePath("/dashboard");
+  revalidatePath("/topics");
   return { status: "success", message: parsed.data.decision === "APPROVE" ? "프로젝트를 승인하고 공개했습니다." : "프로젝트 요청을 반려했습니다." };
 }

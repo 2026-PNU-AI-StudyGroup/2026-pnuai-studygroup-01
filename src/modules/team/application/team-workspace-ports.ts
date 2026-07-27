@@ -10,6 +10,8 @@ export type TeamListItem = {
   memberCount: number;
   milestoneCount: number;
   completedMilestoneCount: number;
+  reportCount: number;
+  submittedReportCount: number;
   milestones: Array<{
     id: string;
     title: string;
@@ -20,7 +22,16 @@ export type TeamListItem = {
 };
 
 export type TeamWorkspace = TeamListItem & {
+  topicId: string;
   professorName: string;
+  advisorEnabled: boolean;
+  access: {
+    isPrimaryAdvisor: boolean;
+    isAssistant: boolean;
+    isTeamMember: boolean;
+    canSupervise: boolean;
+    canContribute: boolean;
+  };
   canClose: boolean;
   schedule: {
     recruitmentStartsAt: Date;
@@ -52,6 +63,7 @@ export interface TeamWorkspaceReader {
   listForStudent(studentId: string): Promise<TeamListItem[]>;
   listForProfessor(professorId: string): Promise<TeamListItem[]>;
   listAll(): Promise<TeamListItem[]>;
+  listForActor(actor: CurrentActor): Promise<TeamListItem[]>;
 }
 
 export interface MilestoneWriter {

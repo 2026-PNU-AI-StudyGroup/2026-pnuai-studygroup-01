@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   ApplyToTopicService,
   StudentAlreadyAssignedError,
@@ -36,7 +36,7 @@ export async function applyTopicAction(
   _previousState: ApplyTopicActionState,
   formData: FormData,
 ): Promise<ApplyTopicActionState> {
-  const actor = await getCurrentActor();
+  const actor = await getCurrentOperationalActor();
   if (!actor) {
     redirect("/sign-in");
   }

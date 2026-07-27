@@ -26,8 +26,6 @@ export default async function ProfessorApplicationDetailPage({
 }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
-
   const { applicationId } = await params;
   let application;
   try {

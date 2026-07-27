@@ -8,6 +8,7 @@ import type {
   ApprovalDecision,
   ReportType,
 } from "@/modules/report/domain/report-policy";
+import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaReportDecisionRepository implements ReportDecisionWriter {
   constructor(private readonly client: PrismaClient) {}
@@ -33,13 +34,7 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
         JOIN "team" ON "team"."id" = "report"."teamId"
         WHERE "report_version"."id" = ${input.reportVersionId}
           AND "team"."status" = 'CONFIRMED'
-          AND (
-            ${input.actor.role}::"UserRole" = 'ADMIN'
-            OR (
-              ${input.actor.role}::"UserRole" = 'PROFESSOR'
-              AND "team"."professorId" = ${input.actor.id}
-            )
-          )
+          AND ${teamSupervisorSql(input.actor)}
         FOR UPDATE OF "team"
       `);
       if (teams.length !== 1) return false;

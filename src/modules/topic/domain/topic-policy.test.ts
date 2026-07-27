@@ -126,16 +126,16 @@ describe("주제 소유권 정책", () => {
     expect(canCreateTopic({ id: "admin", role: "ADMIN" })).toBe(true);
   });
 
-  it("작성자와 관리자는 주제를 관리할 수 있다", () => {
-    expect(canManageTopic({ id: "author", role: "PROFESSOR" }, "author")).toBe(
+  it("담당 교수와 관리자는 주제를 관리할 수 있다", () => {
+    expect(canManageTopic({ id: "manager", role: "PROFESSOR" }, "manager")).toBe(
       true,
     );
-    expect(canManageTopic({ id: "other", role: "PROFESSOR" }, "author")).toBe(
+    expect(canManageTopic({ id: "other", role: "PROFESSOR" }, "manager")).toBe(
       false,
     );
-    expect(canManageTopic({ id: "author", role: "STUDENT" }, "author")).toBe(
+    expect(canManageTopic({ id: "manager", role: "STUDENT" }, "manager")).toBe(
       false,
     );
-    expect(canManageTopic({ id: "admin", role: "ADMIN" }, "author")).toBe(true);
+    expect(canManageTopic({ id: "admin", role: "ADMIN" }, null)).toBe(true);
   });
 });
