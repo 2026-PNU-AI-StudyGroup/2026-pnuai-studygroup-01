@@ -1,5 +1,7 @@
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -63,7 +65,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     ]);
     const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
     const selectedProgram = archive.programs.find((program) => program.id === programId);
-    const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs);
+    const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs, "past");
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref="/topics?view=past" />}>
         <ProjectPortalHero view="past" program={selectedProgram} />
@@ -85,7 +87,13 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const sidebarItems = buildProgramSidebarItems(programs, archivedPrograms);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref="/topics" />}>
-        <ProjectPortalHero view="active" program={selectedProgram} />
+        <ProjectPortalHero
+          view="active"
+          program={selectedProgram}
+          action={actor.role === "STUDENT" && selectedProgram?.studentProjectCreationEnabled
+            ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 만들기"}</UiText></Link>
+            : undefined}
+        />
         <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} />
       </ExplorerLayout>
     );

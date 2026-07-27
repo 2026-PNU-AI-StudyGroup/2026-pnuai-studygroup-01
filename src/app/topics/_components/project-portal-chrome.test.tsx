@@ -28,4 +28,16 @@ describe("ProjectPortalHero", () => {
     expect(screen.getByText("캡스톤 · 완료된 프로젝트와 결과물을 둘러보세요.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "지난 프로젝트" })).not.toBeInTheDocument();
   });
+
+  it("선택한 프로그램에서 전달한 프로젝트 생성 동작을 표시한다", () => {
+    render(
+      <ProjectPortalHero
+        view="active"
+        program={{ id: "program-1", name: "AI 부스터", category: "교육" }}
+        action={<a href="/projects/new?programId=program-1">프로젝트 만들기</a>}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "프로젝트 만들기" })).toHaveAttribute("href", "/projects/new?programId=program-1");
+  });
 });

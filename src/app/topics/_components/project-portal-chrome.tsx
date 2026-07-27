@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
@@ -11,9 +12,10 @@ const phaseLabel: Record<PublicTopicPhase, string> = {
   CLOSING_SOON: "마감 임박",
 };
 
-export function ProjectPortalHero({ view, program }: {
+export function ProjectPortalHero({ view, program, action }: {
   view: "active" | "past";
-  program?: { name: string; category: string; description?: string };
+  program?: { id?: string; name: string; category: string; description?: string };
+  action?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
   const description = program?.description ?? (view === "past" ? "완료된 프로젝트와 결과물을 둘러보세요." : "현재 참여할 수 있는 프로젝트를 한곳에서 찾아보세요.");
@@ -23,6 +25,7 @@ export function ProjectPortalHero({ view, program }: {
       description={<UiText>{description}</UiText>}
       context={program?.category ? <UiText>{program.category}</UiText> : undefined}
       mark={program ? program.name.replace(/[^A-Za-z가-힣]/g, "").slice(0, 2) : "P"}
+      action={action}
     />
   );
 }

@@ -6,10 +6,12 @@ import { ListArchivedProjectsService } from "@/modules/team/application/archive-
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export async function loadProgramSidebarItems(): Promise<ProgramSidebarItem[]> {
+export async function loadProgramSidebarItems(
+  view: "active" | "past" = "active",
+): Promise<ProgramSidebarItem[]> {
   const [openPrograms, archivedPrograms] = await Promise.all([
     new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen(),
     new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma)).listPrograms(),
   ]);
-  return buildProgramSidebarItems(openPrograms, archivedPrograms);
+  return buildProgramSidebarItems(openPrograms, archivedPrograms, view);
 }

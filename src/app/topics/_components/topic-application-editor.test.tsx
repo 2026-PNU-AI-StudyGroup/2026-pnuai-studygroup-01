@@ -38,6 +38,9 @@ describe("TopicApplicationEditor", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "이 프로젝트에 지원" }));
+    expect(screen.getByRole("radio", { name: /개인 지원/ })).toBeDisabled();
+    expect(screen.getByText("이 프로젝트는 팀 지원만 받습니다.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "지원서 작성하기" }));
     expect(screen.getByRole("button", { name: "선택한 팀으로 지원" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "팀을 선택하세요" }));
 
@@ -64,9 +67,32 @@ describe("TopicApplicationEditor", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "이 프로젝트에 지원" }));
+    fireEvent.click(screen.getByRole("button", { name: "지원서 작성하기" }));
 
     expect(screen.getByText("지원할 수 있는 내 팀이 없습니다")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "팀 만들기" })).toHaveAttribute("href", "/teams?modal=create");
     expect(screen.getByRole("button", { name: "선택한 팀으로 지원" })).toBeDisabled();
+  });
+
+  it("개인·팀 지원이 모두 가능하면 방식을 선택한 뒤 지원서 화면으로 이동한다", () => {
+    render(
+      <TopicApplicationEditor
+        topicId="50000000-0000-4000-8000-000000000001"
+        topicTitle="캠퍼스 이동약자를 위한 실내 길찾기"
+        applicationMode="INDIVIDUAL_OR_TEAM"
+        applicationQuestions={[]}
+        capacity={4}
+        leaderTeams={[{ id: "70000000-0000-4000-8000-000000000001", name: "코드웨이브", memberCount: 3 }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "이 프로젝트에 지원" }));
+    expect(screen.getByRole("heading", { name: "지원 방식 선택" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /팀 지원/ }));
+    fireEvent.click(screen.getByRole("button", { name: "지원서 작성하기" }));
+
+    expect(screen.getByRole("heading", { name: "지원서 작성" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "팀을 선택하세요" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "지원 방식 다시 선택" })).toBeInTheDocument();
   });
 });

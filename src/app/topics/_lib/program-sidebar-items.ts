@@ -5,7 +5,29 @@ import type { ArchivedProgramOption } from "@/modules/team/application/archive-p
 export function buildProgramSidebarItems(
   openPrograms: ProjectProgramRecord[],
   archivedPrograms: ArchivedProgramOption[],
+  view: "active" | "past" = "active",
 ): ProgramSidebarItem[] {
+  if (view === "past") {
+    const archivedIds = new Set(archivedPrograms.map((program) => program.id));
+    return [
+      ...archivedPrograms.map((program) => ({
+        ...program,
+        status: "past" as const,
+        href: `/topics?view=past&programId=${encodeURIComponent(program.id)}`,
+      })),
+      ...openPrograms
+        .filter((program) => !archivedIds.has(program.id))
+        .map((program) => ({
+          id: program.id,
+          name: program.name,
+          category: program.category,
+          academicYear: program.academicYear,
+          status: "active" as const,
+          href: `/topics?programId=${encodeURIComponent(program.id)}`,
+        })),
+    ];
+  }
+
   const activeIds = new Set(openPrograms.map((program) => program.id));
   return [
     ...openPrograms.map((program) => ({
