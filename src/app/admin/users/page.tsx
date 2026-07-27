@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { UserStatusForm } from "@/app/admin/users/_components/user-status-form";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { UserAdministrationService } from "@/modules/identity/application/manage-users";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaUserAdministrationRepository } from "@/modules/identity/infrastructure/prisma-user-administration-repository";

@@ -2,7 +2,7 @@
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
-import { decideTopicApprovalAction, type TopicApprovalActionState } from "@/app/project-approvals/_actions/topic-approval-actions";
+import { decideTopicApprovalAction, type TopicApprovalActionState } from "@/app/_actions/topic-approval-actions";
 const initial: TopicApprovalActionState = { status: "idle", message: "" };
 export function TopicApprovalDecisionForm({ requestId }: { requestId: string }) {
   const [state, action, pending] = useActionState(decideTopicApprovalAction, initial);

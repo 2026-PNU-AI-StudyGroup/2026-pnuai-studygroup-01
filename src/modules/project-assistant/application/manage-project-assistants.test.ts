@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ProjectAssistantCommandService,
 } from "@/modules/project-assistant/application/manage-project-assistants";
-import type { ProjectAssistantOperationError } from "@/modules/project-assistant/application/manage-project-assistants";
 import type { ProjectAssistantWriter } from "@/modules/project-assistant/application/project-assistant-ports";
 
 function writer(result: Awaited<ReturnType<ProjectAssistantWriter["invite"]>> = "INVITED") {

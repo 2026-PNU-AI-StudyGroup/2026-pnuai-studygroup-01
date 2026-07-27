@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ProfessorAccessForm } from "@/app/admin/professors/_components/professor-access-form";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { AppShell } from "@/app/_components/app-shell";
 

@@ -8,7 +8,7 @@ import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data
 import { ChevronRightIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { StatusBadge } from "@/shared/ui/page-primitives";
-import { ProjectAssistantManagementPanel } from "@/modules/project-assistant/ui/project-assistant-management";
+import { ProjectAssistantManagementPanel } from "@/app/_components/project-assistant-management";
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";

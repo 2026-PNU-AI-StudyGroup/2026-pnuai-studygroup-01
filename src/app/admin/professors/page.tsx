@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { RevokeProfessorAccessForm } from "@/app/admin/professors/_components/revoke-professor-access-form";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { ProfessorAccessService } from "@/modules/identity/application/manage-professor-access";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaProfessorAccessRepository } from "@/modules/identity/infrastructure/prisma-professor-access-repository";

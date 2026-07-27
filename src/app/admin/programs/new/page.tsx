@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ProgramForm } from "@/app/admin/programs/_components/program-form";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { ListAcademicCyclesService } from "@/modules/academic-cycle/application/list-academic-cycles";
 import { PrismaAcademicCycleRepository } from "@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";

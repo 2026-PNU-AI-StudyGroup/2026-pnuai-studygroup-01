@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProjectApprovalLedger } from "@/app/project-approvals/_components/project-approval-ledger";
+import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 
-vi.mock("@/app/project-approvals/_components/topic-approval-decision-form", () => ({
+vi.mock("@/app/_components/topic-approval-decision-form", () => ({
   TopicApprovalDecisionForm: ({ requestId }: { requestId: string }) => <button>요청 {requestId} 검토</button>,
 }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor: vi.fn() }));

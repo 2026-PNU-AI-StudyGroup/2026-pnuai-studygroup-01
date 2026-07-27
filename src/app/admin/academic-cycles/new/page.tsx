@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AcademicCycleForm } from "@/app/admin/academic-cycles/_components/academic-cycle-form";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { AppShell } from "@/app/_components/app-shell";
 

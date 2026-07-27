@@ -2,7 +2,7 @@ import {
   cancelProjectAssistantInvitationAction,
   removeProjectAssistantAction,
 } from "@/app/_actions/project-assistant-actions";
-import { InviteProjectAssistantForm } from "@/modules/project-assistant/ui/project-assistant-controls";
+import { InviteProjectAssistantForm } from "@/app/_components/project-assistant-controls";
 import type { ProjectAssistantManagement } from "@/modules/project-assistant/application/project-assistant-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";

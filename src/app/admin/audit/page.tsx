@@ -6,7 +6,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { ListAuditLogService, type AuditAction } from "@/modules/audit/application/list-audit-log";
 import { PrismaAuditLogReader } from "@/modules/audit/infrastructure/prisma-audit-log-reader";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";

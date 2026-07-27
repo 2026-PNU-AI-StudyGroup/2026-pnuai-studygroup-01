@@ -9,7 +9,7 @@ import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-das
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
 import { AdminProjectOverview } from "@/app/dashboard/_components/admin-project-overview";
-import { ProjectApprovalLedger } from "@/app/project-approvals/_components/project-approval-ledger";
+import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
   parseProjectDashboardView,
@@ -29,7 +29,7 @@ import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { ProjectAssistantInvitationDecisionForm } from "@/modules/project-assistant/ui/project-assistant-controls";
+import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/project-assistant-controls";
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 

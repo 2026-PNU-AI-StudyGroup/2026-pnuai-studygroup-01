@@ -1,7 +1,7 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
-import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
+import { AdminSidebar } from "@/app/_components/admin-sidebar";
 
 export function AdminWorkspace({ currentPath, eyebrow, title, description, actions, children }: { currentPath: string; eyebrow?: string; title: string; description: string; actions?: ReactNode; children: ReactNode }) {
   return <main className="min-h-[calc(100vh-4.5rem)] lg:min-h-screen">

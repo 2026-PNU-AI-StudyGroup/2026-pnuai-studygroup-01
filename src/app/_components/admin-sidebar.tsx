@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 

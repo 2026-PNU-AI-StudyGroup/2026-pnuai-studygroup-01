@@ -9,6 +9,7 @@ import {
   classifyProjectProgressBand,
 } from "@/modules/team/domain/project-progress";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 const programStatus = {
@@ -239,13 +240,13 @@ function AdminProjectSidebar({
   ] as const;
 
   return (
-    <aside aria-label="프로젝트 현황 탐색" className="min-w-0 overflow-hidden border-b border-[var(--line)] bg-white lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
+    <UiAside aria-label="프로젝트 현황 탐색" className="min-w-0 overflow-hidden border-b border-[var(--line)] bg-white lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
       <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
         <div className="mb-4 px-2">
           <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
           <h2 className="mt-1 text-sm font-black tracking-[-0.02em]"><UiText>{"프로젝트 현황"}</UiText></h2>
         </div>
-        <nav aria-label="프로그램 선택">
+        <UiNav aria-label="프로그램 선택">
           <div className="space-y-4">
             {groups.map((group) => (
               <section key={group.id} aria-labelledby={`admin-project-group-${group.id}`} className="border-t border-[var(--line)] pt-3 first:border-t-0 first:pt-0">
@@ -290,9 +291,9 @@ function AdminProjectSidebar({
               </section>
             ))}
           </div>
-        </nav>
+        </UiNav>
       </div>
-    </aside>
+    </UiAside>
   );
 }
 

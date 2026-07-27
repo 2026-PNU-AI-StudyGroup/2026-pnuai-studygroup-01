@@ -1,6 +1,6 @@
 import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { TopicApprovalDecisionForm } from "@/app/project-approvals/_components/topic-approval-decision-form";
+import { TopicApprovalDecisionForm } from "@/app/_components/topic-approval-decision-form";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 

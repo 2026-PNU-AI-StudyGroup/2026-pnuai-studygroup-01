@@ -7,6 +7,7 @@ import {
   type AnnouncementActionState,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
+import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 const initialState: AnnouncementActionState = {
@@ -33,7 +34,7 @@ export function AnnouncementForm({
     <form action={formAction} className="panel grid gap-6 p-6 sm:p-8">
       <label className="grid gap-2 font-semibold">
         <span><UiText>{"제목"}</UiText></span>
-        <input
+        <UiInput
           className="field"
           name="title"
           type="text"
@@ -46,7 +47,7 @@ export function AnnouncementForm({
       </label>
       <label className="grid gap-2 font-semibold">
         <span><UiText>{"본문"}</UiText></span>
-        <textarea
+        <UiTextarea
           className="field min-h-72 leading-7"
           name="content"
           maxLength={20_000}

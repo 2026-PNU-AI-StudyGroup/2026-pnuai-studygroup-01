@@ -3,9 +3,9 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
-import { ProjectApprovalLedger } from "@/app/project-approvals/_components/project-approval-ledger";
+import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";

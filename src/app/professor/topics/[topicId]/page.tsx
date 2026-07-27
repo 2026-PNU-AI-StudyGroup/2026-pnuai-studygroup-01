@@ -14,7 +14,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/app/_components/translated-text";
-import { ProjectAssistantManagementPanel } from "@/modules/project-assistant/ui/project-assistant-management";
+import { ProjectAssistantManagementPanel } from "@/app/_components/project-assistant-management";
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 

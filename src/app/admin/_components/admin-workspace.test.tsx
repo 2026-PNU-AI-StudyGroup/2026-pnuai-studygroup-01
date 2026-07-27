@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { AdminWorkspace } from "@/app/admin/_components/admin-workspace";
+import { AdminWorkspace } from "@/app/_components/admin-workspace";
 
 describe("AdminWorkspace", () => {
   it("관리자 업무를 2차 사이드바와 현재 메뉴 선택 상태로 제공한다", () => {

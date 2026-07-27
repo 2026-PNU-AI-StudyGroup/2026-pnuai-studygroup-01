@@ -12,6 +12,7 @@ import {
   UiDate,
   UiText,
 } from "@/modules/translation/ui/i18n-provider";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -98,7 +99,7 @@ export default async function AnnouncementsPage({
         </section>
 
         {data.totalPages > 1 ? (
-          <nav aria-label="공지사항 페이지" className="flex items-center justify-between">
+          <UiNav aria-label="공지사항 페이지" className="flex items-center justify-between">
             <span className="text-sm text-[var(--muted)]">
               {data.page} / {data.totalPages} <UiText>{"페이지"}</UiText>
             </span>
@@ -110,7 +111,7 @@ export default async function AnnouncementsPage({
                 <Link className="button-secondary" href={`/announcements?page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link>
               ) : null}
             </div>
-          </nav>
+          </UiNav>
         ) : null}
       </main>
     </AppShell>
