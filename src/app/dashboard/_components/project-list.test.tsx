@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashboard-hero";
+import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-dashboard-sidebar";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
-import styles from "@/app/dashboard/_components/project-list.module.css";
 
 const team = {
   id: "team-1",
@@ -21,67 +22,112 @@ const team = {
   ],
 };
 
-describe("프로젝트 목록 역할별 작업", () => {
-  it("학생 프로젝트 화면을 통계 카드 없이 작업 중심으로 보여준다", () => {
+describe("내 프로젝트 통합 화면", () => {
+  it("사용 빈도에 따라 진행 중 상태를 지원 상태보다 먼저 배치한다", () => {
+    render(<ProjectDashboardSidebar counts={{ all: 6, pending: 2, rejected: 1, active: 2, completed: 1 }} selectedView="pending" student />);
+
+    const links = screen.getByRole("navigation", { name: "내 프로젝트 바로가기" }).querySelectorAll("a");
+
+    expect(Array.from(links).map((link) => link.getAttribute("href"))).toEqual([
+      "/dashboard",
+      "/dashboard?view=active",
+      "/dashboard?view=pending",
+      "/dashboard?view=completed",
+      "/dashboard?view=rejected",
+    ]);
+    expect(screen.getByRole("link", { name: "승인 대기 2개" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("학생 프로젝트 화면을 지원부터 완료까지의 단일 흐름으로 설명한다", () => {
     render(<ProjectDashboardHero role="STUDENT" />);
 
     expect(screen.getByRole("heading", { name: "내 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByText("지원부터 진행, 완료까지 내 프로젝트 상태를 한곳에서 확인합니다.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "새 프로젝트 찾기" })).toHaveAttribute("href", "/topics");
-    expect(screen.queryByText("전체 진행률")).not.toBeInTheDocument();
-    expect(screen.queryByText("진행 프로젝트")).not.toBeInTheDocument();
   });
 
-  it("교수에게 지도 의견과 보고서 관리 진입점을 제공한다", () => {
-    render(<ProjectList role="PROFESSOR" teams={[team]} />);
+  it("진행 프로젝트 카드는 핵심 현황과 단일 진입점만 제공한다", () => {
+    render(<ProjectList role="STUDENT" teams={[team]} view="active" />);
 
-    expect(screen.getByRole("link", { name: "지도 의견" })).toHaveAttribute("href", "/teams/team-1/discussion");
-    expect(screen.getByRole("link", { name: "보고서 관리" })).toHaveAttribute("href", "/teams/team-1/reports");
-    expect(screen.getByRole("button", { name: /프로토타입 테스트/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getAllByText("한지우")).toHaveLength(2);
-    expect(screen.queryByText("3단계")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "모두의 길 마일스톤 진행률" })).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText("팀 대화")).not.toBeInTheDocument();
+    expect(screen.queryByText("보고서")).not.toBeInTheDocument();
   });
 
-  it("학생에게 단일 작업 공간 진입점을 제공한다", () => {
-    render(<ProjectList role="STUDENT" teams={[team]} />);
+  it("교수와 완료 프로젝트에는 역할과 상태에 맞는 진입 문구를 제공한다", () => {
+    const { rerender } = render(<ProjectList role="PROFESSOR" teams={[team]} view="active" />);
 
-    expect(screen.getByRole("link", { name: /프로젝트 개요/ })).toHaveAttribute("href", "/teams/team-1");
-    expect(screen.queryByRole("link", { name: "지도 의견" })).not.toBeInTheDocument();
-  });
+    expect(screen.getByRole("link", { name: "지도 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
 
-  it("종료 프로젝트를 진행 중 작업처럼 표시하지 않는다", () => {
-    render(<ProjectList role="STUDENT" teams={[{ ...team, status: "CLOSED", milestoneCount: 0, completedMilestoneCount: 0, milestones: [] }]} />);
+    rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "CLOSED" }]} view="completed" />);
 
-    expect(screen.getByText("완료한 프로젝트")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /프로젝트 보기/ })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("heading", { name: "완료한 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "완료 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByText("진행 중 프로젝트")).not.toBeInTheDocument();
   });
 
-  it("진행 중 프로젝트와 종료 프로젝트를 별도 섹션으로 구분한다", () => {
-    render(<ProjectList role="ADMIN" teams={[team, { ...team, id: "team-closed", status: "CLOSED" }]} />);
+  it("선택한 프로젝트 상태만 렌더링한다", () => {
+    const closedTeam = { ...team, id: "team-closed", status: "CLOSED" as const };
+    const { rerender } = render(<ProjectList role="STUDENT" teams={[team, closedTeam]} view="active" />);
 
     expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
-    expect(screen.getByText("완료한 프로젝트")).toBeInTheDocument();
+    expect(screen.queryByText("완료 프로젝트 열기")).not.toBeInTheDocument();
+
+    rerender(<ProjectList role="STUDENT" teams={[team, closedTeam]} view="completed" />);
+
+    expect(screen.getByRole("link", { name: "완료 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-closed");
+    expect(screen.queryByRole("link", { name: "프로젝트 열기" })).not.toBeInTheDocument();
   });
 
-  it("여러 프로젝트는 하나의 캔버스에서 전환한다", () => {
-    render(<ProjectList role="STUDENT" teams={[team, { ...team, id: "team-2", name: "다음 팀" }]} />);
+  it("지원 대기와 승인 거절을 서로 다른 프로젝트 상태로 보여준다", () => {
+    const pendingApplication = {
+      id: "application-1",
+      topicId: "topic-1",
+      topicTitle: "접근성 지도",
+      topicStatus: "PUBLISHED" as const,
+      programName: "2026 캡스톤",
+      programStatus: "OPEN" as const,
+      status: "PENDING" as const,
+      reviewComment: "",
+      message: "",
+      skills: [],
+      desiredRole: "",
+      availability: "",
+      applicationKind: "INDIVIDUAL" as const,
+      teamMembers: [],
+      answers: [],
+      createdAt: new Date("2026-07-20T00:00:00Z"),
+      decidedAt: null,
+    };
+    const page = {
+      items: [pendingApplication],
+      page: 1,
+      totalPages: 1,
+      total: 1,
+      counts: { PENDING: 1, ACCEPTED: 0, REJECTED: 0 },
+    };
+    const { rerender } = render(<ProjectApplicationList page={page} status="PENDING" />);
 
-    expect(screen.getByRole("button", { name: "모두의 길" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "다음 팀" }));
-    expect(screen.getByRole("button", { name: "다음 팀" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("heading", { name: "다음 팀" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "모두의 길" })).not.toBeInTheDocument();
-  });
+    expect(screen.getByRole("heading", { name: "승인 대기" })).toBeInTheDocument();
+    expect(screen.getByText("접근성 지도")).toBeInTheDocument();
 
-  it("빈 작업 lane은 별도 카드 없이 평문으로 안내한다", () => {
-    render(<ProjectList role="STUDENT" teams={[{ ...team, milestones: [team.milestones[2]] }]} />);
+    rerender(
+      <ProjectApplicationList
+        page={{
+          ...page,
+          items: [{ ...pendingApplication, status: "REJECTED", reviewComment: "정원이 마감되었습니다.", decidedAt: new Date("2026-07-21T00:00:00Z") }],
+          counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 1 },
+        }}
+        status="REJECTED"
+      />,
+    );
 
-    const emptyLanes = screen.getAllByText("해당 작업 없음");
-    expect(emptyLanes).toHaveLength(2);
-    for (const lane of emptyLanes) {
-      expect(lane.tagName).toBe("P");
-      expect(lane).toHaveClass(styles.emptyLaneMessage);
-      expect(lane.className).not.toContain("laneEmpty");
-    }
+    expect(screen.getByRole("heading", { name: "승인 거절" })).toBeInTheDocument();
+    expect(screen.getByText("정원이 마감되었습니다.")).toBeInTheDocument();
   });
 });

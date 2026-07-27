@@ -1,146 +1,136 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo, useState } from "react";
 
-import { MilestoneBoard } from "@/app/dashboard/_components/milestone-board";
-import { MilestoneInspector } from "@/app/dashboard/_components/milestone-inspector";
-import {
-  defaultMilestoneId,
-  projectStatus,
-} from "@/app/dashboard/_components/project-list-model";
 import styles from "@/app/dashboard/_components/project-list.module.css";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import type { TeamListItem } from "@/modules/team/application/team-workspace-ports";
+import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { StatusBadge } from "@/shared/ui/page-primitives";
 
-function ProjectStrip({
-  teams,
-  selectedId,
-  onSelect,
+const projectStatus = {
+  FORMING: { label: "구성 중", tone: "warning" },
+  CONFIRMED: { label: "진행 중", tone: "info" },
+  CLOSED: { label: "완료", tone: "neutral" },
+} as const;
+
+function nextMilestone(team: TeamListItem) {
+  return [...team.milestones]
+    .filter(({ status }) => status !== "DONE")
+    .sort((left, right) => {
+      const statusOrder = Number(right.status === "IN_PROGRESS") -
+        Number(left.status === "IN_PROGRESS");
+      return statusOrder || left.dueAt.getTime() - right.dueAt.getTime();
+    })[0];
+}
+
+function ProjectCard({
+  role,
+  team,
 }: {
-  teams: TeamListItem[];
-  selectedId: string;
-  onSelect: (team: TeamListItem) => void;
+  role: UserRole;
+  team: TeamListItem;
 }) {
+  const status = projectStatus[team.status];
+  const milestone = nextMilestone(team);
+  const progress = team.milestoneCount > 0
+    ? Math.round((team.completedMilestoneCount / team.milestoneCount) * 100)
+    : 0;
+  const actionLabel = role === "PROFESSOR"
+    ? "지도 프로젝트 열기"
+    : team.status === "CLOSED"
+      ? "완료 프로젝트 열기"
+      : "프로젝트 열기";
+
   return (
-    <section aria-labelledby="active-projects-title">
-      <div className={styles.sectionHeading}>
-        <h2 id="active-projects-title">진행 중 프로젝트</h2>
-        <span>{teams.length}개</span>
+    <article className={styles.projectCard} aria-labelledby={`project-${team.id}-title`}>
+      <div className={styles.cardHeader}>
+        <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
+        <span><UiText>{"팀원"}</UiText> {team.memberCount}<UiText>{"명"}</UiText></span>
       </div>
-      <div className={styles.projectStrip}>
-        {teams.map((team) => {
-          const selected = team.id === selectedId;
-          return (
-            <button
-              key={team.id}
-              type="button"
-              className={styles.projectTab}
-              aria-label={team.name}
-              aria-pressed={selected}
-              onClick={() => onSelect(team)}
-            >
-              <span className={styles.projectTabStatus}>
-                {projectStatus[team.status]}
-              </span>
-              <strong>{team.name}</strong>
-              <span className={styles.projectTabTopic}>{team.topicTitle}</span>
-              <span className={styles.projectTabMeta}>
-                마일스톤 {team.completedMilestoneCount}/{team.milestoneCount}
-                <i aria-hidden="true" />
-                팀원 {team.memberCount}명
-              </span>
-            </button>
-          );
-        })}
+
+      <div>
+        <h3 id={`project-${team.id}-title`}><UiText>{team.name}</UiText></h3>
+        <p className={styles.topic}><UiText>{team.topicTitle}</UiText></p>
       </div>
-    </section>
+
+      <div className={styles.progress}>
+        <div>
+          <span><UiText>{"마일스톤 진행률"}</UiText></span>
+          <strong>{progress}%</strong>
+        </div>
+        <div
+          className={styles.progressTrack}
+          role="progressbar"
+          aria-label={`${team.name} 마일스톤 진행률`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+        >
+          <span style={{ width: `${progress}%` }} />
+        </div>
+        <p>{team.completedMilestoneCount} / {team.milestoneCount} <UiText>{"완료"}</UiText></p>
+      </div>
+
+      <div className={styles.nextMilestone}>
+        <span><UiText>{team.status === "CLOSED" ? "마지막 현황" : "다음 마일스톤"}</UiText></span>
+        {milestone ? (
+          <>
+            <strong><UiText>{milestone.title}</UiText></strong>
+            <p>
+              <UiText>{milestone.assignees.map(({ name }) => name).join(", ") || "담당자 미정"}</UiText>
+              <time dateTime={milestone.dueAt.toISOString()}><UiDate value={milestone.dueAt} mode="date" /></time>
+            </p>
+          </>
+        ) : (
+          <strong><UiText>{team.milestoneCount > 0 ? "모든 마일스톤 완료" : "등록된 마일스톤 없음"}</UiText></strong>
+        )}
+      </div>
+
+      <Link href={`/teams/${team.id}`} className={styles.cardAction}>
+        <UiText>{actionLabel}</UiText>
+        <span aria-hidden="true">→</span>
+      </Link>
+    </article>
   );
 }
 
-function CompletedProjectRows({
+export function ProjectList({
+  role,
   teams,
+  view = "all",
 }: {
+  role: UserRole;
   teams: TeamListItem[];
+  view?: "all" | "active" | "completed";
 }) {
-  if (teams.length === 0) return null;
+  const visibleTeams = teams.filter((team) => {
+    if (view === "active") return team.status !== "CLOSED";
+    if (view === "completed") return team.status === "CLOSED";
+    return true;
+  });
+
+  if (visibleTeams.length === 0) return null;
 
   return (
-    <section className={styles.completed} aria-labelledby="completed-projects-title">
+    <section
+      aria-labelledby={`${view}-projects-title`}
+      className={styles.projectSection}
+    >
       <div className={styles.sectionHeading}>
-        <h2 id="completed-projects-title">완료한 프로젝트</h2>
-        <span>{teams.length}개</span>
+        <div>
+          <h2 id={`${view}-projects-title`}>
+            <UiText>{view === "completed" ? "완료한 프로젝트" : view === "active" ? "진행 중 프로젝트" : "프로젝트"}</UiText>
+          </h2>
+          <p>
+            <UiText>{view === "completed" ? "종료된 프로젝트와 결과를 확인합니다." : "핵심 현황을 확인하고 작업 공간으로 이동합니다."}</UiText>
+          </p>
+        </div>
+        <span>{visibleTeams.length}<UiText>{"개"}</UiText></span>
       </div>
-      <ul className={styles.completedRows}>
-        {teams.map((team) => (
-          <li key={team.id}>
-            <div>
-              <strong>{team.name}</strong>
-              <span>{team.topicTitle}</span>
-            </div>
-            <span>팀원 {team.memberCount}명</span>
-            <Link href={`/teams/${team.id}`}>프로젝트 보기</Link>
-          </li>
+      <div className={styles.projectGrid}>
+        {visibleTeams.map((team) => (
+          <ProjectCard key={team.id} role={role} team={team} />
         ))}
-      </ul>
+      </div>
     </section>
-  );
-}
-
-export function ProjectList({ role, teams }: { role: UserRole; teams: TeamListItem[] }) {
-  const activeTeams = useMemo(
-    () => teams.filter((team) => team.status !== "CLOSED"),
-    [teams],
-  );
-  const closedTeams = useMemo(
-    () => teams.filter((team) => team.status === "CLOSED"),
-    [teams],
-  );
-  const [selectedProjectId, setSelectedProjectId] = useState(
-    activeTeams[0]?.id ?? "",
-  );
-  const selectedTeam =
-    activeTeams.find(({ id }) => id === selectedProjectId) ?? activeTeams[0];
-  const [selectedMilestoneId, setSelectedMilestoneId] = useState(
-    defaultMilestoneId(selectedTeam),
-  );
-  const selectedMilestone =
-    selectedTeam?.milestones.find(({ id }) => id === selectedMilestoneId) ??
-    selectedTeam?.milestones.find(({ status }) => status === "IN_PROGRESS") ??
-    selectedTeam?.milestones.find(({ status }) => status === "TODO") ??
-    selectedTeam?.milestones[0];
-
-  function selectProject(team: TeamListItem) {
-    setSelectedProjectId(team.id);
-    setSelectedMilestoneId(defaultMilestoneId(team));
-  }
-
-  return (
-    <div className={styles.projectSections}>
-      {selectedTeam ? (
-        <>
-          {activeTeams.length > 1 ? (
-            <ProjectStrip
-              teams={activeTeams}
-              selectedId={selectedTeam.id}
-              onSelect={selectProject}
-            />
-          ) : null}
-          <div className={styles.workspaceGrid}>
-            <MilestoneBoard
-              team={selectedTeam}
-              selectedMilestoneId={selectedMilestone?.id ?? ""}
-              onSelectMilestone={setSelectedMilestoneId}
-            />
-            <MilestoneInspector
-              role={role}
-              team={selectedTeam}
-              milestone={selectedMilestone}
-            />
-          </div>
-        </>
-      ) : null}
-      <CompletedProjectRows teams={closedTeams} />
-    </div>
   );
 }
