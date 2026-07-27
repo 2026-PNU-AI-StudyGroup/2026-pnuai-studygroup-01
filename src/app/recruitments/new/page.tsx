@@ -1,7 +1,10 @@
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "새 모집" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("새 모집");
+}
 
 export default async function NewRecruitmentPage({
   searchParams,

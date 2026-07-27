@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
+import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
 const navigation = [
   { href: "/recruitments", label: "팀 찾기", icon: "search" },
@@ -46,25 +49,25 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
   const current = navigation.find((item) => isTeamNavigationActive(item.href, currentPath)) ?? navigation[0];
 
   return (
-    <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[13.5rem_minmax(0,1fr)]">
-      <aside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
+    <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
+      <UiAside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
           <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
-            <p className="text-base font-extrabold tracking-[-0.025em] text-[var(--ink)]">팀</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">팀 구성과 모집을 관리합니다.</p>
+            <p className="text-base font-extrabold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
+            <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"팀 구성과 모집을 관리합니다."}</UiText></p>
           </div>
 
           <details className="group lg:hidden">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 border-y border-[var(--line)] py-2.5 [&::-webkit-details-marker]:hidden">
               <span className="flex min-w-0 items-center gap-2.5 text-sm font-extrabold text-[var(--primary-hover)]">
                 <StudentTeamIcon name={current.icon} />
-                {current.label}
+                <UiText>{current.label}</UiText>
               </span>
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.75] transition-transform group-open:rotate-180">
                 <path d="m6 8 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </summary>
-            <nav aria-label="팀 메뉴 모바일" className="border-b border-[var(--line)] py-2">
+            <UiNav aria-label="팀 메뉴 모바일" className="border-b border-[var(--line)] py-2">
               <ul className="grid grid-cols-2 gap-x-4">
                 {navigation.map((item) => {
                   const active = isTeamNavigationActive(item.href, currentPath);
@@ -80,16 +83,16 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                         }`}
                       >
                         <StudentTeamIcon name={item.icon} />
-                        {item.label}
+                        <UiText>{item.label}</UiText>
                       </Link>
                     </li>
                   );
                 })}
               </ul>
-            </nav>
+            </UiNav>
           </details>
 
-          <nav aria-label="팀 메뉴" className="mt-5 hidden lg:block">
+          <UiNav aria-label="팀 메뉴" className="mt-5 hidden lg:block">
             <ul className="flex flex-col">
               {navigation.map((item) => {
                 const active = isTeamNavigationActive(item.href, currentPath);
@@ -105,52 +108,49 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                       }`}
                     >
                       <StudentTeamIcon name={item.icon} />
-                      {item.label}
+                      <UiText>{item.label}</UiText>
                     </Link>
                   </li>
                 );
               })}
             </ul>
-          </nav>
+          </UiNav>
         </div>
-      </aside>
-      <div className="min-w-0 px-5 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10 lg:py-10 xl:px-12">{children}</div>
+      </UiAside>
+      <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>
     </div>
   );
 }
 
 export function StudentTeamPageIntro({ title, description, action, meta }: { title: string; description: string; action?: ReactNode; meta?: ReactNode }) {
   return (
-    <header className="flex flex-col items-start justify-between gap-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:flex-row sm:items-end sm:gap-10 sm:p-7">
-      <div className="min-w-0 max-w-3xl">
-        {meta ? <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">{meta}</div> : null}
-        <h1 className="text-[clamp(2.25rem,3.4vw,3.25rem)] font-black leading-[1.04] tracking-[-0.055em] text-[var(--ink)]">{title}</h1>
-        <p className="mt-3 max-w-2xl text-[0.95rem] leading-6 text-[var(--muted)]">{description}</p>
-      </div>
-      {action ? <div className="flex shrink-0">{action}</div> : null}
-    </header>
+    <ExplorerHero
+      title={<UiText>{title}</UiText>}
+      description={<UiText>{description}</UiText>}
+      context={meta}
+      mark={<UiText>{title.replace(/\s/g, "").slice(0, 1)}</UiText>}
+      action={action}
+    />
   );
 }
 
 export function StudentTeamPagination({ page, totalPages, total, href }: { page: number; totalPages: number; total: number; href: (page: number) => string }) {
   if (totalPages <= 1) return null;
   return (
-    <nav aria-label="페이지 이동" className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-6">
-      <span className="text-sm text-[var(--muted)]">전체 {total}개 · {page}/{totalPages} 페이지</span>
+    <UiNav aria-label="페이지 이동" className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-6">
+      <span className="text-sm text-[var(--muted)]"><UiText>{"전체"}</UiText>{" "}{total}<UiText>{"개 ·"}</UiText>{" "}{page}/{totalPages} {" "}<UiText>{"페이지"}</UiText></span>
       <div className="flex items-center gap-1">
         {page > 1 ? (
           <Link className="button-quiet gap-2" href={href(page - 1)}>
             <StudentTeamIcon name="chevron-left" className="size-4" />
-            이전
-          </Link>
+            <UiText>{"이전"}</UiText></Link>
         ) : null}
         {page < totalPages ? (
           <Link className="button-quiet gap-2" href={href(page + 1)}>
-            다음
-            <StudentTeamIcon name="chevron-right" className="size-4" />
+            <UiText>{"다음"}</UiText><StudentTeamIcon name="chevron-right" className="size-4" />
           </Link>
         ) : null}
       </div>
-    </nav>
+    </UiNav>
   );
 }

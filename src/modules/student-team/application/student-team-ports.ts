@@ -1,4 +1,4 @@
-export type StudentTeamMemberSummary = {
+type StudentTeamMemberSummary = {
   studentId: string;
   name: string;
   email: string;
@@ -6,7 +6,7 @@ export type StudentTeamMemberSummary = {
   joinedAt: Date;
 };
 
-export type StudentTeamInvitationSummary = {
+type StudentTeamInvitationSummary = {
   id: string;
   email: string;
   status: "PENDING" | "ACCEPTED" | "DECLINED" | "CANCELED";

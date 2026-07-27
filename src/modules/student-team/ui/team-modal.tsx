@@ -1,5 +1,7 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -36,7 +38,7 @@ export function TeamModal({
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 p-4 sm:p-6">
-      <button type="button" aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={() => router.replace(closeHref)} />
+      <UiButton type="button" aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={() => router.replace(closeHref)} />
       <section
         role="dialog"
         aria-modal="true"
@@ -45,10 +47,10 @@ export function TeamModal({
       >
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 id="team-modal-title" className="text-2xl font-black tracking-[-0.035em] text-[var(--ink)]">{title}</h2>
-            {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
+            <h2 id="team-modal-title" className="text-2xl font-black tracking-[-0.035em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
+            {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p> : null}
           </div>
-          <button
+          <UiButton
             ref={closeButtonRef}
             type="button"
             aria-label="닫기"
@@ -56,9 +58,9 @@ export function TeamModal({
             onClick={() => router.replace(closeHref)}
           >
             ×
-          </button>
+          </UiButton>
         </div>
-        <div className="mt-6">{children}</div>
+        <div className="mt-6"><UiText>{children}</UiText></div>
       </section>
     </div>
   );

@@ -36,7 +36,6 @@ describe("Prisma 주제 저장소", () => {
         findMany: vi.fn(async () => { order.push("applications-read"); return []; }),
         updateMany: vi.fn(async () => ({ count: 0 })),
       },
-      teamApplicationDraft: { deleteMany: vi.fn(async () => ({ count: 0 })) },
       recruitmentPost: { updateMany: vi.fn(async () => ({ count: 0 })) },
       recruitmentApplication: { updateMany: vi.fn(async () => ({ count: 0 })) },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) },

@@ -1,5 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { UiDate } from "@/modules/translation/ui/i18n-provider";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -15,9 +18,9 @@ import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
-export const metadata: Metadata = { title: "보낸 지원" };
-
-const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("보낸 지원");
+}
 const statusPresentation = {
   PENDING: { label: "검토 중", tone: "info" },
   ACCEPTED: { label: "수락", tone: "success" },
@@ -39,36 +42,36 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/applications">
       <main className="pb-28 lg:min-h-screen lg:pb-0">
         <StudentTeamSectionLayout currentPath="/recruitments/applications">
-          <div className="space-y-8">
+          <div className="space-y-5">
             <StudentTeamPageIntro
               title="보낸 지원"
               description="지원한 역할과 팀의 검토 결과를 시간순으로 확인합니다."
-              meta={<span>지원 기록 {data.total}개</span>}
-              action={<Link className="button-secondary" href="/recruitments">모집 글 탐색</Link>}
+              meta={<span><UiText>{"지원 기록"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
+              action={<Link className="button-secondary" href="/recruitments"><UiText>{"모집 글 탐색"}</UiText></Link>}
             />
 
             {data.applications.length === 0 ? (
-              <EmptyState title="보낸 지원이 없습니다" description="열린 포지션에서 내 경험과 맞는 역할을 찾아보세요." action={<Link className="button-primary" href="/recruitments">모집 둘러보기</Link>} />
+              <EmptyState title="보낸 지원이 없습니다" description="열린 포지션에서 내 경험과 맞는 역할을 찾아보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"모집 둘러보기"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
                 <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-bold text-[var(--muted)] lg:grid">
-                  <span>지원한 모집</span>
-                  <span>지원일</span>
-                  <span className="text-right">상태</span>
+                  <span><UiText>{"지원한 모집"}</UiText></span>
+                  <span><UiText>{"지원일"}</UiText></span>
+                  <span className="text-right"><UiText>{"상태"}</UiText></span>
                 </div>
                 <ol>
                   {data.applications.map((application) => (
                     <li key={application.id} className="grid gap-4 border-b border-[var(--line)] px-6 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_10rem_8rem] lg:items-center lg:gap-6">
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-[var(--primary)]">{application.teamName}</p>
-                        <h3 className="mt-1 truncate text-lg font-black tracking-[-0.02em] text-[var(--ink)]">{application.postTitle}</h3>
-                        <p className="mt-1 truncate text-sm text-[var(--muted)]">{application.topicTitle} · {application.recruiterName}</p>
+                        <h3 className="mt-1 truncate text-lg font-black tracking-[-0.02em] text-[var(--ink)]"><UiText>{application.postTitle}</UiText></h3>
+                        <p className="mt-1 truncate text-sm text-[var(--muted)]"><UiText>{application.topicTitle}</UiText> · {application.recruiterName}</p>
                       </div>
                       <p className="text-sm text-[var(--muted)]">
-                        {koreanDate.format(application.createdAt)}
-                        {application.decidedAt ? <span className="mt-1 block text-xs">{koreanDate.format(application.decidedAt)} 처리</span> : null}
+                        <UiDate value={application.createdAt} mode="date" />
+                        {application.decidedAt ? <span className="mt-1 block text-xs"><UiDate value={application.decidedAt} mode="date" /> {" "}<UiText>{"처리"}</UiText></span> : null}
                       </p>
-                      <div className="lg:text-right"><StatusBadge tone={statusPresentation[application.status].tone}>{statusPresentation[application.status].label}</StatusBadge></div>
+                      <div className="lg:text-right"><StatusBadge tone={statusPresentation[application.status].tone}><UiText>{statusPresentation[application.status].label}</UiText></StatusBadge></div>
                     </li>
                   ))}
                 </ol>

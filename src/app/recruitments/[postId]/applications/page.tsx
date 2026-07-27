@@ -1,3 +1,4 @@
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -9,7 +10,9 @@ import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
-export const metadata: Metadata = { title: "모집 지원자 검토" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("모집 지원자 검토");
+}
 
 export default async function RecruitmentPostApplicationsPage({ params }: { params: Promise<{ postId: string }> }) {
   const actor = await getCurrentActor();

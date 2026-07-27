@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { StudentTeamRecruitmentWriter } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaStudentTeamRecruitmentCommandRepository
   implements StudentTeamRecruitmentWriter
@@ -34,6 +35,13 @@ export class PrismaStudentTeamRecruitmentCommandRepository
       await transaction.studentTeamRecruitmentPost.create({
         data: { id: randomUUID(), authorId: input.leaderId, ...input },
       });
+      await enqueueTranslations(transaction, [
+        input.title,
+        input.content,
+        ...input.requiredSkills,
+        input.roleNeeded,
+        input.availability,
+      ]);
       return true;
     });
   }
@@ -103,6 +111,12 @@ export class PrismaStudentTeamRecruitmentCommandRepository
           updatedAt: input.appliedAt,
         },
       });
+      await enqueueTranslations(transaction, [
+        input.message,
+        ...input.skills,
+        input.desiredRole,
+        input.availability,
+      ]);
       return "CREATED";
     });
   }

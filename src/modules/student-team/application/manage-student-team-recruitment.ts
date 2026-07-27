@@ -1,7 +1,7 @@
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import { normalizeApplicationMessage, normalizeApplicationProfile } from "@/modules/topic-application/domain/topic-application-policy";
 
-export type StudentTeamRecruitmentPostView = {
+type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
   memberCount: number; capacity: number; createdAt: Date; canApply: boolean;
@@ -13,12 +13,12 @@ export type StudentTeamRecruitmentPostList = {
   page: number; totalPages: number; total: number;
 };
 
-export type StudentTeamAuthoredRecruitmentPost = {
+type StudentTeamAuthoredRecruitmentPost = {
   id: string; teamName: string; topicTitle: string; title: string; status: "OPEN" | "CLOSED";
   memberCount: number; capacity: number; applicationCount: number; pendingApplicationCount: number; createdAt: Date;
 };
 
-export type StudentTeamRecruitmentApplication = {
+type StudentTeamRecruitmentApplication = {
   id: string; studentName: string; message: string; skills: string[]; desiredRole: string; availability: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED"; createdAt: Date; decidedAt: Date | null;
 };
@@ -28,7 +28,7 @@ export type StudentTeamRecruitmentPostApplications = {
   applications: StudentTeamRecruitmentApplication[];
 };
 
-export type StudentTeamRecruitmentHistory = {
+type StudentTeamRecruitmentHistory = {
   id: string; postTitle: string; teamName: string; topicTitle: string; recruiterName: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED"; createdAt: Date; decidedAt: Date | null;
 };

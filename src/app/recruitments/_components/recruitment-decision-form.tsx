@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
 import { decideRecruitmentAction } from "@/app/recruitments/_actions/recruitment-actions";
@@ -27,14 +28,14 @@ export function RecruitmentDecisionForm({
       <input type="hidden" name="decision" value={decision} />
       {decision === "REJECT" ? (
         <ConfirmSubmitButton className="button-danger" confirmMessage="이 팀원 지원을 거절하시겠습니까?" disabled={pending}>
-          {pending ? "처리 중" : "거절"}
+          <UiText>{pending ? "처리 중" : "거절"}</UiText>
         </ConfirmSubmitButton>
       ) : (
-        <button className="button-primary" disabled={pending}>{pending ? "처리 중" : "수락"}</button>
+        <button className="button-primary" disabled={pending}><UiText>{pending ? "처리 중" : "수락"}</UiText></button>
       )}
       {state.message ? (
         <p aria-live="polite" className={`mt-1 text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
-          {state.message}
+          <UiText>{state.message}</UiText>
         </p>
       ) : null}
     </form>

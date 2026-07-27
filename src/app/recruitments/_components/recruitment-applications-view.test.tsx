@@ -6,6 +6,9 @@ import { RecruitmentApplicationsView } from "@/app/recruitments/_components/recr
 vi.mock("@/app/recruitments/_components/recruitment-decision-form", () => ({
   RecruitmentDecisionForm: () => null,
 }));
+vi.mock("@/app/_components/translated-text", () => ({
+  TranslatedText: ({ text }: { text: string }) => <p>{text}</p>,
+}));
 
 describe("RecruitmentApplicationsView", () => {
   it("지원자가 없으면 기존 모집 패널 안에서 평면 빈 상태를 보여준다", () => {
