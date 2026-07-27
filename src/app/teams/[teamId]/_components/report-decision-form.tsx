@@ -1,5 +1,7 @@
 "use client";
 
+import { UiInput } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
 import { decideReportAction } from "@/app/teams/[teamId]/_actions/team-report-actions";
@@ -26,15 +28,13 @@ export function ReportDecisionForm({
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="reportVersionId" value={reportVersionId} />
       <label className="grid gap-2 text-sm font-semibold">
-        검토 결과
-        <CustomSelect name="decision" defaultValue="APPROVED" options={[
+        <UiText>{"검토 결과"}</UiText><CustomSelect name="decision" defaultValue="APPROVED" options={[
           { value: "APPROVED", label: "승인" },
           { value: "REVISION_REQUESTED", label: "수정 요청" },
         ]} />
       </label>
       <label className="grid gap-2 text-sm font-semibold">
-        검토 의견
-        <input
+        <UiText>{"검토 의견"}</UiText><UiInput
           name="comment"
           maxLength={2000}
           placeholder="수정 요청을 선택한 경우 필수"
@@ -42,7 +42,7 @@ export function ReportDecisionForm({
         />
       </label>
       <button disabled={pending} className="button-quiet">
-        {pending ? "저장 중" : "검토 완료"}
+        <UiText>{pending ? "저장 중" : "검토 완료"}</UiText>
       </button>
       {state.message ? (
         <p
@@ -53,7 +53,7 @@ export function ReportDecisionForm({
               : "text-[var(--success)]"
           }`}
         >
-          {state.message}
+          <UiText>{state.message}</UiText>
         </p>
       ) : null}
     </form>

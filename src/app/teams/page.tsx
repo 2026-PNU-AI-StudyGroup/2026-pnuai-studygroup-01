@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
@@ -8,7 +10,7 @@ import {
   InvitationDecisionForm,
 } from "@/app/teams/_components/student-team-controls";
 import { StudentTeamLedger } from "@/app/teams/_components/student-team-ledger";
-import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
+import { StudentTeamPageIntro, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
@@ -16,7 +18,9 @@ import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrast
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
-export const metadata: Metadata = { title: "팀 관리" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("팀 관리");
+}
 
 export default async function StudentTeamsPage({
   searchParams,
@@ -36,39 +40,35 @@ export default async function StudentTeamsPage({
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams">
       <main className="page-enter pb-28 lg:min-h-screen lg:pb-0">
         <StudentTeamSectionLayout currentPath="/teams">
-          <div className="space-y-8">
-            <header className="flex flex-col gap-6 border-b border-[var(--line)] pb-8 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-black text-[var(--primary)]">지속형 팀</p>
-                <h1 className="mt-2 text-[clamp(2.3rem,4vw,3.5rem)] font-black leading-none tracking-[-0.055em] text-[var(--ink)]">
-                  내 팀
-                </h1>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--muted)]">
-                  프로젝트에 지원할 팀을 만들고 관리합니다. 프로젝트 지원은 팀장만 할 수 있습니다.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
+          <div className="space-y-5">
+            <StudentTeamPageIntro
+              title="내 팀"
+              description="프로젝트에 지원할 팀을 만들고 관리합니다. 프로젝트 지원은 팀장만 할 수 있습니다."
+              meta={<span><UiText>{"참여 중인 팀"}</UiText>{" "}{teams.length}<UiText>{"개"}</UiText></span>}
+              action={
+                <div className="flex flex-wrap gap-2">
                 <Link className="button-secondary" href="/teams?modal=invitations">
-                  받은 초대 {invitations.length ? `${invitations.length}` : ""}
+                  <UiText>{"받은 초대"}</UiText>{invitations.length ? `${invitations.length}` : ""}
                 </Link>
-                <Link className="button-primary" href="/teams?modal=create">새 팀 만들기</Link>
-              </div>
-            </header>
+                <Link className="button-primary" href="/teams?modal=create"><UiText>{"새 팀 만들기"}</UiText></Link>
+                </div>
+              }
+            />
 
             <section aria-labelledby="my-teams-title">
               <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
-                  <h2 id="my-teams-title" className="text-2xl font-black tracking-[-0.035em]">참여 중인 팀</h2>
-                  <p className="mt-1 text-sm text-[var(--muted)]">팀을 선택해 구성원과 초대를 관리하세요.</p>
+                  <h2 id="my-teams-title" className="text-2xl font-black tracking-[-0.035em]"><UiText>{"참여 중인 팀"}</UiText></h2>
+                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"팀을 선택해 구성원과 초대를 관리하세요."}</UiText></p>
                 </div>
-                <span className="text-sm font-bold text-[var(--muted)]">{teams.length}개</span>
+                <span className="text-sm font-bold text-[var(--muted)]">{teams.length}<UiText>{"개"}</UiText></span>
               </div>
 
               {teams.length === 0 ? (
                 <EmptyState
                   title="아직 참여 중인 팀이 없습니다"
                   description="새 팀을 만들면 본인이 팀장이 됩니다."
-                  action={<Link className="button-primary" href="/teams?modal=create">첫 팀 만들기</Link>}
+                  action={<Link className="button-primary" href="/teams?modal=create"><UiText>{"첫 팀 만들기"}</UiText></Link>}
                 />
               ) : (
                 <StudentTeamLedger teams={teams} actorId={actor.id} />
@@ -77,10 +77,10 @@ export default async function StudentTeamsPage({
 
             <aside className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
               <div>
-                <strong className="text-sm text-[var(--ink)]">학생 프로젝트를 제안할 수 있습니다.</strong>
-                <p className="mt-1 text-sm text-[var(--muted)]">교수를 지정하거나 관리자 승인을 요청하세요.</p>
+                <strong className="text-sm text-[var(--ink)]"><UiText>{"학생 프로젝트를 제안할 수 있습니다."}</UiText></strong>
+                <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"교수를 지정하거나 관리자 승인을 요청하세요."}</UiText></p>
               </div>
-              <Link className="button-quiet" href="/projects/new">학생 프로젝트 제안</Link>
+              <Link className="button-quiet" href="/projects/new"><UiText>{"학생 프로젝트 제안"}</UiText></Link>
             </aside>
           </div>
 
@@ -103,7 +103,7 @@ export default async function StudentTeamsPage({
                     <li key={invitation.id} className="grid gap-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                       <div>
                         <strong>{invitation.teamName}</strong>
-                        <p className="mt-1 text-sm text-[var(--muted)]">팀장 {invitation.leaderName}</p>
+                        <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"팀장"}</UiText>{" "}{invitation.leaderName}</p>
                       </div>
                       <InvitationDecisionForm invitationId={invitation.id} />
                     </li>

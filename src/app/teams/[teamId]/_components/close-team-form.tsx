@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
 import { closeTeamAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
@@ -17,9 +18,9 @@ export function CloseTeamForm({ teamId }: { teamId: string }) {
         className="button-danger"
         confirmMessage="팀을 종료하면 마일스톤과 보고서를 더 이상 수정할 수 없습니다. 승인된 최종 보고서를 확인하고 종료하시겠습니까?"
       >
-        {pending ? "종료 중" : "팀 종료"}
+        <UiText>{pending ? "종료 중" : "팀 종료"}</UiText>
       </ConfirmSubmitButton>
-      {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]">{state.message}</span> : null}
+      {state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}
     </form>
   );
 }

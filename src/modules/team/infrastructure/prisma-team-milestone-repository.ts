@@ -10,6 +10,7 @@ import {
   teamRecordActorSql,
   validTeamAssigneesSql,
 } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaTeamMilestoneRepository implements MilestoneWriter {
   constructor(private readonly client: PrismaClient) {}
@@ -40,6 +41,7 @@ export class PrismaTeamMilestoneRepository implements MilestoneWriter {
         RETURNING "id"
       `);
       if (!rows[0]) return null;
+      await enqueueTranslations(transaction, [input.title]);
       if (assigneeIds.length > 0) {
         await transaction.milestoneAssignee.createMany({
           data: assigneeIds.map((userId) => ({ milestoneId: id, userId })),

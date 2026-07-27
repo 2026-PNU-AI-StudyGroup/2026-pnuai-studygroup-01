@@ -1,3 +1,4 @@
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -9,7 +10,9 @@ import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrast
 import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export const metadata: Metadata = { title: "팀 상세 관리" };
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("팀 상세 관리");
+}
 
 export default async function StudentTeamManagePage({
   params,

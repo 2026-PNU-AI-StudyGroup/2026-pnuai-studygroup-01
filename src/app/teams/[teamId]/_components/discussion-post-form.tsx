@@ -1,5 +1,7 @@
 "use client";
 
+import { UiButton, UiTextarea } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
 import { createDiscussionPostAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
@@ -19,9 +21,9 @@ export function DiscussionPostForm({ teamId, authorName }: { teamId: string; aut
           </svg>
         </span>
         <div className="min-w-0 flex-1">
-          <label htmlFor="discussion-message" className="sr-only">메시지</label>
+          <label htmlFor="discussion-message" className="sr-only"><UiText>{"메시지"}</UiText></label>
           <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--focus-ring)]">
-            <textarea
+            <UiTextarea
               id="discussion-message"
               name="content"
               required
@@ -30,15 +32,15 @@ export function DiscussionPostForm({ teamId, authorName }: { teamId: string; aut
               placeholder={`${authorName}님의 메시지 입력`}
               className="min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
             />
-            <button disabled={pending} className="button-primary min-h-11 shrink-0 px-4" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
-              <span className="hidden sm:inline">{pending ? "전송 중" : "보내기"}</span>
+            <UiButton disabled={pending} className="button-primary min-h-11 shrink-0 px-4" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
+              <span className="hidden sm:inline"><UiText>{pending ? "전송 중" : "보내기"}</UiText></span>
               <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m4 5 16 7-16 7 3-7-3-7Z" />
                 <path d="M7 12h13" />
               </svg>
-            </button>
+            </UiButton>
           </div>
-          {state.message ? <p aria-live="polite" className={`mt-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{state.message}</p> : null}
+          {state.message ? <p aria-live="polite" className={`mt-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
         </div>
       </div>
     </form>

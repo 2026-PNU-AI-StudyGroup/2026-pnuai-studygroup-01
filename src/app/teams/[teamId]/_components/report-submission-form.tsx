@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useId, useRef, useState, useTransition } from "react";
 
 import {
@@ -42,8 +43,7 @@ export function ReportSubmissionForm({
         onClick={() => dialogRef.current?.showModal()}
         className="button-primary"
       >
-        보고서 제출
-      </button>
+        <UiText>{"보고서 제출"}</UiText></button>
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
@@ -96,7 +96,7 @@ export function ReportSubmissionForm({
               role="alert"
               className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"
             >
-              {state.message}
+              <UiText>{state.message}</UiText>
             </p>
           ) : null}
           <ReportFormActions

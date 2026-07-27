@@ -1,3 +1,6 @@
+import { UiDate } from "@/modules/translation/ui/i18n-provider";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
@@ -6,8 +9,9 @@ import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
-export const metadata: Metadata = { title: "프로젝트 결과물" };
-const koreanDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" });
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata("프로젝트 결과물");
+}
 const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
 
 export default async function TeamArtifactsPage({ params }: { params: Promise<{ teamId: string }> }) {
@@ -30,11 +34,11 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
             <li key={artifact.id} className="flex min-h-44 flex-col border-b border-[var(--line)] py-5">
               <div className="flex items-start justify-between gap-4">
                 <span className="text-xs font-extrabold text-[var(--primary)]">{artifactTypeLabel[artifact.type]}</span>
-                <time className="muted text-xs" dateTime={artifact.createdAt.toISOString()}>{koreanDate.format(artifact.createdAt)}</time>
+                <time className="muted text-xs" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
               </div>
-              <h2 className="mt-4 font-extrabold leading-6 [overflow-wrap:anywhere]">{artifact.title}</h2>
+              <h2 className="mt-4 font-extrabold leading-6 [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
               <div className="mt-auto pt-5">
-                {artifact.fileId ? <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" />파일 받기</a> : <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" />링크 열기<span className="sr-only"> 새 창</span></a>}
+                {artifact.fileId ? <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a> : <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>}
               </div>
             </li>
           ))}

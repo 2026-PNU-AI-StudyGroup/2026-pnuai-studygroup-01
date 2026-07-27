@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useId, useRef, useState, useTransition } from "react";
 
 import {
@@ -36,8 +37,7 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
         className="button-primary"
         onClick={() => dialogRef.current?.showModal()}
       >
-        결과물 등록
-      </button>
+        <UiText>{"결과물 등록"}</UiText></button>
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
@@ -100,7 +100,7 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
               role="alert"
               className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"
             >
-              {state.message}
+              <UiText>{state.message}</UiText>
             </p>
           ) : null}
           <ReportFormActions

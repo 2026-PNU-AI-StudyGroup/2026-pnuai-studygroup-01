@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { UiLink } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { usePathname } from "next/navigation";
 
 const sections = [
@@ -35,20 +38,20 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
     <>
       <details className="group lg:hidden">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 border-y border-[var(--line)] py-2.5 [&::-webkit-details-marker]:hidden">
-          <span className="flex min-w-0 items-center gap-2.5 text-sm font-extrabold text-[var(--primary-hover)]"><NavigationIcon name={currentSection.icon} />{currentSection.label}</span>
+          <span className="flex min-w-0 items-center gap-2.5 text-sm font-extrabold text-[var(--primary-hover)]"><NavigationIcon name={currentSection.icon} /><UiText>{currentSection.label}</UiText></span>
           <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round] transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
         </summary>
-        <nav aria-label="프로젝트 공간" className="border-b border-[var(--line)] py-2">
+        <UiNav aria-label="프로젝트 공간" className="border-b border-[var(--line)] py-2">
           <ul className="grid grid-cols-2 gap-x-4">
             {sections.map(({ label, suffix, icon }) => {
               const href = `/teams/${teamId}${suffix}`;
               const selected = suffix ? pathname.startsWith(href) : pathname === href;
-              return <li key={suffix || "overview"}><Link href={href} aria-label={`${label} 모바일 메뉴`} aria-current={selected ? "page" : undefined} className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-bold ${selected ? "border-[var(--primary)] text-[var(--primary-hover)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}><NavigationIcon name={icon} />{label}</Link></li>;
+              return <li key={suffix || "overview"}><UiLink href={href} aria-label={`${label} 모바일 메뉴`} aria-current={selected ? "page" : undefined} className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-bold ${selected ? "border-[var(--primary)] text-[var(--primary-hover)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}><NavigationIcon name={icon} /><UiText>{label}</UiText></UiLink></li>;
             })}
           </ul>
-        </nav>
+        </UiNav>
       </details>
-      <nav aria-label="프로젝트 공간" className="hidden lg:block">
+      <UiNav aria-label="프로젝트 공간" className="hidden lg:block">
       <ul className="flex flex-col">
         {sections.map(({ label, suffix, icon }) => {
           const href = `/teams/${teamId}${suffix}`;
@@ -61,13 +64,13 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
                 className={`snap-color relative flex min-h-11 items-center gap-3 border-l-2 px-3 text-sm font-bold lg:w-full ${selected ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}
               >
                 <NavigationIcon name={icon} />
-                {label}
+                <UiText>{label}</UiText>
               </Link>
             </li>
           );
         })}
       </ul>
-      </nav>
+      </UiNav>
     </>
   );
 }
