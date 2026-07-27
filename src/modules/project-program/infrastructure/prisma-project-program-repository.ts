@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { ProjectProgramRecord, ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type { ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaProjectProgramRepository implements ProjectProgramRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -11,6 +12,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       return await this.client.$transaction(async (transaction) => {
         if (!(await transaction.academicCycle.findUnique({ where: { id: input.academicCycleId }, select: { id: true } }))) return "CYCLE_NOT_FOUND";
         await transaction.projectProgram.create({ data: { ...input, status: "DRAFT", openedAt: null } });
+        await enqueueTranslations(transaction, [input.name, input.category, input.description]);
         return "CREATED";
       });
     } catch (error) {
@@ -59,7 +61,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           select: { id: true, studentId: true, topic: { select: { title: true } } },
         });
         await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PUBLISHED" }, data: { status: "CLOSED" } });
-        await transaction.teamApplicationDraft.deleteMany({ where: { topicId: { in: topicIds } } });
         await transaction.topicApplication.updateMany({ where: { topicId: { in: topicIds }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
         await transaction.recruitmentPost.updateMany({ where: { team: { topicId: { in: topicIds } }, status: "OPEN" }, data: { status: "CLOSED" } });
         await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: { in: topicIds } } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });

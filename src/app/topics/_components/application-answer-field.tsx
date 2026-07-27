@@ -1,5 +1,6 @@
 "use client";
 
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ChangeEvent } from "react";
 import { useId, useState } from "react";
 
@@ -22,9 +23,9 @@ export function ApplicationAnswerField({ question }: { question: ApplicationQues
 
   return (
     <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-      {question.label} <span className="muted text-xs font-medium">{question.required ? "필수" : "선택"}</span>
+      <UiText>{question.label}</UiText> <span className="muted text-xs font-medium"><UiText>{question.required ? "필수" : "선택"}</UiText></span>
       {question.maxLength <= 200 ? <input {...common} /> : <textarea {...common} rows={5} />}
-      <span id={descriptionId} className="muted text-right text-xs">{value.length} / {question.maxLength}자</span>
+      <span id={descriptionId} className="muted text-right text-xs">{value.length} / {question.maxLength}<UiText>{"자"}</UiText></span>
     </label>
   );
 }

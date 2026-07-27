@@ -114,15 +114,21 @@ export class PrismaTopicApplicationQueryRepository implements
 {
   constructor(private readonly client: PrismaClient) {}
 
-  async listByStudent(studentId: string, requestedPage: number, pageSize: number) {
+  async listByStudent(
+    studentId: string,
+    requestedPage: number,
+    pageSize: number,
+    status?: "PENDING" | "REJECTED",
+  ) {
+    const pageFilter = { studentId, ...(status ? { status } : {}) };
     const [total, groupedCounts] = await Promise.all([
-      this.client.topicApplication.count({ where: { studentId } }),
+      this.client.topicApplication.count({ where: pageFilter }),
       this.client.topicApplication.groupBy({ by: ["status"], where: { studentId }, _count: { _all: true } }),
     ]);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, totalPages);
     const applications = await this.client.topicApplication.findMany({
-      where: { studentId },
+      where: pageFilter,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,

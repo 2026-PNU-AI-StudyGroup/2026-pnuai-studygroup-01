@@ -10,7 +10,21 @@ describe("ListOwnTopicApplicationsService", () => {
 
     await new ListOwnTopicApplicationsService(repository).execute({ id: "student-1", role: "STUDENT" }, -2, 100);
 
-    expect(listByStudent).toHaveBeenCalledWith("student-1", 1, 20);
+    expect(listByStudent).toHaveBeenCalledWith("student-1", 1, 20, undefined);
+  });
+
+  it("내 프로젝트 상태 필터를 저장소까지 전달한다", async () => {
+    const listByStudent = vi.fn(async (_studentId, page) => ({ items: [], page, totalPages: 1, total: 0, counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 0 } }));
+    const repository: TopicApplicationLister = { listByStudent, findByStudentAndTopic: vi.fn(async () => null) };
+
+    await new ListOwnTopicApplicationsService(repository).execute(
+      { id: "student-1", role: "STUDENT" },
+      2,
+      20,
+      "REJECTED",
+    );
+
+    expect(listByStudent).toHaveBeenCalledWith("student-1", 2, 20, "REJECTED");
   });
 
   it("특정 프로젝트 지원 상태도 현재 학생 범위로 조회한다", async () => {

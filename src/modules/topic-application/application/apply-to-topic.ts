@@ -29,7 +29,7 @@ export class StudentAlreadyAssignedError extends Error {
 
 export class TeamMemberUnavailableError extends Error {
   constructor() {
-    super("초대한 팀원 중 이미 지원했거나 같은 학기의 다른 팀에 소속된 사용자가 있습니다.");
+    super("팀원 중 이미 지원했거나 같은 학기의 다른 프로젝트 팀에 소속된 사용자가 있습니다.");
     this.name = "TeamMemberUnavailableError";
   }
 }
@@ -49,8 +49,8 @@ export class ApplyToTopicService {
 
   async execute(
     actor: CurrentUser,
-    input: { topicId: string; kind: "INDIVIDUAL" | "TEAM"; answers: Array<{ questionId: string; value: string }>; inviteeEmails?: string[]; studentTeamId?: string },
-  ): Promise<{ outcome: "CREATED"; id: string } | { outcome: "INVITATIONS_PENDING"; draftId: string }> {
+    input: { topicId: string; kind: "INDIVIDUAL" | "TEAM"; answers: Array<{ questionId: string; value: string }>; studentTeamId?: string },
+  ): Promise<{ outcome: "CREATED"; id: string }> {
     assertCanApplyToTopic(actor);
     const appliedAt = this.now();
     const configuration = await this.repository.findConfiguration(input.topicId, appliedAt);
@@ -67,8 +67,8 @@ export class ApplyToTopicService {
       appliedAt,
     };
     const result = input.kind === "TEAM"
-      ? await this.repository.createTeamFromStudentTeam({ ...common, kind: "TEAM", inviteeEmails: [], studentTeamId: input.studentTeamId! })
-      : await this.repository.createIndividualIfAvailable({ ...common, kind: "INDIVIDUAL", inviteeEmails: [] });
+      ? await this.repository.createTeamFromStudentTeam({ ...common, kind: "TEAM", studentTeamId: input.studentTeamId! })
+      : await this.repository.createIndividualIfAvailable({ ...common, kind: "INDIVIDUAL" });
 
     if (result.outcome === "ALREADY_APPLIED") {
       throw new TopicAlreadyAppliedError();

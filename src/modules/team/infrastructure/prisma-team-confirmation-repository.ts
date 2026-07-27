@@ -24,9 +24,6 @@ export class PrismaTeamConfirmationRepository
       const team = rows[0];
       if (!team) return false;
 
-      await transaction.teamApplicationDraft.deleteMany({
-        where: { topicId: team.topicId },
-      });
       const applications = await transaction.topicApplication.findMany({
         where: { topicId: team.topicId, status: "PENDING" },
         select: {

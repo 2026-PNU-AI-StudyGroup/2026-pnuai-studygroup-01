@@ -145,7 +145,6 @@ async function main() {
     studentEmail: `verification+${studentIds[2]}@pusan.ac.kr`,
     kind: "INDIVIDUAL",
     answers: [{ questionId: fullTopicConfiguration.questions[0].id, value: "정원 충족 후 지원" }],
-    inviteeEmails: [],
     appliedAt: new Date("2026-07-13T00:00:00Z"),
   });
   if (fullTopicApplication.outcome !== "TOPIC_UNAVAILABLE") {
@@ -196,7 +195,6 @@ async function main() {
       studentEmail: `verification+${studentIds[3]}@pusan.ac.kr`,
       kind: "INDIVIDUAL",
       answers: [{ questionId: configuration.questions[0].id, value: "수락 중 동시 지원" }],
-      inviteeEmails: [],
       appliedAt: new Date("2026-07-13T00:00:00Z"),
       });
     }),

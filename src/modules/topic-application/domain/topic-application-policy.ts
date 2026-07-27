@@ -29,13 +29,6 @@ export class InvalidTopicApplicationAnswersError extends Error {
   }
 }
 
-export class InvalidTeamApplicationMembersError extends Error {
-  constructor(message = "팀원 이메일을 확인해 주세요.") {
-    super(message);
-    this.name = "InvalidTeamApplicationMembersError";
-  }
-}
-
 export class TopicApplicationKindForbiddenError extends Error {
   constructor() {
     super("이 주제에서 허용하지 않는 지원 방식입니다.");
@@ -110,24 +103,4 @@ export function normalizeApplicationAnswers(
     }
     return { questionId: question.id, value };
   });
-}
-
-export function normalizeTeamMemberEmails(
-  emails: string[],
-  leaderEmail: string,
-  capacity: number,
-): string[] {
-  const normalizedLeader = leaderEmail.trim().toLowerCase();
-  const normalized = [...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean))];
-  if (
-    normalized.length === 0 ||
-    normalized.length + 1 > capacity ||
-    normalized.includes(normalizedLeader) ||
-    normalized.some((email) => !/^[^@\s]+@pusan\.ac\.kr$/i.test(email))
-  ) {
-    throw new InvalidTeamApplicationMembersError(
-      `팀원은 본인을 제외한 부산대학교 이메일로 입력하고 전체 인원은 ${capacity}명을 넘을 수 없습니다.`,
-    );
-  }
-  return normalized;
 }

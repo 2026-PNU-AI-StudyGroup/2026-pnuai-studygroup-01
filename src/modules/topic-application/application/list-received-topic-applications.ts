@@ -5,7 +5,7 @@ import type {
 } from "@/modules/topic-application/application/topic-application-ports";
 import { canCreateTopic } from "@/modules/topic/domain/topic-policy";
 
-export class ReceivedTopicApplicationListingForbiddenError extends Error {
+class ReceivedTopicApplicationListingForbiddenError extends Error {
   constructor() {
     super("교수 또는 관리자만 받은 지원서를 조회할 수 있습니다.");
     this.name = "ReceivedTopicApplicationListingForbiddenError";

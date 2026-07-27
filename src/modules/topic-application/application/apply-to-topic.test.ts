@@ -27,7 +27,6 @@ function repository(
   return {
     findConfiguration: vi.fn(async () => configuration),
     createIndividualIfAvailable: vi.fn(async () => outcome),
-    createTeamDraftIfAvailable: vi.fn(async () => ({ outcome: "INVITATIONS_PENDING" as const, draftId: "draft-1" })),
     createTeamFromStudentTeam: vi.fn(async () => outcome),
   };
 }
@@ -42,7 +41,6 @@ describe("주제 지원", () => {
       topicId: "topic-1",
       kind: "INDIVIDUAL",
       answers: [{ questionId: "question-1", value: "  참여하고 싶습니다.  " }],
-      inviteeEmails: [],
     })).resolves.toEqual({ outcome: "CREATED", id: "app-1" });
     expect(store.createIndividualIfAvailable).toHaveBeenCalledWith({
       topicId: "topic-1",
@@ -50,7 +48,6 @@ describe("주제 지원", () => {
       studentEmail: "student@pusan.ac.kr",
       kind: "INDIVIDUAL",
       answers: [{ questionId: "question-1", value: "참여하고 싶습니다." }],
-      inviteeEmails: [],
       appliedAt,
     });
   });
@@ -73,7 +70,7 @@ describe("주제 지원", () => {
     const store = repository();
     await expect(new ApplyToTopicService(store).execute(
       { ...student, id: "professor-1", role: "PROFESSOR" },
-      { topicId: "topic-1", kind: "INDIVIDUAL", answers: [], inviteeEmails: [] },
+      { topicId: "topic-1", kind: "INDIVIDUAL", answers: [] },
     )).rejects.toBeInstanceOf(TopicApplicationForbiddenError);
     expect(store.findConfiguration).not.toHaveBeenCalled();
   });
@@ -84,7 +81,6 @@ describe("주제 지원", () => {
       topicId: "topic-1",
       kind: "INDIVIDUAL",
       answers: [{ questionId: "question-1", value: "지원합니다." }],
-      inviteeEmails: [],
     })).rejects.toBeInstanceOf(TopicAlreadyAppliedError);
   });
 });

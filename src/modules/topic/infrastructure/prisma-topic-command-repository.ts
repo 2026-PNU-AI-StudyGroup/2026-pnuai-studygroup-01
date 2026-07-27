@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 import type {
   TopicCreator,
   TopicDraft,
@@ -24,7 +25,7 @@ export class PrismaTopicCommandRepository
       `);
       if (!programs[0]) return null;
       const { applicationQuestions, ...topicData } = topic;
-      return transaction.topic.create({
+      const created = await transaction.topic.create({
         data: {
           ...topicData,
           applicationQuestions: {
@@ -38,6 +39,16 @@ export class PrismaTopicCommandRepository
         },
         select: { id: true },
       });
+      await enqueueTranslations(transaction, [
+        topic.title,
+        topic.description,
+        ...topic.requiredSkills,
+        ...topic.preferredSkills,
+        topic.roleExpectations,
+        topic.availabilityRequirement,
+        ...topic.applicationQuestions.map(({ label }) => label),
+      ]);
+      return created;
     });
   }
 
@@ -94,9 +105,6 @@ export class PrismaTopicCommandRepository
           studentId: true,
           topic: { select: { title: true } },
         },
-      });
-      await transaction.teamApplicationDraft.deleteMany({
-        where: { topicId: id },
       });
       await transaction.topicApplication.updateMany({
         where: { topicId: id, status: "PENDING" },

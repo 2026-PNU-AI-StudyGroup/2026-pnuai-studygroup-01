@@ -13,6 +13,34 @@ function knownError(code: string, target?: string[]) {
 }
 
 describe("Prisma 지원 결정 저장소", () => {
+  it("내 프로젝트 상태 필터를 목록과 페이지 수 계산에 동일하게 적용한다", async () => {
+    const count = vi.fn().mockResolvedValue(1);
+    const groupBy = vi.fn().mockResolvedValue([
+      { status: "PENDING", _count: { _all: 2 } },
+      { status: "REJECTED", _count: { _all: 1 } },
+    ]);
+    const findMany = vi.fn().mockResolvedValue([]);
+    const repository = new PrismaTopicApplicationQueryRepository({
+      topicApplication: { count, groupBy, findMany },
+    } as unknown as PrismaClient);
+
+    const page = await repository.listByStudent("student-1", 3, 20, "REJECTED");
+
+    expect(count).toHaveBeenCalledWith({
+      where: { studentId: "student-1", status: "REJECTED" },
+    });
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { studentId: "student-1", status: "REJECTED" },
+      skip: 0,
+      take: 20,
+    }));
+    expect(page).toMatchObject({
+      page: 1,
+      total: 1,
+      counts: { PENDING: 2, ACCEPTED: 0, REJECTED: 1 },
+    });
+  });
+
   it("교수 상세 조회에 지원서와 주제 소유자 조건을 함께 적용한다", async () => {
     const findFirst = vi.fn().mockResolvedValue(null);
     const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);

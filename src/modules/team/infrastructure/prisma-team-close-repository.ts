@@ -75,9 +75,6 @@ export class PrismaTeamCloseRepository implements TeamCloser {
       });
       if (result.count !== 1) return false;
 
-      await transaction.teamApplicationDraft.deleteMany({
-        where: { topicId: team.topicId },
-      });
       const applications = await transaction.topicApplication.findMany({
         where: { topicId: team.topicId, status: "PENDING" },
         select: {

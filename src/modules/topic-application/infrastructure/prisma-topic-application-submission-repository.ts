@@ -8,6 +8,7 @@ import type {
   TopicApplicationCreator,
   TopicApplicationConfiguration,
 } from "@/modules/topic-application/application/topic-application-ports";
+import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaTopicApplicationSubmissionRepository
   implements TopicApplicationCreator
@@ -16,14 +17,14 @@ export class PrismaTopicApplicationSubmissionRepository
 
   async findConfiguration(topicId: string, appliedAt: Date): Promise<TopicApplicationConfiguration | null> {
     const topic = await this.client.topic.findFirst({
-      where: { id: topicId, status: "PUBLISHED", recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt }, program: { status: "OPEN" } },
+      where: { id: topicId, status: "PUBLISHED", recruitmentEnabled: true, recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt }, program: { status: "OPEN" } },
       select: { id: true, applicationMode: true, capacity: true, applicationQuestions: { orderBy: { position: "asc" }, select: { id: true, label: true, maxLength: true, required: true } } },
     });
     return topic ? { topicId: topic.id, mode: topic.applicationMode, capacity: topic.capacity, questions: topic.applicationQuestions } : null;
   }
 
   async createIndividualIfAvailable(
-    input: CreateTopicApplicationInput & { kind: "INDIVIDUAL"; inviteeEmails: [] },
+    input: CreateTopicApplicationInput & { kind: "INDIVIDUAL" },
   ): Promise<CreateTopicApplicationResult> {
     const id = randomUUID();
     return this.client.$transaction(async (transaction) => {
@@ -40,6 +41,7 @@ export class PrismaTopicApplicationSubmissionRepository
         FROM "topic"
         WHERE "topic"."id" = ${input.topicId}
           AND "topic"."status" = 'PUBLISHED'
+          AND "topic"."recruitmentEnabled" = true
           AND "topic"."recruitmentStartsAt" <= ${input.appliedAt}
           AND "topic"."recruitmentEndsAt" > ${input.appliedAt}
         FOR UPDATE
@@ -117,74 +119,8 @@ export class PrismaTopicApplicationSubmissionRepository
           updatedAt: input.appliedAt,
         },
       });
+      await enqueueTranslations(transaction, input.answers.map(({ value }) => value));
       return { outcome: "CREATED", id } as const;
-    });
-  }
-
-  async createTeamDraftIfAvailable(
-    input: CreateTopicApplicationInput & { kind: "TEAM" },
-  ): Promise<CreateTopicApplicationResult> {
-    const draftId = randomUUID();
-    return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
-        SELECT "project_program"."status"
-        FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
-        WHERE "topic"."id" = ${input.topicId}
-        FOR UPDATE OF "project_program"
-      `);
-      const topics = await transaction.$queryRaw<Array<{ id: string; academicCycleId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
-        SELECT "topic"."id", "topic"."academicCycleId", "topic"."capacity", "topic"."applicationMode"
-        FROM "topic"
-        WHERE "topic"."id" = ${input.topicId}
-          AND "topic"."status" = 'PUBLISHED'
-          AND "topic"."recruitmentStartsAt" <= ${input.appliedAt}
-          AND "topic"."recruitmentEndsAt" > ${input.appliedAt}
-        FOR UPDATE
-      `);
-      const topic = topics[0];
-      if (programs[0]?.status !== "OPEN" || !topic || topic.applicationMode === "INDIVIDUAL_ONLY" || input.inviteeEmails.length === 0 || input.inviteeEmails.length + 1 > topic.capacity) return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      const teams = await transaction.$queryRaw<Array<{ status: "FORMING" | "CONFIRMED" | "CLOSED" }>>(Prisma.sql`
-        SELECT "status" FROM "team" WHERE "topicId" = ${input.topicId} FOR UPDATE
-      `);
-      if (teams[0] && teams[0].status !== "FORMING") return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      const leaders = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
-        SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE
-      `);
-      if (!areActiveStudents(leaders, 1)) return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      const membership = await transaction.teamMember.findUnique({ where: { academicCycleId_studentId: { academicCycleId: topic.academicCycleId, studentId: input.studentId } }, select: { id: true } });
-      const existing = await transaction.topicApplication.findUnique({ where: { topicId_studentId: { topicId: input.topicId, studentId: input.studentId } }, select: { id: true } });
-      const existingDraft = await transaction.teamApplicationDraft.findUnique({ where: { topicId_leaderId: { topicId: input.topicId, leaderId: input.studentId } }, select: { id: true } });
-      const team = await transaction.team.findUnique({ where: { topicId: input.topicId }, select: { _count: { select: { members: true } } } });
-      const questionCount = await transaction.topicApplicationQuestion.count({ where: { topicId: input.topicId, id: { in: input.answers.map(({ questionId }) => questionId) } } });
-      if (membership) return { outcome: "STUDENT_ALREADY_ASSIGNED" } as const;
-      if (existing || existingDraft) return { outcome: "ALREADY_APPLIED" } as const;
-      if ((team?._count.members ?? 0) + input.inviteeEmails.length + 1 > topic.capacity || questionCount !== input.answers.length) return { outcome: "TOPIC_UNAVAILABLE" } as const;
-
-      const registeredInvitees = await transaction.user.findMany({
-        where: { email: { in: input.inviteeEmails, mode: "insensitive" } },
-        select: { id: true, role: true, isActive: true },
-      });
-      if (registeredInvitees.length) {
-        if (!areActiveStudents(registeredInvitees, registeredInvitees.length)) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
-        const unavailableCount = await transaction.user.count({ where: { id: { in: registeredInvitees.map(({ id }) => id) }, OR: [
-          { teamMemberships: { some: { academicCycleId: topic.academicCycleId } } },
-          { topicApplications: { some: { topicId: input.topicId } } },
-        ] } });
-        if (unavailableCount > 0) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
-      }
-
-      await transaction.teamApplicationDraft.create({
-        data: {
-          id: draftId,
-          topicId: input.topicId,
-          leaderId: input.studentId,
-          createdAt: input.appliedAt,
-          updatedAt: input.appliedAt,
-        },
-      });
-      await transaction.teamApplicationDraftAnswer.createMany({ data: input.answers.map((answer) => ({ draftId, ...answer })) });
-      await transaction.teamApplicationInvitation.createMany({ data: input.inviteeEmails.map((email) => ({ draftId, email, createdAt: input.appliedAt })) });
-      return { outcome: "INVITATIONS_PENDING", draftId } as const;
     });
   }
 
@@ -201,6 +137,7 @@ export class PrismaTopicApplicationSubmissionRepository
       const topics = await transaction.$queryRaw<Array<{ id: string; academicCycleId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
         SELECT "id", "academicCycleId", "capacity", "applicationMode" FROM "topic"
         WHERE "id" = ${input.topicId} AND "status" = 'PUBLISHED'
+          AND "recruitmentEnabled" = true
           AND "recruitmentStartsAt" <= ${input.appliedAt} AND "recruitmentEndsAt" > ${input.appliedAt}
         FOR UPDATE
       `);
@@ -252,6 +189,7 @@ export class PrismaTopicApplicationSubmissionRepository
         updatedAt: input.appliedAt,
       }));
       await transaction.topicApplication.createMany({ data: applications });
+      await enqueueTranslations(transaction, input.answers.map(({ value }) => value));
       return { outcome: "CREATED", id: applications.find(({ studentId }) => studentId === input.studentId)!.id } as const;
     });
   }

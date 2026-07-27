@@ -9,7 +9,6 @@ import { UpdateTopicScheduleService } from "../src/modules/topic/application/upd
 import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
 import { PrismaTopicQueryRepository } from "../src/modules/topic/infrastructure/prisma-topic-query-repository";
 import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
-import { PrismaRecruitmentQueryRepository } from "../src/modules/recruitment/infrastructure/prisma-recruitment-query-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_PROGRAM_TEST !== "true") {
@@ -123,15 +122,9 @@ async function main() {
   if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED") {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
   }
-  const [topicHistory, recruitmentHistory] = await Promise.all([
-    new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20),
-    new PrismaRecruitmentQueryRepository(prisma).listApplicationHistory(applicantId, 1),
-  ]);
+  const topicHistory = await new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20);
   if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
-  }
-  if (recruitmentHistory.applications[0]?.status !== "REJECTED") {
-    throw new Error("마감된 팀원 모집 지원 이력을 학생이 조회할 수 없습니다.");
   }
   if (await topicCommands.publishDraft(topic.id, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
 
@@ -157,7 +150,7 @@ async function main() {
   const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "PUBLISHED" } });
   if (publishedRaceTopics !== 0) throw new Error("프로그램 마감과 주제 생성 경합 후 공개 주제가 남았습니다.");
 
-  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, recruitmentApplicationHistory: recruitmentHistory.total, closeCreateRacePublishedTopics: publishedRaceTopics }));
+  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, closeCreateRacePublishedTopics: publishedRaceTopics }));
 }
 
 main()
