@@ -1,34 +1,25 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
-import { WorkspaceNavigation } from "@/shared/ui/workspace-navigation";
 
-const items = [
-  ["/project-approvals", "프로젝트 승인", "학생 제안 검토"],
-  ["/admin/programs", "프로그램", "개설과 공개 상태"],
-  ["/admin/academic-cycles", "운영 학기", "연도와 학기 기준"],
-  ["/admin/professors", "교수 권한", "교수 접근 승인"],
-  ["/admin/users", "사용자", "계정 상태 관리"],
-  ["/admin/audit", "감사 기록", "중요 변경 추적"],
-] as const;
+import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
 
-export function AdminWorkspace({ currentPath, title, description, actions, children }: { currentPath: string; eyebrow?: string; title: string; description: string; actions?: ReactNode; children: ReactNode }) {
-  const isActive = (href: string) => currentPath === href || currentPath.startsWith(`${href}/`);
-  const navigationItems = items.map(([href, label, hint]) => ({
-    href,
-    label,
-    hint,
-    active: isActive(href),
-  }));
-
-  return <main className="content-shell">
-    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="min-w-0">
-        <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-bold leading-tight tracking-[-0.035em]"><UiText>{title}</UiText></h1>
-        <p className="mt-2 max-w-3xl text-[0.9375rem] leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p>
+export function AdminWorkspace({ currentPath, eyebrow, title, description, actions, children }: { currentPath: string; eyebrow?: string; title: string; description: string; actions?: ReactNode; children: ReactNode }) {
+  return <main className="min-h-[calc(100vh-4.5rem)] lg:min-h-screen">
+    <div className="grid w-full lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
+      <aside className="min-w-0 overflow-hidden border-b border-[var(--line)] bg-white lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
+        <AdminSidebar currentPath={currentPath} />
+      </aside>
+      <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14">
+        <header className="flex flex-col gap-4 border-b border-[var(--line)] pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            {eyebrow ? <p className="mb-2 text-xs font-black text-[var(--primary)]"><UiText>{eyebrow}</UiText></p> : null}
+            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-bold leading-tight tracking-[-0.035em]"><UiText>{title}</UiText></h1>
+            <p className="mt-2 max-w-3xl text-[0.9375rem] leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p>
+          </div>
+          {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
+        </header>
+        <div className="space-y-8 pt-7"><UiText>{children}</UiText></div>
       </div>
-      {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
-    </header>
-    <WorkspaceNavigation label="관리자 업무" items={navigationItems} />
-    <div className="space-y-8 pt-7"><UiText>{children}</UiText></div>
+    </div>
   </main>;
 }

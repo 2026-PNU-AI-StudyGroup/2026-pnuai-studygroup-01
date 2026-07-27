@@ -1,0 +1,44 @@
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+
+export type AdminProjectOverviewItem = {
+  id: string;
+  name: string;
+  topicTitle: string;
+  professorName: string;
+  advisorEnabled: boolean;
+  status: "FORMING" | "CONFIRMED" | "CLOSED";
+  memberCount: number;
+  reportCount: number;
+  submittedReportCount: number;
+  overdueReportCount: number;
+};
+
+export type AdminProjectOverviewProgram = {
+  id: string;
+  name: string;
+  category: string;
+  academicYear: number;
+  term: "FIRST" | "SECOND";
+  status: "DRAFT" | "OPEN" | "CLOSED";
+  advisorEnabled: boolean;
+  projects: AdminProjectOverviewItem[];
+};
+
+export interface AdminProjectOverviewReader {
+  listByProgram(): Promise<AdminProjectOverviewProgram[]>;
+}
+
+export class AdminProjectOverviewForbiddenError extends Error {}
+
+export class ListAdminProjectOverviewService {
+  constructor(private readonly reader: AdminProjectOverviewReader) {}
+
+  async execute(actor: CurrentActor): Promise<AdminProjectOverviewProgram[]> {
+    if (actor.role !== "ADMIN") {
+      throw new AdminProjectOverviewForbiddenError(
+        "관리자만 전체 프로젝트 현황을 확인할 수 있습니다.",
+      );
+    }
+    return this.reader.listByProgram();
+  }
+}

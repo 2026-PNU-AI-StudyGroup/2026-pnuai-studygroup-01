@@ -12,7 +12,7 @@ import { StatusBadge } from "@/shared/ui/page-primitives";
 const presentation = {
   PENDING: {
     title: "승인 대기",
-    description: "교수가 검토 중인 프로젝트 지원입니다.",
+    description: "프로젝트 담당자가 검토 중인 지원입니다.",
     empty: "승인을 기다리는 프로젝트가 없습니다.",
     badge: "검토 중",
     tone: "info",
@@ -67,12 +67,12 @@ function ApplicationRow({
           </p>
           {status === "PENDING" ? (
             <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-              <UiText>{"지원서가 접수되었으며 교수의 결정을 기다리고 있습니다."}</UiText>
+              <UiText>{"지원서가 접수되었으며 프로젝트 담당자의 결정을 기다리고 있습니다."}</UiText>
             </p>
           ) : application.reviewComment ? (
             <div className="mt-4 border-l-2 border-[var(--line-strong)] pl-4">
               <p className="text-xs font-bold text-[var(--muted)]">
-                <UiText>{"교수 검토 의견"}</UiText>
+                <UiText>{"검토 의견"}</UiText>
               </p>
               <p className="mt-1 whitespace-pre-wrap text-sm leading-6">
                 <UiText>{application.reviewComment}</UiText>

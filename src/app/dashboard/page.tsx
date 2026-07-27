@@ -8,20 +8,30 @@ import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashbo
 import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-dashboard-sidebar";
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
+import { AdminProjectOverview } from "@/app/dashboard/_components/admin-project-overview";
+import { ProjectApprovalLedger } from "@/app/project-approvals/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
   parseProjectDashboardView,
 } from "@/app/dashboard/_lib/project-dashboard-view";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
+import { ListAdminProjectOverviewService } from "@/modules/team/application/list-admin-project-overview";
+import { PrismaAdminProjectOverviewReader } from "@/modules/team/infrastructure/prisma-admin-project-overview-reader";
 import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { ProjectAssistantInvitationDecisionForm } from "@/modules/project-assistant/ui/project-assistant-controls";
+import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
+import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -33,6 +43,7 @@ export default async function DashboardPage({
   searchParams: Promise<{
     view?: SearchParamValue;
     page?: SearchParamValue;
+    programId?: SearchParamValue;
   }>;
 }) {
   const actor = await getCurrentActor();
@@ -44,9 +55,45 @@ export default async function DashboardPage({
     ? "all"
     : requestedView;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
+  if (actor.role === "ADMIN") {
+    const programs = await new ListAdminProjectOverviewService(
+      new PrismaAdminProjectOverviewReader(prisma),
+    ).execute(actor);
+    const selectedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200);
+
+    return (
+      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
+        <AdminProjectOverview
+          programs={programs}
+          selectedProgramId={selectedProgramId}
+        />
+      </AppShell>
+    );
+  }
+
   const teamPromise = new TeamWorkspaceQueryService(
     new PrismaTeamWorkspaceQueryRepository(prisma),
   ).list(actor);
+  const assistantInvitationsPromise = new ProjectAssistantQueryService(
+    new PrismaProjectAssistantRepository(prisma),
+  ).listPending(actor);
+  const assistantTopicsPromise = prisma.topic.findMany({
+    where: { assistants: { some: { userId: actor.id } } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      program: { select: { name: true } },
+      team: { select: { id: true } },
+    },
+  });
+  const pendingApprovalPromise = actor.role === "PROFESSOR"
+    ? new TopicApprovalService(
+        new PrismaTopicApprovalRepository(prisma),
+        new PrismaProjectProgramRepository(prisma),
+      ).listPendingForReview(actor)
+    : Promise.resolve([]);
   const applicationService = student
     ? new ListOwnTopicApplicationsService(
         new PrismaTopicApplicationQueryRepository(prisma),
@@ -63,8 +110,11 @@ export default async function DashboardPage({
   const secondaryApplicationPromise = applicationService && view === "all"
     ? applicationService.execute(actor, 1, 20, "REJECTED")
     : null;
-  const [teams, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
+  const [teams, assistantInvitations, assistantTopics, pendingApprovals, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
     teamPromise,
+    assistantInvitationsPromise,
+    assistantTopicsPromise,
+    pendingApprovalPromise,
     primaryApplicationPromise,
     secondaryApplicationPromise,
   ]);
@@ -101,6 +151,47 @@ export default async function DashboardPage({
       >
         <ProjectDashboardHero role={actor.role} />
         <div className="page-enter space-y-8 pt-5">
+          {assistantInvitations.length > 0 ? (
+            <section aria-labelledby="assistant-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
+              <h2 id="assistant-invitations-title" className="text-lg font-extrabold"><UiText>{"프로젝트 조교 초대"}</UiText></h2>
+              <ul className="mt-3 divide-y divide-[var(--line)]">
+                {assistantInvitations.map((invitation) => (
+                  <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div>
+                      <strong><UiText>{invitation.topicTitle}</UiText></strong>
+                      <p className="muted mt-1 text-sm">{invitation.inviterName} · <UiText>{invitation.advisorEnabled ? "지도교수와 동일한 프로젝트 운영 권한" : "프로젝트 운영 권한"}</UiText></p>
+                    </div>
+                    <ProjectAssistantInvitationDecisionForm invitationId={invitation.id} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {assistantTopics.some(({ team }) => !team) ? (
+            <section aria-labelledby="assistant-topics-title">
+              <div className="flex items-end justify-between border-b border-[var(--line)] pb-3">
+                <div>
+                  <p className="eyebrow"><UiText>{"조교 권한"}</UiText></p>
+                  <h2 id="assistant-topics-title" className="mt-1 text-xl font-extrabold"><UiText>{"운영 준비 중인 프로젝트"}</UiText></h2>
+                </div>
+              </div>
+              <ul className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+                {assistantTopics.filter(({ team }) => !team).map((topic) => (
+                  <li key={topic.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div>
+                      <strong><UiText>{topic.title}</UiText></strong>
+                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "DRAFT" ? "초안" : topic.status === "PUBLISHED" ? "공개" : "마감"}</UiText></p>
+                    </div>
+                    <Link href={`/professor/topics/${topic.id}`} className="button-secondary"><UiText>{"프로젝트 관리"}</UiText></Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {actor.role === "PROFESSOR" && pendingApprovals.length > 0 ? (
+            <ProjectApprovalLedger requests={pendingApprovals} student={false} />
+          ) : null}
+
           {view === "all" && !hasAnyProject ? (
             <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "관심 있는 프로젝트를 발견하고 첫 지원을 시작해 보세요." : "주제를 만들거나 학생 지원을 승인하면 팀이 연결됩니다."} action={<Link href={actor.role === "STUDENT" ? "/topics" : "/professor/topics"} className="button-secondary"><UiText>{actor.role === "STUDENT" ? "프로젝트 둘러보기" : "새 주제 만들기"}</UiText></Link>} />
           ) : null}

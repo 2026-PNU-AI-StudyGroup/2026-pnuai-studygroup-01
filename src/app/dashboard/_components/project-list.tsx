@@ -3,6 +3,7 @@ import Link from "next/link";
 import styles from "@/app/dashboard/_components/project-list.module.css";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import type { TeamListItem } from "@/modules/team/application/team-workspace-ports";
+import { calculateProjectProgress } from "@/modules/team/domain/project-progress";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -31,9 +32,10 @@ function ProjectCard({
 }) {
   const status = projectStatus[team.status];
   const milestone = nextMilestone(team);
-  const progress = team.milestoneCount > 0
-    ? Math.round((team.completedMilestoneCount / team.milestoneCount) * 100)
-    : 0;
+  const progress = calculateProjectProgress(
+    team.submittedReportCount,
+    team.reportCount,
+  );
   const actionLabel = role === "PROFESSOR"
     ? "지도 프로젝트 열기"
     : team.status === "CLOSED"
@@ -54,20 +56,20 @@ function ProjectCard({
 
       <div className={styles.progress}>
         <div>
-          <span><UiText>{"마일스톤 진행률"}</UiText></span>
+          <span><UiText>{"프로젝트 진행률"}</UiText></span>
           <strong>{progress}%</strong>
         </div>
         <div
           className={styles.progressTrack}
           role="progressbar"
-          aria-label={`${team.name} 마일스톤 진행률`}
+          aria-label={`${team.name} 보고서 제출률`}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress}
         >
           <span style={{ width: `${progress}%` }} />
         </div>
-        <p>{team.completedMilestoneCount} / {team.milestoneCount} <UiText>{"완료"}</UiText></p>
+        <p>{team.submittedReportCount} / {team.reportCount} <UiText>{"보고서 제출"}</UiText></p>
       </div>
 
       <div className={styles.nextMilestone}>

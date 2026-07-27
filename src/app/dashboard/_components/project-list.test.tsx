@@ -14,6 +14,8 @@ const team = {
   memberCount: 4,
   milestoneCount: 4,
   completedMilestoneCount: 2,
+  reportCount: 3,
+  submittedReportCount: 1,
   milestones: [
     { id: "milestone-1", title: "현장 조사", status: "DONE" as const, dueAt: new Date("2026-07-10T00:00:00Z"), assignees: [{ id: "student-1", name: "정하늘" }] },
     { id: "milestone-2", title: "경로 데이터 검증", status: "DONE" as const, dueAt: new Date("2026-07-18T00:00:00Z"), assignees: [{ id: "student-2", name: "윤서준" }] },
@@ -51,12 +53,20 @@ describe("내 프로젝트 통합 화면", () => {
 
     expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "모두의 길 마일스톤 진행률" })).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByText("프로젝트 진행률")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "1 / 3 보고서 제출")).toBeInTheDocument();
     expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByText("팀 대화")).not.toBeInTheDocument();
     expect(screen.queryByText("보고서")).not.toBeInTheDocument();
+  });
+
+  it("필수 보고서가 없으면 프로젝트 진행률을 0으로 표시한다", () => {
+    render(<ProjectList role="STUDENT" teams={[{ ...team, reportCount: 0, submittedReportCount: 0 }]} />);
+
+    expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "0");
   });
 
   it("교수와 완료 프로젝트에는 역할과 상태에 맞는 진입 문구를 제공한다", () => {
