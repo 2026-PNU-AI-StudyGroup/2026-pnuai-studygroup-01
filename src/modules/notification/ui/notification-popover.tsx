@@ -147,7 +147,7 @@ export function NotificationPopover({
                         <span className="min-w-0">
                           <span className="flex items-center justify-between gap-3">
                             <span className={`text-xs font-bold ${item.read ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
-                              {typeLabel[item.type]}
+                              <UiText>{typeLabel[item.type]}</UiText>
                             </span>
                             <time className="shrink-0 text-[11px] font-medium text-[var(--muted)]" dateTime={item.createdAt}>
                               <UiDate value={new Date(item.createdAt)} mode="dateTime" />

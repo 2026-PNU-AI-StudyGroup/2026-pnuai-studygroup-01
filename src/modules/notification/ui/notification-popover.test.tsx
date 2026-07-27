@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { NotificationPopover } from "@/modules/notification/ui/notification-popover";
+import { I18nProvider } from "@/modules/translation/ui/i18n-provider";
 
 const openNotification = vi.fn();
 
@@ -56,5 +57,24 @@ describe("NotificationPopover", () => {
 
     expect(screen.queryByRole("dialog", { name: "최근 알림" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("영어 모드에서 알림 종류를 영어로 보여준다", () => {
+    render(
+      <I18nProvider locale="en">
+        <NotificationPopover
+          active={false}
+          placement="side"
+          unreadCount={1}
+          items={items}
+          openNotification={openNotification}
+        />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByText("Report")).toBeInTheDocument();
+    expect(screen.queryByText("보고서")).not.toBeInTheDocument();
   });
 });

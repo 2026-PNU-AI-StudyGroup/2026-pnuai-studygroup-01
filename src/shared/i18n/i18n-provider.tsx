@@ -29,9 +29,28 @@ function translateStoredMessage(
   if (sources.length === 0) return undefined;
 
   return sources.reduce(
-    (result, source) => result.replaceAll(source, storedTranslations[source]),
+    (result, source) => replaceDelimitedSource(
+      result,
+      source,
+      storedTranslations[source],
+    ),
     message,
   );
+}
+
+function replaceDelimitedSource(
+  message: string,
+  source: string,
+  translation: string,
+): string {
+  const escapedSource = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `(^|[^\\p{L}\\p{N}])${escapedSource}(?=$|[^\\p{L}\\p{N}])`,
+    "gu",
+  );
+  return message.replace(pattern, (_match, prefix: string) => (
+    `${prefix}${translation}`
+  ));
 }
 
 const I18nContext = createContext<I18nContextValue>({

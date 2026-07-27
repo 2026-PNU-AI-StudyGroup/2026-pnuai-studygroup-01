@@ -59,6 +59,17 @@ describe("I18nProvider", () => {
     expect(screen.getByText("Hackathon · Creative Convergence")).toBeInTheDocument();
   });
 
+  it("does not replace a stored source inside another word", () => {
+    render(
+      <I18nProvider locale="en" storedTranslations={{ "팀": "Team" }}>
+        <UiText>{"팀원"}</UiText>
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText("Team member")).toBeInTheDocument();
+    expect(screen.queryByText("Team원")).not.toBeInTheDocument();
+  });
+
   it("does not nest an original toggle inside an interactive control", () => {
     render(
       <I18nProvider
