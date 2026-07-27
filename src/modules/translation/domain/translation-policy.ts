@@ -11,7 +11,7 @@ export class InvalidTranslationInputError extends Error {
 
 export function normalizeTranslationText(text: string): string {
   const normalized = text.trim();
-  if (normalized.length === 0 || normalized.length > 2_000) {
+  if (normalized.length === 0 || normalized.length > 8_000) {
     throw new InvalidTranslationInputError();
   }
   return normalized;

@@ -21,7 +21,14 @@ describe("Ollama 번역 어댑터", () => {
     );
     const request = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
     expect(request).toMatchObject({ model: "qwen3.5:2b", stream: false, think: false });
-    expect(request.format).toBe("json");
+    expect(request.format).toEqual({
+      type: "object",
+      properties: {
+        translation: { type: "string" },
+      },
+      required: ["translation"],
+      additionalProperties: false,
+    });
     expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
   });
 
@@ -30,6 +37,19 @@ describe("Ollama 번역 어댑터", () => {
       OLLAMA_BASE_URL: "http://127.0.0.1:11434",
       OLLAMA_MODEL: "qwen3.5:2b",
     }, vi.fn(async () => new Response("bad gateway", { status: 502 })) as typeof fetch);
+
+    await expect(engine.translate({ text: "hello", target: "ko" })).rejects.toBeInstanceOf(
+      TranslationUnavailableError,
+    );
+  });
+
+  it("네트워크 예외도 사용 불가 오류로 정규화한다", async () => {
+    const engine = new OllamaTranslationEngine({
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434",
+      OLLAMA_MODEL: "qwen3.5:2b",
+    }, vi.fn(async () => {
+      throw new TypeError("connection refused");
+    }) as typeof fetch);
 
     await expect(engine.translate({ text: "hello", target: "ko" })).rejects.toBeInstanceOf(
       TranslationUnavailableError,

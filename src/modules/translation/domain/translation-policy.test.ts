@@ -10,8 +10,8 @@ describe("번역 입력 정책", () => {
     expect(normalizeTranslationText("  졸업과제 주제  ")).toBe("졸업과제 주제");
   });
 
-  it("빈 문자열과 2,000자 초과 문자열을 거부한다", () => {
+  it("빈 문자열과 8,000자 초과 문자열을 거부한다", () => {
     expect(() => normalizeTranslationText("   ")).toThrow(InvalidTranslationInputError);
-    expect(() => normalizeTranslationText("가".repeat(2_001))).toThrow(InvalidTranslationInputError);
+    expect(() => normalizeTranslationText("가".repeat(8_001))).toThrow(InvalidTranslationInputError);
   });
 });
