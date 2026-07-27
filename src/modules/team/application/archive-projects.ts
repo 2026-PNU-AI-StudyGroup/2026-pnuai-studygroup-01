@@ -13,7 +13,11 @@ export type ArchivedProject = {
   requiredSkills: string[];
   preferredSkills: string[];
   professorName: string;
+  advisorRole: string;
   memberNames: string[];
+  sourceUrl?: string;
+  thumbnailPath?: string;
+  posterPath?: string;
   artifacts: Array<{
     id: string;
     type: "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER";
@@ -34,6 +38,7 @@ export type ArchivedProgramOption = {
   id: string;
   name: string;
   category: string;
+  academicYear: number;
 };
 
 export interface ArchivedProjectReader {
@@ -67,6 +72,10 @@ export class CloseTeamService {
 
 export class ListArchivedProjectsService {
   constructor(private readonly reader: ArchivedProjectReader) {}
+
+  listPrograms(): Promise<ArchivedProgramOption[]> {
+    return this.reader.listPrograms();
+  }
 
   async execute(page = 1, pageSize = 20, filters: ArchiveFilters = {}) {
     const normalizedPageSize = Number.isInteger(pageSize) && pageSize > 0

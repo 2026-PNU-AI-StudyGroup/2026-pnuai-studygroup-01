@@ -36,6 +36,11 @@
   pointer-events: none;
 }
 
+.coverImage {
+  z-index: 0;
+  object-fit: cover;
+}
+
 .cover::before {
   inset: -30%;
   z-index: -2;

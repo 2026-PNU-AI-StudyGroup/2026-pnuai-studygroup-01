@@ -1,3 +1,4 @@
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
 export function ProjectDetailShell({
@@ -38,7 +39,7 @@ export function ProjectDetailShell({
               : ""
           }`}
         >
-          {heading}
+          <UiText>{heading}</UiText>
           {headerAside ? (
             <div className="border-t border-[var(--line)] pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
               {headerAside}
@@ -47,7 +48,7 @@ export function ProjectDetailShell({
         </header>
 
         <div className="grid gap-12 pt-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
-          <div className="min-w-0">{children}</div>
+          <div className="min-w-0"><UiText>{children}</UiText></div>
           <aside
             aria-labelledby={railLabelledBy}
             className="border-t border-[var(--line)] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"

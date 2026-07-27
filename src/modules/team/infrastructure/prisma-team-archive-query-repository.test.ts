@@ -24,4 +24,28 @@ describe("지난 프로젝트 기술 검색", () => {
       }),
     });
   });
+
+  it("아카이브 프로그램에 학년도를 평탄화해 제공한다", async () => {
+    const findMany = vi.fn(async () => [{
+      id: "program-2025",
+      name: "캡스톤 2025",
+      category: "캡스톤",
+      academicCycle: { academicYear: 2025 },
+    }]);
+    const client = {
+      projectProgram: { findMany },
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTeamArchiveQueryRepository(client).listPrograms()).resolves.toEqual([{
+      id: "program-2025",
+      name: "캡스톤 2025",
+      category: "캡스톤",
+      academicYear: 2025,
+    }]);
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({
+        academicCycle: { select: { academicYear: true } },
+      }),
+    }));
+  });
 });

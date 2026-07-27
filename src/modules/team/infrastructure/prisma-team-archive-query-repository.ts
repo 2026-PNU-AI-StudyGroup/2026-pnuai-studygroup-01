@@ -8,9 +8,13 @@ import type {
 const archivedProjectSelect = {
   id: true,
   name: true,
+  sourceUrl: true,
+  thumbnailPath: true,
+  posterPath: true,
   topic: { select: {
     title: true,
     description: true,
+    advisorRole: true,
     requiredSkills: true,
     preferredSkills: true,
     program: { select: { id: true, name: true, category: true } },
@@ -53,15 +57,24 @@ export class PrismaTeamArchiveQueryRepository
     return programs.map(({ category }) => category);
   }
 
-  listPrograms() {
-    return this.client.projectProgram.findMany({
+  async listPrograms() {
+    const programs = await this.client.projectProgram.findMany({
       where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
       orderBy: [
         { academicCycle: { academicYear: "desc" } },
         { name: "asc" },
       ],
-      select: { id: true, name: true, category: true },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        academicCycle: { select: { academicYear: true } },
+      },
     });
+    return programs.map(({ academicCycle, ...program }) => ({
+      ...program,
+      academicYear: academicCycle.academicYear,
+    }));
   }
 
   async countClosed(filters: ArchiveFilters): Promise<number> {
@@ -131,7 +144,11 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     requiredSkills: team.topic.requiredSkills,
     preferredSkills: team.topic.preferredSkills,
     professorName: team.topic.author.name,
+    advisorRole: team.topic.advisorRole,
     memberNames: team.members.map(({ student }) => student.name),
+    sourceUrl: team.sourceUrl ?? undefined,
+    thumbnailPath: team.thumbnailPath ?? undefined,
+    posterPath: team.posterPath ?? undefined,
     artifacts: team.artifacts.map(({ file, ...artifact }) => ({
       id: artifact.id,
       type: artifact.type,

@@ -1,4 +1,8 @@
-import Link from "next/link";
+import Image from "next/image";
+
+import { UiLink } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { AccountIcon } from "@/shared/ui/workspace-icons";
 
 import styles from "@/app/topics/_components/project-gallery.module.css";
 
@@ -17,26 +21,33 @@ function stableVariant(value: string) {
   return coverVariants[hash % coverVariants.length];
 }
 
-export function ProjectGalleryCover({ id, href, label, title, professorName, authorSuffix = "교수" }: {
+export function ProjectGalleryCover({ id, href, label, title, professorName, authorSuffix = "교수", imagePath }: {
   id: string;
   href: string;
   label: string;
   title: string;
   professorName: string;
   authorSuffix?: string;
+  imagePath?: string;
 }) {
   return (
     <>
       <div className={`${styles.cover} ${stableVariant(id)}`}>
-        <span className={styles.programLabel}>{label}</span>
-        <Link href={href} aria-label={`${title} 보기`} className={styles.coverLink} />
+        {imagePath ? (
+          <Image
+            alt=""
+            className={styles.coverImage}
+            fill
+            sizes="(min-width: 1536px) 27vw, (min-width: 768px) 42vw, 100vw"
+            src={imagePath}
+          />
+        ) : null}
+        <span className={styles.programLabel}><UiText>{label}</UiText></span>
+        <UiLink href={href} aria-label={`${title} 보기`} className={styles.coverLink} />
       </div>
       <div className={styles.professor}>
         <span aria-hidden="true" className={styles.professorMark}>
-          <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
-            <circle cx="12" cy="8" r="3.5" />
-            <path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" />
-          </svg>
+          <AccountIcon className="size-5" />
         </span>
         <span className={styles.professorName}>{professorName} {authorSuffix}</span>
       </div>

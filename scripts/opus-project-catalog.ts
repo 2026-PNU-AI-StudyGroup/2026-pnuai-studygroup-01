@@ -1,0 +1,1615 @@
+// OPUS 공개 API(https://opus.pusan.ac.kr/api)의 2026-07-25 스냅샷입니다.
+// 원문에 교수나 Overview가 비어 있는 경우에만 프로그램 운영진/제목 기반 설명으로 보완합니다.
+export const opusArchivedProjects = [
+  {
+    "sourceTeamId": 88,
+    "sourceContestId": 3,
+    "teamName": "A-1. Broom",
+    "projectName": "컴퓨터 비전 기반의 개인 맞춤형 사진 관리 서비스 개발",
+    "professorName": "박진선",
+    "advisorRole": "교수",
+    "overview": "컴퓨터 비전 기반의 개인 맞춤형 사진 관리 서비스 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "조수영",
+      "이서연",
+      "정지민"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-01",
+    "youtubeUrl": "https://www.youtube.com/watch?v=Uou5iwWqTDA",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 89,
+    "sourceContestId": 3,
+    "teamName": "A-2. PillTip",
+    "projectName": "Pilltip : 개인맞춤 AI 안심복약 솔루션",
+    "professorName": "박진선",
+    "advisorRole": "교수",
+    "overview": "개인맞춤 AI 안전복약 솔루션 Pilltip입니다.",
+    "memberNames": [
+      "김기윤",
+      "강태진",
+      "김재형"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-02",
+    "youtubeUrl": "https://www.youtube.com/watch?v=hAz6OM7bPMQ&t=11s",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 90,
+    "sourceContestId": 3,
+    "teamName": "A-3. 버드 프로3",
+    "projectName": "컴퓨터 비전을 활용한 조류 분석 게임 개발",
+    "professorName": "박진선",
+    "advisorRole": "교수",
+    "overview": "컴퓨터 비전을 활용한 조류 분석 게임 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "정국경",
+      "심영환",
+      "김후겸"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-03",
+    "youtubeUrl": "https://www.youtube.com/watch?v=d-oNHMNYrPk",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 91,
+    "sourceContestId": 3,
+    "teamName": "A-4. 송골매",
+    "projectName": "시계열 특성을 활용한 다양한 이상 거래 탐지 딥러닝 모델 개발 및 성능 비교",
+    "professorName": "송길태",
+    "advisorRole": "교수",
+    "overview": "시계열 특성을 활용한 다양한 이상 거래 탐지 딥러닝 모델 개발 및 성능 비교 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "배근호",
+      "추민",
+      "윤소현"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-04",
+    "youtubeUrl": "https://www.youtube.com/watch?v=2UTNNKXFWw0",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 92,
+    "sourceContestId": 3,
+    "teamName": "A-5. 으쌰으쌰",
+    "projectName": "PLaNet-X 단백질 리간드 결합 부위 및 결합 친화도 예측 모델 개발",
+    "professorName": "송길태",
+    "advisorRole": "교수",
+    "overview": "PLaNet-X 단백질 리간드 결합 부위 및 결합 친화도 예측 모델 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김다현",
+      "박주은",
+      "안수현"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-05",
+    "youtubeUrl": "https://www.youtube.com/watch?v=KX1Z7JPGk7Y",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 93,
+    "sourceContestId": 3,
+    "teamName": "A-6. SheCodes",
+    "projectName": "Multimodal Type-2 Diabetes Risk Prediction Using Graph Neural Networks",
+    "professorName": "송길태",
+    "advisorRole": "교수",
+    "overview": "Multimodal Type-2 Diabetes Risk Prediction Using Graph Neural Networks 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "박 엘리나",
+      "바히예바 아이술루",
+      "코느스베코바 옌릭"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-06",
+    "youtubeUrl": "https://www.youtube.com/watch?v=fQ592dZjNhk",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 94,
+    "sourceContestId": 3,
+    "teamName": "A-7. meARy(메아리)",
+    "projectName": "AR 기술을 활용한 소셜 네트워킹 서비스 개발",
+    "professorName": "이명호",
+    "advisorRole": "교수",
+    "overview": "AR 기술을 활용한 소셜 네트워킹 서비스 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김진영",
+      "임석윤",
+      "허취원"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-07",
+    "youtubeUrl": "https://www.youtube.com/watch?v=6Jr0kbTqL4k",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 95,
+    "sourceContestId": 3,
+    "teamName": "A-8. MotiScan",
+    "projectName": "지능형 혼합 현실 기능 구현",
+    "professorName": "이명호",
+    "advisorRole": "교수",
+    "overview": "지능형 혼합 현실 기능 구현 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "전승윤",
+      "박정완",
+      "최민서"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-08",
+    "youtubeUrl": "https://www.youtube.com/watch?v=OBJkaXwsDsc",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 96,
+    "sourceContestId": 3,
+    "teamName": "A-9. 꾱깡낑",
+    "projectName": "AR 기반 원격 협업 시스템 구현",
+    "professorName": "이명호",
+    "advisorRole": "교수",
+    "overview": "AR 기반 원격 협업 시스템 구현 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "윤민혁",
+      "강유승",
+      "김준성"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-09",
+    "youtubeUrl": "https://www.youtube.com/watch?v=V8as0GTWRN0",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 97,
+    "sourceContestId": 3,
+    "teamName": "A-10. TMOJI",
+    "projectName": "자연스러운 번역 텍스트 합성",
+    "professorName": "전상률",
+    "advisorRole": "교수",
+    "overview": "자연스러운 번역 텍스트 합성 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이동훈",
+      "문경환",
+      "이승재"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-10",
+    "youtubeUrl": "https://www.youtube.com/watch?v=xpn8hlP2sX8",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 98,
+    "sourceContestId": 3,
+    "teamName": "A-11. Underdog",
+    "projectName": "AI-Powerd Personal Beauty Advisor",
+    "professorName": "전상률",
+    "advisorRole": "교수",
+    "overview": "AI-Powerd Personal Beauty Advisor 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "Han Nwae Nyein",
+      "Nyi Nyi Htun",
+      "전재원"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-11",
+    "youtubeUrl": "https://www.youtube.com/watch?v=k5bF-HZpHNc",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 99,
+    "sourceContestId": 3,
+    "teamName": "A-12. 첫눈",
+    "projectName": "인공지능 기술을 활용한 디지털 약자 금융 활동 지원 서비스",
+    "professorName": "전상률",
+    "advisorRole": "교수",
+    "overview": "인공지능 기술을 활용한 디지털 약자 금융 활동 지원 서비스 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "성민기",
+      "성도범",
+      "송시우"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-12",
+    "youtubeUrl": "https://www.youtube.com/watch?v=B3Di2WLdcKs",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 100,
+    "sourceContestId": 3,
+    "teamName": "B-13. 뭉게구름",
+    "projectName": "멀티 클라우드 인프라 기반 연합학습 환경 구축 플랫폼 개발",
+    "professorName": "염근혁",
+    "advisorRole": "교수",
+    "overview": "멀티 클라우드 인프라 기반 연합학습 환경 구축 플랫폼 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "전진혁",
+      "김민경",
+      "박재일"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-13",
+    "youtubeUrl": "https://www.youtube.com/watch?v=KugrTo0gUVo",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 101,
+    "sourceContestId": 3,
+    "teamName": "B-14. 트리톤",
+    "projectName": "RAG를 활용한 컨테이너 기반 마이크로서비스 운영 환경 관리 지원 시스템",
+    "professorName": "염근혁",
+    "advisorRole": "교수",
+    "overview": "RAG를 활용한 컨테이너 기반 마이크로서비스 운영 환경 관리 지원 시스템 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김휘수",
+      "신세환",
+      "설종환"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-14",
+    "youtubeUrl": "https://www.youtube.com/watch?v=FzFFJJMwS_4",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 102,
+    "sourceContestId": 3,
+    "teamName": "B-15. fm마스터",
+    "projectName": "Football tracking data를 활용한 이벤트 데이터 예측 및 분석",
+    "professorName": "이기준",
+    "advisorRole": "교수",
+    "overview": "Football tracking data를 활용한 이벤트 데이터 예측 및 분석 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "최성민",
+      "강동권"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-15",
+    "youtubeUrl": "https://www.youtube.com/watch?v=DlT91KUyxKE",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 103,
+    "sourceContestId": 3,
+    "teamName": "B-16. Route 0x78",
+    "projectName": "Deep Learning을 활용한 도로 상황 분석",
+    "professorName": "이기준",
+    "advisorRole": "교수",
+    "overview": "Deep Learning을 활용한 도로 상황 분석 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "Yerbol Janbubu",
+      "Jamiyanpurev Ochir",
+      "Boldbaatar Amartuvshin"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-16",
+    "youtubeUrl": "https://www.youtube.com/watch?v=kbx903QOJqI",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 104,
+    "sourceContestId": 3,
+    "teamName": "B-17. CodeSphere",
+    "projectName": "생성형 인공지능을 기반으로 한 알고리즘 학습 플랫폼 구현",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "생성형 인공지능을 기반으로 한 알고리즘 학습 플랫폼 구현 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김대욱",
+      "김문경",
+      "김진우"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-17",
+    "youtubeUrl": "https://www.youtube.com/watch?v=nC5KDjFtwjA",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 105,
+    "sourceContestId": 3,
+    "teamName": "B-18. SLaM Dunk",
+    "projectName": "경량 언어 모델 (SLM) 학습을 위한 웹 기반 시각화 플랫폼 설계 및 구현",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "경량 언어 모델 (SLM) 학습을 위한 웹 기반 시각화 플랫폼 설계 및 구현 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김명석",
+      "정지윤",
+      "염현석"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-18",
+    "youtubeUrl": "https://www.youtube.com/watch?v=ZKH90zYx9Ow",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 106,
+    "sourceContestId": 3,
+    "teamName": "B-19. 드레스 코딩",
+    "projectName": "강의 음성 기반 실시간 AI 주석 시스템 및 지연 최소화를 위한 병렬 처리 통신 구조 설계",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "강의 음성 기반 실시간 AI 주석 시스템 및 지연 최소화를 위한 병렬 처리 통신 구조 설계 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김동인",
+      "김예슬",
+      "정유성"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-19",
+    "youtubeUrl": "https://www.youtube.com/watch?v=CNCycpolmgY",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 107,
+    "sourceContestId": 3,
+    "teamName": "B-20. 라피스 블루",
+    "projectName": "웹 크롤링 기반 블루레이 추천 서비스",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "웹 크롤링 기반 블루레이 추천 서비스 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "박덕형",
+      "박태준",
+      "안형찬"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-20",
+    "youtubeUrl": "https://www.youtube.com/watch?v=MDDWl_jW8FQ",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 108,
+    "sourceContestId": 3,
+    "teamName": "B-21. 치매노노",
+    "projectName": "AI 기반 추억 앨범 및 치매 예방 서비스",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "AI 기반 추억 앨범 및 치매 예방 서비스 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김나림",
+      "김채현"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-21",
+    "youtubeUrl": "https://www.youtube.com/watch?v=bHZ7OJzTG7E",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 109,
+    "sourceContestId": 3,
+    "teamName": "B-22. 토마토주스",
+    "projectName": "공공데이터를 활용한 KoBERT 파인튜닝과 한국어 키워드 분석 및 대시보드 시각화",
+    "professorName": "조준수",
+    "advisorRole": "교수",
+    "overview": "공공데이터를 활용한 KoBERT 파인튜닝과 한국어 키워드 분석 및 대시보드 시각화 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "박준혁",
+      "이차현",
+      "임성표"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-22",
+    "youtubeUrl": "https://www.youtube.com/watch?v=xe7hnoUrLW4",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 110,
+    "sourceContestId": 3,
+    "teamName": "B-23. Team Cook",
+    "projectName": "요리용 코딩언어 개발",
+    "professorName": "조환규",
+    "advisorRole": "교수",
+    "overview": "요리용 코딩언어 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "윤선재",
+      "채문석",
+      "팜민두옹"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-23",
+    "youtubeUrl": "https://www.youtube.com/watch?v=9R9XChsXTgg",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 111,
+    "sourceContestId": 3,
+    "teamName": "B-24. 첫눈에",
+    "projectName": "Lego-MindStorm NXT를 활용한 군집주행 통신 알고리즘 구현 및 안전거리 테스트",
+    "professorName": "조환규",
+    "advisorRole": "교수",
+    "overview": "Lego-MindStorm NXT를 활용한 군집주행 통신 알고리즘 구현 및 안전거리 테스트 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "박혜연",
+      "김도엽",
+      "정종현"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-24",
+    "youtubeUrl": "https://www.youtube.com/watch?v=uQxJopbJNZc",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 112,
+    "sourceContestId": 3,
+    "teamName": "B-25. UmiZoomi",
+    "projectName": "UmiDo: AI 기반 스마트 알림 시스템",
+    "professorName": "조환규",
+    "advisorRole": "교수",
+    "overview": "UmiDo: AI 기반 스마트 알림 시스템 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "Kadyrov Adilet",
+      "Yegizbayev Zholan"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-25",
+    "youtubeUrl": "https://www.youtube.com/watch?v=I-nckl0zJQ0",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 113,
+    "sourceContestId": 3,
+    "teamName": "B-26. L팩토링",
+    "projectName": "LLM을 활용한 SW Refactoring",
+    "professorName": "채흥석",
+    "advisorRole": "교수",
+    "overview": "LLM을 활용한 SW Refactoring 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김병현",
+      "박준하"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-26",
+    "youtubeUrl": "https://www.youtube.com/watch?v=mbzhsrA5UJg",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 114,
+    "sourceContestId": 3,
+    "teamName": "C-27. 블록버스터",
+    "projectName": "디지털 트윈 활용 대형 블록 배치 최적화",
+    "professorName": "김원석",
+    "advisorRole": "교수",
+    "overview": "디지털 트윈 활용 대형 블록 배치 최적화 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김도완",
+      "서민성",
+      "유주연"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-27",
+    "youtubeUrl": "https://www.youtube.com/watch?v=_u5BN7r9BKI",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 115,
+    "sourceContestId": 3,
+    "teamName": "C-28. BitFlow",
+    "projectName": "네트워크 상태와 영상 특성 기반 실시간 적응형 비디오 스트리밍 시스템",
+    "professorName": "김종덕",
+    "advisorRole": "교수",
+    "overview": "네트워크 상태와 영상 특성 기반 실시간 적응형 비디오 스트리밍 시스템 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김남희",
+      "박은재"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-28",
+    "youtubeUrl": "https://www.youtube.com/watch?v=l0LDAP3IGH0",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 116,
+    "sourceContestId": 3,
+    "teamName": "C-29. AI Chasers",
+    "projectName": "청각 제약 상황을 위한 실내 소리 인식 및 상황 감지 시스템",
+    "professorName": "김태운",
+    "advisorRole": "교수",
+    "overview": "청각 제약 상황을 위한 실내 소리 인식 및 상황 감지 시스템 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이민경",
+      "이진솔",
+      "박지용"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-29",
+    "youtubeUrl": "https://www.youtube.com/watch?v=bWdz_H-KRW0",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 117,
+    "sourceContestId": 3,
+    "teamName": "C-30. 강아지도학습",
+    "projectName": "LLM 및 행동 복제를 활용한 심층강화학습 알고리즘의 학습 성능 개선 연구",
+    "professorName": "김태운",
+    "advisorRole": "교수",
+    "overview": "LLM 및 행동 복제를 활용한 심층강화학습 알고리즘의 학습 성능 개선 연구 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "심영찬",
+      "김동건",
+      "오현식"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-30",
+    "youtubeUrl": "https://www.youtube.com/watch?v=zVyBsuvrQdw",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 118,
+    "sourceContestId": 3,
+    "teamName": "C-31. 커피는생필품",
+    "projectName": "대규모 사물인터넷 관리를 위한 클라우드 기반 OTA 기술 개발",
+    "professorName": "김태운",
+    "advisorRole": "교수",
+    "overview": "대규모 사물인터넷 관리를 위한 클라우드 기반 OTA 기술 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "박준우",
+      "송승우",
+      "장민준"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-31",
+    "youtubeUrl": "https://www.youtube.com/watch?v=4TjecZSbxeg",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 119,
+    "sourceContestId": 3,
+    "teamName": "C-32. ASTRO",
+    "projectName": "자폭 무인 드론",
+    "professorName": "유영환",
+    "advisorRole": "교수",
+    "overview": "자폭 무인 드론 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "정연수",
+      "김현태"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-32",
+    "youtubeUrl": "https://www.youtube.com/watch?v=s9eQ-d9TRfM",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 120,
+    "sourceContestId": 3,
+    "teamName": "C-33. ByteStorm",
+    "projectName": "날씨 연동 개인 맞춤형 패션 추천 애플리케이션 - OutfitterAI",
+    "professorName": "유영환",
+    "advisorRole": "교수",
+    "overview": "날씨 연동 개인 맞춤형 패션 추천 애플리케이션 - OutfitterAI 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "OKADA HONOKA",
+      "FAYZULLAEVA MADINA ABDUVAKHOB KIZI",
+      "신상협"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-33",
+    "youtubeUrl": "https://www.youtube.com/watch?v=y29PbEt5UK8",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 121,
+    "sourceContestId": 3,
+    "teamName": "C-34. Re:Fresh",
+    "projectName": "중등 혹은 고등 영어 독해 객관식 문제 자동 정답 생성기",
+    "professorName": "탁성우",
+    "advisorRole": "교수",
+    "overview": "중등 혹은 고등 영어 독해 객관식 문제 자동 정답 생성기 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "강형원",
+      "주연학",
+      "박규태"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-34",
+    "youtubeUrl": "https://www.youtube.com/watch?v=zF91HYHA-iY",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 122,
+    "sourceContestId": 3,
+    "teamName": "C-35. wUDC",
+    "projectName": "어린이가 작성한 이야기 (혹은 일기) 기반 그림 동화 생성기",
+    "professorName": "탁성우",
+    "advisorRole": "교수",
+    "overview": "어린이가 작성한 이야기 (혹은 일기) 기반 그림 동화 생성기 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "차행철",
+      "최광진",
+      "오지웅"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-35",
+    "youtubeUrl": "https://www.youtube.com/watch?v=4BcCm-qAaCs",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 123,
+    "sourceContestId": 3,
+    "teamName": "C-36. 스토리픽셀",
+    "projectName": "어린아이가 쓴 일기, 이야기를 기반으로 한 그림일기, 그림동화 생성 AI",
+    "professorName": "탁성우",
+    "advisorRole": "교수",
+    "overview": "어린아이가 쓴 일기, 이야기를 기반으로 한 그림일기, 그림동화 생성 AI 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이승민",
+      "여현준"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-36",
+    "youtubeUrl": "https://www.youtube.com/watch?v=K8SzoP5nCNY",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 124,
+    "sourceContestId": 3,
+    "teamName": "D-37. TrustForge",
+    "projectName": "신뢰 실행 환경을 활용한 스마트 컨트랙트 실행 보호 기술 개발",
+    "professorName": "권동현",
+    "advisorRole": "교수",
+    "overview": "신뢰 실행 환경을 활용한 스마트 컨트랙트 실행 보호 기술 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "위재준",
+      "이준혁",
+      "이준태"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-37",
+    "youtubeUrl": "https://www.youtube.com/watch?v=PZBSTbfFUqQ",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 125,
+    "sourceContestId": 3,
+    "teamName": "D-38. 응답하라 지휘본부",
+    "projectName": "마이크로 컨트롤러에서의 안전한 로봇 어플리케이션 수행을 위한 원격증명기술 개발",
+    "professorName": "권동현",
+    "advisorRole": "교수",
+    "overview": "마이크로 컨트롤러에서의 안전한 로봇 어플리케이션 수행을 위한 원격증명기술 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "강승민",
+      "김의준",
+      "박재선"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-38",
+    "youtubeUrl": "https://www.youtube.com/watch?v=qEImVgg-imc",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 126,
+    "sourceContestId": 3,
+    "teamName": "D-39. AutoShield",
+    "projectName": "Simulink 기반 자동차 부품 연계보안 기술 연구",
+    "professorName": "손준영",
+    "advisorRole": "교수",
+    "overview": "Simulink 기반 자동차 부품 연계보안 기술 연구 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "홍재왕",
+      "석재영",
+      "레퐁푸"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-39",
+    "youtubeUrl": "https://www.youtube.com/watch?v=P9r13Io3QSs",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 127,
+    "sourceContestId": 3,
+    "teamName": "D-40. BYTE",
+    "projectName": "BYTE: AI POWERED PERSONALIZED ITINERARY GENERATION WEB APPLICATION",
+    "professorName": "손준영",
+    "advisorRole": "교수",
+    "overview": "BYTE: AI POWERED PERSONALIZED ITINERARY GENERATION WEB APPLICATION 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "NAFIKOVA SOFI",
+      "ORIPOV MIRSHOD",
+      "Karimova Savrelina"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-40",
+    "youtubeUrl": "https://www.youtube.com/watch?v=gtBjCST874Q",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 128,
+    "sourceContestId": 3,
+    "teamName": "D-41. 먹킷리스트",
+    "projectName": "React와 NestJS를 활용한 맛집 지도 웹 애플리케이션 개발",
+    "professorName": "손준영",
+    "advisorRole": "교수",
+    "overview": "React와 NestJS를 활용한 맛집 지도 웹 애플리케이션 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "최민기",
+      "권소현"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-41",
+    "youtubeUrl": "https://www.youtube.com/watch?v=FjNO5QgeNCQ",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 129,
+    "sourceContestId": 3,
+    "teamName": "D-42. numpy",
+    "projectName": "ZNS SSD를 활용한 키-밸류 스토어의 성능 개선 연구",
+    "professorName": "안성용",
+    "advisorRole": "교수",
+    "overview": "ZNS SSD를 활용한 키-밸류 스토어의 성능 개선 연구 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김의현",
+      "나도윤",
+      "박정민"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-42",
+    "youtubeUrl": "https://www.youtube.com/watch?v=x1avfUPjLIo",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 130,
+    "sourceContestId": 3,
+    "teamName": "D-43. SSDeep Learning",
+    "projectName": "딥러닝을 이용한 SSD 성능 개선 연구",
+    "professorName": "안성용",
+    "advisorRole": "교수",
+    "overview": "딥러닝을 이용한 SSD 성능 개선 연구 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이준형",
+      "강인석",
+      "김지수"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-43",
+    "youtubeUrl": "https://www.youtube.com/watch?v=uA37RvXBMUM",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 131,
+    "sourceContestId": 3,
+    "teamName": "D-44. 호두마루",
+    "projectName": "ZNS SSD를 지원하는 POSIX 파일 시스템 개발",
+    "professorName": "안성용",
+    "advisorRole": "교수",
+    "overview": "ZNS SSD를 지원하는 POSIX 파일 시스템 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김민준",
+      "박천휘"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-44",
+    "youtubeUrl": "https://www.youtube.com/watch?v=i1E6tK-mzfY",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 132,
+    "sourceContestId": 3,
+    "teamName": "D-45. CtrlAltDefend",
+    "projectName": "사용자 행동 기반 동적 네트워크 접근 제어 시스템 연구",
+    "professorName": "최윤호",
+    "advisorRole": "교수",
+    "overview": "사용자 행동 기반 동적 네트워크 접근 제어 시스템 연구 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이광훈",
+      "조유진",
+      "신해진"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-45",
+    "youtubeUrl": "https://www.youtube.com/watch?v=NT58sOO8Xqk",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 133,
+    "sourceContestId": 3,
+    "teamName": "D-46. KGL",
+    "projectName": "모바일 엔드 포인트 행동 분석 기반 Policy Engine 구현",
+    "professorName": "최윤호",
+    "advisorRole": "교수",
+    "overview": "모바일 엔드 포인트 행동 분석 기반 Policy Engine 구현 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "권태현",
+      "구현서",
+      "이승원"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-46",
+    "youtubeUrl": "https://www.youtube.com/watch?v=1GCc7PAkc5U",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 134,
+    "sourceContestId": 3,
+    "teamName": "D-47. 심두호",
+    "projectName": "심두호",
+    "professorName": "최윤호",
+    "advisorRole": "교수",
+    "overview": "심두호 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "최두환",
+      "심여준",
+      "유지호"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-47",
+    "youtubeUrl": "https://www.youtube.com/watch?v=2anq6-4zlbc",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 135,
+    "sourceContestId": 3,
+    "teamName": "B-48. Dronex",
+    "projectName": "축구 경기 영상 정보를 활용한 전술 분석 모델",
+    "professorName": "이기준",
+    "advisorRole": "교수",
+    "overview": "축구 경기 영상 정보를 활용한 전술 분석 모델 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "안성수",
+      "박성재"
+    ],
+    "githubUrl": "https://github.com/pnucse-capstone2025/Capstone-2025-team-48",
+    "youtubeUrl": "https://www.youtube.com/watch?v=YcgTPpjReJk",
+    "productionUrl": null,
+    "previewIds": [],
+    "cycleIndex": 0,
+    "programIndex": 0,
+    "categoryKey": "capstone"
+  },
+  {
+    "sourceTeamId": 19,
+    "sourceContestId": 1,
+    "teamName": "1. 404Found",
+    "projectName": "ResQ",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "ResQ는 모두를 위한 실시간 재난 대응 플랫폼입니다.\n \n예기치 못한 재난 상황에서 시민들이 신속하고 정확한 정보를 얻을 수 있으며\n가까운 대피소 위치, 현재 지역의 재난 현황, 상황별 대응 방법을 직관적으로 확인할 수 있습니다.\n또한 커뮤니티 기능을 통해 이웃과 정보를 공유하고 도움을 요청할 수 있으며 행정안전부 API와 공공 데이터를 활용하여 실시간 재난 알림을 제공하고, 개인 맞춤형 경보 시스템을 통해 재난에 대처할 수 있도록 지원합니다.\n\nResQ는 단순한 알림 서비스를 넘어, 재난 상황에서 모두가 서로를 지킬 수 있는 생활 안전망을 구축하는 것을 목표로 합니다.",
+    "memberNames": [
+      "임나빈",
+      "박지은",
+      "정재민",
+      "판킨킨자우",
+      "황수민"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-404Found-01",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM",
+    "productionUrl": "https://github.com/ResQ-404Found",
+    "previewIds": [
+      19
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 21,
+    "sourceContestId": 1,
+    "teamName": "3. Sync",
+    "projectName": "ForinK: 외국인을 위한 맞춤형 정착 지원 서비스",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "\"기숙사를 물었지만 ‘모른다’는 답변, 병원을 물었을 땐 카카오톡 차단...\"\n\n낯선 한국 땅에 도착한 외국인 유학생이 도움을 요청했다가 겪은 실제 이야기입니다. 😢\n\n이 문제는 한두 명의 이야기가 아닙니다. 부산 거주 외국인의 26.1%는 '서툰 한국어' 때문에 일조차 구하지 못하고, 29.8%는 집을 구하는 데 필요한 정보조차 얻지 못하고 있습니다.\n\n기존의 오프라인 지원 시스템은 이 간절한 목소리에 실시간으로 응답하지 못하고 있습니다.\n\n그래서 저희 ForinK가 시작했습니다.\n\n저희는 단순히 정보를 나열하는 것을 넘어, 한국에 정착하는 외국인 한 명 한 명에게 ‘성공적인 정착 과정 전체’를 선물하는 AI 기반 맞춤형 정착 원 플랫폼입니다. 🗺️\n\n🤔 \"무엇부터 해야 할지 막막한가요?\"\nAI가 당신의 비자, 언어, 목적을 분석해 개인 맞춤형 ‘정착 로드맵’을 자동으로 만들어 드립니다. 더 이상 혼자서 정보를 찾아 헤맬 필요가 없습니다.\n\n🤝 \"물어볼 사람이 없어 외로운가요?\"\n블록체인으로 신원이 인증된 ‘정착 가이드(멘토)’와 연결해, 정보만으로는 해결할 수 없는 실제적인 도움과 정서적 지지를 받을 수 있습니다.\n\n💬 \"사소하지만 급한 질문이 있나요?\"\n24시간 깨어있는 AI 챗봇 ‘Fori’가 당신의 상황을 기억하고 언제든 다국어로 답변해 드립니다. 밤늦게 약국을 찾을 때도, 복잡한 서류를 문의할 때도 이제는 괜찮습니다.\n\n저희의 목표는 단순한 앱 개발이 아닙니다. 언어와 문화의 장벽을 허물고, 외국인 주민이 진정으로 일원이 되도록 돕는 것입니다.\n\n이 프로젝트는 우리 주변의 다양한 외국인에게  반드시 필요한 실질적인 솔루션이 될 것이라고 생각합다. ✨\n\n여러분의 한 표가 보이지 않는 벽을 허무는 첫걸음이 될 수 있습니다.\n저희의 주제에 공감하신다면, ForinK에 소중한 한 표를 부탁드립니다! 🙏\n\n---\n\n\"He/She asked for directions to his/her dorm, but his/her guide said, 'I don't know.' He/She asked where a hospital was and was blocked on KakaoTalk.\"\n\nThis is a true story of an international student who arrived in a foreign land—Korea—only to be ignored when he asked for help. 😢\n\nAnd this isn't just one person's story. In Busan, 26.1% of foreign residents can't find work due to the language barrier, and 29.8% struggle to even find basic housing information.\n\nThe existing offline support systems are failing to answer these desperate calls for help in real-time.\n\nThat's why we started ForinK.\n\nWe're more than just a list of information. ForinK is an AI-powered, all-in-one platform that provides a personalized guide to successfully settling in Korea, designed for each and every foreign resident. 🗺️\n\n🤔 Feeling lost and don't know where to start?\nOur AI analyzes your visa, language, and goals to automatically create a personalized ‘settlement roadmap’ just for you. No more searching for information alone.\n\n🤝 Feeling alone with no one to ask for help?\nConnect with blockchain-verified ‘settlement guides’ (mentors) for practical help and emotional support that information alone can't provide.\n\n💬 Have a small but urgent question?\nOur 24/7 AI chatbot, ‘Fori,’ remembers your situation and provides multilingual answers anytime. Whether you're looking for a late-night pharmacy or have a question about complex paperwork, we've got you covered.\n\nOur goal isn't just to build an app. It's to break down language and cultural barriers and help foreign residents truly become part of the community.\n\nWe believe this project will be an essential, practical solution for the diverse international community around us. ✨\n\nYour vote can be the first step in tearing down these invisible walls.\nIf our mission resonates with you, please give your valuable vote to ForinK! 🙏",
+    "memberNames": [
+      "홍지연",
+      "황수환",
+      "정승한",
+      "이지민",
+      "송도형"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-Sync-03",
+    "youtubeUrl": "https://youtu.be/au3J_i3it-I",
+    "productionUrl": "https://forink.redzzzi.com",
+    "previewIds": [
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 22,
+    "sourceContestId": 1,
+    "teamName": "4. 경식이",
+    "projectName": "경식이",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "# 어르신 여가생활 안내 AI 전화 서비스, \"경식이\"\n\n고령화가 심화되면서 어르신들의 남는 시간은 증가하고 있지만\n그 시간을 어떻게, 의미 있게 보낼지에 대한 관심과 고려는 부족합니다.\n경식이는 '전화 한 통'으로 이 장벽을 허물고, 어르신의 삶과 여가생활을 연결합니다.\n\n## 주요 기능\n\n- 안부확인 및 일상대화를 통해 심리적 거리를 가까이 좁힙니다.\n\n- 산책, 드라마, TV, 연예인, 트로트의 가벼운 주제부터 문화센터, 지역축제, 맛집, 카페까지 전범위의 여가생활을 안내합니다.\n\n- 통화가 종료된 뒤 위치 정보, 쿠폰 등 필요한 추가 정보를 메시지로 전송합니다.",
+    "memberNames": [
+      "김은종",
+      "김도완",
+      "정유진",
+      "장윤영"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-04",
+    "youtubeUrl": "https://youtu.be/tdykttC6nw4",
+    "productionUrl": null,
+    "previewIds": [
+      55
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 23,
+    "sourceContestId": 1,
+    "teamName": "5. 뚝딱하우스",
+    "projectName": "Tudy",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "‘부산대생을 위한 게임형 STUDY - TODO’\n\n공부나 목표 관리, 작심삼일로 끝난 경험이 많지 않으신가요?\n\nTUDY는 단순한 할 일 관리 앱을 넘어, 게임적인 요소🎮와 기록✏️의 즐거움을 결합한 새로운 목표 달성 플랫폼입니다. 목표를 세우고, 성취를 눈으로 확인하며, 혼자가 아닌 함께 성장할 수 있는 경험을 제공합니다.\n\n📍 주요 기능\n\n1. 가상 건물 성장\n사용자는 목표를 달성할 때마다 코인을 획득하고, 이를 활용하여 건물을 확장하거나 다양한 내부시설을 설치할 수 있습니다.\n원하는 공간을 꾸며가며 **개인의 성취 과정을 시각적으로 확인**할 수 있습니다. \n\n2. 목표 등록 및 관리\n개인 목표뿐만 아니라 그룹 또는 친구와 공동 목표를 설정할 수 있습니다.\n타이머/사진 인증 기능, 캘린더 기반 일정 관리를 통해 **목표 달성을 보다 체계적이고 지속적으로 관리**할 수 있도록 도와줍니다.\n\n3. 사진 인증\n학습, 운동, 생활 습관 등 다양한 활동을 사진으로 인증할 수 있으며,\nAI 판별 기능으로 번거로움 없이 인증 과정을 더욱 간편합니다.\n\n4. 그룹/친구 및 경쟁\n사용자는 그룹 또는 친구와 목표를 공유하고 함께 도전할 수 있습니다.\n또한, 단과대별 누적 학습 시간을 기반으로 실시간 경쟁이 이루어져, **개인과 집단 모두에게 동기를 부여하는 학습 환경**을 조성합니다. \n\n5. 하루 일기\n하루를 마무리하며 학습 성과와 느낀 점을 기록할 수 있습니다.\n매일의 소중한 기록은 시간이 지나면서 개인의 노력과 성장을 보여주는 **학습 다이어리**가 됩니다.\n\n📌 **TUDY, 당신의 목표를 건물처럼 차곡차곡 쌓아 올리세요!**\n즐기며 공부하고 싶은 사람이라면 누구나 환영합니다 🤗",
+    "memberNames": [
+      "김효정",
+      "이지원",
+      "전혜은",
+      "김윤지",
+      "이예은"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-team-05",
+    "youtubeUrl": "https://youtu.be/Kkdytik3lmI",
+    "productionUrl": null,
+    "previewIds": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 24,
+    "sourceContestId": 1,
+    "teamName": "6. 머니버디",
+    "projectName": "청년 맞춤 금융 관리 어플 '머니로그'",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "청년 맞춤 금융 관리 어플 '머니로그'\n머니로그의 모비티아이로 ‘나만의 소비 타입’을 1분 만에 확인하세요.\n나만의 모비티아이, 나만의 챌린지, 나만의 가계부로 나에게 꼭 맞는 소비 생활,\n머니로그에서 시작해요.",
+    "memberNames": [
+      "최지현",
+      "구민서",
+      "김민서",
+      "이지현",
+      "정채진"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-MoneyBuddy-06",
+    "youtubeUrl": "https://youtu.be/tdykttC6nw4?si=mi-VJZNG_jDZa8v7",
+    "productionUrl": null,
+    "previewIds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 25,
+    "sourceContestId": 1,
+    "teamName": "7. 몽글몽글 스튜디오",
+    "projectName": "하루 일기로 마음 심기, Sim(心) Log",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "마음에 물을 주는 가장 쉬운 습관, SimLog🌱🌷\n\nSimLog와 함께하는 하루는, 아침에 한 줄로 마음의 온도를 살짝 확인하는 순간부터 시작돼요.\n출근길에 스친 생각을 가볍게 적어두면, AI가 다정한 색과 한 줄 요약으로 복잡한 기분을 맑게 정리해 주죠.\n점심 무렵엔 지난 일주일의 감정 흐름을 쓱 훑어보며, 놓친 신호가 없는지 조용히 살피고 필요한 케어를 더합니다.\n오후에는 1분 기록만으로도 씨앗이 심기듯 마음이 돌봐지고, 화면 속 정원은 어제보다 조금 더 푸르게 자라나요.\n저녁엔 텍스트든 음성이든 편한 방식으로 하루를 맡기면, AI가 핵심만 부드럽게 정리해 마음의 짐을 가볍게 해줍니다.\n\n혹시 무거운 날이 이어졌다면, 전문가 상담 연결까지 자연스럽게 이어져 비대면·비실명으로 안전하게 기대어 볼 수 있어요.\n그래서 SimLog는 단순한 일기를 넘어, 스스로의 마음과 다시 친해지게 하는 작은 정원이 됩니다.\n오늘이 조금 흐려도 괜찮아요. 내일의 정원은 더 단단해질 거예요\n\n지금, SimLog로 포근한 하루를 심어보세요 ✨🌱",
+    "memberNames": [
+      "안나연",
+      "문진혁",
+      "황연경",
+      "김율겸"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-SimLog-07",
+    "youtubeUrl": "https://youtu.be/2i2YJWFWQY4",
+    "productionUrl": null,
+    "previewIds": [
+      26,
+      27,
+      28,
+      29
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 26,
+    "sourceContestId": 1,
+    "teamName": "8. 박송양이",
+    "projectName": "Some's Up",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "세상의 모든 소식, 가장 쉽고 올바르게 만나는 방법. 썸즈업(Some's Up)\n\n혹시, 뉴스가 어렵고 부담스러워 일부러 피하고 계신가요?\n\n정치적 편향성, 넘쳐나는 자극적인 정보들 속에서 무엇을 믿어야 할지 혼란스러우셨다면, 이제 AI 뉴스 큐레이션 서비스 '썸즈업(Some's Up)'과 함께 건강한 뉴스 소비를 시작해 보세요!\n\n저희는 많은 사람들이, 특히 20대 대학생들이 뉴스에 대한 불신과 피로감으로 점점 뉴스를 외면하는 현실에 주목했습니다. 건강한 민주주의 사회의 핵심인 뉴스가 외면받는 현실을 바꾸고자 '썸즈업'이 탄생했습니다.\n\n썸즈업은 복잡하고 흩어져 있는 뉴스들을 당신을 위해 새롭게 구성합니다.\n\n하나, AI가 만드는 균형 잡힌 시각\n하나의 이슈에 대한 여러 언론사의 기사들을 AI가 종합하여 편향성을 줄이고 사실 중심의 중립적인 요약본을 제공합니다. 더 이상 이리저리 헤매지 않고, 이슈의 핵심을 꿰뚫어 보세요.\n\n둘, 스와이프만으로 간편하게 즐기는 뉴스\n숏폼 콘텐츠처럼 가볍게 넘기기만 하세요. 어려운 헤드라인 선택 과정 없이, 요약된 핵심 내용부터 접하고, 더 궁금할 때만 상세 기사를 확인할 수 있습니다. 긴 기사도 단락별로 나뉘어 있어 읽기 부담이 없습니다.\n\n셋, 나에게 꼭 맞는 뉴스 큐레이션\n나의 관심사를 반영한 똑똑한 알고리즘이 매일 꼭 필요한 뉴스만 골라드립니다. 바쁜 일상 속, '5분 요약 뉴스' 기능으로 어제의 주요 이슈도 놓치지 마세요.\n\n이제 썸즈업과 함께라면, 뉴스는 더 이상 어렵고 지루한 숙제가 아닙니다.\n세상을 이해하는 가장 스마트한 습관, 썸즈업(Some's Up)으로 시작해 보세요!",
+    "memberNames": [
+      "박준우",
+      "양준석",
+      "송수민",
+      "이다은"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-08",
+    "youtubeUrl": "https://youtu.be/NhiDf7LqvfA",
+    "productionUrl": null,
+    "previewIds": [
+      37,
+      38,
+      39,
+      40,
+      41
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 27,
+    "sourceContestId": 1,
+    "teamName": "9. 손길모아",
+    "projectName": "손모음",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "\"손모음\"\n\n금정열림배움터는 부산대학교 인근 부곡시장에 위치한 지역 어르신들의 문해교육을 지원하는 교육봉사 기관입니다.\n\n손모음은 해당 교육 기관에서 발생하는 수작업 중심 업무, 비체계적인 재정 운영, 소통 창구의 부재, 미흡한 학습 진도 관리를 해결하기 위해 개발되었습니다.\n\n봉사자(야학 선생님) 출석 관리, 학생 출석 관리, 수업 교환/결강 신청, 결제 신청, 게시판 등 다양한 기능을 지원하여 업무 효율을 높이고 선생님과 학생 모두 수업에 더욱 집중할 수 있는 환경을 제공합니다.",
+    "memberNames": [
+      "이병길",
+      "김소영",
+      "김태란",
+      "김도형",
+      "황혜정",
+      "최양진"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-Team-09",
+    "youtubeUrl": "https://youtu.be/1xYucHfOKXk",
+    "productionUrl": null,
+    "previewIds": [
+      63,
+      64,
+      65
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 28,
+    "sourceContestId": 1,
+    "teamName": "10. 온기",
+    "projectName": "온기(Warmth) – 부모와 자식 간 건강 관리 및 정서적 소통을 위한 어플리케이션",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "온기(Warmth) – 부모와 자식 간 건강 관리 및 정서적 소통을 위한 어플리케이션\n\n---\n만성 질환이나 사고 후 회복, 노화로 인해 돌봄이 필요한 부모님들이 많습니다.\n그러나 바쁜 일상과 물리적 거리, 자녀에게 아픈 모습을 쉽게 드러내고 싶지 않은 부모의 마음으로 인해 자녀가 부모의 건강과 감정을 세심하게 살피기 어렵습니다.\n그래서 개발된 ‘온기’는 멀리 있어도 부모님의 건강을 세심하게 돌볼 수 있도록 함께합니다.\n부모님은 간편하게 건강 상태를 기록하고, 자녀는 언제 어디서든 그 기록을 확인할 수 있습니다.\n\n* 주요 기능\n- 통증 부위 기록: 아픈 곳을 쉽고 빠르게 입력\n- 복용 약 체크: 약 복용 여부를 한눈에 확인\n- 운동 시간 관리: 운동 시간과 걸음수를 자동 또는 수동으로 기록\n- 건강 데이터 공유: 부모님의 건강 변화를 실시간으로 확인\n- 일상 사진 공유: 하루 한 장씩 올리는 일상 사진으로 가족 간 소통 증진\n\n부모님의 하루를 알고 싶을 때, 건강 상태가 걱정될 때, 온기와 함께라면 멀리 있어도 한결 가까워집니다.",
+    "memberNames": [
+      "양준영",
+      "최현아",
+      "옥소미",
+      "박민지",
+      "김윤영",
+      "이태경"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-OnGi-10",
+    "youtubeUrl": "https://youtu.be/b4rGJLy9ngk",
+    "productionUrl": null,
+    "previewIds": [
+      57,
+      58,
+      59,
+      60,
+      61
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 29,
+    "sourceContestId": 1,
+    "teamName": "11. 잡(Job)아보소",
+    "projectName": "JobMate",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "부산 청년들은 수도권 중심의 정보 부족, 선배 사례 부재, 객관적 스펙 비교 어려움으로 취업 준비에 큰 한계를 겪습니다. 학교는 졸업 이후 학생들의 현황을 파악하기 힘들고, 기업은 인재 유출로 채용에 어려움을 겪고 있습니다.\n\n이를 해결하기 위해 잡메이트는 학생·학교·기업을 연결하는 지역 맞춤형 취업 지원 플랫폼으로 개발되었습니다. 학생은 스펙 등록과 AI 기반 벤치마크, 지원 현황 관리, 맞춤형 일일 미션을 통해 전략적으로 성장할 수 있고, 학교는 실시간 데이터로 통계와 진로 지도를 강화할 수 있으며, 기업은 찜 기능으로 우수 인재와 직접 연결됩니다.\n\n학생은 유사 사례를 참고해 현실적인 전략을 세우고 성장 과정을 기록하며 동기를 얻습니다. 대학교는 실시간 데이터를 활용해 교과·비교과 개선에 활용할 수 있고, 기업은 지역 청년과 연결되어 인재를 확보하며 새로운 선택지를 제시할 수 있습니다.",
+    "memberNames": [
+      "문여원",
+      "여채언",
+      "이유민",
+      "김태우",
+      "배현지",
+      "이지원"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-JOBaboso-11",
+    "youtubeUrl": "https://www.youtube.com/watch?v=wAY2qZIokBM",
+    "productionUrl": null,
+    "previewIds": [
+      54
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 30,
+    "sourceContestId": 1,
+    "teamName": "12. 지조있는홍합탕",
+    "projectName": "채소채소",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "‘채소채소’ 는 불규칙하고 영양 불균형한 식습관을 가진 현대인, 건강한 식단을 필요로 하는 현대인들을 위해, 채소 섭취를 자연스럽게 유도하고 건강한 식단을 실천할 수 있도록 하는 맞춤형 식단 애플리케이션입니다!\n\n 앱 내 ‘My냉장고’ 에 사용자가 입력한 재료를 기반으로 한 레시피 추천과, \n이 외에도 수 많은 건강하고 맛있는 추천 레시피들을 제공하며,\n사용자는 자신의 선호도에 따라 채소 함량 단계를 선택해 맞춤형 레시피를 제공받을 수 있습니다.\n\n 귀여운 나만의 텃밭, ‘나의 텃밭’ 기능을 통해 사용자는 식단 일지를 작성하고 자신의 식생활을 평가하고 개선해 나갈 수 있습니다.\n\n 더해 커뮤니티를 통한 사용자 간의 정보 및 레시피 공유할 수 있으며,\n 다양한 채소 지식와 꿀팁들을 제공합니다.\n\n나를 바꾸는 한 끼의 시작, 채소채소!",
+    "memberNames": [
+      "조은서",
+      "김지현",
+      "홍지민"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-12.git",
+    "youtubeUrl": "https://youtu.be/THlMtfI_39E?feature=shared",
+    "productionUrl": null,
+    "previewIds": [
+      51
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 32,
+    "sourceContestId": 1,
+    "teamName": "14. HEART LAB",
+    "projectName": "엔지니어와 HR평가자를 위한 협업툴 연동 기반 성과관리 AI SaaS, Moti",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "Moti는 엔지니어와 팀을 위한 성과 관리 자동화 서비스입니다.\nJira, GitHub, Notion 같은 협업툴과 연동해, 흩어져 있는 작업 기록을 한 곳에 모아 성과를 자동으로 정리해 줍니다.\n이제 번거롭게 복사·붙여넣기를 반복하지 않아도, 클릭 한 번이면 나의 성과가 정리됩니다.\n\n또한 moti는 AI 기반 성과 평가 지원 기능을 제공합니다.\n피평가자는 스스로의 성과를 돌아볼 수 있는 자기평가 참고 자료를,\n평가자는 객관적인 데이터를 기반으로 한 평가 리포트 초안을 받아볼 수 있습니다.\n그 결과, 누구나 더 쉽고 공정하게 평가에 참여할 수 있습니다.\n\nmoti는 성과 관리의 공백을 메우고,\n누구나 편리하게 성과를 정리하고,\n공정한 평가가 이루어질 수 있도록 돕는 새로운 SaaS 플랫폼입니다.\n\n성과 관리의 새로운 표준, Moti",
+    "memberNames": [
+      "김륜영",
+      "정유진",
+      "이준영",
+      "문진서",
+      "양라윤"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-heart-lab-13",
+    "youtubeUrl": "https://youtu.be/xxAHdtzN4Ao",
+    "productionUrl": "https://app.moti.work",
+    "previewIds": [
+      49
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 33,
+    "sourceContestId": 1,
+    "teamName": "15. wecan(위캔)",
+    "projectName": "위캠퍼스(WeCampus)",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "위캠퍼스(WeCampus)\n\n학생회가 효율적으로 운영되고, 학생과 투명하게 소통하며, 학교와도 자연스럽게 연결되는 구조.\n\n그 해답은, 학생과 학생회, 그리고 학교까지 연결하는 통합 플랫폼.\n\n우리의 비전은 분명합니다!\n\n“모든 조직이 효율적으로 연결될 수 있는,\n학생회부터 시작하는 조직 협업의 표준 플랫폼이 되는 것.”\n\nWeCam은 대학 내 자치의 디지털 전환을 시작으로, 청년 조직, 비영리 단체, 공공 기관 등 다양한 조직으로 확장할 수 있는 모듈형 커뮤니케이션 & 협업 플랫폼으로 성장할 것입니다.\n\n단순히 대학 내의 연결에 그치지 않고, 대학 간, 그리고 대학과 기업 간 연결까지도 만들어가겠습니다.\n\n학생회 출신의 초기 멤버들을 중심으로 저희가 겪은 문제를 직접 해결해나가고 , \n\n저희가 꿈꾸는 대학 사회를 만들겠습니다.",
+    "memberNames": [
+      "김예슬",
+      "박장현",
+      "김동인",
+      "김예원",
+      "김대욱",
+      "김나림"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-WeCan-15",
+    "youtubeUrl": "https://youtu.be/4YDSW4PsEFk?si=Cl_ZAW1W6TebbBrY",
+    "productionUrl": null,
+    "previewIds": [
+      34,
+      35
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 34,
+    "sourceContestId": 1,
+    "teamName": "16. 모이GO",
+    "projectName": "Spotple(스팟플) - 사람을 잇는 시작",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "Spotple - 사람을 잇는 시작\n\n\"3일 걸리던 모임 준비, 단 3분 만에\"\n스포츠 관람을 위한 사람과 공간을 연결하는 올인원 플랫폼\n\n혼자 경기를 보는 것이 아쉽지 않으셨나요? 함께 응원할 사람을 찾기 어렵지 않으셨나요? Spotple은 스포츠 관람 모임 생성부터 장소 예약까지, 모든 과정을 단 3분 만에 해결하는 플랫폼입니다.\n\n문제 정의\n\n - 혼자 보면 재미가 떨어지고 함께할 사람을 찾기 어려움\n - 원하는 경기를 중계하는 매장 정보 부족\n - 전화나 방문에 의존하는 번거로운 예약 과정\n - 가게 사장님 입장에서는 SNS 홍보와 손님 확보의 한계\n\nSpotple의 솔루션\n\n - 모임 생성부터 예약, 결제, 채팅까지 한 번에 가능한 올인원 서비스\n - 위치 기반 매장 검색과 경기 요청 기능으로 원하는 장소 찾기 지원\n - 예약금 에스크로 시스템으로 노쇼 방지 및 안전한 거래 보장\n - 매장 운영 대시보드를 통한 실시간 예약 관리와 매출 분석\n\n핵심 기능\n\n - 사용자: 모임 관리, 매장 검색, 실시간 예약, 안전한 결제, 실시간 채팅, 경기 일정 알림\n - 가게 사장님: 매장 운영 대시보드, 예약 및 매출 관리, 매장 정보 등록, 스포츠 카테고리 관리\n\n경쟁 서비스와 차별점\n\n - 올인원 플랫폼: 사람 모집, 장소 찾기, 예약, 소통을 하나의 앱에서 제공\n - 안전한 예약: 에스크로 기반 결제 시스템으로 신뢰 확보\n - 실시간 정보: 최신 경기 일정과 매장 현황을 즉시 확인 가능\n - 상생 모델: 사용자와 매장을 직접 연결하여 지역 상권 활성화\n\n비전\n\nSpotple은 부산에서 시작하여 전국으로 확장하며, 스포츠 관람 문화를 \"혼자 즐기기\"에서 \"함께 즐기기\"로 변화시킵니다. 또한 지역 상권과 상생하는 지속 가능한 비즈니스 모델을 통해 사회적 가치를 창출합니다.",
+    "memberNames": [
+      "윤대한",
+      "박태원",
+      "김재혁",
+      "김세한",
+      "정예준"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-go-16",
+    "youtubeUrl": "https://youtu.be/S3_UjLFRAsc",
+    "productionUrl": null,
+    "previewIds": [
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 35,
+    "sourceContestId": 1,
+    "teamName": "17. 민간인넷",
+    "projectName": "루티(Routy)",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "목표를 세우고 계획을 세우는 것은 쉽지만, 꾸준히 실천하는 것은 많은 사람들이 어려워합니다.\n공부, 운동, 자기계발 등 다양한 목표를 달성하고 싶어도, 혼자서는 실천 동기를 유지하기 어렵기 때문입니다.\n\n그래서 개발된 ‘루티’는 AI가 마치 함께 있는 사람처럼 실천을 지켜보고, 격려하고, 피드백하는 코치 역할을 수행합니다.\n사용자는 AI와 상호작용하며 목표를 설정하고 루틴을 만들고, 루티는 꾸준한 실천을 돕는 메시지와 리포트를 제공합니다.\n\n#주요 기능\n\n- 루틴 생성: 목표 달성을 위한 맞춤형 실천 계획 제공\n\n- AI 코칭: 사용자의 성향에 맞춘 격려와 피드백 메시지\n\n- 진행 리포트: 일별·주간 실천 기록과 성취 분석\n\n- 음성/텍스트 지원: 상황에 맞게 AI와 자연스럽게 소통\n\n목표 달성의 어려움을 느낄 때, 루티와 함께라면 혼자가 아닌 AI 코치가 항상 곁에서 지켜보고, 격려하며 실천을 이끌어 줍니다.",
+    "memberNames": [
+      "배휘랑",
+      "허성준",
+      "신규민",
+      "이상윤",
+      "윤정환"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-MinganinNet-17",
+    "youtubeUrl": "https://www.youtube.com/watch?v=XAFs4hxy64M",
+    "productionUrl": null,
+    "previewIds": [
+      44,
+      45,
+      46,
+      47
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 36,
+    "sourceContestId": 1,
+    "teamName": "18. 반짝이",
+    "projectName": "Exitmate",
+    "professorName": "PNU 창의융합SW해커톤",
+    "advisorRole": "운영진",
+    "overview": "우리나라 자영업자는 OECD 평균보다 높은 비중을 차지하지만, 매년 많은 수가 폐업 위기에 놓이고 있습니다. 폐업에는 큰 비용이 들고, 이후에도 생계 불안이 이어지며, 특히 부산은 폐업률과 상가 공실률이 전국 상위권으로 지역 경제 침체가 심각합니다. 정부와 지자체가 다양한 지원정책을 운영하고 있으나, 많은 자영업자가 제도를 알지 못하거나 절차가 복잡해 실질적인 도움을 받지 못하고 있습니다.\n\nExit Mate는 이러한 문제를 해결하기 위해 개발된 공공 지원 매칭 플랫폼입니다. 흩어진 지원사업 정보를 한곳에 모아 제공하고, 개인의 조건에 맞는 사업만 보여주며, AI 추천으로 최적의 지원사업을 제시합니다. 또한 신청서 작성 보조와 행정·세무 질의응답 기능을 통해 누구나 쉽게 정책에 참여할 수 있도록 돕습니다.\n\nExit Mate는 단순한 정보 제공을 넘어 자영업자의 정보 불평등을 해소하고, 정책 효과성을 높이며, 지역 사회의 지속 가능한 회복에 기여하는 공익적 디지털 플랫폼으로 나아가겠습니다.",
+    "memberNames": [
+      "이민경",
+      "김지영",
+      "이세형",
+      "이가현",
+      "이시웅",
+      "김예원"
+    ],
+    "githubUrl": "https://github.com/2025-PNU-SW-Hackathon/PNUSW-2025-Banjjaki-18",
+    "youtubeUrl": "https://youtu.be/6rBmEnssBcs?si=yJFMyTyEKmo5Oigw",
+    "productionUrl": null,
+    "previewIds": [
+      30,
+      31,
+      32
+    ],
+    "cycleIndex": 0,
+    "programIndex": 1,
+    "categoryKey": "hackathon"
+  },
+  {
+    "sourceTeamId": 141,
+    "sourceContestId": 4,
+    "teamName": "앱티브 게임팀",
+    "projectName": "매추리 (매일 추리 게임)",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "매추리 (매일 추리 게임) 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "정윤성",
+      "이요환"
+    ],
+    "githubUrl": "https://github.com/Apptive-Game-Team/Maechuri",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/Apptive-Game-Team/Maechuri",
+    "previewIds": [
+      183
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 142,
+    "sourceContestId": 4,
+    "teamName": "Go In Water",
+    "projectName": "Detox Agent",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "Detox Agent 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김은종",
+      "허동혁"
+    ],
+    "githubUrl": "https://github.com/GoInWater301/PrivateDNS",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/GoInWater301/PrivateDNS",
+    "previewIds": [
+      181
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 143,
+    "sourceContestId": 4,
+    "teamName": "코드에 샷 추가",
+    "projectName": "TradeMate",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "TradeMate 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "양윤성",
+      "문수호",
+      "강민규"
+    ],
+    "githubUrl": "https://github.com/AddShotInCode/TradeMate_FE",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/AddShotInCode/TradeMate_BE",
+    "previewIds": [
+      179
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 144,
+    "sourceContestId": 4,
+    "teamName": "AISFA",
+    "projectName": "드릴 뮤직",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "드릴 뮤직 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김성욱",
+      "문경환"
+    ],
+    "githubUrl": "https://github.com/wannabidr/aibooster-drillmusic.git",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/wannabidr/aibooster-drillmusic.git",
+    "previewIds": [
+      177
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 145,
+    "sourceContestId": 4,
+    "teamName": "attention",
+    "projectName": "ai_company",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "ai_company 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김륜영",
+      "김동인"
+    ],
+    "githubUrl": "https://github.com/PNU-attention/ai_company",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/PNU-attention/ai_company",
+    "previewIds": [
+      175
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 146,
+    "sourceContestId": 4,
+    "teamName": "SeqLab",
+    "projectName": "Smart PCR Primer Designer",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "Smart PCR Primer Designer 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "강두하",
+      "문성현",
+      "김동현"
+    ],
+    "githubUrl": "https://github.com/Seq-Lab/PrimerFlow",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/Seq-Lab/PrimerFlow",
+    "previewIds": [
+      173
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 147,
+    "sourceContestId": 4,
+    "teamName": "딸바(딸기바나나)",
+    "projectName": "부산대 농구 통합 플랫폼 개발",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "부산대 농구 통합 플랫폼 개발 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "김세엽",
+      "임도균",
+      "박현아"
+    ],
+    "githubUrl": "https://github.com/Blueapple031/PNUBasketballPlatform",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/Blueapple031/PNUBasketballPlatform",
+    "previewIds": [
+      171
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  },
+  {
+    "sourceTeamId": 148,
+    "sourceContestId": 4,
+    "teamName": "레이티브",
+    "projectName": "Project S",
+    "professorName": "PNU AI부스터",
+    "advisorRole": "운영진",
+    "overview": "Project S 프로젝트의 문제 정의, 설계, 구현과 검증 결과를 정리한 OPUS 등록 프로젝트입니다.",
+    "memberNames": [
+      "이천서",
+      "정국경"
+    ],
+    "githubUrl": "https://github.com/RRRayer/AIBooster",
+    "youtubeUrl": "https://youtu.be/4z43MMPDgcM?si=882CtwVFekIJuuxD",
+    "productionUrl": "https://github.com/RRRayer/AIBooster",
+    "previewIds": [
+      170
+    ],
+    "cycleIndex": 1,
+    "programIndex": 3,
+    "categoryKey": "aiBooster"
+  }
+] as const;
