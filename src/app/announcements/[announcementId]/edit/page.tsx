@@ -48,18 +48,21 @@ export default async function EditAnnouncementPage({
       userName={actor.name}
       currentPath={`/announcements/${announcement.id}/edit`}
     >
-      <main className="content-shell page-enter space-y-8">
-        <PageHeader
-          eyebrow="공지사항 · 수정"
-          title="공지 수정"
-          description="변경한 내용은 저장 즉시 모든 구성원에게 표시됩니다."
-          actions={<Link className="button-secondary" href={`/announcements/${announcement.id}`}><UiText>{"취소"}</UiText></Link>}
-        />
-        <AnnouncementForm
-          announcementId={announcement.id}
-          initialTitle={announcement.title}
-          initialContent={announcement.content}
-        />
+      <main className="content-shell page-enter pb-28 lg:pb-16">
+        <div className="mx-auto max-w-4xl space-y-7">
+          <PageHeader
+            compact
+            eyebrow="공지사항 · 수정"
+            title="공지 수정"
+            description="변경한 내용은 저장 즉시 모든 구성원에게 표시됩니다."
+            actions={<Link className="button-secondary" href={`/announcements/${announcement.id}`}><UiText>{"취소"}</UiText></Link>}
+          />
+          <AnnouncementForm
+            announcementId={announcement.id}
+            initialTitle={announcement.title}
+            initialContent={announcement.content}
+          />
+        </div>
       </main>
     </AppShell>
   );

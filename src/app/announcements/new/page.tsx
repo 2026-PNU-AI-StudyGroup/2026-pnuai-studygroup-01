@@ -26,14 +26,17 @@ export default async function NewAnnouncementPage() {
       userName={actor.name}
       currentPath="/announcements/new"
     >
-      <main className="content-shell page-enter space-y-8">
-        <PageHeader
-          eyebrow="공지사항 · 작성"
-          title="새 공지 작성"
-          description="모든 구성원이 확인해야 할 운영 안내를 작성합니다."
-          actions={<Link className="button-secondary" href="/announcements"><UiText>{"목록으로"}</UiText></Link>}
-        />
-        <AnnouncementForm />
+      <main className="content-shell page-enter pb-28 lg:pb-16">
+        <div className="mx-auto max-w-4xl space-y-7">
+          <PageHeader
+            compact
+            eyebrow="공지사항 · 작성"
+            title="새 공지 작성"
+            description="모든 구성원이 확인해야 할 운영 안내를 작성합니다."
+            actions={<Link className="button-secondary" href="/announcements"><UiText>{"목록으로"}</UiText></Link>}
+          />
+          <AnnouncementForm />
+        </div>
       </main>
     </AppShell>
   );

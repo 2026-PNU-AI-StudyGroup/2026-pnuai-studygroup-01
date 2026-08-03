@@ -49,9 +49,9 @@ export default async function AnnouncementDetailPage({
       userName={actor.name}
       currentPath={`/announcements/${announcement.id}`}
     >
-      <main className="content-shell page-enter">
-        <article className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] pb-5">
+      <main className="content-shell page-enter pb-28 lg:pb-16">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <Link className="button-quiet" href="/announcements"><UiText>{"공지 목록"}</UiText></Link>
             {canManage ? (
               <div className="flex items-start gap-2">
@@ -60,29 +60,31 @@ export default async function AnnouncementDetailPage({
               </div>
             ) : null}
           </div>
+          <article className="panel overflow-hidden">
+            <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
+              <p className="text-xs font-black tracking-[0.14em] text-[var(--primary)]">
+                <UiText>{"공지사항"}</UiText>
+              </p>
+              <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-black leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
+                <UiText>{announcement.title}</UiText>
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted)]">
+                <span className="font-semibold text-[var(--ink)]">{announcement.authorName}</span>
+                <span aria-hidden="true">·</span>
+                <time dateTime={announcement.createdAt.toISOString()}>
+                  <UiDate value={announcement.createdAt} mode="dateTime" />
+                </time>
+                {wasUpdated ? (
+                  <><span aria-hidden="true">·</span><span><UiText>{"수정"}</UiText>{" "}<UiDate value={announcement.updatedAt} mode="dateTime" /></span></>
+                ) : null}
+              </div>
+            </header>
 
-          <header className="border-b border-[var(--line)] py-8 sm:py-10">
-            <p className="text-xs font-black tracking-[0.14em] text-[var(--primary)]">
-              <UiText>{"공지사항"}</UiText>
-            </p>
-            <h1 className="mt-3 text-[clamp(2rem,4vw,3rem)] font-black leading-[1.15] tracking-[-0.05em]">
-              <UiText>{announcement.title}</UiText>
-            </h1>
-            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
-              <span className="font-semibold text-[var(--ink)]">{announcement.authorName}</span>
-              <time dateTime={announcement.createdAt.toISOString()}>
-                <UiDate value={announcement.createdAt} mode="dateTime" />
-              </time>
-              {wasUpdated ? (
-                <span><UiText>{"수정"}</UiText>{" "}<UiDate value={announcement.updatedAt} mode="dateTime" /></span>
-              ) : null}
+            <div className="min-h-72 whitespace-pre-wrap px-5 py-8 text-base leading-8 text-[var(--ink)] sm:px-8 sm:py-10">
+              <UiText>{announcement.content}</UiText>
             </div>
-          </header>
-
-          <div className="min-h-72 whitespace-pre-wrap py-8 text-base leading-8 text-[var(--ink)] sm:py-10">
-            <UiText>{announcement.content}</UiText>
-          </div>
-        </article>
+          </article>
+        </div>
       </main>
     </AppShell>
   );

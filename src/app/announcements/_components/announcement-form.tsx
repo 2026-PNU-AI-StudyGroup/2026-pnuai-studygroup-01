@@ -31,40 +31,42 @@ export function AnnouncementForm({
   const editing = Boolean(announcementId);
 
   return (
-    <form action={formAction} className="panel grid gap-6 p-6 sm:p-8">
-      <label className="grid gap-2 font-semibold">
-        <span><UiText>{"제목"}</UiText></span>
-        <UiInput
-          className="field"
-          name="title"
-          type="text"
-          maxLength={120}
-          defaultValue={initialTitle}
-          placeholder="공지 제목을 입력하세요"
-          required
-          autoFocus
-        />
-      </label>
-      <label className="grid gap-2 font-semibold">
-        <span><UiText>{"본문"}</UiText></span>
-        <UiTextarea
-          className="field min-h-72 leading-7"
-          name="content"
-          maxLength={20_000}
-          defaultValue={initialContent}
-          placeholder="구성원이 알아야 할 내용을 입력하세요"
-          required
-        />
-      </label>
-      {state.message ? (
-        <p
-          className="text-sm font-semibold text-[var(--danger)]"
-          role="alert"
-        >
-          <UiText>{state.message}</UiText>
-        </p>
-      ) : null}
-      <div className="flex justify-end">
+    <form action={formAction} className="panel overflow-hidden">
+      <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
+        <label className="grid gap-2 text-sm font-bold text-[var(--ink)]">
+          <span><UiText>{"제목"}</UiText></span>
+          <UiInput
+            className="field bg-white"
+            name="title"
+            type="text"
+            maxLength={120}
+            defaultValue={initialTitle}
+            placeholder="공지 제목을 입력하세요"
+            required
+            autoFocus
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-bold text-[var(--ink)]">
+          <span><UiText>{"본문"}</UiText></span>
+          <UiTextarea
+            className="field min-h-80 bg-white leading-7"
+            name="content"
+            maxLength={20_000}
+            defaultValue={initialContent}
+            placeholder="구성원이 알아야 할 내용을 입력하세요"
+            required
+          />
+        </label>
+        {state.message ? (
+          <p
+            className="rounded-[var(--radius-control)] bg-[var(--danger-subtle)] px-4 py-3 text-sm font-semibold text-[var(--danger)]"
+            role="alert"
+          >
+            <UiText>{state.message}</UiText>
+          </p>
+        ) : null}
+      </div>
+      <div className="flex justify-end border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-8">
         <button
           className="button-primary max-sm:w-full"
           type="submit"
