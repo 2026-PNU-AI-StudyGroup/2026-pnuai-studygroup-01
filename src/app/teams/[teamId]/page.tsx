@@ -29,6 +29,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
   const destinations = [
     ["마일스톤", "목표와 완료 예정일", `/teams/${teamId}/milestones`, `${workspace.completedMilestoneCount} / ${workspace.milestoneCount} 완료`],
     ["팀 대화", "아이디어와 피드백", `/teams/${teamId}/discussion`, `${workspace.discussionTotal}개 글`],
+    ["미팅·검토 요청", workspace.advisorEnabled ? "지도교수에게 요청하고 답변 확인" : "프로젝트 관리자에게 요청하고 답변 확인", `/teams/${teamId}/requests`, "요청·답변"],
     ["보고서", workspace.advisorEnabled ? "제출 버전과 교수 승인" : "제출 버전과 승인", `/teams/${teamId}/reports`, "제출·승인 관리"],
     ["결과물", "발표 자료와 소스 코드", `/teams/${teamId}/artifacts`, "최종 산출물"],
   ] as const;
