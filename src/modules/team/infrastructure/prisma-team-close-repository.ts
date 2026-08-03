@@ -69,6 +69,10 @@ export class PrismaTeamCloseRepository implements TeamCloser {
         data: { status: "CLOSED" },
       });
       if (result.count !== 1) return false;
+      await transaction.projectGuidanceRequest.updateMany({
+        where: { teamId, status: "PENDING" },
+        data: { status: "CANCELED", canceledAt: decidedAt, updatedAt: decidedAt },
+      });
 
       const applications = await transaction.topicApplication.findMany({
         where: { topicId: team.topicId, status: "PENDING" },

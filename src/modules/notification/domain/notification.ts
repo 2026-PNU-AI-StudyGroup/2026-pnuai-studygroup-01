@@ -1,4 +1,9 @@
-export type NotificationType = "APPLICATION_RESULT" | "REPORT_ACTIVITY" | "DEADLINE" | "SYSTEM";
+export type NotificationType =
+  | "APPLICATION_RESULT"
+  | "REPORT_ACTIVITY"
+  | "PROJECT_REQUEST"
+  | "DEADLINE"
+  | "SYSTEM";
 
 export type NotificationItem = {
   id: string;

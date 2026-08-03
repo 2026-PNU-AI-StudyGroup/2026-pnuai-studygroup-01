@@ -134,6 +134,17 @@ enum ProjectAssistantInvitationStatus {
   CANCELED
 }
 
+enum ProjectGuidanceRequestKind {
+  MEETING
+  REVIEW
+}
+
+enum ProjectGuidanceRequestStatus {
+  PENDING
+  ANSWERED
+  CANCELED
+}
+
 enum AuditAction {
   PROFESSOR_ACCESS_GRANTED
   PROFESSOR_ACCESS_REVOKED
@@ -153,6 +164,7 @@ enum AuditAction {
 enum NotificationType {
   APPLICATION_RESULT
   REPORT_ACTIVITY
+  PROJECT_REQUEST
   DEADLINE
   SYSTEM
 }
@@ -189,8 +201,10 @@ model User {
   topicsManaged                      Topic[]                             @relation("TopicManager")
   projectAssistantMemberships        ProjectAssistant[]                  @relation("ProjectAssistantUser")
   projectAssistantMembershipsGranted ProjectAssistant[]                  @relation("ProjectAssistantGrantor")
-  projectAssistantInvitations         ProjectAssistantInvitation[]        @relation("ProjectAssistantInvitee")
-  projectAssistantInvitationsSent     ProjectAssistantInvitation[]        @relation("ProjectAssistantInviter")
+  projectAssistantInvitations        ProjectAssistantInvitation[]        @relation("ProjectAssistantInvitee")
+  projectAssistantInvitationsSent    ProjectAssistantInvitation[]        @relation("ProjectAssistantInviter")
+  projectGuidanceRequests            ProjectGuidanceRequest[]            @relation("ProjectGuidanceRequester")
+  projectGuidanceResponses           ProjectGuidanceRequest[]            @relation("ProjectGuidanceResponder")
   topicApplications                  TopicApplication[]
   teamMemberships                    TeamMember[]
   milestonesCreated                  Milestone[]                         @relation("MilestoneCreator")
@@ -237,9 +251,9 @@ model Announcement {
 }
 
 model TranslationSource {
-  hash         String               @id
+  hash         String              @id
   text         String
-  createdAt    DateTime             @default(now())
+  createdAt    DateTime            @default(now())
   translations StoredTranslation[]
   jobs         TranslationJob[]
 
@@ -422,20 +436,20 @@ model ProjectProgram {
 }
 
 model Topic {
-  id                      String                     @id @default(uuid())
+  id                      String                       @id @default(uuid())
   academicCycleId         String
   programId               String
   authorId                String
   managerId               String?
   title                   String
   description             String
-  advisorRole             String                     @default("교수")
-  requiredSkills          String[]                   @default(["별도 협의"])
-  preferredSkills         String[]                   @default([])
-  roleExpectations        String                     @default("세부 역할 별도 협의")
-  availabilityRequirement String                     @default("활동 가능 시간 별도 협의")
-  applicationMode         TopicApplicationMode       @default(INDIVIDUAL_ONLY)
-  recruitmentEnabled      Boolean                    @default(true)
+  advisorRole             String                       @default("교수")
+  requiredSkills          String[]                     @default(["별도 협의"])
+  preferredSkills         String[]                     @default([])
+  roleExpectations        String                       @default("세부 역할 별도 협의")
+  availabilityRequirement String                       @default("활동 가능 시간 별도 협의")
+  applicationMode         TopicApplicationMode         @default(INDIVIDUAL_ONLY)
+  recruitmentEnabled      Boolean                      @default(true)
   capacity                Int
   recruitmentStartsAt     DateTime
   recruitmentEndsAt       DateTime
@@ -443,14 +457,14 @@ model Topic {
   executionEndsAt         DateTime
   submissionStartsAt      DateTime
   submissionEndsAt        DateTime
-  status                  TopicStatus                @default(DRAFT)
+  status                  TopicStatus                  @default(DRAFT)
   publishedAt             DateTime?
-  createdAt               DateTime                   @default(now())
-  updatedAt               DateTime                   @updatedAt
-  academicCycle           AcademicCycle              @relation(fields: [academicCycleId], references: [id])
-  program                 ProjectProgram             @relation(fields: [programId, academicCycleId], references: [id, academicCycleId])
-  author                  User                       @relation("TopicAuthor", fields: [authorId], references: [id])
-  manager                 User?                      @relation("TopicManager", fields: [managerId], references: [id], onDelete: Restrict)
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  academicCycle           AcademicCycle                @relation(fields: [academicCycleId], references: [id])
+  program                 ProjectProgram               @relation(fields: [programId, academicCycleId], references: [id, academicCycleId])
+  author                  User                         @relation("TopicAuthor", fields: [authorId], references: [id])
+  manager                 User?                        @relation("TopicManager", fields: [managerId], references: [id], onDelete: Restrict)
   applications            TopicApplication[]
   applicationQuestions    TopicApplicationQuestion[]
   applicationGroups       TopicApplicationGroup[]
@@ -529,14 +543,14 @@ model TopicApplication {
 }
 
 model TopicApplicationQuestion {
-  id           String                       @id @default(uuid())
-  topicId      String
-  label        String
-  maxLength    Int
-  required     Boolean                      @default(true)
-  position     Int
-  topic        Topic                        @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  answers      TopicApplicationAnswer[]
+  id        String                   @id @default(uuid())
+  topicId   String
+  label     String
+  maxLength Int
+  required  Boolean                  @default(true)
+  position  Int
+  topic     Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answers   TopicApplicationAnswer[]
 
   @@unique([topicId, position])
   @@index([topicId])
@@ -578,7 +592,7 @@ model TopicApprovalRequest {
   topic                Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
   requester            User                @relation("TopicApprovalRequester", fields: [requesterId], references: [id])
   requestedProfessor   User?               @relation("TopicApprovalProfessor", fields: [requestedProfessorId], references: [id])
-  studentTeam          StudentTeam?         @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
+  studentTeam          StudentTeam?        @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
   decidedBy            User?               @relation("TopicApprovalDecider", fields: [decidedById], references: [id])
 
   @@index([status, route, createdAt])
@@ -602,18 +616,18 @@ model TopicApplicationAnswer {
 }
 
 model Team {
-  id               String            @id @default(uuid())
+  id               String                   @id @default(uuid())
   academicCycleId  String
-  topicId          String            @unique
+  topicId          String                   @unique
   professorId      String
   name             String
   sourceUrl        String?
   thumbnailPath    String?
   posterPath       String?
-  status           TeamStatus        @default(FORMING)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  topic            Topic             @relation(fields: [topicId, academicCycleId, professorId], references: [id, academicCycleId, managerId])
+  status           TeamStatus               @default(FORMING)
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  topic            Topic                    @relation(fields: [topicId, academicCycleId, professorId], references: [id, academicCycleId, managerId])
   members          TeamMember[]
   milestones       Milestone[]
   progressUpdates  ProgressUpdate[]
@@ -622,12 +636,39 @@ model Team {
   reports          Report[]
   artifacts        Artifact[]
   recruitmentPosts RecruitmentPost[]
+  guidanceRequests ProjectGuidanceRequest[]
 
   @@unique([topicId, academicCycleId, professorId])
   @@unique([id, academicCycleId, topicId])
   @@index([academicCycleId, status])
   @@index([professorId])
   @@map("team")
+}
+
+model ProjectGuidanceRequest {
+  id           String                       @id @default(uuid())
+  teamId       String
+  requesterId  String
+  kind         ProjectGuidanceRequestKind
+  title        String
+  content      String
+  referenceUrl String?
+  preferredAt  DateTime?
+  status       ProjectGuidanceRequestStatus @default(PENDING)
+  response     String?
+  scheduledAt  DateTime?
+  responderId  String?
+  respondedAt  DateTime?
+  canceledAt   DateTime?
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+  team         Team                         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  requester    User                         @relation("ProjectGuidanceRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  responder    User?                        @relation("ProjectGuidanceResponder", fields: [responderId], references: [id], onDelete: Restrict)
+
+  @@index([teamId, status, createdAt])
+  @@index([requesterId, createdAt])
+  @@map("project_guidance_request")
 }
 
 model StudentTeam {

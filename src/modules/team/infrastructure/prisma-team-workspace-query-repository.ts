@@ -5,9 +5,7 @@ import type {
   TeamWorkspace,
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
-import {
-  teamSupervisorWhere,
-} from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
+import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 
 const teamListInclude = {
   topic: { select: { title: true } },
@@ -197,13 +195,7 @@ export class PrismaTeamWorkspaceQueryRepository
   }
 
   listForActor(actor: CurrentActor): Promise<TeamListItem[]> {
-    if (actor.role === "ADMIN") return this.listAll();
-    return this.list({
-      OR: [
-        teamSupervisorWhere(actor),
-        { members: { some: { studentId: actor.id } } },
-      ],
-    });
+    return this.list(teamActorWhere(actor));
   }
 
   private async list(where: Prisma.TeamWhereInput): Promise<TeamListItem[]> {
@@ -232,14 +224,4 @@ export class PrismaTeamWorkspaceQueryRepository
       })),
     }));
   }
-}
-
-function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
-  if (actor.role === "ADMIN") return {};
-  return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
-    ],
-  };
 }

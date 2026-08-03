@@ -59,3 +59,21 @@ export function createReportActivityNotifications(
     skipDuplicates: true,
   });
 }
+
+export function createProjectRequestNotifications(
+  transaction: NotificationTransaction,
+  inputs: Array<{
+    dedupeKey: string;
+    recipientId: string;
+    title: string;
+    body: string;
+    href: string;
+    createdAt: Date;
+  }>,
+) {
+  if (!inputs.length) return Promise.resolve({ count: 0 });
+  return transaction.notification.createMany({
+    data: inputs.map((input) => ({ ...input, type: "PROJECT_REQUEST" as const })),
+    skipDuplicates: true,
+  });
+}
