@@ -127,6 +127,7 @@ const ids = {
   activeApprovalDecisions: Array.from({ length: 2 }, (_, index) => `f5000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeStoredFiles: Array.from({ length: 3 }, (_, index) => `e1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeArtifacts: Array.from({ length: 3 }, (_, index) => `d1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  announcements: Array.from({ length: 5 }, (_, index) => `a1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
 };
 const baseProfessorEmails = ids.professors.map((_, index) => `demo.professor${index + 1}@pusan.ac.kr`);
 const opusAdvisorEmails = ids.opusAdvisors.map((_, index) => `demo.opus.advisor${index + 1}@pusan.ac.kr`);
@@ -256,6 +257,49 @@ async function seed() {
         where: { id },
         update: { name, email, emailVerified: true, role, isActive: true },
         create: { id, name, email, emailVerified: true, role, isActive: true },
+      });
+    }
+    const demoAnnouncements = [
+      {
+        authorId: ids.admin,
+        title: "2026학년도 2학기 프로젝트 운영 일정 안내",
+        content: "프로젝트 주제 확정과 팀 구성, 보고서 제출 일정을 안내합니다.\n\n- 주제 및 팀 구성 확정: 8월 14일\n- 프로젝트 수행 시작: 8월 17일\n- 중간보고서 제출: 10월 16일\n- 최종보고서 제출: 12월 11일\n\n프로그램별 세부 일정은 각 프로젝트 화면에서 확인해 주세요.",
+        createdAt: new Date("2026-08-03T09:00:00+09:00"),
+      },
+      {
+        authorId: ids.professors[0],
+        title: "중간보고서 제출 및 지도교수 확인 안내",
+        content: "중간보고서는 팀장이 제출한 뒤 지도교수 확인까지 완료해야 합니다. 제출 전 팀원별 진행 내용과 다음 단계 계획이 포함되어 있는지 확인해 주세요.\n\n보완 요청을 받은 경우 의견을 반영한 새 버전을 제출할 수 있습니다.",
+        createdAt: new Date("2026-08-01T14:30:00+09:00"),
+      },
+      {
+        authorId: ids.admin,
+        title: "팀 구성 확정 전 확인 사항",
+        content: "팀 구성 확정 전 모든 팀원의 참여 상태와 담당 역할을 확인해 주세요. 중복 참여나 미응답 초대가 남아 있으면 팀 확정이 제한될 수 있습니다.\n\n문제가 지속되면 학과 프로젝트 담당자에게 문의해 주세요.",
+        createdAt: new Date("2026-07-30T11:00:00+09:00"),
+      },
+      {
+        authorId: ids.professors[1],
+        title: "프로젝트 결과물 공개 범위 안내",
+        content: "최종 승인된 프로젝트는 결과물 공개 여부를 선택할 수 있습니다. 공개 링크와 첨부 파일에 개인정보, 비공개 저장소 주소, 접근 토큰이 포함되지 않았는지 등록 전에 반드시 확인해 주세요.",
+        createdAt: new Date("2026-07-28T16:20:00+09:00"),
+      },
+      {
+        authorId: ids.admin,
+        title: "프로젝트 관리 시스템 정기 점검 안내",
+        content: "안정적인 서비스 운영을 위해 8월 8일 토요일 오전 2시부터 4시까지 정기 점검을 진행합니다. 점검 시간에는 로그인과 보고서 제출이 일시적으로 제한될 수 있습니다.",
+        createdAt: new Date("2026-07-25T10:00:00+09:00"),
+      },
+    ] as const;
+    for (const [index, announcement] of demoAnnouncements.entries()) {
+      await tx.announcement.upsert({
+        where: { id: ids.announcements[index] },
+        update: { ...announcement, updatedAt: announcement.createdAt },
+        create: {
+          id: ids.announcements[index],
+          ...announcement,
+          updatedAt: announcement.createdAt,
+        },
       });
     }
     for (const [index, professorId] of allProfessorIds.entries()) {
@@ -1129,6 +1173,7 @@ async function seed() {
       activeReports: ids.activeReports.length,
       activeReportVersions: ids.activeReportVersions.length,
       activeArtifacts: ids.activeArtifacts.length,
+      announcements: ids.announcements.length,
     };
   });
 
@@ -1148,6 +1193,7 @@ async function seed() {
     activeReports: seedResult.activeReports,
     activeReportVersions: seedResult.activeReportVersions,
     artifacts: artifactCount + seedResult.activeArtifacts,
+    announcements: seedResult.announcements,
     localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
     verificationResidueRemoved: seedResult.verificationResidueRemoved,
   }));
