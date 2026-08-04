@@ -32,8 +32,9 @@ export class PrismaStudentTeamRecruitmentCommandRepository
       ) {
         return false;
       }
+      const { leaderId, ...postData } = input;
       await transaction.studentTeamRecruitmentPost.create({
-        data: { id: randomUUID(), authorId: input.leaderId, ...input },
+        data: { id: randomUUID(), authorId: leaderId, ...postData },
       });
       await enqueueTranslations(transaction, [
         input.title,
@@ -104,11 +105,13 @@ export class PrismaStudentTeamRecruitmentCommandRepository
       ) {
         return "ALREADY_APPLIED";
       }
+      const { appliedAt, ...applicationData } = input;
       await transaction.studentTeamRecruitmentApplication.create({
         data: {
           id: randomUUID(),
-          ...input,
-          updatedAt: input.appliedAt,
+          ...applicationData,
+          createdAt: appliedAt,
+          updatedAt: appliedAt,
         },
       });
       await enqueueTranslations(transaction, [

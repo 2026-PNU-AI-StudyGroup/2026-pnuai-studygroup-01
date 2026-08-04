@@ -955,25 +955,10 @@ async function seed() {
         createdAt: new Date("2026-07-08T12:00:00+09:00"),
       },
     ] });
-    await tx.studentTeamRecruitmentApplication.createMany({ data: [
-      // DEMO_VIEWER_EMAIL 미지정 시 studentTeamViewer가 students[0]로 폴백하는데,
-      // students[0]는 아래 엔트리에서 이미 recruitments[1]에 지원한다.
-      // 그대로 두면 (postId, studentId) 유니크 제약 위반 → 뷰어가 별도 계정일 때만 추가한다.
-      ...(studentTeamViewer.id === ids.students[0]
-        ? []
-        : [
-            {
-              id: ids.studentTeamRecruitmentApplications[0],
-              postId: ids.studentTeamRecruitments[1],
-              studentId: studentTeamViewer.id,
-              message: "데이터를 실제 사용자가 이해할 수 있는 화면으로 만드는 역할을 맡고 싶습니다.",
-              skills: ["TypeScript", "PostgreSQL", "데이터 시각화"],
-              desiredRole: "데이터 시각화와 프론트엔드 연동",
-              availability: "평일 저녁, 주말 협의 가능",
-              status: "PENDING",
-              createdAt: new Date("2026-07-23T20:00:00+09:00"),
-            },
-          ]),
+    // DEMO_VIEWER_EMAIL 미지정 시 studentTeamViewer가 students[0]로 폴백하는데,
+    // students[0]는 아래 엔트리에서 이미 recruitments[1]에 지원한다. 그대로 두면
+    // (postId, studentId) 유니크 제약 위반 → 뷰어가 별도 계정일 때만 뷰어 지원 행을 추가한다.
+    const studentTeamRecruitmentApplicationRows: Prisma.StudentTeamRecruitmentApplicationCreateManyInput[] = [
       {
         id: ids.studentTeamRecruitmentApplications[1],
         postId: ids.studentTeamRecruitments[2],
@@ -1008,7 +993,23 @@ async function seed() {
         status: "PENDING",
         createdAt: new Date("2026-07-24T20:00:00+09:00"),
       },
-    ] });
+    ];
+    if (studentTeamViewer.id !== ids.students[0]) {
+      studentTeamRecruitmentApplicationRows.unshift({
+        id: ids.studentTeamRecruitmentApplications[0],
+        postId: ids.studentTeamRecruitments[1],
+        studentId: studentTeamViewer.id,
+        message: "데이터를 실제 사용자가 이해할 수 있는 화면으로 만드는 역할을 맡고 싶습니다.",
+        skills: ["TypeScript", "PostgreSQL", "데이터 시각화"],
+        desiredRole: "데이터 시각화와 프론트엔드 연동",
+        availability: "평일 저녁, 주말 협의 가능",
+        status: "PENDING",
+        createdAt: new Date("2026-07-23T20:00:00+09:00"),
+      });
+    }
+    await tx.studentTeamRecruitmentApplication.createMany({
+      data: studentTeamRecruitmentApplicationRows,
+    });
 
     await tx.milestone.createMany({ data: [
       { id: ids.milestones[0], teamId: ids.teams[0], createdById: ids.students[0], title: "교내 접근성 경로 현장 조사", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE" },
