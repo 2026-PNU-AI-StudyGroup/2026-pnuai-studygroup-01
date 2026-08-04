@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import type { TopicApprovalRepository, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
+import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
@@ -124,8 +125,9 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     }));
   }
 
-  decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE"> {
-    return this.client.$transaction(async (transaction) => {
+  async decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE"> {
+    try {
+      return await this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId: string | null; status: string }>>(Prisma.sql`
         SELECT "id", "topicId", "route", "requestedProfessorId", "studentTeamId", "status"
         FROM "topic_approval_request" WHERE "id" = ${input.requestId} FOR UPDATE
@@ -166,9 +168,10 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
           select: { studentId: true, student: { select: { role: true, isActive: true } } },
         });
+        // 제안 시점 capacity와 정확히 일치하도록 요구하면 대기 중 팀원이 바뀔 때
+        // 승인이 영구 불가해진다. 현재 활성 팀원 수를 그대로 정원으로 사용한다.
         if (
           members.length === 0 ||
-          members.length !== topic.capacity ||
           members.some(({ student }) => student.role !== "STUDENT" || !student.isActive)
         ) return "UNAVAILABLE";
         const studentIds = members.map(({ studentId }) => studentId);
@@ -211,6 +214,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             managerId: input.actorId,
             status: "PUBLISHED",
             publishedAt: input.decidedAt,
+            capacity: members.length,
           },
         });
         const executionTeam = await transaction.team.create({
@@ -235,11 +239,60 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             joinedAt: input.decidedAt,
           })),
         });
+
+        // 확정된 학생들이 같은 학기에 낸 다른 PENDING 지원을 자동 거절한다.
+        // (수락 경로 prisma-topic-application-acceptance.ts와 동일한 정리 — 없으면
+        //  해당 지원이 영구 "검토 중"으로 남고 교수 수락 시 STUDENT_ALREADY_ASSIGNED 충돌.)
+        const conflicting = await transaction.topicApplication.findMany({
+          where: {
+            status: "PENDING",
+            studentId: { in: studentIds },
+            topic: { academicCycleId: topic.academicCycleId },
+          },
+          select: { id: true, groupId: true },
+        });
+        const conflictingIds = conflicting.map(({ id }) => id);
+        const conflictingGroupIds = conflicting.flatMap(({ groupId }) => (groupId ? [groupId] : []));
+        const toReject = conflictingIds.length || conflictingGroupIds.length
+          ? await transaction.topicApplication.findMany({
+              where: {
+                status: "PENDING",
+                OR: [{ id: { in: conflictingIds } }, { groupId: { in: conflictingGroupIds } }],
+              },
+              select: { id: true, studentId: true, topic: { select: { title: true } } },
+            })
+          : [];
+        if (toReject.length) {
+          const rejectedIds = toReject.map(({ id }) => id);
+          await transaction.topicApplication.updateMany({
+            where: { id: { in: rejectedIds }, status: "PENDING" },
+            data: { status: "REJECTED", decidedAt: input.decidedAt },
+          });
+          await transaction.recruitmentApplication.updateMany({
+            where: { topicApplicationId: { in: rejectedIds }, status: "PENDING" },
+            data: { status: "REJECTED", decidedAt: input.decidedAt },
+          });
+          for (const rejected of toReject) {
+            await createApplicationResultNotification(transaction, {
+              applicationId: rejected.id,
+              recipientId: rejected.studentId,
+              topicTitle: rejected.topic.title,
+              outcome: "REJECTED",
+              createdAt: input.decidedAt,
+            });
+          }
+        }
         }
       }
       const status = input.decision === "APPROVE" ? "APPROVED" : "REJECTED";
       await transaction.topicApprovalRequest.update({ where: { id: request.id }, data: { status, reviewComment: input.reviewComment, decidedById: input.actorId, decidedAt: input.decidedAt } });
       return status;
-    });
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return "UNAVAILABLE";
+      }
+      throw error;
+    }
   }
 }
