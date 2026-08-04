@@ -75,7 +75,7 @@ export default async function AccountPage() {
                         <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">{profile.bio}</p>
                         <UiUl aria-label="관심 분야와 보유 기술" className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
                           {[...profile.interests, ...profile.skills].slice(0, 6).map((item) => (
-                            <li key={item} className="text-xs font-semibold text-[var(--muted-strong)]">#{item}</li>
+                            <li key={item} className="text-xs font-semibold text-[var(--muted)]">#{item}</li>
                           ))}
                         </UiUl>
                       </>

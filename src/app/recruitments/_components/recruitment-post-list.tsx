@@ -51,13 +51,13 @@ export function RecruitmentPostList({
                 <div aria-hidden="true" className="absolute bottom-0 right-16 h-28 w-px rotate-[28deg] bg-white/70" />
                 <div className="relative flex h-full min-h-32 flex-col justify-between">
                   <div className="flex items-start justify-between gap-4">
-                    <p className={`text-sm font-black ${posterTheme.accent}`}>{post.teamName}</p>
+                    <p className={`min-w-0 truncate text-sm font-black ${posterTheme.accent}`}>{post.teamName}</p>
                     <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
                       <CapacityIcon />
                       {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText></span>
                   </div>
                   <div className="flex items-end justify-between gap-5">
-                    <p className="max-w-[21rem] text-[1.65rem] font-black leading-[1.12] tracking-[-0.04em] text-[var(--ink)]">{post.roleNeeded}</p>
+                    <p className="line-clamp-2 max-w-[21rem] text-[1.65rem] font-black leading-[1.12] tracking-[-0.04em] text-[var(--ink)]">{post.roleNeeded}</p>
                     <UiDiv className="grid size-14 shrink-0 place-items-center rounded-full border-4 border-white bg-[var(--ink)] text-white" aria-label={`모집자 ${post.authorName}`}>
                       <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6 fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
                         <circle cx="12" cy="8" r="3.25" />

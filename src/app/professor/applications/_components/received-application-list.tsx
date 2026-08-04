@@ -21,7 +21,7 @@ export function ReceivedApplicationList({
     <UiSection aria-label="지원서 목록">
       <div className="flex items-center gap-4 border-y border-[var(--line)] py-4 text-sm">
         <StatusBadge tone="info">
-          <UiText>{"검토 대기"}</UiText>{applications.filter((item) => item.status === "PENDING").length}
+          <UiText>{"검토 대기"}</UiText>{" "}{applications.filter((item) => item.status === "PENDING").length}
         </StatusBadge>
         <span className="muted"><UiText>{"전체"}</UiText>{" "}{applications.length}</span>
       </div>

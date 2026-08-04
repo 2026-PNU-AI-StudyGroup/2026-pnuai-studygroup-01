@@ -9,6 +9,9 @@
 }
 
 :root {
+  /* 라이트 전용 UI. 다크 모드 OS에서 네이티브 컨트롤(select/date picker/스크롤바)이
+     어둡게 렌더되지 않도록 명시한다. */
+  color-scheme: light;
   --workspace: #fafbfd;
   --sidebar: #2347b8;
   --surface: #ffffff;
