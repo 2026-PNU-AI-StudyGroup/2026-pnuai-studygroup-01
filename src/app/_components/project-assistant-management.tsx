@@ -1,11 +1,10 @@
 import {
-  cancelProjectAssistantInvitationAction,
-  removeProjectAssistantAction,
-} from "@/app/_actions/project-assistant-actions";
-import { InviteProjectAssistantForm } from "@/app/_components/project-assistant-controls";
+  CancelProjectAssistantInvitationForm,
+  InviteProjectAssistantForm,
+  RemoveProjectAssistantForm,
+} from "@/app/_components/project-assistant-controls";
 import type { ProjectAssistantManagement } from "@/modules/project-assistant/application/project-assistant-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const roleLabel = {
   STUDENT: "학생",
@@ -37,13 +36,11 @@ export function ProjectAssistantManagementPanel({
                     <strong>{assistant.name}</strong>
                     <p className="muted text-sm">{assistant.email} · <UiText>{roleLabel[assistant.role]}</UiText></p>
                   </div>
-                  <form action={removeProjectAssistantAction}>
-                    <input type="hidden" name="topicId" value={management.topicId} />
-                    <input type="hidden" name="assistantUserId" value={assistant.userId} />
-                    <ConfirmSubmitButton className="button-quiet" confirmMessage={`${assistant.name}님의 프로젝트 조교 권한을 해제하시겠습니까?`}>
-                      <UiText>{"권한 해제"}</UiText>
-                    </ConfirmSubmitButton>
-                  </form>
+                  <RemoveProjectAssistantForm
+                    topicId={management.topicId}
+                    assistantUserId={assistant.userId}
+                    assistantName={assistant.name}
+                  />
                 </li>
               ))}
             </ul>
@@ -59,11 +56,10 @@ export function ProjectAssistantManagementPanel({
                     <strong>{invitation.inviteeName}</strong>
                     <p className="muted text-sm">{invitation.inviteeEmail} · <UiText>{roleLabel[invitation.inviteeRole]}</UiText></p>
                   </div>
-                  <form action={cancelProjectAssistantInvitationAction}>
-                    <input type="hidden" name="topicId" value={management.topicId} />
-                    <input type="hidden" name="invitationId" value={invitation.id} />
-                    <button className="button-quiet" type="submit"><UiText>{"초대 취소"}</UiText></button>
-                  </form>
+                  <CancelProjectAssistantInvitationForm
+                    topicId={management.topicId}
+                    invitationId={invitation.id}
+                  />
                 </li>
               ))}
             </ul>

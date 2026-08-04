@@ -2,11 +2,14 @@
 import { useActionState } from "react";
 
 import {
+  cancelProjectAssistantInvitationAction,
   inviteProjectAssistantAction,
+  removeProjectAssistantAction,
   respondProjectAssistantInvitationAction,
   type ProjectAssistantActionState,
 } from "@/app/_actions/project-assistant-actions";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: ProjectAssistantActionState = {
   status: "idle",
@@ -78,6 +81,52 @@ export function ProjectAssistantInvitationDecisionForm({
         <UiText>{"거절"}</UiText>
       </button>
       {state.message ? <p className="basis-full text-sm" role="status"><UiText>{state.message}</UiText></p> : null}
+    </form>
+  );
+}
+
+export function RemoveProjectAssistantForm({
+  topicId,
+  assistantUserId,
+  assistantName,
+}: {
+  topicId: string;
+  assistantUserId: string;
+  assistantName: string;
+}) {
+  const [state, action, pending] = useActionState(removeProjectAssistantAction, initialState);
+  return (
+    <form action={action}>
+      <input type="hidden" name="topicId" value={topicId} />
+      <input type="hidden" name="assistantUserId" value={assistantUserId} />
+      <ConfirmSubmitButton
+        disabled={pending}
+        className="button-quiet"
+        confirmMessage={`${assistantName}님의 프로젝트 조교 권한을 해제하시겠습니까?`}
+      >
+        <UiText>{pending ? "해제 중" : "권한 해제"}</UiText>
+      </ConfirmSubmitButton>
+      {state.status === "error" ? <span role="alert" className="mt-1 block text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}
+    </form>
+  );
+}
+
+export function CancelProjectAssistantInvitationForm({
+  topicId,
+  invitationId,
+}: {
+  topicId: string;
+  invitationId: string;
+}) {
+  const [state, action, pending] = useActionState(cancelProjectAssistantInvitationAction, initialState);
+  return (
+    <form action={action}>
+      <input type="hidden" name="topicId" value={topicId} />
+      <input type="hidden" name="invitationId" value={invitationId} />
+      <button className="button-quiet" type="submit" disabled={pending}>
+        <UiText>{pending ? "취소 중" : "초대 취소"}</UiText>
+      </button>
+      {state.status === "error" ? <span role="alert" className="mt-1 block text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}
     </form>
   );
 }

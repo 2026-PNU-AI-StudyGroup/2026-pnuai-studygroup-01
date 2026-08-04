@@ -2,13 +2,12 @@ import { UiAside, UiLink } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
-import { confirmTeamAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-workspace-navigation";
 import { CloseTeamForm } from "@/app/teams/[teamId]/_components/close-team-form";
+import { ConfirmTeamForm } from "@/app/teams/[teamId]/_components/confirm-team-form";
 import { AppShell } from "@/app/_components/app-shell";
 import { calculateProjectProgress } from "@/modules/team/domain/project-progress";
-import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 const workspaceStatus = {
@@ -55,10 +54,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} /></div>
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
-                <form action={confirmTeamAction}>
-                  <input type="hidden" name="teamId" value={workspace.id} />
-                  <ConfirmSubmitButton className="button-primary" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?"><UiText>{"팀 확정"}</UiText></ConfirmSubmitButton>
-                </form>
+                <ConfirmTeamForm teamId={workspace.id} />
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <CloseTeamForm teamId={workspace.id} /> : null}
             </div>
@@ -69,10 +65,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               </> : null}
               <p className="muted mt-1 text-xs"><UiText>{"팀원"}</UiText>{" "}{workspace.members.length}<UiText>{"명"}</UiText></p>
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
-                <form action={confirmTeamAction} className="mt-4">
-                  <input type="hidden" name="teamId" value={workspace.id} />
-                  <ConfirmSubmitButton className="button-primary w-full" confirmMessage="팀을 확정하면 구성원을 기준으로 프로젝트 운영을 시작합니다. 확정하시겠습니까?"><UiText>{"팀 확정"}</UiText></ConfirmSubmitButton>
-                </form>
+                <ConfirmTeamForm teamId={workspace.id} className="mt-4" buttonClassName="button-primary w-full" />
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <div className="mt-4"><CloseTeamForm teamId={workspace.id} /></div> : null}
             </div>
