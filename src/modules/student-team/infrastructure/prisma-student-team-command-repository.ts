@@ -191,6 +191,27 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           updatedAt: input.respondedAt,
         },
       });
+      // 초대 수락으로 정원이 찬 모집 공고를 닫고 대기 지원을 거절한다.
+      // (모집 지원 수락 decide()와 동일한 정리 — 없으면 유령 "모집 중" 공고와
+      //  영구 대기 지원자가 남는다.)
+      const memberCount = await transaction.studentTeamMember.count({
+        where: { teamId: invitation.teamId },
+      });
+      const filledPosts = await transaction.studentTeamRecruitmentPost.findMany({
+        where: { teamId: invitation.teamId, status: "OPEN", capacity: { lte: memberCount } },
+        select: { id: true },
+      });
+      if (filledPosts.length) {
+        const filledPostIds = filledPosts.map(({ id }) => id);
+        await transaction.studentTeamRecruitmentPost.updateMany({
+          where: { id: { in: filledPostIds } },
+          data: { status: "CLOSED" },
+        });
+        await transaction.studentTeamRecruitmentApplication.updateMany({
+          where: { postId: { in: filledPostIds }, status: "PENDING" },
+          data: { status: "REJECTED", decidedAt: input.respondedAt },
+        });
+      }
       return "ACCEPTED";
     });
   }

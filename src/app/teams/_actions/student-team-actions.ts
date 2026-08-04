@@ -72,5 +72,15 @@ export async function deleteStudentTeamAction(_state: StudentTeamActionState, fo
   const parsed = z.object({ teamId: z.string().uuid() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "팀을 확인해 주세요." };
   const { actor, service } = await serviceAndActor();
-  return run(async () => { await service.delete(actor, parsed.data.teamId); }, "팀을 삭제했습니다. 기존 프로젝트 기록은 유지됩니다.");
+  try {
+    await service.delete(actor, parsed.data.teamId);
+  } catch (error) {
+    if (error instanceof StudentTeamOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  revalidatePath("/teams");
+  revalidatePath("/recruitments");
+  // 삭제한 팀의 관리 페이지(/teams/manage/[teamId])는 이제 notFound가 되므로
+  // 그 자리에 머무르지 않고 팀 목록으로 보낸다.
+  redirect("/teams");
 }
