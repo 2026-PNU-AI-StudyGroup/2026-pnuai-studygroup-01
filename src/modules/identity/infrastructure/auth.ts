@@ -30,7 +30,11 @@ async function reconcileProfessorRole(userId: string): Promise<void> {
     });
     await transaction.user.updateMany({
       where: { id: userId, role: { not: "ADMIN" } },
-      data: { role: professorEntry ? "PROFESSOR" : "STUDENT" },
+      // 교수로 지정되면 학생 온보딩 요구를 해제한다. 이 값이 남아 있으면
+      // 이후 관리자가 권한을 회수해 STUDENT로 강등할 때 온보딩 폼에 갇힌다.
+      data: professorEntry
+        ? { role: "PROFESSOR", onboardingRequired: false }
+        : { role: "STUDENT" },
     });
   });
 }

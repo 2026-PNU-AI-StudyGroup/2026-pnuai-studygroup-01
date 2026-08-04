@@ -131,17 +131,31 @@ export class PrismaTranslationQueueWorker {
           job."attempts",
           source."text"
       `);
-      return rows.map((row) => ({
-        ...row,
-        targetLocale: assertTarget(row.targetLocale),
-      }));
+      // 지원하지 않는 targetLocale 행 하나가 throw하면 claim 트랜잭션 전체가
+      // 롤백되어 번역 처리가 무기한 멈춘다(poison pill). 해당 행만 FAILED로
+      // 표시하고 정상 행만 반환한다.
+      const supported: ClaimedTranslationJob[] = [];
+      const unsupportedIds: string[] = [];
+      for (const row of rows) {
+        if (isSupportedTarget(row.targetLocale)) {
+          supported.push({ ...row, targetLocale: row.targetLocale });
+        } else {
+          unsupportedIds.push(row.id);
+        }
+      }
+      if (unsupportedIds.length) {
+        await transaction.translationJob.updateMany({
+          where: { id: { in: unsupportedIds } },
+          data: { status: "FAILED", lockedAt: null, lastError: "Unsupported translation target" },
+        });
+      }
+      return supported;
     });
   }
 }
 
-function assertTarget(value: string): TranslationTarget {
-  if (value === "ko" || value === "en") return value;
-  throw new Error(`Unsupported translation target: ${value}`);
+function isSupportedTarget(value: string): value is TranslationTarget {
+  return value === "ko" || value === "en";
 }
 
 function retryDelayMs(attempts: number): number {
