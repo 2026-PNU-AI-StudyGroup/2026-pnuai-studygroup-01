@@ -68,12 +68,14 @@ export function assertValidTopicSchedule(schedule: TopicSchedule): void {
 }
 
 export function assertValidTopicDetails(details: TopicDetails): void {
-  if (details.title.trim().length === 0) {
-    throw new InvalidTopicDetailsError("주제 제목은 비어 있을 수 없습니다.");
+  if (details.title.trim().length === 0 || details.title.length > 200) {
+    throw new InvalidTopicDetailsError("주제 제목은 1자 이상 200자 이하여야 합니다.");
   }
 
-  if (details.description.trim().length === 0) {
-    throw new InvalidTopicDetailsError("주제 설명은 비어 있을 수 없습니다.");
+  // 상한이 없으면 8,000자 초과 설명이 enqueueTranslations에서 throw되어
+  // 주제 저장이 500으로 실패한다. 번역 한도 미만으로 캡한다.
+  if (details.description.trim().length === 0 || details.description.length > 5_000) {
+    throw new InvalidTopicDetailsError("주제 설명은 1자 이상 5,000자 이하여야 합니다.");
   }
 
   if (
