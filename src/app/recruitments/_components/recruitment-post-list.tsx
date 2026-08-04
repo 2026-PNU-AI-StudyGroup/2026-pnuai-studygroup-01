@@ -92,12 +92,14 @@ export function RecruitmentPostList({
                     <UiText>{post.capacity - post.memberCount > 0 ? `${post.capacity - post.memberCount}자리 남음` : "팀 구성 완료"}</UiText>
                   </p>
                   <div className="min-w-36">
-                    {post.authorId !== actorId && post.canApply && !post.ownApplication ? (
+                    {post.authorId !== actorId && post.canApply && !post.ownApplication && !post.isMember ? (
                       <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} profile={profile} />
                     ) : post.ownApplication ? (
                       <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
                     ) : post.authorId === actorId ? (
                       <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 모집"}</UiText></span>
+                    ) : post.isMember ? (
+                      <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 팀"}</UiText></span>
                     ) : (
                       <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"지원 마감"}</UiText></span>
                     )}
