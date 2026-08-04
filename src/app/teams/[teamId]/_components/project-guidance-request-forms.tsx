@@ -171,16 +171,19 @@ export function ProjectGuidanceResponseForm({
   teamId,
   requestId,
   kind,
+  executionEndsAt,
 }: {
   teamId: string;
   requestId: string;
   kind: ProjectGuidanceRequestKind;
+  executionEndsAt: Date;
 }) {
   const [state, action, pending] = useActionState(
     respondProjectGuidanceRequestAction,
     initialState,
   );
   const fieldId = useId();
+  const [minimumScheduledAt] = useState(() => koreanDateTimeInput(new Date()));
 
   return (
     <form
@@ -213,6 +216,8 @@ export function ProjectGuidanceResponseForm({
             id={`${fieldId}-scheduled-at`}
             name="scheduledAt"
             type="datetime-local"
+            min={minimumScheduledAt}
+            max={koreanDateTimeInput(executionEndsAt)}
             disabled={pending}
             className="field"
           />

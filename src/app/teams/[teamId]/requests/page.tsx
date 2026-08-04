@@ -127,6 +127,7 @@ export default async function ProjectGuidanceRequestsPage({
                 request={request}
                 actorId={actor.id}
                 canRespond={canRespond}
+                executionEndsAt={workspace.schedule.executionEndsAt}
               />
             ))}
           </ol>
@@ -150,10 +151,12 @@ function RequestRecord({
   request,
   actorId,
   canRespond,
+  executionEndsAt,
 }: {
   request: ProjectGuidanceRequestItem;
   actorId: string;
   canRespond: boolean;
+  executionEndsAt: Date;
 }) {
   const status = requestStatus(request);
   return (
@@ -213,6 +216,7 @@ function RequestRecord({
             teamId={request.teamId}
             requestId={request.id}
             kind={request.kind}
+            executionEndsAt={executionEndsAt}
           />
         ) : null}
       </UiArticle>
