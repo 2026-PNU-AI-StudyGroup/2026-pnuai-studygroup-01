@@ -7,22 +7,19 @@ import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-w
 import { CloseTeamForm } from "@/app/teams/[teamId]/_components/close-team-form";
 import { ConfirmTeamForm } from "@/app/teams/[teamId]/_components/confirm-team-form";
 import { AppShell } from "@/app/_components/app-shell";
-import { calculateProjectProgress } from "@/modules/team/domain/project-progress";
+import { calculateReportSubmissionRate, hasReportSchedule } from "@/modules/team/domain/project-progress";
+import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
-
-const workspaceStatus = {
-  FORMING: "구성 중",
-  CONFIRMED: "운영 중",
-  CLOSED: "종료",
-} as const;
 
 export default async function TeamWorkspaceLayout({ children, params }: { children: ReactNode; params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(teamId);
-  const progress = calculateProjectProgress(
+  const progress = calculateReportSubmissionRate(
     workspace.submittedReportCount,
     workspace.reportCount,
   );
+  const reportScheduleAvailable = hasReportSchedule(workspace.reportCount);
+  const status = teamStatusPresentation[workspace.status];
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
@@ -45,13 +42,17 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
                   <p className="truncate text-base font-bold tracking-[-0.025em]">{workspace.name}</p>
                   <p className="muted mt-1 line-clamp-1 text-xs leading-5 lg:line-clamp-2"><UiText>{workspace.topicTitle}</UiText></p>
                 </div>
-                <StatusBadge tone={workspace.status === "CONFIRMED" ? "info" : "neutral"}><UiText>{workspaceStatus[workspace.status]}</UiText></StatusBadge>
+                <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
               </div>
               <div className="mt-4 hidden lg:block">
-                <ProgressBar value={progress} label={`보고서 제출 ${workspace.submittedReportCount}/${workspace.reportCount}`} />
+                {reportScheduleAvailable ? (
+                  <ProgressBar value={progress} label={`보고서 제출 ${workspace.submittedReportCount}/${workspace.reportCount}`} />
+                ) : (
+                  <p className="text-xs font-bold text-[var(--muted)]"><UiText>{"보고서 일정이 없습니다"}</UiText></p>
+                )}
               </div>
             </div>
-            <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} /></div>
+            <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} advisorEnabled={workspace.advisorEnabled} /></div>
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
                 <ConfirmTeamForm teamId={workspace.id} />
@@ -71,7 +72,9 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             </div>
           </div>
         </UiAside>
-        <div className="min-w-0 px-5 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10 lg:py-10 xl:px-12"><UiText>{children}</UiText></div>
+        <div className="min-w-0 px-5 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10 lg:py-10 xl:px-12">
+          <div className="mx-auto w-full max-w-6xl"><UiText>{children}</UiText></div>
+        </div>
       </main>
     </AppShell>
   );

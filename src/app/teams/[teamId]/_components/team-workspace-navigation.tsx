@@ -29,12 +29,15 @@ function NavigationIcon({ name }: { name: WorkspaceIcon }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]">{paths[name]}</svg>;
 }
 
-export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
+export function TeamWorkspaceNavigation({ teamId, advisorEnabled }: { teamId: string; advisorEnabled: boolean }) {
   const pathname = usePathname();
-  const currentSection = sections.find(({ suffix }) => {
+  const visibleSections = advisorEnabled
+    ? sections
+    : sections.filter(({ suffix }) => suffix !== "/requests");
+  const currentSection = visibleSections.find(({ suffix }) => {
     const href = `/teams/${teamId}${suffix}`;
     return suffix ? pathname.startsWith(href) : pathname === href;
-  }) ?? sections[0];
+  }) ?? visibleSections[0];
 
   return (
     <>
@@ -45,7 +48,7 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
         </summary>
         <UiNav aria-label="프로젝트 공간" className="border-b border-[var(--line)] py-2">
           <ul className="grid grid-cols-2 gap-x-4">
-            {sections.map(({ label, suffix, icon }) => {
+            {visibleSections.map(({ label, suffix, icon }) => {
               const href = `/teams/${teamId}${suffix}`;
               const selected = suffix ? pathname.startsWith(href) : pathname === href;
               return <li key={suffix || "overview"}><UiLink href={href} aria-label={`${label} 모바일 메뉴`} aria-current={selected ? "page" : undefined} className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-semibold ${selected ? "border-[var(--primary)] text-[var(--primary-hover)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}><NavigationIcon name={icon} /><UiText>{label}</UiText></UiLink></li>;
@@ -55,7 +58,7 @@ export function TeamWorkspaceNavigation({ teamId }: { teamId: string }) {
       </details>
       <UiNav aria-label="프로젝트 공간" className="hidden lg:block">
       <ul className="flex flex-col">
-        {sections.map(({ label, suffix, icon }) => {
+        {visibleSections.map(({ label, suffix, icon }) => {
           const href = `/teams/${teamId}${suffix}`;
           const selected = suffix ? pathname.startsWith(href) : pathname === href;
           return (

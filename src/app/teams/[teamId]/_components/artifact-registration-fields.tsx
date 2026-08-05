@@ -35,7 +35,7 @@ export function ArtifactRegistrationFields({ method }: { method: ArtifactMethod 
   return (
     <>
       <label className="grid gap-2 text-sm font-semibold">
-        <UiText>{"결과물 종류"}</UiText><CustomSelect key={method} name="type" defaultValue={method === "LINK" ? "SOURCE_CODE" : "PRESENTATION_VIDEO"} options={[
+        <UiText>{"결과물 종류"}</UiText><CustomSelect key={method} name="type" ariaLabel="결과물 종류" defaultValue={method === "LINK" ? "SOURCE_CODE" : "PRESENTATION_VIDEO"} options={[
           { value: "SOURCE_CODE", label: "소스 코드" },
           { value: "PRESENTATION_VIDEO", label: "발표 영상" },
           { value: "POSTER", label: "포스터" },
@@ -51,7 +51,9 @@ export function ArtifactRegistrationFields({ method }: { method: ArtifactMethod 
         </label>
       ) : (
         <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-          <UiText>{"결과물 파일"}</UiText><input name="file" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" />
+          <UiText>{"결과물 파일"}</UiText>
+          <span className="muted text-xs font-normal"><UiText>{"문서·압축·영상·이미지 · 최대 1GB"}</UiText></span>
+          <UiInput aria-label="결과물 파일" name="file" type="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" className="field" />
         </label>
       )}
     </>

@@ -2,16 +2,46 @@
 
 import { UiButton, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef } from "react";
 
 import { createDiscussionPostAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import { initialTeamActionState } from "@/app/teams/[teamId]/_lib/team-form-state";
 
-export function DiscussionPostForm({ teamId, authorName }: { teamId: string; authorName: string }) {
+export function DiscussionPostForm({
+  teamId,
+  authorName,
+  scrollContainerId,
+  latestPostId,
+  autoScrollToLatest = false,
+}: {
+  teamId: string;
+  authorName: string;
+  scrollContainerId?: string;
+  latestPostId?: string;
+  autoScrollToLatest?: boolean;
+}) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(createDiscussionPostAction, initialTeamActionState);
+  const handledSuccessRef = useRef<typeof state | null>(null);
+
+  useEffect(() => {
+    if (state.status !== "success" || handledSuccessRef.current === state) return;
+    handledSuccessRef.current = state;
+    if (!autoScrollToLatest) router.replace(`/teams/${teamId}/discussion`);
+  }, [autoScrollToLatest, router, state, teamId]);
+
+  useEffect(() => {
+    if (!autoScrollToLatest || !scrollContainerId) return;
+    const timer = window.setTimeout(() => {
+      const container = document.getElementById(scrollContainerId);
+      if (container) container.scrollTop = container.scrollHeight;
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [autoScrollToLatest, latestPostId, scrollContainerId]);
 
   return (
-    <form action={action} className="border-t border-[var(--line)] bg-white px-5 py-5 lg:px-7">
+    <form action={action} className="shrink-0 border-t border-[var(--line)] bg-white px-5 py-5 lg:px-7">
       <input type="hidden" name="teamId" value={teamId} />
       <div className="flex items-start gap-3">
         <span aria-hidden="true" className="mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-white">
@@ -22,7 +52,7 @@ export function DiscussionPostForm({ teamId, authorName }: { teamId: string; aut
         </span>
         <div className="min-w-0 flex-1">
           <label htmlFor="discussion-message" className="sr-only"><UiText>{"메시지"}</UiText></label>
-          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--focus)]">
+          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--focus)_18%,transparent)]">
             <UiTextarea
               id="discussion-message"
               name="content"

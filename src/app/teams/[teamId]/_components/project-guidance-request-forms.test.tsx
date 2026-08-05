@@ -7,10 +7,15 @@ import {
   ProjectGuidanceResponseForm,
 } from "@/app/teams/[teamId]/_components/project-guidance-request-forms";
 
-const { cancelRequest, createRequest, respondRequest } = vi.hoisted(() => ({
+const { cancelRequest, createRequest, respondRequest, refresh } = vi.hoisted(() => ({
   cancelRequest: vi.fn(),
   createRequest: vi.fn(),
   respondRequest: vi.fn(),
+  refresh: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh }),
 }));
 
 vi.mock("@/app/teams/[teamId]/_actions/project-guidance-request-actions", () => ({
@@ -28,6 +33,13 @@ describe("프로젝트 지도 요청 폼", () => {
     cancelRequest.mockReset();
     createRequest.mockReset();
     respondRequest.mockReset();
+    refresh.mockReset();
+    HTMLDialogElement.prototype.showModal = function showModal() {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function close() {
+      this.open = false;
+    };
   });
 
   afterEach(() => {
@@ -42,6 +54,11 @@ describe("프로젝트 지도 요청 폼", () => {
     const { container } = render(
       <ProjectGuidanceRequestForm teamId={teamId} executionEndsAt={executionEndsAt} />,
     );
+
+    const dialog = container.querySelector("dialog");
+    expect(dialog).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "새 요청 보내기" }));
+    expect(dialog).toHaveAttribute("open");
 
     expect(container.querySelector('input[name="teamId"]')).toHaveValue(teamId);
     expect(screen.getByRole("radio", { name: /회의 요청/ })).toBeChecked();
@@ -73,6 +90,8 @@ describe("프로젝트 지도 요청 폼", () => {
       <ProjectGuidanceRequestForm teamId={teamId} executionEndsAt={executionEndsAt} />,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "새 요청 보내기" }));
+
     fireEvent.change(screen.getByLabelText("제목"), { target: { value: "중간 점검 회의" } });
     fireEvent.change(screen.getByLabelText("요청 내용"), { target: { value: "구현 현황을 함께 점검하고 싶습니다." } });
     fireEvent.change(screen.getByLabelText("참고 링크 (선택)"), { target: { value: "https://example.com/progress" } });
@@ -87,9 +106,10 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(formData.get("preferredAt")).toBe("2026-08-10T14:00");
     expect(await screen.findByRole("status")).toHaveTextContent("요청을 보냈습니다.");
     expect(container.querySelector('input[name="referenceUrl"]')).toHaveValue("");
+    expect(container.querySelector("dialog")).not.toHaveAttribute("open");
     expect(screen.getByLabelText("제목")).toHaveValue("");
     expect(screen.getByLabelText("요청 내용")).toHaveValue("");
-    expect(screen.getByRole("radio", { name: /회의 요청/ })).toBeChecked();
+    expect(container.querySelector('input[name="kind"][value="MEETING"]')).toBeChecked();
   });
 
   it("회의 답변에만 확정 일시를 제공하고 오류 피드백과 액션 필드를 전달한다", async () => {
@@ -97,6 +117,11 @@ describe("프로젝트 지도 요청 폼", () => {
     const { container, rerender } = render(
       <ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="MEETING" executionEndsAt={executionEndsAt} />,
     );
+
+    const dialog = container.querySelector("dialog");
+    expect(dialog).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "답변하기" }));
+    expect(dialog).toHaveAttribute("open");
 
     expect(screen.getByLabelText("답변")).toHaveAttribute("minlength", "2");
     expect(screen.getByLabelText("답변")).toHaveAttribute("maxlength", "2000");
@@ -116,6 +141,7 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(formData.get("requestId")).toBe(requestId);
     expect(formData.get("response")).toBe("확인했습니다.");
     expect(await screen.findByRole("alert")).toHaveTextContent("답변 내용을 확인해 주세요.");
+    expect(dialog).toHaveAttribute("open");
     expect(container.querySelector('input[name="scheduledAt"]')).not.toBeInTheDocument();
   });
 

@@ -1,16 +1,17 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
-export function WorkspacePageHeader({ eyebrow, title, titleId, description, meta, actions }: {
+export function WorkspacePageHeader({ eyebrow, title, titleId, description, meta, actions, bordered = true }: {
   eyebrow: string;
   title: string;
   titleId?: string;
   description: string;
   meta?: ReactNode;
   actions?: ReactNode;
+  bordered?: boolean;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--line)] pb-6">
+    <header className={`flex flex-wrap items-end justify-between gap-5 ${bordered ? "border-b border-[var(--line)] pb-6" : ""}`}>
       <div className="max-w-2xl">
         <p className="eyebrow"><UiText>{eyebrow}</UiText></p>
         <h1 id={titleId} className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{title}</UiText></h1>

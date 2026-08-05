@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("팀 대화");
 }
 const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+const discussionScrollContainerId = "team-discussion-messages";
 
 function PersonIcon({ own = false }: { own?: boolean }) {
   return (
@@ -39,8 +40,8 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
   ];
 
   return (
-    <section aria-labelledby="discussion-title" className="flex min-h-[calc(100vh-5rem)] flex-col">
-      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--line)] pb-6">
+    <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
+      <header className="flex shrink-0 flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">
           <p className="eyebrow"><UiText>{"프로젝트 채널"}</UiText></p>
           <h1 id="discussion-title" className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
@@ -49,10 +50,10 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
         <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participants.length}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
       </header>
 
-      <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="flex min-h-[38rem] min-w-0 flex-col xl:border-r xl:border-[var(--line)]">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)] xl:grid-cols-[minmax(0,1fr)_15rem]">
+        <div className="flex min-h-[38rem] min-w-0 flex-col lg:min-h-0 xl:border-r xl:border-[var(--line)]">
           {workspace.discussionTotalPages > 1 ? (
-            <UiNav aria-label="팀 대화 페이지" className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] py-4 xl:pr-8">
+            <UiNav aria-label="팀 대화 페이지" className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6 lg:px-7">
               <span className="muted text-xs">{workspace.discussionPage} / {workspace.discussionTotalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
                 {workspace.discussionPage > 1 ? <Link className="button-quiet" href={`/teams/${teamId}/discussion?page=${workspace.discussionPage - 1}`}><UiText>{"최근 대화"}</UiText></Link> : null}
@@ -61,49 +62,58 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
             </UiNav>
           ) : null}
 
-          {workspace.discussionPosts.length === 0 ? (
-            <div className="grid flex-1 place-items-center py-16 xl:pr-8">
-              <EmptyState title="아직 나눈 대화가 없습니다" description={emptyDescription} />
-            </div>
-          ) : (
-            <ol className="flex-1 space-y-6 py-8 xl:pr-8">
-              {workspace.discussionPosts.map((post, index) => {
-                const own = post.authorId === actor.id;
-                const previous = workspace.discussionPosts[index - 1];
-                const startsNewDay = !previous || dayKey.format(previous.createdAt) !== dayKey.format(post.createdAt);
-                return (
-                  <li key={post.id}>
-                    {startsNewDay ? (
-                      <div className="mb-6 flex items-center gap-4" aria-label={post.createdAt.toISOString()}>
-                        <span className="h-px flex-1 bg-[var(--line)]" />
-                        <time className="muted text-xs font-semibold" dateTime={post.createdAt.toISOString()}><UiDate value={post.createdAt} mode="day" /></time>
-                        <span className="h-px flex-1 bg-[var(--line)]" />
-                      </div>
-                    ) : null}
-                    <UiArticle className={`flex items-start gap-3 ${own ? "flex-row-reverse" : ""}`} aria-label={`${post.authorName}의 메시지`}>
-                      <PersonIcon own={own} />
-                      <div className={`min-w-0 max-w-[46rem] ${own ? "text-right" : ""}`}>
-                        <div className={`mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${own ? "justify-end" : ""}`}>
-                          <strong className="text-sm">{post.authorName}</strong>
-                          <time className="muted text-xs" dateTime={post.createdAt.toISOString()}><UiDate value={post.createdAt} mode="time" /></time>
+          <div
+            id={discussionScrollContainerId}
+            data-discussion-scroll-container
+            role="log"
+            aria-labelledby="discussion-title"
+            tabIndex={0}
+            className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-6 lg:px-7 [overscroll-behavior:contain] [scrollbar-gutter:stable]"
+          >
+            {workspace.discussionPosts.length === 0 ? (
+              <div className="grid min-h-full place-items-center py-16">
+                <EmptyState title="아직 나눈 대화가 없습니다" description={emptyDescription} variant="embedded" />
+              </div>
+            ) : (
+              <ol className="space-y-6 py-7">
+                {workspace.discussionPosts.map((post, index) => {
+                  const own = post.authorId === actor.id;
+                  const previous = workspace.discussionPosts[index - 1];
+                  const startsNewDay = !previous || dayKey.format(previous.createdAt) !== dayKey.format(post.createdAt);
+                  return (
+                    <li key={post.id}>
+                      {startsNewDay ? (
+                        <div className="mb-6 flex items-center gap-4" aria-label={post.createdAt.toISOString()}>
+                          <span className="h-px flex-1 bg-[var(--line)]" />
+                          <time className="muted text-xs font-semibold" dateTime={post.createdAt.toISOString()}><UiDate value={post.createdAt} mode="day" /></time>
+                          <span className="h-px flex-1 bg-[var(--line)]" />
                         </div>
-                        <div className={`rounded-xl border px-4 py-3 text-left [&_button]:min-h-8 [&_button]:px-2.5 ${own ? "border-[color-mix(in_srgb,var(--primary)_24%,var(--line))] bg-[var(--primary-subtle)]" : "border-[var(--line)] bg-[var(--surface-subtle)]"}`}>
-                          <TranslatedText text={post.content} className="text-base leading-7" />
+                      ) : null}
+                      <UiArticle className={`flex items-start gap-3 ${own ? "flex-row-reverse" : ""}`} aria-label={`${post.authorName}의 메시지`}>
+                        <PersonIcon own={own} />
+                        <div className={`min-w-0 max-w-[46rem] ${own ? "text-right" : ""}`}>
+                          <div className={`mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${own ? "justify-end" : ""}`}>
+                            <strong className="text-sm">{post.authorName}</strong>
+                            <time className="muted text-xs" dateTime={post.createdAt.toISOString()}><UiDate value={post.createdAt} mode="time" /></time>
+                          </div>
+                          <div className={`rounded-xl border px-4 py-3 text-left [&_button]:min-h-8 [&_button]:px-2.5 ${own ? "border-[color-mix(in_srgb,var(--primary)_24%,var(--line))] bg-[var(--primary-subtle)]" : "border-[var(--line-strong)] bg-[var(--surface-subtle)] shadow-[0_1px_2px_rgba(31,35,48,0.04)]"}`}>
+                            <TranslatedText text={post.content} className="text-base leading-7" />
+                          </div>
                         </div>
-                      </div>
-                    </UiArticle>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
+                      </UiArticle>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
 
-          {workspace.status !== "CLOSED" ? <DiscussionPostForm teamId={workspace.id} authorName={actor.name} /> : (
-            <p className="border-t border-[var(--line)] py-5 text-sm text-[var(--muted)]"><UiText>{"종료된 프로젝트에서는 새 메시지를 보낼 수 없습니다."}</UiText></p>
+          {workspace.status !== "CLOSED" ? <DiscussionPostForm teamId={workspace.id} authorName={actor.name} scrollContainerId={discussionScrollContainerId} latestPostId={workspace.discussionPosts.at(-1)?.id} autoScrollToLatest={workspace.discussionPage === 1} /> : (
+            <p className="shrink-0 border-t border-[var(--line)] px-5 py-5 text-sm text-[var(--muted)] sm:px-6 lg:px-7"><UiText>{"종료된 프로젝트에서는 새 메시지를 보낼 수 없습니다."}</UiText></p>
           )}
         </div>
 
-        <UiAside aria-label="대화 참여자" className="hidden px-6 py-8 xl:block">
+        <UiAside aria-label="대화 참여자" className="hidden overflow-y-auto px-6 py-8 xl:block">
           <div className="sticky top-8">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-sm font-bold"><UiText>{"참여자"}</UiText></h2>

@@ -10,7 +10,7 @@ describe("TeamWorkspaceNavigation", () => {
   beforeEach(() => usePathname.mockReturnValue("/teams/team-1"));
 
   it("서로 다른 프로젝트 작업을 독립 경로로 안내한다", () => {
-    render(<TeamWorkspaceNavigation teamId="team-1" />);
+    render(<TeamWorkspaceNavigation teamId="team-1" advisorEnabled />);
 
     expect(screen.getByRole("link", { name: "개요" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.getByRole("link", { name: "마일스톤" })).toHaveAttribute("href", "/teams/team-1/milestones");
@@ -23,12 +23,19 @@ describe("TeamWorkspaceNavigation", () => {
 
   it("현재 미팅·검토 작업을 모바일과 데스크톱에서 활성 상태로 표시한다", () => {
     usePathname.mockReturnValue("/teams/team-1/requests");
-    render(<TeamWorkspaceNavigation teamId="team-1" />);
+    render(<TeamWorkspaceNavigation teamId="team-1" advisorEnabled />);
 
     expect(screen.getByRole("link", { name: "미팅·검토" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "미팅·검토 모바일 메뉴" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "보고서" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "보고서 모바일 메뉴" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "개요" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("지도교수가 없는 프로젝트에서는 지도 요청 경로를 노출하지 않는다", () => {
+    render(<TeamWorkspaceNavigation teamId="team-1" advisorEnabled={false} />);
+
+    expect(screen.queryByRole("link", { name: "미팅·검토" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "미팅·검토 모바일 메뉴" })).not.toBeInTheDocument();
   });
 });

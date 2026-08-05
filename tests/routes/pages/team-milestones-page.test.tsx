@@ -1,0 +1,167 @@
+import { render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import TeamMilestonesPage from "@/app/teams/[teamId]/milestones/page";
+
+const { loadTeamWorkspace } = vi.hoisted(() => ({
+  loadTeamWorkspace: vi.fn(),
+}));
+
+vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+  loadTeamWorkspace,
+}));
+
+vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
+  getLocalizedMetadata: vi.fn(),
+}));
+
+vi.mock("@/app/teams/[teamId]/_components/milestone-forms", () => ({
+  MilestoneForm: () => <div data-testid="new-milestone-form" />,
+  MilestoneStatusForm: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
+    <div data-testid="milestone-editor">{status}:{assigneeIds.join(",")}</div>
+  ),
+}));
+
+const workspace = {
+  id: "team-1",
+  topicId: "topic-1",
+  name: "모두의 길",
+  topicTitle: "실내 길찾기",
+  status: "CONFIRMED" as const,
+  memberCount: 1,
+  milestoneCount: 1,
+  completedMilestoneCount: 0,
+  reportCount: 0,
+  submittedReportCount: 0,
+  milestones: [{
+    id: "milestone-1",
+    title: "사용자 인터뷰 완료",
+    dueAt: new Date("2026-09-01T00:00:00Z"),
+    status: "IN_PROGRESS" as const,
+    assignees: [{ id: "student-1", name: "정하늘" }],
+  }],
+  professorName: "김도윤",
+  advisorEnabled: true,
+  canClose: false,
+  access: {
+    isPrimaryAdvisor: false,
+    isAssistant: false,
+    isTeamMember: true,
+    canSupervise: false,
+    canContribute: true,
+  },
+  schedule: {
+    recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
+    recruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
+    executionStartsAt: new Date("2026-03-01T00:00:00Z"),
+    executionEndsAt: new Date("2026-10-01T00:00:00Z"),
+    submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
+    submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
+  },
+  members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
+  discussionPosts: [],
+  discussionPage: 1,
+  discussionTotalPages: 1,
+  discussionTotal: 0,
+};
+
+describe("TeamMilestonesPage", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it("기여자도 정적 상태와 담당자를 확인하고 별도 편집 컨트롤을 사용한다", async () => {
+    loadTeamWorkspace.mockResolvedValue({ workspace });
+
+    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    expect(screen.getByTestId("milestone-editor")).toHaveTextContent("IN_PROGRESS:student-1");
+    expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
+    expect(screen.getByText("정하늘")).toBeInTheDocument();
+  });
+
+  it("읽기 전용 사용자는 정적 상태와 담당자를 확인한다", async () => {
+    loadTeamWorkspace.mockResolvedValue({
+      workspace: {
+        ...workspace,
+        access: { ...workspace.access, isTeamMember: false, canContribute: false },
+      },
+    });
+
+    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    expect(screen.queryByTestId("milestone-editor")).not.toBeInTheDocument();
+    expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
+    expect(screen.getByText("정하늘")).toBeInTheDocument();
+  });
+
+  it("기한이 지난 활성 항목을 먼저 보여주고 완료 항목은 접힌 후순위 영역에 둔다", async () => {
+    loadTeamWorkspace.mockResolvedValue({
+      workspace: {
+        ...workspace,
+        milestoneCount: 4,
+        completedMilestoneCount: 1,
+        milestones: [
+          {
+            id: "done",
+            title: "완료한 조사",
+            dueAt: new Date("2026-07-20T00:00:00.000Z"),
+            status: "DONE" as const,
+            assignees: [{ id: "student-1", name: "정하늘" }],
+          },
+          {
+            id: "future-progress",
+            title: "프로토타입 검증",
+            dueAt: new Date("2026-08-20T00:00:00.000Z"),
+            status: "IN_PROGRESS" as const,
+            assignees: [{ id: "student-1", name: "정하늘" }],
+          },
+          {
+            id: "future-todo",
+            title: "지도 데이터 검증",
+            dueAt: new Date("2026-08-10T00:00:00.000Z"),
+            status: "TODO" as const,
+            assignees: [],
+          },
+          {
+            id: "overdue-todo",
+            title: "지연된 인터뷰 정리",
+            dueAt: new Date("2026-08-01T00:00:00.000Z"),
+            status: "TODO" as const,
+            assignees: [],
+          },
+        ],
+      },
+    });
+
+    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    const activeSection = screen.getByRole("heading", { name: "활성 마일스톤" }).closest("section");
+    expect(activeSection).not.toBeNull();
+    expect(within(activeSection!).getAllByRole("heading", { level: 3 }).map(({ textContent }) => textContent)).toEqual([
+      "지연된 인터뷰 정리",
+      "프로토타입 검증",
+      "지도 데이터 검증",
+    ]);
+    expect(screen.getAllByText("기한 초과")).toHaveLength(1);
+    expect(screen.getByText(/완료 마일스톤/).closest("details")).not.toHaveAttribute("open");
+  });
+
+  it("종료된 프로젝트에서는 생성과 편집 컨트롤을 숨긴다", async () => {
+    loadTeamWorkspace.mockResolvedValue({
+      workspace: {
+        ...workspace,
+        status: "CLOSED" as const,
+      },
+    });
+
+    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    expect(screen.queryByTestId("new-milestone-form")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("milestone-editor")).not.toBeInTheDocument();
+    expect(screen.getByText("정하늘")).toBeInTheDocument();
+  });
+});
