@@ -33,4 +33,17 @@ describe("auth environment", () => {
       BETTER_AUTH_URL: "http://pms.example.edu",
     })).toThrow();
   });
+
+  it("개발용 목 인증 활성화 시 허용 호스트를 요구한다", () => {
+    expect(() => parseAuthEnvironment({
+      ...validEnvironment,
+      ENABLE_DEVELOPMENT_MOCK_AUTH: "true",
+    })).toThrow();
+
+    expect(parseAuthEnvironment({
+      ...validEnvironment,
+      ENABLE_DEVELOPMENT_MOCK_AUTH: "true",
+      DEVELOPMENT_MOCK_AUTH_HOSTS: "pnu-pms.jun0.dev",
+    }).DEVELOPMENT_MOCK_AUTH_HOSTS).toBe("pnu-pms.jun0.dev");
+  });
 });

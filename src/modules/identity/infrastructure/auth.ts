@@ -9,6 +9,7 @@ import {
   USER_ROLES,
 } from "@/modules/identity/domain/user-role";
 import { parseAuthEnvironment } from "@/modules/identity/infrastructure/auth-environment";
+import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/development-mock-auth";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const authEnvironment = parseAuthEnvironment(process.env);
@@ -114,7 +115,10 @@ export const auth = betterAuth({
       prompt: "select_account",
     },
   },
-  plugins: authEnvironment.NODE_ENV === "development" ? [testUtils()] : [],
+  plugins: isDevelopmentMockAuthEnabled({
+    nodeEnv: authEnvironment.NODE_ENV,
+    explicitlyEnabled: authEnvironment.ENABLE_DEVELOPMENT_MOCK_AUTH,
+  }) ? [testUtils()] : [],
   databaseHooks: {
     user: {
       create: {

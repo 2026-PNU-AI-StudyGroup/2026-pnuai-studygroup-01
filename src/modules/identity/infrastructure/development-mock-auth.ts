@@ -20,12 +20,57 @@ export const DEVELOPMENT_MOCK_ACCOUNTS = {
 
 const localHostnames = new Set(["localhost", "127.0.0.1", "::1"]);
 
+export function isDevelopmentMockAuthEnabled(input: {
+  nodeEnv: string | undefined;
+  explicitlyEnabled: string | undefined;
+}): boolean {
+  return input.nodeEnv === "development" || input.explicitlyEnabled === "true";
+}
+
 export function isUserRole(value: string): value is UserRole {
   return USER_ROLES.some((role) => role === value);
 }
 
-export function canUseDevelopmentMockAuth(input: { nodeEnv: string | undefined; requestUrl: string; origin: string | null }): boolean {
-  if (input.nodeEnv !== "development") return false;
+type DevelopmentMockAuthRequest = {
+  requestUrl: string;
+  host?: string | null;
+  forwardedHost?: string | null;
+  forwardedProto?: string | null;
+};
+
+export function getDevelopmentMockAuthOrigin(input: DevelopmentMockAuthRequest): string | null {
   const requestUrl = new URL(input.requestUrl);
-  return localHostnames.has(requestUrl.hostname) && input.origin === requestUrl.origin;
+  const host = input.forwardedHost?.split(",")[0]?.trim()
+    || input.host?.trim()
+    || requestUrl.host;
+  const protocol = input.forwardedProto?.split(",")[0]?.trim()
+    || requestUrl.protocol.slice(0, -1);
+  let effectiveUrl: URL;
+  try {
+    effectiveUrl = new URL(`${protocol}://${host}`);
+  } catch {
+    return null;
+  }
+  return effectiveUrl.origin;
+}
+
+export function canUseDevelopmentMockAuth(input: DevelopmentMockAuthRequest & {
+  nodeEnv: string | undefined;
+  explicitlyEnabled: string | undefined;
+  allowedHostnames: string | undefined;
+  origin: string | null;
+}): boolean {
+  if (!isDevelopmentMockAuthEnabled(input)) return false;
+  const effectiveOrigin = getDevelopmentMockAuthOrigin(input);
+  if (!effectiveOrigin || input.origin !== effectiveOrigin) return false;
+  const effectiveUrl = new URL(effectiveOrigin);
+  if (input.nodeEnv === "development" && localHostnames.has(effectiveUrl.hostname)) return true;
+  if (input.explicitlyEnabled !== "true") return false;
+  const allowedHostnames = new Set(
+    input.allowedHostnames
+      ?.split(",")
+      .map((hostname) => hostname.trim().toLowerCase())
+      .filter(Boolean) ?? [],
+  );
+  return allowedHostnames.has(effectiveUrl.hostname.toLowerCase());
 }
