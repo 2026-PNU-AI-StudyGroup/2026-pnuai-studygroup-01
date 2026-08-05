@@ -14,7 +14,7 @@ import { AccountPopover } from "@/modules/identity/ui/account-popover";
 
 describe("AccountPopover", () => {
   it("계정 버튼에서 내 계정 이동과 로그아웃을 바로 제공한다", async () => {
-    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} locale="ko" />);
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} accountPageCurrent={false} locale="ko" />);
 
     fireEvent.click(screen.getByRole("button", { name: "정하늘 계정 메뉴" }));
 
@@ -28,7 +28,7 @@ describe("AccountPopover", () => {
   });
 
   it("Esc를 누르면 계정 말풍선을 닫고 버튼으로 초점을 돌린다", () => {
-    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} placement="below" locale="ko" />);
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} accountPageCurrent={false} placement="below" locale="ko" />);
 
     const trigger = screen.getByRole("button", { name: "정하늘 계정 메뉴" });
     fireEvent.click(trigger);
@@ -36,5 +36,20 @@ describe("AccountPopover", () => {
 
     expect(screen.queryByRole("dialog", { name: "계정 메뉴" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("데스크톱 역상 트리거는 보이는 역할 라벨까지 버튼에 포함한다", () => {
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active={false} accountPageCurrent={false} inverse locale="ko" />);
+
+    expect(screen.getByRole("button", { name: "정하늘 계정 메뉴" })).toHaveTextContent("학생");
+  });
+
+  it("정확히 계정 페이지에서는 내 계정을 현재 상태로 표시하고 링크를 제거한다", () => {
+    render(<AccountPopover userName="정하늘" roleLabel="학생" active accountPageCurrent locale="ko" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "정하늘 계정 메뉴" }));
+
+    expect(screen.queryByRole("link", { name: "내 계정" })).not.toBeInTheDocument();
+    expect(screen.getByText("내 계정").closest("[aria-current='page']")).toBeInTheDocument();
   });
 });

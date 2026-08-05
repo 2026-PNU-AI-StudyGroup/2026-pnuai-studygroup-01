@@ -8,6 +8,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useEffect, useId, useRef, useState } from "react";
 
 import type { NotificationType } from "@/modules/notification/domain/notification";
+import { useI18n } from "@/shared/i18n/i18n-provider";
 
 export type NotificationPreviewItem = {
   id: string;
@@ -47,7 +48,21 @@ export function NotificationPopover({
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const accessibleCount = unreadCount > 99 ? "99개 이상" : `${unreadCount}개`;
+  const { locale } = useI18n();
+  const korean = locale === "ko";
+  const accessibleCount = korean
+    ? unreadCount > 99 ? "99개 이상" : `${unreadCount}개`
+    : unreadCount > 99 ? "99 or more" : `${unreadCount}`;
+  const triggerLabel = unreadCount
+    ? korean
+      ? `읽지 않은 알림 ${accessibleCount}`
+      : `${accessibleCount} unread notification${unreadCount === 1 ? "" : "s"}`
+    : korean ? "알림" : "Notifications";
+  const dialogLabel = korean ? "최근 알림" : "Recent notifications";
+  const unreadSummary = unreadCount
+    ? korean ? `읽지 않음 ${accessibleCount}` : `${accessibleCount} unread`
+    : korean ? "모두 확인함" : "All confirmed";
+  const showDesktopLabel = inverse && placement === "side";
 
   useEffect(() => {
     if (!open) return;
@@ -70,16 +85,20 @@ export function NotificationPopover({
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={`relative ${showDesktopLabel ? "w-full" : ""}`}>
       <UiButton
         ref={buttonRef}
         type="button"
         aria-current={active ? "page" : undefined}
-        aria-label={unreadCount ? `읽지 않은 알림 ${accessibleCount}` : "알림"}
+        aria-label={triggerLabel}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
-        className={`snap-color relative grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] ${
+        className={`snap-color relative shrink-0 rounded-[var(--radius-control)] ${
+          showDesktopLabel
+            ? "flex min-h-[4rem] w-full flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold"
+            : "grid size-11 place-items-center"
+        } ${
           inverse
             ? open || active
               ? "bg-white/16 text-white"
@@ -89,28 +108,31 @@ export function NotificationPopover({
               : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
         }`}
       >
-        {active ? (
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-current">
-            <path d="M12 2.5A6.5 6.5 0 0 0 5.5 9v3.1c0 2.2-.8 3.4-1.7 4.5-.6.8-.1 2 1 2h14.4c1.1 0 1.6-1.2 1-2-.9-1.1-1.7-2.3-1.7-4.5V9A6.5 6.5 0 0 0 12 2.5ZM9.5 20a2.7 2.7 0 0 0 5 0h-5Z" />
-          </svg>
-        ) : (
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
-            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" />
-            <path d="M10 21h4" />
-          </svg>
-        )}
-        {unreadCount ? (
-          <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-bold leading-4 text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        ) : null}
+        <span aria-hidden="true" className="relative grid size-6 place-items-center">
+          {active ? (
+            <svg viewBox="0 0 24 24" className="size-5 fill-current">
+              <path d="M12 2.5A6.5 6.5 0 0 0 5.5 9v3.1c0 2.2-.8 3.4-1.7 4.5-.6.8-.1 2 1 2h14.4c1.1 0 1.6-1.2 1-2-.9-1.1-1.7-2.3-1.7-4.5V9A6.5 6.5 0 0 0 12 2.5ZM9.5 20a2.7 2.7 0 0 0 5 0h-5Z" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
+              <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" />
+              <path d="M10 21h4" />
+            </svg>
+          )}
+          {unreadCount ? (
+            <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-black leading-4 text-white">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : null}
+        </span>
+        {showDesktopLabel ? <span aria-hidden="true"><UiText>{"알림"}</UiText></span> : null}
       </UiButton>
 
       {open ? (
         <UiSection
           id={panelId}
           role="dialog"
-          aria-label="최근 알림"
+          aria-label={dialogLabel}
           className={`absolute z-50 text-left text-[var(--ink)] ${
             placement === "side"
               ? "bottom-0 left-[calc(100%+0.75rem)] w-[23rem]"
@@ -129,7 +151,7 @@ export function NotificationPopover({
             <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4">
               <h2 className="text-base font-bold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
               <span className="text-xs font-semibold text-[var(--muted)]">
-                <UiText>{unreadCount ? `읽지 않음 ${accessibleCount}` : "모두 확인함"}</UiText>
+                {unreadSummary}
               </span>
             </header>
 
@@ -172,15 +194,17 @@ export function NotificationPopover({
               </div>
             )}
 
-            <Link
-              href="/notifications"
-              onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-bold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
-            >
-              <UiText>{"전체 알림 보기"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
-                <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+            {!active ? (
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-extrabold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
+              >
+                <UiText>{"전체 알림 보기"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
+                  <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            ) : null}
           </div>
         </UiSection>
       ) : null}

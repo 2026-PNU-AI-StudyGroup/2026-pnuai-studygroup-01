@@ -12,6 +12,7 @@ export function AccountPopover({
   userName,
   roleLabel,
   active,
+  accountPageCurrent,
   placement = "side",
   inverse = false,
   locale,
@@ -19,6 +20,7 @@ export function AccountPopover({
   userName: string;
   roleLabel: string;
   active: boolean;
+  accountPageCurrent: boolean;
   placement?: "side" | "below";
   inverse?: boolean;
   locale: SiteLocale;
@@ -28,6 +30,7 @@ export function AccountPopover({
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { signOut, isPending, message } = useSignOut();
+  const showDesktopLabel = inverse && placement === "side";
   const copy = locale === "ko"
     ? { accountMenu: "계정 메뉴", myAccount: "내 계정", signingOut: "로그아웃 중…", signOut: "로그아웃" }
     : { accountMenu: "Account menu", myAccount: "My account", signingOut: "Signing out…", signOut: "Sign out" };
@@ -53,7 +56,7 @@ export function AccountPopover({
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={`relative ${showDesktopLabel ? "w-full" : ""}`}>
       <UiButton
         ref={buttonRef}
         type="button"
@@ -62,7 +65,11 @@ export function AccountPopover({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
-        className={`snap-color grid size-11 place-items-center rounded-[var(--radius-control)] ${
+        className={`snap-color rounded-[var(--radius-control)] ${
+          showDesktopLabel
+            ? "flex min-h-[4rem] w-full flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold"
+            : "grid size-11 place-items-center"
+        } ${
           inverse
             ? open || active
               ? "bg-white/16 text-white"
@@ -78,6 +85,7 @@ export function AccountPopover({
             <path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" />
           </svg>
         </span>
+        {showDesktopLabel ? <span aria-hidden="true"><UiText>{roleLabel}</UiText></span> : null}
       </UiButton>
 
       {open ? (
@@ -113,16 +121,28 @@ export function AccountPopover({
               </span>
             </header>
 
-            <Link
-              href="/account"
-              onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
-            >
-              {copy.myAccount}
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
-                <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+            {accountPageCurrent ? (
+              <span
+                aria-current="page"
+                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] bg-[var(--primary-subtle)] px-5 text-sm font-bold text-[var(--primary)]"
+              >
+                {copy.myAccount}
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-2">
+                  <path d="m4 10 3.5 3.5L16 5.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            ) : (
+              <Link
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-bold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
+              >
+                {copy.myAccount}
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
+                  <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            )}
             <button
               type="button"
               onClick={signOut}

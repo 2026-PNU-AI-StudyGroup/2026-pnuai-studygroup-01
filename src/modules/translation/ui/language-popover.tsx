@@ -20,6 +20,7 @@ export function LanguagePopover({
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const showDesktopLabel = inverse && placement === "side";
   const copy = locale === "ko"
     ? { trigger: "언어 선택", title: "언어", current: "현재 언어", korean: "한국어", english: "English" }
     : { trigger: "Choose language", title: "Language", current: "Current language", korean: "한국어", english: "English" };
@@ -45,7 +46,7 @@ export function LanguagePopover({
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={`relative ${showDesktopLabel ? "w-full" : ""}`}>
       <UiButton
         ref={buttonRef}
         type="button"
@@ -53,7 +54,11 @@ export function LanguagePopover({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
-        className={`snap-color grid size-11 place-items-center rounded-[var(--radius-control)] ${
+        className={`snap-color rounded-[var(--radius-control)] ${
+          showDesktopLabel
+            ? "flex min-h-[4rem] w-full flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold"
+            : "grid size-11 place-items-center"
+        } ${
           inverse
             ? open
               ? "bg-white/16 text-white"
@@ -67,6 +72,7 @@ export function LanguagePopover({
           <circle cx="12" cy="12" r="8.5" />
           <path d="M3.8 12h16.4M12 3.5c2.2 2.3 3.3 5.1 3.3 8.5S14.2 18.2 12 20.5M12 3.5C9.8 5.8 8.7 8.6 8.7 12s1.1 6.2 3.3 8.5" />
         </svg>
+        {showDesktopLabel ? <span aria-hidden="true">{copy.title}</span> : null}
       </UiButton>
 
       {open ? (
@@ -96,24 +102,26 @@ export function LanguagePopover({
             <div className="p-2">
               {(["ko", "en"] as const).map((value) => {
                 const selected = locale === value;
-                return (
+                const label = value === "ko" ? copy.korean : copy.english;
+                return selected ? (
+                  <div
+                    key={value}
+                    aria-current="true"
+                    className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] bg-[var(--primary-subtle)] px-3 text-sm font-bold text-[var(--primary)]"
+                  >
+                    <span>{label}</span>
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-2">
+                      <path d="m4 10 3.5 3.5L16 5.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
                   <form key={value} action={updateLanguage}>
                     <input type="hidden" name="locale" value={value} />
                     <button
                       type="submit"
-                      aria-pressed={selected}
-                      className={`flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] px-3 text-sm font-semibold ${
-                        selected
-                          ? "bg-[var(--primary-subtle)] text-[var(--primary)]"
-                          : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
-                      }`}
+                      className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] px-3 text-sm font-bold text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
                     >
-                      <span>{value === "ko" ? copy.korean : copy.english}</span>
-                      {selected ? (
-                        <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-2">
-                          <path d="m4 10 3.5 3.5L16 5.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      ) : null}
+                      <span>{label}</span>
                     </button>
                   </form>
                 );
