@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/development-mock-auth";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { Brand } from "@/shared/ui/brand";
@@ -31,7 +32,10 @@ export default async function Home({
   }
 
   const params = await searchParams;
-  const showDevelopmentLogin = process.env.NODE_ENV === "development";
+  const showDevelopmentLogin = isDevelopmentMockAuthEnabled({
+    nodeEnv: process.env.NODE_ENV,
+    explicitlyEnabled: process.env.ENABLE_DEVELOPMENT_MOCK_AUTH,
+  });
 
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
