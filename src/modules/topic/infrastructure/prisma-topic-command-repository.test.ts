@@ -57,6 +57,7 @@ describe("Prisma 주제 저장소", () => {
       recruitmentPost: { updateMany: vi.fn(async () => ({ count: 0 })) },
       recruitmentApplication: { updateMany: vi.fn(async () => ({ count: 0 })) },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) },
+      auditLog: { create: vi.fn(async () => ({ id: "audit-1" })) },
     };
     const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
 
@@ -66,6 +67,14 @@ describe("Prisma 주제 저장소", () => {
     )).resolves.toBe(true);
 
     expect(order).toEqual(["topic-closed", "applications-read"]);
+    expect(transaction.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        actorId: "professor-1",
+        action: "TOPIC_CLOSED",
+        targetType: "TOPIC",
+        targetId: "topic-1",
+      }),
+    }));
   });
 
   it("담당 교수 ID를 기준으로 주제 일정을 변경한다", async () => {

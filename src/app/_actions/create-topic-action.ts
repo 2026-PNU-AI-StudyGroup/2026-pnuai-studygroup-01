@@ -9,7 +9,7 @@ import { PrismaProjectProgramRepository } from "@/modules/project-program/infras
 import { CreateTopicService } from "@/modules/topic/application/create-topic";
 import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
 import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
-import { createTopicInputSchema } from "@/modules/topic/ui/create-topic-input";
+import { parseTopicFormData } from "@/modules/topic/ui/create-topic-input";
 import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
 import { TopicApprovalOperationError, TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
@@ -22,17 +22,7 @@ export async function createTopicAction(
   const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
 
-  const questionLabels = formData.getAll("questionLabel");
-  const questionMaxLengths = formData.getAll("questionMaxLength");
-  const questionRequiredValues = formData.getAll("questionRequired");
-  const parsed = createTopicInputSchema.safeParse({
-    ...Object.fromEntries(formData),
-    applicationQuestions: questionLabels.map((label, index) => ({
-      label,
-      maxLength: questionMaxLengths[index],
-      required: questionRequiredValues[index] === "true",
-    })),
-  });
+  const parsed = parseTopicFormData(formData);
   if (!parsed.success) {
     return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
   }

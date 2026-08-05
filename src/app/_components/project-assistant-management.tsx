@@ -36,11 +36,7 @@ export function ProjectAssistantManagementPanel({
                     <strong>{assistant.name}</strong>
                     <p className="muted text-sm">{assistant.email} · <UiText>{roleLabel[assistant.role]}</UiText></p>
                   </div>
-                  <RemoveProjectAssistantForm
-                    topicId={management.topicId}
-                    assistantUserId={assistant.userId}
-                    assistantName={assistant.name}
-                  />
+                  <RemoveProjectAssistantForm topicId={management.topicId} assistantUserId={assistant.userId} assistantName={assistant.name} />
                 </li>
               ))}
             </ul>
@@ -56,10 +52,7 @@ export function ProjectAssistantManagementPanel({
                     <strong>{invitation.inviteeName}</strong>
                     <p className="muted text-sm">{invitation.inviteeEmail} · <UiText>{roleLabel[invitation.inviteeRole]}</UiText></p>
                   </div>
-                  <CancelProjectAssistantInvitationForm
-                    topicId={management.topicId}
-                    invitationId={invitation.id}
-                  />
+                  <CancelProjectAssistantInvitationForm topicId={management.topicId} invitationId={invitation.id} inviteeName={invitation.inviteeName} />
                 </li>
               ))}
             </ul>

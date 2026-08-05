@@ -18,6 +18,10 @@ import {
 } from "@/modules/topic/application/update-topic-schedule";
 import { InvalidTopicScheduleError } from "@/modules/topic/domain/topic-policy";
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
+import { parseTopicFormData } from "@/modules/topic/ui/create-topic-input";
+import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
+import { TopicUpdateError, UpdateTopicService } from "@/modules/topic/application/update-topic";
+import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 type TopicManagementActionState = {
@@ -27,6 +31,7 @@ type TopicManagementActionState = {
 
 export type TopicStatusActionState = TopicManagementActionState;
 export type TopicScheduleActionState = TopicManagementActionState;
+export type TopicDeleteActionState = TopicManagementActionState;
 
 const topicScheduleInputSchema = z.object({
   topicId: z.string().uuid(),
@@ -84,6 +89,50 @@ export async function changeTopicStatusAction(
     status: "success",
     message: parsed.data.intent === "publish" ? "주제가 공개되었습니다." : "주제가 마감되었습니다.",
   };
+}
+
+export async function updateTopicAction(
+  _previousState: TopicFormActionState,
+  formData: FormData,
+): Promise<TopicFormActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const topicId = z.string().uuid().safeParse(formData.get("topicId"));
+  const parsed = parseTopicFormData(formData);
+  if (!topicId.success || !parsed.success) {
+    return { status: "error", message: "주제 내용과 기간을 확인해 주세요." };
+  }
+  try {
+    await new UpdateTopicService(new PrismaTopicCommandRepository(prisma)).execute(actor, topicId.data, parsed.data);
+  } catch (error) {
+    if (error instanceof TopicUpdateError) return { status: "error", message: error.message };
+    const message = getCreateTopicErrorMessage(error);
+    if (message) return { status: "error", message };
+    throw error;
+  }
+  revalidatePath("/professor/topics");
+  revalidatePath(`/professor/topics/${topicId.data}`);
+  revalidatePath(`/professor/topics/${topicId.data}/edit`);
+  revalidatePath("/topics");
+  return { status: "success", message: "주제 내용을 변경했습니다." };
+}
+
+export async function deleteTopicDraftAction(
+  _previousState: TopicDeleteActionState,
+  formData: FormData,
+): Promise<TopicDeleteActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const topicId = z.string().uuid().safeParse(formData.get("topicId"));
+  if (!topicId.success) return { status: "error", message: "주제 정보를 확인해 주세요." };
+  try {
+    await new UpdateTopicService(new PrismaTopicCommandRepository(prisma)).deleteDraft(actor, topicId.data);
+  } catch (error) {
+    if (error instanceof TopicUpdateError) return { status: "error", message: error.message };
+    throw error;
+  }
+  revalidatePath("/professor/topics");
+  redirect("/professor/topics");
 }
 
 export async function updateTopicScheduleAction(

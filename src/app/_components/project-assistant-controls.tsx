@@ -85,48 +85,26 @@ export function ProjectAssistantInvitationDecisionForm({
   );
 }
 
-export function RemoveProjectAssistantForm({
-  topicId,
-  assistantUserId,
-  assistantName,
-}: {
-  topicId: string;
-  assistantUserId: string;
-  assistantName: string;
-}) {
+export function RemoveProjectAssistantForm({ topicId, assistantUserId, assistantName }: { topicId: string; assistantUserId: string; assistantName: string }) {
   const [state, action, pending] = useActionState(removeProjectAssistantAction, initialState);
   return (
-    <form action={action}>
+    <form action={action} className="flex flex-wrap justify-end gap-2">
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="assistantUserId" value={assistantUserId} />
-      <ConfirmSubmitButton
-        disabled={pending}
-        className="button-quiet"
-        confirmMessage={`${assistantName}님의 프로젝트 조교 권한을 해제하시겠습니까?`}
-      >
-        <UiText>{pending ? "해제 중" : "권한 해제"}</UiText>
-      </ConfirmSubmitButton>
-      {state.status === "error" ? <span role="alert" className="mt-1 block text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}
+      <ConfirmSubmitButton className="button-quiet" disabled={pending} confirmMessage={`${assistantName}님의 프로젝트 조교 권한을 해제하시겠습니까?`} aria-label={`${assistantName} 조교 권한 해제`}><UiText>{pending ? "해제 중" : "권한 해제"}</UiText></ConfirmSubmitButton>
+      {state.message ? <p className={`basis-full text-right text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`} role="status"><UiText>{state.message}</UiText></p> : null}
     </form>
   );
 }
 
-export function CancelProjectAssistantInvitationForm({
-  topicId,
-  invitationId,
-}: {
-  topicId: string;
-  invitationId: string;
-}) {
+export function CancelProjectAssistantInvitationForm({ topicId, invitationId, inviteeName }: { topicId: string; invitationId: string; inviteeName: string }) {
   const [state, action, pending] = useActionState(cancelProjectAssistantInvitationAction, initialState);
   return (
-    <form action={action}>
+    <form action={action} className="flex flex-wrap justify-end gap-2">
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="invitationId" value={invitationId} />
-      <button className="button-quiet" type="submit" disabled={pending}>
-        <UiText>{pending ? "취소 중" : "초대 취소"}</UiText>
-      </button>
-      {state.status === "error" ? <span role="alert" className="mt-1 block text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}
+      <ConfirmSubmitButton className="button-quiet" disabled={pending} confirmMessage={`${inviteeName}님에게 보낸 조교 초대를 취소하시겠습니까?`} aria-label={`${inviteeName} 조교 초대 취소`}><UiText>{pending ? "취소 중" : "초대 취소"}</UiText></ConfirmSubmitButton>
+      {state.message ? <p className={`basis-full text-right text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`} role="status"><UiText>{state.message}</UiText></p> : null}
     </form>
   );
 }

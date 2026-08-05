@@ -5,6 +5,7 @@ import { enqueueTranslations } from "@/modules/translation/application/translati
 import type {
   TopicCreator,
   TopicDraft,
+  TopicEditor,
   TopicScheduleUpdater,
   TopicStateRecord,
   TopicStateRepository,
@@ -14,7 +15,7 @@ import { topicSupervisorSql } from "@/modules/project-assistant/infrastructure/p
 import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaTopicCommandRepository
-  implements TopicCreator, TopicStateRepository, TopicScheduleUpdater
+  implements TopicCreator, TopicStateRepository, TopicScheduleUpdater, TopicEditor
 {
   constructor(private readonly client: PrismaClient) {}
 
@@ -53,6 +54,83 @@ export class PrismaTopicCommandRepository
       ]);
       return created;
     });
+  }
+
+  update(
+    id: string,
+    actor: CurrentActor,
+    topic: Omit<TopicDraft, "authorId">,
+  ) {
+    return this.client.$transaction(async (transaction) => {
+      const current = await transaction.topic.findFirst({
+        where: { id, ...topicSupervisorWhere(actor) },
+        select: {
+          id: true,
+          programId: true,
+          status: true,
+          applicationMode: true,
+          applicationQuestions: {
+            orderBy: { position: "asc" },
+            select: { label: true, maxLength: true, required: true },
+          },
+          _count: { select: { applications: true } },
+          team: { select: { _count: { select: { members: true } } } },
+        },
+      });
+      if (!current) return "NOT_FOUND" as const;
+      if (current.status === "CLOSED") return "CLOSED" as const;
+      if (current.programId !== topic.programId) return "PROGRAM_UNAVAILABLE" as const;
+      const program = await transaction.projectProgram.findFirst({
+        where: { id: current.programId, status: "OPEN" },
+        select: { startsAt: true, endsAt: true },
+      });
+      const times = [topic.recruitmentStartsAt, topic.recruitmentEndsAt, topic.executionStartsAt, topic.executionEndsAt, topic.submissionStartsAt, topic.submissionEndsAt];
+      if (!program || times.some((time) => time < program.startsAt || time > program.endsAt)) {
+        return "PROGRAM_UNAVAILABLE" as const;
+      }
+      const formChanged = current.applicationMode !== topic.applicationMode ||
+        JSON.stringify(current.applicationQuestions) !== JSON.stringify(topic.applicationQuestions);
+      if (current._count.applications > 0 && formChanged) return "APPLICATION_FORM_LOCKED" as const;
+      if ((current.team?._count.members ?? 0) > topic.capacity) return "CAPACITY_TOO_SMALL" as const;
+
+      const { applicationQuestions, ...data } = topic;
+      await transaction.topic.update({
+        where: { id: current.id },
+        data: {
+          ...data,
+          ...(current._count.applications === 0 ? {
+            applicationQuestions: {
+              deleteMany: {},
+              create: applicationQuestions.map((question, position) => ({ ...question, position })),
+            },
+          } : {}),
+        },
+      });
+      await enqueueTranslations(transaction, [
+        topic.title,
+        topic.description,
+        ...topic.requiredSkills,
+        ...topic.preferredSkills,
+        topic.roleExpectations,
+        topic.availabilityRequirement,
+        ...topic.applicationQuestions.map(({ label }) => label),
+      ]);
+      return "UPDATED" as const;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  async deleteDraft(id: string, actor: CurrentActor): Promise<boolean> {
+    const result = await this.client.topic.deleteMany({
+      where: {
+        id,
+        status: "DRAFT",
+        applications: { none: {} },
+        approvalRequest: null,
+        team: null,
+        ...topicSupervisorWhere(actor),
+      },
+    });
+    return result.count === 1;
   }
 
   findState(id: string): Promise<TopicStateRecord | null> {
@@ -116,11 +194,16 @@ export class PrismaTopicCommandRepository
           topic: { select: { title: true } },
         },
       });
-      await transaction.topicApplication.updateMany({
+      const rejectedApplications = await transaction.topicApplication.updateMany({
         where: { topicId: id, status: "PENDING" },
-        data: { status: "REJECTED", decidedAt },
+        data: {
+          status: "REJECTED",
+          decidedAt,
+          decidedById: actor.id,
+          reviewComment: "프로젝트 모집이 마감되어 자동 미선정되었습니다.",
+        },
       });
-      await transaction.recruitmentPost.updateMany({
+      const closedRecruitmentPosts = await transaction.recruitmentPost.updateMany({
         where: { team: { topicId: id }, status: "OPEN" },
         data: { status: "CLOSED" },
       });
@@ -138,6 +221,19 @@ export class PrismaTopicCommandRepository
           createdAt: decidedAt,
         })),
       );
+      await transaction.auditLog.create({
+        data: {
+          actorId: actor.id,
+          action: "TOPIC_CLOSED",
+          targetType: "TOPIC",
+          targetId: id,
+          metadata: {
+            rejectedApplicationCount: rejectedApplications.count,
+            closedRecruitmentPostCount: closedRecruitmentPosts.count,
+          },
+          createdAt: decidedAt,
+        },
+      });
       return true;
     });
   }

@@ -1,0 +1,47 @@
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { TopicDraft, TopicEditor } from "@/modules/topic/application/topic-ports";
+import {
+  assertValidTopicDetails,
+  assertValidTopicSchedule,
+} from "@/modules/topic/domain/topic-policy";
+
+export class TopicUpdateError extends Error {}
+
+function normalizeTopic(input: Omit<TopicDraft, "authorId">): Omit<TopicDraft, "authorId"> {
+  return {
+    ...input,
+    title: input.title.trim(),
+    description: input.description.trim(),
+    requiredSkills: [...new Set(input.requiredSkills.map((skill) => skill.trim()).filter(Boolean))],
+    preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
+    roleExpectations: input.roleExpectations.trim(),
+    availabilityRequirement: input.availabilityRequirement.trim(),
+    applicationQuestions: input.applicationQuestions.map((question) => ({
+      ...question,
+      label: question.label.trim(),
+    })),
+  };
+}
+
+export class UpdateTopicService {
+  constructor(private readonly repository: TopicEditor) {}
+
+  async execute(actor: CurrentActor, topicId: string, input: Omit<TopicDraft, "authorId">): Promise<void> {
+    const normalized = normalizeTopic(input);
+    assertValidTopicDetails(normalized);
+    assertValidTopicSchedule(normalized);
+    const outcome = await this.repository.update(topicId, actor, normalized);
+    if (outcome === "UPDATED") return;
+    if (outcome === "NOT_FOUND") throw new TopicUpdateError("수정할 수 있는 주제를 찾지 못했습니다.");
+    if (outcome === "CLOSED") throw new TopicUpdateError("마감된 주제는 수정할 수 없습니다.");
+    if (outcome === "PROGRAM_UNAVAILABLE") throw new TopicUpdateError("주제의 프로그램이나 운영 기간을 변경할 수 없습니다.");
+    if (outcome === "APPLICATION_FORM_LOCKED") throw new TopicUpdateError("제출된 지원서가 있어 지원 방식과 문항은 변경할 수 없습니다.");
+    throw new TopicUpdateError("현재 팀 인원보다 모집 정원을 작게 설정할 수 없습니다.");
+  }
+
+  async deleteDraft(actor: CurrentActor, topicId: string): Promise<void> {
+    if (!(await this.repository.deleteDraft(topicId, actor))) {
+      throw new TopicUpdateError("지원·승인·팀 기록이 없는 초안만 삭제할 수 있습니다.");
+    }
+  }
+}

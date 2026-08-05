@@ -88,7 +88,12 @@ export class PrismaTeamCloseRepository implements TeamCloser {
       });
       await transaction.topicApplication.updateMany({
         where: { topicId: team.topicId, status: "PENDING" },
-        data: { status: "REJECTED", decidedAt },
+        data: {
+          status: "REJECTED",
+          decidedAt,
+          decidedById: actor.id,
+          reviewComment: "프로젝트가 종료되어 자동 미선정되었습니다.",
+        },
       });
       await createApplicationResultNotifications(
         transaction,
