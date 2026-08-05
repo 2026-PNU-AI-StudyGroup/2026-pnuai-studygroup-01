@@ -17,10 +17,10 @@
   --surface: #ffffff;
   --surface-subtle: #f7f8fa;
   --ink: #171921;
-  --muted: #6f7480;
+  --muted: #656b76;
   --line: #e5e7eb;
   --line-strong: #cfd3da;
-  --field-border: #d8dbe2;
+  --field-border: #858fa1;
   --primary: #2f5bea;
   --primary-hover: #2148c9;
   --primary-subtle: #e9efff;
@@ -39,6 +39,7 @@
   --radius-control: 0.6875rem;
   --radius-panel: 1.25rem;
   --shadow-card: none;
+  --shadow-admin-panel: 0 1px 2px rgb(31 35 48 / 0.03), 0 8px 24px rgb(31 35 48 / 0.045);
   --shadow-float: 0 18px 48px rgb(31 35 48 / 0.12);
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -99,6 +100,13 @@ textarea {
     background: var(--surface);
   }
 
+  .admin-panel {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+    box-shadow: var(--shadow-admin-panel);
+  }
+
   .field {
     min-height: 3.25rem;
     width: 100%;
@@ -113,7 +121,7 @@ textarea {
   }
 
   .field:hover {
-    border-color: #aeb4bf;
+    border-color: #667085;
   }
 
   .field:focus {
@@ -132,7 +140,7 @@ textarea {
   }
 
   .field::placeholder {
-    color: #7a8496;
+    color: #667085;
     opacity: 1;
   }
 
@@ -150,6 +158,14 @@ textarea {
     position: relative;
     min-width: 0;
     width: 100%;
+  }
+
+  .custom-select__validation-proxy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .custom-select__trigger {
@@ -174,8 +190,21 @@ textarea {
     background: var(--surface);
   }
 
+  .custom-select__trigger:focus-visible,
   .custom-select__trigger[aria-expanded="true"] {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 12%, transparent);
+  }
+
+  .custom-select__trigger[aria-invalid="true"],
+  .custom-select__trigger[aria-invalid="true"]:hover:not(:disabled),
+  .custom-select__trigger[aria-invalid="true"][aria-expanded="true"] {
+    border-color: var(--danger);
+    background: var(--danger-subtle);
+  }
+
+  .custom-select__trigger[aria-invalid="true"]:focus-visible,
+  .custom-select__trigger[aria-invalid="true"][aria-expanded="true"] {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
   }
 
   .custom-select__trigger:disabled {
@@ -311,7 +340,7 @@ textarea {
     height: 1.25rem;
     flex: 0 0 auto;
     place-items: center;
-    border: 1.5px solid var(--line-strong);
+    border: 1.5px solid var(--field-border);
     border-radius: 0.35rem;
   }
 
@@ -347,7 +376,7 @@ textarea {
     height: 1.125rem;
     flex: 0 0 auto;
     place-content: center;
-    border: 1.5px solid #aeb4bf;
+    border: 1.5px solid var(--field-border);
     background: var(--surface);
     color: var(--primary);
     cursor: pointer;
@@ -401,8 +430,9 @@ textarea {
 
   input[type="radio"]:focus-visible,
   input[type="checkbox"]:focus-visible {
+    border-color: var(--focus);
     outline: 0;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 24%, transparent);
   }
 
   input[type="radio"]:disabled,
