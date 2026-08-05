@@ -16,10 +16,10 @@ const input = {
 function dependencies() {
   const repository: TopicApprovalRepository = {
     listProfessors: vi.fn(async () => []), create: vi.fn(async () => "topic-1"),
-    listVisible: vi.fn(async () => []), decide: vi.fn(async () => "APPROVED" as const),
+    listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), decide: vi.fn(async () => "APPROVED" as const),
   };
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
-    findOpen: vi.fn(async () => ({ id: "program-1", academicCycleId: "cycle-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
+    findOpen: vi.fn(async () => ({ id: "program-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
   };
   return { repository, programs };
 }
@@ -41,7 +41,6 @@ describe("학생 프로젝트 승인", () => {
     const { repository, programs } = dependencies();
     vi.mocked(programs.findOpen).mockResolvedValue({
       id: "program-1",
-      academicCycleId: "cycle-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: true,
@@ -57,7 +56,6 @@ describe("학생 프로젝트 승인", () => {
     const { repository, programs } = dependencies();
     vi.mocked(programs.findOpen).mockResolvedValue({
       id: "program-1",
-      academicCycleId: "cycle-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: false,
@@ -85,6 +83,6 @@ describe("학생 프로젝트 승인", () => {
 
     await new TopicApprovalService(repository, programs).listPendingForReview(professor);
 
-    expect(repository.listVisible).toHaveBeenCalledWith(professor, "PENDING");
+    expect(repository.listVisiblePage).toHaveBeenCalledWith(professor, 1, 5, "PENDING");
   });
 });

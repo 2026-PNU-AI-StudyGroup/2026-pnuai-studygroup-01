@@ -9,6 +9,7 @@ import { UpdateTopicScheduleService } from "../src/modules/topic/application/upd
 import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
 import { PrismaTopicQueryRepository } from "../src/modules/topic/infrastructure/prisma-topic-query-repository";
 import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
+import { PrismaTopicApprovalRepository } from "../src/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
 if (process.env.ALLOW_LOCAL_PROGRAM_TEST !== "true") {
@@ -19,15 +20,17 @@ const adminId = randomUUID();
 const professorId = randomUUID();
 const leaderId = randomUUID();
 const applicantId = randomUUID();
-let cycleId: string | null = null;
 
 async function cleanup() {
-  if (cycleId) {
-    await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.topicApplication.deleteMany({ where: { topic: { academicCycleId: cycleId } } });
-    await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
+  const createdProgramIds = (await prisma.projectProgram.findMany({
+    where: { createdById: adminId },
+    select: { id: true },
+  })).map(({ id }) => id);
+  if (createdProgramIds.length) {
+    await prisma.team.deleteMany({ where: { programId: { in: createdProgramIds } } });
+    await prisma.topicApplication.deleteMany({ where: { topic: { programId: { in: createdProgramIds } } } });
+    await prisma.topic.deleteMany({ where: { programId: { in: createdProgramIds } } });
+    await prisma.projectProgram.deleteMany({ where: { id: { in: createdProgramIds } } });
   }
   await prisma.auditLog.deleteMany({ where: { actorId: { in: [adminId, professorId, leaderId, applicantId] } } });
   await prisma.user.deleteMany({ where: { id: { in: [adminId, professorId, leaderId, applicantId] } } });
@@ -40,16 +43,13 @@ async function main() {
     { id: leaderId, name: "Program Leader", email: `verification+${leaderId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
     { id: applicantId, name: "Program Applicant", email: `verification+${applicantId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
-  const cycle = await prisma.academicCycle.create({ data: { academicYear: 6000 + Math.floor(Math.random() * 1000), term: "FIRST" } });
-  cycleId = cycle.id;
-
   const now = new Date();
   const day = 24 * 60 * 60_000;
   const programs = new PrismaProjectProgramRepository(prisma);
   const programService = new ProjectProgramService(programs);
+  const programName = `자유 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
-    academicCycleId: cycle.id,
-    name: `자유 프로그램 ${randomUUID()}`,
+    name: programName,
     category: "사용자 정의 분류",
     description: "하드코딩 없는 동적 프로그램 검증",
     startsAt: new Date(now.getTime() - day),
@@ -57,7 +57,7 @@ async function main() {
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
   });
-  const program = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id } });
+  const program = await prisma.projectProgram.findFirstOrThrow({ where: { name: programName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "OPEN", now);
 
   const topicCommands = new PrismaTopicCommandRepository(prisma);
@@ -109,19 +109,42 @@ async function main() {
   }
   const escapedSearch = await topicQueries.listPublished({ programId: program.id, query: "%", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (escapedSearch.total !== 0) throw new Error("검색 와일드카드가 일반 문자로 처리되지 않았습니다.");
-  const team = await prisma.team.create({ data: { academicCycleId: cycle.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
-  await prisma.teamMember.create({ data: { teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
+  const team = await prisma.team.create({ data: { programId: program.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
+  await prisma.teamMember.create({ data: { teamId: team.id, programId: program.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
   const post = await prisma.recruitmentPost.create({ data: { teamId: team.id, authorId: leaderId, title: "팀원 모집", content: "내용", roleNeeded: "개발", availability: "주 1회" } });
   await prisma.recruitmentApplication.create({ data: { postId: post.id, topicApplicationId: pending.id, studentId: applicantId } });
+  const pendingApprovalTopic = await prisma.topic.create({ data: {
+    programId: program.id,
+    authorId: applicantId,
+    managerId: null,
+    title: "프로그램 종료 승인 요청 검증",
+    description: "프로그램 종료 시 대기 승인 요청도 함께 종료되는지 검증",
+    capacity: 2,
+    recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
+    recruitmentEndsAt: new Date(now.getTime() + 30 * day),
+    executionStartsAt: new Date(now.getTime() + 20 * day),
+    executionEndsAt: new Date(now.getTime() + 70 * day),
+    submissionStartsAt: new Date(now.getTime() + 60 * day),
+    submissionEndsAt: new Date(now.getTime() + 80 * day),
+    status: "DRAFT",
+    approvalRequest: {
+      create: {
+        requesterId: applicantId,
+        route: "ADMIN",
+        status: "PENDING",
+      },
+    },
+  }, include: { approvalRequest: true } });
 
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "CLOSED", new Date(now.getTime() + 1_000));
-  const [closedTopic, rejectedTopicApplication, closedPost, rejectedRecruitmentApplication] = await Promise.all([
+  const [closedTopic, rejectedTopicApplication, closedPost, rejectedRecruitmentApplication, rejectedApprovalRequest] = await Promise.all([
     prisma.topic.findUniqueOrThrow({ where: { id: topic.id } }),
     prisma.topicApplication.findUniqueOrThrow({ where: { id: pending.id } }),
     prisma.recruitmentPost.findUniqueOrThrow({ where: { id: post.id } }),
     prisma.recruitmentApplication.findUniqueOrThrow({ where: { topicApplicationId: pending.id } }),
+    prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: pendingApprovalTopic.approvalRequest!.id } }),
   ]);
-  if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED") {
+  if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED" || rejectedApprovalRequest.status !== "REJECTED") {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
   }
   const topicHistory = await new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20);
@@ -132,12 +155,12 @@ async function main() {
 
   const raceName = `마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
-    academicCycleId: cycle.id, name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
+    name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
   });
-  const raceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { academicCycleId: cycle.id, name: raceName } });
+  const raceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { name: raceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "OPEN", now);
   const race = await Promise.allSettled([
     new CreateTopicService(topicCommands, programs).execute({ id: professorId, role: "PROFESSOR" }, {
@@ -154,7 +177,81 @@ async function main() {
   const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "PUBLISHED" } });
   if (publishedRaceTopics !== 0) throw new Error("프로그램 마감과 주제 생성 경합 후 공개 주제가 남았습니다.");
 
-  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, closeCreateRacePublishedTopics: publishedRaceTopics }));
+  const approvalRaceName = `승인 마감 경합 프로그램 ${randomUUID()}`;
+  await programService.create({ id: adminId, role: "ADMIN" }, {
+    name: approvalRaceName, category: "경합 검증", description: "학생 제안 생성 및 승인과 프로그램 마감 경합",
+    startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
+    advisorEnabled: true,
+    studentProjectCreationEnabled: true,
+  });
+  const approvalRaceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { name: approvalRaceName } });
+  await programService.changeStatus({ id: adminId, role: "ADMIN" }, approvalRaceProgram.id, "OPEN", now);
+  const topicApprovals = new PrismaTopicApprovalRepository(prisma);
+  const proposalInput = {
+    programId: approvalRaceProgram.id,
+    authorId: applicantId,
+    description: "프로그램 마감과 학생 제안 처리의 원자성 검증",
+    requiredSkills: ["TypeScript"],
+    preferredSkills: [],
+    roleExpectations: "구현",
+    availabilityRequirement: "주 1회",
+    applicationMode: "INDIVIDUAL_ONLY" as const,
+    applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
+    capacity: 2,
+    recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
+    recruitmentEndsAt: new Date(now.getTime() + 30 * day),
+    executionStartsAt: new Date(now.getTime() + 20 * day),
+    executionEndsAt: new Date(now.getTime() + 70 * day),
+    submissionStartsAt: new Date(now.getTime() + 60 * day),
+    submissionEndsAt: new Date(now.getTime() + 80 * day),
+    route: "ADMIN" as const,
+    requestedProfessorId: null,
+  };
+  const approvalRaceTopicId = await topicApprovals.create({
+    ...proposalInput,
+    title: "승인 마감 경합 기존 제안",
+    requestedAt: now,
+  });
+  if (!approvalRaceTopicId) throw new Error("승인 마감 경합용 학생 제안을 생성하지 못했습니다.");
+  const approvalRaceRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({
+    where: { topicId: approvalRaceTopicId },
+  });
+  const approvalCloseRace = await Promise.allSettled([
+    topicApprovals.decide({
+      requestId: approvalRaceRequest.id,
+      actorId: adminId,
+      actorRole: "ADMIN",
+      decision: "APPROVE",
+      reviewComment: "경합 승인",
+      decidedAt: new Date(now.getTime() + 4_000),
+    }),
+    topicApprovals.create({
+      ...proposalInput,
+      title: "승인 마감 경합 동시 생성",
+      requestedAt: new Date(now.getTime() + 4_000),
+    }),
+    programService.changeStatus({ id: adminId, role: "ADMIN" }, approvalRaceProgram.id, "CLOSED", new Date(now.getTime() + 5_000)),
+  ]);
+  if (approvalCloseRace[2].status !== "fulfilled") throw approvalCloseRace[2].reason;
+  if (approvalCloseRace[0].status !== "fulfilled") throw approvalCloseRace[0].reason;
+  if (approvalCloseRace[1].status !== "fulfilled") throw approvalCloseRace[1].reason;
+  const [approvalRaceProgramState, approvalRacePublishedTopics, approvalRacePendingRequests] = await Promise.all([
+    prisma.projectProgram.findUniqueOrThrow({ where: { id: approvalRaceProgram.id } }),
+    prisma.topic.count({ where: { programId: approvalRaceProgram.id, status: "PUBLISHED" } }),
+    prisma.topicApprovalRequest.count({ where: { topic: { programId: approvalRaceProgram.id }, status: "PENDING" } }),
+  ]);
+  if (
+    approvalRaceProgramState.status !== "CLOSED" ||
+    approvalRacePublishedTopics !== 0 ||
+    approvalRacePendingRequests !== 0 ||
+    !["APPROVED", "UNAVAILABLE"].includes(approvalCloseRace[0].value)
+  ) {
+    throw new Error(
+      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: program=${approvalRaceProgramState.status}, published=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
+    );
+  }
+
+  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, topicApprovalRequest: rejectedApprovalRequest.status, closeCreateRacePublishedTopics: publishedRaceTopics, approvalCloseRace: { approval: approvalCloseRace[0].value, createdTopic: approvalCloseRace[1].value !== null, publishedTopics: approvalRacePublishedTopics, pendingRequests: approvalRacePendingRequests } }));
 }
 
 main()

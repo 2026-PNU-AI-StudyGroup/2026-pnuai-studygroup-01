@@ -37,17 +37,16 @@ const professorId = randomUUID();
 const otherProfessorId = randomUUID();
 const studentId = randomUUID();
 const pendingStudentId = randomUUID();
-let cycleId: string | null = null;
+let programId: string | null = null;
 const storage = new S3ObjectStorage(s3, objectStorageBucket);
 const uploads = new UploadService(new PrismaUploadIntentRepository(prisma), storage);
 
 async function cleanup() {
-  if (cycleId) {
-    await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.topicApplication.deleteMany({ where: { topic: { academicCycleId: cycleId } } });
-    await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
+  if (programId) {
+    await prisma.team.deleteMany({ where: { programId } });
+    await prisma.topicApplication.deleteMany({ where: { topic: { programId } } });
+    await prisma.topic.deleteMany({ where: { programId } });
+    await prisma.projectProgram.deleteMany({ where: { id: programId } });
     await uploads.cleanup(new Date(Date.now() + 27 * 60 * 60_000));
   }
   await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, otherProfessorId, studentId, pendingStudentId] } } });
@@ -85,16 +84,13 @@ async function main() {
     { id: studentId, name: "Report Student", email: `verification+${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
     { id: pendingStudentId, name: "Pending Student", email: `verification+${pendingStudentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
-  const cycle = await prisma.academicCycle.create({ data: {
-    academicYear: 7000 + Math.floor(Math.random() * 1000), term: "SECOND",
-  } });
-  cycleId = cycle.id;
   const program = await prisma.projectProgram.create({ data: {
-    academicCycleId: cycle.id, createdById: professorId, name: "보고서 검증 프로그램", category: "검증", description: "보고서 통합 검증",
+    createdById: professorId, name: `보고서 검증 프로그램 ${professorId}`, category: "검증", description: "보고서 통합 검증",
     startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
+  programId = program.id;
   const topic = await prisma.topic.create({ data: {
-    academicCycleId: cycle.id, programId: program.id, authorId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
+    programId: program.id, authorId: professorId, managerId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
     recruitmentStartsAt: new Date("2026-01-01"), recruitmentEndsAt: new Date("2026-12-31"),
     executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
     submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),
@@ -107,10 +103,10 @@ async function main() {
     topicId: topic.id, studentId: pendingStudentId, message: "종료 전 대기 지원", status: "PENDING",
   } });
   const team = await prisma.team.create({ data: {
-    academicCycleId: cycle.id, topicId: topic.id, professorId, name: "보고서 검증 팀", status: "CONFIRMED",
+    programId: program.id, topicId: topic.id, professorId, name: "보고서 검증 팀", status: "CONFIRMED",
   } });
   await prisma.teamMember.create({ data: {
-    teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId, applicationId: application.id,
+    teamId: team.id, programId: program.id, topicId: topic.id, studentId, applicationId: application.id,
   } });
 
   const reportQuery = new ReportQueryService(

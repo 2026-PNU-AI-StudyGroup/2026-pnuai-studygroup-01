@@ -2,17 +2,17 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { assertProgramAdmin, normalizeProjectProgram, type ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
 
 export type ProjectProgramRecord = ProjectProgramDetails & {
-  id: string; academicCycleId: string; academicYear: number; term: "FIRST" | "SECOND";
+  id: string; startYear: number;
   status: "DRAFT" | "OPEN" | "CLOSED"; openedAt: Date | null; topicCount: number; teamCount: number;
 };
 
 export interface ProjectProgramRepository {
-  create(input: ProjectProgramDetails & { academicCycleId: string; createdById: string }): Promise<"CREATED" | "CYCLE_NOT_FOUND" | "DUPLICATE">;
+  create(input: ProjectProgramDetails & { createdById: string }): Promise<"CREATED" | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
-  changeStatus(id: string, status: "OPEN" | "CLOSED", changedAt: Date): Promise<boolean>;
+  changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
   changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean>;
-  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null>;
+  findOpen(id: string): Promise<{ id: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null>;
 }
 
 export class ProjectProgramOperationError extends Error {}
@@ -24,14 +24,14 @@ export class ProjectProgramService {
     return (await this.repository.listOpen()).filter(({ studentProjectCreationEnabled }) => studentProjectCreationEnabled);
   }
   async listAll(actor: CurrentActor) { assertProgramAdmin(actor); return this.repository.listAll(); }
-  async create(actor: CurrentActor, input: ProjectProgramDetails & { academicCycleId: string }) {
+  async create(actor: CurrentActor, input: ProjectProgramDetails) {
     assertProgramAdmin(actor);
-    const outcome = await this.repository.create({ ...normalizeProjectProgram(input), academicCycleId: input.academicCycleId, createdById: actor.id });
-    if (outcome !== "CREATED") throw new ProjectProgramOperationError(outcome === "DUPLICATE" ? "같은 학기에 동일한 프로그램명이 있습니다." : "존재하지 않는 학기입니다.");
+    const outcome = await this.repository.create({ ...normalizeProjectProgram(input), createdById: actor.id });
+    if (outcome !== "CREATED") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
   }
   async changeStatus(actor: CurrentActor, id: string, status: "OPEN" | "CLOSED", now = new Date()) {
     assertProgramAdmin(actor);
-    if (!(await this.repository.changeStatus(id, status, now))) throw new ProjectProgramOperationError("변경할 수 없는 프로그램 상태입니다.");
+    if (!(await this.repository.changeStatus(id, status, actor.id, now))) throw new ProjectProgramOperationError("변경할 수 없는 프로그램 상태입니다.");
   }
   async changeStudentProjectCreation(actor: CurrentActor, id: string, enabled: boolean) {
     assertProgramAdmin(actor);

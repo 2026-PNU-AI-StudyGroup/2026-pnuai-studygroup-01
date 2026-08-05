@@ -28,18 +28,17 @@ if (process.env.ALLOW_LOCAL_WORKSPACE_TEST !== "true") {
 const professorId = randomUUID();
 const studentId = randomUUID();
 const outsiderId = randomUUID();
-let cycleId: string | null = null;
+let programId: string | null = null;
 
 async function cleanup() {
-  if (cycleId) {
-    await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
+  if (programId) {
+    await prisma.team.deleteMany({ where: { programId } });
     await prisma.topicApplication.deleteMany({
-      where: { topic: { academicCycleId: cycleId } },
+      where: { topic: { programId } },
     });
-    await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
-    cycleId = null;
+    await prisma.topic.deleteMany({ where: { programId } });
+    await prisma.projectProgram.deleteMany({ where: { id: programId } });
+    programId = null;
   }
   await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, studentId, outsiderId] } } });
   await prisma.user.deleteMany({
@@ -86,22 +85,16 @@ async function main() {
       },
     ],
   });
-  const cycle = await prisma.academicCycle.create({
-    data: {
-      academicYear: 9000 + Math.floor(Math.random() * 1000),
-      term: "FIRST",
-    },
-  });
-  cycleId = cycle.id;
   const program = await prisma.projectProgram.create({ data: {
-    academicCycleId: cycle.id, createdById: professorId, name: "워크스페이스 검증 프로그램", category: "검증", description: "워크스페이스 통합 검증",
+    createdById: professorId, name: `워크스페이스 검증 프로그램 ${professorId}`, category: "검증", description: "워크스페이스 통합 검증",
     startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
+  programId = program.id;
   const topic = await prisma.topic.create({
     data: {
-      academicCycleId: cycle.id,
       programId: program.id,
       authorId: professorId,
+      managerId: professorId,
       title: "워크스페이스 검증 주제",
       description: "워크스페이스 통합 검증",
       capacity: 2,
@@ -126,7 +119,7 @@ async function main() {
   });
   const team = await prisma.team.create({
     data: {
-      academicCycleId: cycle.id,
+      programId: program.id,
       topicId: topic.id,
       professorId,
       name: "워크스페이스 검증 팀",
@@ -135,7 +128,7 @@ async function main() {
   await prisma.teamMember.create({
     data: {
       teamId: team.id,
-      academicCycleId: cycle.id,
+      programId: program.id,
       topicId: topic.id,
       studentId,
       applicationId: application.id,

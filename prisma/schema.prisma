@@ -13,11 +13,6 @@ enum UserRole {
   ADMIN
 }
 
-enum AcademicTerm {
-  FIRST
-  SECOND
-}
-
 enum TopicStatus {
   DRAFT
   PUBLISHED
@@ -159,6 +154,7 @@ enum AuditAction {
   PROJECT_ASSISTANT_INVITED
   PROJECT_ASSISTANT_ACCEPTED
   PROJECT_ASSISTANT_REMOVED
+  TOPIC_CLOSED
 }
 
 enum NotificationType {
@@ -225,6 +221,7 @@ model User {
   projectGuidanceRequests            ProjectGuidanceRequest[]            @relation("ProjectGuidanceRequester")
   projectGuidanceResponses           ProjectGuidanceRequest[]            @relation("ProjectGuidanceResponder")
   topicApplications                  TopicApplication[]
+  topicApplicationsDecided           TopicApplication[]                  @relation("TopicApplicationDecider")
   teamMemberships                    TeamMember[]
   milestonesCreated                  Milestone[]                         @relation("MilestoneCreator")
   milestoneAssignments               MilestoneAssignee[]
@@ -418,22 +415,8 @@ model ProfessorAllowlist {
   @@map("professor_allowlist")
 }
 
-model AcademicCycle {
-  id           String           @id @default(uuid())
-  academicYear Int
-  term         AcademicTerm
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  topics       Topic[]
-  programs     ProjectProgram[]
-
-  @@unique([academicYear, term])
-  @@map("academic_cycle")
-}
-
 model ProjectProgram {
   id                            String               @id @default(uuid())
-  academicCycleId               String
   createdById                   String?
   name                          String
   category                      String
@@ -446,19 +429,16 @@ model ProjectProgram {
   openedAt                      DateTime?
   createdAt                     DateTime             @default(now())
   updatedAt                     DateTime             @updatedAt
-  academicCycle                 AcademicCycle        @relation(fields: [academicCycleId], references: [id])
   createdBy                     User?                @relation(fields: [createdById], references: [id])
   topics                        Topic[]
 
-  @@unique([academicCycleId, name])
-  @@unique([id, academicCycleId])
+  @@unique([name, startsAt])
   @@index([status, startsAt, endsAt])
   @@map("project_program")
 }
 
 model Topic {
   id                      String                       @id @default(uuid())
-  academicCycleId         String
   programId               String
   authorId                String
   managerId               String?
@@ -482,8 +462,7 @@ model Topic {
   publishedAt             DateTime?
   createdAt               DateTime                     @default(now())
   updatedAt               DateTime                     @updatedAt
-  academicCycle           AcademicCycle                @relation(fields: [academicCycleId], references: [id])
-  program                 ProjectProgram               @relation(fields: [programId, academicCycleId], references: [id, academicCycleId])
+  program                 ProjectProgram               @relation(fields: [programId], references: [id])
   author                  User                         @relation("TopicAuthor", fields: [authorId], references: [id])
   manager                 User?                        @relation("TopicManager", fields: [managerId], references: [id], onDelete: Restrict)
   applications            TopicApplication[]
@@ -494,8 +473,7 @@ model Topic {
   assistants              ProjectAssistant[]
   assistantInvitations    ProjectAssistantInvitation[]
 
-  @@unique([id, academicCycleId, managerId])
-  @@index([academicCycleId, status])
+  @@unique([id, programId, managerId])
   @@index([programId, status])
   @@index([authorId])
   @@index([managerId, status])
@@ -547,11 +525,13 @@ model TopicApplication {
   availability           String                          @default("기존 지원서 미입력")
   status                 TopicApplicationStatus          @default(PENDING)
   reviewComment          String                          @default("")
+  decidedById            String?
   decidedAt              DateTime?
   createdAt              DateTime                        @default(now())
   updatedAt              DateTime                        @updatedAt
   topic                  Topic                           @relation(fields: [topicId], references: [id])
   student                User                            @relation(fields: [studentId], references: [id])
+  decidedBy              User?                           @relation("TopicApplicationDecider", fields: [decidedById], references: [id], onDelete: Restrict)
   group                  TopicApplicationGroup?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
   teamMember             TeamMember?
   recruitmentApplication RecruitmentApplication?
@@ -559,6 +539,7 @@ model TopicApplication {
   @@unique([topicId, studentId])
   @@unique([id, studentId, topicId])
   @@index([studentId, status])
+  @@index([decidedById, decidedAt])
   @@index([groupId, participantRole])
   @@map("topic_application")
 }
@@ -638,7 +619,7 @@ model TopicApplicationAnswer {
 
 model Team {
   id               String                   @id @default(uuid())
-  academicCycleId  String
+  programId        String
   topicId          String                   @unique
   professorId      String
   name             String
@@ -648,7 +629,7 @@ model Team {
   status           TeamStatus               @default(FORMING)
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
-  topic            Topic                    @relation(fields: [topicId, academicCycleId, professorId], references: [id, academicCycleId, managerId])
+  topic            Topic                    @relation(fields: [topicId, programId, professorId], references: [id, programId, managerId])
   members          TeamMember[]
   milestones       Milestone[]
   progressUpdates  ProgressUpdate[]
@@ -659,9 +640,9 @@ model Team {
   recruitmentPosts RecruitmentPost[]
   guidanceRequests ProjectGuidanceRequest[]
 
-  @@unique([topicId, academicCycleId, professorId])
-  @@unique([id, academicCycleId, topicId])
-  @@index([academicCycleId, status])
+  @@unique([topicId, programId, professorId])
+  @@unique([id, programId, topicId])
+  @@index([programId, status])
   @@index([professorId])
   @@map("team")
 }
@@ -828,19 +809,19 @@ model RecruitmentApplication {
 }
 
 model TeamMember {
-  id              String           @id @default(uuid())
-  teamId          String
-  academicCycleId String
-  topicId         String
-  studentId       String
-  applicationId   String           @unique
-  joinedAt        DateTime         @default(now())
-  team            Team             @relation(fields: [teamId, academicCycleId, topicId], references: [id, academicCycleId, topicId], onDelete: Cascade)
-  student         User             @relation(fields: [studentId], references: [id])
-  application     TopicApplication @relation(fields: [applicationId, studentId, topicId], references: [id, studentId, topicId])
+  id            String           @id @default(uuid())
+  teamId        String
+  programId     String
+  topicId       String
+  studentId     String
+  applicationId String           @unique
+  joinedAt      DateTime         @default(now())
+  team          Team             @relation(fields: [teamId, programId, topicId], references: [id, programId, topicId], onDelete: Cascade)
+  student       User             @relation(fields: [studentId], references: [id])
+  application   TopicApplication @relation(fields: [applicationId, studentId, topicId], references: [id, studentId, topicId])
 
   @@unique([teamId, studentId])
-  @@unique([academicCycleId, studentId])
+  @@unique([programId, studentId])
   @@unique([applicationId, studentId, topicId])
   @@index([studentId])
   @@map("team_member")

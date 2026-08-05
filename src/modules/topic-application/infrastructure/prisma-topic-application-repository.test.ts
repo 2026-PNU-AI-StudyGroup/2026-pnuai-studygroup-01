@@ -46,8 +46,8 @@ describe("Prisma 지원 결정 저장소", () => {
     const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
 
     await repository.findVisibleById("application-1", {
-      actorId: "professor-1",
-      isAdmin: false,
+      id: "professor-1",
+      role: "PROFESSOR",
     });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
@@ -69,12 +69,12 @@ describe("Prisma 지원 결정 저장소", () => {
     const repository = new PrismaTopicApplicationQueryRepository({ topicApplication: { findFirst } } as unknown as PrismaClient);
 
     await repository.findVisibleById("application-1", {
-      actorId: "admin-1",
-      isAdmin: true,
+      id: "admin-1",
+      role: "ADMIN",
     });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "application-1", OR: [{ groupId: null }, { participantRole: "LEADER" }] },
+      where: { id: "application-1", topic: {}, OR: [{ groupId: null }, { participantRole: "LEADER" }] },
     }));
   });
 
@@ -93,12 +93,12 @@ describe("Prisma 지원 결정 저장소", () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { createdAt: "desc" } }));
   });
 
-  it("학생-학기 유니크 충돌만 중복 소속으로 분류한다", async () => {
+  it("학생-프로그램 유니크 충돌만 중복 소속으로 분류한다", async () => {
     const studentConflict = new PrismaTopicApplicationDecisionRepository({
       $transaction: vi
         .fn()
         .mockRejectedValue(
-          knownError("P2002", ["academicCycleId", "studentId"]),
+          knownError("P2002", ["programId", "studentId"]),
         ),
     } as unknown as PrismaClient);
     const otherConflict = new PrismaTopicApplicationDecisionRepository({
@@ -121,6 +121,84 @@ describe("Prisma 지원 결정 저장소", () => {
         new Date(),
       ),
     ).resolves.toBe("CONFLICT");
+  });
+
+  it("수락한 학생의 같은 프로그램 내 다른 대기 지원을 자동 거절한다", async () => {
+    const decidedAt = new Date("2026-07-19T00:00:00Z");
+    const findMany = vi.fn()
+      .mockResolvedValueOnce([{ id: "application-2", groupId: null }])
+      .mockResolvedValueOnce([{
+        id: "application-2",
+        studentId: "student-1",
+        topic: { title: "다른 주제" },
+      }]);
+    const updateMany = vi.fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{ status: "PUBLISHED" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "student-1", role: "STUDENT", isActive: true }]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      topicApplication: {
+        findUnique: vi.fn()
+          .mockResolvedValueOnce({ studentId: "student-1", topicId: "topic-1", groupId: null })
+          .mockResolvedValueOnce({
+            id: "application-1",
+            topicId: "topic-1",
+            studentId: "student-1",
+            status: "PENDING",
+            topic: {
+              id: "topic-1",
+              title: "선택 주제",
+              authorId: "professor-1",
+              managerId: "professor-1",
+              assistants: [],
+              programId: "program-1",
+              capacity: 2,
+              status: "PUBLISHED",
+            },
+            recruitmentApplication: null,
+          }),
+        findMany,
+        updateMany,
+      },
+      teamMember: {
+        findUnique: vi.fn(async () => null),
+        create: vi.fn(async () => ({ id: "member-1" })),
+      },
+      team: { upsert: vi.fn(async () => ({ id: "team-1" })) },
+      recruitmentApplication: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
+    const client = {
+      $transaction: vi.fn(async (operation: (tx: typeof transaction) => unknown) => operation(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApplicationDecisionRepository(client).accept(
+      "application-1",
+      { id: "professor-1", isAdmin: false },
+      decidedAt,
+    )).resolves.toBe("ACCEPTED");
+
+    expect(findMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: expect.objectContaining({
+        OR: expect.arrayContaining([
+          { studentId: "student-1", topic: { programId: "program-1" } },
+        ]),
+      }),
+    }));
+    expect(updateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: { in: ["application-2"] }, status: "PENDING" },
+      data: {
+        status: "REJECTED",
+        decidedAt,
+        decidedById: "professor-1",
+        reviewComment: "다른 지원이 선정되었거나 프로젝트 정원이 충족되어 자동 미선정되었습니다.",
+      },
+    });
   });
 
   it("담당자가 없는 공개 주제는 실행 팀으로 전환하지 않는다", async () => {
@@ -149,7 +227,7 @@ describe("Prisma 지원 결정 저장소", () => {
               authorId: "student-1",
               managerId: null,
               assistants: [],
-              academicCycleId: "cycle-1",
+              programId: "program-1",
               capacity: 4,
               status: "PUBLISHED",
             },

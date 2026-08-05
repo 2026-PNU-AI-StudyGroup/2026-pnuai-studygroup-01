@@ -14,7 +14,7 @@ async function actor() { const value = await getCurrentActor(); if (!value) redi
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
 export async function createProgramAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ academicCycleId: z.string().uuid(), name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
+  const parsed = z.object({ name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
     ...Object.fromEntries(formData),
     studentProjectCreationEnabled: formData.get("studentProjectCreationEnabled") === "true",
   });

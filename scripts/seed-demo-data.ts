@@ -186,16 +186,15 @@ async function seed() {
   ]);
 
   const seedResult = await prisma.$transaction(async (tx) => {
-    // 검증 프로세스가 강제 종료돼도 전용 이메일 표식이 있는 임시 계정과 그 주기만 회수한다.
-    // 학년도 숫자만으로 사용자 데이터를 검증 데이터라고 추정하지 않는다.
+    // 검증 프로세스가 강제 종료돼도 전용 이메일 표식이 있는 임시 계정과 그 프로그램만 회수한다.
     const verificationUsers = await tx.user.findMany({
       where: { email: { startsWith: "verification+" } },
       select: { id: true },
     });
     const verificationUserIds = verificationUsers.map(({ id }) => id);
-    const verificationCycles = await tx.academicCycle.findMany({
+    const verificationPrograms = await tx.projectProgram.findMany({
       where: { OR: [
-        { programs: { some: { createdById: { in: verificationUserIds } } } },
+        { createdById: { in: verificationUserIds } },
         { topics: { some: { OR: [
           { authorId: { in: verificationUserIds } },
           { applications: { some: { studentId: { in: verificationUserIds } } } },
@@ -207,13 +206,12 @@ async function seed() {
       ] },
       select: { id: true },
     });
-    const verificationCycleIds = verificationCycles.map(({ id }) => id);
-    if (verificationCycleIds.length > 0) {
-      await tx.team.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
-      await tx.topicApplication.deleteMany({ where: { topic: { academicCycleId: { in: verificationCycleIds } } } });
-      await tx.topic.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
-      await tx.projectProgram.deleteMany({ where: { academicCycleId: { in: verificationCycleIds } } });
-      await tx.academicCycle.deleteMany({ where: { id: { in: verificationCycleIds } } });
+    const verificationProgramIds = verificationPrograms.map(({ id }) => id);
+    if (verificationProgramIds.length > 0) {
+      await tx.team.deleteMany({ where: { programId: { in: verificationProgramIds } } });
+      await tx.topicApplication.deleteMany({ where: { topic: { programId: { in: verificationProgramIds } } } });
+      await tx.topic.deleteMany({ where: { programId: { in: verificationProgramIds } } });
+      await tx.projectProgram.deleteMany({ where: { id: { in: verificationProgramIds } } });
     }
     if (verificationUserIds.length > 0) {
       await tx.auditLog.deleteMany({ where: { actorId: { in: verificationUserIds } } });
@@ -372,28 +370,12 @@ async function seed() {
       });
     }
 
-    async function cycle(academicYear: number, term: "FIRST" | "SECOND") {
-      return tx.academicCycle.upsert({
-        where: { academicYear_term: { academicYear, term } },
-        update: {},
-        create: { academicYear, term },
-      });
-    }
-    const currentCycle = await cycle(2026, "FIRST");
-    const secondCycle = await cycle(2026, "SECOND");
-    const pastCycles = [
-      await cycle(2025, "FIRST"),
-      await cycle(2024, "FIRST"),
-      await cycle(2023, "FIRST"),
-      await cycle(2022, "FIRST"),
-    ];
-
     async function program(input: {
-      id: string; academicCycleId: string; name: string; category: string; description: string;
+      id: string; name: string; category: string; description: string;
       startsAt: Date; endsAt: Date; status: "OPEN" | "CLOSED";
     }) {
       const sameName = await tx.projectProgram.findUnique({
-        where: { academicCycleId_name: { academicCycleId: input.academicCycleId, name: input.name } },
+        where: { name_startsAt: { name: input.name, startsAt: input.startsAt } },
         select: { id: true },
       });
       if (sameName && sameName.id !== input.id) {
@@ -401,26 +383,26 @@ async function seed() {
       }
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { academicCycleId: input.academicCycleId, name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
         create: { ...input, createdById: ids.professors[0], openedAt: input.startsAt },
       });
     }
     const activePrograms = [
-      await program({ id: ids.programs[0], academicCycleId: currentCycle.id, name: "CSE 캡스톤디자인 2026", category: opusProgramCategories.capstone, description: "전공 지식을 실제 문제 해결에 적용하고, 지도교수 피드백과 단계별 보고를 거쳐 결과물을 완성하는 팀 프로젝트", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[1], academicCycleId: currentCycle.id, name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-05-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[2], academicCycleId: currentCycle.id, name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-04-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[11], academicCycleId: secondCycle.id, name: "PNU 데이터 프로젝트 2026", category: opusProgramCategories.aiBooster, description: "캠퍼스 데이터를 수집·분석하고 실제 사용자가 활용할 수 있는 서비스로 구현하는 프로젝트형 데이터 교육 프로그램", startsAt: new Date("2026-07-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
+      await program({ id: ids.programs[0], name: "CSE 캡스톤디자인 2026", category: opusProgramCategories.capstone, description: "전공 지식을 실제 문제 해결에 적용하고, 지도교수 피드백과 단계별 보고를 거쳐 결과물을 완성하는 팀 프로젝트", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
+      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-05-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), status: "OPEN" }),
+      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-04-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), status: "OPEN" }),
+      await program({ id: ids.programs[11], name: "PNU 데이터 프로젝트 2026", category: opusProgramCategories.aiBooster, description: "캠퍼스 데이터를 수집·분석하고 실제 사용자가 활용할 수 있는 서비스로 구현하는 프로젝트형 데이터 교육 프로그램", startsAt: new Date("2026-07-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
     ];
     const pastPrograms = [
-      await program({ id: ids.programs[3], academicCycleId: pastCycles[0].id, name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[4], academicCycleId: pastCycles[0].id, name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), status: "CLOSED" }),
       // OPUS 공개 목록에 없는 연도·회차는 과거 프로젝트 탐색을 풍부하게 하기 위한 데모 항목이다.
-      await program({ id: ids.programs[5], academicCycleId: pastCycles[1].id, name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[6], academicCycleId: pastCycles[1].id, name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[7], academicCycleId: pastCycles[2].id, name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[8], academicCycleId: pastCycles[2].id, name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[9], academicCycleId: pastCycles[3].id, name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[10], academicCycleId: pastCycles[3].id, name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), status: "CLOSED" }),
     ];
 
     // OPUS의 2026 캡스톤, 제7회 AI해커톤, AI부스터 2기 공개 API에는 아직 프로젝트가 없다.
@@ -466,13 +448,13 @@ async function seed() {
       await tx.topic.upsert({
         where: { id: ids.topics[index] },
         update: {
-          academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
+          programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           ...schedule,
           status: "PUBLISHED", publishedAt: new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`),
         },
         create: {
-          id: ids.topics[index], academicCycleId: activePrograms[programIndex].academicCycleId, programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
+          id: ids.topics[index], programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           applicationQuestions: { create: applicationQuestions },
           ...schedule,
@@ -496,7 +478,6 @@ async function seed() {
         project.overview,
         skills[0],
         skills[1],
-        project.cycleIndex,
         project.programIndex,
         ids.opusAdvisors[advisorIndex],
         project.advisorRole,
@@ -504,14 +485,13 @@ async function seed() {
       ] as const;
     });
     for (const [offset, data] of pastTopics.entries()) {
-      const [title, description, requiredSkills, preferredSkills, cycleIndex, programIndex, professorId, advisorRole, capacity] = data;
+      const [title, description, requiredSkills, preferredSkills, programIndex, professorId, advisorRole, capacity] = data;
       const topicIndex = offset + 6;
-      const targetCycle = pastCycles[cycleIndex];
       const targetProgram = pastPrograms[programIndex];
       await tx.topic.upsert({
         where: { id: ids.topics[topicIndex] },
         update: {
-          academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
+          programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
           capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
@@ -519,7 +499,7 @@ async function seed() {
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
         create: {
-          id: ids.topics[topicIndex], academicCycleId: targetCycle.id, programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
+          id: ids.topics[topicIndex], programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
           capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
@@ -542,7 +522,7 @@ async function seed() {
       throw new Error("OPUS 프로젝트 참여자와 데모 학생 계정 수가 일치하지 않습니다.");
     }
     const acceptedApplicationRows: Array<readonly [number, number]> = [
-      // 2026년 진행 팀. 정하늘 학생은 서로 다른 학기의 프로젝트 두 개에 참여한다.
+      // 2026년 진행 팀. 정하늘 학생은 서로 다른 프로그램의 프로젝트 두 개에 참여한다.
       [0, 0], [0, 1], [0, 3], [0, 4], [1, 0], [2, 2],
       // OPUS 공개 상세에 등록된 실제 참여자 이름을 프로젝트별로 그대로 연결한다.
       ...pastAcceptedApplicationRows,
@@ -559,7 +539,7 @@ async function seed() {
     function acceptedApplicationTiming(topicIndex: number) {
       const createdAt = topicIndex < 6
         ? new Date("2026-07-05T12:00:00+09:00")
-        : new Date(pastPrograms[pastTopics[topicIndex - 6][5]].startsAt.getTime() + 14 * 86_400_000);
+        : new Date(pastPrograms[pastTopics[topicIndex - 6][4]].startsAt.getTime() + 14 * 86_400_000);
       const decidedAt = new Date(createdAt.getTime() + 5 * 86_400_000);
       return { createdAt, decidedAt };
     }
@@ -589,7 +569,7 @@ async function seed() {
     let localViewerApplicationId: string | null = null;
     if (localViewer) {
       const currentMembership = await tx.teamMember.findUnique({
-        where: { academicCycleId_studentId: { academicCycleId: currentCycle.id, studentId: localViewer.id } },
+        where: { programId_studentId: { programId: activePrograms[0].id, studentId: localViewer.id } },
         select: { id: true },
       });
       if (!currentMembership) {
@@ -619,13 +599,13 @@ async function seed() {
 
     const pastTeamNames = demoProjectDocuments.map(([teamName]) => teamName);
     const teamRows: Array<readonly [number, string, string, string, "FORMING" | "CONFIRMED" | "CLOSED"]> = [
-      [0, currentCycle.id, ids.professors[0], "모두의 길", "CONFIRMED"],
-      [2, currentCycle.id, ids.professors[2], "프로젝트 모아", "FORMING"],
-      ...pastTopics.map((topic, offset) => [offset + 6, pastCycles[topic[4]].id, topic[6], pastTeamNames[offset], "CLOSED"] as const),
-      [1, secondCycle.id, ids.professors[1], "캠퍼스 플로우", "CONFIRMED"],
+      [0, activePrograms[0].id, ids.professors[0], "모두의 길", "CONFIRMED"],
+      [2, activePrograms[0].id, ids.professors[2], "프로젝트 모아", "FORMING"],
+      ...pastTopics.map((topic, offset) => [offset + 6, pastPrograms[topic[4]].id, topic[5], pastTeamNames[offset], "CLOSED"] as const),
+      [1, activePrograms[3].id, ids.professors[1], "캠퍼스 플로우", "CONFIRMED"],
     ];
-    await tx.team.createMany({ data: teamRows.map(([topicIndex, academicCycleId, professorId, name, status], index) => ({
-      id: ids.teams[index], academicCycleId, topicId: ids.topics[topicIndex], professorId, name, status,
+    await tx.team.createMany({ data: teamRows.map(([topicIndex, programId, professorId, name, status], index) => ({
+      id: ids.teams[index], programId, topicId: ids.topics[topicIndex], professorId, name, status,
       sourceUrl: topicIndex >= 6 ? `https://opus.pusan.ac.kr/contest/${opusArchivedProjects[topicIndex - 6].sourceContestId}/teams/view/${opusArchivedProjects[topicIndex - 6].sourceTeamId}` : null,
       thumbnailPath: topicIndex >= 6 ? opusImagePath(opusArchivedProjects[topicIndex - 6].sourceTeamId, "thumbnail") : null,
       posterPath: topicIndex >= 6 ? opusImagePath(opusArchivedProjects[topicIndex - 6].sourceTeamId, "poster") : null,
@@ -638,7 +618,7 @@ async function seed() {
       const teamIndex = teamIndexByTopic.get(topicIndex);
       if (teamIndex === undefined) throw new Error(`팀이 없는 주제에 합격 지원이 연결되었습니다: ${topicIndex}`);
       return {
-        id: ids.members[index], teamId: ids.teams[teamIndex], academicCycleId: teamRows[teamIndex][1], topicId: ids.topics[topicIndex],
+        id: ids.members[index], teamId: ids.teams[teamIndex], programId: teamRows[teamIndex][1], topicId: ids.topics[topicIndex],
         studentId: ids.students[studentIndex], applicationId: ids.applications[index], joinedAt: acceptedApplicationTiming(topicIndex).decidedAt,
       };
     }) });
@@ -646,7 +626,7 @@ async function seed() {
       await tx.teamMember.create({ data: {
         id: ids.members[acceptedApplicationRows.length],
         teamId: ids.teams[1],
-        academicCycleId: currentCycle.id,
+        programId: activePrograms[0].id,
         topicId: ids.topics[2],
         studentId: localViewer.id,
         applicationId: localViewerApplicationId,
@@ -776,7 +756,7 @@ async function seed() {
 
     for (const [reportIndex, teamIndex] of closedTeamIndexes.entries()) {
       const topicIndex = teamRows[teamIndex][0];
-      const programIndex = pastTopics[topicIndex - 6][5];
+      const programIndex = pastTopics[topicIndex - 6][4];
       const submitterIndex = pastStudentIndexesByProject[reportIndex][0];
       const submittedAt = new Date(pastPrograms[programIndex].endsAt.getTime() - 14 * 86_400_000);
       const approvedAt = new Date(submittedAt.getTime() + 5 * 86_400_000);
@@ -1094,7 +1074,7 @@ async function seed() {
     let nextArtifactIndex = archivedProjectCount;
     for (const [index, teamIndex] of closedTeamIndexes.entries()) {
       const ownerId = ids.students[pastStudentIndexesByProject[index][0]];
-      const publishedAt = new Date(pastPrograms[pastTopics[teamRows[teamIndex][0] - 6][5]].endsAt.getTime() - 8 * 86_400_000);
+      const publishedAt = new Date(pastPrograms[pastTopics[teamRows[teamIndex][0] - 6][4]].endsAt.getTime() - 8 * 86_400_000);
       const objectKey = demoArtifactObjectKeys[index];
       const fileId = ids.storedFiles[index + closedTeamIndexes.length];
       const artifactPdf = demoArtifactPdfs[index];
@@ -1149,7 +1129,7 @@ async function seed() {
             OR topic."submissionStartsAt" < program."startsAt"
             OR topic."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
         (SELECT count(*)::int FROM (
-          SELECT "academicCycleId", "studentId" FROM "team_member" GROUP BY 1, 2 HAVING count(*) > 1
+          SELECT "programId", "studentId" FROM "team_member" GROUP BY 1, 2 HAVING count(*) > 1
         ) AS duplicate) AS "duplicateMembership",
         (SELECT count(*)::int FROM "recruitment_application" AS recruitment
           JOIN "topic_application" AS application ON application."id" = recruitment."topicApplicationId"
@@ -1178,7 +1158,7 @@ async function seed() {
     return {
       localViewer: localViewer ? { name: localViewer.name, email: localViewer.email } : null,
       connectedToDemoProject: Boolean(localViewerApplicationId),
-      verificationResidueRemoved: verificationCycles.length,
+      verificationResidueRemoved: verificationPrograms.length,
       topicApplications: acceptedApplicationRows.length + reviewApplicationRows.length + (localViewerApplicationId ? 1 : 0),
       studentTeams: ids.studentTeams.length,
       studentTeamRecruitmentPosts: ids.studentTeamRecruitments.length,
@@ -1188,7 +1168,10 @@ async function seed() {
       activeArtifacts: ids.activeArtifacts.length,
       announcements: ids.announcements.length,
     };
-  }, { timeout: 60_000 });
+  }, {
+    maxWait: 30_000,
+    timeout: 600_000,
+  });
 
   console.log(JSON.stringify({
     activePrograms: 4,

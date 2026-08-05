@@ -60,14 +60,12 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             sizes="(min-width: 1024px) 72vw, 100vw"
             src={project.thumbnailPath}
           />
-          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-bold text-[var(--ink)] backdrop-blur">
-            {project.academicYear} · {project.programName}
+          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-black text-[var(--ink)] backdrop-blur">
+            {project.startYear} · {project.programName}
           </span>
         </div>
-      ) : <EditorialProjectCover id={project.id} label={`${project.academicYear} · ${project.programName}`} />}
-      marker={
-        <ProjectIcon className="size-6" />
-      }
+      ) : <EditorialProjectCover id={project.id} label={`${project.startYear} · ${project.programName}`} />}
+      marker={<ProjectIcon className="size-6" />}
       heading={
         <div>
           <p className="text-sm font-semibold text-[var(--muted)]">{project.teamName}{project.advisorEnabled ? ` · ${project.professorName} ${project.advisorRole}` : ""}</p>

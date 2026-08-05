@@ -5,7 +5,6 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 const adminNavigationItems = [
   { href: "/project-approvals", label: "프로젝트 승인", hint: "학생 제안 검토", icon: "approval" },
   { href: "/admin/programs", label: "프로그램", hint: "개설과 공개 상태", icon: "program" },
-  { href: "/admin/academic-cycles", label: "운영 학기", hint: "연도와 학기 기준", icon: "calendar" },
   { href: "/admin/professors", label: "교수 권한", hint: "교수 접근 승인", icon: "professor" },
   { href: "/admin/users", label: "사용자", hint: "계정 상태 관리", icon: "users" },
   { href: "/admin/audit", label: "감사 기록", hint: "중요 변경 추적", icon: "audit" },
@@ -19,7 +18,6 @@ function AdminNavigationIcon({ name }: { name: (typeof adminNavigationItems)[num
   const paths = {
     approval: <><path d="M5 3h10v14H5z" /><path d="m8 10 2 2 4-5" /></>,
     program: <><rect x="3" y="3" width="6" height="6" /><rect x="11" y="3" width="6" height="6" /><rect x="3" y="11" width="6" height="6" /><rect x="11" y="11" width="6" height="6" /></>,
-    calendar: <><path d="M4 5h12v12H4zM7 3v4m6-4v4M4 9h12" /></>,
     professor: <><circle cx="10" cy="7" r="3" /><path d="M4 17c.4-4 2.4-6 6-6s5.6 2 6 6m-2-8 2 2 3-4" /></>,
     users: <><circle cx="7" cy="7" r="3" /><path d="M2 17c.3-4 2-6 5-6s4.7 2 5 6m2-10c2 0 3 1.3 3 3s-1 2.7-2.5 3M15 13c2.2.3 3.3 1.6 3.5 4" /></>,
     audit: <><circle cx="10" cy="10" r="7" /><path d="M10 6v4l3 2M15.5 15.5 18 18" /></>,

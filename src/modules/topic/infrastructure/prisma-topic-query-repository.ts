@@ -2,20 +2,21 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   ManagedTopicReader,
+  ManagedTopicPage,
+  ManagedTopicSummary,
   PublicTopicLister,
   PublicTopicPage,
   PublicTopicPhase,
   PublicTopicQuery,
   PublicTopicSummary,
   TopicLister,
-  TopicSummary,
 } from "@/modules/topic/application/topic-ports";
 import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
+import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
 
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
-  academicCycle: { select: { academicYear: true, term: true } },
-  program: { select: { name: true, category: true, status: true, advisorEnabled: true } },
+  program: { select: { name: true, category: true, status: true, advisorEnabled: true, startsAt: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -31,7 +32,6 @@ const publicTopicInclude = {
 
 const managedTopicSelect = {
   id: true,
-  academicCycleId: true,
   authorId: true,
   author: { select: { name: true, role: true } },
   title: true,
@@ -62,6 +62,20 @@ const managedTopicSelect = {
   submissionEndsAt: true,
   status: true,
   publishedAt: true,
+  _count: {
+    select: {
+      applications: { where: { status: "PENDING" } },
+    },
+  },
+  team: {
+    select: {
+      _count: {
+        select: {
+          recruitmentPosts: { where: { status: "OPEN" } },
+        },
+      },
+    },
+  },
   program: { select: { name: true, category: true, status: true, advisorEnabled: true } },
 } satisfies Prisma.TopicSelect;
 
@@ -77,19 +91,34 @@ export class PrismaTopicQueryRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
-  listByManager(managerId: string): Promise<TopicSummary[]> {
+  listByManager(managerId: string): Promise<ManagedTopicSummary[]> {
     return this.list({ managerId });
   }
 
-  listAll(): Promise<TopicSummary[]> {
+  listAll(): Promise<ManagedTopicSummary[]> {
     return this.list({});
   }
 
-  listForActor(actor: CurrentActor): Promise<TopicSummary[]> {
+  listForActor(actor: CurrentActor): Promise<ManagedTopicSummary[]> {
     return this.list(topicSupervisorWhere(actor));
   }
 
-  private list(where: Prisma.TopicWhereInput): Promise<TopicSummary[]> {
+  async listPageForActor(actor: CurrentActor, requestedPage: number, pageSize: number): Promise<ManagedTopicPage> {
+    const where = topicSupervisorWhere(actor);
+    const total = await this.client.topic.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const topics = await this.client.topic.findMany({
+      where,
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: managedTopicSelect,
+    });
+    return { items: topics.map(toTopicSummary), page, totalPages, total };
+  }
+
+  private list(where: Prisma.TopicWhereInput): Promise<ManagedTopicSummary[]> {
     return this.client.topic.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -100,7 +129,7 @@ export class PrismaTopicQueryRepository
   async findManaged(
     id: string,
     actor: CurrentActor,
-  ): Promise<TopicSummary | null> {
+  ): Promise<ManagedTopicSummary | null> {
     const topic = await this.client.topic.findFirst({
       where: {
         id,
@@ -205,8 +234,8 @@ export class PrismaTopicQueryRepository
 }
 
 function toTopicSummary(
-  { author, program, ...topic }: ManagedTopicRow,
-): TopicSummary {
+  { author, program, _count, team, ...topic }: ManagedTopicRow,
+): ManagedTopicSummary {
   return {
     ...topic,
     authorName: author.name,
@@ -215,19 +244,20 @@ function toTopicSummary(
     programCategory: program.category,
     programStatus: program.status,
     advisorEnabled: program.advisorEnabled,
+    pendingApplicationCount: _count.applications,
+    openRecruitmentPostCount: team?._count.recruitmentPosts ?? 0,
   };
 }
 
 function toPublicTopic(
-  { author, academicCycle, program, team, ...topic }: PublicTopicRow,
+  { author, program, team, ...topic }: PublicTopicRow,
   ownApplicationStatus: PublicTopicSummary["ownApplicationStatus"] = null,
 ): PublicTopicSummary {
   return {
     ...topic,
     authorName: author.name,
     authorRole: author.role,
-    academicYear: academicCycle.academicYear,
-    term: academicCycle.term,
+    startYear: getProgramStartYear(program.startsAt),
     programName: program.name,
     programCategory: program.category,
     programStatus: program.status,

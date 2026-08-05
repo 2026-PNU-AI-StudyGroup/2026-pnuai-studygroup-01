@@ -13,7 +13,6 @@ import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/pri
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const suffix = randomUUID();
-const cycleId = randomUUID();
 const programId = randomUUID();
 const topicId = randomUUID();
 const teamId = randomUUID();
@@ -46,13 +45,9 @@ async function verify() {
       })),
     ],
   });
-  await prisma.academicCycle.create({
-    data: { id: cycleId, academicYear: 2199, term: "SECOND" },
-  });
   await prisma.projectProgram.create({
     data: {
       id: programId,
-      academicCycleId: cycleId,
       createdById: professorId,
       name: `조교 권한 검증 ${suffix}`,
       category: "검증",
@@ -66,7 +61,6 @@ async function verify() {
   await prisma.topic.create({
     data: {
       id: topicId,
-      academicCycleId: cycleId,
       programId,
       authorId: professorId,
       managerId: professorId,
@@ -113,7 +107,7 @@ async function verify() {
   await prisma.team.create({
     data: {
       id: teamId,
-      academicCycleId: cycleId,
+      programId,
       topicId,
       professorId,
       name: "조교 권한 검증 팀",
@@ -132,7 +126,7 @@ async function verify() {
   await prisma.teamMember.create({
     data: {
       teamId,
-      academicCycleId: cycleId,
+      programId,
       topicId,
       studentId: studentAssistant.id,
       applicationId,
@@ -173,7 +167,6 @@ async function cleanup() {
   await prisma.topicApplicationQuestion.deleteMany({ where: { topicId } });
   await prisma.topic.deleteMany({ where: { id: topicId } });
   await prisma.projectProgram.deleteMany({ where: { id: programId } });
-  await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
   await prisma.user.deleteMany({ where: { id: { in: userIds } } });
 }
 
