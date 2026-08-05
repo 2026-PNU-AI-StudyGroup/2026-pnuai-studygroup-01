@@ -99,7 +99,7 @@ function StatCard({
           : "border-[var(--line-strong)]"
     }`}>
       <dt className={`text-xs font-bold ${danger ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}><UiText>{label}</UiText></dt>
-      <dd className={`mt-1 text-2xl font-black tracking-[-0.04em] ${danger ? "text-[var(--danger)]" : ""}`}>
+      <dd className={`mt-1 text-lg font-black tracking-[-0.03em] ${danger ? "text-[var(--danger)]" : ""}`}>
         {value}<span className="ml-1 text-xs font-bold text-[var(--muted)]"><UiText>{suffix}</UiText></span>
       </dd>
     </div>
@@ -108,7 +108,7 @@ function StatCard({
 
 function ProgressSummary({ summary }: { summary: ProjectProgressSummary }) {
   return (
-    <dl className="grid grid-cols-2 gap-y-5 sm:grid-cols-4 xl:grid-cols-7">
+    <dl className="grid grid-cols-2 gap-y-4 sm:grid-cols-4 xl:grid-cols-7">
       <StatCard label="제출 기한 초과" value={summary.overdue} danger={summary.overdue > 0} />
       <StatCard label="착수 전 · 0%" value={summary.notStarted} accent={summary.notStarted > 0} />
       <StatCard label="초기 · 1–25%" value={summary.early} accent={summary.early > 0} />
