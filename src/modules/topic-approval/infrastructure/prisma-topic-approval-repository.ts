@@ -126,7 +126,8 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   }
 
   async decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE"> {
-    try {
+    for (let attempt = 1; attempt <= DECISION_ATTEMPTS; attempt += 1) {
+      try {
       return await this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId: string | null; status: string }>>(Prisma.sql`
         SELECT "id", "topicId", "route", "requestedProfessorId", "studentTeamId", "status"
@@ -288,11 +289,37 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       await transaction.topicApprovalRequest.update({ where: { id: request.id }, data: { status, reviewComment: input.reviewComment, decidedById: input.actorId, decidedAt: input.decidedAt } });
       return status;
       });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        return "UNAVAILABLE";
+      } catch (error) {
+        // 학생-학기 중복(academicCycleId+studentId)은 동시 승인 TOCTOU 경합 → UNAVAILABLE.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          isStudentCycleUniqueConflict(error)
+        ) {
+          return "UNAVAILABLE";
+        }
+        // 직렬화 충돌(P2034)은 수락 경로와 동일하게 재시도.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2034" &&
+          attempt < DECISION_ATTEMPTS
+        ) {
+          continue;
+        }
+        throw error;
       }
-      throw error;
     }
+    return "UNAVAILABLE";
   }
+}
+
+const DECISION_ATTEMPTS = 3;
+
+function isStudentCycleUniqueConflict(error: Prisma.PrismaClientKnownRequestError): boolean {
+  const target = error.meta?.target;
+  return (
+    Array.isArray(target) &&
+    target.includes("academicCycleId") &&
+    target.includes("studentId")
+  );
 }

@@ -748,7 +748,7 @@
   "삭제된 주제": "Deleted topic",
   "{0} 조교 초대": "{0} assistant invitation",
   "주제 제목은 1자 이상 200자 이하여야 합니다.": "The topic title must be 1 to 200 characters.",
-  "주제 설명은 1자 이상 5,000자 이하여야 합니다.": "The topic description must be 1 to 5,000 characters.",
+  "주제 설명은 1자 이상 8,000자 이하여야 합니다.": "The topic description must be 1 to 8,000 characters.",
   "읽지 않은 알림": "Unread notification",
   "읽지 않은 알림 {0}": "Unread notifications {0}",
   "읽지 않음": "Not read",

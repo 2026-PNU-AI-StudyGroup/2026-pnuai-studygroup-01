@@ -187,17 +187,23 @@ export class PrismaStudentTeamRecruitmentCommandRepository
         where: { id: target.id },
         data: { status: "ACCEPTED", decidedAt: input.decidedAt },
       });
-      if (
-        await transaction.studentTeamMember.count({
-          where: { teamId: target.teamId },
-        }) >= target.capacity
-      ) {
-        await transaction.studentTeamRecruitmentPost.update({
-          where: { id: target.postId },
+      // 정원이 찬 이 팀의 모든 OPEN 모집 공고를 닫고 대기 지원을 거절한다.
+      // (초대 수락 경로 respond()와 동일 — 한 팀에 여러 공고가 있어도 전부 정리.)
+      const memberCount = await transaction.studentTeamMember.count({
+        where: { teamId: target.teamId },
+      });
+      const filledPosts = await transaction.studentTeamRecruitmentPost.findMany({
+        where: { teamId: target.teamId, status: "OPEN", capacity: { lte: memberCount } },
+        select: { id: true },
+      });
+      if (filledPosts.length) {
+        const filledPostIds = filledPosts.map(({ id }) => id);
+        await transaction.studentTeamRecruitmentPost.updateMany({
+          where: { id: { in: filledPostIds } },
           data: { status: "CLOSED" },
         });
         await transaction.studentTeamRecruitmentApplication.updateMany({
-          where: { postId: target.postId, status: "PENDING" },
+          where: { postId: { in: filledPostIds }, status: "PENDING" },
           data: { status: "REJECTED", decidedAt: input.decidedAt },
         });
       }
