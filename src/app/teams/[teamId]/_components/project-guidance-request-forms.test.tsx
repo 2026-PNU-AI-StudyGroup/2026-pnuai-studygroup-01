@@ -85,8 +85,8 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(formData.get("kind")).toBe("MEETING");
     expect(formData.get("title")).toBe("중간 점검 회의");
     expect(formData.get("preferredAt")).toBe("2026-08-10T14:00");
-    expect(container.querySelector('input[name="referenceUrl"]')).toHaveValue("");
     expect(await screen.findByRole("status")).toHaveTextContent("요청을 보냈습니다.");
+    expect(container.querySelector('input[name="referenceUrl"]')).toHaveValue("");
     expect(screen.getByLabelText("제목")).toHaveValue("");
     expect(screen.getByLabelText("요청 내용")).toHaveValue("");
     expect(screen.getByRole("radio", { name: /회의 요청/ })).toBeChecked();
