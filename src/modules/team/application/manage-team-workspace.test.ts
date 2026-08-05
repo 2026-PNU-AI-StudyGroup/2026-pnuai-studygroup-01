@@ -20,6 +20,7 @@ function dependencies() {
     listForProfessor: vi.fn(),
     listAll: vi.fn(),
     listForActor: vi.fn(),
+    listPageForActor: vi.fn(),
   };
   const milestones: MilestoneWriter = {
     createMilestone: vi.fn(async () => ({ id: "milestone-1" })),

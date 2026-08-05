@@ -4,6 +4,7 @@ import type {
   MilestoneStatus,
   MilestoneWriter,
   TeamListItem,
+  TeamListPage,
   TeamWorkspace,
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
@@ -45,6 +46,11 @@ export class TeamWorkspaceQueryService {
 
   list(actor: CurrentActor): Promise<TeamListItem[]> {
     return this.workspaceReader.listForActor(actor);
+  }
+
+  listPage(actor: CurrentActor, requestedPage = 1, status?: "ACTIVE" | "COMPLETED"): Promise<TeamListPage> {
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    return this.workspaceReader.listPageForActor(actor, page, 20, status);
   }
 }
 

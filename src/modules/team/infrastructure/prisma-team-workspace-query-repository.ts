@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   TeamListItem,
+  TeamListPage,
   TeamWorkspace,
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
@@ -33,6 +34,7 @@ const teamListInclude = {
   },
 } satisfies Prisma.TeamInclude;
 const DISCUSSION_PAGE_SIZE = 50;
+type TeamListRow = Prisma.TeamGetPayload<{ include: typeof teamListInclude }>;
 
 export class PrismaTeamWorkspaceQueryRepository
   implements TeamWorkspaceReader
@@ -198,13 +200,55 @@ export class PrismaTeamWorkspaceQueryRepository
     return this.list(teamActorWhere(actor));
   }
 
+  async listPageForActor(
+    actor: CurrentActor,
+    requestedPage: number,
+    pageSize: number,
+    status?: "ACTIVE" | "COMPLETED",
+  ): Promise<TeamListPage> {
+    const visibility = teamActorWhere(actor);
+    const statusWhere: Prisma.TeamWhereInput = status === "ACTIVE"
+      ? { status: { in: ["FORMING", "CONFIRMED"] } }
+      : status === "COMPLETED"
+        ? { status: "CLOSED" }
+        : {};
+    const where: Prisma.TeamWhereInput = { AND: [visibility, statusWhere] };
+    const [total, all, active, completed] = await Promise.all([
+      this.client.team.count({ where }),
+      this.client.team.count({ where: visibility }),
+      this.client.team.count({ where: { AND: [visibility, { status: { in: ["FORMING", "CONFIRMED"] } }] } }),
+      this.client.team.count({ where: { AND: [visibility, { status: "CLOSED" }] } }),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const teams = await this.client.team.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: teamListInclude,
+    });
+    return {
+      items: teams.map(toTeamListItem),
+      page,
+      totalPages,
+      total,
+      counts: { all, active, completed },
+    };
+  }
+
   private async list(where: Prisma.TeamWhereInput): Promise<TeamListItem[]> {
     const teams = await this.client.team.findMany({
       where,
       orderBy: { createdAt: "desc" },
       include: teamListInclude,
     });
-    return teams.map((team) => ({
+    return teams.map(toTeamListItem);
+  }
+}
+
+function toTeamListItem(team: TeamListRow): TeamListItem {
+  return {
       id: team.id,
       name: team.name,
       topicTitle: team.topic.title,
@@ -222,6 +266,5 @@ export class PrismaTeamWorkspaceQueryRepository
         ...milestone,
         assignees: milestone.assignees.map(({ user }) => user),
       })),
-    }));
-  }
+    };
 }

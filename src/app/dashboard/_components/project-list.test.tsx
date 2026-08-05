@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
@@ -26,9 +26,10 @@ const team = {
 
 describe("내 프로젝트 통합 화면", () => {
   it("사용 빈도에 따라 진행 중 상태를 지원 상태보다 먼저 배치한다", () => {
-    render(<ProjectDashboardSidebar counts={{ all: 6, pending: 2, rejected: 1, active: 2, completed: 1 }} selectedView="pending" student />);
+    const { container } = render(<ProjectDashboardSidebar counts={{ all: 6, pending: 2, rejected: 1, active: 2, completed: 1 }} selectedView="pending" student />);
 
-    const links = screen.getByRole("navigation", { name: "내 프로젝트 바로가기" }).querySelectorAll("a");
+    const navigation = screen.getByRole("navigation", { name: "내 프로젝트 바로가기" });
+    const links = navigation.querySelectorAll("a");
 
     expect(Array.from(links).map((link) => link.getAttribute("href"))).toEqual([
       "/dashboard",
@@ -37,7 +38,8 @@ describe("내 프로젝트 통합 화면", () => {
       "/dashboard?view=completed",
       "/dashboard?view=rejected",
     ]);
-    expect(screen.getByRole("link", { name: "승인 대기 2개" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "승인 대기 2개" })).toHaveAttribute("aria-current", "page");
+    expect(container.querySelector("summary")).toHaveTextContent("내 프로젝트승인 대기2개");
   });
 
   it("학생 프로젝트 화면을 지원부터 완료까지의 단일 흐름으로 설명한다", () => {
@@ -53,9 +55,10 @@ describe("내 프로젝트 통합 화면", () => {
 
     expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
+    expect(screen.getByText("진행 중")).toHaveClass("bg-[var(--primary-subtle)]");
     expect(screen.getByText("프로젝트 진행률")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");
-    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "1 / 3 보고서 제출")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "모두의 길 마일스톤 완료율" })).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "2 / 4 마일스톤 완료")).toBeInTheDocument();
     expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
@@ -63,20 +66,23 @@ describe("내 프로젝트 통합 화면", () => {
     expect(screen.queryByText("보고서")).not.toBeInTheDocument();
   });
 
-  it("필수 보고서가 없으면 프로젝트 진행률을 0으로 표시한다", () => {
-    render(<ProjectList role="STUDENT" teams={[{ ...team, reportCount: 0, submittedReportCount: 0 }]} />);
+  it("마일스톤이 없으면 산정할 수 없는 진행률 대신 계획 없음 상태를 표시한다", () => {
+    render(<ProjectList role="STUDENT" teams={[{ ...team, milestoneCount: 0, completedMilestoneCount: 0, milestones: [] }]} />);
 
-    expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText("등록된 마일스톤이 없습니다")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar", { name: "모두의 길 마일스톤 완료율" })).not.toBeInTheDocument();
+    expect(screen.queryByText("0 / 0 마일스톤 완료")).not.toBeInTheDocument();
   });
 
   it("교수와 완료 프로젝트에는 역할과 상태에 맞는 진입 문구를 제공한다", () => {
     const { rerender } = render(<ProjectList role="PROFESSOR" teams={[team]} view="active" />);
 
-    expect(screen.getByRole("link", { name: "지도 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
 
     rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "CLOSED" }]} view="completed" />);
 
     expect(screen.getByRole("heading", { name: "완료한 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByText("완료")).toHaveClass("bg-[var(--surface-subtle)]");
     expect(screen.getByRole("link", { name: "완료 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByText("진행 중 프로젝트")).not.toBeInTheDocument();
   });
@@ -125,6 +131,7 @@ describe("내 프로젝트 통합 화면", () => {
 
     expect(screen.getByRole("heading", { name: "승인 대기" })).toBeInTheDocument();
     expect(screen.getByText("접근성 지도")).toBeInTheDocument();
+    expect(screen.getByText("검토 중")).toHaveClass("bg-[var(--primary-subtle)]");
 
     rerender(
       <ProjectApplicationList
@@ -138,6 +145,7 @@ describe("내 프로젝트 통합 화면", () => {
     );
 
     expect(screen.getByRole("heading", { name: "승인 거절" })).toBeInTheDocument();
+    expect(screen.getByText("미선정")).toHaveClass("bg-[var(--danger-subtle)]");
     expect(screen.getByText("정원이 마감되었습니다.")).toBeInTheDocument();
   });
 });

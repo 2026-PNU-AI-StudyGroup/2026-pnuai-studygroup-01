@@ -21,6 +21,14 @@ export type TeamListItem = {
   }>;
 };
 
+export type TeamListPage = {
+  items: TeamListItem[];
+  page: number;
+  totalPages: number;
+  total: number;
+  counts: { all: number; active: number; completed: number };
+};
+
 export type TeamWorkspace = TeamListItem & {
   topicId: string;
   professorName: string;
@@ -64,6 +72,12 @@ export interface TeamWorkspaceReader {
   listForProfessor(professorId: string): Promise<TeamListItem[]>;
   listAll(): Promise<TeamListItem[]>;
   listForActor(actor: CurrentActor): Promise<TeamListItem[]>;
+  listPageForActor(
+    actor: CurrentActor,
+    page: number,
+    pageSize: number,
+    status?: "ACTIVE" | "COMPLETED",
+  ): Promise<TeamListPage>;
 }
 
 export interface MilestoneWriter {

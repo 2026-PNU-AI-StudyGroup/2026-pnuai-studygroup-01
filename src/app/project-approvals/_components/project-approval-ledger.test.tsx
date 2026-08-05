@@ -45,4 +45,12 @@ describe("ProjectApprovalLedger", () => {
     expect(screen.getByText("공개 승인")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /검토/ })).not.toBeInTheDocument();
   });
+
+  it("관리자 화면에서는 공통 관리 패널과 넓은 화면 전용 열 구조를 사용한다", () => {
+    const { container } = render(<ProjectApprovalLedger requests={[request]} student={false} adminSurface />);
+
+    expect(container.querySelector("section")).toHaveClass("admin-panel");
+    expect(container.querySelector("li")?.className).toContain("2xl:grid-cols-");
+    expect(container.querySelector("li")?.className).not.toContain("xl:grid-cols-[minmax(16rem");
+  });
 });
