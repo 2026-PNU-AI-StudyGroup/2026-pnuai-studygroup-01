@@ -1,7 +1,7 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   TopicLister,
-  TopicSummary,
+  ManagedTopicPage,
 } from "@/modules/topic/application/topic-ports";
 
 export class TopicListingForbiddenError extends Error {
@@ -14,7 +14,8 @@ export class TopicListingForbiddenError extends Error {
 export class ListOwnTopicsService {
   constructor(private readonly repository: TopicLister) {}
 
-  async execute(actor: CurrentActor): Promise<TopicSummary[]> {
-    return this.repository.listForActor(actor);
+  async execute(actor: CurrentActor, requestedPage = 1): Promise<ManagedTopicPage> {
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    return this.repository.listPageForActor(actor, page, 20);
   }
 }

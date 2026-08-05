@@ -18,6 +18,14 @@ export class PrismaProjectAssistantRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
+  async hasSupervisedTopic(actor: CurrentActor): Promise<boolean> {
+    const topic = await this.client.topic.findFirst({
+      where: topicSupervisorWhere(actor),
+      select: { id: true },
+    });
+    return topic !== null;
+  }
+
   async findManagement(
     topicId: string,
     actor: CurrentActor,

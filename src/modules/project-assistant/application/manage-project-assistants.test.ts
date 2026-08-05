@@ -2,8 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ProjectAssistantCommandService,
+  ProjectAssistantQueryService,
 } from "@/modules/project-assistant/application/manage-project-assistants";
-import type { ProjectAssistantWriter } from "@/modules/project-assistant/application/project-assistant-ports";
+import type {
+  ProjectAssistantReader,
+  ProjectAssistantWriter,
+} from "@/modules/project-assistant/application/project-assistant-ports";
 
 function writer(result: Awaited<ReturnType<ProjectAssistantWriter["invite"]>> = "INVITED") {
   return {
@@ -14,7 +18,43 @@ function writer(result: Awaited<ReturnType<ProjectAssistantWriter["invite"]>> = 
   } satisfies ProjectAssistantWriter;
 }
 
+function reader(hasSupervisedTopic: boolean) {
+  return {
+    hasSupervisedTopic: vi.fn(async () => hasSupervisedTopic),
+    findManagement: vi.fn(async () => null),
+    listPendingInvitations: vi.fn(async () => []),
+  } satisfies ProjectAssistantReader;
+}
+
 describe("프로젝트 조교 관리", () => {
+  it.each(["PROFESSOR", "ADMIN"] as const)(
+    "%s 계정은 프로젝트 배정 여부와 무관하게 교수 워크스페이스에 접근한다",
+    async (role) => {
+      const repository = reader(false);
+
+      await expect(
+        new ProjectAssistantQueryService(repository)
+          .canAccessProfessorWorkspace({ id: `${role.toLowerCase()}-1`, role }),
+      ).resolves.toBe(true);
+      expect(repository.hasSupervisedTopic).not.toHaveBeenCalled();
+    },
+  );
+
+  it("수락한 프로젝트 조교 관계가 있는 학생만 교수 워크스페이스에 접근한다", async () => {
+    const assignedRepository = reader(true);
+    const unassignedRepository = reader(false);
+    const actor = { id: "student-1", role: "STUDENT" } as const;
+
+    await expect(
+      new ProjectAssistantQueryService(assignedRepository)
+        .canAccessProfessorWorkspace(actor),
+    ).resolves.toBe(true);
+    await expect(
+      new ProjectAssistantQueryService(unassignedRepository)
+        .canAccessProfessorWorkspace(actor),
+    ).resolves.toBe(false);
+  });
+
   it.each(["STUDENT", "PROFESSOR", "ADMIN"] as const)(
     "%s 계정도 프로젝트 감독 관계가 있으면 다른 사용자를 초대할 수 있다",
     async (role) => {
