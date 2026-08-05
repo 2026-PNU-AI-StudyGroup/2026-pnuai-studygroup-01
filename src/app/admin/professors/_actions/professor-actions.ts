@@ -8,6 +8,7 @@ import {
   InvalidProfessorEmailError,
   ProfessorAccessForbiddenError,
   ProfessorAccessNotFoundError,
+  ProfessorHasActiveProjectsError,
   ProfessorAccessService,
 } from "@/modules/identity/application/manage-professor-access";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -62,7 +63,8 @@ export async function revokeProfessorAccessAction(
     if (
       error instanceof InvalidProfessorEmailError ||
       error instanceof ProfessorAccessForbiddenError ||
-      error instanceof ProfessorAccessNotFoundError
+      error instanceof ProfessorAccessNotFoundError ||
+      error instanceof ProfessorHasActiveProjectsError
     ) return { status: "error", message: error.message };
     throw error;
   }

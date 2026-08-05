@@ -7,7 +7,10 @@ export type ProfessorAccessRecord = {
   createdAt: Date;
   revokedAt: Date | null;
   account: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" } | null;
+  activeResponsibilityCount: number;
 };
+
+export type ProfessorAccessRevokeOutcome = "REVOKED" | "NOT_FOUND" | "ACTIVE_PROJECTS";
 
 export type ProfessorAccessAuditRecord = {
   id: string;
@@ -21,7 +24,7 @@ export interface ProfessorAccessRepository {
   list(): Promise<ProfessorAccessRecord[]>;
   listAudit(): Promise<ProfessorAccessAuditRecord[]>;
   grant(email: string, createdById: string): Promise<void>;
-  revoke(email: string, revokedById: string, revokedAt: Date): Promise<boolean>;
+  revoke(email: string, revokedById: string, revokedAt: Date): Promise<ProfessorAccessRevokeOutcome>;
 }
 
 export class ProfessorAccessForbiddenError extends Error {
@@ -42,6 +45,13 @@ export class ProfessorAccessNotFoundError extends Error {
   constructor() {
     super("활성 상태인 교수 허용 항목이 없습니다.");
     this.name = "ProfessorAccessNotFoundError";
+  }
+}
+
+export class ProfessorHasActiveProjectsError extends Error {
+  constructor() {
+    super("진행 중이거나 공개 전인 담당 프로젝트가 있습니다. 프로젝트를 다른 교수에게 인계하거나 마감한 뒤 권한을 회수해 주세요.");
+    this.name = "ProfessorHasActiveProjectsError";
   }
 }
 
@@ -67,9 +77,11 @@ export class ProfessorAccessService {
   async revoke(actor: CurrentActor, email: string, revokedAt = new Date()): Promise<void> {
     this.assertAdmin(actor);
     const normalizedEmail = this.normalizeProfessorEmail(email);
-    if (!(await this.repository.revoke(normalizedEmail, actor.id, revokedAt))) {
+    const outcome = await this.repository.revoke(normalizedEmail, actor.id, revokedAt);
+    if (outcome === "NOT_FOUND") {
       throw new ProfessorAccessNotFoundError();
     }
+    if (outcome === "ACTIVE_PROJECTS") throw new ProfessorHasActiveProjectsError();
   }
 
   private assertAdmin(actor: CurrentActor): void {

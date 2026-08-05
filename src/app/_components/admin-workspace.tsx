@@ -18,7 +18,7 @@ export function AdminWorkspace({ currentPath, eyebrow, title, description, actio
           </div>
           {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
         </header>
-        <div className="space-y-8 pt-7"><UiText>{children}</UiText></div>
+        <div className="page-enter space-y-8 pt-7"><UiText>{children}</UiText></div>
       </div>
     </div>
   </main>;

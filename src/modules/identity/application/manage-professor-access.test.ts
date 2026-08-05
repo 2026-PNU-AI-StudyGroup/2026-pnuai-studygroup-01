@@ -4,6 +4,7 @@ import {
   InvalidProfessorEmailError,
   ProfessorAccessForbiddenError,
   ProfessorAccessNotFoundError,
+  ProfessorHasActiveProjectsError,
   ProfessorAccessService,
   type ProfessorAccessRepository,
 } from "@/modules/identity/application/manage-professor-access";
@@ -13,7 +14,7 @@ function repository(overrides: Partial<ProfessorAccessRepository> = {}): Profess
     list: vi.fn(async () => []),
     listAudit: vi.fn(async () => []),
     grant: vi.fn(async () => undefined),
-    revoke: vi.fn(async () => true),
+    revoke: vi.fn(async () => "REVOKED" as const),
     ...overrides,
   };
 }
@@ -39,7 +40,7 @@ describe("교수 권한 관리", () => {
   });
 
   it("활성 허용 항목이 없는 회수를 명시적으로 거부한다", async () => {
-    const target = repository({ revoke: vi.fn(async () => false) });
+    const target = repository({ revoke: vi.fn(async () => "NOT_FOUND" as const) });
     await expect(new ProfessorAccessService(target).revoke(
       { id: "admin", role: "ADMIN" },
       "professor@pusan.ac.kr",
@@ -55,5 +56,13 @@ describe("교수 권한 관리", () => {
       revokedAt,
     );
     expect(target.revoke).toHaveBeenCalledWith("professor@pusan.ac.kr", "admin", revokedAt);
+  });
+
+  it("담당 프로젝트가 있는 교수 권한 회수를 차단한다", async () => {
+    const target = repository({ revoke: vi.fn(async () => "ACTIVE_PROJECTS" as const) });
+    await expect(new ProfessorAccessService(target).revoke(
+      { id: "admin", role: "ADMIN" },
+      "professor@pusan.ac.kr",
+    )).rejects.toBeInstanceOf(ProfessorHasActiveProjectsError);
   });
 });

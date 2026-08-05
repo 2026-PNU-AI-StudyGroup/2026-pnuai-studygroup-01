@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
   ProfessorAccessRecord,
   ProfessorAccessAuditRecord,
+  ProfessorAccessRevokeOutcome,
   ProfessorAccessRepository,
 } from "@/modules/identity/application/manage-professor-access";
 
@@ -17,10 +18,41 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
     });
     const users = await this.client.user.findMany({
       where: { email: { in: entries.map(({ email }) => email) } },
-      select: { email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, role: true },
     });
-    const accountByEmail = new Map(users.map(({ email, ...account }) => [email, account]));
-    return entries.map((entry) => ({ ...entry, account: accountByEmail.get(entry.email) ?? null }));
+    const userIds = users.map(({ id }) => id);
+    const [activeTopics, activeTeams] = userIds.length ? await Promise.all([
+      this.client.topic.findMany({
+        where: { managerId: { in: userIds }, status: { not: "CLOSED" } },
+        select: { id: true, managerId: true },
+      }),
+      this.client.team.findMany({
+        where: { professorId: { in: userIds }, status: { in: ["FORMING", "CONFIRMED"] } },
+        select: { topicId: true, professorId: true },
+      }),
+    ]) : [[], []];
+    const responsibilityIdsByUserId = new Map<string, Set<string>>();
+    for (const { id, managerId } of activeTopics) {
+      if (managerId) {
+        const ids = responsibilityIdsByUserId.get(managerId) ?? new Set<string>();
+        ids.add(id);
+        responsibilityIdsByUserId.set(managerId, ids);
+      }
+    }
+    for (const { topicId, professorId } of activeTeams) {
+      const ids = responsibilityIdsByUserId.get(professorId) ?? new Set<string>();
+      ids.add(topicId);
+      responsibilityIdsByUserId.set(professorId, ids);
+    }
+    const accountByEmail = new Map(users.map(({ id, email, ...account }) => [email, {
+      account,
+      activeResponsibilityCount: responsibilityIdsByUserId.get(id)?.size ?? 0,
+    }]));
+    return entries.map((entry) => ({
+      ...entry,
+      account: accountByEmail.get(entry.email)?.account ?? null,
+      activeResponsibilityCount: accountByEmail.get(entry.email)?.activeResponsibilityCount ?? 0,
+    }));
   }
 
   async listAudit(): Promise<ProfessorAccessAuditRecord[]> {
@@ -64,16 +96,32 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
     });
   }
 
-  async revoke(email: string, revokedById: string, revokedAt: Date): Promise<boolean> {
+  async revoke(email: string, revokedById: string, revokedAt: Date): Promise<ProfessorAccessRevokeOutcome> {
     return this.client.$transaction(async (transaction) => {
       await transaction.$queryRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${email}, 0))::text AS "lock"
       `);
+      const allowlist = await transaction.professorAllowlist.findFirst({
+        where: { email, revokedAt: null },
+        select: { id: true },
+      });
+      if (!allowlist) return "NOT_FOUND";
+      const account = await transaction.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (account) {
+        const [activeTopicCount, activeTeamCount] = await Promise.all([
+          transaction.topic.count({ where: { managerId: account.id, status: { not: "CLOSED" } } }),
+          transaction.team.count({ where: { professorId: account.id, status: { in: ["FORMING", "CONFIRMED"] } } }),
+        ]);
+        if (activeTopicCount > 0 || activeTeamCount > 0) return "ACTIVE_PROJECTS";
+      }
       const result = await transaction.professorAllowlist.updateMany({
         where: { email, revokedAt: null },
         data: { revokedAt },
       });
-      if (result.count !== 1) return false;
+      if (result.count !== 1) return "NOT_FOUND";
       await transaction.user.updateMany({
         where: { email, role: "PROFESSOR" },
         data: { role: "STUDENT" },
@@ -86,7 +134,7 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
         metadata: {},
         createdAt: revokedAt,
       } });
-      return true;
-    });
+      return "REVOKED";
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }
