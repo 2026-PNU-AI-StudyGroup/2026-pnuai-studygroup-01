@@ -23,16 +23,18 @@ function stableVariant(value: string) {
 
 export function ProjectGalleryCover({ id, href, label, title, professorName, authorSuffix = "교수", imagePath }: {
   id: string;
-  href: string;
-  label: string;
-  title: string;
+  href?: string;
+  label?: string;
+  title?: string;
   professorName?: string;
   authorSuffix?: string;
   imagePath?: string;
 }) {
+  const interactive = Boolean(href && title);
+
   return (
     <>
-      <div className={`${styles.cover} ${stableVariant(id)}`}>
+      <div aria-hidden={interactive ? undefined : true} data-project-cover className={`${styles.cover} ${stableVariant(id)}`}>
         {imagePath ? (
           <Image
             alt=""
@@ -43,7 +45,7 @@ export function ProjectGalleryCover({ id, href, label, title, professorName, aut
           />
         ) : null}
         {label ? <span className={styles.programLabel}><UiText>{label}</UiText></span> : null}
-        <UiLink href={href} aria-label={`${title} 보기`} className={styles.coverLink} />
+        {href && title ? <UiLink href={href} aria-label={`${title} 보기`} className={styles.coverLink} /> : null}
       </div>
       {professorName ? <div className={styles.professor}>
         <span aria-hidden="true" className={styles.professorMark}>

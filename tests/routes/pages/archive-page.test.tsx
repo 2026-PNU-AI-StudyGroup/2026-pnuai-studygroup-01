@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({ redirect }));
 import ArchivePage from "@/app/archive/page";
 
 describe("지난 프로젝트 이전 주소", () => {
-  it("기존 필터를 보존해 통합 프로젝트 탐색의 종료 탭으로 이동한다", async () => {
+  it("통합 탐색이 지원하는 검색과 페이지 계약만 보존한다", async () => {
     await ArchivePage({
       searchParams: Promise.resolve({
         page: "2",

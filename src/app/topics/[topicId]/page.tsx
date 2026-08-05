@@ -15,6 +15,7 @@ import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
+import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -26,7 +27,6 @@ import { TranslatedText } from "@/app/_components/translated-text";
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 상세");
 }
-const applicationStatus = { PENDING: ["검토 중", "info"], ACCEPTED: ["선정", "success"], REJECTED: ["미선정", "neutral"] } as const;
 const applicationDashboardHref = {
   PENDING: "/dashboard?view=pending",
   ACCEPTED: "/dashboard?view=active",
@@ -88,7 +88,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
             <div className="text-right"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 마감"}</UiText></dt><dd className="mt-1 text-sm font-semibold"><UiDate value={topic.recruitmentEndsAt} mode="dateTime" /></dd></div>
           </dl>
           <div className="mt-5">
-            {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{applicationStatus[application.status][0]}</Link>
+            {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{topicApplicationStatusPresentation[application.status].label}</Link>
               : actor.role === "STUDENT" && recruiting ? <TopicApplicationEditor topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} leaderTeams={leaderTeams} />
                 : null}
           </div>

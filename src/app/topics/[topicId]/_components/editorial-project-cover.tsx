@@ -17,4 +17,3 @@ export function EditorialProjectCover({ id, label }: { id: string; label: string
     </div>
   );
 }
-

@@ -16,9 +16,9 @@ const koreanDate = new Intl.DateTimeFormat("ko-KR", {
   day: "numeric",
 });
 
-const applicationStatus = {
-  PENDING: { label: "지원서 검토 중", tone: "info", href: "/dashboard?view=pending" },
-  REJECTED: { label: "지원 결과 확인", tone: "neutral", href: "/dashboard?view=rejected" },
+const applicationAction = {
+  PENDING: { label: "지원서 검토 중", href: "/dashboard?view=pending" },
+  REJECTED: { label: "지원 결과 확인", href: "/dashboard?view=rejected" },
 } as const;
 
 type TopicItem = PublicTopicPage["items"][number];
@@ -101,12 +101,12 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
 
           <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
             {application === "ACCEPTED" ? (
-              <button type="button" disabled className="button-secondary w-full cursor-not-allowed border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted)] opacity-100">
-                <UiText>{"참여 중"}</UiText>
-              </button>
+              <Link href="/dashboard?view=active" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
+                <UiText>{"내 프로젝트"}</UiText> <ArrowIcon />
+              </Link>
             ) : application ? (
-              <Link href={applicationStatus[application].href} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
-                <UiText>{applicationStatus[application].label}</UiText> <ArrowIcon />
+              <Link href={applicationAction[application].href} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
+                <UiText>{applicationAction[application].label}</UiText> <ArrowIcon />
               </Link>
             ) : canApply && recruiting ? (
               <TopicApplicationEditor
@@ -156,9 +156,13 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   now: Date;
   programOrder: string[];
 }) {
-  // 전체·기본 정렬(최신순)일 때만 프로그램별 그룹. 특정 프로그램·검색·마감임박
-  // 정렬은 목적이 분명하므로 평면 리스트를 유지한다.
-  const grouped = !programId && !query && sort === "LATEST" && topics.items.length > 0
+  const hasFilters = Boolean(
+    programId
+    || query
+    || phase !== "ACTIVE"
+    || sort !== "LATEST",
+  );
+  const grouped = !hasFilters && topics.items.length > 0
     ? groupByProgram(topics.items, programOrder)
     : null;
 
@@ -173,7 +177,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
         <EmptyState
           title="조건에 맞는 프로젝트가 없습니다"
           description="상태나 프로그램을 바꾸거나 검색어를 지워 다시 확인해 주세요."
-          action={<Link href="/topics" className="button-secondary"><UiText>{"필터 초기화"}</UiText></Link>}
+          action={hasFilters ? <Link href="/topics" className="button-secondary"><UiText>{"필터 초기화"}</UiText></Link> : undefined}
         />
       ) : grouped ? (
         <div className="space-y-10">

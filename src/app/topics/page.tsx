@@ -9,6 +9,7 @@ import { ActiveProjectsView } from "@/app/topics/_components/active-projects-vie
 import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
 import { ProjectPortalHero } from "@/app/topics/_components/project-portal-chrome";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
+import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
@@ -65,9 +66,11 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     ]);
     const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
     const selectedProgram = archive.programs.find((program) => program.id === programId);
-    const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs, "past");
+    const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs, "past", { query });
+    const pastAllParams = new URLSearchParams({ view: "past" });
+    if (query) pastAllParams.set("q", query);
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref="/topics?view=past" />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref={`/topics?${pastAllParams.toString()}`} />}>
         <ProjectPortalHero view="past" program={selectedProgram} />
         <PastProjectsView {...archive} query={query} programId={programId} />
       </ExplorerLayout>
@@ -84,9 +87,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
         : Promise.resolve([]),
     ]);
     const selectedProgram = programs.find((program) => program.id === programId);
-    const sidebarItems = buildProgramSidebarItems(programs, archivedPrograms);
+    const sidebarItems = buildProgramSidebarItems(programs, archivedPrograms, "active", { query, phase, sort });
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref="/topics" />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref={activeProjectsHref({ phase, query, sort })} />}>
         <ProjectPortalHero
           view="active"
           program={selectedProgram}

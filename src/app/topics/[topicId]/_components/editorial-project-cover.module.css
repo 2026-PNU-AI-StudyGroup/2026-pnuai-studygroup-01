@@ -98,8 +98,5 @@
 }
 
 @media (min-width: 1024px) {
-  .cover {
-    min-height: 22rem;
-  }
+  .cover { min-height: 22rem; }
 }
-
