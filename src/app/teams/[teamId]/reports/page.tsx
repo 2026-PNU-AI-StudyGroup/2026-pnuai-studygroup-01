@@ -10,12 +10,14 @@ import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-deci
 import { RemoveReportRequirementForm, ReportRequirementForm } from "@/app/teams/[teamId]/_components/report-requirement-forms";
 import { ReportSubmissionForm } from "@/app/teams/[teamId]/_components/report-submission-form";
 import { MobileFieldLabel, WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
+import { ReportFeedbackForm, ReportScoreForm } from "@/app/teams/[teamId]/_components/report-score-feedback-forms";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 보고서");
 }
 const reportTypeLabel = { START: "착수 보고서", MIDTERM: "중간 보고서", FINAL: "결과 보고서" } as const;
+const feedbackRoleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자" } as const;
 
 function ReportStatusStrip({ title, description }: { title: string; description: string }) {
   return (
@@ -90,6 +92,8 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   const now = new Date();
   const submittableReports = reportWorkspace.reports.filter((report) => report.dueAt >= now).map(({ type, dueAt }) => ({ type, dueAt }));
   const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
+  const canScore = workspace.access.canSupervise && workspace.status !== "FORMING";
+  const canFeedback = (workspace.access.isTeamMember || workspace.access.canSupervise) && workspace.status !== "FORMING";
   const canSubmit = workspace.status === "CONFIRMED" && workspace.access.canContribute && submittableReports.length > 0;
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
   const nextReport = [...reportWorkspace.reports].filter((report) => report.dueAt >= now).sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime())[0];
@@ -158,6 +162,45 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                       ))}
                     </ol>
                   )}
+                  {report.score != null || canScore ? (
+                    <div className="mt-5 border-t border-[var(--line)] pt-4">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="text-sm font-extrabold"><UiText>{"보고서 점수"}</UiText></h3>
+                        {report.score != null ? (
+                          <p className="text-sm">
+                            <strong className="text-lg tabular-nums text-[var(--primary)]">{report.score}</strong>
+                            <span className="text-[var(--muted)]"> / 100</span>
+                            {report.scoredByName ? <span className="ml-2 text-xs text-[var(--muted)]">· {report.scoredByName}</span> : null}
+                          </p>
+                        ) : <span className="text-xs text-[var(--muted)]"><UiText>{"아직 점수가 없습니다."}</UiText></span>}
+                      </div>
+                      {report.score != null && report.scoreComment ? (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6"><UiText>{report.scoreComment}</UiText></p>
+                      ) : null}
+                      {canScore ? (
+                        <ReportScoreForm teamId={workspace.id} reportId={report.id} currentScore={report.score} currentComment={report.scoreComment} />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="mt-5 border-t border-[var(--line)] pt-4">
+                    <h3 className="text-sm font-extrabold"><UiText>{"피드백"}</UiText>{report.feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{report.feedback.length}</span> : null}</h3>
+                    {report.feedback.length ? (
+                      <ul className="mt-3 space-y-3">
+                        {report.feedback.map((item) => (
+                          <li key={item.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3">
+                            <p className="text-xs text-[var(--muted)]">
+                              <span className="font-semibold text-[var(--ink)]">{item.authorName}</span>
+                              <span className="ml-1"><UiText>{feedbackRoleLabel[item.authorRole]}</UiText></span>
+                              <span aria-hidden="true"> · </span>
+                              <time dateTime={item.createdAt.toISOString()}><UiDate value={item.createdAt} mode="dateTime" /></time>
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap text-sm leading-6"><UiText>{item.body}</UiText></p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"아직 피드백이 없습니다."}</UiText></p>}
+                    {canFeedback ? <ReportFeedbackForm teamId={workspace.id} reportId={report.id} /> : null}
+                  </div>
                 </div>
                 <div><MobileFieldLabel><UiText>{"마감 기한"}</UiText></MobileFieldLabel><time className="text-sm font-semibold" dateTime={report.dueAt.toISOString()}><UiDate value={report.dueAt} mode="date" /></time></div>
                 <div className="md:justify-self-end">{canManageRequirements ? <><MobileFieldLabel><UiText>{"관리"}</UiText></MobileFieldLabel><RemoveReportRequirementForm teamId={workspace.id} type={report.type} disabled={report.versions.length > 0} /></> : null}</div>

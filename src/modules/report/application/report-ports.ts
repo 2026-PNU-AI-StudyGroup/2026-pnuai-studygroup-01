@@ -10,6 +10,10 @@ export type ReportWorkspace = {
     id: string;
     type: ReportType;
     dueAt: Date;
+    score?: number;
+    scoreComment?: string;
+    scoredByName?: string;
+    scoredAt?: Date;
     versions: Array<{
       id: string;
       version: number;
@@ -24,6 +28,13 @@ export type ReportWorkspace = {
         decidedAt: Date;
         reviewerName: string;
       };
+    }>;
+    feedback: Array<{
+      id: string;
+      authorName: string;
+      authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";
+      body: string;
+      createdAt: Date;
     }>;
   }>;
   artifacts: Array<{
@@ -74,6 +85,25 @@ export interface ReportDecisionWriter {
     decision: ApprovalDecision;
     comment: string;
     decidedAt: Date;
+  }): Promise<boolean>;
+}
+
+export interface ReportScoreWriter {
+  score(input: {
+    reportId: string;
+    actor: CurrentActor;
+    score: number;
+    comment: string;
+    scoredAt: Date;
+  }): Promise<boolean>;
+}
+
+export interface ReportFeedbackWriter {
+  add(input: {
+    reportId: string;
+    actor: CurrentActor;
+    body: string;
+    createdAt: Date;
   }): Promise<boolean>;
 }
 
