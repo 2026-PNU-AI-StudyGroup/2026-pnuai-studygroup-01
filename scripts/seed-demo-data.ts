@@ -993,7 +993,7 @@ async function seed() {
       {
         id: ids.studentTeamRecruitmentApplications[3],
         postId: ids.studentTeamRecruitments[1],
-        studentId: ids.students[0],
+        studentId: ids.students[12],
         message: "데이터 분석 결과가 실제 학생의 의사결정으로 이어지도록 화면과 사용자 흐름을 함께 설계하겠습니다.",
         skills: ["Next.js", "Figma", "TypeScript"],
         desiredRole: "프론트엔드 개발과 사용자 검증",
@@ -1175,7 +1175,7 @@ async function seed() {
       activeArtifacts: ids.activeArtifacts.length,
       announcements: ids.announcements.length,
     };
-  });
+  }, { timeout: 60_000 });
 
   console.log(JSON.stringify({
     activePrograms: 4,
