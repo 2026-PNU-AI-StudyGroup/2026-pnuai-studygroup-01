@@ -22,14 +22,14 @@ export class TopicUnavailableForApplicationError extends Error {
 
 export class StudentAlreadyAssignedError extends Error {
   constructor() {
-    super("이미 같은 학기의 팀에 소속되어 있습니다.");
+    super("이미 같은 프로그램의 팀에 소속되어 있습니다.");
     this.name = "StudentAlreadyAssignedError";
   }
 }
 
 export class TeamMemberUnavailableError extends Error {
   constructor() {
-    super("팀원 중 이미 지원했거나 같은 학기의 다른 프로젝트 팀에 소속된 사용자가 있습니다.");
+    super("팀원 중 이미 지원했거나 같은 프로그램의 다른 프로젝트 팀에 소속된 사용자가 있습니다.");
     this.name = "TeamMemberUnavailableError";
   }
 }

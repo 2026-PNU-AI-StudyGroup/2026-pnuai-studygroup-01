@@ -28,14 +28,17 @@ describe("StudentTeamLedger", () => {
     const { container } = render(<StudentTeamLedger teams={[team]} actorId="student-1" />);
 
     expect(screen.getByRole("list", { name: "참여 중인 팀 목록" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "코드웨이브" })).toHaveAttribute("href", "/teams/manage/team-1");
+    expect(screen.getByRole("heading", { name: "코드웨이브" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "코드웨이브" })).not.toBeInTheDocument();
     expect(screen.getByText("캠퍼스 접근성을 개선하는 팀")).toBeInTheDocument();
     expect(screen.getByText("팀장")).toBeInTheDocument();
     expect(screen.getByText("2명")).toBeInTheDocument();
     expect(screen.getByText("김학생, 이학생")).toBeInTheDocument();
     expect(screen.getByText("3명")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "팀 관리" })).toHaveAttribute("href", "/teams/manage/team-1");
+    expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(container.querySelector("li")).toHaveClass("record-row");
+    expect(container.querySelector("li")?.className).toContain("minmax(13rem,1.55fr)");
     expect(container.querySelector("li")?.className).not.toContain("rounded-[var(--radius-panel)]");
   });
 });

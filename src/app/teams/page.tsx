@@ -49,15 +49,16 @@ export default async function StudentTeamsPage({
             <StudentTeamPageIntro
               title="내 팀"
               description="프로젝트에 지원할 팀을 만들고 관리합니다. 프로젝트 지원은 팀장만 할 수 있습니다."
-              meta={<span><UiText>{"참여 중인 팀"}</UiText>{" "}{teams.length}<UiText>{"개"}</UiText></span>}
-              action={
+              action={teams.length > 0 || invitations.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                <Link className="button-secondary" href="/teams?modal=invitations">
-                  <UiText>{"받은 초대"}</UiText>{invitations.length ? `${invitations.length}` : ""}
-                </Link>
-                <Link className="button-primary" href="/teams?modal=create"><UiText>{"새 팀 만들기"}</UiText></Link>
+                  {invitations.length > 0 ? (
+                    <Link className="button-secondary" href="/teams?modal=invitations">
+                      <UiText>{"받은 초대"}</UiText>{" "}{invitations.length}
+                    </Link>
+                  ) : null}
+                  {teams.length > 0 ? <Link className="button-primary" href="/teams?modal=create"><UiText>{"새 팀 만들기"}</UiText></Link> : null}
                 </div>
-              }
+              ) : undefined}
             />
 
             <section aria-labelledby="my-teams-title">

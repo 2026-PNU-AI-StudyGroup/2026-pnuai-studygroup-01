@@ -50,6 +50,7 @@ export function RecruitmentPostForm({
           <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
             <UiText>{"내 팀"}</UiText><CustomSelect
               name="teamId"
+              ariaLabel="내 팀"
               defaultValue={teams.some((team) => team.id === selectedTeamId) ? selectedTeamId : teams[0]?.id}
               options={teams.map((team) => ({
                 value: team.id,

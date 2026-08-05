@@ -50,7 +50,7 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
               title="내 모집"
               description="열어 둔 역할의 충원 상태와 검토할 지원자를 관리합니다."
               meta={<span><UiText>{"등록한 모집"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
-              action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link>}
+              action={data.posts.length ? <Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link> : undefined}
             />
 
             {data.posts.length === 0 ? (

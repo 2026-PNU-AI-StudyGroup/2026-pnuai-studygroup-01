@@ -39,7 +39,7 @@ export function StudentTeamManagementSections({
         {isLeader ? <Link className="button-secondary shrink-0" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><UiText>{"팀원 모집 공고"}</UiText></Link> : null}
       </header>
 
-      <div className={`grid gap-6 ${isLeader ? "xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]" : ""}`}>
+      <div className={`grid gap-6 ${isLeader ? "2xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]" : ""}`}>
         <section aria-labelledby="members-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-7">
           <div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
             <div>

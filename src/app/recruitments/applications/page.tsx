@@ -47,7 +47,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
               title="보낸 지원"
               description="지원한 역할과 팀의 검토 결과를 시간순으로 확인합니다."
               meta={<span><UiText>{"지원 기록"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
-              action={<Link className="button-secondary" href="/recruitments"><UiText>{"모집 글 탐색"}</UiText></Link>}
+              action={data.applications.length ? <Link className="button-secondary" href="/recruitments"><UiText>{"모집 글 탐색"}</UiText></Link> : undefined}
             />
 
             {data.applications.length === 0 ? (

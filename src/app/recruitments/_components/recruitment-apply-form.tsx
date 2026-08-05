@@ -7,6 +7,7 @@ import { useActionState, useId, useRef } from "react";
 import { applyRecruitmentAction } from "@/app/recruitments/_actions/recruitment-actions";
 import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
 import type { StudentProfile } from "@/modules/identity/domain/student-profile";
+import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
 export function RecruitmentApplyForm({
@@ -68,7 +69,7 @@ export function RecruitmentApplyForm({
           </div>
         </form>
       </dialog>
-      {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border-l-4 border-[var(--primary)] bg-[var(--ink)] px-5 py-4 text-sm font-semibold text-white sm:bottom-6"><UiText>{toastMessage}</UiText></div> : null}
+      <SuccessToast message={toastMessage} />
     </>
   );
 }

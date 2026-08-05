@@ -3,6 +3,7 @@ import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
+import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 
 const navigation = [
   { href: "/recruitments", label: "팀 찾기", icon: "search" },
@@ -57,17 +58,11 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
             <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"팀 구성과 모집을 관리합니다."}</UiText></p>
           </div>
 
-          <details className="group lg:hidden">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 border-y border-[var(--line)] py-2.5 [&::-webkit-details-marker]:hidden">
-              <span className="flex min-w-0 items-center gap-2.5 text-sm font-bold text-[var(--primary-hover)]">
-                <StudentTeamIcon name={current.icon} />
-                <UiText>{current.label}</UiText>
-              </span>
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.75] transition-transform group-open:rotate-180">
-                <path d="m6 8 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </summary>
-            <UiNav aria-label="팀 메뉴 모바일" className="border-b border-[var(--line)] py-2">
+          <ResponsiveSectionNavigation
+            eyebrow={<UiText>{"팀"}</UiText>}
+            label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
+          >
+            <UiNav aria-label="팀 메뉴 모바일">
               <ul className="grid grid-cols-2 gap-x-4">
                 {navigation.map((item) => {
                   const active = isTeamNavigationActive(item.href, currentPath);
@@ -90,7 +85,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                 })}
               </ul>
             </UiNav>
-          </details>
+          </ResponsiveSectionNavigation>
 
           <UiNav aria-label="팀 메뉴" className="mt-5 hidden lg:block">
             <ul className="flex flex-col">

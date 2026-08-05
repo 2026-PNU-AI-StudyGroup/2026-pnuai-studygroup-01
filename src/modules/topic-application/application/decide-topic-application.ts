@@ -64,7 +64,7 @@ export class DecideTopicApplicationService {
     }
     if (outcome === "STUDENT_ALREADY_ASSIGNED") {
       throw new TopicApplicationDecisionConflictError(
-        "학생이 이미 같은 학기의 다른 팀에 소속되어 있습니다.",
+        "학생이 이미 같은 프로그램의 다른 팀에 소속되어 있습니다.",
       );
     }
     if (outcome === "CONFLICT") {
