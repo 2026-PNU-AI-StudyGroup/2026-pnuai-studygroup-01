@@ -31,11 +31,12 @@ function ArrowIcon() {
   return <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-2 size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-function ProjectCard({ topic, canApply, leaderTeams, now }: {
+function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = true }: {
   topic: TopicItem;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
   now: Date;
+  showProgramLabel?: boolean;
 }) {
   const href = `/topics/${topic.id}`;
   const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
@@ -62,7 +63,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now }: {
         <ProjectGalleryCover
           id={topic.id}
           href={href}
-          label={`${topic.programCategory} · ${topic.programName}`}
+          label={showProgramLabel ? `${topic.programCategory} · ${topic.programName}` : ""}
           title={topic.title}
           professorName={topic.advisorEnabled ? topic.authorName : undefined}
           authorSuffix={topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}
@@ -185,7 +186,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
               </header>
               <UiUl aria-label={`${group.programName} 프로젝트`} className={cardGridClassName}>
                 {group.items.map((topic) => (
-                  <ProjectCard key={topic.id} topic={topic} canApply={canApply} leaderTeams={leaderTeams} now={now} />
+                  <ProjectCard key={topic.id} topic={topic} canApply={canApply} leaderTeams={leaderTeams} now={now} showProgramLabel={false} />
                 ))}
               </UiUl>
             </section>

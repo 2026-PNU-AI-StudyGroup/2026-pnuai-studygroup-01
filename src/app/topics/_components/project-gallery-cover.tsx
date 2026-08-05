@@ -42,7 +42,7 @@ export function ProjectGalleryCover({ id, href, label, title, professorName, aut
             src={imagePath}
           />
         ) : null}
-        <span className={styles.programLabel}><UiText>{label}</UiText></span>
+        {label ? <span className={styles.programLabel}><UiText>{label}</UiText></span> : null}
         <UiLink href={href} aria-label={`${title} 보기`} className={styles.coverLink} />
       </div>
       {professorName ? <div className={styles.professor}>
