@@ -15,6 +15,7 @@ const typeLabel: Record<NotificationType, string> = {
   APPLICATION_RESULT: "지원 결과",
   REPORT_ACTIVITY: "보고서",
   PROJECT_REQUEST: "미팅·검토",
+  DISCUSSION: "팀 대화",
   DEADLINE: "마감",
   SYSTEM: "안내",
 };
@@ -22,6 +23,7 @@ const typeIcon = {
   APPLICATION_RESULT: CheckIcon,
   REPORT_ACTIVITY: ProfileIcon,
   PROJECT_REQUEST: ProfileIcon,
+  DISCUSSION: ProfileIcon,
   DEADLINE: BellIcon,
   SYSTEM: BellIcon,
 } satisfies Record<NotificationType, typeof BellIcon>;

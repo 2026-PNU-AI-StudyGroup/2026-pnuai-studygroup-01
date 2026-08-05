@@ -2,6 +2,7 @@ export type NotificationType =
   | "APPLICATION_RESULT"
   | "REPORT_ACTIVITY"
   | "PROJECT_REQUEST"
+  | "DISCUSSION"
   | "DEADLINE"
   | "SYSTEM";
 
