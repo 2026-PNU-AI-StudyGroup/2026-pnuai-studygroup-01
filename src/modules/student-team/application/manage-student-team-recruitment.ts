@@ -4,7 +4,7 @@ import { normalizeApplicationMessage, normalizeApplicationProfile } from "@/modu
 type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
-  memberCount: number; capacity: number; createdAt: Date; canApply: boolean;
+  memberCount: number; capacity: number; createdAt: Date; canApply: boolean; isMember: boolean;
   ownApplication: { status: "PENDING" | "ACCEPTED" | "REJECTED" } | null;
 };
 

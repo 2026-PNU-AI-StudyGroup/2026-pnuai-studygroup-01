@@ -33,12 +33,12 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
           {reportWorkspace.artifacts.map((artifact) => (
             <li key={artifact.id} className="flex min-h-44 flex-col border-b border-[var(--line)] py-5">
               <div className="flex items-start justify-between gap-4">
-                <span className="text-xs font-extrabold text-[var(--primary)]">{artifactTypeLabel[artifact.type]}</span>
+                <span className="text-xs font-bold text-[var(--primary)]">{artifactTypeLabel[artifact.type]}</span>
                 <time className="muted text-xs" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
               </div>
-              <h2 className="mt-4 font-extrabold leading-6 [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
+              <h2 className="mt-4 font-bold leading-6 [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
               <div className="mt-auto pt-5">
-                {artifact.fileId ? <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a> : <a className="inline-flex items-center gap-2 text-sm font-bold text-[var(--primary-hover)] hover:underline" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>}
+                {artifact.fileId ? <a className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a> : <a className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>}
               </div>
             </li>
           ))}

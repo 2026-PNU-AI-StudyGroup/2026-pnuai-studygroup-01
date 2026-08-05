@@ -47,7 +47,7 @@ export function TeamModal({
       >
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 id="team-modal-title" className="text-2xl font-black tracking-[-0.035em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
+            <h2 id="team-modal-title" className="text-2xl font-bold tracking-[-0.035em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
             {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p> : null}
           </div>
           <UiButton

@@ -33,7 +33,7 @@ export function AnnouncementForm({
   return (
     <form action={formAction} className="panel overflow-hidden">
       <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
-        <label className="grid gap-2 text-sm font-bold text-[var(--ink)]">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>
           <UiInput
             className="field bg-white"
@@ -46,7 +46,7 @@ export function AnnouncementForm({
             autoFocus
           />
         </label>
-        <label className="grid gap-2 text-sm font-bold text-[var(--ink)]">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"본문"}</UiText></span>
           <UiTextarea
             className="field min-h-80 bg-white leading-7"

@@ -55,10 +55,10 @@ export default async function AnnouncementsPage({
 
           <section aria-labelledby="announcement-list-title" className="panel overflow-hidden">
             <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-7">
-              <h2 id="announcement-list-title" className="text-base font-black tracking-[-0.02em] text-[var(--ink)]">
+              <h2 id="announcement-list-title" className="text-base font-bold tracking-[-0.02em] text-[var(--ink)]">
                 <UiText>{"전체 공지"}</UiText>
               </h2>
-              <p className="text-sm font-bold text-[var(--muted)]">
+              <p className="text-sm font-semibold text-[var(--muted)]">
                 <UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{data.total}</strong><UiText>{"건"}</UiText>
               </p>
             </div>
@@ -83,7 +83,7 @@ export default async function AnnouncementsPage({
                       className="record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6"
                     >
                       <div className="min-w-0">
-                        <h3 className="text-[1.0625rem] font-bold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
+                        <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                           <UiText>{announcement.title}</UiText>
                         </h3>
                         <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted)] sm:line-clamp-1">

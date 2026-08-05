@@ -8,19 +8,25 @@ import {
   ArtifactRegistrationService,
   InvalidReportInputError,
   ReportDecisionService,
+  ReportFeedbackService,
   ReportOperationNotAllowedError,
   ReportRequirementService,
+  ReportScoreService,
   ReportSubmissionService,
 } from "@/modules/report/application/manage-reports";
 import { PrismaArtifactRepository } from "@/modules/report/infrastructure/prisma-artifact-repository";
 import { PrismaReportDecisionRepository } from "@/modules/report/infrastructure/prisma-report-decision-repository";
+import { PrismaReportFeedbackRepository } from "@/modules/report/infrastructure/prisma-report-feedback-repository";
 import { PrismaReportRequirementRepository } from "@/modules/report/infrastructure/prisma-report-requirement-repository";
+import { PrismaReportScoreRepository } from "@/modules/report/infrastructure/prisma-report-score-repository";
 import { PrismaReportSubmissionRepository } from "@/modules/report/infrastructure/prisma-report-submission-repository";
 import {
   artifactRegistrationSchema,
   reportDecisionSchema,
+  reportFeedbackSchema,
   reportRequirementRemovalSchema,
   reportRequirementSchema,
+  reportScoreSchema,
   reportSubmissionSchema,
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -113,6 +119,51 @@ export async function decideReportAction(
     ).decide(actor, parsed.data);
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "검토 결정을 저장했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function scoreReportAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = reportScoreSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "점수(0~100)와 총평을 확인해 주세요." };
+  try {
+    await new ReportScoreService(new PrismaReportScoreRepository(prisma)).score(actor, {
+      reportId: parsed.data.reportId,
+      score: parsed.data.score,
+      comment: parsed.data.comment,
+    });
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
+    return { status: "success", message: "점수를 저장했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function addReportFeedbackAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = reportFeedbackSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "피드백 내용을 확인해 주세요." };
+  try {
+    await new ReportFeedbackService(new PrismaReportFeedbackRepository(prisma)).add(actor, {
+      reportId: parsed.data.reportId,
+      body: parsed.data.body,
+    });
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
+    return { status: "success", message: "피드백을 남겼습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

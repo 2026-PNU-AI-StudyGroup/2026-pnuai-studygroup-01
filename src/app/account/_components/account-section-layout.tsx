@@ -17,7 +17,7 @@ export function AccountSectionLayout({ role, currentPath, children }: { role: Us
     <div className="w-full px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
       <header className="border-b border-[var(--line)]">
         <div className="flex flex-wrap items-end justify-between gap-5">
-          <h1 className="pb-3 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"내 계정"}</UiText></h1>
+          <h1 className="pb-3 text-[2rem] font-bold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"내 계정"}</UiText></h1>
           {items.length ? <UiNav aria-label="계정 메뉴" className="flex min-w-0 gap-7 overflow-x-auto">
             {items.map((item) => {
               const active = currentPath === item.href;
@@ -27,7 +27,7 @@ export function AccountSectionLayout({ role, currentPath, children }: { role: Us
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`snap-color relative flex min-h-12 shrink-0 items-center gap-2 pb-3 text-sm font-bold ${
+                  className={`snap-color relative flex min-h-12 shrink-0 items-center gap-2 pb-3 text-sm font-semibold ${
                     active
                       ? "text-[var(--primary)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--primary)]"
                       : "text-[var(--muted)] hover:text-[var(--ink)]"

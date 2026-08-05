@@ -21,7 +21,7 @@ export function ReceivedApplicationList({
     <UiSection aria-label="지원서 목록">
       <div className="flex items-center gap-4 border-y border-[var(--line)] py-4 text-sm">
         <StatusBadge tone="info">
-          <UiText>{"검토 대기"}</UiText>{applications.filter((item) => item.status === "PENDING").length}
+          <UiText>{"검토 대기"}</UiText>{" "}{applications.filter((item) => item.status === "PENDING").length}
         </StatusBadge>
         <span className="muted"><UiText>{"전체"}</UiText>{" "}{applications.length}</span>
       </div>
@@ -43,7 +43,7 @@ export function ReceivedApplicationList({
               </h2>
             </div>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">{application.studentName}<UiText>{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</UiText></p>
+              <p className="truncate font-semibold">{application.studentName}<UiText>{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</UiText></p>
               <p className="muted mt-1 truncate text-xs">{application.studentEmail}</p>
               <p className="muted mt-2 text-xs">
                 <time dateTime={application.createdAt.toISOString()}>

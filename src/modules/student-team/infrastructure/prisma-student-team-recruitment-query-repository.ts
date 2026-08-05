@@ -56,6 +56,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
           select: {
             name: true,
             _count: { select: { members: true } },
+            members: { where: { studentId: actorId }, select: { id: true }, take: 1 },
           },
         },
         applications: {
@@ -75,6 +76,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
         authorName: author.name,
         memberCount: team._count.members,
         canApply: team._count.members < post.capacity,
+        isMember: team.members.length > 0,
         ownApplication: applications[0] ?? null,
       })),
     };

@@ -64,6 +64,9 @@ export async function createTopicAction(
       if (error instanceof TopicApprovalOperationError) {
         return { status: "error", message: error.message };
       }
+      // 도메인 검증 오류(InvalidTopicDetailsError 등)도 500 대신 친절한 메시지로.
+      const message = getCreateTopicErrorMessage(error);
+      if (message) return { status: "error", message };
       throw error;
     }
     revalidatePath("/project-approvals");

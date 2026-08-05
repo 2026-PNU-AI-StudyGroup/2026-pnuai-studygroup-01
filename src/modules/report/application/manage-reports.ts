@@ -2,7 +2,9 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   ArtifactWriter,
   ReportDecisionWriter,
+  ReportFeedbackWriter,
   ReportRequirementWriter,
+  ReportScoreWriter,
   ReportSubmissionWriter,
   ReportWorkspaceReader,
 } from "@/modules/report/application/report-ports";
@@ -13,6 +15,8 @@ import {
   normalizeArtifact,
   normalizeDecisionComment,
   normalizeDescription,
+  normalizeReportFeedback,
+  normalizeReportScore,
   type ReportType,
   validateReportDueAt,
 } from "@/modules/report/domain/report-policy";
@@ -125,6 +129,43 @@ export class ArtifactRegistrationService {
     });
     if (!result) throw new ReportOperationNotAllowedError();
     return result;
+  }
+}
+
+export class ReportScoreService {
+  constructor(private readonly scoreWriter: ReportScoreWriter) {}
+
+  async score(actor: CurrentActor, input: {
+    reportId: string;
+    score: number;
+    comment: string;
+  }, now = new Date()) {
+    const normalized = normalizeReportScore(input.score, input.comment);
+    const scored = await this.scoreWriter.score({
+      reportId: input.reportId,
+      actor,
+      score: normalized.score,
+      comment: normalized.comment,
+      scoredAt: now,
+    });
+    if (!scored) throw new ReportOperationNotAllowedError();
+  }
+}
+
+export class ReportFeedbackService {
+  constructor(private readonly feedbackWriter: ReportFeedbackWriter) {}
+
+  async add(actor: CurrentActor, input: {
+    reportId: string;
+    body: string;
+  }, now = new Date()) {
+    const added = await this.feedbackWriter.add({
+      reportId: input.reportId,
+      actor,
+      body: normalizeReportFeedback(input.body),
+      createdAt: now,
+    });
+    if (!added) throw new ReportOperationNotAllowedError();
   }
 }
 

@@ -101,9 +101,12 @@ export function UiDate({
   mode?: "date" | "dateTime" | "day" | "time";
 }) {
   const { locale } = useI18n();
+  // hour12를 지정하지 않으면 ko-KR 12시간제 dayPeriod가 서버(Node ICU)에서는
+  // "PM", 브라우저에서는 "오후"로 갈려 하이드레이션 불일치가 난다. 24시간제로
+  // 고정하면 서버·클라이언트가 항상 같은 문자열을 렌더한다.
   const options: Intl.DateTimeFormatOptions =
     mode === "dateTime"
-      ? { dateStyle: "medium", timeStyle: "short" }
+      ? { dateStyle: "medium", timeStyle: "short", hour12: false }
       : mode === "day"
         ? {
             year: "numeric",
@@ -112,7 +115,7 @@ export function UiDate({
             weekday: "short",
           }
         : mode === "time"
-          ? { hour: "numeric", minute: "2-digit" }
+          ? { hour: "numeric", minute: "2-digit", hour12: false }
           : { dateStyle: "medium" };
   return (
     <>

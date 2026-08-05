@@ -51,13 +51,13 @@ export function RecruitmentPostList({
                 <div aria-hidden="true" className="absolute bottom-0 right-16 h-28 w-px rotate-[28deg] bg-white/70" />
                 <div className="relative flex h-full min-h-32 flex-col justify-between">
                   <div className="flex items-start justify-between gap-4">
-                    <p className={`text-sm font-black ${posterTheme.accent}`}>{post.teamName}</p>
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
+                    <p className={`min-w-0 truncate text-sm font-bold ${posterTheme.accent}`}>{post.teamName}</p>
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--ink)]">
                       <CapacityIcon />
                       {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText></span>
                   </div>
                   <div className="flex items-end justify-between gap-5">
-                    <p className="max-w-[21rem] text-[1.65rem] font-black leading-[1.12] tracking-[-0.04em] text-[var(--ink)]">{post.roleNeeded}</p>
+                    <p className="line-clamp-2 max-w-[21rem] text-[1.65rem] font-bold leading-[1.12] tracking-[-0.04em] text-[var(--ink)]">{post.roleNeeded}</p>
                     <UiDiv className="grid size-14 shrink-0 place-items-center rounded-full border-4 border-white bg-[var(--ink)] text-white" aria-label={`모집자 ${post.authorName}`}>
                       <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6 fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
                         <circle cx="12" cy="8" r="3.25" />
@@ -70,34 +70,36 @@ export function RecruitmentPostList({
 
               <div className="flex min-h-[22rem] flex-col px-6 py-6">
                 <div>
-                  <p className="text-xs font-bold text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.authorName}</p>
-                  <h3 className="mt-2 text-[1.35rem] font-black leading-snug tracking-[-0.025em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
+                  <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.authorName}</p>
+                  <h3 className="mt-2 text-[1.35rem] font-bold leading-snug tracking-[-0.025em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
                   <TranslatedText text={post.content} className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]" />
                 </div>
 
                 <dl className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-5 gap-y-4 border-t border-[var(--line)] pt-5 text-sm">
                   <div className="min-w-0">
                     <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"필요 기술"}</UiText></dt>
-                    <dd className="mt-1 truncate font-bold text-[var(--ink)]"><UiText>{post.requiredSkills.join(", ")}</UiText></dd>
+                    <dd className="mt-1 truncate font-semibold text-[var(--ink)]"><UiText>{post.requiredSkills.join(", ")}</UiText></dd>
                   </div>
                   <div className="min-w-0">
                     <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"활동 가능 시간"}</UiText></dt>
-                    <dd className="mt-1 truncate font-bold text-[var(--ink)]"><UiText>{post.availability}</UiText></dd>
+                    <dd className="mt-1 truncate font-semibold text-[var(--ink)]"><UiText>{post.availability}</UiText></dd>
                   </div>
                 </dl>
 
                 <div className="mt-auto flex items-end justify-between gap-5 pt-6">
-                  <p className="flex items-center gap-2 text-sm font-bold text-[var(--ink)]">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                     <CapacityIcon />
                     <UiText>{post.capacity - post.memberCount > 0 ? `${post.capacity - post.memberCount}자리 남음` : "팀 구성 완료"}</UiText>
                   </p>
                   <div className="min-w-36">
-                    {post.authorId !== actorId && post.canApply && !post.ownApplication ? (
+                    {post.authorId !== actorId && post.canApply && !post.ownApplication && !post.isMember ? (
                       <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} profile={profile} />
                     ) : post.ownApplication ? (
                       <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
                     ) : post.authorId === actorId ? (
                       <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 모집"}</UiText></span>
+                    ) : post.isMember ? (
+                      <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 팀"}</UiText></span>
                     ) : (
                       <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"지원 마감"}</UiText></span>
                     )}

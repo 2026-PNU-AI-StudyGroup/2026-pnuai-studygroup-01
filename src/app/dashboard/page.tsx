@@ -153,7 +153,7 @@ export default async function DashboardPage({
         <div className="page-enter space-y-8 pt-5">
           {assistantInvitations.length > 0 ? (
             <section aria-labelledby="assistant-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
-              <h2 id="assistant-invitations-title" className="text-lg font-extrabold"><UiText>{"프로젝트 조교 초대"}</UiText></h2>
+              <h2 id="assistant-invitations-title" className="text-lg font-bold"><UiText>{"프로젝트 조교 초대"}</UiText></h2>
               <ul className="mt-3 divide-y divide-[var(--line)]">
                 {assistantInvitations.map((invitation) => (
                   <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -172,7 +172,7 @@ export default async function DashboardPage({
               <div className="flex items-end justify-between border-b border-[var(--line)] pb-3">
                 <div>
                   <p className="eyebrow"><UiText>{"조교 권한"}</UiText></p>
-                  <h2 id="assistant-topics-title" className="mt-1 text-xl font-extrabold"><UiText>{"운영 준비 중인 프로젝트"}</UiText></h2>
+                  <h2 id="assistant-topics-title" className="mt-1 text-xl font-bold"><UiText>{"운영 준비 중인 프로젝트"}</UiText></h2>
                 </div>
               </div>
               <ul className="divide-y divide-[var(--line)] border-b border-[var(--line)]">

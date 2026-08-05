@@ -10,7 +10,9 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
 
   async list(): Promise<ProfessorAccessRecord[]> {
     const entries = await this.client.professorAllowlist.findMany({
-      orderBy: [{ revokedAt: "asc" }, { createdAt: "desc" }],
+      // 활성(revokedAt IS NULL) 항목을 먼저 보여준다. 기본 ASC는 NULLS LAST라
+      // 활성 항목이 회수된 항목 아래로 묻힌다.
+      orderBy: [{ revokedAt: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }],
       select: { id: true, email: true, createdAt: true, revokedAt: true },
     });
     const users = await this.client.user.findMany({
@@ -49,7 +51,8 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       });
       await transaction.user.updateMany({
         where: { email, emailVerified: true, role: "STUDENT" },
-        data: { role: "PROFESSOR" },
+        // 교수 승격 시 학생 온보딩 요구 해제(추후 강등 시 온보딩 트랩 방지).
+        data: { role: "PROFESSOR", onboardingRequired: false },
       });
       await transaction.auditLog.create({ data: {
         actorId: createdById,

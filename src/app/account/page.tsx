@@ -31,7 +31,7 @@ export default async function AccountPage() {
         <div className={`grid gap-10 ${actor.role === "STUDENT" ? "xl:grid-cols-2 xl:gap-12" : ""}`}>
           <section aria-labelledby="account-summary-heading" className="grid gap-6 border-y border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
             <div>
-              <h2 id="account-summary-heading" className="text-lg font-extrabold tracking-[-0.02em]"><UiText>{"기본 정보"}</UiText></h2>
+              <h2 id="account-summary-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"기본 정보"}</UiText></h2>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-5 pb-8">
@@ -39,7 +39,7 @@ export default async function AccountPage() {
                   <AccountIcon className="size-7" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-2xl font-extrabold tracking-[-0.035em]">{actor.name}</p>
+                  <p className="truncate text-2xl font-bold tracking-[-0.035em]">{actor.name}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--muted)]">{roleLabel[actor.role]}</p>
                 </div>
               </div>
@@ -59,23 +59,23 @@ export default async function AccountPage() {
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-y border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
               <div>
-                <h2 id="project-profile-heading" className="text-lg font-extrabold tracking-[-0.02em]"><UiText>{"프로젝트 프로필"}</UiText></h2>
+                <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 프로필"}</UiText></h2>
               </div>
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-5">
                   <div className="min-w-0">
-                    <p className={`inline-flex items-center gap-1.5 text-sm font-bold ${profile ? "text-[var(--success)]" : "text-[var(--warning)]"}`}>
+                    <p className={`inline-flex items-center gap-1.5 text-sm font-semibold ${profile ? "text-[var(--success)]" : "text-[var(--warning)]"}`}>
                       {profile ? <CheckIcon className="size-4" /> : null}
                       <UiText>{profile ? "작성 완료" : "작성 필요"}</UiText>
                     </p>
                     {profile ? (
                       <>
-                        <p className="mt-4 text-base font-extrabold leading-6">{profile.desiredRole}</p>
+                        <p className="mt-4 text-base font-bold leading-6">{profile.desiredRole}</p>
                         <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{profile.availability}</UiText></p>
                         <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">{profile.bio}</p>
                         <UiUl aria-label="관심 분야와 보유 기술" className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
                           {[...profile.interests, ...profile.skills].slice(0, 6).map((item) => (
-                            <li key={item} className="text-xs font-semibold text-[var(--muted-strong)]">#{item}</li>
+                            <li key={item} className="text-xs font-semibold text-[var(--muted)]">#{item}</li>
                           ))}
                         </UiUl>
                       </>

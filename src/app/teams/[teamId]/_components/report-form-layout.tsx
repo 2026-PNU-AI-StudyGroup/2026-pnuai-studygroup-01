@@ -18,7 +18,7 @@ export function ReportFormDialogHeader({ eyebrow, title, description, titleId, c
     <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7">
       <div>
         <p className="eyebrow"><UiText>{eyebrow}</UiText></p>
-        <h3 id={titleId} className="mt-2 text-2xl font-extrabold tracking-[-0.035em]"><UiText>{title}</UiText></h3>
+        <h3 id={titleId} className="mt-2 text-2xl font-bold tracking-[-0.035em]"><UiText>{title}</UiText></h3>
         <p className="muted mt-2 text-sm"><UiText>{description}</UiText></p>
       </div>
       <button type="button" onClick={onClose} disabled={pending} aria-label={closeLabel} className="button-quiet min-w-11 shrink-0 px-0"><CloseIcon /></button>
@@ -43,7 +43,7 @@ export function ReportFormActions({ pending, pendingLabel, submitLabel, onCancel
 export function ReportFormToast({ message }: { message: string }) {
   if (!message) return null;
   return (
-    <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">
+    <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-semibold text-[var(--ink)] sm:bottom-6">
       <UiText>{message}</UiText>
     </div>
   );

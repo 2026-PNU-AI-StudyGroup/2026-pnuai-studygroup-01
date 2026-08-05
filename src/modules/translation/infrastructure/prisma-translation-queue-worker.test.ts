@@ -154,7 +154,7 @@ describe("PrismaTranslationQueueWorker", () => {
     });
   });
 
-  it("rejects a corrupt target locale before invoking the LLM", async () => {
+  it("fails a corrupt target locale without blocking the batch", async () => {
     const fixture = createFixture([
       {
         id: "job-4",
@@ -168,12 +168,18 @@ describe("PrismaTranslationQueueWorker", () => {
       translate: vi.fn(),
     };
 
-    await expect(
-      new PrismaTranslationQueueWorker(fixture.client, engine, "qwen").processBatch(
-        10,
-        now,
-      ),
-    ).rejects.toThrow("Unsupported translation target: ja");
+    const result = await new PrismaTranslationQueueWorker(
+      fixture.client,
+      engine,
+      "qwen",
+    ).processBatch(10, now);
+
+    // poison pill이 배치 전체를 막지 않고 해당 작업만 FAILED 처리한다.
+    expect(result).toEqual({ claimed: 0, succeeded: 0, retried: 0, failed: 0 });
     expect(engine.translate).not.toHaveBeenCalled();
+    expect(fixture.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["job-4"] } },
+      data: { status: "FAILED", lockedAt: null, lastError: "Unsupported translation target" },
+    });
   });
 });

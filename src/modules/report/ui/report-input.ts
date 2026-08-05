@@ -36,6 +36,19 @@ export const reportDecisionSchema = z.object({
   comment: z.string().max(2_000),
 });
 
+export const reportScoreSchema = z.object({
+  teamId: z.string().uuid(),
+  reportId: z.string().uuid(),
+  score: z.coerce.number().int().min(0).max(100),
+  comment: z.string().max(2_000).optional().default(""),
+});
+
+export const reportFeedbackSchema = z.object({
+  teamId: z.string().uuid(),
+  reportId: z.string().uuid(),
+  body: z.string().trim().min(1).max(2_000),
+});
+
 export const artifactRegistrationSchema = z.object({
   teamId: z.string().uuid(),
   type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER"]),

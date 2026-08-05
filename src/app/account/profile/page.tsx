@@ -30,7 +30,7 @@ export default async function StudentProfilePage() {
         <div>
           <div className="grid gap-6 border-b border-[var(--line)] pb-9 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
             <div>
-              <h2 className="text-lg font-extrabold tracking-[-0.02em]"><UiText>{"프로필 편집"}</UiText></h2>
+              <h2 className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로필 편집"}</UiText></h2>
             </div>
             <div className="flex flex-wrap items-start justify-between gap-5">
               <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
