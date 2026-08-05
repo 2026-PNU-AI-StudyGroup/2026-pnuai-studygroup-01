@@ -24,6 +24,11 @@ const projectStatus = {
   CLOSED: { label: "완료", tone: "neutral" },
 } as const;
 
+// 느린 팀 = 진행 중인데 필수 보고서 제출 기한을 넘긴 프로젝트(객관적 지연 신호).
+function projectNeedsAttention(project: AdminProjectOverviewItem): boolean {
+  return project.status === "CONFIRMED" && project.overdueReportCount > 0;
+}
+
 export type ProjectProgressSummary = {
   total: number;
   notStarted: number;
@@ -121,9 +126,10 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
     project.reportCount,
   );
   const status = projectStatus[project.status];
+  const needsAttention = projectNeedsAttention(project);
 
   return (
-    <li className="grid gap-4 border-t border-[var(--line)] px-4 py-5 first:border-t-0 sm:px-5 lg:grid-cols-[minmax(0,1.5fr)_9rem_minmax(10rem,0.7fr)_auto] lg:items-center">
+    <li className={`grid gap-4 border-t border-[var(--line)] px-4 py-5 first:border-t-0 sm:px-5 lg:grid-cols-[minmax(0,1.5fr)_9rem_minmax(10rem,0.7fr)_auto] lg:items-center ${needsAttention ? "border-l-2 border-l-[var(--danger)]" : ""}`}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="truncate font-bold tracking-[-0.02em]">{project.name}</h3>
@@ -181,6 +187,17 @@ function ProgramSection({
   const summary = summarizeProjectProgress(program.projects);
   const status = programStatus[program.status];
   const programSectionId = `${sectionId}-program-${program.id}`;
+  const attentionCount = program.projects.filter(projectNeedsAttention).length;
+  // 느린 팀을 맨 위로, 그다음 진행률 낮은 순으로 정렬해 관리자가 문제 팀을 먼저 보게 한다.
+  const sortedProjects = [...program.projects].sort((a, b) => {
+    const aa = projectNeedsAttention(a) ? 0 : 1;
+    const bb = projectNeedsAttention(b) ? 0 : 1;
+    if (aa !== bb) return aa - bb;
+    return (
+      calculateProjectProgress(a.submittedReportCount, a.reportCount) -
+      calculateProjectProgress(b.submittedReportCount, b.reportCount)
+    );
+  });
 
   return (
     <section id={programSectionId} aria-labelledby={`${programSectionId}-title`} className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
@@ -200,6 +217,11 @@ function ProgramSection({
             <UiText>{"프로젝트"}</UiText> {summary.total}<UiText>{"개"}</UiText>
             {" · "}
             <UiText>{"평균 진행률"}</UiText> {summary.averageProgress}%
+            {attentionCount > 0 ? (
+              <span className="text-[var(--danger)]">
+                {" · "}<UiText>{"느린 팀"}</UiText> {attentionCount}<UiText>{"개"}</UiText>
+              </span>
+            ) : null}
           </strong>
         </div>
         <div className="mt-5">
@@ -208,7 +230,7 @@ function ProgramSection({
       </header>
       {program.projects.length > 0 ? (
         <ol>
-          {program.projects.map((project) => <ProjectRow key={project.id} project={project} />)}
+          {sortedProjects.map((project) => <ProjectRow key={project.id} project={project} />)}
         </ol>
       ) : (
         <p className="px-5 py-8 text-center text-sm text-[var(--muted)]">
