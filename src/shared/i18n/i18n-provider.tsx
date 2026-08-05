@@ -101,9 +101,16 @@ export function UiDate({
   mode?: "date" | "dateTime" | "day" | "time";
 }) {
   const { locale } = useI18n();
+  const isKorean = locale === "ko";
+  // Node's ICU renders ko-KR AM/PM as "AM"/"PM" instead of "오전"/"오후" when
+  // formatting via dateStyle/timeStyle, unlike browsers — causing a hydration
+  // mismatch. Requesting the day period explicitly keeps server and client
+  // output identical without changing the visible format in either.
   const options: Intl.DateTimeFormatOptions =
     mode === "dateTime"
-      ? { dateStyle: "medium", timeStyle: "short" }
+      ? isKorean
+        ? { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit", dayPeriod: "short" }
+        : { dateStyle: "medium", timeStyle: "short" }
       : mode === "day"
         ? {
             year: "numeric",
@@ -112,11 +119,13 @@ export function UiDate({
             weekday: "short",
           }
         : mode === "time"
-          ? { hour: "numeric", minute: "2-digit" }
+          ? isKorean
+            ? { hour: "numeric", minute: "2-digit", dayPeriod: "short" }
+            : { hour: "numeric", minute: "2-digit" }
           : { dateStyle: "medium" };
   return (
     <>
-      {new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+      {new Intl.DateTimeFormat(isKorean ? "ko-KR" : "en-US", {
         ...options,
         timeZone: "Asia/Seoul",
       }).format(new Date(value))}
