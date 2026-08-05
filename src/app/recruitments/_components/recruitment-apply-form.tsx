@@ -45,8 +45,8 @@ export function RecruitmentApplyForm({
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-[var(--line)] bg-white px-5 py-5 sm:px-7">
           <div>
-            <p className="text-sm font-extrabold text-[var(--primary)]">{teamName}</p>
-            <h3 id={titleId} className="mt-1 text-2xl font-black tracking-[-0.035em]"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
+            <p className="text-sm font-bold text-[var(--primary)]">{teamName}</p>
+            <h3 id={titleId} className="mt-1 text-2xl font-bold tracking-[-0.035em]"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
             <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"팀에 전달할 내 역할과 협업 가능 시간을 확인해 주세요."}</UiText></p>
           </div>
           <UiButton type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0">
@@ -57,10 +57,10 @@ export function RecruitmentApplyForm({
         </div>
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">
           <input type="hidden" name="postId" value={postId} />
-          <label className="grid gap-2 text-sm font-bold"><UiText>{"보유 기술"}</UiText><UiInput name="skills" required defaultValue={profile?.skills.join(", ")} className="field" placeholder="예: TypeScript, Python" /></label>
-          <label className="grid gap-2 text-sm font-bold"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required defaultValue={profile?.desiredRole} className="field" placeholder="팀에서 맡고 싶은 역할" /></label>
-          <label className="grid gap-2 text-sm font-bold sm:col-span-2"><UiText>{"활동 가능 시간"}</UiText><UiInput name="availability" required defaultValue={profile?.availability} className="field" placeholder="회의와 작업이 가능한 시간" /></label>
-          <label className="grid gap-2 text-sm font-bold sm:col-span-2"><UiText>{"지원 메시지"}</UiText><UiTextarea aria-label="지원 메시지" name="message" maxLength={2000} rows={6} required className="field resize-y" placeholder="경험과 함께하고 싶은 이유를 구체적으로 적어 주세요" /><span className="muted text-xs font-normal"><UiText>{"최대 2,000자"}</UiText></span></label>
+          <label className="grid gap-2 text-sm font-semibold"><UiText>{"보유 기술"}</UiText><UiInput name="skills" required defaultValue={profile?.skills.join(", ")} className="field" placeholder="예: TypeScript, Python" /></label>
+          <label className="grid gap-2 text-sm font-semibold"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required defaultValue={profile?.desiredRole} className="field" placeholder="팀에서 맡고 싶은 역할" /></label>
+          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"활동 가능 시간"}</UiText><UiInput name="availability" required defaultValue={profile?.availability} className="field" placeholder="회의와 작업이 가능한 시간" /></label>
+          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"지원 메시지"}</UiText><UiTextarea aria-label="지원 메시지" name="message" maxLength={2000} rows={6} required className="field resize-y" placeholder="경험과 함께하고 싶은 이유를 구체적으로 적어 주세요" /><span className="muted text-xs font-normal"><UiText>{"최대 2,000자"}</UiText></span></label>
           {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"><UiText>{state.message}</UiText></p> : null}
           <div className="sticky bottom-0 -mx-5 -mb-6 flex flex-col-reverse gap-2 border-t border-[var(--line)] bg-white px-5 py-4 sm:col-span-2 sm:-mx-7 sm:flex-row sm:justify-end sm:px-7">
             <button type="button" className="button-quiet" disabled={pending} onClick={() => dialogRef.current?.close()}><UiText>{"취소"}</UiText></button>
@@ -68,7 +68,7 @@ export function RecruitmentApplyForm({
           </div>
         </form>
       </dialog>
-      {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border-l-4 border-[var(--primary)] bg-[var(--ink)] px-5 py-4 text-sm font-bold text-white sm:bottom-6"><UiText>{toastMessage}</UiText></div> : null}
+      {toastMessage ? <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border-l-4 border-[var(--primary)] bg-[var(--ink)] px-5 py-4 text-sm font-semibold text-white sm:bottom-6"><UiText>{toastMessage}</UiText></div> : null}
     </>
   );
 }

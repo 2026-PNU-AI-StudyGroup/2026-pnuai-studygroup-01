@@ -102,7 +102,7 @@ export function ReceivedApplicationDetail({
 function ApplicationProfileItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="muted text-xs font-bold"><UiText>{label}</UiText></dt>
+      <dt className="muted text-xs font-semibold"><UiText>{label}</UiText></dt>
       <dd className="mt-2"><UiText>{value || "미입력"}</UiText></dd>
     </div>
   );

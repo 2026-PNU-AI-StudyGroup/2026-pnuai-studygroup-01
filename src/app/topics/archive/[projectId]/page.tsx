@@ -44,7 +44,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
     <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} allHref="/topics?view=past" />}>
     <UiNav aria-label="이전 위치" className="mb-5">
-      <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--ink)]">
+      <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <ChevronIcon className="size-4 rotate-180" />
         <UiText>{"지난 프로젝트"}</UiText></Link>
     </UiNav>
@@ -60,7 +60,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             sizes="(min-width: 1024px) 72vw, 100vw"
             src={project.thumbnailPath}
           />
-          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-black text-[var(--ink)] backdrop-blur">
+          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-bold text-[var(--ink)] backdrop-blur">
             {project.academicYear} · {project.programName}
           </span>
         </div>
@@ -70,14 +70,14 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
       }
       heading={
         <div>
-          <p className="text-sm font-bold text-[var(--muted)]">{project.teamName}{project.advisorEnabled ? ` · ${project.professorName} ${project.advisorRole}` : ""}</p>
-          <h1 className="mt-4 max-w-5xl text-[clamp(2.45rem,5vw,4.25rem)] font-black leading-[1.03] tracking-[-0.055em]"><UiText>{project.topicTitle}</UiText></h1>
+          <p className="text-sm font-semibold text-[var(--muted)]">{project.teamName}{project.advisorEnabled ? ` · ${project.professorName} ${project.advisorRole}` : ""}</p>
+          <h1 className="mt-4 max-w-5xl text-[clamp(2.45rem,5vw,4.25rem)] font-bold leading-[1.03] tracking-[-0.055em]"><UiText>{project.topicTitle}</UiText></h1>
         </div>
       }
       railLabelledBy="archive-artifacts"
       rail={
         <>
-          <h2 id="archive-artifacts" className="text-xl font-black"><UiText>{"공개 결과물"}</UiText></h2>
+          <h2 id="archive-artifacts" className="text-xl font-bold"><UiText>{"공개 결과물"}</UiText></h2>
           {project.artifacts.length ? (
             <ul className="mt-5 border-y border-[var(--line)]">
               {project.artifacts.map((artifact) => {
@@ -86,7 +86,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
                     <span className="grid size-9 shrink-0 place-items-center bg-[var(--surface-subtle)] text-[var(--primary)]">
                       <DocumentIcon className="size-4" />
                     </span>
-                    <span className="min-w-0"><span className="block text-xs text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate font-bold"><UiText>{artifact.title}</UiText></span></span>
+                    <span className="min-w-0"><span className="block text-xs text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate font-semibold"><UiText>{artifact.title}</UiText></span></span>
                     <ExternalLinkIcon className="ml-auto size-4 shrink-0" />
                   </>
                 );
@@ -103,7 +103,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
     >
       <div className="space-y-12">
         <section aria-labelledby="archive-description">
-          <h2 id="archive-description" className="text-2xl font-black tracking-[-0.035em]"><UiText>{"프로젝트 이야기"}</UiText></h2>
+          <h2 id="archive-description" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"프로젝트 이야기"}</UiText></h2>
           <TranslatedText text={project.topicDescription} className="mt-5 max-w-3xl whitespace-pre-wrap text-[1.05rem] leading-8 text-[var(--muted)]" />
           {project.posterPath ? (
             <Image
@@ -118,14 +118,14 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
         </section>
 
         <section aria-labelledby="archive-team">
-          <h2 id="archive-team" className="text-2xl font-black tracking-[-0.035em]"><UiText>{"함께 만든 사람들"}</UiText></h2>
+          <h2 id="archive-team" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"함께 만든 사람들"}</UiText></h2>
           <dl className="mt-5 border-y border-[var(--line)]">
             <div className="grid gap-2 py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
-              <dt className="text-sm font-bold text-[var(--muted)]"><UiText>{"참여자"}</UiText></dt>
+              <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"참여자"}</UiText></dt>
               <dd className="font-semibold leading-7">{project.memberNames.join(", ")}</dd>
             </div>
             <div className="grid gap-2 border-t border-[var(--line)] py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
-              <dt className="text-sm font-bold text-[var(--muted)]"><UiText>{"사용 기술"}</UiText></dt>
+              <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"사용 기술"}</UiText></dt>
               <dd className="font-semibold leading-7"><UiText>{skills.join(", ") || "공개된 기술 정보 없음"}</UiText></dd>
             </div>
           </dl>

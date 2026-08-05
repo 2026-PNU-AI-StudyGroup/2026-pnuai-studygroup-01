@@ -53,7 +53,7 @@ function YearProgramGroup({
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between rounded-lg px-2 text-xs font-black text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-10 w-full cursor-pointer items-center justify-between rounded-lg px-2 text-xs font-bold text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
       >
         <span>{year}</span>
         <svg
@@ -85,9 +85,9 @@ function YearProgramGroup({
                   >
                     <ProgramMark value={program.id} />
                     <span className="min-w-0">
-                      <strong className="block truncate text-[0.8rem] font-black"><UiText>{program.name}</UiText></strong>
+                      <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
                       <span className="mt-1 flex items-center gap-1.5">
-                        <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
+                        <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold ${
                           program.status === "active" ? "bg-[var(--success-subtle)] text-[var(--success)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
                         }`}>
                           <UiText>{program.status === "active" ? "진행 중" : "종료"}</UiText>
@@ -133,8 +133,8 @@ export function ProgramSidebar({ items, selectedId, allHref }: {
   return (
     <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
       <div className="mb-4 flex items-center justify-between px-2">
-        <h2 className="text-sm font-black tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
-        <Link href={allHref} className="text-[0.7rem] font-black text-[var(--primary)]"><UiText>{"전체 보기"}</UiText></Link>
+        <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
+        <Link href={allHref} className="text-[0.7rem] font-bold text-[var(--primary)]"><UiText>{"전체 보기"}</UiText></Link>
       </div>
 
       <UiNav aria-label="프로그램 선택">

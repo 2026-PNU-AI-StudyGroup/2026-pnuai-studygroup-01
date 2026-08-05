@@ -25,7 +25,7 @@ export function InviteProjectAssistantForm({ topicId }: { topicId: string }) {
     <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
       <input type="hidden" name="topicId" value={topicId} />
       <label className="grid gap-1.5">
-        <span className="text-sm font-bold"><UiText>{"사용자 이메일"}</UiText></span>
+        <span className="text-sm font-semibold"><UiText>{"사용자 이메일"}</UiText></span>
         <input
           className="field"
           type="email"

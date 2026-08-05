@@ -88,15 +88,15 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
       >
         <div className="grid lg:grid-cols-[18rem_minmax(0,1fr)]">
           <header className="border-b border-[var(--line)] bg-[var(--primary-subtle)] px-6 py-7 lg:border-b-0 lg:border-r lg:px-8 lg:py-9">
-            <p className="text-xs font-black text-[var(--primary)]">{applicationModeLabel(applicationMode)}</p>
-            <h2 id={titleId} className="mt-3 text-3xl font-black leading-[1.08] tracking-[-0.045em]"><UiText>{step === "KIND" ? "지원 방식 선택" : "지원서 작성"}</UiText></h2>
-            <p id={descriptionId} className="mt-5 font-bold leading-6 [overflow-wrap:anywhere]"><UiText>{topicTitle}</UiText></p>
+            <p className="text-xs font-bold text-[var(--primary)]">{applicationModeLabel(applicationMode)}</p>
+            <h2 id={titleId} className="mt-3 text-3xl font-bold leading-[1.08] tracking-[-0.045em]"><UiText>{step === "KIND" ? "지원 방식 선택" : "지원서 작성"}</UiText></h2>
+            <p id={descriptionId} className="mt-5 font-semibold leading-6 [overflow-wrap:anywhere]"><UiText>{topicTitle}</UiText></p>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
               <UiText>{step === "KIND"
                 ? "개인 또는 팀 중 지원 가능한 방식을 먼저 선택해 주세요."
                 : "필수 항목을 확인하고 한 번에 제출합니다. 팀 지원은 팀장만 현재 팀 구성으로 접수할 수 있습니다."}</UiText>
             </p>
-            <UiOl aria-label="지원 단계" className="mt-8 grid gap-3 text-xs font-bold">
+            <UiOl aria-label="지원 단계" className="mt-8 grid gap-3 text-xs font-semibold">
               <li className={step === "KIND" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>1. <UiText>{"지원 방식"}</UiText></li>
               <li className={step === "FORM" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>2. <UiText>{"지원서 작성"}</UiText></li>
             </UiOl>
@@ -105,7 +105,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
           {step === "KIND" ? (
             <section className="grid content-start gap-7 px-6 py-7 sm:px-8 lg:px-10 lg:py-9" aria-labelledby={`${titleId}-kind`}>
               <div>
-                <h3 id={`${titleId}-kind`} className="text-lg font-black"><UiText>{"어떻게 지원하시겠어요?"}</UiText></h3>
+                <h3 id={`${titleId}-kind`} className="text-lg font-bold"><UiText>{"어떻게 지원하시겠어요?"}</UiText></h3>
                 <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"지원 방식을 선택하면 다음 화면에서 지원서를 작성합니다."}</UiText></p>
               </div>
               <fieldset className="grid gap-3 sm:grid-cols-2">
@@ -127,7 +127,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                       <input type="radio" name="applicationKindChoice" value={value} checked={kind === value} disabled={!enabled} onChange={() => setKind(value)} />
                     </span>
                     <span className="text-sm leading-6 text-[var(--muted)]"><UiText>{enabled ? description : disabledMessage}</UiText></span>
-                    <span className="mt-auto text-xs font-bold"><UiText>{enabled ? "선택 가능" : "선택할 수 없음"}</UiText></span>
+                    <span className="mt-auto text-xs font-semibold"><UiText>{enabled ? "선택 가능" : "선택할 수 없음"}</UiText></span>
                   </label>
                 ))}
               </fieldset>
@@ -143,7 +143,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
 
             {kind === "TEAM" ? (
               <fieldset className="grid gap-2">
-                <legend className="text-sm font-bold"><UiText>{"지원할 팀"}</UiText></legend>
+                <legend className="text-sm font-semibold"><UiText>{"지원할 팀"}</UiText></legend>
                 {eligibleTeams.length ? (
                   <>
                   <CustomSelect
@@ -162,7 +162,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                 ) : (
                   <div className="grid gap-4 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <div>
-                      <p className="font-bold">
+                      <p className="font-semibold">
                         <UiText>{leaderTeams.length ? "정원 안에 들어오는 팀이 없습니다" : "지원할 수 있는 내 팀이 없습니다"}</UiText>
                       </p>
                       <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
@@ -181,7 +181,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
 
             <section aria-labelledby={`${titleId}-questions`} className="grid gap-5 border-t border-[var(--line)] pt-7">
               <div>
-                <h3 id={`${titleId}-questions`} className="text-lg font-black"><UiText>{"지원 질문"}</UiText></h3>
+                <h3 id={`${titleId}-questions`} className="text-lg font-bold"><UiText>{"지원 질문"}</UiText></h3>
                 <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"프로젝트 지원에 필요한 질문에 맞춰 작성해 주세요."}</UiText></p>
               </div>
               {applicationQuestions.map((question) => <ApplicationAnswerField key={question.id} question={question} />)}
@@ -202,7 +202,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
       </dialog>
 
       {state.status === "success" ? (
-        <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-bold text-[var(--ink)] sm:bottom-6">
+        <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-semibold text-[var(--ink)] sm:bottom-6">
           <UiText>{state.message}</UiText>
         </div>
       ) : null}

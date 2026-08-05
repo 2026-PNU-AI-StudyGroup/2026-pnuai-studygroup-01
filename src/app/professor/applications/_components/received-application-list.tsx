@@ -43,7 +43,7 @@ export function ReceivedApplicationList({
               </h2>
             </div>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">{application.studentName}<UiText>{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</UiText></p>
+              <p className="truncate font-semibold">{application.studentName}<UiText>{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</UiText></p>
               <p className="muted mt-1 truncate text-xs">{application.studentEmail}</p>
               <p className="muted mt-2 text-xs">
                 <time dateTime={application.createdAt.toISOString()}>

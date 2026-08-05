@@ -19,7 +19,7 @@ function OnboardingSidebar() {
   return (
     <div className="px-5 py-6 lg:sticky lg:top-0 lg:h-screen lg:px-5 lg:py-8">
       <div className="border-b border-[var(--line)] pb-6">
-        <h2 className="text-sm font-black tracking-[-0.02em] text-[var(--ink)]">
+        <h2 className="text-sm font-bold tracking-[-0.02em] text-[var(--ink)]">
           <UiText>{"가입 정보"}</UiText>
         </h2>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
@@ -27,11 +27,11 @@ function OnboardingSidebar() {
         </p>
       </div>
       <UiOl className="mt-5 space-y-1" aria-label="가입 단계">
-        <li className="relative flex min-h-11 items-center gap-3 border-l-2 border-[var(--primary)] px-3 text-sm font-bold text-[var(--primary)]">
+        <li className="relative flex min-h-11 items-center gap-3 border-l-2 border-[var(--primary)] px-3 text-sm font-semibold text-[var(--primary)]">
           <span aria-hidden="true" className="grid size-6 place-items-center rounded-full bg-[var(--primary)] text-xs text-white">1</span>
           <UiText>{"기본 정보 입력"}</UiText>
         </li>
-        <li className="flex min-h-11 items-center gap-3 border-l-2 border-transparent px-3 text-sm font-bold text-[var(--muted)]">
+        <li className="flex min-h-11 items-center gap-3 border-l-2 border-transparent px-3 text-sm font-semibold text-[var(--muted)]">
           <span aria-hidden="true" className="grid size-6 place-items-center rounded-full border border-[var(--line)] text-xs">2</span>
           <UiText>{"프로젝트 탐색 시작"}</UiText>
         </li>
@@ -67,7 +67,7 @@ export default async function OnboardingPage() {
         />
         <section aria-labelledby="student-onboarding-title" className="page-enter pt-7">
           <div className="pb-6">
-            <h2 id="student-onboarding-title" className="text-lg font-extrabold tracking-[-0.025em] text-[var(--ink)]">
+            <h2 id="student-onboarding-title" className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
               <UiText>{"학생 기본 정보"}</UiText>
             </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">

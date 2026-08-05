@@ -28,7 +28,7 @@ export function Brand({
       {isSidebar ? (
         <span
           aria-hidden="true"
-          className={`mt-1.5 block w-full whitespace-nowrap text-[0.625rem] font-extrabold leading-[1.35] tracking-[-0.04em] ${
+          className={`mt-1.5 block w-full whitespace-nowrap text-[0.625rem] font-bold leading-[1.35] tracking-[-0.04em] ${
             inverse ? "text-white" : "text-[var(--ink)]"
           }`}
         >

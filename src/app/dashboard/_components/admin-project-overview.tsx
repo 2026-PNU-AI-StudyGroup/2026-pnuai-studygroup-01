@@ -98,9 +98,9 @@ function StatCard({
           ? "border-[var(--primary)]"
           : "border-[var(--line-strong)]"
     }`}>
-      <dt className={`text-xs font-bold ${danger ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}><UiText>{label}</UiText></dt>
-      <dd className={`mt-1 text-lg font-black tracking-[-0.03em] ${danger ? "text-[var(--danger)]" : ""}`}>
-        {value}<span className="ml-1 text-xs font-bold text-[var(--muted)]"><UiText>{suffix}</UiText></span>
+      <dt className={`text-xs font-semibold ${danger ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}><UiText>{label}</UiText></dt>
+      <dd className={`mt-1 text-lg font-bold tracking-[-0.03em] ${danger ? "text-[var(--danger)]" : ""}`}>
+        {value}<span className="ml-1 text-xs font-semibold text-[var(--muted)]"><UiText>{suffix}</UiText></span>
       </dd>
     </div>
   );
@@ -132,7 +132,7 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
     <li className={`grid gap-4 border-t border-[var(--line)] px-4 py-5 first:border-t-0 sm:px-5 lg:grid-cols-[minmax(0,1.5fr)_9rem_minmax(10rem,0.7fr)_auto] lg:items-center ${needsAttention ? "border-l-2 border-l-[var(--danger)]" : ""}`}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate font-bold tracking-[-0.02em]">{project.name}</h3>
+          <h3 className="truncate font-semibold tracking-[-0.02em]">{project.name}</h3>
           <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
           {project.overdueReportCount > 0 ? (
             <StatusBadge tone="danger">
@@ -144,21 +144,21 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
       </div>
       <dl className="grid grid-cols-[5rem_1fr] text-sm lg:block">
         {project.advisorEnabled ? <>
-          <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{"지도교수"}</UiText></dt>
+          <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"지도교수"}</UiText></dt>
           <dd className="lg:mt-1">{project.professorName}</dd>
         </> : null}
-        <dt className={`text-xs font-bold text-[var(--muted)] ${project.advisorEnabled ? "mt-1 lg:hidden" : ""}`}><UiText>{"팀원"}</UiText></dt>
+        <dt className={`text-xs font-semibold text-[var(--muted)] ${project.advisorEnabled ? "mt-1 lg:hidden" : ""}`}><UiText>{"팀원"}</UiText></dt>
         <dd className="mt-1 lg:text-xs">{project.memberCount}<UiText>{"명"}</UiText></dd>
       </dl>
       <div>
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-bold text-[var(--muted)]"><UiText>{"진행률"}</UiText></span>
+          <span className="font-semibold text-[var(--muted)]"><UiText>{"진행률"}</UiText></span>
           <strong>{progress}%</strong>
         </div>
         <ProgressBar value={progress} label={`${project.name} 보고서 제출률`} />
         <p className={`mt-1 text-right text-xs ${
           project.overdueReportCount > 0
-            ? "font-bold text-[var(--danger)]"
+            ? "font-semibold text-[var(--danger)]"
             : "text-[var(--muted)]"
         }`}>
           {project.submittedReportCount} / {project.reportCount} <UiText>{"보고서 제출"}</UiText>
@@ -205,7 +205,7 @@ function ProgramSection({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h3 id={`${programSectionId}-title`} className="text-lg font-black tracking-[-0.025em]">{program.name}</h3>
+              <h3 id={`${programSectionId}-title`} className="text-lg font-bold tracking-[-0.025em]">{program.name}</h3>
               <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
             </div>
             <p className="mt-1 text-sm text-[var(--muted)]">
@@ -265,14 +265,14 @@ function AdminProjectSidebar({
     <UiAside aria-label="프로젝트 현황 탐색" className="min-w-0 overflow-hidden border-b border-[var(--line)] bg-white lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
       <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
         <div className="mb-4 px-2">
-          <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
-          <h2 className="mt-1 text-sm font-black tracking-[-0.02em]"><UiText>{"프로젝트 현황"}</UiText></h2>
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
+          <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"프로젝트 현황"}</UiText></h2>
         </div>
         <UiNav aria-label="프로그램 선택">
           <div className="space-y-4">
             {groups.map((group) => (
               <section key={group.id} aria-labelledby={`admin-project-group-${group.id}`} className="border-t border-[var(--line)] pt-3 first:border-t-0 first:pt-0">
-                <h3 id={`admin-project-group-${group.id}`} className="flex items-center gap-2 px-2 py-1 text-xs font-black">
+                <h3 id={`admin-project-group-${group.id}`} className="flex items-center gap-2 px-2 py-1 text-xs font-bold">
                   <span className={`size-2 rounded-full ${group.id === "active" ? "bg-[var(--primary)]" : "bg-[var(--line-strong)]"}`} />
                   <UiText>{group.label}</UiText>
                 </h3>
@@ -291,11 +291,11 @@ function AdminProjectSidebar({
                                 : "hover:bg-[var(--surface-subtle)]"
                             }`}
                           >
-                            <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-xs font-black text-[var(--primary)]">
+                            <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-xs font-bold text-[var(--primary)]">
                               {program.name.replace(/[^A-Za-z가-힣]/g, "").slice(0, 2) || "P"}
                             </span>
                             <span className="min-w-0">
-                              <strong className="block truncate text-[0.8rem] font-black"><UiText>{program.name}</UiText></strong>
+                              <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
                               <span className="mt-1 block truncate text-[0.65rem] font-semibold text-[var(--muted)]">
                                 {program.academicYear} · <UiText>{program.category}</UiText> · {program.projects.length}<UiText>{"개"}</UiText>
                               </span>
@@ -342,7 +342,7 @@ export function AdminProjectOverview({
         />
         <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14">
           <header className="border-b border-[var(--line)] pb-7">
-            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-bold leading-tight tracking-[-0.035em]"><UiText>{"프로젝트 현황"}</UiText></h1>
+            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]"><UiText>{"프로젝트 현황"}</UiText></h1>
             <p className="mt-2 max-w-3xl text-[0.9375rem] leading-6 text-[var(--muted)]">
               <UiText>{"프로그램별 프로젝트를 확인하고 필수 보고서 제출 기준의 진행률을 비교합니다."}</UiText>
             </p>

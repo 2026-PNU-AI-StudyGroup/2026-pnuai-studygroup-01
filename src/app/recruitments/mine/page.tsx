@@ -57,7 +57,7 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
               <EmptyState title="등록한 모집이 없습니다" description="팀에 필요한 역할과 협업 조건을 정리해 모집을 시작하세요." action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
-                <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-bold text-[var(--muted)] lg:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">
                   <span><UiText>{"모집"}</UiText></span>
                   <span><UiText>{"팀 구성"}</UiText></span>
                   <span><UiText>{"지원 현황"}</UiText></span>
@@ -71,12 +71,12 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
                         <StatusBadge tone={post.status === "OPEN" ? "success" : undefined}><UiText>{post.status === "OPEN" ? "모집 중" : "모집 종료"}</UiText></StatusBadge>
                         <span className="text-xs font-semibold text-[var(--muted)]"><UiDate value={post.createdAt} mode="date" /></span>
                       </div>
-                      <h3 className="mt-2 truncate text-lg font-black tracking-[-0.02em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
+                      <h3 className="mt-2 truncate text-lg font-bold tracking-[-0.02em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
                       <p className="mt-1 truncate text-sm text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.teamName}</p>
                     </div>
-                    <p className="text-sm font-bold text-[var(--ink)]"><span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden"><UiText>{"팀 구성"}</UiText></span>{post.memberCount}/{post.capacity}<UiText>{"명"}</UiText></p>
+                    <p className="text-sm font-semibold text-[var(--ink)]"><span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden"><UiText>{"팀 구성"}</UiText></span>{post.memberCount}/{post.capacity}<UiText>{"명"}</UiText></p>
                     <div className="text-sm">
-                      <p className={post.pendingApplicationCount ? "font-black text-[var(--primary)]" : "font-bold text-[var(--ink)]"}>
+                      <p className={post.pendingApplicationCount ? "font-bold text-[var(--primary)]" : "font-semibold text-[var(--ink)]"}>
                         <span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden"><UiText>{"지원"}</UiText></span>{post.applicationCount}<UiText>{"명"}</UiText></p>
                       <p className="mt-0.5 text-xs text-[var(--muted)]"><UiText>{"검토 대기"}</UiText>{" "}{post.pendingApplicationCount}<UiText>{"명"}</UiText></p>
                     </div>

@@ -70,7 +70,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
         />
         <div className={styles.body}>
           <div className="flex items-start justify-between gap-3">
-            <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
+            <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
               <Link href={href} className={styles.titleLink}><UiText>{topic.title}</UiText></Link>
             </h3>
             <StatusBadge tone={availability.tone}><UiText>{availability.label}</UiText></StatusBadge>
@@ -78,12 +78,12 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
 
           <dl className="mt-5 grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
             <div>
-              <dt className="text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"현재 인원"}</UiText></dt>
-              <dd className="mt-1 font-black">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></dd>
+              <dt className="text-[0.7rem] font-semibold text-[var(--muted)]"><UiText>{"현재 인원"}</UiText></dt>
+              <dd className="mt-1 font-bold">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></dd>
             </div>
             <div>
-              <dt className="text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"모집 마감"}</UiText></dt>
-              <dd className="mt-1 font-black">
+              <dt className="text-[0.7rem] font-semibold text-[var(--muted)]"><UiText>{"모집 마감"}</UiText></dt>
+              <dd className="mt-1 font-bold">
                 <time dateTime={topic.recruitmentEndsAt.toISOString()}>{koreanDate.format(topic.recruitmentEndsAt)}</time>
                 {recruiting ? <span className="ml-1.5 text-[var(--primary)]">D-{deadlineDays}</span> : null}
               </dd>
@@ -93,9 +93,9 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
           {visibleSkills.length ? (
             <UiUl aria-label="필요 기술" className="mt-4 flex min-w-0 flex-wrap items-center gap-1.5">
               {visibleSkills.map((skill) => (
-                <li key={skill} className="max-w-[9rem] truncate rounded-md bg-[var(--surface-subtle)] px-2 py-1 text-xs font-bold text-[var(--muted)]"><UiText>{skill}</UiText></li>
+                <li key={skill} className="max-w-[9rem] truncate rounded-md bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--muted)]"><UiText>{skill}</UiText></li>
               ))}
-              {remainingSkillCount ? <li className="text-xs font-bold text-[var(--muted)]"><UiText>{"외"}</UiText>{" "}{remainingSkillCount}</li> : null}
+              {remainingSkillCount ? <li className="text-xs font-semibold text-[var(--muted)]"><UiText>{"외"}</UiText>{" "}{remainingSkillCount}</li> : null}
             </UiUl>
           ) : null}
 
@@ -105,7 +105,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
                 <UiText>{"참여 중"}</UiText>
               </button>
             ) : application ? (
-              <Link href={applicationStatus[application].href} className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
+              <Link href={applicationStatus[application].href} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
                 <UiText>{applicationStatus[application].label}</UiText> <ArrowIcon />
               </Link>
             ) : canApply && recruiting ? (
@@ -166,7 +166,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
       <div className="mb-4 flex justify-end">
         <h2 id="project-results-title" className="sr-only"><UiText>{"프로젝트 목록"}</UiText></h2>
-        <p className="text-xs font-bold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
+        <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
       </div>
 
       {!topics.items.length ? (
@@ -180,9 +180,9 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
           {grouped.map((group) => (
             <section key={group.programId} aria-label={`${group.programCategory} ${group.programName}`}>
               <header className="mb-4 flex items-baseline gap-3 border-b border-[var(--line)] pb-3">
-                <span className="text-[0.7rem] font-black uppercase tracking-[0.1em] text-[var(--primary)]"><UiText>{group.programCategory}</UiText></span>
-                <h3 className="min-w-0 truncate text-base font-black tracking-[-0.02em]"><UiText>{group.programName}</UiText></h3>
-                <span className="ml-auto shrink-0 text-xs font-bold text-[var(--muted)]">{group.items.length}<UiText>{"개"}</UiText></span>
+                <span className="text-[0.7rem] font-bold uppercase tracking-[0.1em] text-[var(--primary)]"><UiText>{group.programCategory}</UiText></span>
+                <h3 className="min-w-0 truncate text-base font-bold tracking-[-0.02em]"><UiText>{group.programName}</UiText></h3>
+                <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]">{group.items.length}<UiText>{"개"}</UiText></span>
               </header>
               <UiUl aria-label={`${group.programName} 프로젝트`} className={cardGridClassName}>
                 {group.items.map((topic) => (

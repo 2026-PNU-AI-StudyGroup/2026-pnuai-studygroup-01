@@ -32,7 +32,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             <UiLink
               href="/dashboard"
               aria-label="프로젝트 목록으로 돌아가기"
-              className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+              className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
                 <path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -42,7 +42,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             <div className="lg:border-b lg:border-[var(--line)] lg:pb-6">
               <div className="flex min-w-0 items-start justify-between gap-4 lg:block">
                 <div className="min-w-0">
-                  <p className="truncate text-base font-extrabold tracking-[-0.025em]">{workspace.name}</p>
+                  <p className="truncate text-base font-bold tracking-[-0.025em]">{workspace.name}</p>
                   <p className="muted mt-1 line-clamp-1 text-xs leading-5 lg:line-clamp-2"><UiText>{workspace.topicTitle}</UiText></p>
                 </div>
                 <StatusBadge tone={workspace.status === "CONFIRMED" ? "info" : "neutral"}><UiText>{workspaceStatus[workspace.status]}</UiText></StatusBadge>
@@ -60,7 +60,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             </div>
             <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">
               {workspace.advisorEnabled ? <>
-                <p className="muted text-[0.6875rem] font-bold uppercase tracking-[0.08em]"><UiText>{"지도교수"}</UiText></p>
+                <p className="muted text-[0.6875rem] font-semibold uppercase tracking-[0.08em]"><UiText>{"지도교수"}</UiText></p>
                 <p className="mt-1.5 text-sm font-semibold">{workspace.professorName}</p>
               </> : null}
               <p className="muted mt-1 text-xs"><UiText>{"팀원"}</UiText>{" "}{workspace.members.length}<UiText>{"명"}</UiText></p>

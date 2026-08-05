@@ -30,7 +30,7 @@ export default async function TeamMilestonesPage({ params }: { params: Promise<{
       {workspace.status !== "CLOSED" && workspace.access.canContribute ? <MilestoneForm teamId={workspace.id} members={workspace.members} /> : null}
       {workspace.milestones.length === 0 ? <EmptyState title="마일스톤이 없습니다" description={emptyDescription} /> : (
         <div>
-          <div className="hidden grid-cols-[7rem_minmax(0,1fr)_9rem_10rem_19rem] border-b border-[var(--line-strong)] px-2 pb-3 text-xs font-bold text-[var(--muted)] xl:grid">
+          <div className="hidden grid-cols-[7rem_minmax(0,1fr)_9rem_10rem_19rem] border-b border-[var(--line-strong)] px-2 pb-3 text-xs font-semibold text-[var(--muted)] xl:grid">
             <span><UiText>{"상태"}</UiText></span><span><UiText>{"마일스톤"}</UiText></span><span><UiText>{"담당자"}</UiText></span><span><UiText>{"완료 예정"}</UiText></span><span className="text-right"><UiText>{"변경"}</UiText></span>
           </div>
           <ol className="border-b border-[var(--line)]">

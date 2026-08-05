@@ -21,13 +21,13 @@ export function ProjectAssistantManagementPanel({
     <section aria-labelledby="project-assistants-title" className="space-y-5 border-t border-[var(--line)] pt-7">
       <div>
         <p className="eyebrow"><UiText>{"프로젝트 권한"}</UiText></p>
-        <h2 id="project-assistants-title" className="mt-1 text-xl font-extrabold"><UiText>{"조교 관리"}</UiText></h2>
+        <h2 id="project-assistants-title" className="mt-1 text-xl font-bold"><UiText>{"조교 관리"}</UiText></h2>
         <p className="muted mt-1 text-sm"><UiText>{management.advisorEnabled ? "초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트에서 지도교수와 동일한 운영 권한을 갖습니다." : "초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트의 운영 권한을 갖습니다."}</UiText></p>
       </div>
       <InviteProjectAssistantForm topicId={management.topicId} />
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <h3 className="text-sm font-extrabold"><UiText>{"현재 조교"}</UiText>{" "}{management.assistants.length}<UiText>{"명"}</UiText></h3>
+          <h3 className="text-sm font-bold"><UiText>{"현재 조교"}</UiText>{" "}{management.assistants.length}<UiText>{"명"}</UiText></h3>
           {management.assistants.length ? (
             <ul className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {management.assistants.map((assistant) => (
@@ -47,7 +47,7 @@ export function ProjectAssistantManagementPanel({
           ) : <p className="muted mt-3 text-sm"><UiText>{"등록된 조교가 없습니다."}</UiText></p>}
         </div>
         <div>
-          <h3 className="text-sm font-extrabold"><UiText>{"응답 대기"}</UiText>{" "}{management.pendingInvitations.length}<UiText>{"명"}</UiText></h3>
+          <h3 className="text-sm font-bold"><UiText>{"응답 대기"}</UiText>{" "}{management.pendingInvitations.length}<UiText>{"명"}</UiText></h3>
           {management.pendingInvitations.length ? (
             <ul className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {management.pendingInvitations.map((invitation) => (

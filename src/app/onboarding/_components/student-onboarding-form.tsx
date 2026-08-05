@@ -28,7 +28,7 @@ function Field({
   return (
     <div className="grid gap-3 border-b border-[var(--line)] py-6 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
       <span>
-        <label htmlFor={id} className="block text-sm font-bold text-[var(--ink)]">
+        <label htmlFor={id} className="block text-sm font-semibold text-[var(--ink)]">
           <UiText>{label}</UiText>
         </label>
         <span id={`${id}-help`} className="mt-1 block text-xs leading-5 text-[var(--muted)]">

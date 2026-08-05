@@ -51,7 +51,7 @@ export function ProjectDashboardSidebar({
   return (
     <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
       <div className="border-b border-[var(--line)] px-2 pb-5">
-        <h2 className="text-sm font-black tracking-[-0.02em] text-[var(--ink)]">
+        <h2 className="text-sm font-bold tracking-[-0.02em] text-[var(--ink)]">
           <UiText>{"내 프로젝트"}</UiText>
         </h2>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
@@ -72,7 +72,7 @@ export function ProjectDashboardSidebar({
                   href={item.view === "all" ? "/dashboard" : `/dashboard?view=${item.view}`}
                   aria-labelledby={`${labelId} ${countId}`}
                   aria-current={selected ? "page" : undefined}
-                  className={`relative flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors ${
+                  className={`relative flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-semibold transition-colors ${
                     selected
                       ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]"
                       : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
@@ -80,7 +80,7 @@ export function ProjectDashboardSidebar({
                 >
                   <span id={labelId}><UiText>{item.label}</UiText></span>
                   <span id={countId} className="sr-only">{item.count}<UiText>{"개"}</UiText></span>
-                  <span aria-hidden="true" className="min-w-7 rounded-full bg-white px-2 py-0.5 text-center text-[0.68rem] font-black text-[var(--muted)]">
+                  <span aria-hidden="true" className="min-w-7 rounded-full bg-white px-2 py-0.5 text-center text-[0.68rem] font-bold text-[var(--muted)]">
                     {item.count}
                   </span>
                 </Link>

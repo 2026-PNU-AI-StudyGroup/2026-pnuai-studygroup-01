@@ -139,7 +139,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-bold leading-tight transition-colors ${active ? "bg-white/14 text-white" : "text-[#cbd6ff] hover:bg-white/8 hover:text-white"}`}>
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-white/14 text-white" : "text-[#cbd6ff] hover:bg-white/8 hover:text-white"}`}>
                   <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
                   <span><UiText>{item.label}</UiText></span>
                 </Link>
@@ -147,7 +147,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             })}
           </nav>
           <div className="mt-auto flex w-full flex-col items-center gap-2 pt-4">
-            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${currentPath === "/notifications" ? "text-white" : "text-[#cbd6ff]"}`}>
+            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold ${currentPath === "/notifications" ? "text-white" : "text-[#cbd6ff]"}`}>
               <NotificationIndicatorContainer
                 userId={userId}
                 active={currentPath === "/notifications"}
@@ -156,11 +156,11 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
               />
               <span aria-hidden="true">{shellCopy.notifications}</span>
             </div>
-            <div className="flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold text-[#cbd6ff]">
+            <div className="flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold text-[#cbd6ff]">
               <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} inverse />
               <span aria-hidden="true">{shellCopy.language}</span>
             </div>
-            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-bold ${isSectionActive("/account", currentPath) ? "text-white" : "text-[#cbd6ff]"}`}>
+            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold ${isSectionActive("/account", currentPath) ? "text-white" : "text-[#cbd6ff]"}`}>
               <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} inverse locale={locale} />
               <span aria-hidden="true"><UiText>{roleLabel}</UiText></span>
             </div>
@@ -187,7 +187,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
         <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white/94 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
           {navigation.map((item) => {
             const active = isNavigationActive(item, currentPath, role);
-            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-bold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;
+            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;
           })}
         </nav>
       </div>
