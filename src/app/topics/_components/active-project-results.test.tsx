@@ -64,6 +64,7 @@ describe("ActiveProjectResults", () => {
         query=""
         sort="LATEST"
         now={now}
+        programOrder={["program-1"]}
       />,
     );
 
@@ -81,6 +82,7 @@ describe("ActiveProjectResults", () => {
         query=""
         sort="LATEST"
         now={now}
+        programOrder={["program-1"]}
       />,
     );
 

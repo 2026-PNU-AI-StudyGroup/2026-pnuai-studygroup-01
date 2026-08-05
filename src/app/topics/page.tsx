@@ -94,7 +94,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
             ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 만들기"}</UiText></Link>
             : undefined}
         />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} programOrder={programs.map((program) => program.id)} />
       </ExplorerLayout>
     );
   }
