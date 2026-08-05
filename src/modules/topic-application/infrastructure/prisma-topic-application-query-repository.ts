@@ -1,9 +1,13 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 import type {
   ProfessorTopicApplicationLister,
+  ProfessorTopicApplicationListItem,
+  ProfessorTopicApplicationPage,
+  ProfessorTopicApplicationQuery,
   ProfessorTopicApplicationReader,
   ProfessorTopicApplicationSummary,
-  ProfessorTopicApplicationViewer,
   TopicApplicationLister,
   TopicApplicationSummary,
 } from "@/modules/topic-application/application/topic-application-ports";
@@ -48,6 +52,7 @@ type StudentSummaryRow = Prisma.TopicApplicationGetPayload<{ select: typeof stud
 const professorSummarySelect = {
   id: true,
   topicId: true,
+  groupId: true,
   studentId: true,
   status: true,
   reviewComment: true,
@@ -56,10 +61,14 @@ const professorSummarySelect = {
   desiredRole: true,
   availability: true,
   createdAt: true,
+  decidedAt: true,
+  decidedBy: { select: { name: true } },
   topic: {
     select: {
       title: true,
       managerId: true,
+      programId: true,
+      capacity: true,
       assistants: { select: { userId: true } },
     },
   },
@@ -81,6 +90,23 @@ const professorSummarySelect = {
 
 type ProfessorSummaryRow = Prisma.TopicApplicationGetPayload<{ select: typeof professorSummarySelect }>;
 
+const professorListItemSelect = {
+  id: true,
+  topicId: true,
+  status: true,
+  createdAt: true,
+  topic: { select: { title: true } },
+  student: { select: { name: true } },
+  group: {
+    select: {
+      kind: true,
+      _count: { select: { applications: true } },
+    },
+  },
+} satisfies Prisma.TopicApplicationSelect;
+
+type ProfessorListItemRow = Prisma.TopicApplicationGetPayload<{ select: typeof professorListItemSelect }>;
+
 function toStudentSummary(application: StudentSummaryRow): TopicApplicationSummary {
   const { topic, student, group, ...record } = application;
   return {
@@ -98,7 +124,7 @@ function toStudentSummary(application: StudentSummaryRow): TopicApplicationSumma
 }
 
 function toProfessorSummary(application: ProfessorSummaryRow): ProfessorTopicApplicationSummary {
-  const { topic, student, group, ...record } = application;
+  const { topic, student, group, decidedBy, ...record } = application;
   return {
     ...record,
     topicTitle: topic.title,
@@ -106,11 +132,26 @@ function toProfessorSummary(application: ProfessorSummaryRow): ProfessorTopicApp
     topicAssistantIds: topic.assistants.map(({ userId }) => userId),
     studentName: student.name,
     studentEmail: student.email,
+    decidedByName: decidedBy?.name ?? null,
+    decisionImpact: null,
     applicationKind: group?.kind ?? "INDIVIDUAL",
     teamMembers: group
       ? group.applications.map(({ studentId, participantRole, student: member }) => ({ studentId, name: member.name, email: member.email, role: participantRole }))
       : [{ studentId: application.studentId, name: student.name, email: student.email, role: "LEADER" }],
     answers: group?.answers.map(({ question, ...answer }) => ({ ...answer, ...question })) ?? [],
+  };
+}
+
+function toProfessorListItem(application: ProfessorListItemRow): ProfessorTopicApplicationListItem {
+  return {
+    id: application.id,
+    topicId: application.topicId,
+    topicTitle: application.topic.title,
+    status: application.status,
+    studentName: application.student.name,
+    applicationKind: application.group?.kind ?? "INDIVIDUAL",
+    teamMemberCount: application.group?._count.applications ?? 1,
+    createdAt: application.createdAt,
   };
 }
 
@@ -173,39 +214,78 @@ export class PrismaTopicApplicationQueryRepository implements
   }
 
   listForActor(
-    actorId: string,
-    isAdmin: boolean,
-  ): Promise<ProfessorTopicApplicationSummary[]> {
-    return this.listForProfessor(isAdmin ? {} : {
-      topic: {
-        OR: [
-          { managerId: actorId },
-          { assistants: { some: { userId: actorId } } },
-        ],
-      },
-    });
+    actor: CurrentActor,
+    query: ProfessorTopicApplicationQuery,
+  ): Promise<ProfessorTopicApplicationPage> {
+    const visibility = {
+      topic: topicSupervisorWhere(actor),
+    } satisfies Prisma.TopicApplicationWhereInput;
+    return this.listPageForProfessor(visibility, query);
   }
 
   async findVisibleById(
     id: string,
-    viewer: ProfessorTopicApplicationViewer,
+    actor: CurrentActor,
   ): Promise<ProfessorTopicApplicationSummary | null> {
     const application = await this.client.topicApplication.findFirst({
       where: {
         id,
-        ...(viewer.isAdmin ? {} : {
-          topic: {
-            OR: [
-              { managerId: viewer.actorId },
-              { assistants: { some: { userId: viewer.actorId } } },
-            ],
-          },
-        }),
+        topic: topicSupervisorWhere(actor),
         OR: [{ groupId: null }, { participantRole: "LEADER" }],
       },
       select: professorSummarySelect,
     });
-    return application ? toProfessorSummary(application) : null;
+    if (!application) return null;
+    const summary = toProfessorSummary(application);
+    if (application.status !== "PENDING") return summary;
+
+    const acceptedApplicationIds = application.group
+      ? application.group.applications.map(({ studentId }) => studentId)
+      : [application.studentId];
+    const selectedApplicationIds = application.group
+      ? await this.client.topicApplication.findMany({
+          where: { groupId: application.groupId ?? undefined },
+          select: { id: true },
+        }).then((items) => items.map(({ id: applicationId }) => applicationId))
+      : [application.id];
+    const currentMemberCount = await this.client.teamMember.count({
+      where: { team: { topicId: application.topicId } },
+    });
+    const closesRecruitment = currentMemberCount + acceptedApplicationIds.length >= application.topic.capacity;
+    const directConflicts = await this.client.topicApplication.findMany({
+      where: {
+        id: { notIn: selectedApplicationIds },
+        status: "PENDING",
+        OR: [
+          { studentId: { in: acceptedApplicationIds }, topic: { programId: application.topic.programId } },
+          ...(closesRecruitment ? [{ topicId: application.topicId }] : []),
+        ],
+      },
+      select: { id: true, groupId: true },
+    });
+    const conflictIds = directConflicts.map(({ id: conflictId }) => conflictId);
+    const conflictGroupIds = directConflicts.flatMap(({ groupId }) => groupId ? [groupId] : []);
+    const automaticallyRejectedApplicationCount = directConflicts.length
+      ? await this.client.topicApplication.count({
+          where: {
+            status: "PENDING",
+            OR: [
+              { id: { in: conflictIds } },
+              { groupId: { in: conflictGroupIds } },
+            ],
+          },
+        })
+      : 0;
+    return {
+      ...summary,
+      decisionImpact: {
+        acceptedMemberCount: acceptedApplicationIds.length,
+        currentMemberCount,
+        capacity: application.topic.capacity,
+        automaticallyRejectedApplicationCount,
+        closesRecruitment,
+      },
+    };
   }
 
   private async listForProfessor(
@@ -220,6 +300,59 @@ export class PrismaTopicApplicationQueryRepository implements
     applications.sort((left, right) => Number(right.status === "PENDING") - Number(left.status === "PENDING"));
 
     return applications.map(toProfessorSummary);
+  }
+
+  private async listPageForProfessor(
+    visibility: Prisma.TopicApplicationWhereInput,
+    query: ProfessorTopicApplicationQuery,
+  ): Promise<ProfessorTopicApplicationPage> {
+    const escapedQuery = query.query.replace(/[\\%_]/g, "\\$&");
+    const search: Prisma.TopicApplicationWhereInput = escapedQuery ? {
+      OR: [
+        { topic: { title: { contains: escapedQuery, mode: "insensitive" } } },
+        { student: { name: { contains: escapedQuery, mode: "insensitive" } } },
+        { student: { email: { contains: escapedQuery, mode: "insensitive" } } },
+      ],
+    } : {};
+    const baseWhere: Prisma.TopicApplicationWhereInput = {
+      AND: [
+        visibility,
+        { OR: [{ groupId: null }, { participantRole: "LEADER" }] },
+        search,
+      ],
+    };
+    const where: Prisma.TopicApplicationWhereInput = {
+      AND: [baseWhere, query.status ? { status: query.status } : {}],
+    };
+    const [total, groupedCounts] = await Promise.all([
+      this.client.topicApplication.count({ where }),
+      this.client.topicApplication.groupBy({
+        by: ["status"],
+        where: baseWhere,
+        _count: { _all: true },
+      }),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
+    const page = Math.min(query.page, totalPages);
+    const applications = await this.client.topicApplication.findMany({
+      where,
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * query.pageSize,
+      take: query.pageSize,
+      select: professorListItemSelect,
+    });
+
+    return {
+      items: applications.map(toProfessorListItem),
+      page,
+      totalPages,
+      total,
+      counts: {
+        PENDING: groupedCounts.find(({ status }) => status === "PENDING")?._count._all ?? 0,
+        ACCEPTED: groupedCounts.find(({ status }) => status === "ACCEPTED")?._count._all ?? 0,
+        REJECTED: groupedCounts.find(({ status }) => status === "REJECTED")?._count._all ?? 0,
+      },
+    };
   }
 
 }

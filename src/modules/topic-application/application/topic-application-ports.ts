@@ -1,3 +1,4 @@
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { TopicApplicationConfiguration } from "@/modules/topic-application/domain/topic-application-configuration";
 
 export type { TopicApplicationConfiguration } from "@/modules/topic-application/domain/topic-application-configuration";
@@ -87,12 +88,48 @@ export interface TopicApplicationLister {
   findByStudentAndTopic(studentId: string, topicId: string): Promise<TopicApplicationSummary | null>;
 }
 
-export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "programStatus" | "decidedAt"> & {
+export type ProfessorTopicApplicationSummary = Omit<TopicApplicationSummary, "topicStatus" | "programName" | "programStatus"> & {
   topicManagerId: string | null;
   topicAssistantIds: string[];
   studentId: string;
   studentName: string;
   studentEmail: string;
+  decidedByName: string | null;
+  decisionImpact: {
+    acceptedMemberCount: number;
+    currentMemberCount: number;
+    capacity: number;
+    automaticallyRejectedApplicationCount: number;
+    closesRecruitment: boolean;
+  } | null;
+};
+
+export type ProfessorTopicApplicationStatus = ProfessorTopicApplicationSummary["status"];
+
+export type ProfessorTopicApplicationListItem = {
+  id: string;
+  topicId: string;
+  topicTitle: string;
+  status: ProfessorTopicApplicationStatus;
+  studentName: string;
+  applicationKind: "INDIVIDUAL" | "TEAM";
+  teamMemberCount: number;
+  createdAt: Date;
+};
+
+export type ProfessorTopicApplicationPage = {
+  items: ProfessorTopicApplicationListItem[];
+  page: number;
+  totalPages: number;
+  total: number;
+  counts: Record<ProfessorTopicApplicationStatus, number>;
+};
+
+export type ProfessorTopicApplicationQuery = {
+  page: number;
+  pageSize: number;
+  status?: ProfessorTopicApplicationStatus;
+  query: string;
 };
 
 export interface ProfessorTopicApplicationLister {
@@ -100,18 +137,16 @@ export interface ProfessorTopicApplicationLister {
     managerId: string,
   ): Promise<ProfessorTopicApplicationSummary[]>;
   listAll(): Promise<ProfessorTopicApplicationSummary[]>;
-  listForActor(actorId: string, isAdmin: boolean): Promise<ProfessorTopicApplicationSummary[]>;
+  listForActor(
+    actor: CurrentActor,
+    query: ProfessorTopicApplicationQuery,
+  ): Promise<ProfessorTopicApplicationPage>;
 }
-
-export type ProfessorTopicApplicationViewer = {
-  actorId: string;
-  isAdmin: boolean;
-};
 
 export interface ProfessorTopicApplicationReader {
   findVisibleById(
     id: string,
-    viewer: ProfessorTopicApplicationViewer,
+    actor: CurrentActor,
   ): Promise<ProfessorTopicApplicationSummary | null>;
 }
 

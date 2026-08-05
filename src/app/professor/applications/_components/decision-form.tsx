@@ -9,7 +9,16 @@ import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 const initialState: DecisionActionState = { status: "idle", message: "" };
 
-export function ApplicationDecisionForm({ applicationId }: { applicationId: string }) {
+export function ApplicationDecisionForm({ applicationId, impact }: {
+  applicationId: string;
+  impact: {
+    acceptedMemberCount: number;
+    currentMemberCount: number;
+    capacity: number;
+    automaticallyRejectedApplicationCount: number;
+    closesRecruitment: boolean;
+  };
+}) {
   const [state, action, pending] = useActionState(decideTopicApplicationAction, initialState);
 
   return (
@@ -26,13 +35,21 @@ export function ApplicationDecisionForm({ applicationId }: { applicationId: stri
           className="field min-h-24 resize-y"
         />
       </label>
-      <button name="decision" value="accept" disabled={pending} className="button-primary text-sm sm:mb-0.5"><UiText>{"수락"}</UiText></button>
+      <ConfirmSubmitButton
+        name="decision"
+        value="accept"
+        disabled={pending}
+        className="button-primary text-sm sm:mb-0.5"
+        confirmMessage={`수락하면 ${impact.acceptedMemberCount}명이 팀에 추가됩니다. ${impact.automaticallyRejectedApplicationCount ? `다른 대기 지원 ${impact.automaticallyRejectedApplicationCount}건이 자동 미선정됩니다. ` : ""}${impact.closesRecruitment ? "정원이 충족되어 모집 글도 마감됩니다. " : ""}이 결정은 취소할 수 없습니다. 계속하시겠습니까?`}
+      >
+        <UiText>{"수락"}</UiText>
+      </ConfirmSubmitButton>
       <ConfirmSubmitButton
         name="decision"
         value="reject"
         disabled={pending}
         className="button-danger text-sm sm:mb-0.5"
-        confirmMessage="이 주제 지원을 거절하시겠습니까?"
+        confirmMessage="이 지원을 미선정 처리하면 되돌릴 수 없습니다. 입력한 검토 의견과 함께 결과를 전달하시겠습니까?"
       >
         <UiText>{"거절"}</UiText></ConfirmSubmitButton>
       {state.message ? (

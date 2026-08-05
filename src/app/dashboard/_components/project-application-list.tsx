@@ -7,6 +7,7 @@ import type {
   TopicApplicationPage,
   TopicApplicationSummary,
 } from "@/modules/topic-application/application/topic-application-ports";
+import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 const presentation = {
@@ -14,15 +15,11 @@ const presentation = {
     title: "승인 대기",
     description: "프로젝트 담당자가 검토 중인 지원입니다.",
     empty: "승인을 기다리는 프로젝트가 없습니다.",
-    badge: "검토 중",
-    tone: "info",
   },
   REJECTED: {
     title: "승인 거절",
     description: "선정되지 않은 지원과 검토 의견입니다.",
     empty: "승인이 거절된 프로젝트가 없습니다.",
-    badge: "미선정",
-    tone: "neutral",
   },
 } as const;
 
@@ -46,7 +43,7 @@ function ApplicationRow({
   application: TopicApplicationSummary;
   status: OwnTopicApplicationStatus;
 }) {
-  const copy = presentation[status];
+  const statusPresentation = topicApplicationStatusPresentation[status];
   const decisionDate = application.decidedAt ?? application.createdAt;
 
   return (
@@ -54,7 +51,7 @@ function ApplicationRow({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge tone={copy.tone}><UiText>{copy.badge}</UiText></StatusBadge>
+            <StatusBadge tone={statusPresentation.tone}><UiText>{statusPresentation.label}</UiText></StatusBadge>
             <span className="text-xs font-semibold text-[var(--muted)]">
               <UiText>{application.applicationKind === "TEAM" ? "팀 지원" : "개인 지원"}</UiText>
             </span>
