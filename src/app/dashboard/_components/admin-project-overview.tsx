@@ -335,7 +335,7 @@ function AdminProjectSidebar({
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
 
   return (
-    <UiAside aria-label="프로젝트 현황 탐색" className="min-w-0 border-b border-[var(--line)] bg-white xl:min-h-screen xl:border-b-0 xl:border-r">
+    <UiAside aria-label="프로젝트 현황 선택" className="min-w-0 border-b border-[var(--line)] bg-white xl:min-h-screen xl:border-b-0 xl:border-r">
       <details className="group xl:hidden">
         <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <span className="min-w-0">

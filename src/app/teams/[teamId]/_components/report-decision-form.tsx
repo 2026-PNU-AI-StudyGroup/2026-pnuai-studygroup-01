@@ -122,7 +122,6 @@ export function ReportDecisionForm({
           className={`${reportDialogClassName} max-w-lg`}
         >
           <ReportFormDialogHeader
-            eyebrow="최종 확인"
             title={pendingDecision === "REVISION_REQUESTED" ? "수정 요청 확인" : "보고서 승인 확인"}
             description="검토 결과는 저장 후 변경할 수 없습니다."
             titleId={dialogTitleId}

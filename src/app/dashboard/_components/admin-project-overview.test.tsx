@@ -61,7 +61,7 @@ describe("관리자 프로젝트 현황", () => {
   it("프로그램별로 프로젝트와 진행률 통계를 보여준다", () => {
     const { container } = render(<AdminProjectOverview programs={programs} />);
 
-    expect(screen.getByRole("complementary", { name: "프로젝트 현황 탐색" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "프로젝트 현황 선택" })).toBeInTheDocument();
     const programNavigation = screen.getByRole("navigation", { name: "프로그램 선택" });
     expect(within(programNavigation).getByRole("heading", { name: "진행 중" })).toBeInTheDocument();
     expect(within(programNavigation).getByRole("heading", { name: "종료" })).toBeInTheDocument();

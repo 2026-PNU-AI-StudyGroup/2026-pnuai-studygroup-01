@@ -51,11 +51,11 @@ const workspace = {
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
   memberCount: 1,
-  milestoneCount: 0,
-  completedMilestoneCount: 0,
+  taskCount: 0,
+  completedTaskCount: 0,
   reportCount: 0,
   submittedReportCount: 0,
-  milestones: [],
+  tasks: [],
   professorName: "김도윤",
   advisorEnabled: true,
   canClose: false,
@@ -105,7 +105,7 @@ describe("ProjectGuidanceRequestsPage", () => {
 
     render(await ProjectGuidanceRequestsPage(routeProps));
 
-    const pageTitle = screen.getByRole("heading", { name: "미팅·검토 요청" });
+    const pageTitle = screen.getByRole("heading", { name: "회의·검토 요청" });
     expect(pageTitle.closest("section")).toHaveClass("max-w-6xl");
     expect(pageTitle.closest("header")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "새 요청 보내기" })).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe("ProjectGuidanceRequestsPage", () => {
     expect(screen.getByText("종료된 프로젝트에서는 요청 이력만 확인할 수 있습니다.")).toBeInTheDocument();
   });
 
-  it("지도교수가 없는 프로젝트의 직접 요청 경로를 조회 전에 차단한다", async () => {
+  it("지도교수가 없는 프로젝트의 직접 검토 요청을 조회 전에 차단한다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       actor: student,
       workspace: { ...workspace, advisorEnabled: false },

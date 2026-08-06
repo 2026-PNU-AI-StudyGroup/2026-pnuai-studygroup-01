@@ -25,7 +25,7 @@ import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("미팅·검토 요청");
+  return getLocalizedMetadata("회의·검토 요청");
 }
 
 const kindLabel = {
@@ -73,8 +73,7 @@ export default async function ProjectGuidanceRequestsPage({
   return (
     <section aria-labelledby="guidance-request-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
-        eyebrow="프로젝트 지도"
-        title="미팅·검토 요청"
+        title="회의·검토 요청"
         titleId="guidance-request-title"
         description="지도교수에게 회의나 검토를 요청하고 답변과 확정 일정을 확인합니다."
         bordered={false}
@@ -84,8 +83,7 @@ export default async function ProjectGuidanceRequestsPage({
       {canCreate ? (
         <section aria-labelledby="new-guidance-request-title" className="grid gap-5 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6">
           <div>
-            <p className="text-xs font-black tracking-[0.12em] text-[var(--primary)]"><UiText>{"프로젝트 지도"}</UiText></p>
-            <h2 id="new-guidance-request-title" className="mt-1 text-xl font-extrabold tracking-[-0.025em]"><UiText>{"회의나 검토가 필요하신가요?"}</UiText></h2>
+            <h2 id="new-guidance-request-title" className="text-xl font-extrabold tracking-[-0.025em]"><UiText>{"회의나 검토가 필요하신가요?"}</UiText></h2>
             <p className="muted mt-1.5 text-sm leading-6"><UiText>{"같은 유형의 요청은 교수 답변을 받은 뒤 다시 보낼 수 있습니다."}</UiText></p>
           </div>
           <ProjectGuidanceRequestForm
@@ -134,7 +132,7 @@ export default async function ProjectGuidanceRequestsPage({
         )}
 
         {requestPage.totalPages > 1 ? (
-          <UiNav aria-label="미팅·검토 요청 페이지" className="mt-6 flex items-center justify-between gap-3">
+          <UiNav aria-label="회의·검토 요청 페이지" className="mt-6 flex items-center justify-between gap-3">
             <span className="muted text-sm">{requestPage.page} / {requestPage.totalPages}<UiText>{" 페이지"}</UiText></span>
             <div className="flex gap-2">
               {requestPage.page > 1 ? <Link className="button-secondary" href={`/teams/${teamId}/requests?page=${requestPage.page - 1}`}><UiText>{"이전"}</UiText></Link> : <span />}

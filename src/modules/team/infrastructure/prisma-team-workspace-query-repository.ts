@@ -11,7 +11,7 @@ import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-worksp
 const teamListInclude = {
   topic: { select: { title: true } },
   members: { select: { id: true } },
-  milestones: {
+  tasks: {
     orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
     select: {
       id: true,
@@ -62,17 +62,40 @@ export class PrismaTeamWorkspaceQueryRepository
           program: { select: { advisorEnabled: true } },
           manager: { select: { name: true } },
           assistants: {
-            where: { userId: actor.id },
-            select: { id: true },
+            orderBy: { createdAt: "asc" },
+            select: {
+              userId: true,
+              user: { select: { id: true, name: true, email: true } },
+            },
           },
         } },
         members: {
           orderBy: { joinedAt: "asc" },
           select: {
-            student: { select: { id: true, name: true, email: true } },
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                department: true,
+                studentNumber: true,
+                grade: true,
+                phoneNumber: true,
+                contactEmail: true,
+                studentProfile: {
+                  select: {
+                    interests: true,
+                    skills: true,
+                    desiredRole: true,
+                    availability: true,
+                    bio: true,
+                  },
+                },
+              },
+            },
           },
         },
-        milestones: {
+        tasks: {
           orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
           select: {
             id: true,
@@ -113,7 +136,7 @@ export class PrismaTeamWorkspaceQueryRepository
       return null;
     }
 
-    const completedMilestoneCount = team.milestones.filter(
+    const completedTaskCount = team.tasks.filter(
       ({ status }) => status === "DONE",
     ).length;
     const discussionTotalPages = Math.max(1, Math.ceil(team._count.discussionPosts / DISCUSSION_PAGE_SIZE));
@@ -143,11 +166,11 @@ export class PrismaTeamWorkspaceQueryRepository
       advisorEnabled: team.topic.program.advisorEnabled,
       access: {
         isPrimaryAdvisor: team.professorId === actor.id,
-        isAssistant: team.topic.assistants.length > 0,
+        isAssistant: team.topic.assistants.some(({ userId }) => userId === actor.id),
         isTeamMember: team.members.some(({ student }) => student.id === actor.id),
         canSupervise: actor.role === "ADMIN" ||
           team.professorId === actor.id ||
-          team.topic.assistants.length > 0,
+          team.topic.assistants.some(({ userId }) => userId === actor.id),
         canContribute: actor.role === "ADMIN" ||
           team.members.some(({ student }) => student.id === actor.id),
       },
@@ -163,16 +186,20 @@ export class PrismaTeamWorkspaceQueryRepository
         (report) => report.versions[0]?.decision?.decision === "APPROVED",
       ),
       memberCount: team.members.length,
-      milestoneCount: team.milestones.length,
-      completedMilestoneCount,
+      taskCount: team.tasks.length,
+      completedTaskCount,
       reportCount: team.reports.length,
       submittedReportCount: team.reports.filter(
         (report) => report.versions.length > 0,
       ).length,
-      members: team.members.map(({ student }) => student),
-      milestones: team.milestones.map((milestone) => ({
-        ...milestone,
-        assignees: milestone.assignees.map(({ user }) => user),
+      assistants: team.topic.assistants.map(({ user }) => user),
+      members: team.members.map(({ student: { studentProfile, ...student } }) => ({
+        ...student,
+        profile: studentProfile,
+      })),
+      tasks: team.tasks.map((task) => ({
+        ...task,
+        assignees: task.assignees.map(({ user }) => user),
       })),
       discussionPosts: discussionPosts.reverse().map(({ author, ...post }) => ({
         ...post,
@@ -254,17 +281,17 @@ function toTeamListItem(team: TeamListRow): TeamListItem {
       topicTitle: team.topic.title,
       status: team.status,
       memberCount: team.members.length,
-      milestoneCount: team.milestones.length,
-      completedMilestoneCount: team.milestones.filter(
+      taskCount: team.tasks.length,
+      completedTaskCount: team.tasks.filter(
         ({ status }) => status === "DONE",
       ).length,
       reportCount: team.reports.length,
       submittedReportCount: team.reports.filter(
         (report) => report.versions.length > 0,
       ).length,
-      milestones: team.milestones.map((milestone) => ({
-        ...milestone,
-        assignees: milestone.assignees.map(({ user }) => user),
+      tasks: team.tasks.map((task) => ({
+        ...task,
+        assignees: task.assignees.map(({ user }) => user),
       })),
     };
 }

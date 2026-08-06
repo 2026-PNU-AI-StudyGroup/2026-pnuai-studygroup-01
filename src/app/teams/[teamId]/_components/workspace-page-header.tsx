@@ -2,10 +2,10 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
 export function WorkspacePageHeader({ eyebrow, title, titleId, description, meta, actions, bordered = true }: {
-  eyebrow: string;
+  eyebrow?: ReactNode;
   title: string;
   titleId?: string;
-  description: string;
+  description?: ReactNode;
   meta?: ReactNode;
   actions?: ReactNode;
   bordered?: boolean;
@@ -13,9 +13,9 @@ export function WorkspacePageHeader({ eyebrow, title, titleId, description, meta
   return (
     <header className={`flex flex-wrap items-end justify-between gap-5 ${bordered ? "border-b border-[var(--line)] pb-6" : ""}`}>
       <div className="max-w-2xl">
-        <p className="eyebrow"><UiText>{eyebrow}</UiText></p>
-        <h1 id={titleId} className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{title}</UiText></h1>
-        <p className="muted mt-2 max-w-xl text-sm leading-6 sm:text-base"><UiText>{description}</UiText></p>
+        {eyebrow ? <p className="eyebrow"><UiText>{eyebrow}</UiText></p> : null}
+        <h1 id={titleId} className={`${eyebrow ? "mt-2" : ""} text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]`}><UiText>{title}</UiText></h1>
+        {description ? <p className="muted mt-2 max-w-xl text-sm leading-6 sm:text-base"><UiText>{description}</UiText></p> : null}
       </div>
       {actions ?? meta ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions ?? meta}</div> : null}
     </header>

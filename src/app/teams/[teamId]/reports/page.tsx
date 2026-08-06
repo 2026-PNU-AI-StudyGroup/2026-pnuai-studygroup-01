@@ -358,12 +358,12 @@ function ReportScoreFeedbackSection({
   teamId,
   report,
   canScore,
-  canFeedback,
+  canWriteFeedback,
 }: {
   teamId: string;
   report: ReportItem;
   canScore: boolean;
-  canFeedback: boolean;
+  canWriteFeedback: boolean;
 }) {
   const hasScore = report.score !== undefined;
   const feedback = report.feedback ?? [];
@@ -416,7 +416,7 @@ function ReportScoreFeedbackSection({
             ))}
           </ul>
         ) : <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"아직 피드백이 없습니다."}</UiText></p>}
-        {canFeedback ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
+        {canWriteFeedback ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
       </section>
     </div>
   );
@@ -433,7 +433,7 @@ function ReportCard({
   isTeamMember,
   advisorEnabled,
   canScore,
-  canFeedback,
+  canWriteFeedback,
 }: {
   teamId: string;
   report: ReportItem;
@@ -445,7 +445,7 @@ function ReportCard({
   isTeamMember: boolean;
   advisorEnabled: boolean;
   canScore: boolean;
-  canFeedback: boolean;
+  canWriteFeedback: boolean;
 }) {
   const state = reportPresentationState(report);
   const stateView = reportStateView[state];
@@ -553,7 +553,7 @@ function ReportCard({
           teamId={teamId}
           report={report}
           canScore={canScore}
-          canFeedback={canFeedback}
+          canWriteFeedback={canWriteFeedback}
         />
 
         {canManageRequirements ? (
@@ -577,7 +577,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   const submittableReports = reportWorkspace.reports.filter((report) => isReportSubmissionOpen(report, now));
   const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
   const canScore = workspace.access.canSupervise && workspace.status !== "FORMING";
-  const canFeedback = (workspace.access.isTeamMember || workspace.access.canSupervise) && workspace.status !== "FORMING";
+  const canWriteFeedback = workspace.access.canSupervise && workspace.status !== "FORMING";
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
   const hasNoSubmittableReports = workspace.status === "CONFIRMED"
     && workspace.access.canContribute
@@ -617,7 +617,6 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   return (
     <section aria-labelledby="reports-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
-        eyebrow="프로젝트 문서"
         title="보고서"
         titleId="reports-title"
         description="제출 일정과 버전별 피드백, 승인 상태를 확인합니다."
@@ -639,8 +638,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
         <div id="report-list" className="space-y-4 scroll-mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-black tracking-[0.12em] text-[var(--primary)]"><UiText>{"제출 현황"}</UiText></p>
-              <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 일정"}</UiText></h2>
+              <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 제출 현황"}</UiText></h2>
             </div>
             <div className="flex flex-wrap gap-2 text-sm font-bold">
               <span className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--ink)]">
@@ -666,7 +664,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                 isTeamMember={workspace.access.isTeamMember}
                 advisorEnabled={workspace.advisorEnabled}
                 canScore={canScore}
-                canFeedback={canFeedback}
+                canWriteFeedback={canWriteFeedback}
               />
             ))}
           </div>

@@ -22,11 +22,11 @@ const workspace = {
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
   memberCount: 1,
-  milestoneCount: 0,
-  completedMilestoneCount: 0,
+  taskCount: 0,
+  completedTaskCount: 0,
   reportCount: 0,
   submittedReportCount: 0,
-  milestones: [],
+  tasks: [],
   professorName: "",
   advisorEnabled: false,
   canClose: false,
@@ -45,7 +45,24 @@ const workspace = {
     submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
     submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
   },
-  members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
+  assistants: [],
+  members: [{
+    id: "student-1",
+    name: "정하늘",
+    email: "student@pusan.ac.kr",
+    department: "정보컴퓨터공학부",
+    studentNumber: "202612345",
+    grade: 3,
+    phoneNumber: "010-1234-5678",
+    contactEmail: "sky@example.com",
+    profile: {
+      interests: ["접근성", "교육"],
+      skills: ["TypeScript", "Figma"],
+      desiredRole: "프론트엔드 개발",
+      availability: "평일 저녁",
+      bio: "사용자 문제를 해결하고 싶습니다.",
+    },
+  }],
   discussionPosts: [],
   discussionPage: 1,
   discussionTotalPages: 1,
@@ -68,8 +85,23 @@ describe("TeamOverviewPage", () => {
     expect(screen.getByRole("heading", { name: "프로젝트 기간" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "팀원 1명" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "프로젝트 작업" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /미팅·검토 요청/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /회의·검토 요청/ })).not.toBeInTheDocument();
     expect(screen.queryByText("프로젝트 관리자에게 요청하고 답변 확인")).not.toBeInTheDocument();
+  });
+
+  it("배정된 조교가 있을 때만 개요에 조교 정보를 표시한다", async () => {
+    loadTeamWorkspace.mockResolvedValue({
+      workspace: {
+        ...workspace,
+        assistants: [{ id: "assistant-1", name: "박조교", email: "assistant@pusan.ac.kr" }],
+      },
+    });
+
+    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+
+    expect(screen.getByRole("heading", { name: "조교 1명" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "프로젝트 조교" })).toHaveTextContent("박조교");
+    expect(screen.getByText("assistant@pusan.ac.kr")).toBeInTheDocument();
   });
 
   it("감독자 헤더에는 사이드바와 중복되는 상태 대신 조교 관리 행동만 둔다", async () => {
@@ -118,13 +150,13 @@ describe("TeamOverviewPage", () => {
     expect(screen.getByRole("link", { name: "조교 관리" })).toHaveAttribute("href", "/professor/topics/topic-1/assistants");
   });
 
-  it("기한이 지난 활성 마일스톤을 상태와 담당자, 이동 링크가 있는 다음 행동으로 보여준다", async () => {
+  it("기한이 지난 활성 할 일을 상태와 담당자, 이동 링크가 있는 다음 행동으로 보여준다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
-        milestoneCount: 3,
-        completedMilestoneCount: 1,
-        milestones: [
+        taskCount: 3,
+        completedTaskCount: 1,
+        tasks: [
           {
             id: "done",
             title: "완료한 조사",
@@ -155,6 +187,6 @@ describe("TeamOverviewPage", () => {
     expect(screen.getByRole("heading", { name: "지연된 데이터 정리" })).toBeInTheDocument();
     expect(screen.getByText("기한 초과")).toBeInTheDocument();
     expect(screen.getByText("윤서준")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "마일스톤 확인" })).toHaveAttribute("href", "/teams/team-1/milestones");
+    expect(screen.getByRole("link", { name: "할 일 확인" })).toHaveAttribute("href", "/teams/team-1/tasks");
   });
 });

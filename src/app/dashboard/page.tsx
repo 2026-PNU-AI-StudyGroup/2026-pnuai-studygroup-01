@@ -36,7 +36,6 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
-import { ProfessorWorkspace } from "@/shared/ui/professor-workspace";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -48,17 +47,12 @@ function ProjectDashboardFrame({ role, counts, view, children }: {
   view: ProjectDashboardView;
   children: ReactNode;
 }) {
-  const explorer = (
+  return (
     <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} />}>
-      {role === "STUDENT" ? <ProjectDashboardHero role={role} /> : null}
+      <ProjectDashboardHero role={role} />
       {children}
     </ExplorerLayout>
   );
-  return role === "PROFESSOR" ? (
-    <ProfessorWorkspace currentPath="/dashboard" title="프로젝트 운영" description="확정된 팀의 마일스톤과 작업 현황, 승인 대기 항목을 관리합니다.">
-      {explorer}
-    </ProfessorWorkspace>
-  ) : explorer;
 }
 
 export default async function DashboardPage({
@@ -177,7 +171,7 @@ export default async function DashboardPage({
                   <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <div>
                       <strong><UiText>{invitation.topicTitle}</UiText></strong>
-                      <p className="muted mt-1 text-sm">{invitation.inviterName} · <UiText>{invitation.advisorEnabled ? "지도교수와 동일한 프로젝트 운영 권한" : "프로젝트 운영 권한"}</UiText></p>
+                      <p className="muted mt-1 text-sm">{invitation.inviterName} · <UiText>{"프로젝트 관리 권한"}</UiText></p>
                     </div>
                     <ProjectAssistantInvitationDecisionForm invitationId={invitation.id} />
                   </li>
@@ -209,20 +203,19 @@ export default async function DashboardPage({
           {actor.role === "PROFESSOR" && pendingApprovals.length > 0 ? (
             <ProjectApprovalLedger requests={pendingApprovals} student={false} />
           ) : actor.role === "PROFESSOR" && view === "all" ? (
-            <section aria-labelledby="approval-empty-title">
-              <div className="mb-4 flex items-end justify-between gap-4">
+            <section aria-labelledby="approval-empty-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 sm:px-6">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 id="approval-empty-title" className="text-xl font-black tracking-[-0.03em]"><UiText>{"승인 대기열"}</UiText></h2>
-                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"제안 내용과 요청 경로를 확인한 뒤 처리합니다."}</UiText></p>
+                  <h2 id="approval-empty-title" className="text-lg font-black tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
+                  <h3 className="mt-3 text-sm font-bold text-[var(--ink)]"><UiText>{"검토할 승인 요청이 없습니다"}</UiText></h3>
                 </div>
-                <span className="shrink-0 text-sm font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>
+                <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>
               </div>
-              <EmptyState variant="embedded" title="검토할 승인 요청이 없습니다" description="새 승인 요청이 도착하면 이곳에서 바로 확인할 수 있습니다." />
             </section>
           ) : null}
 
           {view === "all" && !hasAnyProject ? (
-            <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "관심 있는 프로젝트를 발견하고 첫 지원을 시작해 보세요." : "주제를 만들거나 학생 지원을 승인하면 팀이 연결됩니다."} />
+            <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "참여할 프로젝트를 확인하고 지원서를 제출하세요." : "주제를 등록하거나 학생 지원을 승인하면 팀이 연결됩니다."} />
           ) : null}
 
           {view === "all" && activeCount > 0 ? (
@@ -263,8 +256,8 @@ export default async function DashboardPage({
           {(view === "active" || view === "completed") && visibleTeams.length === 0 ? (
             <EmptyState
               title={view === "active" ? "진행 중인 프로젝트가 없습니다" : "완료한 프로젝트가 없습니다"}
-              description={view === "active" && student ? "승인을 기다리거나 새로운 프로젝트를 찾아보세요." : "해당 상태의 프로젝트가 생기면 이곳에 표시됩니다."}
-              action={view === "active" && student ? <Link href="/topics" className="button-secondary"><UiText>{"프로젝트 둘러보기"}</UiText></Link> : undefined}
+              description={view === "active" && student ? "지원 승인 상태를 확인하거나 참여할 프로젝트를 확인하세요." : undefined}
+              action={view === "active" && student ? <Link href="/topics" className="button-secondary"><UiText>{"프로젝트 목록"}</UiText></Link> : undefined}
             />
           ) : null}
           {(view === "all" || view === "active" || view === "completed") ? (

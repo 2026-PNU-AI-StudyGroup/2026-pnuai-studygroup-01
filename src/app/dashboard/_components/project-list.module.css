@@ -33,7 +33,7 @@
 
 .projectGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
   gap: 1rem;
 }
 
@@ -54,8 +54,9 @@
 }
 
 .projectCard:only-child {
+  grid-column: 1 / -1;
   width: 100%;
-  max-width: 36rem;
+  max-width: none;
 }
 
 .projectCard:hover {
@@ -96,6 +97,45 @@
   line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+@media (min-width: 1024px) {
+  .projectCard:only-child {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      "header header"
+      "identity progress"
+      "task progress"
+      "action action";
+  }
+
+  .projectCard:only-child .cardHeader {
+    grid-area: header;
+  }
+
+  .projectCard:only-child .projectIdentity {
+    grid-area: identity;
+  }
+
+  .projectCard:only-child .progress {
+    grid-area: progress;
+    align-self: stretch;
+  }
+
+  .projectCard:only-child .nextTask {
+    grid-area: task;
+  }
+
+  .projectCard:only-child .cardAction {
+    grid-area: action;
+  }
+
+  .projectCard:only-child .topic {
+    min-height: 0;
+    max-width: 48rem;
+  }
 }
 
 .progress {
@@ -144,20 +184,20 @@
   font-weight: 700;
 }
 
-.nextMilestone {
+.nextTask {
   display: grid;
   align-content: start;
   gap: 0.45rem;
 }
 
-.nextMilestone > span {
+.nextTask > span {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.04em;
 }
 
-.nextMilestone > strong {
+.nextTask > strong {
   overflow-wrap: anywhere;
   color: var(--ink);
   font-size: 0.95rem;
@@ -165,7 +205,7 @@
   line-height: 1.45;
 }
 
-.nextMilestone > p {
+.nextTask > p {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -175,7 +215,7 @@
   font-size: 0.74rem;
 }
 
-.nextMilestone time {
+.nextTask time {
   flex: 0 0 auto;
   font-weight: 750;
 }

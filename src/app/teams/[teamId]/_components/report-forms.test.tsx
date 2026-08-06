@@ -231,7 +231,7 @@ describe("보고서 요구사항 화면", () => {
     const openButton = screen.getByRole("button", { name: "보고서 제출" });
 
     fireEvent.click(openButton);
-    const dialog = screen.getByRole("dialog", { name: "새 버전 등록" });
+    const dialog = screen.getByRole("dialog", { name: "새 버전 제출" });
     fireEvent.submit(dialog.querySelector("form")!);
     await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
 
@@ -264,7 +264,7 @@ describe("보고서 요구사항 화면", () => {
     render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
-    const dialog = screen.getByRole("dialog", { name: "새 버전 등록" });
+    const dialog = screen.getByRole("dialog", { name: "새 버전 제출" });
     fireEvent.submit(dialog.querySelector("form")!);
 
     expect(await screen.findByRole("progressbar", { name: "파일 업로드 중 50%" })).toHaveValue(50);
@@ -295,7 +295,7 @@ describe("보고서 요구사항 화면", () => {
     render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
-    const dialog = screen.getByRole("dialog", { name: "새 버전 등록" });
+    const dialog = screen.getByRole("dialog", { name: "새 버전 제출" });
     fireEvent.submit(dialog.querySelector("form")!);
     expect(await screen.findByRole("alert")).toHaveTextContent("이전 업로드 오류");
 
@@ -325,7 +325,7 @@ describe("보고서 요구사항 화면", () => {
     const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
-    fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 등록" }).querySelector("form")!);
+    fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 제출" }).querySelector("form")!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
     unmount();
@@ -392,7 +392,7 @@ describe("보고서 요구사항 화면", () => {
     const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
-    fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 등록" }).querySelector("form")!);
+    fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 제출" }).querySelector("form")!);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
     unmount();

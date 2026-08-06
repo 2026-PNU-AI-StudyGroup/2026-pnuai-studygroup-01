@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamMilestonesPage from "@/app/teams/[teamId]/milestones/page";
+import TeamTasksPage from "@/app/teams/[teamId]/tasks/page";
 
 const { loadTeamWorkspace } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
@@ -15,11 +15,13 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/milestone-forms", () => ({
-  MilestoneForm: () => <div data-testid="new-milestone-form" />,
-  MilestoneStatusForm: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
-    <div data-testid="milestone-editor">{status}:{assigneeIds.join(",")}</div>
+vi.mock("@/app/teams/[teamId]/_components/task-forms", () => ({
+  TaskForm: () => <div data-testid="new-task-form" />,
+  TaskDetailsForm: () => <div data-testid="task-details-editor" />,
+  TaskStatusForm: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
+    <div data-testid="task-editor">{status}:{assigneeIds.join(",")}</div>
   ),
+  TaskDeleteForm: () => <div data-testid="task-delete-form" />,
 }));
 
 const workspace = {
@@ -29,12 +31,12 @@ const workspace = {
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
   memberCount: 1,
-  milestoneCount: 1,
-  completedMilestoneCount: 0,
+  taskCount: 1,
+  completedTaskCount: 0,
   reportCount: 0,
   submittedReportCount: 0,
-  milestones: [{
-    id: "milestone-1",
+  tasks: [{
+    id: "task-1",
     title: "사용자 인터뷰 완료",
     dueAt: new Date("2026-09-01T00:00:00Z"),
     status: "IN_PROGRESS" as const,
@@ -65,7 +67,7 @@ const workspace = {
   discussionTotal: 0,
 };
 
-describe("TeamMilestonesPage", () => {
+describe("TeamTasksPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
@@ -76,9 +78,9 @@ describe("TeamMilestonesPage", () => {
   it("기여자도 정적 상태와 담당자를 확인하고 별도 편집 컨트롤을 사용한다", async () => {
     loadTeamWorkspace.mockResolvedValue({ workspace });
 
-    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.getByTestId("milestone-editor")).toHaveTextContent("IN_PROGRESS:student-1");
+    expect(screen.getByTestId("task-editor")).toHaveTextContent("IN_PROGRESS:student-1");
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
@@ -91,20 +93,20 @@ describe("TeamMilestonesPage", () => {
       },
     });
 
-    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.queryByTestId("milestone-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
 
-  it("기한이 지난 활성 항목을 먼저 보여주고 완료 항목은 접힌 후순위 영역에 둔다", async () => {
+  it("기한이 지난 진행 중 항목을 먼저 보여주고 완료 항목은 접힌 후순위 영역에 둔다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
-        milestoneCount: 4,
-        completedMilestoneCount: 1,
-        milestones: [
+        taskCount: 4,
+        completedTaskCount: 1,
+        tasks: [
           {
             id: "done",
             title: "완료한 조사",
@@ -137,9 +139,9 @@ describe("TeamMilestonesPage", () => {
       },
     });
 
-    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    const activeSection = screen.getByRole("heading", { name: "활성 마일스톤" }).closest("section");
+    const activeSection = screen.getByRole("heading", { name: "남은 할 일" }).closest("section");
     expect(activeSection).not.toBeNull();
     expect(within(activeSection!).getAllByRole("heading", { level: 3 }).map(({ textContent }) => textContent)).toEqual([
       "지연된 인터뷰 정리",
@@ -147,7 +149,7 @@ describe("TeamMilestonesPage", () => {
       "지도 데이터 검증",
     ]);
     expect(screen.getAllByText("기한 초과")).toHaveLength(1);
-    expect(screen.getByText(/완료 마일스톤/).closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText(/완료 할 일/).closest("details")).not.toHaveAttribute("open");
   });
 
   it("종료된 프로젝트에서는 생성과 편집 컨트롤을 숨긴다", async () => {
@@ -158,10 +160,10 @@ describe("TeamMilestonesPage", () => {
       },
     });
 
-    render(await TeamMilestonesPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.queryByTestId("new-milestone-form")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("milestone-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("new-task-form")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
 });

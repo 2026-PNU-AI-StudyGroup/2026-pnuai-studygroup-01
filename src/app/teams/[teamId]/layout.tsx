@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { TeamWorkspaceNavigation } from "@/app/teams/[teamId]/_components/team-workspace-navigation";
+import { TeamPeopleSidebar } from "@/app/teams/[teamId]/_components/team-people-sidebar";
 import { CloseTeamForm } from "@/app/teams/[teamId]/_components/close-team-form";
 import { ConfirmTeamForm } from "@/app/teams/[teamId]/_components/confirm-team-form";
 import { AppShell } from "@/app/_components/app-shell";
@@ -53,22 +54,23 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               </div>
             </div>
             <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} advisorEnabled={workspace.advisorEnabled} /></div>
+            <TeamPeopleSidebar
+              advisorEnabled={workspace.advisorEnabled}
+              professorName={workspace.professorName}
+              assistants={workspace.assistants}
+              members={workspace.members}
+            />
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
                 <ConfirmTeamForm teamId={workspace.id} />
               ) : null}
               {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <CloseTeamForm teamId={workspace.id} /> : null}
             </div>
-            <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">
-              {workspace.advisorEnabled ? <>
-                <p className="muted text-[0.6875rem] font-semibold uppercase tracking-[0.08em]"><UiText>{"지도교수"}</UiText></p>
-                <p className="mt-1.5 text-sm font-semibold">{workspace.professorName}</p>
-              </> : null}
-              <p className="muted mt-1 text-xs"><UiText>{"팀원"}</UiText>{" "}{workspace.members.length}<UiText>{"명"}</UiText></p>
+            <div className="mt-4 hidden lg:block">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
-                <ConfirmTeamForm teamId={workspace.id} className="mt-4" buttonClassName="button-primary w-full" />
+                <ConfirmTeamForm teamId={workspace.id} buttonClassName="button-primary w-full" />
               ) : null}
-              {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <div className="mt-4"><CloseTeamForm teamId={workspace.id} /></div> : null}
+              {workspace.status === "CONFIRMED" && workspace.canClose && workspace.access.canSupervise ? <CloseTeamForm teamId={workspace.id} /> : null}
             </div>
           </div>
         </UiAside>

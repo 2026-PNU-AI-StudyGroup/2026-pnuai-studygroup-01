@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  milestoneDeadlineState,
-  presentMilestones,
+  taskDeadlineState,
+  presentTasks,
   schedulePhaseState,
-  type MilestonePageItem,
-} from "@/app/teams/[teamId]/_lib/milestone-page-presentation";
+  type TaskPageItem,
+} from "@/app/teams/[teamId]/_lib/task-page-presentation";
 
-function milestone(
+function task(
   id: string,
-  status: MilestonePageItem["status"],
+  status: TaskPageItem["status"],
   dueAt: string,
-): MilestonePageItem {
+): TaskPageItem {
   return {
     id,
     title: id,
@@ -21,18 +21,18 @@ function milestone(
   };
 }
 
-describe("milestone page presentation", () => {
+describe("task page presentation", () => {
   const now = new Date("2026-08-04T00:00:00.000Z");
 
   it("기한이 지난 활성 항목을 먼저 두고 같은 긴급도에서는 진행 중을 우선한다", () => {
     const source = [
-      milestone("future-progress", "IN_PROGRESS", "2026-08-20T00:00:00.000Z"),
-      milestone("overdue-todo", "TODO", "2026-08-01T00:00:00.000Z"),
-      milestone("future-todo", "TODO", "2026-08-10T00:00:00.000Z"),
-      milestone("near-progress", "IN_PROGRESS", "2026-08-15T00:00:00.000Z"),
+      task("future-progress", "IN_PROGRESS", "2026-08-20T00:00:00.000Z"),
+      task("overdue-todo", "TODO", "2026-08-01T00:00:00.000Z"),
+      task("future-todo", "TODO", "2026-08-10T00:00:00.000Z"),
+      task("near-progress", "IN_PROGRESS", "2026-08-15T00:00:00.000Z"),
     ];
 
-    const result = presentMilestones(source, now);
+    const result = presentTasks(source, now);
 
     expect(result.active.map(({ id }) => id)).toEqual([
       "overdue-todo",
@@ -50,10 +50,10 @@ describe("milestone page presentation", () => {
   });
 
   it("완료 항목은 활성 목록과 분리하고 최근 완료 예정일 순서로 둔다", () => {
-    const result = presentMilestones([
-      milestone("old-done", "DONE", "2026-07-01T00:00:00.000Z"),
-      milestone("active", "TODO", "2026-09-01T00:00:00.000Z"),
-      milestone("recent-done", "DONE", "2026-07-20T00:00:00.000Z"),
+    const result = presentTasks([
+      task("old-done", "DONE", "2026-07-01T00:00:00.000Z"),
+      task("active", "TODO", "2026-09-01T00:00:00.000Z"),
+      task("recent-done", "DONE", "2026-07-20T00:00:00.000Z"),
     ], now);
 
     expect(result.active.map(({ id }) => id)).toEqual(["active"]);
@@ -61,9 +61,9 @@ describe("milestone page presentation", () => {
   });
 
   it("완료 여부를 우선해 마감 상태를 계산한다", () => {
-    expect(milestoneDeadlineState(milestone("late", "TODO", "2026-08-03T23:59:59.999Z"), now)).toBe("OVERDUE");
-    expect(milestoneDeadlineState(milestone("today", "TODO", "2026-08-04T00:00:00.000Z"), now)).toBe("UPCOMING");
-    expect(milestoneDeadlineState(milestone("done", "DONE", "2026-07-01T00:00:00.000Z"), now)).toBe("COMPLETE");
+    expect(taskDeadlineState(task("late", "TODO", "2026-08-03T23:59:59.999Z"), now)).toBe("OVERDUE");
+    expect(taskDeadlineState(task("today", "TODO", "2026-08-04T00:00:00.000Z"), now)).toBe("UPCOMING");
+    expect(taskDeadlineState(task("done", "DONE", "2026-07-01T00:00:00.000Z"), now)).toBe("COMPLETE");
   });
 
   it("기간의 시작과 종료 경계를 현재 단계에 포함한다", () => {

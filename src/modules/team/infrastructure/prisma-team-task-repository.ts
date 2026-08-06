@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
-  MilestoneStatus,
-  MilestoneWriter,
+  TaskStatus,
+  TaskWriter,
 } from "@/modules/team/application/team-workspace-ports";
 import {
   teamRecordActorSql,
@@ -12,10 +12,10 @@ import {
 } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
-export class PrismaTeamMilestoneRepository implements MilestoneWriter {
+export class PrismaTeamTaskRepository implements TaskWriter {
   constructor(private readonly client: PrismaClient) {}
 
-  createMilestone(input: {
+  createTask(input: {
     teamId: string;
     actor: CurrentActor;
     title: string;
@@ -27,12 +27,12 @@ export class PrismaTeamMilestoneRepository implements MilestoneWriter {
     const assigneeIds = [...new Set(input.assigneeIds)];
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        INSERT INTO "milestone" (
+        INSERT INTO "task" (
           "id", "teamId", "createdById", "title", "dueAt",
           "status", "createdAt", "updatedAt"
         )
         SELECT ${id}, "team"."id", ${input.actor.id}, ${input.title},
-          ${input.dueAt}, 'TODO'::"MilestoneStatus", ${now}, ${now}
+          ${input.dueAt}, 'TODO'::"TaskStatus", ${now}, ${now}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" <> 'CLOSED'
@@ -43,17 +43,17 @@ export class PrismaTeamMilestoneRepository implements MilestoneWriter {
       if (!rows[0]) return null;
       await enqueueTranslations(transaction, [input.title]);
       if (assigneeIds.length > 0) {
-        await transaction.milestoneAssignee.createMany({
-          data: assigneeIds.map((userId) => ({ milestoneId: id, userId })),
+        await transaction.taskAssignee.createMany({
+          data: assigneeIds.map((userId) => ({ taskId: id, userId })),
         });
       }
       return rows[0];
     });
   }
 
-  updateMilestoneStatus(
+  updateTaskStatus(
     id: string,
-    status: MilestoneStatus,
+    status: TaskStatus,
     assigneeIds: string[],
     actor: CurrentActor,
   ): Promise<{ teamId: string } | null> {
@@ -62,31 +62,69 @@ export class PrismaTeamMilestoneRepository implements MilestoneWriter {
       const rows = await transaction.$queryRaw<Array<{
         teamId: string;
       }>>(Prisma.sql`
-        UPDATE "milestone"
-        SET "status" = ${status}::"MilestoneStatus",
+        UPDATE "task"
+        SET "status" = ${status}::"TaskStatus",
           "updatedAt" = ${new Date()}
         FROM "team"
-        WHERE "milestone"."id" = ${id}
-          AND "team"."id" = "milestone"."teamId"
+        WHERE "task"."id" = ${id}
+          AND "team"."id" = "task"."teamId"
           AND "team"."status" <> 'CLOSED'
           AND ${teamRecordActorSql(actor)}
           AND ${validTeamAssigneesSql(uniqueAssigneeIds)}
-        RETURNING "milestone"."teamId"
+        RETURNING "task"."teamId"
       `);
-      const milestone = rows[0];
-      if (!milestone) return null;
-      await transaction.milestoneAssignee.deleteMany({
-        where: { milestoneId: id },
+      const task = rows[0];
+      if (!task) return null;
+      await transaction.taskAssignee.deleteMany({
+        where: { taskId: id },
       });
       if (uniqueAssigneeIds.length > 0) {
-        await transaction.milestoneAssignee.createMany({
+        await transaction.taskAssignee.createMany({
           data: uniqueAssigneeIds.map((userId) => ({
-            milestoneId: id,
+            taskId: id,
             userId,
           })),
         });
       }
-      return milestone;
+      return task;
     });
+  }
+
+  updateTaskDetails(input: {
+    id: string;
+    title: string;
+    dueAt: Date;
+    actor: CurrentActor;
+  }): Promise<{ teamId: string } | null> {
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
+        UPDATE "task"
+        SET "title" = ${input.title},
+          "dueAt" = ${input.dueAt},
+          "updatedAt" = ${new Date()}
+        FROM "team"
+        WHERE "task"."id" = ${input.id}
+          AND "team"."id" = "task"."teamId"
+          AND "team"."status" <> 'CLOSED'
+          AND ${teamRecordActorSql(input.actor)}
+        RETURNING "task"."teamId"
+      `);
+      if (!rows[0]) return null;
+      await enqueueTranslations(transaction, [input.title]);
+      return rows[0];
+    });
+  }
+
+  async deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null> {
+    const rows = await this.client.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
+      DELETE FROM "task"
+      USING "team"
+      WHERE "task"."id" = ${id}
+        AND "team"."id" = "task"."teamId"
+        AND "team"."status" <> 'CLOSED'
+        AND ${teamRecordActorSql(actor)}
+      RETURNING "task"."teamId"
+    `);
+    return rows[0] ?? null;
   }
 }

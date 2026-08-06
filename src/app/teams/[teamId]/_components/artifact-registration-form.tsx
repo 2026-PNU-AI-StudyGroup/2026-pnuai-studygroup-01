@@ -67,7 +67,6 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
         className={`${reportDialogClassName} max-w-2xl`}
       >
         <ReportFormDialogHeader
-          eyebrow="프로젝트 결과"
           title="결과물 등록"
           description="공개 링크 또는 파일 중 한 방식으로 결과물을 추가합니다."
           titleId={titleId}

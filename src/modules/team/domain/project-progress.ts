@@ -7,16 +7,6 @@ export type ProjectProgressBand =
   | "FINALIZING"
   | "COMPLETED";
 
-export function calculateProjectProgress(
-  completedMilestoneCount: number,
-  milestoneCount: number,
-): number {
-  if (milestoneCount <= 0) return 0;
-
-  const completed = Math.min(Math.max(completedMilestoneCount, 0), milestoneCount);
-  return Math.round((completed / milestoneCount) * 100);
-}
-
 export function calculateReportSubmissionRate(
   submittedReportCount: number,
   reportCount: number,
@@ -24,10 +14,6 @@ export function calculateReportSubmissionRate(
   if (reportCount <= 0) return 0;
   const submitted = Math.min(Math.max(submittedReportCount, 0), reportCount);
   return Math.round((submitted / reportCount) * 100);
-}
-
-export function hasMilestonePlan(milestoneCount: number): boolean {
-  return milestoneCount > 0;
 }
 
 export function hasReportSchedule(reportCount: number): boolean {

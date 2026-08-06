@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  calculateProjectProgress,
   calculateReportSubmissionRate,
   classifyProjectProgress,
   classifyProjectProgressBand,
@@ -10,19 +9,7 @@ import {
 } from "@/modules/team/domain/project-progress";
 
 describe("프로젝트 진행률", () => {
-  it("완료한 마일스톤 비율을 반올림한 프로젝트 진행률로 계산한다", () => {
-    expect(calculateProjectProgress(1, 3)).toBe(33);
-    expect(calculateProjectProgress(2, 4)).toBe(50);
-    expect(calculateProjectProgress(3, 3)).toBe(100);
-  });
-
-  it("마일스톤이 없거나 완료 수가 범위를 벗어나도 0~100으로 제한한다", () => {
-    expect(calculateProjectProgress(0, 0)).toBe(0);
-    expect(calculateProjectProgress(-1, 3)).toBe(0);
-    expect(calculateProjectProgress(4, 3)).toBe(100);
-  });
-
-  it("보고서 제출률은 프로젝트 진행률과 별도 지표로 계산한다", () => {
+  it("보고서 제출률을 프로젝트 진행 지표로 계산한다", () => {
     expect(calculateReportSubmissionRate(1, 3)).toBe(33);
     expect(calculateReportSubmissionRate(3, 3)).toBe(100);
   });

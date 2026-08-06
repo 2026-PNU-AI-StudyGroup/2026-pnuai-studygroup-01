@@ -149,7 +149,7 @@ describe("TeamDiscussionPage", () => {
     }));
 
     expect(screen.getByRole("heading", { name: "아직 나눈 대화가 없습니다" })).toBeInTheDocument();
-    expect(screen.getByText("첫 질문이나 의견을 남겨 프로젝트 대화를 시작하세요.")).toBeInTheDocument();
+    expect(screen.getByText("질문이나 의견을 작성해 대화를 시작하세요.")).toBeInTheDocument();
     expect(screen.getByLabelText("메시지 작성")).toBeInTheDocument();
   });
 });

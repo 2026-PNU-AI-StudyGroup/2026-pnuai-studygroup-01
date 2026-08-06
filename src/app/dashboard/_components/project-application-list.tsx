@@ -12,14 +12,14 @@ import { StatusBadge } from "@/shared/ui/page-primitives";
 
 const presentation = {
   PENDING: {
-    title: "승인 대기",
+    title: "검토 중",
     description: "프로젝트 담당자가 검토 중인 지원입니다.",
     empty: "승인을 기다리는 프로젝트가 없습니다.",
   },
   REJECTED: {
-    title: "승인 거절",
+    title: "미선정",
     description: "선정되지 않은 지원과 검토 의견입니다.",
-    empty: "승인이 거절된 프로젝트가 없습니다.",
+    empty: "미선정된 프로젝트가 없습니다.",
   },
 } as const;
 
@@ -137,7 +137,7 @@ export function ProjectApplicationList({
           <p className="font-semibold"><UiText>{copy.empty}</UiText></p>
           {status === "PENDING" ? (
             <Link href="/topics" className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
-              <UiText>{"프로젝트 둘러보기"}</UiText>
+              <UiText>{"프로젝트 목록"}</UiText>
             </Link>
           ) : null}
         </div>

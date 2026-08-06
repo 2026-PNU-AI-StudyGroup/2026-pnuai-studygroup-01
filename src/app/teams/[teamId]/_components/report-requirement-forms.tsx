@@ -26,7 +26,7 @@ export function ReportRequirementForm({ teamId, executionStartsAt, submissionEnd
     <>
       <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary"><UiText>{"보고서 일정 설정"}</UiText></button>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-xl`}>
-        <ReportFormDialogHeader eyebrow="보고서 일정" title="보고서와 마감 설정" description="제출할 보고서 종류와 마감 시각을 정합니다." titleId={titleId} closeLabel="보고서 설정 닫기" pending={pending} onClose={() => dialogRef.current?.close()} />
+        <ReportFormDialogHeader title="보고서와 마감 설정" description="제출할 보고서 종류와 마감 시각을 정합니다." titleId={titleId} closeLabel="보고서 설정 닫기" pending={pending} onClose={() => dialogRef.current?.close()} />
         <form action={action} className="grid gap-5 px-5 py-6 sm:px-7">
           <input type="hidden" name="teamId" value={teamId} />
           <label className="grid gap-2 text-sm font-semibold">

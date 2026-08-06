@@ -35,8 +35,8 @@ export function ProjectDashboardHero({ role }: { role: ProjectDashboardRole }) {
       : "내 프로젝트";
   const description =
     role === "PROFESSOR"
-      ? "지도 중인 프로젝트의 작업과 마일스톤을 확인합니다."
-      : "지원부터 진행, 완료까지 내 프로젝트 상태를 한곳에서 확인합니다.";
+      ? "지도 중인 프로젝트의 일정과 제출 현황을 확인합니다."
+      : "참여 프로젝트의 일정과 제출 현황을 확인합니다.";
 
   return (
     <div id="project-dashboard-overview">

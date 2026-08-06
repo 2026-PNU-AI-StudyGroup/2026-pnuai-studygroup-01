@@ -17,7 +17,7 @@ export class PrismaDeadlineNotificationGenerator
   constructor(private readonly client: PrismaClient) {}
 
   async generate(now: Date, endsAt: Date): Promise<number> {
-    const [teams, milestones, reports] = await Promise.all([
+    const [teams, tasks, reports] = await Promise.all([
       this.client.team.findMany({
         where: {
           status: { not: "CLOSED" },
@@ -40,7 +40,7 @@ export class PrismaDeadlineNotificationGenerator
           },
         },
       }),
-      this.client.milestone.findMany({
+      this.client.task.findMany({
         where: {
           status: { not: "DONE" },
           dueAt: { gte: now, lte: endsAt },
@@ -121,22 +121,22 @@ export class PrismaDeadlineNotificationGenerator
         }
       }
     }
-    for (const milestone of milestones) {
+    for (const task of tasks) {
       const recipients = new Set([
-        milestone.team.professorId,
-        ...milestone.team.topic.assistants.map(({ userId }) => userId),
-        ...milestone.team.members.map(({ studentId }) => studentId),
+        task.team.professorId,
+        ...task.team.topic.assistants.map(({ userId }) => userId),
+        ...task.team.members.map(({ studentId }) => studentId),
       ]);
       for (const recipientId of recipients) {
         rows.push({
           recipientId,
           type: "DEADLINE",
-          title: `마일스톤 마감 임박 · ${milestone.title}`,
+          title: `할 일 마감 임박 · ${task.title}`,
           body:
-            `${milestone.team.name}의 마일스톤이 ${formatKoreanDate(milestone.dueAt)}에 마감됩니다.`,
-          href: `/teams/${milestone.team.id}/milestones`,
+            `${task.team.name}의 할 일이 ${formatKoreanDate(task.dueAt)}에 마감됩니다.`,
+          href: `/teams/${task.team.id}/tasks`,
           dedupeKey:
-            `deadline:milestone:${milestone.id}:${milestone.dueAt.toISOString()}:${recipientId}`,
+            `deadline:task:${task.id}:${task.dueAt.toISOString()}:${recipientId}`,
           createdAt: now,
         });
       }

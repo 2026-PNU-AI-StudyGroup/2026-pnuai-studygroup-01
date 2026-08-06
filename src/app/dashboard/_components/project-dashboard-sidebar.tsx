@@ -34,7 +34,7 @@ export function ProjectDashboardSidebar({
     },
     ...(student ? [{
       view: "pending" as const,
-      label: "승인 대기",
+      label: "검토 중",
       count: counts.pending,
     }] : []),
     {
@@ -44,7 +44,7 @@ export function ProjectDashboardSidebar({
     },
     ...(student ? [{
       view: "rejected" as const,
-      label: "승인 거절",
+      label: "미선정",
       count: counts.rejected,
     }] : []),
   ];
@@ -96,9 +96,6 @@ export function ProjectDashboardSidebar({
           <h2 className="text-sm font-black tracking-[-0.02em] text-[var(--ink)]">
             <UiText>{student ? "내 프로젝트" : "프로젝트 운영"}</UiText>
           </h2>
-          <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-            <UiText>{student ? "지원부터 완료까지 한곳에서 확인합니다." : "프로젝트 작업 현황을 확인합니다."}</UiText>
-          </p>
         </div>
 
         <UiNav aria-label={student ? "내 프로젝트 바로가기" : "프로젝트 운영 바로가기"} className="mt-4">

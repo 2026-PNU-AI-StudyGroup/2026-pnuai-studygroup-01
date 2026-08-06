@@ -1,6 +1,6 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
-export type MilestoneStatus = "TODO" | "IN_PROGRESS" | "DONE";
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
 
 export type TeamListItem = {
   id: string;
@@ -8,15 +8,15 @@ export type TeamListItem = {
   topicTitle: string;
   status: "FORMING" | "CONFIRMED" | "CLOSED";
   memberCount: number;
-  milestoneCount: number;
-  completedMilestoneCount: number;
+  taskCount: number;
+  completedTaskCount: number;
   reportCount: number;
   submittedReportCount: number;
-  milestones: Array<{
+  tasks: Array<{
     id: string;
     title: string;
     dueAt: Date;
-    status: MilestoneStatus;
+    status: TaskStatus;
     assignees: Array<{ id: string; name: string }>;
   }>;
 };
@@ -49,7 +49,24 @@ export type TeamWorkspace = TeamListItem & {
     submissionStartsAt: Date;
     submissionEndsAt: Date;
   };
-  members: Array<{ id: string; name: string; email: string }>;
+  assistants: Array<{ id: string; name: string; email: string }>;
+  members: Array<{
+    id: string;
+    name: string;
+    email: string;
+    department: string | null;
+    studentNumber: string | null;
+    grade: number | null;
+    phoneNumber: string | null;
+    contactEmail: string | null;
+    profile: {
+      interests: string[];
+      skills: string[];
+      desiredRole: string;
+      availability: string;
+      bio: string;
+    } | null;
+  }>;
   discussionPosts: Array<{
     id: string;
     authorId: string;
@@ -80,20 +97,27 @@ export interface TeamWorkspaceReader {
   ): Promise<TeamListPage>;
 }
 
-export interface MilestoneWriter {
-  createMilestone(input: {
+export interface TaskWriter {
+  createTask(input: {
     teamId: string;
     actor: CurrentActor;
     title: string;
     dueAt: Date;
     assigneeIds: string[];
   }): Promise<{ id: string } | null>;
-  updateMilestoneStatus(
+  updateTaskStatus(
     id: string,
-    status: MilestoneStatus,
+    status: TaskStatus,
     assigneeIds: string[],
     actor: CurrentActor,
   ): Promise<{ teamId: string } | null>;
+  updateTaskDetails(input: {
+    id: string;
+    title: string;
+    dueAt: Date;
+    actor: CurrentActor;
+  }): Promise<{ teamId: string } | null>;
+  deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null>;
 }
 
 export interface DiscussionPostWriter {

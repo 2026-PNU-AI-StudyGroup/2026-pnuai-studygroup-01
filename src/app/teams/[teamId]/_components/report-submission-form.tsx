@@ -77,8 +77,7 @@ export function ReportSubmissionForm({
         className={`${reportDialogClassName} max-w-2xl`}
       >
         <ReportFormDialogHeader
-          eyebrow="보고서 제출"
-          title="새 버전 등록"
+          title="새 버전 제출"
           description="설정된 기한 안에 PDF 또는 Word 파일을 제출합니다."
           titleId={titleId}
           closeLabel="보고서 제출 닫기"

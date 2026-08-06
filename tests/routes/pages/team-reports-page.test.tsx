@@ -42,9 +42,9 @@ const workspace = {
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
   memberCount: 1,
-  milestoneCount: 0,
-  completedMilestoneCount: 0,
-  milestones: [],
+  taskCount: 0,
+  completedTaskCount: 0,
+  tasks: [],
   professorName: "김교수",
   advisorEnabled: true,
   canClose: false,
@@ -147,6 +147,7 @@ describe("TeamReportsPage feedback states", () => {
     expect(screen.getByText("김도윤")).toBeInTheDocument();
     expect(screen.getByText("요청 사항을 반영한 새 버전을 제출해 주세요.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "수정본 제출" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "피드백 남기기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "일정 삭제" })).not.toBeInTheDocument();
     const focus = screen.getByRole("complementary", { name: "중간 보고서 수정 요청을 확인해 주세요" });
     expect(within(focus).getByText("수정 요청 도착")).toBeInTheDocument();
@@ -270,5 +271,6 @@ describe("TeamReportsPage feedback states", () => {
     expect(screen.getByRole("button", { name: "보고서 일정 설정" })).toBeInTheDocument();
     expect(screen.getByText("보고서 일정 관리")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "일정 삭제" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "피드백 남기기" })).toBeInTheDocument();
   });
 });

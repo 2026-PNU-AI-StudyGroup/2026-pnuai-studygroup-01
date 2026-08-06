@@ -70,19 +70,18 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
   const emptyDescription = workspace.status === "CLOSED"
     ? "프로젝트 종료 전에 공개한 결과물이 없습니다."
     : !workspace.access.canContribute
-      ? "팀원이 첫 결과물을 공개하면 바로 볼 수 있습니다."
+      ? "팀원이 결과물을 등록하면 확인할 수 있습니다."
       : workspace.status === "FORMING"
         ? "팀이 확정되면 결과물을 공개할 수 있습니다."
         : registrationPeriodState === "BEFORE"
           ? "결과물 등록 기간이 시작되면 파일 또는 링크를 공개할 수 있습니다."
           : registrationPeriodState === "AFTER"
             ? "결과물 등록 기간이 종료되어 새 결과물을 등록할 수 없습니다."
-            : "소스 코드와 발표 영상, 포스터를 파일 또는 링크로 공개해 보세요.";
+            : "공개할 소스 코드, 발표 영상, 포스터를 파일 또는 링크로 등록하세요.";
 
   return (
     <section aria-labelledby="artifacts-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
-        eyebrow="프로젝트 결과"
         title="프로젝트 결과물"
         titleId="artifacts-title"
         description="발표 자료와 소스 코드 등 공개 가능한 결과물을 관리합니다."

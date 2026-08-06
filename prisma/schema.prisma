@@ -47,7 +47,7 @@ enum TeamStatus {
   CLOSED
 }
 
-enum MilestoneStatus {
+enum TaskStatus {
   TODO
   IN_PROGRESS
   DONE
@@ -223,15 +223,15 @@ model User {
   topicApplications                  TopicApplication[]
   topicApplicationsDecided           TopicApplication[]                  @relation("TopicApplicationDecider")
   teamMemberships                    TeamMember[]
-  milestonesCreated                  Milestone[]                         @relation("MilestoneCreator")
-  milestoneAssignments               MilestoneAssignee[]
+  tasksCreated                       Task[]                              @relation("TaskCreator")
+  taskAssignments                    TaskAssignee[]
   progressUpdates                    ProgressUpdate[]
   discussionPosts                    DiscussionPost[]
   storedFiles                        StoredFile[]
   reportVersionsSubmitted            ReportVersion[]
   approvalDecisions                  ApprovalDecision[]
-  reportsScored                      Report[]                           @relation("ReportScorer")
-  reportFeedback                     ReportFeedback[]                   @relation("ReportFeedbackAuthor")
+  reportsScored                      Report[]                            @relation("ReportScorer")
+  reportFeedback                     ReportFeedback[]                    @relation("ReportFeedbackAuthor")
   artifactsRegistered                Artifact[]
   recruitmentPosts                   RecruitmentPost[]
   recruitmentApplications            RecruitmentApplication[]
@@ -631,7 +631,7 @@ model Team {
   updatedAt        DateTime                 @updatedAt
   topic            Topic                    @relation(fields: [topicId, programId, professorId], references: [id, programId, managerId])
   members          TeamMember[]
-  milestones       Milestone[]
+  tasks            Task[]
   progressUpdates  ProgressUpdate[]
   discussionPosts  DiscussionPost[]
   storedFiles      StoredFile[]
@@ -827,33 +827,33 @@ model TeamMember {
   @@map("team_member")
 }
 
-model Milestone {
-  id          String              @id @default(uuid())
+model Task {
+  id          String         @id @default(uuid())
   teamId      String
   createdById String
   title       String
   dueAt       DateTime
-  status      MilestoneStatus     @default(TODO)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  team        Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  createdBy   User                @relation("MilestoneCreator", fields: [createdById], references: [id])
-  assignees   MilestoneAssignee[]
+  status      TaskStatus     @default(TODO)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy   User           @relation("TaskCreator", fields: [createdById], references: [id])
+  assignees   TaskAssignee[]
 
   @@index([teamId, dueAt])
-  @@map("milestone")
+  @@map("task")
 }
 
-model MilestoneAssignee {
-  milestoneId String
-  userId      String
-  assignedAt  DateTime  @default(now())
-  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+model TaskAssignee {
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([milestoneId, userId])
+  @@id([taskId, userId])
   @@index([userId])
-  @@map("milestone_assignee")
+  @@map("task_assignee")
 }
 
 model ProgressUpdate {

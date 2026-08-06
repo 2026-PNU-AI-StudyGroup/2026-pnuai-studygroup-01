@@ -33,7 +33,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
   const { teamId } = await params;
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
   const { actor, workspace } = await loadTeamWorkspace(teamId, requestedPage);
-  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 나눈 대화가 없습니다." : "첫 질문이나 의견을 남겨 프로젝트 대화를 시작하세요.";
+  const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 나눈 대화가 없습니다." : "질문이나 의견을 작성해 대화를 시작하세요.";
   const participants = [
     ...(workspace.advisorEnabled ? [{ id: `professor-${workspace.professorName}`, name: workspace.professorName, role: "지도교수" }] : []),
     ...workspace.members.map((member) => ({ id: member.id, name: member.name, role: "팀원" })),
@@ -43,9 +43,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
     <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">
-          <p className="eyebrow"><UiText>{"프로젝트 채널"}</UiText></p>
-          <h1 id="discussion-title" className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
-          <p className="muted mt-2 text-sm leading-6 sm:text-base"><UiText>{"프로젝트 결정과 피드백을 팀원과 바로 공유합니다."}</UiText></p>
+          <h1 id="discussion-title" className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
         </div>
         <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participants.length}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
       </header>

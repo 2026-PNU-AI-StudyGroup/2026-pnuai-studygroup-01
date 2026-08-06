@@ -55,7 +55,7 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
       description: parsed.data.description,
     });
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-    return { status: "success", message: `${result.version}차 버전을 제출했습니다.` };
+    return { status: "success", message: `버전 ${result.version}을 제출했습니다.` };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

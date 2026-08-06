@@ -8,14 +8,14 @@ import {
 } from "../src/modules/team/application/confirm-team";
 import {
   TeamDiscussionService,
-  TeamMilestoneService,
-  MilestoneNotFoundError,
+  TeamTaskService,
+  TaskNotFoundError,
   TeamNotFoundError,
   TeamWorkspaceQueryService,
 } from "../src/modules/team/application/manage-team-workspace";
 import { PrismaTeamConfirmationRepository } from "../src/modules/team/infrastructure/prisma-team-confirmation-repository";
 import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
-import { PrismaTeamMilestoneRepository } from "../src/modules/team/infrastructure/prisma-team-milestone-repository";
+import { PrismaTeamTaskRepository } from "../src/modules/team/infrastructure/prisma-team-task-repository";
 import { PrismaTeamWorkspaceQueryRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
@@ -48,7 +48,7 @@ async function cleanup() {
 
 async function expectRejected(
   operation: () => Promise<unknown>,
-  ErrorType: typeof TeamNotFoundError | typeof MilestoneNotFoundError,
+  ErrorType: typeof TeamNotFoundError | typeof TaskNotFoundError,
 ) {
   try {
     await operation();
@@ -138,8 +138,8 @@ async function main() {
   const queryService = new TeamWorkspaceQueryService(
     new PrismaTeamWorkspaceQueryRepository(prisma),
   );
-  const milestoneService = new TeamMilestoneService(
-    new PrismaTeamMilestoneRepository(prisma),
+  const taskService = new TeamTaskService(
+    new PrismaTeamTaskRepository(prisma),
   );
   const discussionService = new TeamDiscussionService(
     new PrismaTeamDiscussionRepository(prisma),
@@ -159,7 +159,7 @@ async function main() {
   }
   await confirmation.confirm(professor, team.id);
 
-  const milestone = await milestoneService.createMilestone(student, {
+  const task = await taskService.createTask(student, {
     teamId: team.id,
     title: "  중간 발표  ",
     dueAt: new Date("2026-08-01T00:00:00Z"),
@@ -176,33 +176,33 @@ async function main() {
     TeamNotFoundError,
   );
   await expectRejected(
-    () => milestoneService.createMilestone(outsider, {
+    () => taskService.createTask(outsider, {
       teamId: team.id,
-      title: "권한 없는 마일스톤",
+      title: "권한 없는 할 일",
       dueAt: new Date("2026-08-02T00:00:00Z"),
     }),
     TeamNotFoundError,
   );
   await expectRejected(
-    () => milestoneService.updateMilestoneStatus(outsider, {
-      milestoneId: milestone.id,
+    () => taskService.updateTaskStatus(outsider, {
+      taskId: task.id,
       status: "DONE",
     }),
-    MilestoneNotFoundError,
+    TaskNotFoundError,
   );
   await expectRejected(
     () => queryService.get({ id: professorId, role: "STUDENT" }, team.id),
     TeamNotFoundError,
   );
-  await milestoneService.updateMilestoneStatus(student, {
-    milestoneId: milestone.id,
+  await taskService.updateTaskStatus(student, {
+    taskId: task.id,
     status: "DONE",
   });
 
   const workspace = await queryService.get(student, team.id);
   if (
-    workspace.milestoneCount !== 1 ||
-    workspace.completedMilestoneCount !== 1 ||
+    workspace.taskCount !== 1 ||
+    workspace.completedTaskCount !== 1 ||
     workspace.discussionPosts[0]?.content !== "Can we meet on Friday?" ||
     workspace.members[0]?.email !== `verification+${studentId}@pusan.ac.kr`
   ) {
@@ -238,8 +238,8 @@ async function main() {
       unauthorizedWrite: "NOT_FOUND",
       demotedProfessorRead: "NOT_FOUND",
       professorTeamConfirmation: true,
-      milestones: workspace.milestoneCount,
-      completedMilestones: workspace.completedMilestoneCount,
+      tasks: workspace.taskCount,
+      completedTasks: workspace.completedTaskCount,
       discussionHistory: { total: secondHistoryPage.discussionTotal, pages: secondHistoryPage.discussionTotalPages },
     }),
   );
