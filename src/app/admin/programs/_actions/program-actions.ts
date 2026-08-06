@@ -88,7 +88,6 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
   revalidatePath("/admin/programs");
   revalidatePath(`/admin/programs/${programId.data}/settings`);
   revalidatePath(`/programs/${programId.data}/vote`);
-  revalidatePath(`/admin/programs/${programId.data}/votes`);
   revalidatePath("/topics");
   revalidatePath("/projects/new");
   revalidatePath("/professor/topics/new");
@@ -101,7 +100,7 @@ export async function changeProgramIconAction(_state: ProgramActionState, formDa
   if (!parsed.success) return { status: "error", message: "프로그램 아이콘을 다시 선택해 주세요." };
   try { await service().changeIcon(await actor(), parsed.data.programId, parsed.data.icon); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); revalidatePath("/topics"); revalidatePath("/dashboard");
+  revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}/settings`); revalidatePath("/topics"); revalidatePath("/dashboard");
   return { status: "success", message: "프로그램 아이콘을 변경했습니다." };
 }
 
@@ -110,7 +109,7 @@ export async function changeStudentProjectCreationAction(_state: ProgramActionSt
   if (!parsed.success) return { status: "error", message: "학생 프로젝트 제안 설정을 다시 확인해 주세요." };
   try { await service().changeStudentProjectCreation(await actor(), parsed.data.programId, parsed.data.enabled === "true"); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); revalidatePath("/topics"); revalidatePath("/projects/new");
+  revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}/settings`); revalidatePath("/topics"); revalidatePath("/projects/new");
   return { status: "success", message: parsed.data.enabled === "true" ? "학생 프로젝트 제안을 허용했습니다." : "학생 프로젝트 제안을 중지했습니다." };
 }
 
@@ -119,5 +118,5 @@ export async function changeProgramStatusAction(_state: ProgramActionState, form
   if (!parsed.success) return { status: "error", message: "변경할 프로그램 상태를 다시 확인해 주세요." };
   try { await service().changeStatus(await actor(), parsed.data.programId, parsed.data.status); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); revalidatePath("/topics"); return { status: "success", message: parsed.data.status === "OPEN" ? "프로그램을 공개했습니다." : "프로그램을 마감했습니다." };
+  revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}/settings`); revalidatePath("/topics"); return { status: "success", message: parsed.data.status === "OPEN" ? "프로그램을 공개했습니다." : "프로그램을 마감했습니다." };
 }

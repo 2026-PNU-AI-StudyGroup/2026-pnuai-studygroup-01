@@ -32,6 +32,6 @@ export async function saveProjectVotesAction(
     throw error;
   }
   revalidatePath(`/programs/${programId.data}/vote`);
-  revalidatePath(`/admin/programs/${programId.data}/votes`);
+  revalidatePath(`/admin/programs/${programId.data}/settings`);
   return { status: "success", message: topicIds.data.length ? "투표를 저장했습니다." : "선택한 투표를 모두 취소했습니다." };
 }

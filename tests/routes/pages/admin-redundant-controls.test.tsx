@@ -29,12 +29,6 @@ vi.mock("@/app/_components/admin-workspace", () => ({
     <main><h1>{title}</h1>{actions}{children}</main>
   ),
 }));
-vi.mock("@/app/admin/programs/_components/student-project-creation-form", () => ({
-  StudentProjectCreationForm: () => <button type="button">학생 생성 설정</button>,
-}));
-vi.mock("@/app/admin/programs/_components/program-status-form", () => ({
-  ProgramStatusForm: () => <button type="button">프로그램 상태 변경</button>,
-}));
 vi.mock("@/app/admin/users/_components/user-status-form", () => ({
   UserStatusForm: ({ name }: { name: string }) => <button type="button">{name} 상태 변경</button>,
 }));
@@ -53,6 +47,8 @@ const program = {
   teamCount: 1,
   advisorEnabled: true,
   studentProjectCreationEnabled: true,
+  icon: "FOLDER" as const,
+  votingPolicy: null,
 };
 
 describe("관리 화면의 중복·가짜 컨트롤", () => {
@@ -71,14 +67,17 @@ describe("관리 화면의 중복·가짜 컨트롤", () => {
     expect(screen.getAllByRole("link", { name: "새 프로그램" })).toHaveLength(1);
   });
 
-  it("마감된 프로그램은 학생 생성 설정을 상태로만 보여준다", async () => {
+  it("프로그램 목록은 최우측 관리 버튼 하나로 모든 조작을 진입시킨다", async () => {
     listPrograms.mockResolvedValue([program]);
 
     render(await ProgramsAdminPage());
 
-    expect(screen.getByText(/학생 프로젝트 제안 허용/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "학생 생성 설정" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "프로그램 상태 변경" })).not.toBeInTheDocument();
+    const manage = screen.getByRole("link", { name: "관리" });
+    expect(manage).toHaveAttribute("href", "/admin/programs/program-1/settings");
+    expect(manage.parentElement?.parentElement).toHaveClass("2xl:col-start-4");
+    expect(screen.queryByRole("link", { name: "등록·투표 설정" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "득표현황" })).not.toBeInTheDocument();
+    expect(screen.queryByText("지도교수 있음")).not.toBeInTheDocument();
   });
 
   it("현재 관리자는 비활성화 버튼 대신 내 계정 상태를 보여준다", async () => {
