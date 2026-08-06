@@ -32,7 +32,7 @@ describe("TopicForm", () => {
       />,
     );
 
-    expect(screen.getByText("지도교수가 없는 프로그램이므로 관리자 그룹에 검토를 요청합니다.")).toBeInTheDocument();
+    expect(screen.getByText("지도교수가 없는 프로그램이므로 관리자에게 검토를 요청합니다.")).toBeInTheDocument();
     expect(screen.queryByRole("radio", { name: /교수에게 요청/ })).not.toBeInTheDocument();
     expect(container.querySelector('input[name="approvalRoute"]')).toHaveValue("ADMIN");
     expect(screen.getByRole("navigation", { name: "주제 작성 섹션" })).toBeInTheDocument();

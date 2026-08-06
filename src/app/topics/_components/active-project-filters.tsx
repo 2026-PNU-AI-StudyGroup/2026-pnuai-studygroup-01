@@ -30,6 +30,7 @@ export function ActiveProjectFilters({ phase, counts, programId, query, sort }: 
           <CustomSelect
             name="sort"
             ariaLabel="프로젝트 정렬"
+            density="compact"
             value={sort}
             onValueChange={(nextSort) => router.push(activeProjectsHref({
               phase,

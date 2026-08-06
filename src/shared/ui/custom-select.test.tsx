@@ -181,6 +181,28 @@ describe("CustomSelect", () => {
     expect(onlyOption).toHaveFocus();
   });
 
+  it("검색형 목록은 이름과 설명으로 선택지를 좁힌다", async () => {
+    render(
+      <CustomSelect
+        name="professorId"
+        ariaLabel="검토 요청 교수"
+        searchable
+        options={[
+          { value: "professor-1", label: "김교수", description: "kim@pusan.ac.kr" },
+          { value: "professor-2", label: "박교수", description: "park@pusan.ac.kr" },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("combobox", { name: "검토 요청 교수" }));
+    const search = screen.getByRole("searchbox", { name: "검토 요청 교수 검색" });
+    await waitFor(() => expect(search).toHaveFocus());
+    fireEvent.change(search, { target: { value: "park@" } });
+
+    expect(screen.queryByRole("option", { name: /김교수/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /박교수/ })).toBeInTheDocument();
+  });
+
   it("다른 필수 입력이 있어도 첫 커스텀 필드가 제출을 막고 오류 포커스를 유지한다", async () => {
     const submit = vi.fn((event: React.FormEvent<HTMLFormElement>) => event.preventDefault());
     const { container } = render(
@@ -317,5 +339,25 @@ describe("CustomMultiSelect", () => {
 
     await waitFor(() => expect(screen.getByRole("button", { name: "저장" })).toHaveFocus());
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("다중 선택도 검색 결과 안에서 선택한다", async () => {
+    const { container } = render(
+      <CustomMultiSelect
+        name="assigneeIds"
+        searchable
+        options={[
+          { value: "student-1", label: "정하늘" },
+          { value: "student-2", label: "윤서준" },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "담당자를 선택하세요" }));
+    const search = screen.getByRole("searchbox", { name: "담당자 검색" });
+    fireEvent.change(search, { target: { value: "윤서" } });
+    fireEvent.click(screen.getByRole("option", { name: "윤서준" }));
+
+    expect([...container.querySelectorAll<HTMLInputElement>('input[name="assigneeIds"]')].map(({ value }) => value)).toEqual(["student-2"]);
   });
 });

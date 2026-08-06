@@ -13,6 +13,7 @@ type SelectOption = {
 };
 
 type CustomSelectProps = {
+  id?: string;
   name: string;
   ariaLabel: string;
   options: SelectOption[];
@@ -21,11 +22,14 @@ type CustomSelectProps = {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  searchable?: boolean;
+  density?: "default" | "compact";
   className?: string;
   onValueChange?: (value: string) => void;
 };
 
 export function CustomSelect({
+  id,
   name,
   ariaLabel,
   options,
@@ -34,6 +38,8 @@ export function CustomSelect({
   placeholder = "선택하세요",
   required,
   disabled,
+  searchable,
+  density = "default",
   className = "",
   onValueChange,
 }: CustomSelectProps) {
@@ -43,32 +49,41 @@ export function CustomSelect({
   const [portalHost, setPortalHost] = useState<Element | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [invalid, setInvalid] = useState(false);
+  const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const optionRefs = useRef(new Map<number, HTMLButtonElement>());
   const listboxId = useId();
   const value = controlledValue ?? uncontrolledValue;
   const controlled = controlledValue !== undefined;
-  const resolvedActiveIndex = normalizeActiveIndex(activeIndex, options.length);
+  const showSearch = searchable ?? options.length > 7;
+  const filteredOptions = filterOptions(options, query);
+  const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selected = options.find((option) => option.value === value);
   const floatingStyle = useFloatingMenu(rootRef, open);
   const showInvalid = invalid && Boolean(required && !disabled && !value);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
     setOpen(false);
+    setQuery("");
     if (restoreFocus) window.setTimeout(() => triggerRef.current?.focus(), 0);
   });
 
   useEffect(() => {
-    if (!open || resolvedActiveIndex < 0) return;
-    const frame = window.requestAnimationFrame(() => optionRefs.current.get(resolvedActiveIndex)?.focus());
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (showSearch) searchRef.current?.focus();
+      else if (resolvedActiveIndex >= 0) optionRefs.current.get(resolvedActiveIndex)?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
-  }, [open, resolvedActiveIndex]);
+  }, [open, resolvedActiveIndex, showSearch]);
 
   function openMenu(direction: "first" | "last" = "first") {
     const selectedIndex = options.findIndex((option) => option.value === value);
     const fallbackIndex = direction === "last" ? options.length - 1 : 0;
+    setQuery("");
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : fallbackIndex);
     setPortalHost(getPortalHost(triggerRef.current));
     setOpen(true);
@@ -81,12 +96,14 @@ export function CustomSelect({
 
   function moveFromMenu(backward: boolean) {
     setOpen(false);
+    setQuery("");
     const trigger = triggerRef.current;
     if (trigger) window.setTimeout(() => focusAdjacentTabbable(trigger, backward), 0);
   }
 
   function choose(nextValue: string) {
     setOpen(false);
+    setQuery("");
     window.setTimeout(() => triggerRef.current?.focus(), 0);
     if (nextValue === value) return;
     if (!controlled) setUncontrolledValue(nextValue);
@@ -95,9 +112,10 @@ export function CustomSelect({
   }
 
   return (
-    <div ref={rootRef} className={`custom-select ${className}`}>
+    <div ref={rootRef} className={`custom-select ${className}`} data-density={density}>
       <input type="hidden" name={name} value={value} />
       <button
+        id={id}
         ref={triggerRef}
         type="button"
         role="combobox"
@@ -142,8 +160,31 @@ export function CustomSelect({
         }}
       />
       {open && portalHost ? createPortal(
-        <div ref={menuRef} id={listboxId} role="listbox" className="custom-select__menu" style={floatingStyle}>
-          {options.map((option, index) => (
+        <div
+          ref={menuRef}
+          id={showSearch ? undefined : listboxId}
+          role={showSearch ? undefined : "listbox"}
+          className="custom-select__menu"
+          style={floatingStyle}
+        >
+          {showSearch ? <SelectSearch
+            inputRef={searchRef}
+            ariaLabel={`${ariaLabel} 검색`}
+            query={query}
+            onQueryChange={(nextQuery) => {
+              setQuery(nextQuery);
+              setActiveIndex(0);
+            }}
+            onArrowDown={() => focusOption(0)}
+            onEscape={() => {
+              setOpen(false);
+              setQuery("");
+              window.setTimeout(() => triggerRef.current?.focus(), 0);
+            }}
+            onTab={moveFromMenu}
+          /> : null}
+          <div id={showSearch ? listboxId : undefined} role={showSearch ? "listbox" : undefined}>
+          {filteredOptions.map((option, index) => (
             <button
               key={option.value}
               ref={(node) => {
@@ -165,10 +206,11 @@ export function CustomSelect({
                 handleOptionNavigation({
                   event,
                   currentIndex: index,
-                  optionCount: options.length,
+                  optionCount: filteredOptions.length,
                   focusOption,
                   close: () => {
                     setOpen(false);
+                    setQuery("");
                     window.setTimeout(() => triggerRef.current?.focus(), 0);
                   },
                   moveFromMenu,
@@ -183,6 +225,8 @@ export function CustomSelect({
               {value === option.value ? <Check /> : null}
             </button>
           ))}
+          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t("검색 결과가 없습니다.")}</p> : null}
+          </div>
         </div>,
         portalHost,
       ) : null}
@@ -191,23 +235,29 @@ export function CustomSelect({
 }
 
 type CustomMultiSelectProps = {
+  id?: string;
   name: string;
   options: SelectOption[];
   values?: string[];
   defaultValues?: string[];
   placeholder?: string;
   disabled?: boolean;
+  searchable?: boolean;
+  density?: "default" | "compact";
   className?: string;
   onValuesChange?: (values: string[]) => void;
 };
 
 export function CustomMultiSelect({
+  id,
   name,
   options,
   values: controlledValues,
   defaultValues = [],
   placeholder = "담당자를 선택하세요",
   disabled,
+  searchable,
+  density = "default",
   className = "",
   onValuesChange,
 }: CustomMultiSelectProps) {
@@ -216,31 +266,40 @@ export function CustomMultiSelect({
   const [open, setOpen] = useState(false);
   const [portalHost, setPortalHost] = useState<Element | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const optionRefs = useRef(new Map<number, HTMLButtonElement>());
   const listboxId = useId();
   const controlled = controlledValues !== undefined;
   const values = controlled ? [...new Set(controlledValues)] : uncontrolledValues;
-  const resolvedActiveIndex = normalizeActiveIndex(activeIndex, options.length);
+  const showSearch = searchable ?? options.length > 7;
+  const filteredOptions = filterOptions(options, query);
+  const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selectedOptions = options.filter((option) => values.includes(option.value));
   const floatingStyle = useFloatingMenu(rootRef, open);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
     setOpen(false);
+    setQuery("");
     if (restoreFocus) window.setTimeout(() => triggerRef.current?.focus(), 0);
   });
 
   useEffect(() => {
-    if (!open || resolvedActiveIndex < 0) return;
-    const frame = window.requestAnimationFrame(() => optionRefs.current.get(resolvedActiveIndex)?.focus());
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (showSearch) searchRef.current?.focus();
+      else if (resolvedActiveIndex >= 0) optionRefs.current.get(resolvedActiveIndex)?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
-  }, [open, resolvedActiveIndex]);
+  }, [open, resolvedActiveIndex, showSearch]);
 
   function openMenu(direction: "first" | "last" = "first") {
     const selectedIndex = options.findIndex((option) => values.includes(option.value));
     const fallbackIndex = direction === "last" ? options.length - 1 : 0;
+    setQuery("");
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : fallbackIndex);
     setPortalHost(getPortalHost(triggerRef.current));
     setOpen(true);
@@ -253,6 +312,7 @@ export function CustomMultiSelect({
 
   function moveFromMenu(backward: boolean) {
     setOpen(false);
+    setQuery("");
     const trigger = triggerRef.current;
     if (trigger) window.setTimeout(() => focusAdjacentTabbable(trigger, backward), 0);
   }
@@ -266,9 +326,10 @@ export function CustomMultiSelect({
   }
 
   return (
-    <div ref={rootRef} className={`custom-select custom-multi-select ${className}`}>
+    <div ref={rootRef} className={`custom-select custom-multi-select ${className}`} data-density={density}>
       {values.map((value) => <input key={value} type="hidden" name={name} value={value} />)}
       <button
+        id={id}
         ref={triggerRef}
         type="button"
         className="custom-select__trigger"
@@ -300,12 +361,36 @@ export function CustomMultiSelect({
         <Chevron open={open} />
       </button>
       {open && portalHost ? createPortal(
-        <div ref={menuRef} id={listboxId} role="listbox" aria-multiselectable="true" className="custom-select__menu" style={floatingStyle}>
+        <div
+          ref={menuRef}
+          id={showSearch ? undefined : listboxId}
+          role={showSearch ? undefined : "listbox"}
+          aria-multiselectable={showSearch ? undefined : "true"}
+          className="custom-select__menu"
+          style={floatingStyle}
+        >
           <div className="custom-select__menu-heading">
             <span>{t("담당자 선택")}</span>
             <span>{values.length}<UiText>{"명"}</UiText></span>
           </div>
-          {options.map((option, index) => {
+          {showSearch ? <SelectSearch
+            inputRef={searchRef}
+            ariaLabel="담당자 검색"
+            query={query}
+            onQueryChange={(nextQuery) => {
+              setQuery(nextQuery);
+              setActiveIndex(0);
+            }}
+            onArrowDown={() => focusOption(0)}
+            onEscape={() => {
+              setOpen(false);
+              setQuery("");
+              window.setTimeout(() => triggerRef.current?.focus(), 0);
+            }}
+            onTab={moveFromMenu}
+          /> : null}
+          <div id={showSearch ? listboxId : undefined} role={showSearch ? "listbox" : undefined} aria-multiselectable={showSearch ? "true" : undefined}>
+          {filteredOptions.map((option, index) => {
             const checked = values.includes(option.value);
             return (
               <button
@@ -329,10 +414,11 @@ export function CustomMultiSelect({
                   handleOptionNavigation({
                     event,
                     currentIndex: index,
-                    optionCount: options.length,
+                    optionCount: filteredOptions.length,
                     focusOption,
                     close: () => {
                       setOpen(false);
+                      setQuery("");
                       window.setTimeout(() => triggerRef.current?.focus(), 0);
                     },
                     moveFromMenu,
@@ -349,7 +435,8 @@ export function CustomMultiSelect({
               </button>
             );
           })}
-          {options.length === 0 ? <p className="custom-select__empty">{t("선택할 수 있는 팀원이 없습니다.")}</p> : null}
+          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t(query ? "검색 결과가 없습니다." : "선택할 수 있는 팀원이 없습니다.")}</p> : null}
+          </div>
         </div>,
         portalHost,
       ) : null}
@@ -377,6 +464,57 @@ function useDismiss(
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [dismiss, open, refs]);
+}
+
+function SelectSearch({
+  inputRef,
+  ariaLabel,
+  query,
+  onQueryChange,
+  onArrowDown,
+  onEscape,
+  onTab,
+}: {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  ariaLabel: string;
+  query: string;
+  onQueryChange: (query: string) => void;
+  onArrowDown: () => void;
+  onEscape: () => void;
+  onTab: (backward: boolean) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <label className="custom-select__search">
+      <SearchIcon />
+      <input
+        ref={inputRef}
+        type="search"
+        aria-label={t(ariaLabel)}
+        value={query}
+        placeholder={t("목록 검색")}
+        onChange={(event) => onQueryChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            onArrowDown();
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            onEscape();
+          } else if (event.key === "Tab") {
+            event.preventDefault();
+            onTab(event.shiftKey);
+          }
+        }}
+      />
+    </label>
+  );
+}
+
+function filterOptions(options: SelectOption[], query: string) {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) return options;
+  return options.filter((option) => `${option.label} ${option.description ?? ""}`.toLocaleLowerCase().includes(normalizedQuery));
 }
 
 function handleOptionNavigation({
@@ -505,6 +643,15 @@ function Chevron({ open }: { open: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className={`custom-select__chevron ${open ? "rotate-180" : ""}`}>
       <path d="m6 8 4 4 4-4" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20">
+      <circle cx="8.75" cy="8.75" r="5.25" />
+      <path d="m12.6 12.6 3.9 3.9" />
     </svg>
   );
 }
