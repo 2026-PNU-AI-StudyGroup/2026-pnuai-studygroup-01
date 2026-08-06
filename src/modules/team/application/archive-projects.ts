@@ -2,8 +2,7 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type ArchivedProject = {
   id: string;
-  academicYear: number;
-  term: "FIRST" | "SECOND";
+  startYear: number;
   teamName: string;
   programId: string;
   programName: string;
@@ -39,7 +38,7 @@ export type ArchivedProgramOption = {
   id: string;
   name: string;
   category: string;
-  academicYear: number;
+  startYear: number;
 };
 
 export interface ArchivedProjectReader {

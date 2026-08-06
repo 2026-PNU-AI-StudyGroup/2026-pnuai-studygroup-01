@@ -34,13 +34,43 @@ const application: ProfessorTopicApplicationSummary = {
   teamMembers: [{ studentId: "student-1", name: "김학생", email: "student@pusan.ac.kr", role: "LEADER" }],
   answers: [{ questionId: "question-1", label: "지원 동기", required: true, maxLength: 300, value: "영문 자료를 함께 읽고 제품 품질을 높이겠습니다." }],
   createdAt: new Date("2026-07-17T09:00:00+09:00"),
+  decidedAt: null,
+  decidedByName: null,
+  decisionImpact: {
+    acceptedMemberCount: 1,
+    currentMemberCount: 2,
+    capacity: 4,
+    automaticallyRejectedApplicationCount: 0,
+    closesRecruitment: false,
+  },
 };
+
+const listItem = {
+  id: application.id,
+  topicId: application.topicId,
+  topicTitle: application.topicTitle,
+  status: application.status,
+  studentName: application.studentName,
+  applicationKind: application.applicationKind,
+  teamMemberCount: application.teamMembers.length,
+  createdAt: application.createdAt,
+};
+
+function applicationPage(item = listItem) {
+  return {
+    items: [item],
+    page: 1,
+    totalPages: 1,
+    total: 1,
+    counts: { PENDING: item.status === "PENDING" ? 1 : 0, ACCEPTED: item.status === "ACCEPTED" ? 1 : 0, REJECTED: item.status === "REJECTED" ? 1 : 0 },
+  };
+}
 
 describe("교수 지원서 목록과 상세", () => {
   it("목록은 판단에 필요한 요약과 상세 링크만 표시한다", () => {
-    render(<ReceivedApplicationList applications={[application]} />);
+    render(<ReceivedApplicationList page={applicationPage()} query="" />);
 
-    const item = screen.getByRole("listitem");
+    const item = within(screen.getByRole("list", { name: "지원서 결과" })).getByRole("listitem");
     expect(within(item).getByText("프로젝트 관리 시스템")).toBeInTheDocument();
     expect(within(item).getByText("김학생")).toBeInTheDocument();
     expect(within(item).getByRole("link", { name: /지원서 상세 보기/ })).toHaveAttribute(
@@ -50,6 +80,16 @@ describe("교수 지원서 목록과 상세", () => {
     expect(screen.queryByText(application.message)).not.toBeInTheDocument();
     expect(screen.queryByText("UX 리서치")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /결정/ })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["ACCEPTED", "선정", "bg-[var(--success-subtle)]"],
+    ["REJECTED", "미선정", "bg-[var(--danger-subtle)]"],
+  ] as const)("%s 결과를 canonical 배지로 표시한다", (status, label, toneClass) => {
+    render(<ReceivedApplicationList page={applicationPage({ ...listItem, status })} status={status} query="" />);
+
+    const resultList = screen.getByRole("list", { name: "지원서 결과" });
+    expect(within(resultList).getByText(label)).toHaveClass(toneClass);
   });
 
   it("상세에서 지원자와 교수 지정 문항 답변 및 결정 동작을 표시한다", () => {

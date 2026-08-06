@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { EmptyState, ProgressBar } from "@/shared/ui/page-primitives";
+import { EmptyState, PageHeader, ProgressBar } from "@/shared/ui/page-primitives";
+
+describe("PageHeader", () => {
+  it("부제 없이 제목만 렌더링할 수 있다", () => {
+    const { container } = render(<PageHeader title="공지사항" />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "공지사항" })).toBeInTheDocument();
+    expect(container.querySelector("header p")).not.toBeInTheDocument();
+  });
+});
 
 describe("EmptyState", () => {
   it("패널 내부에서는 외부 카드 장식을 다시 만들지 않는다", () => {
@@ -21,6 +30,15 @@ describe("EmptyState", () => {
     expect(state).toHaveAttribute("data-empty-state", "page");
     expect(state).toHaveClass("border");
     expect(state).toHaveClass("bg-white");
+  });
+
+  it("설명이 없으면 빈 문단과 설명용 여백을 만들지 않는다", () => {
+    const { container } = render(<EmptyState variant="embedded" title="등록된 공지가 없습니다" />);
+
+    const state = screen.getByText("등록된 공지가 없습니다").closest("[data-empty-state]");
+    expect(container.querySelector("p")).not.toBeInTheDocument();
+    expect(state).toHaveClass("min-h-20");
+    expect(state).not.toHaveClass("min-h-28", "gap-5");
   });
 });
 

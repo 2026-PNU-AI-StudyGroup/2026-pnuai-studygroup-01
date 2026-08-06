@@ -31,7 +31,7 @@ import {
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export type ReportActionState = { status: "idle" | "error" | "success"; message: string };
+export type ReportActionState = { status: "idle" | "error" | "success" | "conflict"; message: string };
 
 function message(error: unknown) {
   return error instanceof InvalidReportInputError ||
@@ -55,7 +55,7 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
       description: parsed.data.description,
     });
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-    return { status: "success", message: `${result.version}차 버전을 제출했습니다.` };
+    return { status: "success", message: `버전 ${result.version}을 제출했습니다.` };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
@@ -100,7 +100,10 @@ export async function removeReportRequirementAction(
     return { status: "success", message: "보고서 요구사항을 해제했습니다." };
   } catch (error) {
     const expected = message(error);
-    if (expected) return { status: "error", message: "제출 이력이 생겼거나 권한이 변경되어 해제하지 못했습니다. 화면을 새로고침한 뒤 다시 확인해 주세요." };
+    if (expected) {
+      revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
+      return { status: "conflict", message: "제출 이력이나 권한이 변경되어 최신 상태를 다시 불러옵니다." };
+    }
     throw error;
   }
 }

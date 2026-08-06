@@ -36,6 +36,7 @@ export type ProjectAssistantManagement = {
 };
 
 export interface ProjectAssistantReader {
+  hasSupervisedTopic(actor: CurrentActor): Promise<boolean>;
   findManagement(
     topicId: string,
     actor: CurrentActor,

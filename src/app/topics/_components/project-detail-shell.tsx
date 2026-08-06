@@ -10,8 +10,8 @@ export function ProjectDetailShell({
   rail,
   railLabelledBy,
 }: {
-  cover: ReactNode;
-  marker: ReactNode;
+  cover?: ReactNode;
+  marker?: ReactNode;
   heading: ReactNode;
   headerAside?: ReactNode;
   children: ReactNode;
@@ -20,20 +20,24 @@ export function ProjectDetailShell({
 }) {
   return (
     <article className="min-w-0">
-      <div className="overflow-hidden border-y border-[var(--line)] [&>*]:!min-h-64 lg:[&>*]:!min-h-72">
-        {cover}
-      </div>
-
-      <div className="relative pt-9">
-        <div
-          aria-hidden="true"
-          className="absolute -top-7 left-0 grid size-14 place-items-center rounded-full border-4 border-[var(--workspace)] bg-[var(--ink)] text-white"
-        >
-          {marker}
+      {cover ? (
+        <div className="overflow-hidden border-y border-[var(--line)]">
+          {cover}
         </div>
+      ) : null}
+
+      <div className={`relative ${cover ? "pt-9" : ""}`}>
+        {cover && marker ? (
+          <div
+            aria-hidden="true"
+            className="absolute -top-7 left-0 grid size-14 place-items-center rounded-full border-4 border-[var(--workspace)] bg-[var(--ink)] text-white"
+          >
+            {marker}
+          </div>
+        ) : null}
 
         <header
-          className={`grid gap-8 border-b border-[var(--line)] pb-9 pt-5 ${
+          className={`grid gap-8 border-b border-[var(--line)] pb-9 ${cover ? "pt-5" : "pt-1"} ${
             headerAside
               ? "lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end"
               : ""

@@ -25,7 +25,7 @@ describe("ProjectPortalHero", () => {
     render(<ProjectPortalHero view="past" program={{ name: "CSE 캡스톤 디자인 2025", category: "캡스톤" }} />);
 
     expect(screen.getByRole("heading", { name: "CSE 캡스톤 디자인 2025" })).toBeInTheDocument();
-    expect(screen.getByText("캡스톤 · 완료된 프로젝트와 결과물을 둘러보세요.")).toBeInTheDocument();
+    expect(screen.getByText("캡스톤 · 완료된 프로젝트와 결과물을 확인하세요.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "지난 프로젝트" })).not.toBeInTheDocument();
   });
 

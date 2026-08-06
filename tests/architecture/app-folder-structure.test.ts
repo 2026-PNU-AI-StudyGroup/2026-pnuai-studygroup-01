@@ -16,6 +16,11 @@ const ROUTE_FILES = new Set([
 ]);
 const ROOT_ASSETS = new Set(["globals.css", "icon.svg"]);
 const IGNORED_FILES = new Set([".DS_Store"]);
+const FULL_PAGE_LOADING_BOUNDARIES = new Set([
+  "loading.tsx",
+  path.join("dashboard", "loading.tsx"),
+  path.join("teams", "[teamId]", "loading.tsx"),
+]);
 
 async function findUnexpectedFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -43,6 +48,15 @@ async function findUnexpectedFiles(directory: string): Promise<string[]> {
 describe("App Router production folder structure", () => {
   it("라우트 세그먼트에는 예약 파일만 직접 둔다", async () => {
     await expect(findUnexpectedFiles(APP_ROOT)).resolves.toEqual([]);
+  });
+
+  it("앱 셸을 통째로 대체하는 전체 화면 로딩 경계를 두지 않는다", async () => {
+    const sourceFiles = await findSourceFiles(APP_ROOT);
+    const loadingBoundaries = sourceFiles
+      .map((file) => path.relative(APP_ROOT, file))
+      .filter((file) => FULL_PAGE_LOADING_BOUNDARIES.has(file));
+
+    expect(loadingBoundaries).toEqual([]);
   });
 
   it("라우트 private 구현은 다른 최상위 라우트에서 참조하지 않는다", async () => {

@@ -22,4 +22,10 @@ describe("사용자 상태 관리", () => {
     const repository = {} as UserAdministrationRepository;
     await expect(new UserAdministrationService(repository).setActive({ id: "student-1", role: "STUDENT" }, "student-2", false)).rejects.toBeInstanceOf(UserAdministrationError);
   });
+
+  it("담당 프로젝트가 있는 교수 계정 비활성화를 차단한다", async () => {
+    const repository = { setActive: vi.fn().mockResolvedValue("ACTIVE_PROJECTS") } as unknown as UserAdministrationRepository;
+    await expect(new UserAdministrationService(repository).setActive(admin, "professor-1", false))
+      .rejects.toThrow("담당 중인 프로젝트가 있는 교수 계정은 비활성화할 수 없습니다.");
+  });
 });

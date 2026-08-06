@@ -222,14 +222,16 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
     nextLeaderId: string;
   }): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
-      const team = await transaction.studentTeam.findFirst({
-        where: {
-          id: input.teamId,
-          leaderId: input.leaderId,
-          deletedAt: null,
-        },
-        select: { id: true },
-      });
+      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id"
+        FROM "student_team"
+        WHERE "id" = ${input.teamId}
+          AND "leaderId" = ${input.leaderId}
+          AND "deletedAt" IS NULL
+        FOR UPDATE
+      `);
+      const team = teams[0];
+      if (!team) return false;
       const next = await transaction.studentTeamMember.findUnique({
         where: {
           teamId_studentId: {
@@ -239,7 +241,7 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         },
         select: { id: true },
       });
-      if (!team || !next || input.leaderId === input.nextLeaderId) return false;
+      if (!next || input.leaderId === input.nextLeaderId) return false;
       await transaction.studentTeamMember.updateMany({
         where: { teamId: input.teamId, studentId: input.leaderId },
         data: { role: "MEMBER" },
@@ -262,13 +264,24 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
     studentId: string;
   }): Promise<boolean> {
     if (input.leaderId === input.studentId) return Promise.resolve(false);
-    return this.client.studentTeamMember.deleteMany({
-      where: {
-        teamId: input.teamId,
-        studentId: input.studentId,
-        team: { leaderId: input.leaderId, deletedAt: null },
-      },
-    }).then(({ count }) => count === 1);
+    return this.client.$transaction(async (transaction) => {
+      const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id"
+        FROM "student_team"
+        WHERE "id" = ${input.teamId}
+          AND "leaderId" = ${input.leaderId}
+          AND "deletedAt" IS NULL
+        FOR UPDATE
+      `);
+      if (!teams[0]) return false;
+      const result = await transaction.studentTeamMember.deleteMany({
+        where: {
+          teamId: input.teamId,
+          studentId: input.studentId,
+        },
+      });
+      return result.count === 1;
+    });
   }
 
   delete(input: {

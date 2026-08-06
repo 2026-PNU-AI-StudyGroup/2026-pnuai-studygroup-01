@@ -10,7 +10,7 @@ export function AccountSectionLayout({ role, currentPath, children }: { role: Us
   const items = role === "STUDENT"
     ? [
         { href: "/account", label: "계정 정보", icon: AccountIcon },
-        { href: "/account/profile", label: "프로젝트 프로필", icon: ProfileIcon },
+        { href: "/account/profile", label: "프로젝트 지원 정보", icon: ProfileIcon },
       ]
     : [];
   return (

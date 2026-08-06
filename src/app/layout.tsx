@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s · ${applicationName}`,
     },
     description: locale === "ko"
-      ? "부산대학교의 아이디어와 팀, 과정과 결과를 하나의 프로젝트 경험으로 연결합니다."
+      ? "학과 프로젝트의 모집, 수행, 보고서 및 결과물을 관리합니다."
       : "Connect PNU project ideas, teams, process, and outcomes in one workspace.",
     robots: { index: false, follow: false },
   };

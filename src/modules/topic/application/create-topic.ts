@@ -32,7 +32,7 @@ export class CreateTopicService {
 
   async execute(
     actor: CurrentActor,
-    input: Omit<TopicDraft, "authorId" | "academicCycleId">,
+    input: Omit<TopicDraft, "authorId">,
   ): Promise<{ id: string }> {
     if (!canCreateTopic(actor)) {
       throw new TopicCreationForbiddenError();
@@ -65,7 +65,6 @@ export class CreateTopicService {
 
     const created = await this.topicRepository.createDraft({
       ...details,
-      academicCycleId: program.academicCycleId,
       authorId: actor.id,
     });
     if (!created) {

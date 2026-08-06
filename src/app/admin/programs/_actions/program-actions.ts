@@ -14,7 +14,7 @@ async function actor() { const value = await getCurrentActor(); if (!value) redi
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
 export async function createProgramAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ academicCycleId: z.string().uuid(), name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
+  const parsed = z.object({ name: z.string(), category: z.string(), description: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
     ...Object.fromEntries(formData),
     studentProjectCreationEnabled: formData.get("studentProjectCreationEnabled") === "true",
   });
@@ -26,16 +26,16 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
 
 export async function changeStudentProjectCreationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "잘못된 학생 프로젝트 생성 설정입니다." };
+  if (!parsed.success) return { status: "error", message: "학생 프로젝트 제안 설정을 다시 확인해 주세요." };
   try { await service().changeStudentProjectCreation(await actor(), parsed.data.programId, parsed.data.enabled === "true"); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/admin/programs"); revalidatePath("/topics"); revalidatePath("/projects/new");
-  return { status: "success", message: parsed.data.enabled === "true" ? "학생 프로젝트 생성을 허용했습니다." : "학생 프로젝트 생성을 중지했습니다." };
+  return { status: "success", message: parsed.data.enabled === "true" ? "학생 프로젝트 제안을 허용했습니다." : "학생 프로젝트 제안을 중지했습니다." };
 }
 
 export async function changeProgramStatusAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const parsed = z.object({ programId: z.string().min(1).max(200), status: z.enum(["OPEN", "CLOSED"]) }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "잘못된 상태 변경 요청입니다." };
+  if (!parsed.success) return { status: "error", message: "변경할 프로그램 상태를 다시 확인해 주세요." };
   try { await service().changeStatus(await actor(), parsed.data.programId, parsed.data.status); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/admin/programs"); revalidatePath("/topics"); return { status: "success", message: parsed.data.status === "OPEN" ? "프로그램을 공개했습니다." : "프로그램을 마감했습니다." };

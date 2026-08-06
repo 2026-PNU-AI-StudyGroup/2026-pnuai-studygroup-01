@@ -28,6 +28,9 @@ const application: ProfessorTopicApplicationSummary = {
   teamMembers: [{ studentId: "student-1", name: "김학생", email: "student@pusan.ac.kr", role: "LEADER" }],
   answers: [{ questionId: "question-1", label: "지원 동기", required: true, maxLength: 300, value: "지원합니다." }],
   createdAt: new Date("2026-07-17T09:00:00+09:00"),
+  decidedAt: null,
+  decidedByName: null,
+  decisionImpact: null,
 };
 
 function reader(result: ProfessorTopicApplicationSummary | null): ProfessorTopicApplicationReader {
@@ -44,10 +47,7 @@ describe("받은 지원서 상세 조회", () => {
         "application-1",
       ),
     ).resolves.toEqual(application);
-    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", {
-      actorId: "professor-1",
-      isAdmin: false,
-    });
+    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", { id: "professor-1", role: "PROFESSOR" });
   });
 
   it("다른 교수에게 보이지 않는 지원서는 찾을 수 없음으로 처리한다", async () => {
@@ -69,10 +69,7 @@ describe("받은 지원서 상세 조회", () => {
       "application-1",
     );
 
-    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", {
-      actorId: "admin-1",
-      isAdmin: true,
-    });
+    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", { id: "admin-1", role: "ADMIN" });
   });
 
   it("감독 관계가 없는 학생의 지원서를 저장소 조회 조건으로 숨긴다", async () => {
@@ -84,9 +81,6 @@ describe("받은 지원서 상세 조회", () => {
         "application-1",
       ),
     ).rejects.toBeInstanceOf(ReceivedTopicApplicationNotFoundError);
-    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", {
-      actorId: "student-1",
-      isAdmin: false,
-    });
+    expect(repository.findVisibleById).toHaveBeenCalledWith("application-1", { id: "student-1", role: "STUDENT" });
   });
 });

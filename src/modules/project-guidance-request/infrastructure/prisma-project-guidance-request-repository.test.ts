@@ -7,7 +7,7 @@ const student = { id: "student-1", role: "STUDENT" as const };
 const professor = { id: "professor-1", role: "PROFESSOR" as const };
 
 describe("PrismaProjectGuidanceRequestRepository", () => {
-  it("팀 접근 권한을 확인한 뒤 요청과 응답자를 페이지 단위로 반환한다", async () => {
+  it("팀 접근 권한을 확인한 뒤 대기·답변·취소 상태와 최신 시각, ID 순으로 안정적으로 페이지 조회한다", async () => {
     const findFirst = vi.fn(async () => ({ id: "team-1" }));
     const findMany = vi.fn(async () => [{
       id: "request-1",
@@ -43,7 +43,15 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ id: "team-1", OR: expect.any(Array) }),
     }));
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 20, skip: 0 }));
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [
+        { status: "asc" },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
+      take: 20,
+      skip: 0,
+    }));
     expect(page?.items[0]).toEqual(expect.objectContaining({
       requesterName: "정하늘",
       responderName: null,

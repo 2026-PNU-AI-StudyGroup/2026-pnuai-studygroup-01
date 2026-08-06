@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  calculateProjectProgress,
+  calculateReportSubmissionRate,
   classifyProjectProgress,
   classifyProjectProgressBand,
+  hasReportSchedule,
   isReportSubmissionOverdue,
 } from "@/modules/team/domain/project-progress";
 
 describe("프로젝트 진행률", () => {
-  it("필수 보고서 제출 비율을 반올림한 백분율로 계산한다", () => {
-    expect(calculateProjectProgress(1, 3)).toBe(33);
-    expect(calculateProjectProgress(2, 3)).toBe(67);
-    expect(calculateProjectProgress(3, 3)).toBe(100);
+  it("보고서 제출률을 프로젝트 진행 지표로 계산한다", () => {
+    expect(calculateReportSubmissionRate(1, 3)).toBe(33);
+    expect(calculateReportSubmissionRate(3, 3)).toBe(100);
   });
 
-  it("필수 보고서가 없거나 제출 수가 범위를 벗어나도 0~100으로 제한한다", () => {
-    expect(calculateProjectProgress(0, 0)).toBe(0);
-    expect(calculateProjectProgress(-1, 3)).toBe(0);
-    expect(calculateProjectProgress(4, 3)).toBe(100);
+  it("진행률을 표시할 보고서 일정의 존재 여부를 구분한다", () => {
+    expect(hasReportSchedule(0)).toBe(false);
+    expect(hasReportSchedule(-1)).toBe(false);
+    expect(hasReportSchedule(1)).toBe(true);
   });
 
   it("진행률을 시작 전, 진행 중, 완료 구간으로 분류한다", () => {

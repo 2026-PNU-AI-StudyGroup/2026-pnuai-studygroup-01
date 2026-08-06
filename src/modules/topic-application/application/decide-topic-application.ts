@@ -36,7 +36,7 @@ function normalizeReviewComment(comment: string, required: boolean): string {
     throw new TopicApplicationReviewCommentError("검토 의견은 2,000자 이내로 입력해 주세요.");
   }
   if (required && !normalized) {
-    throw new TopicApplicationReviewCommentError("거절 사유를 검토 의견에 입력해 주세요.");
+    throw new TopicApplicationReviewCommentError("미선정 사유를 검토 의견에 입력해 주세요.");
   }
   return normalized;
 }
@@ -64,7 +64,7 @@ export class DecideTopicApplicationService {
     }
     if (outcome === "STUDENT_ALREADY_ASSIGNED") {
       throw new TopicApplicationDecisionConflictError(
-        "학생이 이미 같은 학기의 다른 팀에 소속되어 있습니다.",
+        "학생이 이미 같은 프로그램의 다른 팀에 소속되어 있습니다.",
       );
     }
     if (outcome === "CONFLICT") {

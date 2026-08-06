@@ -27,18 +27,18 @@ type NavigationItem = {
 function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
-        explore: "프로젝트 탐색",
+        explore: "프로젝트 찾기",
         projects: "내 프로젝트",
-        teams: "팀 관리",
+        teamWorkspace: "팀",
         announcements: "공지사항",
         allProjects: "전체 프로젝트",
-        mentoredProjects: "지도 프로젝트",
+        mentoredProjects: "프로젝트 운영",
         manage: "관리",
       }
     : {
         explore: "Explore",
         projects: "Projects",
-        teams: "Teams",
+        teamWorkspace: "Teams",
         announcements: "Notices",
         allProjects: "All projects",
         mentoredProjects: "Mentoring",
@@ -48,7 +48,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.projects, icon: "home" },
-      { href: "/recruitments", label: label.teams, icon: "users" },
+      { href: "/recruitments", label: label.teamWorkspace, icon: "users" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
     ];
   }
@@ -69,8 +69,16 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
+  if (
+    role === "STUDENT" &&
+    item.href === "/dashboard" &&
+    (isSectionActive("/projects", currentPath) || isSectionActive("/project-approvals", currentPath))
+  ) {
+    return true;
+  }
   if (role === "STUDENT" && item.href === "/recruitments") {
-    return currentPath.startsWith("/recruitments") || currentPath.startsWith("/teams");
+    return isSectionActive("/recruitments", currentPath) ||
+      isSectionActive("/teams", currentPath);
   }
   if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);
   if (currentPath.startsWith("/project-approvals")) return true;
@@ -126,8 +134,8 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자"
     : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : "Administrator";
   const shellCopy = locale === "ko"
-    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", notifications: "알림", language: "언어", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 탐색 모바일" }
-    : { skip: "Skip to content", navigation: "Primary navigation", notifications: "Notifications", language: "Language", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
+    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
+    : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
   return (
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>
     <div className="min-h-screen bg-[var(--workspace)]">
@@ -147,23 +155,14 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             })}
           </nav>
           <div className="mt-auto flex w-full flex-col items-center gap-2 pt-4">
-            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold ${currentPath === "/notifications" ? "text-white" : "text-[#cbd6ff]"}`}>
-              <NotificationIndicatorContainer
-                userId={userId}
-                active={currentPath === "/notifications"}
-                inverse
-                openNotification={openNotificationAction}
-              />
-              <span aria-hidden="true">{shellCopy.notifications}</span>
-            </div>
-            <div className="flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold text-[#cbd6ff]">
-              <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} inverse />
-              <span aria-hidden="true">{shellCopy.language}</span>
-            </div>
-            <div className={`flex min-h-[4rem] flex-col items-center justify-center gap-0.5 text-[0.7rem] font-semibold ${isSectionActive("/account", currentPath) ? "text-white" : "text-[#cbd6ff]"}`}>
-              <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} inverse locale={locale} />
-              <span aria-hidden="true"><UiText>{roleLabel}</UiText></span>
-            </div>
+            <NotificationIndicatorContainer
+              userId={userId}
+              active={currentPath === "/notifications"}
+              inverse
+              openNotification={openNotificationAction}
+            />
+            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} inverse />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} inverse locale={locale} />
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">
@@ -178,7 +177,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
                   openNotification={openNotificationAction}
                 />
                 <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} placement="below" />
-                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} placement="below" locale={locale} />
+                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} />
               </div>
             </div>
           </header>

@@ -127,7 +127,7 @@ export class PrismaTopicApplicationRejection {
           id: { in: targets.map(({ id: targetId }) => targetId) },
           status: "PENDING",
         },
-        data: { status: "REJECTED", decidedAt, reviewComment },
+        data: { status: "REJECTED", decidedAt, decidedById: actor.id, reviewComment },
       });
       if (result.count !== targets.length) return "CONFLICT";
 

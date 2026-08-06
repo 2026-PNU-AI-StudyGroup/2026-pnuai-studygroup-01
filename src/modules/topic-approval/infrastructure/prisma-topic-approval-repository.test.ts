@@ -1,20 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 
 vi.mock("@/modules/translation/application/translation-queue", () => ({
   enqueueTranslations: vi.fn(async () => undefined),
 }));
 
-vi.mock("@/modules/notification/infrastructure/notification-events", () => ({
-  createApplicationResultNotification: vi.fn(async () => undefined),
-  createTopicApprovalNotification: vi.fn(async () => undefined),
-}));
-
 const requestedAt = new Date("2026-08-01T00:00:00Z");
+const recruitmentEndsAt = new Date("2026-08-10T00:00:00Z");
+
+function uniqueConflict(target: string[]) {
+  return new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "7.8.0",
+    meta: { target },
+  });
+}
+
 const proposal = {
-  academicCycleId: "cycle-1",
   programId: "program-1",
   authorId: "student-1",
   title: "학생 제안",
@@ -27,7 +31,7 @@ const proposal = {
   applicationQuestions: [{ label: "동기", maxLength: 500, required: true }],
   capacity: 4,
   recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
-  recruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
+  recruitmentEndsAt,
   executionStartsAt: new Date("2026-08-11T00:00:00Z"),
   executionEndsAt: new Date("2026-09-10T00:00:00Z"),
   submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
@@ -43,7 +47,12 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
   it("저장 시점에도 지도교수가 없는 프로그램의 교수 승인 요청을 거부한다", async () => {
     const createTopic = vi.fn();
     const transaction = {
-      projectProgram: { findFirst: vi.fn(async () => ({ id: "program-1", advisorEnabled: false })) },
+      $queryRaw: vi.fn().mockResolvedValue([{
+        id: "program-1",
+        status: "OPEN",
+        advisorEnabled: false,
+        studentProjectCreationEnabled: true,
+      }]),
       user: { findFirst: vi.fn() },
       topic: { create: createTopic },
     };
@@ -59,12 +68,22 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
 
     expect(transaction.user.findFirst).not.toHaveBeenCalled();
     expect(createTopic).not.toHaveBeenCalled();
+    const sql = (transaction.$queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
+    expect(sql).toContain('FROM "project_program"');
+    expect(sql).toContain("FOR SHARE");
   });
 
   it("기존 팀을 선택하면 정원을 현재 팀원 수로 고정하고 추가 모집을 끈다", async () => {
     const createTopic = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
-      projectProgram: { findFirst: vi.fn(async () => ({ id: "program-1" })) },
+      $queryRaw: vi.fn()
+        .mockResolvedValueOnce([{
+          id: "program-1",
+          status: "OPEN",
+          advisorEnabled: true,
+          studentProjectCreationEnabled: true,
+        }])
+        .mockResolvedValueOnce([{ id: "student-team-1" }]),
       studentTeam: {
         findFirst: vi.fn(async () => ({
           id: "student-team-1",
@@ -97,12 +116,24 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         },
       }),
     });
+    const lockSql = transaction.$queryRaw.mock.calls.map(([query]) =>
+      (query as { strings: readonly string[] }).strings.join("?"),
+    );
+    expect(lockSql[0]).toContain('FROM "project_program"');
+    expect(lockSql[0]).toContain("FOR SHARE");
+    expect(lockSql[1]).toContain('FROM "student_team"');
+    expect(lockSql[1]).toContain("FOR UPDATE");
   });
 
   it("기존 팀을 선택하지 않으면 기존 모집 설정을 그대로 유지한다", async () => {
     const createTopic = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
-      projectProgram: { findFirst: vi.fn(async () => ({ id: "program-1" })) },
+      $queryRaw: vi.fn(async () => [{
+        id: "program-1",
+        status: "OPEN",
+        advisorEnabled: true,
+        studentProjectCreationEnabled: true,
+      }]),
       studentTeam: { findFirst: vi.fn() },
       teamMember: { count: vi.fn() },
       topic: { create: createTopic },
@@ -114,6 +145,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     await new PrismaTopicApprovalRepository(client).create(proposal);
 
     expect(transaction.studentTeam.findFirst).not.toHaveBeenCalled();
+    expect(transaction.$queryRaw).toHaveBeenCalledTimes(1);
     expect(createTopic).toHaveBeenCalledWith({
       data: expect.objectContaining({
         managerId: null,
@@ -129,29 +161,38 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
 
   it("교수 승인자를 학생 제안의 담당자로 지정한다", async () => {
     const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
+    const request = {
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      topic: { title: "학생 제안" },
+      route: "PROFESSOR" as const,
+      requestedProfessorId: "professor-1",
+      studentTeamId: null,
+      status: "PENDING" as const,
+    };
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{
+        id: "topic-1",
+        programId: "program-1",
+        authorId: "student-1",
+        title: "학생 제안",
+        capacity: 4,
+        recruitmentEnabled: true,
+        recruitmentEndsAt,
+        status: "DRAFT",
+      }])
+      .mockResolvedValueOnce([request]);
     const transaction = {
-      $queryRaw: vi.fn(async () => [{
-        id: "request-1",
-        topicId: "topic-1",
-        topicTitle: "학생 제안",
-        requesterId: "student-1",
-        route: "PROFESSOR",
-        requestedProfessorId: "professor-1",
-        studentTeamId: null,
-        status: "PENDING",
-      }]),
+      $queryRaw: queryRaw,
       topic: {
-        findFirst: vi.fn(async () => ({
-          id: "topic-1",
-          academicCycleId: "cycle-1",
-          authorId: "student-1",
-          title: "학생 제안",
-          capacity: 4,
-          recruitmentEnabled: true,
-        })),
         update: updateTopic,
       },
-      topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
+      topicApprovalRequest: {
+        findUnique: vi.fn(async () => request),
+        update: vi.fn(async () => ({ id: "request-1" })),
+      },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
@@ -175,21 +216,146 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         publishedAt: requestedAt,
       },
     });
+    expect(queryRaw).toHaveBeenCalledTimes(3);
+    const lockSql = queryRaw.mock.calls.map(([query]) =>
+      (query as { strings: readonly string[] }).strings.join("?"),
+    );
+    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
+    expect(lockSql[1]).toContain('FROM "topic"');
+    expect(lockSql[1]).toContain("FOR UPDATE");
+    expect(lockSql[2]).toContain('FROM "topic_approval_request"');
+  });
+
+  it("종료된 프로그램의 대기 요청은 승인하지 않는다", async () => {
+    const updateTopic = vi.fn();
+    const updateRequest = vi.fn();
+    const request = {
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      topic: { title: "학생 제안" },
+      route: "ADMIN" as const,
+      requestedProfessorId: null,
+      studentTeamId: null,
+      status: "PENDING" as const,
+    };
+    const queryRaw = vi.fn().mockResolvedValueOnce([{ status: "CLOSED" }]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      topic: { update: updateTopic },
+      topicApprovalRequest: {
+        findUnique: vi.fn(async () => request),
+        update: updateRequest,
+      },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
+    const client = {
+      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).decide({
+      requestId: "request-1",
+      actorId: "admin-1",
+      actorRole: "ADMIN",
+      decision: "APPROVE",
+      reviewComment: "승인",
+      decidedAt: requestedAt,
+    })).resolves.toBe("UNAVAILABLE");
+
+    expect(updateTopic).not.toHaveBeenCalled();
+    expect(updateRequest).not.toHaveBeenCalled();
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it("거절은 최신 승인 요청 상태를 잠근 뒤 반영한다", async () => {
+    const request = {
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      topic: { title: "학생 제안" },
+      route: "ADMIN" as const,
+      requestedProfessorId: null,
+      studentTeamId: null,
+      status: "PENDING" as const,
+    };
+    const updateRequest = vi.fn(async () => ({ id: "request-1" }));
+    const queryRaw = vi.fn().mockResolvedValueOnce([request]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      topicApprovalRequest: {
+        findUnique: vi.fn(async () => request),
+        update: updateRequest,
+      },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
+    const client = {
+      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).decide({
+      requestId: "request-1",
+      actorId: "admin-1",
+      actorRole: "ADMIN",
+      decision: "REJECT",
+      reviewComment: "반려",
+      decidedAt: requestedAt,
+    })).resolves.toBe("REJECTED");
+
+    expect(updateRequest).toHaveBeenCalledWith({
+      where: { id: "request-1" },
+      data: {
+        status: "REJECTED",
+        reviewComment: "반려",
+        decidedById: "admin-1",
+        decidedAt: requestedAt,
+      },
+    });
+    const sql = (queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
+    expect(sql).toContain('FROM "topic_approval_request"');
+    expect(sql).toContain("FOR UPDATE");
+  });
+
+  it("프로그램별 학생 소속 고유키 충돌은 승인 불가로 처리한다", async () => {
+    const conflict = uniqueConflict(["programId", "studentId"]);
+    const repository = new PrismaTopicApprovalRepository({
+      $transaction: vi.fn().mockRejectedValue(conflict),
+    } as unknown as PrismaClient);
+    const unrelatedConflict = uniqueConflict(["topicId"]);
+    const unrelatedRepository = new PrismaTopicApprovalRepository({
+      $transaction: vi.fn().mockRejectedValue(unrelatedConflict),
+    } as unknown as PrismaClient);
+
+    await expect(repository.decide({
+      requestId: "request-1",
+      actorId: "admin-1",
+      actorRole: "ADMIN",
+      decision: "APPROVE",
+      reviewComment: "승인",
+      decidedAt: requestedAt,
+    })).resolves.toBe("UNAVAILABLE");
+    await expect(unrelatedRepository.decide({
+      requestId: "request-1",
+      actorId: "admin-1",
+      actorRole: "ADMIN",
+      decision: "APPROVE",
+      reviewComment: "승인",
+      decidedAt: requestedAt,
+    })).rejects.toBe(unrelatedConflict);
   });
 
   it("이전된 현재 팀장도 기존 팀 제안 상태를 조회한다", async () => {
     const findMany = vi.fn(async () => []);
     const client = {
-      topicApprovalRequest: { findMany },
+      topicApprovalRequest: { findMany, count: vi.fn(async () => 0) },
     } as unknown as PrismaClient;
 
-    await new PrismaTopicApprovalRepository(client).listVisible({
+    await new PrismaTopicApprovalRepository(client).listVisiblePage({
       id: "student-2",
       role: "STUDENT",
       name: "새 팀장",
       email: "student2@pusan.ac.kr",
       image: null,
-    });
+    }, 1, 20);
 
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
@@ -209,7 +375,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
   it("교수 지도 화면 조회는 지정된 교수의 승인 대기 요청으로 제한한다", async () => {
     const findMany = vi.fn(async () => []);
     const client = {
-      topicApprovalRequest: { findMany },
+      topicApprovalRequest: { findMany, count: vi.fn(async () => 0) },
     } as unknown as PrismaClient;
     const professor = {
       id: "professor-1",
@@ -219,7 +385,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       image: null,
     };
 
-    await new PrismaTopicApprovalRepository(client).listVisible(professor, "PENDING");
+    await new PrismaTopicApprovalRepository(client).listVisiblePage(professor, 1, 20, "PENDING");
 
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
@@ -235,35 +401,44 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     const createApplications = vi.fn(async () => ({ count: 2 }));
     const createExecutionTeam = vi.fn(async () => ({ id: "execution-team-1" }));
     const createMembers = vi.fn(async () => ({ count: 2 }));
-    const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const rejectConflicting = vi.fn(async () => ({ count: 1 }));
-    const rejectRecruitment = vi.fn(async () => ({ count: 0 }));
-    const conflictingFindMany = vi.fn()
-      .mockResolvedValueOnce([{ id: "other-app-1", groupId: null }])
-      .mockResolvedValueOnce([{ id: "other-app-1", studentId: "student-1", topic: { title: "다른 주제" } }]);
-    const queryRaw = vi.fn()
+    const findApplications = vi.fn()
+      .mockResolvedValueOnce([{ id: "other-application-1", groupId: null }])
       .mockResolvedValueOnce([{
-        id: "request-1",
-        topicId: "topic-1",
-        topicTitle: "학생 제안",
-        requesterId: "student-1",
-        route: "ADMIN",
-        requestedProfessorId: null,
-        studentTeamId: "student-team-1",
-        status: "PENDING",
+        id: "other-application-1",
+        studentId: "student-1",
+        topic: { title: "다른 주제" },
+      }]);
+    const rejectApplications = vi.fn(async () => ({ count: 1 }));
+    const rejectRecruitmentApplications = vi.fn(async () => ({ count: 1 }));
+    const createNotifications = vi.fn(async () => ({ count: 1 }));
+    const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
+    const request = {
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      topic: { title: "학생 제안" },
+      route: "ADMIN" as const,
+      requestedProfessorId: null,
+      studentTeamId: "student-team-1",
+      status: "PENDING" as const,
+    };
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{
+        id: "topic-1",
+        programId: "program-1",
+        authorId: "student-1",
+        title: "학생 제안",
+        capacity: 2,
+        recruitmentEnabled: false,
+        recruitmentEndsAt,
+        status: "DRAFT",
       }])
-      .mockResolvedValueOnce([{ id: "student-team-1", leaderId: "student-2", name: "기존 팀" }]);
+      .mockResolvedValueOnce([{ id: "student-team-1", leaderId: "student-2", name: "기존 팀" }])
+      .mockResolvedValueOnce([request]);
     const transaction = {
       $queryRaw: queryRaw,
       topic: {
-        findFirst: vi.fn(async () => ({
-          id: "topic-1",
-          academicCycleId: "cycle-1",
-          authorId: "student-1",
-          title: "학생 제안",
-          capacity: 2,
-          recruitmentEnabled: false,
-        })),
         update: updateTopic,
       },
       studentTeamMember: {
@@ -274,11 +449,18 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       },
       teamMember: { count: vi.fn(async () => 0), createMany: createMembers },
       topicApplicationGroup: { create: vi.fn(async () => ({ id: "group-1" })) },
-      topicApplication: { createMany: createApplications, findMany: conflictingFindMany, updateMany: rejectConflicting },
-      recruitmentApplication: { updateMany: rejectRecruitment },
+      topicApplication: {
+        createMany: createApplications,
+        findMany: findApplications,
+        updateMany: rejectApplications,
+      },
+      recruitmentApplication: { updateMany: rejectRecruitmentApplications },
+      notification: { createMany: createNotifications },
       team: { create: createExecutionTeam },
-      topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
-      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      topicApprovalRequest: {
+        findUnique: vi.fn(async () => request),
+        update: vi.fn(async () => ({ id: "request-1" })),
+      },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -301,10 +483,41 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       ]),
     });
     expect(createExecutionTeam).toHaveBeenCalledWith({
-      data: expect.objectContaining({ professorId: "admin-1", status: "CONFIRMED", name: "기존 팀" }),
+      data: expect.objectContaining({ programId: "program-1", professorId: "admin-1", status: "CONFIRMED", name: "기존 팀" }),
       select: { id: true },
     });
-    expect(createMembers).toHaveBeenCalled();
+    expect(createMembers).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({ programId: "program-1", studentId: "student-1" }),
+        expect.objectContaining({ programId: "program-1", studentId: "student-2" }),
+      ]),
+    });
+    expect(findApplications).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: expect.objectContaining({
+        studentId: { in: ["student-1", "student-2"] },
+        status: "PENDING",
+        topic: { programId: "program-1" },
+      }),
+    }));
+    expect(rejectApplications).toHaveBeenCalledWith({
+      where: { id: { in: ["other-application-1"] }, status: "PENDING" },
+      data: {
+        status: "REJECTED",
+        decidedAt: requestedAt,
+        decidedById: "admin-1",
+        reviewComment: "같은 프로그램의 다른 프로젝트 참여가 확정되어 자동 미선정되었습니다.",
+      },
+    });
+    expect(rejectRecruitmentApplications).toHaveBeenCalledWith({
+      where: { topicApplicationId: { in: ["other-application-1"] }, status: "PENDING" },
+      data: { status: "REJECTED", decidedAt: requestedAt },
+    });
+    expect(createNotifications).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.arrayContaining([expect.objectContaining({
+        recipientId: "student-1",
+        dedupeKey: "application:other-application-1:REJECTED",
+      })]),
+    }));
     expect(updateTopic).toHaveBeenCalledWith({
       where: { id: "topic-1" },
       data: {
@@ -314,10 +527,12 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         capacity: 2,
       },
     });
-    // 확정된 팀원의 다른 PENDING 지원이 자동 거절된다.
-    expect(rejectConflicting).toHaveBeenCalledWith({
-      where: { id: { in: ["other-app-1"] }, status: "PENDING" },
-      data: { status: "REJECTED", decidedAt: requestedAt },
-    });
+    const lockSql = queryRaw.mock.calls.map(([query]) =>
+      (query as { strings: readonly string[] }).strings.join("?"),
+    );
+    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
+    expect(lockSql[1]).toContain('FROM "topic"');
+    expect(lockSql[2]).toContain('FROM "student_team"');
+    expect(lockSql[3]).toContain('FROM "topic_approval_request"');
   });
 });

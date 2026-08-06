@@ -25,10 +25,7 @@ export class GetReceivedTopicApplicationService {
     actor: CurrentActor,
     applicationId: string,
   ): Promise<ProfessorTopicApplicationSummary> {
-    const application = await this.repository.findVisibleById(applicationId, {
-      actorId: actor.id,
-      isAdmin: actor.role === "ADMIN",
-    });
+    const application = await this.repository.findVisibleById(applicationId, actor);
     if (!application) {
       throw new ReceivedTopicApplicationNotFoundError();
     }

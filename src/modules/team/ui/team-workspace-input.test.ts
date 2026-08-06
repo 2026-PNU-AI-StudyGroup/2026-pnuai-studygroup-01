@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { milestoneInputSchema } from "@/modules/team/ui/team-workspace-input";
+import {
+  taskDeleteInputSchema,
+  taskDetailsInputSchema,
+  taskInputSchema,
+} from "@/modules/team/ui/team-workspace-input";
 
-describe("마일스톤 폼 입력", () => {
+describe("할 일 폼 입력", () => {
   it("한국 날짜의 마지막 분을 UTC로 변환한다", () => {
-    const input = milestoneInputSchema.parse({
+    const input = taskInputSchema.parse({
       teamId: "1c845ddb-523c-4119-a054-91bfb928b78d",
       title: "중간 발표",
       dueAt: "2026-05-01",
@@ -22,11 +26,26 @@ describe("마일스톤 폼 입력", () => {
 
   it("실제 달력에 없는 날짜를 거절한다", () => {
     expect(
-      milestoneInputSchema.safeParse({
+      taskInputSchema.safeParse({
         teamId: "1c845ddb-523c-4119-a054-91bfb928b78d",
         title: "중간 발표",
         dueAt: "2026-02-29",
       }).success,
     ).toBe(false);
+  });
+
+  it("수정과 삭제 요청에 팀과 할 일 식별자를 모두 요구한다", () => {
+    const ids = {
+      teamId: "1c845ddb-523c-4119-a054-91bfb928b78d",
+      taskId: "c728bb33-e62b-47fb-b86f-c5efe9967061",
+    };
+
+    expect(taskDetailsInputSchema.parse({
+      ...ids,
+      title: "  프로토타입 검증  ",
+      dueAt: "2026-05-02",
+    })).toMatchObject({ ...ids, title: "프로토타입 검증" });
+    expect(taskDeleteInputSchema.parse(ids)).toEqual(ids);
+    expect(taskDeleteInputSchema.safeParse({ taskId: ids.taskId }).success).toBe(false);
   });
 });

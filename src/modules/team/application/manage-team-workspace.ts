@@ -1,16 +1,17 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   DiscussionPostWriter,
-  MilestoneStatus,
-  MilestoneWriter,
+  TaskStatus,
+  TaskWriter,
   TeamListItem,
+  TeamListPage,
   TeamWorkspace,
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
 import {
-  assertValidMilestoneDueAt,
+  assertValidTaskDueAt,
   normalizeDiscussionPost,
-  normalizeMilestoneTitle,
+  normalizeTaskTitle,
 } from "@/modules/team/domain/team-workspace-policy";
 
 export class TeamNotFoundError extends Error {
@@ -20,10 +21,10 @@ export class TeamNotFoundError extends Error {
   }
 }
 
-export class MilestoneNotFoundError extends Error {
+export class TaskNotFoundError extends Error {
   constructor() {
-    super("마일스톤을 찾을 수 없습니다.");
-    this.name = "MilestoneNotFoundError";
+    super("할 일을 찾을 수 없습니다.");
+    this.name = "TaskNotFoundError";
   }
 }
 
@@ -46,41 +47,67 @@ export class TeamWorkspaceQueryService {
   list(actor: CurrentActor): Promise<TeamListItem[]> {
     return this.workspaceReader.listForActor(actor);
   }
+
+  listPage(actor: CurrentActor, requestedPage = 1, status?: "ACTIVE" | "COMPLETED"): Promise<TeamListPage> {
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    return this.workspaceReader.listPageForActor(actor, page, 20, status);
+  }
 }
 
-export class TeamMilestoneService {
-  constructor(private readonly milestoneWriter: MilestoneWriter) {}
+export class TeamTaskService {
+  constructor(private readonly taskWriter: TaskWriter) {}
 
-  async createMilestone(
+  async createTask(
     actor: CurrentActor,
     input: { teamId: string; title: string; dueAt: Date; assigneeIds?: string[] },
   ): Promise<{ id: string }> {
-    assertValidMilestoneDueAt(input.dueAt);
-    const milestone = await this.milestoneWriter.createMilestone({
+    assertValidTaskDueAt(input.dueAt);
+    const task = await this.taskWriter.createTask({
       ...input,
       actor,
-      title: normalizeMilestoneTitle(input.title),
+      title: normalizeTaskTitle(input.title),
       assigneeIds: [...new Set(input.assigneeIds ?? [])],
     });
-    if (!milestone) {
+    if (!task) {
       throw new TeamNotFoundError();
     }
-    return milestone;
+    return task;
   }
 
-  async updateMilestoneStatus(
+  async updateTaskStatus(
     actor: CurrentActor,
-    input: { milestoneId: string; status: MilestoneStatus; assigneeIds?: string[] },
+    input: { taskId: string; status: TaskStatus; assigneeIds?: string[] },
   ): Promise<{ teamId: string }> {
-    const result = await this.milestoneWriter.updateMilestoneStatus(
-      input.milestoneId,
+    const result = await this.taskWriter.updateTaskStatus(
+      input.taskId,
       input.status,
       [...new Set(input.assigneeIds ?? [])],
       actor,
     );
     if (!result) {
-      throw new MilestoneNotFoundError();
+      throw new TaskNotFoundError();
     }
+    return result;
+  }
+
+  async updateTaskDetails(
+    actor: CurrentActor,
+    input: { taskId: string; title: string; dueAt: Date },
+  ): Promise<{ teamId: string }> {
+    assertValidTaskDueAt(input.dueAt);
+    const result = await this.taskWriter.updateTaskDetails({
+      id: input.taskId,
+      actor,
+      title: normalizeTaskTitle(input.title),
+      dueAt: input.dueAt,
+    });
+    if (!result) throw new TaskNotFoundError();
+    return result;
+  }
+
+  async deleteTask(actor: CurrentActor, taskId: string): Promise<{ teamId: string }> {
+    const result = await this.taskWriter.deleteTask(taskId, actor);
+    if (!result) throw new TaskNotFoundError();
     return result;
   }
 }

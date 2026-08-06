@@ -2,14 +2,9 @@ import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ApplicationDecisionForm } from "@/app/professor/applications/_components/decision-form";
 import type { ProfessorTopicApplicationSummary } from "@/modules/topic-application/application/topic-application-ports";
+import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/app/_components/translated-text";
-
-const statusPresentation = {
-  PENDING: ["검토 중", "info"],
-  ACCEPTED: ["수락", "success"],
-  REJECTED: ["거절", "danger"],
-} as const;
 
 export function ReceivedApplicationDetail({
   application,
@@ -21,8 +16,8 @@ export function ReceivedApplicationDetail({
       <div className="flex flex-wrap items-start justify-between gap-6 border-b border-[var(--line)] pb-8">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <StatusBadge tone={statusPresentation[application.status][1]}>
-              {statusPresentation[application.status][0]}
+            <StatusBadge tone={topicApplicationStatusPresentation[application.status].tone}>
+              {topicApplicationStatusPresentation[application.status].label}
             </StatusBadge>
             <time className="muted text-sm" dateTime={application.createdAt.toISOString()}>
               <UiDate value={application.createdAt} mode="dateTime" /> <UiText>{"지원"}</UiText></time>
@@ -83,9 +78,14 @@ export function ReceivedApplicationDetail({
         <section aria-labelledby="review-decision-title" className="border-y border-[var(--line)] py-6">
           <div className="mb-5 border-b border-[var(--line)] pb-4">
             <h3 id="review-decision-title" className="text-lg font-semibold"><UiText>{"결정과 의견 전달"}</UiText></h3>
-            <p className="muted mt-2 text-sm leading-6"><UiText>{"수락 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다."}</UiText></p>
+            <p className="muted mt-2 text-sm leading-6"><UiText>{"선정 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다."}</UiText></p>
           </div>
-          <ApplicationDecisionForm applicationId={application.id} />
+          {application.decisionImpact ? <div className="mb-5 grid gap-3 bg-[var(--surface-subtle)] p-4 text-sm sm:grid-cols-3">
+            <p><strong><UiText>{"선정 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.acceptedMemberCount}<UiText>{"명"}</UiText></span></p>
+            <p><strong><UiText>{"선정 후 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.currentMemberCount + application.decisionImpact.acceptedMemberCount} / {application.decisionImpact.capacity}<UiText>{"명"}</UiText></span></p>
+            <p><strong><UiText>{"자동 미선정"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.automaticallyRejectedApplicationCount}<UiText>{"건"}</UiText>{application.decisionImpact.closesRecruitment ? <UiText>{" · 모집 마감"}</UiText> : null}</span></p>
+          </div> : null}
+          {application.decisionImpact ? <ApplicationDecisionForm applicationId={application.id} impact={application.decisionImpact} /> : null}
         </section>
       ) : null}
 
@@ -93,6 +93,7 @@ export function ReceivedApplicationDetail({
         <section aria-labelledby="review-result-title" className="border-l-2 border-[var(--primary)] bg-[var(--primary-subtle)] px-5 py-5">
           <h3 id="review-result-title" className="text-sm font-semibold"><UiText>{"전달한 검토 의견"}</UiText></h3>
           <p className="mt-2 whitespace-pre-wrap leading-7"><UiText>{application.reviewComment || "별도 의견 없이 결정했습니다."}</UiText></p>
+          {application.decidedAt ? <p className="muted mt-3 text-xs"><UiText>{application.decidedByName ?? "시스템"}</UiText>{" · "}<UiDate value={application.decidedAt} mode="dateTime" /></p> : null}
         </section>
       ) : null}
     </article>

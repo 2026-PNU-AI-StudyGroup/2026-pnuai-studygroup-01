@@ -12,6 +12,15 @@ export type ProjectProgramDetails = {
 
 export class InvalidProjectProgramError extends Error {}
 
+const programStartYearFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+});
+
+export function getProgramStartYear(startsAt: Date): number {
+  return Number(programStartYearFormatter.format(startsAt));
+}
+
 export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectProgramDetails {
   const value = { ...input, name: input.name.trim(), category: input.category.trim(), description: input.description.trim() };
   if (!value.name || value.name.length > 200) throw new InvalidProjectProgramError("프로그램명은 1자 이상 200자 이하여야 합니다.");

@@ -70,3 +70,17 @@ export const createTopicInputSchema = z.object({
   submissionStartsAt: koreanLocalDateTime,
   submissionEndsAt: koreanLocalDateTime,
 });
+
+export function parseTopicFormData(formData: FormData) {
+  const questionLabels = formData.getAll("questionLabel");
+  const questionMaxLengths = formData.getAll("questionMaxLength");
+  const questionRequiredValues = formData.getAll("questionRequired");
+  return createTopicInputSchema.safeParse({
+    ...Object.fromEntries(formData),
+    applicationQuestions: questionLabels.map((label, index) => ({
+      label,
+      maxLength: questionMaxLengths[index],
+      required: questionRequiredValues[index] === "true",
+    })),
+  });
+}

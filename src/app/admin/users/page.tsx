@@ -6,6 +6,12 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import {
+  AdminSection,
+  AdminSectionEmpty,
+  adminRecordListClassName,
+  adminRecordRowClassName,
+} from "@/app/_components/admin-section";
 import { UserStatusForm } from "@/app/admin/users/_components/user-status-form";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { UserAdministrationService } from "@/modules/identity/application/manage-users";
@@ -33,20 +39,60 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/users">
-      <AdminWorkspace currentPath="/admin/users" title="사용자" description="가입한 구성원의 역할과 계정 상태를 확인하고, 접근 중단이 필요한 계정의 세션까지 종료합니다.">
-        <form role="search" className="grid gap-3 border-y border-[var(--line)] py-5 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <AdminWorkspace currentPath="/admin/users" title="사용자" description="가입한 구성원의 역할과 계정 상태를 확인하고, 필요한 경우 계정을 비활성화해 로그인 상태를 종료합니다.">
+        <form role="search" className="admin-panel grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-6">
           <label className="grid gap-2 text-sm font-semibold"><UiText>{"이름 또는 이메일 검색"}</UiText><UiInput className="field" type="search" name="q" maxLength={100} defaultValue={query} placeholder="예: 홍길동 또는 user@pusan.ac.kr" /></label>
-          <button type="submit" className="button-primary self-end max-sm:w-full"><UiText>{"검색"}</UiText></button>
+          <button type="submit" className="button-primary max-sm:w-full"><UiText>{"검색"}</UiText></button>
         </form>
-        <section aria-labelledby="user-list-title">
-          <div className="mb-4 flex items-center justify-between gap-4"><h2 id="user-list-title" className="text-lg font-semibold"><UiText>{"가입 사용자"}</UiText></h2><p className="muted text-sm"><UiText>{"총"}</UiText>{" "}{data.total}<UiText>{"명"}</UiText></p></div>
-          {data.items.length === 0 ? <EmptyState title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." action={query ? <Link href="/admin/users" className="button-secondary"><UiText>{"검색 초기화"}</UiText></Link> : undefined} /> : <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white">{data.items.map((user) => <li key={user.id} className="record-row grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_12rem_13rem] lg:items-center">
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-3"><h3 className="font-semibold">{user.name}</h3><StatusBadge>{roleLabel[user.role]}</StatusBadge><StatusBadge tone={user.isActive ? "neutral" : "danger"}><UiText>{user.isActive ? "활성" : "비활성"}</UiText></StatusBadge></div><p className="muted mt-2 break-all text-sm">{user.email}</p></div>
-            <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block"><dt className="muted lg:text-xs"><UiText>{"가입일"}</UiText></dt><dd className="lg:mt-1"><UiDate value={user.createdAt} mode="date" /></dd></dl>
-            <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} disabled={user.id === actor.id} />
-          </li>)}</ol>}
-        </section>
-        {data.totalPages > 1 ? <UiNav aria-label="사용자 목록 페이지" className="flex items-center justify-between"><span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span><div className="flex gap-2">{data.page > 1 ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}{data.page < data.totalPages ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}</div></UiNav> : null}
+        <AdminSection
+          id="user-list-title"
+          title="가입 사용자"
+          meta={<><UiText>{"총"}</UiText>{" "}{data.total}<UiText>{"명"}</UiText></>}
+        >
+          {data.items.length === 0 ? (
+            <AdminSectionEmpty>
+              <EmptyState variant="embedded" title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." action={query ? <Link href="/admin/users" className="button-secondary"><UiText>{"검색 초기화"}</UiText></Link> : undefined} />
+            </AdminSectionEmpty>
+          ) : (
+            <ol className={adminRecordListClassName}>
+              {data.items.map((user) => (
+                <li
+                  key={user.id}
+                  className={`${adminRecordRowClassName} grid gap-5 xl:grid-cols-[minmax(18rem,1fr)_minmax(9rem,11rem)_minmax(10rem,13rem)] xl:items-center`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="font-semibold">{user.name}</h3>
+                      <StatusBadge>{roleLabel[user.role]}</StatusBadge>
+                      <StatusBadge tone={user.isActive ? "neutral" : "danger"}><UiText>{user.isActive ? "활성" : "비활성"}</UiText></StatusBadge>
+                    </div>
+                    <p className="muted mt-2 break-words text-sm">{user.email}</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end xl:contents">
+                    <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 text-sm xl:block">
+                      <dt className="muted xl:text-xs"><UiText>{"가입일"}</UiText></dt>
+                      <dd className="xl:mt-1"><UiDate value={user.createdAt} mode="date" /></dd>
+                    </dl>
+                    {user.id === actor.id ? (
+                      <div className="sm:text-right"><StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge></div>
+                    ) : (
+                      <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          {data.totalPages > 1 ? (
+            <UiNav aria-label="사용자 목록 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
+              <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
+              <div className="flex gap-2">
+                {data.page > 1 ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}
+                {data.page < data.totalPages ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}
+              </div>
+            </UiNav>
+          ) : null}
+        </AdminSection>
       </AdminWorkspace>
     </AppShell>
   );

@@ -18,7 +18,7 @@ export function ProjectPortalHero({ view, program, action }: {
   action?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
-  const description = program?.description ?? (view === "past" ? "완료된 프로젝트와 결과물을 둘러보세요." : "현재 참여할 수 있는 프로젝트를 한곳에서 찾아보세요.");
+  const description = program?.description ?? (view === "past" ? "완료된 프로젝트와 결과물을 확인하세요." : "현재 참여할 수 있는 프로젝트를 확인하세요.");
   return (
     <ExplorerHero
       title={<UiText>{title}</UiText>}

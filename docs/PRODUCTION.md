@@ -16,6 +16,11 @@ Reverse Proxy가 다른 호스트에서 접근해야 한다면 `APP_HOST=0.0.0.0
 방화벽에서 해당 포트를 신뢰하는 내부 네트워크에만 허용한다. 같은 호스트의
 Reverse Proxy를 사용할 때는 기본값인 `127.0.0.1`을 유지한다.
 
+개발용 배포에서 역할별 데모 로그인을 사용할 때만
+`ENABLE_DEVELOPMENT_MOCK_AUTH=true`로 설정하고,
+`DEVELOPMENT_MOCK_AUTH_HOSTS=pnu-pms.jun0.dev,192.168.32.32`처럼 접근을 허용할
+호스트를 정확히 지정한다. 허용 목록에 없는 호스트와 동일 출처가 아닌 요청은 거부된다.
+
 `BETTER_AUTH_SECRET`과 `CRON_SECRET`은 서로 다른 값이어야 한다. 다음 명령으로 각각 생성한다.
 
 ```bash

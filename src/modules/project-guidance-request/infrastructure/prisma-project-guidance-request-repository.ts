@@ -41,7 +41,11 @@ export class PrismaProjectGuidanceRequestRepository
     const page = Math.min(requestedPage, totalPages);
     const rows = await this.client.projectGuidanceRequest.findMany({
       where: { teamId },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: [
+        { status: "asc" },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: {

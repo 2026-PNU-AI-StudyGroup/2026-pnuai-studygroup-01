@@ -13,18 +13,30 @@ const calendarDate = z
     return new Date(`${value}T23:59:00+09:00`);
   });
 
-export const milestoneInputSchema = z.object({
+export const taskInputSchema = z.object({
   teamId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   dueAt: calendarDate,
   assigneeIds: z.array(z.string().uuid()).max(100).default([]),
 });
 
-export const milestoneStatusInputSchema = z.object({
+export const taskStatusInputSchema = z.object({
   teamId: z.string().uuid(),
-  milestoneId: z.string().uuid(),
+  taskId: z.string().uuid(),
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
   assigneeIds: z.array(z.string().uuid()).max(100).default([]),
+});
+
+export const taskDetailsInputSchema = z.object({
+  teamId: z.string().uuid(),
+  taskId: z.string().uuid(),
+  title: z.string().trim().min(1).max(200),
+  dueAt: calendarDate,
+});
+
+export const taskDeleteInputSchema = z.object({
+  teamId: z.string().uuid(),
+  taskId: z.string().uuid(),
 });
 
 export const discussionPostInputSchema = z.object({

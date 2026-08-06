@@ -3,21 +3,25 @@
 import Link from "next/link";
 import { UiButton, UiOl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 
 import { ApplicationAnswerField } from "@/app/topics/_components/application-answer-field";
 import { applyTopicAction, type ApplyTopicActionState } from "@/app/topics/_actions/topic-explorer-actions";
 import type { PublicTopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
+import { SuccessToast } from "@/shared/ui/success-toast";
+import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
 const initialState: ApplyTopicActionState = { status: "idle", message: "" };
-const TOAST_DURATION_MS = 3_000;
 type ApplicationKind = "INDIVIDUAL" | "TEAM";
 type ApplicationStep = "KIND" | "FORM";
 
 function initialApplicationKind(mode: PublicTopicSummary["applicationMode"]): ApplicationKind {
   return mode === "TEAM_ONLY" ? "TEAM" : "INDIVIDUAL";
+}
+
+function initialApplicationStep(mode: PublicTopicSummary["applicationMode"]): ApplicationStep {
+  return mode === "INDIVIDUAL_OR_TEAM" ? "KIND" : "FORM";
 }
 
 function applicationModeLabel(mode: PublicTopicSummary["applicationMode"]) {
@@ -42,34 +46,28 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
   capacity: number;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
 }) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
   const [kind, setKind] = useState<ApplicationKind>(() => initialApplicationKind(applicationMode));
-  const [step, setStep] = useState<ApplicationStep>("KIND");
+  const [step, setStep] = useState<ApplicationStep>(() => initialApplicationStep(applicationMode));
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [state, action, pending] = useActionState(applyTopicAction, initialState);
+  const toastMessage = useDialogSuccessToast(state, dialogRef);
   const eligibleTeams = leaderTeams.filter((team) => team.memberCount <= capacity);
-
-  useEffect(() => {
-    if (state.status !== "success") return;
-    dialogRef.current?.close();
-    const timer = window.setTimeout(() => router.refresh(), TOAST_DURATION_MS);
-    return () => window.clearTimeout(timer);
-  }, [router, state.status]);
+  const canChooseKind = applicationMode === "INDIVIDUAL_OR_TEAM";
 
   function closeDialog() {
     if (!pending) {
       dialogRef.current?.close();
-      setStep("KIND");
+      setStep(initialApplicationStep(applicationMode));
     }
   }
 
   function openDialog() {
     setKind(initialApplicationKind(applicationMode));
     setSelectedTeamId("");
-    setStep("KIND");
+    setStep(initialApplicationStep(applicationMode));
     dialogRef.current?.showModal();
   }
 
@@ -96,10 +94,12 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                 ? "개인 또는 팀 중 지원 가능한 방식을 먼저 선택해 주세요."
                 : "필수 항목을 확인하고 한 번에 제출합니다. 팀 지원은 팀장만 현재 팀 구성으로 접수할 수 있습니다."}</UiText>
             </p>
-            <UiOl aria-label="지원 단계" className="mt-8 grid gap-3 text-xs font-semibold">
-              <li className={step === "KIND" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>1. <UiText>{"지원 방식"}</UiText></li>
-              <li className={step === "FORM" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>2. <UiText>{"지원서 작성"}</UiText></li>
-            </UiOl>
+            {canChooseKind ? (
+              <UiOl aria-label="지원 단계" className="mt-8 grid gap-3 text-xs font-bold">
+                <li className={step === "KIND" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>1. <UiText>{"지원 방식"}</UiText></li>
+                <li className={step === "FORM" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>2. <UiText>{"지원서 작성"}</UiText></li>
+              </UiOl>
+            ) : null}
           </header>
 
           {step === "KIND" ? (
@@ -112,7 +112,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                 <legend className="sr-only"><UiText>{"지원 방식"}</UiText></legend>
                 {([
                   ["INDIVIDUAL", "개인 지원", "혼자 지원서를 작성해 제출합니다.", applicationMode !== "TEAM_ONLY", "이 프로젝트는 팀 지원만 받습니다."],
-                  ["TEAM", "팀 지원", "내가 팀장인 지속형 팀으로 지원합니다.", applicationMode !== "INDIVIDUAL_ONLY", "이 프로젝트는 개인 지원만 받습니다."],
+                  ["TEAM", "팀 지원", "내가 팀장인 팀으로 지원합니다.", applicationMode !== "INDIVIDUAL_ONLY", "이 프로젝트는 개인 지원만 받습니다."],
                 ] as const).map(([value, label, description, enabled, disabledMessage]) => (
                   <label
                     key={value}
@@ -148,6 +148,8 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                   <>
                   <CustomSelect
                     name="studentTeamId"
+                    ariaLabel="지원할 팀"
+                    value={selectedTeamId}
                     required
                     placeholder="팀을 선택하세요"
                     onValueChange={setSelectedTeamId}
@@ -190,7 +192,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
             {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
 
             <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-6 sm:flex-row sm:justify-between">
-              <button type="button" onClick={() => setStep("KIND")} disabled={pending} className="button-quiet"><UiText>{"지원 방식 다시 선택"}</UiText></button>
+              <button type="button" onClick={canChooseKind ? () => setStep("KIND") : closeDialog} disabled={pending} className="button-quiet"><UiText>{canChooseKind ? "지원 방식 다시 선택" : "취소"}</UiText></button>
               <button type="submit" disabled={pending || (kind === "TEAM" && (!eligibleTeams.length || !selectedTeamId))} className="button-primary"><UiText>{pending ? "처리 중" : kind === "TEAM" ? "선택한 팀으로 지원" : "지원서 제출"}</UiText></button>
             </div>
           </form>
@@ -201,11 +203,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
         </UiButton>
       </dialog>
 
-      {state.status === "success" ? (
-        <div role="status" aria-live="polite" className="toast fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md border border-[var(--primary)] bg-white px-5 py-4 text-sm font-semibold text-[var(--ink)] sm:bottom-6">
-          <UiText>{state.message}</UiText>
-        </div>
-      ) : null}
+      <SuccessToast message={toastMessage} />
     </>
   );
 }

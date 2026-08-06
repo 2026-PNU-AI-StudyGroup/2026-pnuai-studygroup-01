@@ -6,7 +6,6 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicDraft = TopicDetails &
   TopicSchedule & {
-    academicCycleId: string;
     programId: string;
     authorId: string;
   };
@@ -17,6 +16,23 @@ export interface TopicCreator {
 
 export interface TopicScheduleUpdater {
   updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
+}
+
+export type TopicUpdateOutcome =
+  | "UPDATED"
+  | "NOT_FOUND"
+  | "CLOSED"
+  | "PROGRAM_UNAVAILABLE"
+  | "APPLICATION_FORM_LOCKED"
+  | "CAPACITY_TOO_SMALL";
+
+export interface TopicEditor {
+  update(
+    id: string,
+    actor: CurrentActor,
+    topic: Omit<TopicDraft, "authorId">,
+  ): Promise<TopicUpdateOutcome>;
+  deleteDraft(id: string, actor: CurrentActor): Promise<boolean>;
 }
 
 type TopicApplicationQuestionSummary = {
@@ -40,14 +56,27 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   advisorEnabled: boolean;
 };
 
+export type ManagedTopicSummary = TopicSummary & {
+  pendingApplicationCount: number;
+  openRecruitmentPostCount: number;
+};
+
+export type ManagedTopicPage = {
+  items: ManagedTopicSummary[];
+  page: number;
+  totalPages: number;
+  total: number;
+};
+
 export interface TopicLister {
-  listByManager(managerId: string): Promise<TopicSummary[]>;
-  listAll(): Promise<TopicSummary[]>;
-  listForActor(actor: CurrentActor): Promise<TopicSummary[]>;
+  listByManager(managerId: string): Promise<ManagedTopicSummary[]>;
+  listAll(): Promise<ManagedTopicSummary[]>;
+  listForActor(actor: CurrentActor): Promise<ManagedTopicSummary[]>;
+  listPageForActor(actor: CurrentActor, page: number, pageSize: number): Promise<ManagedTopicPage>;
 }
 
 export interface ManagedTopicReader {
-  findManaged(id: string, actor: CurrentActor): Promise<TopicSummary | null>;
+  findManaged(id: string, actor: CurrentActor): Promise<ManagedTopicSummary | null>;
 }
 
 export type TopicStateRecord = {
@@ -67,8 +96,7 @@ export interface TopicStateRepository {
 
 export type PublicTopicSummary = TopicSummary & {
   authorName: string;
-  academicYear: number;
-  term: "FIRST" | "SECOND";
+  startYear: number;
   memberCount: number;
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;
 };

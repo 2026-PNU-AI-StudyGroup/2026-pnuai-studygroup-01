@@ -35,9 +35,9 @@ export class PrismaTopicApplicationSubmissionRepository
         FOR UPDATE OF "project_program"
       `);
       const topics = await transaction.$queryRaw<
-        Array<{ id: string; academicCycleId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>
+        Array<{ id: string; programId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>
       >(Prisma.sql`
-        SELECT "topic"."id", "topic"."academicCycleId", "topic"."capacity", "topic"."applicationMode"
+        SELECT "topic"."id", "topic"."programId", "topic"."capacity", "topic"."applicationMode"
         FROM "topic"
         WHERE "topic"."id" = ${input.topicId}
           AND "topic"."status" = 'PUBLISHED'
@@ -63,8 +63,8 @@ export class PrismaTopicApplicationSubmissionRepository
 
       const membership = await transaction.teamMember.findUnique({
         where: {
-          academicCycleId_studentId: {
-            academicCycleId: topic.academicCycleId,
+          programId_studentId: {
+            programId: topic.programId,
             studentId: input.studentId,
           },
         },
@@ -134,8 +134,8 @@ export class PrismaTopicApplicationSubmissionRepository
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
       `);
-      const topics = await transaction.$queryRaw<Array<{ id: string; academicCycleId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
-        SELECT "id", "academicCycleId", "capacity", "applicationMode" FROM "topic"
+      const topics = await transaction.$queryRaw<Array<{ id: string; programId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
+        SELECT "id", "programId", "capacity", "applicationMode" FROM "topic"
         WHERE "id" = ${input.topicId} AND "status" = 'PUBLISHED'
           AND "recruitmentEnabled" = true
           AND "recruitmentStartsAt" <= ${input.appliedAt} AND "recruitmentEndsAt" > ${input.appliedAt}
@@ -162,7 +162,7 @@ export class PrismaTopicApplicationSubmissionRepository
       }
       const memberIds = members.map(({ studentId }) => studentId);
       const unavailable = await transaction.user.count({ where: { id: { in: memberIds }, OR: [
-        { teamMemberships: { some: { academicCycleId: topic.academicCycleId } } },
+        { teamMemberships: { some: { programId: topic.programId } } },
         { topicApplications: { some: { topicId: input.topicId } } },
       ] } });
       if (unavailable) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
@@ -180,8 +180,8 @@ export class PrismaTopicApplicationSubmissionRepository
         studentId: member.studentId,
         groupId: group.id,
         participantRole: member.studentId === input.studentId ? "LEADER" as const : "MEMBER" as const,
-        message: "지속형 팀 지원서",
-        skills: ["지속형 팀 지원서"],
+        message: "팀 지원서",
+        skills: ["팀 지원서"],
         desiredRole: "팀 내 역할 협의",
         availability: "팀 일정에 따름",
         status: "PENDING" as const,

@@ -26,7 +26,7 @@ const request: TopicApprovalRequestSummary = {
 };
 
 describe("ProjectApprovalLedger", () => {
-  it("승인 요청을 상태, 제안자, 요청 경로와 검토 액션을 갖춘 평면 행으로 표시한다", () => {
+  it("승인 요청을 상태, 제안자, 검토 요청 대상과 검토 액션을 갖춘 평면 행으로 표시한다", () => {
     const { container } = render(<ProjectApprovalLedger requests={[request]} student={false} />);
 
     expect(screen.getByRole("list", { name: "프로젝트 승인 요청 목록" })).toBeInTheDocument();
@@ -44,5 +44,13 @@ describe("ProjectApprovalLedger", () => {
 
     expect(screen.getByText("공개 승인")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /검토/ })).not.toBeInTheDocument();
+  });
+
+  it("관리자 화면에서는 공통 관리 패널과 넓은 화면 전용 열 구조를 사용한다", () => {
+    const { container } = render(<ProjectApprovalLedger requests={[request]} student={false} adminSurface />);
+
+    expect(container.querySelector("section")).toHaveClass("admin-panel");
+    expect(container.querySelector("li")?.className).toContain("2xl:grid-cols-");
+    expect(container.querySelector("li")?.className).not.toContain("xl:grid-cols-[minmax(16rem");
   });
 });

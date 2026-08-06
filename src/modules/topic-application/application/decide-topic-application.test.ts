@@ -43,7 +43,7 @@ describe("주제 지원 결정", () => {
     );
   });
 
-  it("거절할 때 학생에게 전달할 검토 의견을 요구한다", async () => {
+  it("미선정할 때 학생에게 전달할 검토 의견을 요구한다", async () => {
     const applications = repository();
     const service = new DecideTopicApplicationService(applications);
 
@@ -53,7 +53,7 @@ describe("주제 지원 결정", () => {
         "application-1",
         "   ",
       ),
-    ).rejects.toThrow("거절 사유를 검토 의견에 입력해 주세요.");
+    ).rejects.toThrow("미선정 사유를 검토 의견에 입력해 주세요.");
     expect(applications.reject).not.toHaveBeenCalled();
   });
 

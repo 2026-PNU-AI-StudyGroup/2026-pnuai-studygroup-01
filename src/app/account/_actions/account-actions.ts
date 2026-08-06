@@ -38,5 +38,5 @@ export async function saveStudentProfileAction(_state: StudentProfileActionState
   revalidatePath("/account");
   revalidatePath("/topics");
   revalidatePath("/recruitments");
-  return { status: "success", message: "프로젝트 프로필을 저장했습니다." };
+  return { status: "success", message: "프로젝트 지원 정보를 저장했습니다." };
 }

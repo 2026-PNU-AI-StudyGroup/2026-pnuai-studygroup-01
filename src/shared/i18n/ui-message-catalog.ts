@@ -9,7 +9,7 @@ const englishOverrides: Record<string, string> = {
   "부산대학교": "Pusan National University",
   "부산대학교 학과 프로젝트": "PNU Department Projects",
   "부산대학교 학과 프로젝트 관리": "PNU Department Project Management",
-  "프로젝트 탐색": "Explore projects",
+  "프로젝트 찾기": "Find Projects",
   "지원 조건": "Application requirements",
   "프로젝트는": "Projects",
   "이어져야 합니다.": "should stay connected.",

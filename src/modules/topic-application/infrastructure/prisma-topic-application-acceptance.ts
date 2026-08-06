@@ -23,7 +23,7 @@ export class PrismaTopicApplicationAcceptance {
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === "P2002"
         ) {
-          return isStudentCycleUniqueConflict(error)
+          return isStudentProgramUniqueConflict(error)
             ? "STUDENT_ALREADY_ASSIGNED"
             : "CONFLICT";
         }
@@ -102,7 +102,7 @@ export class PrismaTopicApplicationAcceptance {
                 authorId: true,
                 managerId: true,
                 assistants: { select: { userId: true } },
-                academicCycleId: true,
+                programId: true,
                 capacity: true,
                 status: true,
               },
@@ -124,8 +124,8 @@ export class PrismaTopicApplicationAcceptance {
 
         const existingMembership = await transaction.teamMember.findUnique({
           where: {
-            academicCycleId_studentId: {
-              academicCycleId: application.topic.academicCycleId,
+            programId_studentId: {
+              programId: application.topic.programId,
               studentId: application.studentId,
             },
           },
@@ -148,7 +148,7 @@ export class PrismaTopicApplicationAcceptance {
           where: { topicId: application.topicId },
           update: {},
           create: {
-            academicCycleId: application.topic.academicCycleId,
+            programId: application.topic.programId,
             topicId: application.topicId,
             professorId: application.topic.managerId,
             name: application.topic.title,
@@ -158,7 +158,7 @@ export class PrismaTopicApplicationAcceptance {
         await transaction.teamMember.create({
           data: {
             teamId: team.id,
-            academicCycleId: application.topic.academicCycleId,
+            programId: application.topic.programId,
             topicId: application.topicId,
             studentId: application.studentId,
             applicationId: application.id,
@@ -167,7 +167,7 @@ export class PrismaTopicApplicationAcceptance {
         });
         const accepted = await transaction.topicApplication.updateMany({
           where: { id: application.id, status: "PENDING" },
-          data: { status: "ACCEPTED", decidedAt, reviewComment },
+          data: { status: "ACCEPTED", decidedAt, decidedById: actor.id, reviewComment },
         });
         if (accepted.count !== 1) {
           throw new DecisionWriteConflictError();
@@ -180,7 +180,7 @@ export class PrismaTopicApplicationAcceptance {
             id: { not: application.id },
             status: "PENDING",
             OR: [
-              { studentId: application.studentId, topic: { academicCycleId: application.topic.academicCycleId } },
+              { studentId: application.studentId, topic: { programId: application.topic.programId } },
               ...(reachesCapacity ? [{ topicId: application.topicId }] : []),
             ],
           },
@@ -201,7 +201,12 @@ export class PrismaTopicApplicationAcceptance {
           const rejectedIds = automaticallyRejected.map(({ id: rejectedId }) => rejectedId);
           await transaction.topicApplication.updateMany({
             where: { id: { in: rejectedIds }, status: "PENDING" },
-            data: { status: "REJECTED", decidedAt },
+            data: {
+              status: "REJECTED",
+              decidedAt,
+              decidedById: actor.id,
+              reviewComment: "다른 지원이 선정되었거나 프로젝트 정원이 충족되어 자동 미선정되었습니다.",
+            },
           });
           await transaction.recruitmentApplication.updateMany({
             where: { topicApplicationId: { in: rejectedIds }, status: "PENDING" },
@@ -264,11 +269,11 @@ export class PrismaTopicApplicationAcceptance {
       title: string;
       authorId: string;
       managerId: string | null;
-      academicCycleId: string;
+      programId: string;
       capacity: number;
       status: "DRAFT" | "PUBLISHED" | "CLOSED";
     }>>(Prisma.sql`
-      SELECT "topic"."id", "topic"."title", "topic"."authorId", "topic"."managerId", "topic"."academicCycleId", "topic"."capacity",
+      SELECT "topic"."id", "topic"."title", "topic"."authorId", "topic"."managerId", "topic"."programId", "topic"."capacity",
              "topic"."status"
       FROM "topic"
       WHERE "topic"."id" = ${group.topicId}
@@ -304,7 +309,7 @@ export class PrismaTopicApplicationAcceptance {
     if (!areActiveStudents(participants, studentIds.length)) return "CONFLICT";
 
     const existingMemberships = await transaction.teamMember.count({
-      where: { academicCycleId: topic.academicCycleId, studentId: { in: studentIds } },
+      where: { programId: topic.programId, studentId: { in: studentIds } },
     });
     if (existingMemberships > 0) return "STUDENT_ALREADY_ASSIGNED";
 
@@ -317,7 +322,7 @@ export class PrismaTopicApplicationAcceptance {
       where: { topicId: group.topicId },
       update: {},
       create: {
-        academicCycleId: topic.academicCycleId,
+        programId: topic.programId,
         topicId: group.topicId,
         professorId: topic.managerId,
         name: topic.title,
@@ -327,7 +332,7 @@ export class PrismaTopicApplicationAcceptance {
     await transaction.teamMember.createMany({
       data: applications.map((application) => ({
         teamId: team.id,
-        academicCycleId: topic.academicCycleId,
+        programId: topic.programId,
         topicId: group.topicId,
         studentId: application.studentId,
         applicationId: application.id,
@@ -336,7 +341,7 @@ export class PrismaTopicApplicationAcceptance {
     });
     const accepted = await transaction.topicApplication.updateMany({
       where: { groupId, status: "PENDING" },
-      data: { status: "ACCEPTED", decidedAt, reviewComment },
+      data: { status: "ACCEPTED", decidedAt, decidedById: actor.id, reviewComment },
     });
     if (accepted.count !== applications.length) throw new DecisionWriteConflictError();
 
@@ -346,7 +351,7 @@ export class PrismaTopicApplicationAcceptance {
         id: { notIn: applications.map(({ id }) => id) },
         status: "PENDING",
         OR: [
-          { studentId: { in: studentIds }, topic: { academicCycleId: topic.academicCycleId } },
+          { studentId: { in: studentIds }, topic: { programId: topic.programId } },
           ...(reachesCapacity ? [{ topicId: group.topicId }] : []),
         ],
       },
@@ -363,7 +368,12 @@ export class PrismaTopicApplicationAcceptance {
     if (automaticallyRejected.length) {
       await transaction.topicApplication.updateMany({
         where: { id: { in: automaticallyRejected.map(({ id }) => id) }, status: "PENDING" },
-        data: { status: "REJECTED", decidedAt },
+        data: {
+          status: "REJECTED",
+          decidedAt,
+          decidedById: actor.id,
+          reviewComment: "다른 지원이 선정되었거나 프로젝트 정원이 충족되어 자동 미선정되었습니다.",
+        },
       });
       await transaction.recruitmentApplication.updateMany({
         where: { topicApplicationId: { in: automaticallyRejected.map(({ id }) => id) }, status: "PENDING" },
@@ -398,13 +408,13 @@ export class PrismaTopicApplicationAcceptance {
 
 class DecisionWriteConflictError extends Error {}
 
-function isStudentCycleUniqueConflict(
+function isStudentProgramUniqueConflict(
   error: Prisma.PrismaClientKnownRequestError,
 ): boolean {
   const target = error.meta?.target;
   return (
     Array.isArray(target) &&
-    target.includes("academicCycleId") &&
+    target.includes("programId") &&
     target.includes("studentId")
   );
 }

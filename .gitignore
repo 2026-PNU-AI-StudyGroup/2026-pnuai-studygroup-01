@@ -12,6 +12,7 @@
 .env
 .env.local
 .env.*.local
+.env.txt
 /client_secret_*.json
 
 # logs

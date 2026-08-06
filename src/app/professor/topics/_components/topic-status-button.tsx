@@ -15,10 +15,14 @@ export function TopicStatusButton({
   topicId,
   status,
   programStatus,
+  pendingApplicationCount,
+  openRecruitmentPostCount,
 }: {
   topicId: string;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
+  pendingApplicationCount: number;
+  openRecruitmentPostCount: number;
 }) {
   const [state, action, pending] = useActionState(
     changeTopicStatusAction,
@@ -38,7 +42,7 @@ export function TopicStatusButton({
     <form action={action}>
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="intent" value={intent} />
-      {intent === "close" ? <ConfirmSubmitButton disabled={pending} className="button-danger text-sm" confirmMessage="주제를 마감하면 더 이상 지원할 수 없습니다. 계속하시겠습니까?"><UiText>{pending ? "처리 중" : "마감"}</UiText></ConfirmSubmitButton> : <button type="submit" disabled={pending} className="button-primary text-sm"><UiText>{pending ? "처리 중" : "공개"}</UiText></button>}
+      {intent === "close" ? <ConfirmSubmitButton disabled={pending} className="button-danger text-sm" confirmMessage={`주제를 마감하면 검토 중인 지원 ${pendingApplicationCount}건이 자동 미선정되고 팀원 모집 글 ${openRecruitmentPostCount}건도 마감됩니다. 이 작업은 취소할 수 없습니다. 계속하시겠습니까?`}><UiText>{pending ? "처리 중" : "마감"}</UiText></ConfirmSubmitButton> : <button type="submit" disabled={pending} className="button-primary text-sm"><UiText>{pending ? "처리 중" : "공개"}</UiText></button>}
       {state.message ? (
         <p
           aria-live="polite"

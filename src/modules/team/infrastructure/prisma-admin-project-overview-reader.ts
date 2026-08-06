@@ -4,9 +4,9 @@ import type {
   AdminProjectOverviewReader,
 } from "@/modules/team/application/list-admin-project-overview";
 import { isReportSubmissionOverdue } from "@/modules/team/domain/project-progress";
+import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
 
 const overviewInclude = {
-  academicCycle: { select: { academicYear: true, term: true } },
   topics: {
     orderBy: { createdAt: "desc" },
     select: {
@@ -49,19 +49,17 @@ export class PrismaAdminProjectOverviewReader
     const now = this.now();
     const programs = await this.client.projectProgram.findMany({
       orderBy: [
-        { academicCycle: { academicYear: "desc" } },
         { startsAt: "desc" },
         { name: "asc" },
       ],
       include: overviewInclude,
     });
 
-    return programs.map(({ academicCycle, topics, ...program }) => ({
+    return programs.map(({ topics, ...program }) => ({
       id: program.id,
       name: program.name,
       category: program.category,
-      academicYear: academicCycle.academicYear,
-      term: academicCycle.term,
+      startYear: getProgramStartYear(program.startsAt),
       status: program.status,
       advisorEnabled: program.advisorEnabled,
       projects: topics.flatMap(({ title, team }) => team ? [{

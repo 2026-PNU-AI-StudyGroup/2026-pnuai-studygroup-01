@@ -83,7 +83,7 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
               ? `${reportTypeLabel(reportVersion.report.type)}가 승인되었습니다`
               : `${reportTypeLabel(reportVersion.report.type)}에 수정 요청이 있습니다`,
             body: approved
-              ? `${teams[0].name}의 ${reportVersion.version}버전 보고서가 승인되었습니다.`
+              ? `${teams[0].name}의 버전 ${reportVersion.version} 보고서가 승인되었습니다.`
               : input.comment,
             href: `/teams/${teams[0].id}/reports`,
             createdAt: input.decidedAt,

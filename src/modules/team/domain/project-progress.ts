@@ -7,14 +7,17 @@ export type ProjectProgressBand =
   | "FINALIZING"
   | "COMPLETED";
 
-export function calculateProjectProgress(
+export function calculateReportSubmissionRate(
   submittedReportCount: number,
   reportCount: number,
 ): number {
   if (reportCount <= 0) return 0;
-
   const submitted = Math.min(Math.max(submittedReportCount, 0), reportCount);
   return Math.round((submitted / reportCount) * 100);
+}
+
+export function hasReportSchedule(reportCount: number): boolean {
+  return reportCount > 0;
 }
 
 export function classifyProjectProgress(progress: number): ProjectProgressStage {

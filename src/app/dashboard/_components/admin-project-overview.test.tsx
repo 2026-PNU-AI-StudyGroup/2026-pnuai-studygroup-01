@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -12,8 +12,7 @@ const programs: AdminProjectOverviewProgram[] = [
     id: "program-1",
     name: "2026 캡스톤",
     category: "캡스톤",
-    academicYear: 2026,
-    term: "FIRST",
+    startYear: 2026,
     status: "OPEN",
     advisorEnabled: true,
     projects: [
@@ -25,8 +24,7 @@ const programs: AdminProjectOverviewProgram[] = [
     id: "program-2",
     name: "AI 경진대회",
     category: "경진대회",
-    academicYear: 2026,
-    term: "SECOND",
+    startYear: 2026,
     status: "DRAFT",
     advisorEnabled: false,
     projects: [],
@@ -35,8 +33,7 @@ const programs: AdminProjectOverviewProgram[] = [
     id: "program-3",
     name: "지난 캡스톤",
     category: "캡스톤",
-    academicYear: 2025,
-    term: "FIRST",
+    startYear: 2025,
     status: "CLOSED",
     advisorEnabled: true,
     projects: [
@@ -56,6 +53,7 @@ describe("관리자 프로젝트 현황", () => {
       finalizing: 0,
       completed: 1,
       overdue: 1,
+      withoutReportSchedule: 0,
       averageProgress: 44,
     });
   });
@@ -63,15 +61,22 @@ describe("관리자 프로젝트 현황", () => {
   it("프로그램별로 프로젝트와 진행률 통계를 보여준다", () => {
     const { container } = render(<AdminProjectOverview programs={programs} />);
 
-    expect(screen.getByRole("complementary", { name: "프로젝트 현황 탐색" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "진행 중" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "종료" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /AI 경진대회/ })).toHaveAttribute(
+    expect(screen.getByRole("complementary", { name: "프로젝트 현황 선택" })).toBeInTheDocument();
+    const programNavigation = screen.getByRole("navigation", { name: "프로그램 선택" });
+    expect(within(programNavigation).getByRole("heading", { name: "진행 중" })).toBeInTheDocument();
+    expect(within(programNavigation).getByRole("heading", { name: "종료" })).toBeInTheDocument();
+    expect(within(programNavigation).getByRole("link", { name: /AI 경진대회/ })).toHaveAttribute(
       "href",
       "/dashboard?programId=program-2",
     );
     expect(screen.getByRole("heading", { name: "2026 캡스톤" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "시작 전 팀" }).parentElement).toHaveTextContent("구성 중");
+    expect(screen.getByRole("heading", { name: "진행 팀" }).parentElement).toHaveTextContent("진행 중");
     expect(screen.getByRole("progressbar", { name: "진행 팀 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");
+    const progressRow = screen.getByRole("heading", { name: "진행 팀" }).closest("li");
+    expect(progressRow).not.toBeNull();
+    expect(within(progressRow!).getAllByText("33%")).toHaveLength(1);
+    expect(within(progressRow!).getAllByText("진행 팀 보고서 제출률")).toHaveLength(1);
     expect(screen.getAllByText("제출 기한 초과").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "프로젝트 열기" })[0]).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByText("전체 보기")).not.toBeInTheDocument();
@@ -80,10 +85,22 @@ describe("관리자 프로젝트 현황", () => {
     expect(programLink).toHaveAttribute("aria-current", "page");
   });
 
+  it("프로젝트가 없는 프로그램에는 보고서 진행 통계를 만들지 않는다", () => {
+    render(<AdminProjectOverview programs={[programs[1]]} />);
+
+    const section = screen.getByRole("heading", { name: "AI 경진대회" }).closest("section");
+    expect(section).not.toBeNull();
+    expect(within(section!).getByText(/프로젝트 0개/)).toBeInTheDocument();
+    expect(within(section!).getByText("이 프로그램에는 아직 운영 중인 프로젝트가 없습니다.")).toBeInTheDocument();
+    expect(within(section!).queryByText("보고서 일정이 없습니다")).not.toBeInTheDocument();
+    expect(within(section!).queryByText("착수 전 · 0%")).not.toBeInTheDocument();
+  });
+
   it("종료 그룹에서 선택한 프로그램의 프로젝트만 보여준다", () => {
     render(<AdminProjectOverview programs={programs} selectedProgramId="program-3" />);
 
     expect(screen.getByRole("heading", { name: "지난 캡스톤" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "완료 팀" }).parentElement).toHaveTextContent("완료");
     expect(screen.getByRole("progressbar", { name: "완료 팀 보고서 제출률" })).toHaveAttribute("aria-valuenow", "100");
     expect(screen.queryByText("진행 팀")).not.toBeInTheDocument();
   });
@@ -102,6 +119,44 @@ describe("관리자 프로젝트 현황", () => {
     expect(screen.queryByText("지도교수")).not.toBeInTheDocument();
     expect(screen.queryByText("숨김 관리자")).not.toBeInTheDocument();
     expect(screen.getByText("3명")).toBeInTheDocument();
+  });
+
+  it("보고서 일정이 없는 프로젝트는 진행률 구간과 평균에서 제외하고 상태를 명시한다", () => {
+    const projectWithoutReportSchedule = {
+      id: "team-no-reports",
+      name: "일정 없는 팀",
+      topicTitle: "주제 E",
+      professorName: "김교수",
+      advisorEnabled: true,
+      status: "CONFIRMED" as const,
+      memberCount: 3,
+      reportCount: 0,
+      submittedReportCount: 0,
+      overdueReportCount: 0,
+    };
+    expect(summarizeProjectProgress([projectWithoutReportSchedule])).toEqual({
+      total: 1,
+      notStarted: 0,
+      early: 0,
+      middle: 0,
+      late: 0,
+      finalizing: 0,
+      completed: 0,
+      overdue: 0,
+      withoutReportSchedule: 1,
+      averageProgress: null,
+    });
+
+    render(<AdminProjectOverview programs={[{
+      ...programs[0],
+      projects: [projectWithoutReportSchedule],
+    }]} />);
+
+    const row = screen.getByRole("heading", { name: "일정 없는 팀" }).closest("li");
+    expect(row).not.toBeNull();
+    expect(within(row!).getByText("보고서 일정이 없습니다")).toBeInTheDocument();
+    expect(within(row!).queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(within(row!).queryByText("0 / 0 보고서 제출")).not.toBeInTheDocument();
   });
 
   it("사이드바에서 선택한 프로그램의 프로젝트와 통계만 보여준다", () => {

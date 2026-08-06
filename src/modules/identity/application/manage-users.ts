@@ -8,6 +8,7 @@ type ManagedUser = {
   role: UserRole;
   isActive: boolean;
   createdAt: Date;
+  activeResponsibilityCount: number;
 };
 
 export type ManagedUserPage = {
@@ -19,7 +20,7 @@ export type ManagedUserPage = {
 
 export interface UserAdministrationRepository {
   list(query: string, requestedPage: number, pageSize: number): Promise<ManagedUserPage>;
-  setActive(input: { actorId: string; targetId: string; isActive: boolean; changedAt: Date }): Promise<"UPDATED" | "NOT_FOUND" | "UNCHANGED" | "SELF_DEACTIVATION" | "LAST_ADMIN">;
+  setActive(input: { actorId: string; targetId: string; isActive: boolean; changedAt: Date }): Promise<"UPDATED" | "NOT_FOUND" | "UNCHANGED" | "SELF_DEACTIVATION" | "LAST_ADMIN" | "ACTIVE_PROJECTS">;
 }
 
 export class UserAdministrationError extends Error {}
@@ -44,6 +45,7 @@ export class UserAdministrationService {
     if (outcome === "NOT_FOUND") throw new UserAdministrationError("사용자를 찾을 수 없습니다.");
     if (outcome === "SELF_DEACTIVATION") throw new UserAdministrationError("현재 로그인한 관리자 계정은 비활성화할 수 없습니다.");
     if (outcome === "LAST_ADMIN") throw new UserAdministrationError("마지막 활성 관리자 계정은 비활성화할 수 없습니다.");
+    if (outcome === "ACTIVE_PROJECTS") throw new UserAdministrationError("담당 중인 프로젝트가 있는 교수 계정은 비활성화할 수 없습니다. 프로젝트를 다른 교수에게 인계하거나 마감해 주세요.");
     return outcome;
   }
 }

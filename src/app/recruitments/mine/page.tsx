@@ -48,13 +48,12 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
           <div className="space-y-5">
             <StudentTeamPageIntro
               title="내 모집"
-              description="열어 둔 역할의 충원 상태와 검토할 지원자를 관리합니다."
               meta={<span><UiText>{"등록한 모집"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
-              action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link>}
+              action={data.posts.length ? <Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link> : undefined}
             />
 
             {data.posts.length === 0 ? (
-              <EmptyState title="등록한 모집이 없습니다" description="팀에 필요한 역할과 협업 조건을 정리해 모집을 시작하세요." action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link>} />
+              <EmptyState title="등록한 모집이 없습니다" description="필요한 역할과 활동 조건을 입력해 팀원 모집을 등록하세요." action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"새 모집"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
                 <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">
@@ -93,7 +92,6 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
           {modal === "new" ? (
             <TeamModal
               title="새 모집"
-              description="팀에 필요한 역할과 협업 조건을 작성합니다."
               closeHref="/recruitments/mine"
               size="wide"
             >

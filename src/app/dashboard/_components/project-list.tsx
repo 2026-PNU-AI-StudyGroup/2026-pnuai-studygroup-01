@@ -3,18 +3,16 @@ import Link from "next/link";
 import styles from "@/app/dashboard/_components/project-list.module.css";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import type { TeamListItem } from "@/modules/team/application/team-workspace-ports";
-import { calculateProjectProgress } from "@/modules/team/domain/project-progress";
+import {
+  calculateReportSubmissionRate,
+  hasReportSchedule,
+} from "@/modules/team/domain/project-progress";
+import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
-const projectStatus = {
-  FORMING: { label: "구성 중", tone: "warning" },
-  CONFIRMED: { label: "진행 중", tone: "info" },
-  CLOSED: { label: "완료", tone: "neutral" },
-} as const;
-
-function nextMilestone(team: TeamListItem) {
-  return [...team.milestones]
+function nextTask(team: TeamListItem) {
+  return [...team.tasks]
     .filter(({ status }) => status !== "DONE")
     .sort((left, right) => {
       const statusOrder = Number(right.status === "IN_PROGRESS") -
@@ -30,14 +28,15 @@ function ProjectCard({
   role: UserRole;
   team: TeamListItem;
 }) {
-  const status = projectStatus[team.status];
-  const milestone = nextMilestone(team);
-  const progress = calculateProjectProgress(
+  const status = teamStatusPresentation[team.status];
+  const task = nextTask(team);
+  const progress = calculateReportSubmissionRate(
     team.submittedReportCount,
     team.reportCount,
   );
+  const reportScheduleAvailable = hasReportSchedule(team.reportCount);
   const actionLabel = role === "PROFESSOR"
-    ? "지도 프로젝트 열기"
+    ? "프로젝트 열기"
     : team.status === "CLOSED"
       ? "완료 프로젝트 열기"
       : "프로젝트 열기";
@@ -49,41 +48,47 @@ function ProjectCard({
         <span><UiText>{"팀원"}</UiText> {team.memberCount}<UiText>{"명"}</UiText></span>
       </div>
 
-      <div>
+      <div className={styles.projectIdentity}>
         <h3 id={`project-${team.id}-title`}><UiText>{team.name}</UiText></h3>
         <p className={styles.topic}><UiText>{team.topicTitle}</UiText></p>
       </div>
 
       <div className={styles.progress}>
-        <div>
-          <span><UiText>{"프로젝트 진행률"}</UiText></span>
-          <strong>{progress}%</strong>
-        </div>
-        <div
-          className={styles.progressTrack}
-          role="progressbar"
-          aria-label={`${team.name} 보고서 제출률`}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progress}
-        >
-          <span style={{ width: `${progress}%` }} />
-        </div>
-        <p>{team.submittedReportCount} / {team.reportCount} <UiText>{"보고서 제출"}</UiText></p>
+        {reportScheduleAvailable ? (
+          <>
+            <div>
+              <span><UiText>{"보고서 제출률"}</UiText></span>
+              <strong>{progress}%</strong>
+            </div>
+            <div
+              className={styles.progressTrack}
+              role="progressbar"
+              aria-label={`${team.name} 보고서 제출률`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <span style={{ width: `${progress}%` }} />
+            </div>
+            <p>{team.submittedReportCount} / {team.reportCount} <UiText>{"보고서 제출"}</UiText></p>
+          </>
+        ) : (
+          <p><UiText>{"등록된 보고서 일정이 없습니다"}</UiText></p>
+        )}
       </div>
 
-      <div className={styles.nextMilestone}>
-        <span><UiText>{team.status === "CLOSED" ? "마지막 현황" : "다음 마일스톤"}</UiText></span>
-        {milestone ? (
+      <div className={styles.nextTask}>
+        <span><UiText>{team.status === "CLOSED" ? "마지막 현황" : "다가오는 할 일"}</UiText></span>
+        {task ? (
           <>
-            <strong><UiText>{milestone.title}</UiText></strong>
+            <strong><UiText>{task.title}</UiText></strong>
             <p>
-              <UiText>{milestone.assignees.map(({ name }) => name).join(", ") || "담당자 미정"}</UiText>
-              <time dateTime={milestone.dueAt.toISOString()}><UiDate value={milestone.dueAt} mode="date" /></time>
+              <UiText>{task.assignees.map(({ name }) => name).join(", ") || "담당자 미정"}</UiText>
+              <time dateTime={task.dueAt.toISOString()}><UiDate value={task.dueAt} mode="date" /></time>
             </p>
           </>
         ) : (
-          <strong><UiText>{team.milestoneCount > 0 ? "모든 마일스톤 완료" : "등록된 마일스톤 없음"}</UiText></strong>
+          <strong><UiText>{team.taskCount > 0 ? "모든 할 일 완료" : "등록된 할 일 없음"}</UiText></strong>
         )}
       </div>
 
@@ -123,7 +128,7 @@ export function ProjectList({
             <UiText>{view === "completed" ? "완료한 프로젝트" : view === "active" ? "진행 중 프로젝트" : "프로젝트"}</UiText>
           </h2>
           <p>
-            <UiText>{view === "completed" ? "종료된 프로젝트와 결과를 확인합니다." : "핵심 현황을 확인하고 작업 공간으로 이동합니다."}</UiText>
+            <UiText>{view === "completed" ? "종료된 프로젝트와 결과를 확인합니다." : "프로젝트 일정과 진행 현황을 확인합니다."}</UiText>
           </p>
         </div>
         <span>{visibleTeams.length}<UiText>{"개"}</UiText></span>

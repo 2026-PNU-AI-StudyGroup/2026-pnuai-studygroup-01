@@ -5,12 +5,13 @@ import { useId, useState } from "react";
 
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 
 export type ProgramSidebarItem = {
   id: string;
   name: string;
   category: string;
-  academicYear: number;
+  startYear: number;
   status: "active" | "past";
   href: string;
 };
@@ -23,8 +24,8 @@ function ProgramMark({ value }: { value: string }) {
     <path key="cube" d="m12 3 7 4-7 4-7-4 7-4Zm-7 4v9l7 4 7-4V7m-7 4v9" />,
   ];
   return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)]">
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.15rem] fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]">
+    <span aria-hidden="true" data-program-mark className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)]">
+      <svg viewBox="0 0 24 24" className="size-[1.15rem] fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]">
         {paths[variant]}
       </svg>
     </span>
@@ -73,29 +74,32 @@ function YearProgramGroup({
           <ul className={`space-y-1 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
             {programs.map((program) => {
               const selected = program.id === selectedId;
+              const rowClassName = `relative flex min-h-[4.1rem] items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
+              }`;
+              const rowContent = (
+                <>
+                  <ProgramMark value={program.id} />
+                  <span className="min-w-0">
+                    <strong className="block truncate text-[0.8rem] font-black"><UiText>{program.name}</UiText></strong>
+                    <span className="mt-1 flex items-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
+                        program.status === "active" ? "bg-[var(--success-subtle)] text-[var(--success)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
+                      }`}>
+                        <UiText>{program.status === "active" ? "진행 중" : "종료"}</UiText>
+                      </span>
+                      <span className="truncate text-[0.64rem] font-semibold text-[var(--muted)]"><UiText>{program.category}</UiText></span>
+                    </span>
+                  </span>
+                </>
+              );
               return (
                 <li key={`${program.status}-${program.id}`}>
-                  <Link
-                    href={program.href}
-                    aria-current={selected ? "page" : undefined}
-                    tabIndex={open ? undefined : -1}
-                    className={`relative flex min-h-[4.1rem] items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                      selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
-                    }`}
-                  >
-                    <ProgramMark value={program.id} />
-                    <span className="min-w-0">
-                      <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
-                      <span className="mt-1 flex items-center gap-1.5">
-                        <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold ${
-                          program.status === "active" ? "bg-[var(--success-subtle)] text-[var(--success)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
-                        }`}>
-                          <UiText>{program.status === "active" ? "진행 중" : "종료"}</UiText>
-                        </span>
-                        <span className="truncate text-[0.64rem] font-semibold text-[var(--muted)]"><UiText>{program.category}</UiText></span>
-                      </span>
-                    </span>
-                  </Link>
+                  {selected ? (
+                    <div aria-current="page" className={rowClassName}>{rowContent}</div>
+                  ) : (
+                    <Link href={program.href} tabIndex={open ? undefined : -1} className={rowClassName}>{rowContent}</Link>
+                  )}
                 </li>
               );
             })}
@@ -106,55 +110,74 @@ function YearProgramGroup({
   );
 }
 
-export function ProgramSidebar({ items, selectedId, allHref }: {
+export function ProgramSidebar({ items, selectedId }: {
   items: ProgramSidebarItem[];
   selectedId?: string;
-  allHref: string;
 }) {
   const groups = items.reduce((result, item) => {
-    const key = item.academicYear;
+    const key = item.startYear;
     const group = result.get(key) ?? [];
     group.push(item);
     result.set(key, group);
     return result;
   }, new Map<number, ProgramSidebarItem[]>());
   const years = [...groups.keys()].sort((a, b) => b - a);
-  const selectedYear = items.find((item) => item.id === selectedId)?.academicYear;
+  const yearsKey = years.join(":");
+  const selectedYear = items.find((item) => item.id === selectedId)?.startYear;
+  const selectedProgram = items.find((item) => item.id === selectedId);
   const [openYear, setOpenYear] = useState<number | undefined>(selectedYear ?? years[0]);
   const [previousSelectedYear, setPreviousSelectedYear] = useState(selectedYear);
+  const [previousYearsKey, setPreviousYearsKey] = useState(yearsKey);
 
-  if (selectedYear !== previousSelectedYear) {
+  if (selectedYear !== previousSelectedYear || yearsKey !== previousYearsKey) {
     setPreviousSelectedYear(selectedYear);
+    setPreviousYearsKey(yearsKey);
     if (selectedYear !== undefined) {
       setOpenYear(selectedYear);
+    } else if ((openYear !== undefined && !years.includes(openYear)) || (!previousYearsKey && years.length)) {
+      setOpenYear(years[0]);
     }
   }
 
+  function yearGroups(surface: "mobile" | "desktop") {
+    return years.map((year) => {
+      const programs = groups.get(year) ?? [];
+      return (
+        <YearProgramGroup
+          key={`${surface}-${year}`}
+          year={year}
+          programs={programs}
+          selectedId={selectedId}
+          open={openYear === year}
+          onToggle={() => setOpenYear((current) => current === year ? undefined : year)}
+        />
+      );
+    });
+  }
+
   return (
-    <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
-      <div className="mb-4 flex items-center justify-between px-2">
-        <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
-        <Link href={allHref} className="text-[0.7rem] font-bold text-[var(--primary)]"><UiText>{"전체 보기"}</UiText></Link>
-      </div>
-
-      <UiNav aria-label="프로그램 선택">
-        <div className="space-y-2">
-          {years.map((year) => {
-            const programs = groups.get(year) ?? [];
-            return (
-              <YearProgramGroup
-                key={year}
-                year={year}
-                programs={programs}
-                selectedId={selectedId}
-                open={openYear === year}
-                onToggle={() => setOpenYear((current) => current === year ? undefined : year)}
-              />
-            );
-          })}
+    <div className="px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
+      <ResponsiveSectionNavigation
+        eyebrow={<UiText>{"프로그램"}</UiText>}
+        label={<UiText>{selectedProgram?.name ?? "프로그램 없음"}</UiText>}
+        meta={selectedProgram ? <UiText>{selectedProgram.status === "active" ? "진행 중" : "종료"}</UiText> : undefined}
+      >
+        <div className="mb-3 px-2">
+          <strong className="text-xs font-black text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
         </div>
+        <UiNav aria-label="프로그램 선택 모바일">
+          <div className="space-y-2">{yearGroups("mobile")}</div>
+        </UiNav>
+      </ResponsiveSectionNavigation>
 
-      </UiNav>
+      <div className="hidden lg:block">
+        <div className="mb-4 px-2">
+          <h2 className="text-sm font-black tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
+        </div>
+        <UiNav aria-label="프로그램 선택">
+          <div className="space-y-2">{yearGroups("desktop")}</div>
+        </UiNav>
+      </div>
     </div>
   );
 }

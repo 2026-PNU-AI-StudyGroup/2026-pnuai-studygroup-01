@@ -3,13 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   getCurrentActorMock,
-  listCyclesMock,
   listProfessorAccessMock,
   listProfessorAuditMock,
   getStudentProfileMock,
 } = vi.hoisted(() => ({
   getCurrentActorMock: vi.fn(),
-  listCyclesMock: vi.fn(),
   listProfessorAccessMock: vi.fn(),
   listProfessorAuditMock: vi.fn(),
   getStudentProfileMock: vi.fn(),
@@ -17,11 +15,6 @@ const {
 
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({
   getCurrentActor: getCurrentActorMock,
-}));
-vi.mock("@/modules/academic-cycle/application/list-academic-cycles", () => ({
-  ListAcademicCyclesService: class {
-    execute = listCyclesMock;
-  },
 }));
 vi.mock("@/modules/identity/application/manage-professor-access", () => ({
   ProfessorAccessService: class {
@@ -34,7 +27,6 @@ vi.mock("@/modules/identity/application/manage-student-profile", () => ({
     get = getStudentProfileMock;
   },
 }));
-vi.mock("@/modules/academic-cycle/infrastructure/prisma-academic-cycle-repository", () => ({ PrismaAcademicCycleRepository: class {} }));
 vi.mock("@/modules/identity/infrastructure/prisma-professor-access-repository", () => ({ PrismaProfessorAccessRepository: class {} }));
 vi.mock("@/modules/identity/infrastructure/prisma-student-profile-repository", () => ({ PrismaStudentProfileRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
@@ -42,8 +34,6 @@ vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { child
 
 import AccountPage from "@/app/account/page";
 import StudentProfilePage from "@/app/account/profile/page";
-import AcademicCyclesPage from "@/app/admin/academic-cycles/page";
-import NewAcademicCyclePage from "@/app/admin/academic-cycles/new/page";
 import ProfessorsPage from "@/app/admin/professors/page";
 import ProfessorHistoryPage from "@/app/admin/professors/history/page";
 import NewProfessorPage from "@/app/admin/professors/new/page";
@@ -61,23 +51,9 @@ const profile = {
 describe("화면 책임 분리", () => {
   beforeEach(() => {
     getCurrentActorMock.mockReset();
-    listCyclesMock.mockReset();
     listProfessorAccessMock.mockReset();
     listProfessorAuditMock.mockReset();
     getStudentProfileMock.mockReset();
-  });
-
-  it("학기 목록은 등록 양식 대신 새 학기 진입점을 제공한다", async () => {
-    getCurrentActorMock.mockResolvedValue(admin);
-    listCyclesMock.mockResolvedValue([]);
-    render(await AcademicCyclesPage());
-
-    expect(screen.getByRole("link", { name: "새 학기" })).toHaveAttribute("href", "/admin/academic-cycles/new");
-    expect(screen.queryByRole("spinbutton", { name: "학년도" })).not.toBeInTheDocument();
-
-    render(await NewAcademicCyclePage());
-    expect(screen.getByRole("spinbutton", { name: "학년도" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "학기 목록" })).toHaveAttribute("href", "/admin/academic-cycles");
   });
 
   it("교수 권한 목록에서 등록과 변경 이력을 독립 화면으로 연결한다", async () => {
@@ -85,7 +61,8 @@ describe("화면 책임 분리", () => {
     listProfessorAccessMock.mockResolvedValue([]);
     render(await ProfessorsPage());
 
-    expect(screen.getByRole("link", { name: "교수 이메일 등록" })).toHaveAttribute("href", "/admin/professors/new");
+    expect(screen.queryByRole("link", { name: "교수 이메일 등록" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "첫 교수 이메일 등록" })).toHaveAttribute("href", "/admin/professors/new");
     expect(screen.getByRole("link", { name: "변경 이력" })).toHaveAttribute("href", "/admin/professors/history");
     expect(screen.queryByRole("textbox", { name: "부산대학교 교수 이메일" })).not.toBeInTheDocument();
   });
@@ -107,14 +84,16 @@ describe("화면 책임 분리", () => {
     getStudentProfileMock.mockResolvedValue(profile);
     const account = render(await AccountPage());
 
-    expect(screen.getByRole("link", { name: "프로필 수정" })).toHaveAttribute("href", "/account/profile");
+    expect(screen.getByRole("link", { name: "지원 정보 수정" })).toHaveAttribute("href", "/account/profile");
     expect(screen.queryByRole("textbox", { name: "관심 분야" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "바로가기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "로그인 세션" })).not.toBeInTheDocument();
     account.unmount();
 
-    render(await StudentProfilePage());
-    expect(screen.getByRole("textbox", { name: "관심 분야" })).toHaveValue("접근성");
-    expect(screen.getAllByRole("link", { name: "계정 정보" }).some((link) => link.getAttribute("href") === "/account")).toBe(true);
+    const profileEdit = render(await StudentProfilePage());
+    expect(screen.getByRole("button", { name: "접근성 삭제" })).toBeInTheDocument();
+    expect(profileEdit.container.querySelector<HTMLInputElement>('input[name="interests"]')).toHaveValue("접근성");
+    expect(screen.getAllByRole("link", { name: "계정 정보" })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "계정 정보" })).toHaveAttribute("href", "/account");
   });
 });

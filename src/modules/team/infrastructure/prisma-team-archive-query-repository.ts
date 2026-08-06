@@ -4,6 +4,7 @@ import type {
   ArchivedProjectReader,
   ArchiveFilters,
 } from "@/modules/team/application/archive-projects";
+import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
 
 const archivedProjectSelect = {
   id: true,
@@ -17,8 +18,7 @@ const archivedProjectSelect = {
     advisorRole: true,
     requiredSkills: true,
     preferredSkills: true,
-    program: { select: { id: true, name: true, category: true, advisorEnabled: true } },
-    academicCycle: { select: { academicYear: true, term: true } },
+    program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true } },
     manager: { select: { name: true } },
   } },
   members: {
@@ -61,19 +61,19 @@ export class PrismaTeamArchiveQueryRepository
     const programs = await this.client.projectProgram.findMany({
       where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
       orderBy: [
-        { academicCycle: { academicYear: "desc" } },
+        { startsAt: "desc" },
         { name: "asc" },
       ],
       select: {
         id: true,
         name: true,
         category: true,
-        academicCycle: { select: { academicYear: true } },
+        startsAt: true,
       },
     });
-    return programs.map(({ academicCycle, ...program }) => ({
+    return programs.map(({ startsAt, ...program }) => ({
       ...program,
-      academicYear: academicCycle.academicYear,
+      startYear: getProgramStartYear(startsAt),
     }));
   }
 
@@ -97,8 +97,7 @@ export class PrismaTeamArchiveQueryRepository
     const teams = await this.client.team.findMany({
       where: closedProjectWhere(input.filters, skillTeamIds),
       orderBy: [
-        { topic: { academicCycle: { academicYear: "desc" } } },
-        { topic: { academicCycle: { term: "desc" } } },
+        { topic: { program: { startsAt: "desc" } } },
         { name: "asc" },
         { id: "asc" },
       ],
@@ -133,8 +132,7 @@ export class PrismaTeamArchiveQueryRepository
 function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
   return {
     id: team.id,
-    academicYear: team.topic.academicCycle.academicYear,
-    term: team.topic.academicCycle.term,
+    startYear: getProgramStartYear(team.topic.program.startsAt),
     teamName: team.name,
     programId: team.topic.program.id,
     programName: team.topic.program.name,

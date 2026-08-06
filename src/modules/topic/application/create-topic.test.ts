@@ -34,7 +34,6 @@ function repositories(programExists = true) {
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
     findOpen: vi.fn(async () => programExists ? {
       id: "program-1",
-      academicCycleId: "cycle-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: true,
@@ -54,7 +53,6 @@ describe("주제 초안 생성", () => {
     ).resolves.toEqual({ id: "topic-1" });
     expect(topics.createDraft).toHaveBeenCalledWith({
       ...topicInput,
-      academicCycleId: "cycle-1",
       title: "로컬 번역",
       description: "졸업과제 번역",
       requiredSkills: ["TypeScript"],

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "올바른 JSON 요청이 아닙니다." }, { status: 400 });
   }
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ message: "업로드 완료 정보를 다시 확인해 주세요." }, { status: 400 });
   try {
     return NextResponse.json(await uploadService().complete(actor, parsed.data.uploadId));
   } catch (error) {

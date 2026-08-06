@@ -8,14 +8,14 @@ import {
 } from "../src/modules/team/application/confirm-team";
 import {
   TeamDiscussionService,
-  TeamMilestoneService,
-  MilestoneNotFoundError,
+  TeamTaskService,
+  TaskNotFoundError,
   TeamNotFoundError,
   TeamWorkspaceQueryService,
 } from "../src/modules/team/application/manage-team-workspace";
 import { PrismaTeamConfirmationRepository } from "../src/modules/team/infrastructure/prisma-team-confirmation-repository";
 import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
-import { PrismaTeamMilestoneRepository } from "../src/modules/team/infrastructure/prisma-team-milestone-repository";
+import { PrismaTeamTaskRepository } from "../src/modules/team/infrastructure/prisma-team-task-repository";
 import { PrismaTeamWorkspaceQueryRepository } from "../src/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
 
@@ -28,18 +28,17 @@ if (process.env.ALLOW_LOCAL_WORKSPACE_TEST !== "true") {
 const professorId = randomUUID();
 const studentId = randomUUID();
 const outsiderId = randomUUID();
-let cycleId: string | null = null;
+let programId: string | null = null;
 
 async function cleanup() {
-  if (cycleId) {
-    await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
+  if (programId) {
+    await prisma.team.deleteMany({ where: { programId } });
     await prisma.topicApplication.deleteMany({
-      where: { topic: { academicCycleId: cycleId } },
+      where: { topic: { programId } },
     });
-    await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
-    cycleId = null;
+    await prisma.topic.deleteMany({ where: { programId } });
+    await prisma.projectProgram.deleteMany({ where: { id: programId } });
+    programId = null;
   }
   await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, studentId, outsiderId] } } });
   await prisma.user.deleteMany({
@@ -49,7 +48,7 @@ async function cleanup() {
 
 async function expectRejected(
   operation: () => Promise<unknown>,
-  ErrorType: typeof TeamNotFoundError | typeof MilestoneNotFoundError,
+  ErrorType: typeof TeamNotFoundError | typeof TaskNotFoundError,
 ) {
   try {
     await operation();
@@ -86,22 +85,16 @@ async function main() {
       },
     ],
   });
-  const cycle = await prisma.academicCycle.create({
-    data: {
-      academicYear: 9000 + Math.floor(Math.random() * 1000),
-      term: "FIRST",
-    },
-  });
-  cycleId = cycle.id;
   const program = await prisma.projectProgram.create({ data: {
-    academicCycleId: cycle.id, createdById: professorId, name: "워크스페이스 검증 프로그램", category: "검증", description: "워크스페이스 통합 검증",
+    createdById: professorId, name: `워크스페이스 검증 프로그램 ${professorId}`, category: "검증", description: "워크스페이스 통합 검증",
     startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
+  programId = program.id;
   const topic = await prisma.topic.create({
     data: {
-      academicCycleId: cycle.id,
       programId: program.id,
       authorId: professorId,
+      managerId: professorId,
       title: "워크스페이스 검증 주제",
       description: "워크스페이스 통합 검증",
       capacity: 2,
@@ -126,7 +119,7 @@ async function main() {
   });
   const team = await prisma.team.create({
     data: {
-      academicCycleId: cycle.id,
+      programId: program.id,
       topicId: topic.id,
       professorId,
       name: "워크스페이스 검증 팀",
@@ -135,7 +128,7 @@ async function main() {
   await prisma.teamMember.create({
     data: {
       teamId: team.id,
-      academicCycleId: cycle.id,
+      programId: program.id,
       topicId: topic.id,
       studentId,
       applicationId: application.id,
@@ -145,8 +138,8 @@ async function main() {
   const queryService = new TeamWorkspaceQueryService(
     new PrismaTeamWorkspaceQueryRepository(prisma),
   );
-  const milestoneService = new TeamMilestoneService(
-    new PrismaTeamMilestoneRepository(prisma),
+  const taskService = new TeamTaskService(
+    new PrismaTeamTaskRepository(prisma),
   );
   const discussionService = new TeamDiscussionService(
     new PrismaTeamDiscussionRepository(prisma),
@@ -166,7 +159,7 @@ async function main() {
   }
   await confirmation.confirm(professor, team.id);
 
-  const milestone = await milestoneService.createMilestone(student, {
+  const task = await taskService.createTask(student, {
     teamId: team.id,
     title: "  중간 발표  ",
     dueAt: new Date("2026-08-01T00:00:00Z"),
@@ -183,33 +176,33 @@ async function main() {
     TeamNotFoundError,
   );
   await expectRejected(
-    () => milestoneService.createMilestone(outsider, {
+    () => taskService.createTask(outsider, {
       teamId: team.id,
-      title: "권한 없는 마일스톤",
+      title: "권한 없는 할 일",
       dueAt: new Date("2026-08-02T00:00:00Z"),
     }),
     TeamNotFoundError,
   );
   await expectRejected(
-    () => milestoneService.updateMilestoneStatus(outsider, {
-      milestoneId: milestone.id,
+    () => taskService.updateTaskStatus(outsider, {
+      taskId: task.id,
       status: "DONE",
     }),
-    MilestoneNotFoundError,
+    TaskNotFoundError,
   );
   await expectRejected(
     () => queryService.get({ id: professorId, role: "STUDENT" }, team.id),
     TeamNotFoundError,
   );
-  await milestoneService.updateMilestoneStatus(student, {
-    milestoneId: milestone.id,
+  await taskService.updateTaskStatus(student, {
+    taskId: task.id,
     status: "DONE",
   });
 
   const workspace = await queryService.get(student, team.id);
   if (
-    workspace.milestoneCount !== 1 ||
-    workspace.completedMilestoneCount !== 1 ||
+    workspace.taskCount !== 1 ||
+    workspace.completedTaskCount !== 1 ||
     workspace.discussionPosts[0]?.content !== "Can we meet on Friday?" ||
     workspace.members[0]?.email !== `verification+${studentId}@pusan.ac.kr`
   ) {
@@ -245,8 +238,8 @@ async function main() {
       unauthorizedWrite: "NOT_FOUND",
       demotedProfessorRead: "NOT_FOUND",
       professorTeamConfirmation: true,
-      milestones: workspace.milestoneCount,
-      completedMilestones: workspace.completedMilestoneCount,
+      tasks: workspace.taskCount,
+      completedTasks: workspace.completedTaskCount,
       discussionHistory: { total: secondHistoryPage.discussionTotal, pages: secondHistoryPage.discussionTotalPages },
     }),
   );

@@ -1,22 +1,25 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { ProjectProgramRecord, ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
-import type { ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
+import { getProgramStartYear, type ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaProjectProgramRepository implements ProjectProgramRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async create(input: ProjectProgramDetails & { academicCycleId: string; createdById: string }): Promise<"CREATED" | "CYCLE_NOT_FOUND" | "DUPLICATE"> {
+  async create(input: ProjectProgramDetails & { createdById: string }): Promise<"CREATED" | "DUPLICATE"> {
     try {
       return await this.client.$transaction(async (transaction) => {
-        if (!(await transaction.academicCycle.findUnique({ where: { id: input.academicCycleId }, select: { id: true } }))) return "CYCLE_NOT_FOUND";
         await transaction.projectProgram.create({ data: { ...input, status: "DRAFT", openedAt: null } });
         await enqueueTranslations(transaction, [input.name, input.category, input.description]);
-        return "CREATED";
+        return "CREATED" as const;
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return "DUPLICATE";
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        isProgramIdentityConflict(error.meta?.target)
+      ) return "DUPLICATE";
       throw error;
     }
   }
@@ -26,22 +29,20 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
 
   private async list(where: Prisma.ProjectProgramWhereInput): Promise<ProjectProgramRecord[]> {
     const programs = await this.client.projectProgram.findMany({
-      where, orderBy: [{ academicCycle: { academicYear: "desc" } }, { startsAt: "desc" }, { name: "asc" }],
+      where, orderBy: [{ startsAt: "desc" }, { name: "asc" }],
       include: {
-        academicCycle: { select: { academicYear: true, term: true } },
         topics: { select: { status: true, team: { select: { id: true } } } },
       },
     });
-    return programs.map(({ academicCycle, topics, ...program }) => ({
+    return programs.map(({ topics, ...program }) => ({
       ...program,
-      academicYear: academicCycle.academicYear,
-      term: academicCycle.term,
+      startYear: getProgramStartYear(program.startsAt),
       topicCount: topics.filter(({ status }) => status === "PUBLISHED").length,
       teamCount: topics.filter(({ team }) => team !== null).length,
     }));
   }
 
-  changeStatus(id: string, status: "OPEN" | "CLOSED", changedAt: Date): Promise<boolean> {
+  changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
@@ -60,8 +61,24 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           where: { topicId: { in: topicIds }, status: "PENDING" },
           select: { id: true, studentId: true, topic: { select: { title: true } } },
         });
+        await transaction.topicApprovalRequest.updateMany({
+          where: { topicId: { in: topicIds }, status: "PENDING" },
+          data: {
+            status: "REJECTED",
+            reviewComment: "프로그램 종료로 승인 요청이 자동 종료되었습니다.",
+            decidedAt: changedAt,
+          },
+        });
         await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PUBLISHED" }, data: { status: "CLOSED" } });
-        await transaction.topicApplication.updateMany({ where: { topicId: { in: topicIds }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
+        await transaction.topicApplication.updateMany({
+          where: { topicId: { in: topicIds }, status: "PENDING" },
+          data: {
+            status: "REJECTED",
+            decidedAt: changedAt,
+            decidedById: changedById,
+            reviewComment: "프로그램이 종료되어 자동 미선정되었습니다.",
+          },
+        });
         await transaction.recruitmentPost.updateMany({ where: { team: { topicId: { in: topicIds } }, status: "OPEN" }, data: { status: "CLOSED" } });
         await transaction.recruitmentApplication.updateMany({ where: { post: { team: { topicId: { in: topicIds } } }, status: "PENDING" }, data: { status: "REJECTED", decidedAt: changedAt } });
         await createApplicationResultNotifications(transaction, applications.map((application) => ({
@@ -84,10 +101,14 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     return result.count === 1;
   }
 
-  findOpen(id: string): Promise<{ id: string; academicCycleId: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null> {
+  findOpen(id: string): Promise<{ id: string; startsAt: Date; endsAt: Date; advisorEnabled: boolean; studentProjectCreationEnabled: boolean } | null> {
     return this.client.projectProgram.findFirst({
       where: { id, status: "OPEN" },
-      select: { id: true, academicCycleId: true, startsAt: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true },
+      select: { id: true, startsAt: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true },
     });
   }
+}
+
+function isProgramIdentityConflict(target: unknown): boolean {
+  return Array.isArray(target) && target.includes("name") && target.includes("startsAt");
 }

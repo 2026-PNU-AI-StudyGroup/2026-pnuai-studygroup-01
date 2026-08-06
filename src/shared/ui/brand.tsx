@@ -18,7 +18,7 @@ export function Brand({
     <UiLink
       href={href}
       className={`inline-flex min-h-11 shrink-0 items-center ${isSidebar ? "w-full flex-col justify-center text-center" : ""}`}
-      aria-label={ariaLabel ?? (href === "/" ? "부산대학교 학과 프로젝트 관리 홈" : "부산대학교 학과 프로젝트 탐색")}
+      aria-label={ariaLabel ?? (href === "/" ? "부산대학교 학과 프로젝트 관리 홈" : "부산대학교 학과 프로젝트 찾기")}
     >
       <span
         aria-hidden="true"
@@ -33,7 +33,7 @@ export function Brand({
           }`}
         >
           <span className="block"><UiText>{"부산대학교"}</UiText></span>
-          <span className={`block ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}><UiText>{"프로젝트관리 시스템"}</UiText></span>
+          <span className={`block ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}><UiText>{"프로젝트 관리 시스템"}</UiText></span>
         </span>
       ) : null}
     </UiLink>

@@ -43,6 +43,7 @@ describe("StudentTeamManagementSections", () => {
     expect(screen.getByText("three@pusan.ac.kr")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "팀 삭제 실행" })).toBeInTheDocument();
     expect(container.querySelector("header")?.className).not.toContain("rounded-[var(--radius-panel)]");
+    expect(screen.getByRole("heading", { name: "구성원" }).closest("section")?.parentElement).toHaveClass("2xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]");
     expect(screen.getByRole("heading", { name: "팀 삭제" }).closest("section")).toHaveClass("border-y");
   });
 

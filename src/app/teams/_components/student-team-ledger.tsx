@@ -5,7 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
-const teamLedgerColumns = "xl:grid-cols-[minmax(18rem,1.55fr)_7rem_minmax(12rem,.85fr)_8rem_7.5rem]";
+const teamLedgerColumns = "xl:grid-cols-[minmax(13rem,1.55fr)_6rem_minmax(8rem,.85fr)_6rem_7rem]";
 
 export function StudentTeamLedger({ teams, actorId }: {
   teams: StudentTeamSummary[];
@@ -28,11 +28,9 @@ export function StudentTeamLedger({ teams, actorId }: {
               <div className="min-w-0">
                 <p className="mb-1 text-xs font-semibold text-[var(--muted)] xl:hidden"><UiText>{"팀"}</UiText></p>
                 <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
-                  <Link className="underline-offset-4 hover:text-[var(--primary-hover)] hover:underline" href={`/teams/manage/${team.id}`}>{team.name}</Link>
+                  {team.name}
                 </h3>
-                <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
-                  <UiText>{team.description || "등록된 팀 소개 없음"}</UiText>
-                </p>
+                {team.description ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
               </div>
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-[var(--muted)] xl:hidden"><UiText>{"내 역할"}</UiText></p>

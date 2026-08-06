@@ -17,6 +17,6 @@ describe("팀원 모집 지원 흐름", () => {
     expect(container.querySelector("details")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "이 팀에 지원하기" }));
     expect(screen.getByRole("dialog", { name: "백엔드 개발자 모집 지원" })).toHaveAttribute("open");
-    expect(screen.getByRole("textbox", { name: "지원 메시지" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "지원 내용" })).toBeInTheDocument();
   });
 });

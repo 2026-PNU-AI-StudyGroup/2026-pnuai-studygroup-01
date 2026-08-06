@@ -59,7 +59,7 @@ export default async function AccountPage() {
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-y border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
               <div>
-                <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 프로필"}</UiText></h2>
+                <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 지원 정보"}</UiText></h2>
               </div>
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-5">
@@ -81,11 +81,11 @@ export default async function AccountPage() {
                       </>
                     ) : (
                       <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">
-                        <UiText>{"관심 분야와 기술, 참여 가능한 시간을 입력하면 지원할 때 바로 활용할 수 있습니다."}</UiText></p>
+                        <UiText>{"관심 분야, 기술, 활동 가능 시간을 미리 입력하면 지원서에 불러올 수 있습니다."}</UiText></p>
                     )}
                   </div>
                   <Link className={profile ? "button-secondary" : "button-primary"} href="/account/profile">
-                    <UiText>{profile ? "프로필 수정" : "프로필 작성"}</UiText>
+                    <UiText>{profile ? "지원 정보 수정" : "지원 정보 작성"}</UiText>
                   </Link>
                 </div>
               </div>

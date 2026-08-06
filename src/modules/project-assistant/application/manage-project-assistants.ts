@@ -6,6 +6,7 @@ import type {
   CurrentActor,
   CurrentUser,
 } from "@/modules/identity/domain/current-actor";
+import { canAccessProfessorWorkspace as canAccessProfessorWorkspaceByPolicy } from "@/modules/project-assistant/domain/project-assistant-policy";
 
 export class ProjectAssistantOperationError extends Error {
   constructor(message: string) {
@@ -24,6 +25,14 @@ function normalizeEmail(email: string): string {
 
 export class ProjectAssistantQueryService {
   constructor(private readonly reader: ProjectAssistantReader) {}
+
+  async canAccessProfessorWorkspace(actor: CurrentActor): Promise<boolean> {
+    if (canAccessProfessorWorkspaceByPolicy(actor, false)) return true;
+    return canAccessProfessorWorkspaceByPolicy(
+      actor,
+      await this.reader.hasSupervisedTopic(actor),
+    );
+  }
 
   async getManagement(actor: CurrentActor, topicId: string) {
     const management = await this.reader.findManagement(topicId, actor);

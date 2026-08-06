@@ -1,9 +1,9 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
-export class InvalidMilestoneError extends Error {
+export class InvalidTaskError extends Error {
   constructor() {
-    super("마일스톤 제목은 1자 이상 200자 이하여야 합니다.");
-    this.name = "InvalidMilestoneError";
+    super("할 일 제목은 1자 이상 200자 이하여야 합니다.");
+    this.name = "InvalidTaskError";
   }
 }
 
@@ -26,16 +26,16 @@ export function canAccessTeam(
   );
 }
 
-export function assertValidMilestoneDueAt(dueAt: Date): void {
+export function assertValidTaskDueAt(dueAt: Date): void {
   if (!Number.isFinite(dueAt.getTime())) {
-    throw new InvalidMilestoneError();
+    throw new InvalidTaskError();
   }
 }
 
-export function normalizeMilestoneTitle(title: string): string {
+export function normalizeTaskTitle(title: string): string {
   const normalized = title.trim();
   if (normalized.length < 1 || normalized.length > 200) {
-    throw new InvalidMilestoneError();
+    throw new InvalidTaskError();
   }
   return normalized;
 }

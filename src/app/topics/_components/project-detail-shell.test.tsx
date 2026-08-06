@@ -21,8 +21,26 @@ describe("ProjectDetailShell", () => {
     const article = screen.getByRole("article");
     expect(article).not.toHaveClass("rounded-[var(--radius-panel)]");
     expect(article).not.toHaveClass("bg-white");
+    expect(screen.getByText("cover").parentElement?.className).not.toContain("min-h-");
     expect(screen.getByRole("heading", { name: "프로젝트 제목" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "프로젝트 일정" })).toBeInTheDocument();
     expect(screen.getByText("프로젝트 소개")).toBeInTheDocument();
+  });
+
+  it("cover가 없으면 장식 영역 없이 제목과 핵심 정보를 먼저 렌더링한다", () => {
+    render(
+      <ProjectDetailShell
+        heading={<h1>프로젝트 제목</h1>}
+        headerAside={<p>지원 정보</p>}
+        railLabelledBy="schedule-title"
+        rail={<h2 id="schedule-title">프로젝트 일정</h2>}
+      >
+        <section>프로젝트 소개</section>
+      </ProjectDetailShell>,
+    );
+
+    const article = screen.getByRole("article");
+    expect(article.firstElementChild).toContainElement(screen.getByRole("heading", { name: "프로젝트 제목" }));
+    expect(screen.queryByText("cover")).not.toBeInTheDocument();
   });
 });

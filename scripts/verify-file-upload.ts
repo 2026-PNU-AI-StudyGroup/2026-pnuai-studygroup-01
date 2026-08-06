@@ -14,15 +14,14 @@ if (process.env.ALLOW_LOCAL_FILE_TEST !== "true") {
 
 const professorId = randomUUID();
 const studentId = randomUUID();
-let cycleId: string | null = null;
+let programId: string | null = null;
 
 async function cleanup() {
-  if (cycleId) {
-    await prisma.team.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.topicApplication.deleteMany({ where: { topic: { academicCycleId: cycleId } } });
-    await prisma.topic.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.projectProgram.deleteMany({ where: { academicCycleId: cycleId } });
-    await prisma.academicCycle.deleteMany({ where: { id: cycleId } });
+  if (programId) {
+    await prisma.team.deleteMany({ where: { programId } });
+    await prisma.topicApplication.deleteMany({ where: { topic: { programId } } });
+    await prisma.topic.deleteMany({ where: { programId } });
+    await prisma.projectProgram.deleteMany({ where: { id: programId } });
     const cleanupService = new UploadService(
       new PrismaUploadIntentRepository(prisma),
       new S3ObjectStorage(s3, objectStorageBucket),
@@ -38,14 +37,13 @@ async function main() {
     { id: professorId, name: "Upload Professor", email: `verification+${professorId}@pusan.ac.kr`, emailVerified: true, role: "PROFESSOR" },
     { id: studentId, name: "Upload Student", email: `verification+${studentId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
-  const cycle = await prisma.academicCycle.create({ data: { academicYear: 8000 + Math.floor(Math.random() * 1000), term: "FIRST" } });
-  cycleId = cycle.id;
   const program = await prisma.projectProgram.create({ data: {
-    academicCycleId: cycle.id, createdById: professorId, name: "업로드 검증 프로그램", category: "검증", description: "업로드 통합 검증",
+    createdById: professorId, name: `업로드 검증 프로그램 ${professorId}`, category: "검증", description: "업로드 통합 검증",
     startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
+  programId = program.id;
   const topic = await prisma.topic.create({ data: {
-    academicCycleId: cycle.id, programId: program.id, authorId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
+    programId: program.id, authorId: professorId, managerId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
     recruitmentStartsAt: new Date("2026-01-01"), recruitmentEndsAt: new Date("2026-12-31"),
     executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
     submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),
@@ -54,8 +52,8 @@ async function main() {
   const application = await prisma.topicApplication.create({ data: {
     topicId: topic.id, studentId, message: "업로드 검증", status: "ACCEPTED", decidedAt: new Date(),
   } });
-  const team = await prisma.team.create({ data: { academicCycleId: cycle.id, topicId: topic.id, professorId, name: "업로드 검증 팀" } });
-  await prisma.teamMember.create({ data: { teamId: team.id, academicCycleId: cycle.id, topicId: topic.id, studentId, applicationId: application.id } });
+  const team = await prisma.team.create({ data: { programId: program.id, topicId: topic.id, professorId, name: "업로드 검증 팀" } });
+  await prisma.teamMember.create({ data: { teamId: team.id, programId: program.id, topicId: topic.id, studentId, applicationId: application.id } });
 
   const storage = new S3ObjectStorage(s3, objectStorageBucket);
   const service = new UploadService(new PrismaUploadIntentRepository(prisma), storage);

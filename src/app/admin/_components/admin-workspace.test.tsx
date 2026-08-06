@@ -22,4 +22,16 @@ describe("AdminWorkspace", () => {
     expect(screen.getByText("관리 화면 본문")).toBeInTheDocument();
     expect(container.querySelector("main > div")).toHaveClass("xl:grid-cols-[17rem_minmax(0,1fr)]");
   });
+
+  it("eyebrow와 설명 없이 제목만 제공할 수 있다", () => {
+    const { container } = render(
+      <AdminWorkspace currentPath="/admin/programs/new" title="새 프로그램">
+        <p>관리 화면 본문</p>
+      </AdminWorkspace>,
+    );
+
+    const header = container.querySelector("header");
+    expect(header).toHaveTextContent("새 프로그램");
+    expect(header?.querySelector("p")).not.toBeInTheDocument();
+  });
 });

@@ -1,11 +1,33 @@
 import type { ProgramSidebarItem } from "@/app/topics/_components/program-sidebar";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
+import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
+
+export type ProgramSidebarQuery = {
+  query?: string;
+  phase?: PublicTopicPhase;
+  sort?: PublicTopicSort;
+};
+
+function programHref(
+  programId: string,
+  target: "active" | "past",
+  query: ProgramSidebarQuery,
+) {
+  const params = new URLSearchParams();
+  if (target === "past") params.set("view", "past");
+  params.set("programId", programId);
+  if (query.query) params.set("q", query.query);
+  if (target === "active" && query.phase) params.set("phase", query.phase);
+  if (target === "active" && query.sort === "DEADLINE") params.set("sort", query.sort);
+  return `/topics?${params.toString()}`;
+}
 
 export function buildProgramSidebarItems(
   openPrograms: ProjectProgramRecord[],
   archivedPrograms: ArchivedProgramOption[],
   view: "active" | "past" = "active",
+  query: ProgramSidebarQuery = {},
 ): ProgramSidebarItem[] {
   if (view === "past") {
     const archivedIds = new Set(archivedPrograms.map((program) => program.id));
@@ -13,7 +35,7 @@ export function buildProgramSidebarItems(
       ...archivedPrograms.map((program) => ({
         ...program,
         status: "past" as const,
-        href: `/topics?view=past&programId=${encodeURIComponent(program.id)}`,
+        href: programHref(program.id, "past", query),
       })),
       ...openPrograms
         .filter((program) => !archivedIds.has(program.id))
@@ -21,9 +43,9 @@ export function buildProgramSidebarItems(
           id: program.id,
           name: program.name,
           category: program.category,
-          academicYear: program.academicYear,
+          startYear: program.startYear,
           status: "active" as const,
-          href: `/topics?programId=${encodeURIComponent(program.id)}`,
+          href: programHref(program.id, "active", query),
         })),
     ];
   }
@@ -34,16 +56,16 @@ export function buildProgramSidebarItems(
       id: program.id,
       name: program.name,
       category: program.category,
-      academicYear: program.academicYear,
+      startYear: program.startYear,
       status: "active" as const,
-      href: `/topics?programId=${encodeURIComponent(program.id)}`,
+      href: programHref(program.id, "active", query),
     })),
     ...archivedPrograms
       .filter((program) => !activeIds.has(program.id))
       .map((program) => ({
         ...program,
         status: "past" as const,
-        href: `/topics?view=past&programId=${encodeURIComponent(program.id)}`,
+        href: programHref(program.id, "past", query),
       })),
   ];
 }

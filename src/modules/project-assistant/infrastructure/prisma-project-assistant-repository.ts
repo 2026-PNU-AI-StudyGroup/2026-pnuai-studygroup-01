@@ -18,6 +18,14 @@ export class PrismaProjectAssistantRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
+  async hasSupervisedTopic(actor: CurrentActor): Promise<boolean> {
+    const topic = await this.client.topic.findFirst({
+      where: topicSupervisorWhere(actor),
+      select: { id: true },
+    });
+    return topic !== null;
+  }
+
   async findManagement(
     topicId: string,
     actor: CurrentActor,
@@ -143,7 +151,7 @@ export class PrismaProjectAssistantRepository
           recipientId: invitee.id,
           type: "SYSTEM",
           title: "프로젝트 조교 초대가 도착했습니다",
-          body: `${topic.title} 프로젝트에서 ${topic.advisorEnabled ? "지도교수와 동일한" : "프로젝트"} 운영 권한을 요청했습니다.`,
+          body: `${topic.title} 프로젝트의 관리 권한을 요청했습니다.`,
           href: "/dashboard?assistantInvitations=open",
           dedupeKey: `project-assistant-invitation:${invitationId}`,
           createdAt: input.invitedAt,
@@ -281,7 +289,7 @@ export class PrismaProjectAssistantRepository
           recipientId: input.assistantUserId,
           type: "SYSTEM",
           title: "프로젝트 조교 권한이 해제되었습니다",
-          body: "프로젝트 운영 권한이 해제되어 더 이상 지도교수 권한으로 접근할 수 없습니다.",
+          body: "프로젝트 관리 권한이 해제되어 더 이상 해당 프로젝트를 관리할 수 없습니다.",
           href: "/dashboard",
           dedupeKey: `project-assistant-removed:${input.topicId}:${input.assistantUserId}:${input.removedAt.toISOString()}`,
           createdAt: input.removedAt,

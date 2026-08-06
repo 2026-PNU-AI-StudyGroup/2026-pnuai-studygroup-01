@@ -17,8 +17,7 @@ export type AdminProjectOverviewProgram = {
   id: string;
   name: string;
   category: string;
-  academicYear: number;
-  term: "FIRST" | "SECOND";
+  startYear: number;
   status: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
   projects: AdminProjectOverviewItem[];

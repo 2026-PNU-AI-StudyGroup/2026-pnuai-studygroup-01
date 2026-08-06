@@ -32,7 +32,7 @@ export async function applyRecruitmentAction(_state: RecruitmentActionState, for
 
 export async function decideRecruitmentAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
   const parsed = z.object({ applicationId: z.string().uuid(), postId: z.string().uuid(), decision: z.enum(["ACCEPT", "REJECT"]) }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "잘못된 결정 요청입니다." };
+  if (!parsed.success) return { status: "error", message: "처리할 팀원 지원 결과를 다시 확인해 주세요." };
   try { await service().decide(await actor(), parsed.data.applicationId, parsed.data.decision); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
   revalidatePath(`/recruitments/${parsed.data.postId}/applications`);

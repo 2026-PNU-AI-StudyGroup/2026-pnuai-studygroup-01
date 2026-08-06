@@ -39,7 +39,12 @@ export class PrismaTeamConfirmationRepository
       });
       await transaction.topicApplication.updateMany({
         where: { topicId: team.topicId, status: "PENDING" },
-        data: { status: "REJECTED", decidedAt },
+        data: {
+          status: "REJECTED",
+          decidedAt,
+          decidedById: actor.id,
+          reviewComment: "프로젝트 팀이 확정되어 모집이 종료되었습니다.",
+        },
       });
       await transaction.recruitmentApplication.updateMany({
         where: { post: { teamId }, status: "PENDING" },

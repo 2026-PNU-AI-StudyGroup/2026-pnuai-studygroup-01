@@ -15,6 +15,7 @@ import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
+import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -26,7 +27,6 @@ import { TranslatedText } from "@/app/_components/translated-text";
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 상세");
 }
-const applicationStatus = { PENDING: ["검토 중", "info"], ACCEPTED: ["선정", "success"], REJECTED: ["미선정", "neutral"] } as const;
 const applicationDashboardHref = {
   PENDING: "/dashboard?view=pending",
   ACCEPTED: "/dashboard?view=active",
@@ -58,13 +58,20 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const now = new Date();
   const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
   const daysUntilDeadline = Math.max(0, Math.ceil((topic.recruitmentEndsAt.getTime() - now.getTime()) / 86_400_000));
+  const recruitmentStatusLabel = !topic.recruitmentEnabled
+    ? "기존 팀 참여"
+    : topic.recruitmentStartsAt > now
+      ? "모집 예정"
+      : recruiting
+        ? `모집 중 · D-${daysUntilDeadline}`
+        : "모집 종료";
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} allHref="/topics" />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
       <Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        <UiText>{"프로젝트 탐색"}</UiText></Link>
+        <UiText>{"프로젝트 목록"}</UiText></Link>
     </UiNav>
 
     <ProjectDetailShell
@@ -76,7 +83,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <div>
           <div className="flex flex-wrap items-center gap-3">
             {topic.advisorEnabled ? <p className="text-sm font-semibold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
-            <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruiting ? `모집 중 · D-${daysUntilDeadline}` : topic.recruitmentEnabled ? "모집 전·종료" : "기존 팀 참여"}</UiText></StatusBadge>
+            <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruitmentStatusLabel}</UiText></StatusBadge>
           </div>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.45rem,5vw,4.25rem)] font-bold leading-[1.03] tracking-[-0.055em]"><UiText>{topic.title}</UiText></h1>
         </div>
@@ -84,11 +91,11 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       headerAside={
         <>
           <dl className="flex items-end justify-between gap-5">
-            <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"현재 참여"}</UiText></dt><dd className="mt-1 text-2xl font-bold">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></dd></div>
+            <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"참여 인원"}</UiText></dt><dd className="mt-1 text-2xl font-bold">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></dd></div>
             <div className="text-right"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 마감"}</UiText></dt><dd className="mt-1 text-sm font-semibold"><UiDate value={topic.recruitmentEndsAt} mode="dateTime" /></dd></div>
           </dl>
           <div className="mt-5">
-            {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{applicationStatus[application.status][0]}</Link>
+            {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{topicApplicationStatusPresentation[application.status].label}</Link>
               : actor.role === "STUDENT" && recruiting ? <TopicApplicationEditor topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} leaderTeams={leaderTeams} />
                 : null}
           </div>
@@ -109,12 +116,12 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         </section>
 
         <section aria-labelledby="topic-requirements">
-          <h2 id="topic-requirements" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"함께할 사람"}</UiText></h2>
+          <h2 id="topic-requirements" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"지원 조건"}</UiText></h2>
           <dl className="mt-5 border-y border-[var(--line)]">
             {[
               ["필수 기술", topic.requiredSkills.join(", ") || "별도 조건 없음"],
               ["우대 기술", topic.preferredSkills.join(", ") || "별도 조건 없음"],
-              ["기대 역할", topic.roleExpectations],
+              ["예상 역할", topic.roleExpectations],
               ["활동 조건", topic.availabilityRequirement],
             ].map(([label, value]) => (
               <div key={label} className="grid gap-2 border-t border-[var(--line)] py-5 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)]">

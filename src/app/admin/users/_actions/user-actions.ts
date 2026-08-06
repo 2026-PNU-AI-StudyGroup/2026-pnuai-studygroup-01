@@ -23,7 +23,7 @@ export async function changeUserStatusAction(_previous: UserStatusActionState, f
     revalidatePath("/admin/users");
     return outcome === "UNCHANGED"
       ? { status: "success", message: "이미 같은 상태입니다." }
-      : { status: "success", message: parsed.data.isActive === "true" ? "계정을 다시 활성화했습니다." : "계정을 비활성화하고 기존 세션을 종료했습니다." };
+      : { status: "success", message: parsed.data.isActive === "true" ? "계정을 다시 활성화했습니다." : "계정을 비활성화하고 로그인 상태를 종료했습니다." };
   } catch (error) {
     if (error instanceof UserAdministrationError) return { status: "error", message: error.message };
     throw error;

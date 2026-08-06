@@ -92,7 +92,7 @@ export class PrismaReportSubmissionRepository
           dedupeKey: `report-submitted:${reportVersionId}:${recipientId}`,
           recipientId,
           title: `${authorized[0].name} 보고서가 제출되었습니다`,
-          body: `${reportTypeLabel(input.type)} ${version}버전이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
+          body: `${reportTypeLabel(input.type)} 버전 ${version}이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
           href: `/teams/${input.teamId}/reports`,
           createdAt: input.submittedAt,
         })),

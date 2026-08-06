@@ -3,8 +3,27 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useI18n } from "@/shared/i18n/i18n-provider";
+
+const focusableSelector = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled]):not([type='hidden'])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+function formSnapshot(form: HTMLFormElement): string {
+  return JSON.stringify(Array.from(new FormData(form).entries()).map(([name, value]) => [
+    name,
+    value instanceof File
+      ? { name: value.name, size: value.size, type: value.type, lastModified: value.lastModified }
+      : value,
+  ]));
+}
 
 export function TeamModal({
   title,
@@ -20,29 +39,92 @@ export function TeamModal({
   size?: "default" | "wide";
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const initialFormSnapshotsRef = useRef(new Map<HTMLFormElement, string>());
+
+  const hasUnsavedChanges = useCallback(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return false;
+    return Array.from(dialog.querySelectorAll("form")).some((form) => {
+      const initial = initialFormSnapshotsRef.current.get(form);
+      return initial !== undefined && initial !== formSnapshot(form);
+    });
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (hasUnsavedChanges() && !window.confirm(t("작성 중인 내용이 있습니다. 닫으면 입력한 내용이 사라집니다. 계속하시겠습니까?"))) {
+      return;
+    }
+    router.replace(closeHref);
+  }, [closeHref, hasUnsavedChanges, router, t]);
 
   useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const dialog = dialogRef.current;
+    initialFormSnapshotsRef.current = new Map(
+      Array.from(dialog?.querySelectorAll("form") ?? []).map((form) => [form, formSnapshot(form)]),
+    );
     closeButtonRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") router.replace(closeHref);
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      requestClose();
+    };
+    const keepFocusInside = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || !dialog || dialog.contains(target)) return;
+      if (target instanceof Element && target.closest("[role='listbox']")) return;
+      closeButtonRef.current?.focus();
     };
     window.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("focusin", keepFocusInside);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("focusin", keepFocusInside);
+      previousFocusRef.current?.focus({ preventScroll: true });
     };
-  }, [closeHref, router]);
+  }, [requestClose]);
+
+  function trapFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
+      .filter((element) => element.getAttribute("aria-hidden") !== "true");
+    if (!focusable.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable.at(-1)!;
+    if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 p-4 sm:p-6">
-      <UiButton type="button" aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={() => router.replace(closeHref)} />
+      <UiButton type="button" tabIndex={-1} aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={requestClose} />
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="team-modal-title"
+        tabIndex={-1}
+        onKeyDown={trapFocus}
         className={`relative my-auto w-full rounded-[var(--radius-panel)] bg-white p-6 shadow-[0_24px_70px_rgba(31,35,48,.18)] sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}
       >
         <div className="flex items-start justify-between gap-6">
@@ -55,7 +137,7 @@ export function TeamModal({
             type="button"
             aria-label="닫기"
             className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] text-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
-            onClick={() => router.replace(closeHref)}
+            onClick={requestClose}
           >
             ×
           </UiButton>

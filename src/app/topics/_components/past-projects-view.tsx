@@ -29,11 +29,11 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
   query: string;
   programId?: string;
 }) {
-  const hasFilters = Boolean(query || programId);
+  const hasFilters = Boolean(query);
   return (
     <div className="min-w-0">
       <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
-        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href="/topics?view=past"><UiText>{"조건 초기화"}</UiText></Link></div> : null}
+        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div> : null}
         <ProjectSearchForm view="past" programId={programId} query={query} />
       </UiSection>
 
@@ -45,8 +45,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
         {projects.length === 0 ? (
           <EmptyState
             title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 지난 프로젝트가 없습니다"}
-            description={hasFilters ? "검색어나 프로그램을 바꿔 다시 찾아보세요." : "완료된 프로젝트와 결과물이 이곳에 쌓입니다."}
-            action={hasFilters ? <Link className="button-secondary" href="/topics?view=past"><UiText>{"전체 프로젝트 보기"}</UiText></Link> : undefined}
+            description={hasFilters ? "검색어나 프로그램을 변경해 다시 확인하세요." : undefined}
           />
         ) : (
           <>
@@ -60,17 +59,13 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                 return (
                   <li key={project.id} className="min-w-0">
                     <article aria-labelledby={`past-project-${project.id}`} className={styles.card}>
-                      <ProjectGalleryCover
-                        id={project.id}
-                        href={href}
-                        label={`${project.programCategory} · ${project.programName}`}
-                        title={project.topicTitle}
-                        professorName={project.advisorEnabled ? project.professorName : undefined}
-                        authorSuffix={project.advisorRole}
-                        imagePath={project.thumbnailPath}
-                      />
+                      <ProjectGalleryCover id={project.id} imagePath={project.thumbnailPath} />
                       <div className={styles.body}>
-                        <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
+                        <p className="mb-3 min-w-0 truncate text-xs font-bold text-[var(--muted)]">
+                          <UiText>{`${project.programCategory} · ${project.programName}`}</UiText>
+                          {project.advisorEnabled ? <><span aria-hidden="true"> · </span>{project.professorName} <UiText>{project.advisorRole}</UiText></> : null}
+                        </p>
+                        <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
                           <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
                         </h3>
 
@@ -92,7 +87,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                             ))}
                             {remainingSkillCount ? <li className="text-xs font-semibold text-[var(--muted)]"><UiText>{"외"}</UiText>{" "}{remainingSkillCount}</li> : null}
                           </UiUl>
-                          <span className="shrink-0 text-xs font-bold text-[var(--muted)]">{project.academicYear}</span>
+                          <span className="shrink-0 text-xs font-black text-[var(--muted)]">{project.startYear}</span>
                         </div>
                       </div>
                     </article>

@@ -25,7 +25,7 @@ import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("미팅·검토 요청");
+  return getLocalizedMetadata("회의·검토 요청");
 }
 
 const kindLabel = {
@@ -55,6 +55,7 @@ export default async function ProjectGuidanceRequestsPage({
   const { teamId } = await params;
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
   const { actor, workspace } = await loadTeamWorkspace(teamId);
+  if (!workspace.advisorEnabled) notFound();
   let requestPage;
   try {
     requestPage = await new ProjectGuidanceRequestQueryService(
@@ -66,25 +67,24 @@ export default async function ProjectGuidanceRequestsPage({
   }
 
   const canCreate = workspace.status === "CONFIRMED" &&
-    workspace.advisorEnabled &&
     workspace.access.isTeamMember;
   const canRespond = workspace.status === "CONFIRMED" && workspace.access.canSupervise;
 
   return (
-    <section aria-labelledby="guidance-request-title" className="space-y-8">
+    <section aria-labelledby="guidance-request-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
-        eyebrow="프로젝트 지도"
-        title="미팅·검토 요청"
+        title="회의·검토 요청"
         titleId="guidance-request-title"
         description="지도교수에게 회의나 검토를 요청하고 답변과 확정 일정을 확인합니다."
+        bordered={false}
         meta={<StatusBadge tone={requestPage.pendingTotal > 0 ? "warning" : "neutral"}>{requestPage.pendingTotal}<UiText>{"건 답변 대기"}</UiText></StatusBadge>}
       />
 
       {canCreate ? (
-        <section aria-labelledby="new-guidance-request-title" className="space-y-4">
+        <section aria-labelledby="new-guidance-request-title" className="grid gap-5 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6">
           <div>
-            <h2 id="new-guidance-request-title" className="text-xl font-bold"><UiText>{"새 요청 보내기"}</UiText></h2>
-            <p className="muted mt-1 text-sm leading-6"><UiText>{"같은 유형의 요청은 교수 답변을 받은 뒤 다시 보낼 수 있습니다."}</UiText></p>
+            <h2 id="new-guidance-request-title" className="text-xl font-extrabold tracking-[-0.025em]"><UiText>{"회의나 검토가 필요하신가요?"}</UiText></h2>
+            <p className="muted mt-1.5 text-sm leading-6"><UiText>{"같은 유형의 요청은 교수 답변을 받은 뒤 다시 보낼 수 있습니다."}</UiText></p>
           </div>
           <ProjectGuidanceRequestForm
             teamId={teamId}
@@ -92,35 +92,33 @@ export default async function ProjectGuidanceRequestsPage({
           />
         </section>
       ) : workspace.access.isTeamMember ? (
-        <UiAside aria-label="새 요청 제한" className="border-y border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-4">
-          <p className="text-sm font-semibold"><UiText>{workspace.status === "FORMING"
+        <UiAside aria-label="새 요청 제한" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-4 shadow-[0_12px_34px_rgba(31,35,48,0.04)] sm:px-6">
+          <p className="text-sm font-bold"><UiText>{workspace.status === "FORMING"
             ? "팀 확정 후 새 요청을 보낼 수 있습니다."
-            : workspace.status === "CLOSED"
-              ? "종료된 프로젝트에서는 요청 이력만 확인할 수 있습니다."
-              : "지도교수가 없는 프로젝트에서는 새 요청을 보낼 수 없습니다."}</UiText></p>
+            : "종료된 프로젝트에서는 요청 이력만 확인할 수 있습니다."}</UiText></p>
         </UiAside>
       ) : null}
 
       <section aria-labelledby="guidance-request-history-title">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line-strong)] pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="eyebrow"><UiText>{"요청 이력"}</UiText></p>
-            <h2 id="guidance-request-history-title" className="mt-1 text-xl font-bold"><UiText>{"회의와 검토 요청"}</UiText></h2>
+            <p className="text-xs font-black tracking-[0.12em] text-[var(--primary)]"><UiText>{"요청 이력"}</UiText></p>
+            <h2 id="guidance-request-history-title" className="mt-1 text-2xl font-black tracking-[-0.04em]"><UiText>{"회의와 검토 요청"}</UiText></h2>
           </div>
-          <p className="muted text-sm"><UiText>{"전체"}</UiText>{" "}<strong className="text-[var(--ink)]">{requestPage.total}<UiText>{"건"}</UiText></strong></p>
+          <p className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-bold text-[var(--ink)]"><UiText>{"전체"}</UiText>{" "}{requestPage.total}<UiText>{"건"}</UiText></p>
         </div>
 
         {requestPage.items.length === 0 ? (
-          <div className="pt-6">
+          <div className="pt-4">
             <EmptyState
               title="아직 등록된 요청이 없습니다"
               description={workspace.access.canSupervise
                 ? "학생이 회의나 검토를 요청하면 이곳에서 확인하고 답변할 수 있습니다."
-                : "회의나 검토가 필요할 때 위 양식에서 첫 요청을 보내세요."}
+                : "회의나 검토가 필요할 때 새 요청 보내기 버튼으로 첫 요청을 작성하세요."}
             />
           </div>
         ) : (
-          <ol className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+          <ol className="mt-4 grid gap-4">
             {requestPage.items.map((request) => (
               <RequestRecord
                 key={request.id}
@@ -134,7 +132,7 @@ export default async function ProjectGuidanceRequestsPage({
         )}
 
         {requestPage.totalPages > 1 ? (
-          <UiNav aria-label="미팅·검토 요청 페이지" className="mt-6 flex items-center justify-between gap-3">
+          <UiNav aria-label="회의·검토 요청 페이지" className="mt-6 flex items-center justify-between gap-3">
             <span className="muted text-sm">{requestPage.page} / {requestPage.totalPages}<UiText>{" 페이지"}</UiText></span>
             <div className="flex gap-2">
               {requestPage.page > 1 ? <Link className="button-secondary" href={`/teams/${teamId}/requests?page=${requestPage.page - 1}`}><UiText>{"이전"}</UiText></Link> : <span />}
@@ -159,26 +157,35 @@ function RequestRecord({
   executionEndsAt: Date;
 }) {
   const status = requestStatus(request);
+  const titleId = `guidance-request-record-title-${request.id}`;
+  const cardTone = request.status === "PENDING"
+    ? "border-[color-mix(in_srgb,var(--warning)_32%,var(--line))]"
+    : request.status === "ANSWERED"
+      ? "border-[color-mix(in_srgb,var(--success)_25%,var(--line))]"
+      : "border-[var(--line)]";
   return (
-    <li className="py-6">
-      <UiArticle aria-label={`${kindLabel[request.kind]} ${request.title}`} className="space-y-5">
+    <li>
+      <UiArticle
+        aria-labelledby={titleId}
+        data-request-state={request.status.toLowerCase()}
+        className={`space-y-5 rounded-[var(--radius-panel)] border bg-white p-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:p-6 ${cardTone}`}
+      >
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone="info">{kindLabel[request.kind]}</StatusBadge>
               <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
             </div>
-            <h3 className="mt-3 text-lg font-bold tracking-[-0.02em]"><TranslatedText text={request.title} /></h3>
+            <h3 id={titleId} className="mt-3 text-lg font-extrabold tracking-[-0.02em]"><TranslatedText text={request.title} /></h3>
           </div>
           {request.status === "PENDING" && request.requesterId === actorId ? (
             <CancelProjectGuidanceRequestForm teamId={request.teamId} requestId={request.id} />
           ) : null}
         </header>
 
-        <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <RequestField label="요청자"><span className="font-semibold">{request.requesterName}</span></RequestField>
           <RequestField label="요청 시각"><time dateTime={request.createdAt.toISOString()}><UiDate value={request.createdAt} mode="dateTime" /></time></RequestField>
-          <RequestField label="요청 유형"><UiText>{kindLabel[request.kind]}</UiText></RequestField>
           <RequestField label="희망 일시">
             {request.preferredAt ? <time dateTime={request.preferredAt.toISOString()}><UiDate value={request.preferredAt} mode="dateTime" /></time> : <UiText>{"해당 없음"}</UiText>}
           </RequestField>
@@ -188,8 +195,8 @@ function RequestRecord({
           <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"요청 내용"}</UiText></p>
           <TranslatedText text={request.content} className="mt-2 whitespace-pre-wrap text-sm leading-6" />
           {request.referenceUrl ? (
-            <a href={request.referenceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--primary)] underline-offset-4 hover:underline">
-              <UiText>{"참고 링크 열기"}</UiText>
+            <a href={request.referenceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)] underline-offset-4 hover:underline">
+              <UiText>{"참고 링크 열기"}</UiText>{" "}<span className="sr-only"><UiText>{"새 창"}</UiText></span>
             </a>
           ) : null}
         </div>
@@ -225,5 +232,5 @@ function RequestRecord({
 }
 
 function RequestField({ label, children }: { label: string; children: ReactNode }) {
-  return <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt><dd className="mt-1 leading-6">{children}</dd></div>;
+  return <div><dt className="text-xs font-bold text-[var(--muted)]"><UiText>{label}</UiText></dt><dd className="mt-1 leading-6 text-[var(--ink)]">{children}</dd></div>;
 }

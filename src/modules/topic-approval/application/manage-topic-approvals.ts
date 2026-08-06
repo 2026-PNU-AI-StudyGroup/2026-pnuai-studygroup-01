@@ -19,13 +19,22 @@ export type TopicApprovalRequestSummary = {
   decidedAt: Date | null;
 };
 
+export type TopicApprovalRequestPage = {
+  items: TopicApprovalRequestSummary[];
+  page: number;
+  totalPages: number;
+  total: number;
+};
+
 export interface TopicApprovalRepository {
   listProfessors(): Promise<Array<{ id: string; name: string; email: string }>>;
   create(input: TopicDraft & { route: TopicApprovalRoute; requestedProfessorId: string | null; studentTeamId?: string; requestedAt: Date }): Promise<string | null>;
-  listVisible(
+  listVisiblePage(
     actor: CurrentUser,
+    page: number,
+    pageSize: number,
     status?: TopicApprovalRequestSummary["status"],
-  ): Promise<TopicApprovalRequestSummary[]>;
+  ): Promise<TopicApprovalRequestPage>;
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE">;
 }
 
@@ -42,7 +51,7 @@ export class TopicApprovalService {
 
   async createStudentProposal(
     actor: CurrentUser,
-    input: Omit<TopicDraft, "authorId" | "academicCycleId"> & { route: TopicApprovalRoute; requestedProfessorId?: string; studentTeamId?: string },
+    input: Omit<TopicDraft, "authorId"> & { route: TopicApprovalRoute; requestedProfessorId?: string; studentTeamId?: string },
   ) {
     if (actor.role !== "STUDENT") throw new TopicApprovalOperationError("학생만 학생 프로젝트 승인 요청을 만들 수 있습니다.");
     const details = {
@@ -60,7 +69,7 @@ export class TopicApprovalService {
     const program = await this.programs.findOpen(input.programId);
     if (!program) throw new TopicApprovalOperationError("현재 프로젝트를 등록할 수 있는 공개 프로그램이 아닙니다.");
     if (!program.studentProjectCreationEnabled) {
-      throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 생성을 허용하지 않습니다.");
+      throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     }
     if (!program.advisorEnabled && input.route !== "ADMIN") {
       throw new TopicApprovalOperationError("지도교수가 없는 프로그램은 관리자에게만 승인을 요청할 수 있습니다.");
@@ -72,7 +81,6 @@ export class TopicApprovalService {
     const id = await this.repository.create({
       ...details,
       authorId: actor.id,
-      academicCycleId: program.academicCycleId,
       route: input.route,
       requestedProfessorId: input.route === "PROFESSOR" ? input.requestedProfessorId! : null,
       requestedAt: this.now(),
@@ -81,14 +89,17 @@ export class TopicApprovalService {
     return id;
   }
 
-  async list(actor: CurrentUser) {
-    if (actor.role === "STUDENT" || actor.role === "PROFESSOR" || actor.role === "ADMIN") return this.repository.listVisible(actor);
-    return [];
+  async list(actor: CurrentUser, requestedPage = 1, pageSize = 20): Promise<TopicApprovalRequestPage> {
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    if (actor.role === "STUDENT" || actor.role === "PROFESSOR" || actor.role === "ADMIN") {
+      return this.repository.listVisiblePage(actor, page, pageSize);
+    }
+    return { items: [], page: 1, totalPages: 1, total: 0 };
   }
 
-  async listPendingForReview(actor: CurrentUser) {
+  async listPendingForReview(actor: CurrentUser, pageSize = 5) {
     if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") return [];
-    return this.repository.listVisible(actor, "PENDING");
+    return (await this.repository.listVisiblePage(actor, 1, pageSize, "PENDING")).items;
   }
 
   async decide(actor: CurrentUser, input: { requestId: string; decision: "APPROVE" | "REJECT"; reviewComment: string }) {
