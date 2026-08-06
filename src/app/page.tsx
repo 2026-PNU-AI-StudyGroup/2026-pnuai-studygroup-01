@@ -51,9 +51,6 @@ export default async function Home({
           <main className="grid min-h-[calc(100vh-4.5rem)] place-items-center px-5 py-10 sm:px-8 lg:min-h-screen">
             <section aria-labelledby="sign-in-title" className="w-full max-w-[31rem] border-t-4 border-[var(--primary)] bg-white p-6 sm:p-9">
               <h1 id="sign-in-title" className="text-3xl font-bold tracking-[-0.05em]"><UiText>{"로그인"}</UiText></h1>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                <UiText>{"부산대학교 계정으로 로그인하세요."}</UiText>
-              </p>
               <div className="mt-7 border-y border-[var(--line)] py-6">
                 <GoogleSignInButton />
               </div>

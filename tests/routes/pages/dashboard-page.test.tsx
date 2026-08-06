@@ -86,13 +86,10 @@ describe("DashboardPage empty states", () => {
   it("승인 0건을 명시하고 상단 행동과 중복되는 빈 상태 CTA는 만들지 않는다", async () => {
     render(await DashboardPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("heading", { name: "승인 대기열" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "승인 대기" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "검토할 승인 요청이 없습니다" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "아직 연결된 프로젝트가 없습니다" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /주제 설계/ })).not.toHaveLength(0);
-    for (const link of screen.getAllByRole("link", { name: /주제 설계/ })) {
-      expect(link).toHaveAttribute("href", "/professor/topics");
-    }
-    expect(screen.queryByRole("link", { name: "새 주제 만들기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "주제 관리" })).toHaveAttribute("href", "/professor/topics");
+    expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();
   });
 });

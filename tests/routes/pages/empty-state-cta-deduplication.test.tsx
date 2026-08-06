@@ -67,12 +67,12 @@ describe("빈 목록 CTA", () => {
     getCurrentActor.mockResolvedValue(student);
   });
 
-  it("보낸 지원이 없으면 빈 상태의 모집 탐색 링크만 보여준다", async () => {
+  it("보낸 지원이 없으면 빈 상태의 모집 목록 링크만 보여준다", async () => {
     listApplicationHistory.mockResolvedValue({ applications: [], total: 0, page: 1, totalPages: 1 });
 
     render(await RecruitmentApplicationsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("link", { name: "모집 둘러보기" })).toHaveAttribute("href", "/recruitments");
+    expect(screen.getByRole("link", { name: "모집 목록" })).toHaveAttribute("href", "/recruitments");
     expect(screen.queryByRole("link", { name: "모집 글 탐색" })).not.toBeInTheDocument();
   });
 

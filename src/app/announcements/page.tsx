@@ -45,9 +45,7 @@ export default async function AnnouncementsPage({
         <div className="mx-auto max-w-6xl space-y-8">
           <PageHeader
             compact
-            eyebrow="PMS 소식"
             title="공지사항"
-            description="프로젝트 운영에 필요한 일정과 안내를 확인합니다."
             actions={canCreateAnnouncement(actor.role) && data.total > 0
               ? <Link className="button-primary" href="/announcements/new"><UiText>{"새 공지 작성"}</UiText></Link>
               : undefined}
@@ -68,7 +66,6 @@ export default async function AnnouncementsPage({
                 <EmptyState
                   variant="embedded"
                   title="등록된 공지가 없습니다"
-                  description="새 공지가 등록되면 최신 순서로 이곳에 표시됩니다."
                   action={canCreateAnnouncement(actor.role)
                     ? <Link className="button-primary max-sm:w-full" href="/announcements/new"><UiText>{"첫 공지 작성"}</UiText></Link>
                     : undefined}

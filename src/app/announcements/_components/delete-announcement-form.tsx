@@ -28,7 +28,7 @@ export function DeleteAnnouncementForm({
     <form action={action} className="flex flex-col items-end gap-2">
       <ConfirmSubmitButton
         className="button-danger"
-        confirmMessage="이 공지사항을 삭제할까요? 삭제한 공지는 복구할 수 없습니다."
+        confirmMessage="이 공지사항을 삭제하시겠습니까? 삭제한 공지는 복구할 수 없습니다."
         disabled={pending}
       >
         <UiText>{pending ? "삭제 중" : "삭제"}</UiText>
