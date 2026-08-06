@@ -13,12 +13,14 @@ function useLocalizedLabel(label: string | undefined): string | undefined {
 export function UiInput({
   placeholder,
   "aria-label": ariaLabel,
+  className = "",
   ...props
 }: ComponentProps<"input">) {
   const { t } = useI18n();
   return (
     <input
       {...props}
+      className={className.includes("form-control") ? className : `form-control ${className}`}
       placeholder={placeholder ? t(placeholder) : placeholder}
       aria-label={ariaLabel ? t(ariaLabel) : ariaLabel}
     />
@@ -28,12 +30,14 @@ export function UiInput({
 export function UiTextarea({
   placeholder,
   "aria-label": ariaLabel,
+  className = "",
   ...props
 }: ComponentProps<"textarea">) {
   const { t } = useI18n();
   return (
     <textarea
       {...props}
+      className={className.includes("form-control") ? className : `form-control ${className}`}
       placeholder={placeholder ? t(placeholder) : placeholder}
       aria-label={ariaLabel ? t(ariaLabel) : ariaLabel}
     />

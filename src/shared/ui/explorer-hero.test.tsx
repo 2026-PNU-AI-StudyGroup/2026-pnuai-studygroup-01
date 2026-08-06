@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
 describe("ExplorerHero", () => {
-  it("표식과 설명 없이 제목만 렌더링할 수 있다", () => {
+  it("원형 표식 없이 제목만 렌더링한다", () => {
     const { container } = render(<ExplorerHero title="가입 정보 입력" />);
 
     expect(screen.getByRole("heading", { level: 1, name: "가입 정보 입력" })).toBeInTheDocument();

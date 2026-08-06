@@ -3,6 +3,22 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CustomMultiSelect, CustomSelect } from "@/shared/ui/custom-select";
 
+describe("CustomMultiSelect", () => {
+  it("이름 첫 글자 타일 없이 체크박스와 텍스트만 표시한다", async () => {
+    const { container } = render(
+      <CustomMultiSelect
+        name="members"
+        ariaLabel="팀원"
+        options={[{ value: "student-1", label: "김학생", description: "학생" }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("combobox", { name: "팀원" }));
+    await screen.findByRole("option", { name: /김학생/ });
+    expect(container.querySelector(".custom-multi-select__avatar")).not.toBeInTheDocument();
+  });
+});
+
 describe("CustomSelect", () => {
   it("선택한 값을 폼 필드에 반영한다", () => {
     const { container } = render(
@@ -22,6 +38,22 @@ describe("CustomSelect", () => {
 
     expect(container.querySelector<HTMLInputElement>('input[name="status"]')?.value).toBe("DONE");
     expect(screen.getByRole("combobox", { name: "상태" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("도움말 연결을 트리거에 유지한다", () => {
+    render(
+      <>
+        <p id="grade-help">현재 재학 중인 학년을 선택합니다.</p>
+        <CustomSelect
+          name="grade"
+          ariaLabel="학년"
+          ariaDescribedBy="grade-help"
+          options={[{ value: "1", label: "1학년" }]}
+        />
+      </>,
+    );
+
+    expect(screen.getByRole("combobox", { name: "학년" })).toHaveAttribute("aria-describedby", "grade-help");
   });
 
   it("제어형 값은 부모가 갱신할 때만 바뀌고 같은 값 재선택은 알리지 않는다", () => {
@@ -229,6 +261,14 @@ describe("CustomSelect", () => {
     expect(trigger).not.toHaveAttribute("aria-invalid");
     expect(validationProxy).toBeRequired();
     expect(validationProxy).not.toHaveAttribute("name");
+    expect(validationProxy).toHaveClass(
+      "absolute",
+      "size-px",
+      "overflow-hidden",
+      "opacity-0",
+      "pointer-events-none",
+      "[clip-path:inset(50%)]",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
 

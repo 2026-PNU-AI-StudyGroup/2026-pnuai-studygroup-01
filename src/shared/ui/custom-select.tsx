@@ -16,6 +16,7 @@ type CustomSelectProps = {
   id?: string;
   name: string;
   ariaLabel: string;
+  ariaDescribedBy?: string;
   options: SelectOption[];
   value?: string;
   defaultValue?: string;
@@ -32,6 +33,7 @@ export function CustomSelect({
   id,
   name,
   ariaLabel,
+  ariaDescribedBy,
   options,
   value: controlledValue,
   defaultValue = "",
@@ -122,6 +124,7 @@ export function CustomSelect({
         className="custom-select__trigger"
         aria-haspopup="listbox"
         aria-label={t(ariaLabel)}
+        aria-describedby={ariaDescribedBy}
         aria-expanded={open}
         aria-controls={listboxId}
         aria-required={required || undefined}
@@ -150,7 +153,7 @@ export function CustomSelect({
         disabled={disabled}
         tabIndex={-1}
         aria-hidden="true"
-        className="custom-select__validation-proxy"
+        className="custom-select__validation-proxy pointer-events-none absolute left-0 top-0 size-px overflow-hidden whitespace-nowrap border-0 p-0 opacity-0 [clip-path:inset(50%)]"
         onChange={() => undefined}
         onInvalid={(event) => {
           event.preventDefault();
@@ -237,6 +240,7 @@ export function CustomSelect({
 type CustomMultiSelectProps = {
   id?: string;
   name: string;
+  ariaLabel?: string;
   options: SelectOption[];
   values?: string[];
   defaultValues?: string[];
@@ -251,6 +255,7 @@ type CustomMultiSelectProps = {
 export function CustomMultiSelect({
   id,
   name,
+  ariaLabel,
   options,
   values: controlledValues,
   defaultValues = [],
@@ -332,8 +337,10 @@ export function CustomMultiSelect({
         id={id}
         ref={triggerRef}
         type="button"
+        role={ariaLabel ? "combobox" : undefined}
         className="custom-select__trigger"
         aria-haspopup="listbox"
+        aria-label={ariaLabel ? t(ariaLabel) : undefined}
         aria-expanded={open}
         aria-controls={listboxId}
         disabled={disabled}
@@ -426,7 +433,6 @@ export function CustomMultiSelect({
                 }}
                 onClick={() => toggle(option.value)}
               >
-                <span className="custom-multi-select__avatar" aria-hidden="true">{option.label.slice(0, 1)}</span>
                 <span className="min-w-0 flex-1">
                   <strong>{t(option.label)}</strong>
                   {option.description ? <small>{t(option.description)}</small> : null}
