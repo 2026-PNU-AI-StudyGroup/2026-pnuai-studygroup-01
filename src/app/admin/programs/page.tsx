@@ -65,14 +65,7 @@ export default async function ProgramsAdminPage() {
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 현황"}</UiText></dt><dd className="mt-1"><UiText>{"주제"}</UiText>{" "}{program.topicCount} {" "}<UiText>{"· 팀"}</UiText>{" "}{program.teamCount}</dd></dl>
                   </div>
                   <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-start-4 2xl:row-start-1 2xl:row-span-1">
-                    <p className="text-xs font-bold text-[var(--muted)]">
-                      <UiText>{program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}</UiText>
-                      {" · "}
-                      <UiText>{program.studentProjectCreationEnabled ? "학생 프로젝트 제안 허용" : "학생 프로젝트 제안 미허용"}</UiText>
-                      {" · "}
-                      <UiText>{program.votingPolicy ? "프로젝트 투표 사용" : "프로젝트 투표 미사용"}</UiText>
-                    </p>
-                    <div className="mt-3 flex justify-end">
+                    <div className="flex justify-end">
                       <Link href={`/admin/programs/${program.id}/settings`} className="button-primary"><UiText>{"관리"}</UiText></Link>
                     </div>
                   </div>
