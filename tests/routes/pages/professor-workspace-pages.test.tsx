@@ -26,7 +26,10 @@ vi.mock("@/app/professor/_lib/professor-workspace-access", () => ({
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
 vi.mock("@/app/_actions/create-topic-action", () => ({ createTopicAction: vi.fn() }));
 vi.mock("@/modules/project-program/application/manage-project-programs", () => ({
-  ProjectProgramService: class { listOpen = listOpenPrograms; },
+  ProjectProgramService: class {
+    listOpen = listOpenPrograms;
+    listRegistrableOpen = listOpenPrograms;
+  },
 }));
 vi.mock("@/modules/topic/application/list-own-topics", () => ({
   ListOwnTopicsService: class { execute = listTopics; },
@@ -116,8 +119,17 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
     expect(listTopics).toHaveBeenCalledWith(assistant, 1);
     expect(listOpenPrograms).not.toHaveBeenCalled();
-    expect(screen.getByRole("heading", { name: "담당 주제" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "배정된 프로젝트" })).toBeInTheDocument();
+    const topicListHeading = screen.getByRole("heading", { name: "담당 주제" });
+    expect(topicListHeading).toBeInTheDocument();
+    expect(topicListHeading.closest("header")?.parentElement).toHaveClass(
+      "overflow-hidden",
+      "lg:rounded-[var(--radius-panel)]",
+      "lg:shadow-[var(--shadow-admin-panel)]",
+    );
+    expect(screen.getByRole("heading", { name: "배정된 프로젝트" }).closest("li")).toHaveClass(
+      "record-row",
+      "focus-within:bg-[var(--primary-subtle)]",
+    );
     expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "학생 제안 검토" })).not.toBeInTheDocument();
   });
@@ -153,7 +165,11 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
   it("교수의 주제 목록이 비어 있으면 빈 상태에만 생성 진입점을 둔다", async () => {
     requireProfessorWorkspaceActor.mockResolvedValue(professor);
-    listOpenPrograms.mockResolvedValue([{ id: "program-1" }]);
+    listOpenPrograms.mockResolvedValue([{
+      id: "program-1",
+      startsAt: new Date("2026-08-01T00:00:00Z"),
+      endsAt: new Date("2026-08-31T00:00:00Z"),
+    }]);
     listTopics.mockResolvedValue({ page: 1, totalPages: 1, total: 0, items: [] });
 
     render(await ProfessorTopicsPage({ searchParams: Promise.resolve({}) }));

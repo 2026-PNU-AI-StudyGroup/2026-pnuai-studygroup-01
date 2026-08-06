@@ -6,15 +6,21 @@ const {
   listProfessorAccessMock,
   listProfessorAuditMock,
   getStudentProfileMock,
+  getProfileImageMock,
 } = vi.hoisted(() => ({
   getCurrentActorMock: vi.fn(),
   listProfessorAccessMock: vi.fn(),
   listProfessorAuditMock: vi.fn(),
   getStudentProfileMock: vi.fn(),
+  getProfileImageMock: vi.fn(),
 }));
 
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({
   getCurrentActor: getCurrentActorMock,
+}));
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
+  useRouter: () => ({ refresh: vi.fn() }),
 }));
 vi.mock("@/modules/identity/application/manage-professor-access", () => ({
   ProfessorAccessService: class {
@@ -29,6 +35,11 @@ vi.mock("@/modules/identity/application/manage-student-profile", () => ({
 }));
 vi.mock("@/modules/identity/infrastructure/prisma-professor-access-repository", () => ({ PrismaProfessorAccessRepository: class {} }));
 vi.mock("@/modules/identity/infrastructure/prisma-student-profile-repository", () => ({ PrismaStudentProfileRepository: class {} }));
+vi.mock("@/modules/identity/infrastructure/prisma-profile-image-repository", () => ({
+  PrismaProfileImageRepository: class {
+    findForOwner = getProfileImageMock;
+  },
+}));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 
@@ -54,6 +65,8 @@ describe("화면 책임 분리", () => {
     listProfessorAccessMock.mockReset();
     listProfessorAuditMock.mockReset();
     getStudentProfileMock.mockReset();
+    getProfileImageMock.mockReset();
+    getProfileImageMock.mockResolvedValue(null);
   });
 
   it("교수 권한 목록에서 등록과 변경 이력을 독립 화면으로 연결한다", async () => {
