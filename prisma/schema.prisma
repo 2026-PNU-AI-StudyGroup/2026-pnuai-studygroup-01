@@ -178,6 +178,23 @@ enum TranslationJobStatus {
   FAILED
 }
 
+enum FeedbackTargetScreen {
+  STUDENT
+  PROFESSOR
+  ADMIN
+  COMMON
+}
+
+enum FeedbackType {
+  FEATURE
+  BUG
+}
+
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
 model User {
   id                                 String                              @id
   name                               String
@@ -1007,4 +1024,34 @@ model Artifact {
 
   @@index([teamId, createdAt])
   @@map("artifact")
+}
+
+model FeedbackPost {
+  id             String               @id @default(uuid())
+  authorName     String
+  targetScreen   FeedbackTargetScreen
+  area           String
+  type           FeedbackType
+  title          String
+  body           String
+  status         FeedbackStatus       @default(OPEN)
+  resolvedAt     DateTime?
+  resolvedByName String?
+  createdAt      DateTime             @default(now())
+  comments       FeedbackComment[]
+
+  @@index([status, createdAt])
+  @@map("feedback_post")
+}
+
+model FeedbackComment {
+  id            String       @id @default(uuid())
+  postId        String
+  developerName String
+  body          String
+  createdAt     DateTime     @default(now())
+  post          FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("feedback_comment")
 }

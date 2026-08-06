@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
@@ -58,6 +59,14 @@ export default async function Home({
               {showDevelopmentLogin ? (
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />
               ) : null}
+              <div className="mt-6 border-t border-[var(--line)] pt-5">
+                <Link href="/feedback" className="button-secondary w-full justify-center">
+                  <UiText>{"피드백 게시판"}</UiText>
+                </Link>
+                <p className="mt-2 text-center text-xs text-[var(--muted)]">
+                  <UiText>{"로그인 없이 의견·버그·새 기능을 남길 수 있습니다."}</UiText>
+                </p>
+              </div>
             </section>
           </main>
         </div>
