@@ -62,7 +62,6 @@ describe("ActiveProjectResults", () => {
         query=""
         sort="LATEST"
         now={now}
-        programOrder={["program-1"]}
       />,
     );
 
@@ -80,7 +79,6 @@ describe("ActiveProjectResults", () => {
         query=""
         sort="LATEST"
         now={now}
-        programOrder={["program-1"]}
       />,
     );
 
@@ -139,6 +137,7 @@ describe("ActiveProjectResults", () => {
         topics={emptyTopics}
         canApply
         leaderTeams={[]}
+        programId="program-1"
         phase="ACTIVE"
         query=""
         sort="LATEST"
@@ -153,6 +152,7 @@ describe("ActiveProjectResults", () => {
         topics={emptyTopics}
         canApply
         leaderTeams={[]}
+        programId="program-1"
         phase="ACTIVE"
         query="길찾기"
         sort="LATEST"
@@ -160,12 +160,11 @@ describe("ActiveProjectResults", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics");
+    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics?phase=ACTIVE&programId=program-1");
 
     for (const filters of [
-      { programId: "program-1", phase: "ACTIVE" as const, query: "", sort: "LATEST" as const },
-      { phase: "RECRUITING" as const, query: "", sort: "LATEST" as const },
-      { phase: "ACTIVE" as const, query: "", sort: "DEADLINE" as const },
+      { programId: "program-1", phase: "RECRUITING" as const, query: "", sort: "LATEST" as const },
+      { programId: "program-1", phase: "ACTIVE" as const, query: "", sort: "DEADLINE" as const },
     ]) {
       rerender(
         <ActiveProjectResults
@@ -176,7 +175,21 @@ describe("ActiveProjectResults", () => {
           now={now}
         />,
       );
-      expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics");
+      expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics?phase=ACTIVE&programId=program-1");
     }
+
+    rerender(
+      <ActiveProjectResults
+        topics={emptyTopics}
+        canApply
+        leaderTeams={[]}
+        programId="program-1"
+        phase="ACTIVE"
+        query=""
+        sort="LATEST"
+        now={now}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: "필터 초기화" })).not.toBeInTheDocument();
   });
 });

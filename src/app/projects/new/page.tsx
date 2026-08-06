@@ -16,7 +16,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("학생 프로젝트 만들기");
+  return getLocalizedMetadata("프로젝트 제안");
 }
 
 export default async function NewStudentProjectPage({ searchParams }: {
@@ -36,7 +36,7 @@ export default async function NewStudentProjectPage({ searchParams }: {
   ]);
   const defaultProgramId = programs.some(({ id }) => id === params.programId) ? params.programId : undefined;
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/projects/new"><main className="content-shell page-enter space-y-8">
-    <PageHeader eyebrow="학생 제안" title="새 프로젝트 만들기" description="학생이 제안한 프로젝트는 프로그램의 지도교수 운영 설정에 맞는 승인을 받은 뒤 공개됩니다." actions={<Link href="/project-approvals" className="button-secondary"><UiText>{"내 승인 요청"}</UiText></Link>} />
-    {programs.length ? <TopicForm action={createTopicAction} programs={programs} defaultProgramId={defaultProgramId} successHref="/project-approvals" studentApproval={{ professors, studentTeams }} /> : <EmptyState title="지금 제안할 수 있는 프로그램이 없습니다" description="관리자가 학생 프로젝트 생성을 허용한 공개 프로그램이 있으면 제안할 수 있습니다." />}
+    <PageHeader title="프로젝트 제안" description="학생이 제안한 프로젝트는 프로그램의 지도교수 배정 설정에 따라 검토를 받은 뒤 공개됩니다." actions={<Link href="/project-approvals" className="button-secondary"><UiText>{"내 승인 요청"}</UiText></Link>} />
+    {programs.length ? <TopicForm action={createTopicAction} programs={programs} defaultProgramId={defaultProgramId} successHref="/project-approvals" studentApproval={{ professors, studentTeams }} /> : <EmptyState title="지금 제안할 수 있는 프로그램이 없습니다" description="관리자가 학생 프로젝트 제안을 허용한 공개 프로그램이 있으면 제안할 수 있습니다." />}
   </main></AppShell>;
 }

@@ -36,7 +36,7 @@ export class ProjectProgramService {
   async changeStudentProjectCreation(actor: CurrentActor, id: string, enabled: boolean) {
     assertProgramAdmin(actor);
     if (!(await this.repository.changeStudentProjectCreation(id, enabled))) {
-      throw new ProjectProgramOperationError("학생 프로젝트 생성 설정을 변경할 프로그램이 없습니다.");
+      throw new ProjectProgramOperationError("학생 프로젝트 제안 설정을 변경할 프로그램이 없습니다.");
     }
   }
 }

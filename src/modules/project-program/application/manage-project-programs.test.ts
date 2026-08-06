@@ -26,7 +26,7 @@ describe("프로젝트 프로그램 관리", () => {
     expect(getProgramStartYear(new Date("2025-12-31T15:00:00.000Z"))).toBe(2026);
   });
 
-  it("관리자가 프로그램의 학생 프로젝트 생성 허용 여부를 변경한다", async () => {
+  it("관리자가 프로그램의 학생 프로젝트 제안 허용 여부를 변경한다", async () => {
     const repository = { create: vi.fn(), listAll: vi.fn(), listOpen: vi.fn(), changeStatus: vi.fn(), changeStudentProjectCreation: vi.fn(async () => true), findOpen: vi.fn() };
 
     await new ProjectProgramService(repository).changeStudentProjectCreation({ id: "admin", role: "ADMIN" }, "program-1", true);

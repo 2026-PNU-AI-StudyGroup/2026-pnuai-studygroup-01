@@ -112,7 +112,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                 <legend className="sr-only"><UiText>{"지원 방식"}</UiText></legend>
                 {([
                   ["INDIVIDUAL", "개인 지원", "혼자 지원서를 작성해 제출합니다.", applicationMode !== "TEAM_ONLY", "이 프로젝트는 팀 지원만 받습니다."],
-                  ["TEAM", "팀 지원", "내가 팀장인 지속형 팀으로 지원합니다.", applicationMode !== "INDIVIDUAL_ONLY", "이 프로젝트는 개인 지원만 받습니다."],
+                  ["TEAM", "팀 지원", "내가 팀장인 팀으로 지원합니다.", applicationMode !== "INDIVIDUAL_ONLY", "이 프로젝트는 개인 지원만 받습니다."],
                 ] as const).map(([value, label, description, enabled, disabledMessage]) => (
                   <label
                     key={value}

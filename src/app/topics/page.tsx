@@ -11,6 +11,7 @@ import { ProjectPortalHero } from "@/app/topics/_components/project-portal-chrom
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
+import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selection";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -26,7 +27,7 @@ import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-para
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("프로젝트 탐색");
+  return getLocalizedMetadata("프로젝트 찾기");
 }
 
 type TopicsSearchParams = {
@@ -64,21 +65,28 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId }),
       programService.listOpen(),
     ]);
-    const programId = archive.programs.some((program) => program.id === requestedArchiveProgramId) ? requestedArchiveProgramId : undefined;
+    const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
+    if (programId && programId !== requestedArchiveProgramId) {
+      const target = new URLSearchParams({ view: "past", programId });
+      if (query) target.set("q", query);
+      if (requestedPage > 1) target.set("page", String(requestedPage));
+      redirect(`/topics?${target.toString()}`);
+    }
     const selectedProgram = archive.programs.find((program) => program.id === programId);
     const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs, "past", { query });
-    const pastAllParams = new URLSearchParams({ view: "past" });
-    if (query) pastAllParams.set("q", query);
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref={`/topics?${pastAllParams.toString()}`} />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero view="past" program={selectedProgram} />
         <PastProjectsView {...archive} query={query} programId={programId} />
       </ExplorerLayout>
     );
   } else {
     const programs = await programService.listOpen();
-    const requestedProgramId = firstSearchParam(params.programId);
-    const programId = requestedProgramId && requestedProgramId.length <= 200 && programs.some((program) => program.id === requestedProgramId) ? requestedProgramId : undefined;
+    const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
+    const programId = resolveProgramSelection(requestedProgramId, programs);
+    if (programId && programId !== requestedProgramId) {
+      redirect(activeProjectsHref({ phase, programId, query, sort, page: requestedPage }));
+    }
     const [topics, archivedPrograms, leaderTeams] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, query, phase, sort, page: requestedPage, now }),
       archiveService.listPrograms(),
@@ -89,15 +97,15 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const selectedProgram = programs.find((program) => program.id === programId);
     const sidebarItems = buildProgramSidebarItems(programs, archivedPrograms, "active", { query, phase, sort });
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} allHref={activeProjectsHref({ phase, query, sort })} />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero
           view="active"
           program={selectedProgram}
           action={actor.role === "STUDENT" && selectedProgram?.studentProjectCreationEnabled
-            ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 만들기"}</UiText></Link>
+            ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 제안"}</UiText></Link>
             : undefined}
         />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} programOrder={programs.map((program) => program.id)} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} />
       </ExplorerLayout>
     );
   }

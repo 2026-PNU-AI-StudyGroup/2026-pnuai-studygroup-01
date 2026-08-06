@@ -110,10 +110,9 @@ function YearProgramGroup({
   );
 }
 
-export function ProgramSidebar({ items, selectedId, allHref }: {
+export function ProgramSidebar({ items, selectedId }: {
   items: ProgramSidebarItem[];
   selectedId?: string;
-  allHref: string;
 }) {
   const groups = items.reduce((result, item) => {
     const key = item.startYear;
@@ -160,12 +159,11 @@ export function ProgramSidebar({ items, selectedId, allHref }: {
     <div className="px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{"프로그램"}</UiText>}
-        label={<UiText>{selectedProgram?.name ?? "전체 프로그램"}</UiText>}
+        label={<UiText>{selectedProgram?.name ?? "프로그램 없음"}</UiText>}
         meta={selectedProgram ? <UiText>{selectedProgram.status === "active" ? "진행 중" : "종료"}</UiText> : undefined}
       >
-        <div className="mb-3 flex items-center justify-between px-2">
+        <div className="mb-3 px-2">
           <strong className="text-xs font-black text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
-          {selectedId ? <Link href={allHref} className="min-h-9 py-2 text-xs font-black text-[var(--primary)]"><UiText>{"전체 보기"}</UiText></Link> : null}
         </div>
         <UiNav aria-label="프로그램 선택 모바일">
           <div className="space-y-2">{yearGroups("mobile")}</div>
@@ -173,9 +171,8 @@ export function ProgramSidebar({ items, selectedId, allHref }: {
       </ResponsiveSectionNavigation>
 
       <div className="hidden lg:block">
-        <div className="mb-4 flex items-center justify-between px-2">
+        <div className="mb-4 px-2">
           <h2 className="text-sm font-black tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
-          {selectedId ? <Link href={allHref} className="text-[0.7rem] font-black text-[var(--primary)]"><UiText>{"전체 보기"}</UiText></Link> : null}
         </div>
         <UiNav aria-label="프로그램 선택">
           <div className="space-y-2">{yearGroups("desktop")}</div>

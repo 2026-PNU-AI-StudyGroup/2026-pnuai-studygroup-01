@@ -21,7 +21,7 @@ const items = [{
 
 describe("ProgramSidebar", () => {
   it("프로그램을 시작 연도별 접이식 목록과 상태 태그로 제공한다", () => {
-    const { container } = render(<ProgramSidebar items={items} allHref="/topics" />);
+    const { container } = render(<ProgramSidebar items={items} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     expect(within(navigation).getByText("2026")).toBeInTheDocument();
@@ -29,13 +29,13 @@ describe("ProgramSidebar", () => {
     expect(within(navigation).getByText("진행 중")).toBeInTheDocument();
     expect(within(navigation).getByText("종료")).toBeInTheDocument();
     expect(navigation.querySelectorAll("[data-program-mark]")).toHaveLength(2);
-    expect(container.querySelector("summary")).toHaveTextContent("프로그램전체 프로그램");
+    expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
     expect(screen.queryByRole("link", { name: "전체 프로젝트" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "전체 보기" })).not.toBeInTheDocument();
   });
 
   it("선택된 프로그램의 시작 연도를 펼치고 링크 선택 상태를 표시한다", () => {
-    const { container } = render(<ProgramSidebar items={items} selectedId="program-2025" allHref="/topics?view=past" />);
+    const { container } = render(<ProgramSidebar items={items} selectedId="program-2025" />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     const selectedRow = within(navigation).getByText("캡스톤 2025").closest('[aria-current="page"]');
@@ -46,12 +46,11 @@ describe("ProgramSidebar", () => {
     expect(within(navigation).queryByRole("link", { name: "캡스톤 2025종료캡스톤" })).not.toBeInTheDocument();
     expect(within(navigation).getByRole("button", { name: "2025" })).toHaveAttribute("aria-expanded", "true");
     expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025종료");
-    expect(screen.getAllByRole("link", { name: "전체 보기" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "전체 보기" })[0]).toHaveAttribute("href", "/topics?view=past");
+    expect(screen.queryByRole("link", { name: "전체 보기" })).not.toBeInTheDocument();
   });
 
   it("다른 연도를 열 때 기존 연도를 모션 상태로 닫고 링크를 키보드 탐색에서 제외한다", () => {
-    render(<ProgramSidebar items={items} allHref="/topics" />);
+    render(<ProgramSidebar items={items} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     const year2026 = within(navigation).getByRole("button", { name: "2026" });
@@ -72,7 +71,7 @@ describe("ProgramSidebar", () => {
   });
 
   it("현재 열린 연도가 새 items 집합에서 사라지면 첫 새 연도를 연다", () => {
-    const { rerender } = render(<ProgramSidebar items={items} allHref="/topics" />);
+    const { rerender } = render(<ProgramSidebar items={items} />);
     let navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
     fireEvent.click(within(navigation).getByRole("button", { name: "2025" }));
     expect(within(navigation).getByRole("button", { name: "2025" })).toHaveAttribute("aria-expanded", "true");
@@ -83,7 +82,6 @@ describe("ProgramSidebar", () => {
           { ...items[0], id: "program-2024", name: "AI 부스터 2024", startYear: 2024 },
           { ...items[1], id: "program-2023", name: "캡스톤 2023", startYear: 2023 },
         ]}
-        allHref="/topics"
       />,
     );
     navigation = screen.getByRole("navigation", { name: "프로그램 선택" });

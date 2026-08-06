@@ -74,7 +74,7 @@ describe("PastProjectsView", () => {
     );
 
     expect(screen.getAllByRole("link", { name: "조건 초기화" })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "조건 초기화" })).toHaveAttribute("href", "/topics?view=past");
+    expect(screen.getByRole("link", { name: "조건 초기화" })).toHaveAttribute("href", "/topics?view=past&programId=program-1");
     expect(screen.queryByRole("link", { name: "전체 프로젝트 보기" })).not.toBeInTheDocument();
   });
 });

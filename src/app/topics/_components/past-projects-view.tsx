@@ -29,11 +29,11 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
   query: string;
   programId?: string;
 }) {
-  const hasFilters = Boolean(query || programId);
+  const hasFilters = Boolean(query);
   return (
     <div className="min-w-0">
       <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
-        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href="/topics?view=past"><UiText>{"조건 초기화"}</UiText></Link></div> : null}
+        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div> : null}
         <ProjectSearchForm view="past" programId={programId} query={query} />
       </UiSection>
 
@@ -45,7 +45,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
         {projects.length === 0 ? (
           <EmptyState
             title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 지난 프로젝트가 없습니다"}
-            description={hasFilters ? "검색어나 프로그램을 바꿔 다시 찾아보세요." : "완료된 프로젝트와 결과물이 이곳에 쌓입니다."}
+            description={hasFilters ? "검색어나 프로그램을 변경해 다시 확인하세요." : undefined}
           />
         ) : (
           <>

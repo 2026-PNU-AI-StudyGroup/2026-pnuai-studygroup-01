@@ -42,7 +42,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} allHref="/topics?view=past" />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
       <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <ChevronIcon className="size-4 rotate-180" />
@@ -101,7 +101,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
     >
       <div className="space-y-12">
         <section aria-labelledby="archive-description">
-          <h2 id="archive-description" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"프로젝트 이야기"}</UiText></h2>
+          <h2 id="archive-description" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"프로젝트 소개"}</UiText></h2>
           <TranslatedText text={project.topicDescription} className="mt-5 max-w-3xl whitespace-pre-wrap text-[1.05rem] leading-8 text-[var(--muted)]" />
           {project.posterPath ? (
             <Image
@@ -116,7 +116,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
         </section>
 
         <section aria-labelledby="archive-team">
-          <h2 id="archive-team" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"함께 만든 사람들"}</UiText></h2>
+          <h2 id="archive-team" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"참여자"}</UiText></h2>
           <dl className="mt-5 border-y border-[var(--line)]">
             <div className="grid gap-2 py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
               <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"참여자"}</UiText></dt>
@@ -124,7 +124,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             </div>
             <div className="grid gap-2 border-t border-[var(--line)] py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
               <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"사용 기술"}</UiText></dt>
-              <dd className="font-semibold leading-7"><UiText>{skills.join(", ") || "공개된 기술 정보 없음"}</UiText></dd>
+              <dd className="font-semibold leading-7"><UiText>{skills.join(", ") || "—"}</UiText></dd>
             </div>
           </dl>
         </section>
