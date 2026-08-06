@@ -43,7 +43,7 @@ export class InvalidProfessorEmailError extends Error {
 
 export class ProfessorAccessNotFoundError extends Error {
   constructor() {
-    super("활성 상태인 교수 허용 항목이 없습니다.");
+    super("회수할 교수 권한이 없습니다.");
     this.name = "ProfessorAccessNotFoundError";
   }
 }

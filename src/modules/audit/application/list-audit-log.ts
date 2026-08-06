@@ -36,7 +36,7 @@ export class ListAuditLogService {
   constructor(private readonly reader: AuditLogReader) {}
 
   execute(actor: CurrentActor, requestedPage = 1) {
-    if (actor.role !== "ADMIN") throw new AuditLogForbiddenError("관리자만 감사 기록을 확인할 수 있습니다.");
+    if (actor.role !== "ADMIN") throw new AuditLogForbiddenError("관리자만 관리 이력을 확인할 수 있습니다.");
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     return this.reader.list(page, 50);
   }

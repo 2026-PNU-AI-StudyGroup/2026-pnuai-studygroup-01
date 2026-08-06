@@ -90,7 +90,7 @@ export function assertValidTopicDetails(details: TopicDetails): void {
   }
 
   if (details.roleExpectations.trim().length === 0 || details.roleExpectations.length > 500) {
-    throw new InvalidTopicDetailsError("기대 역할은 1자 이상 500자 이하여야 합니다.");
+    throw new InvalidTopicDetailsError("예상 역할은 1자 이상 500자 이하여야 합니다.");
   }
 
   if (

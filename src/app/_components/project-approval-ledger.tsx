@@ -14,8 +14,8 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
   student: boolean;
   adminSurface?: boolean;
 }) {
-  const title = student ? "보낸 요청" : "승인 대기열";
-  const description = student ? "요청 경로와 검토 결과를 확인합니다." : "제안 내용과 요청 경로를 확인한 뒤 처리합니다.";
+  const title = student ? "보낸 요청" : "승인 대기";
+  const description = student ? "검토 요청 대상과 결과를 확인합니다." : "제안 내용과 검토 요청 대상을 확인한 뒤 처리합니다.";
   const columns = adminSurface ? adminApprovalLedgerColumns : approvalLedgerColumns;
   const desktopGrid = adminSurface ? "2xl:grid 2xl:gap-5" : "xl:grid xl:gap-5";
   const compactLabel = adminSurface ? "2xl:hidden" : "xl:hidden";
@@ -24,7 +24,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
         <span><UiText>{"프로젝트"}</UiText></span>
         <span><UiText>{"상태"}</UiText></span>
         <span><UiText>{"제안자"}</UiText></span>
-        <span><UiText>{"요청 경로"}</UiText></span>
+        <span><UiText>{"검토 요청 대상"}</UiText></span>
         <span><UiText>{student ? "검토 의견" : "검토"}</UiText></span>
       </div>
       <UiUl aria-label="프로젝트 승인 요청 목록" className={adminSurface ? adminRecordListClassName : "divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white xl:border-t-0"}>
@@ -48,7 +48,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
                 <p className="text-sm font-semibold">{request.requesterName}</p>
               </div>
               <div>
-                <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"요청 경로"}</UiText></p>
+                <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"검토 요청 대상"}</UiText></p>
                 <p className="text-sm font-semibold">{route}</p>
               </div>
               <div className="min-w-0">
@@ -57,7 +57,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
                   <TopicApprovalDecisionForm requestId={request.id} />
                 ) : (
                   <p className={`text-sm leading-6 ${request.reviewComment ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}>
-                    {request.reviewComment || (request.status === "PENDING" ? "검토 대기 중" : "등록된 검토 의견 없음")}
+                    {request.reviewComment || (request.status === "PENDING" ? "검토 대기 중" : "—")}
                   </p>
                 )}
               </div>

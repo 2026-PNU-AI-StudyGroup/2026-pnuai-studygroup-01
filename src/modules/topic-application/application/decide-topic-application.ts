@@ -36,7 +36,7 @@ function normalizeReviewComment(comment: string, required: boolean): string {
     throw new TopicApplicationReviewCommentError("검토 의견은 2,000자 이내로 입력해 주세요.");
   }
   if (required && !normalized) {
-    throw new TopicApplicationReviewCommentError("거절 사유를 검토 의견에 입력해 주세요.");
+    throw new TopicApplicationReviewCommentError("미선정 사유를 검토 의견에 입력해 주세요.");
   }
   return normalized;
 }

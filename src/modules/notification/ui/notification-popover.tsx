@@ -22,7 +22,7 @@ export type NotificationPreviewItem = {
 const typeLabel: Record<NotificationType, string> = {
   APPLICATION_RESULT: "지원 결과",
   REPORT_ACTIVITY: "보고서",
-  PROJECT_REQUEST: "미팅·검토",
+  PROJECT_REQUEST: "회의·검토",
   DISCUSSION: "팀 대화",
   TOPIC_APPROVAL: "프로젝트 제안",
   DEADLINE: "마감",
@@ -61,7 +61,7 @@ export function NotificationPopover({
   const dialogLabel = korean ? "최근 알림" : "Recent notifications";
   const unreadSummary = unreadCount
     ? korean ? `읽지 않음 ${accessibleCount}` : `${accessibleCount} unread`
-    : korean ? "모두 확인함" : "All confirmed";
+    : korean ? "읽지 않은 알림 없음" : "No unread notifications";
   const showDesktopLabel = inverse && placement === "side";
 
   useEffect(() => {
@@ -190,7 +190,6 @@ export function NotificationPopover({
             ) : (
               <div className="px-5 py-10 text-center">
                 <p className="text-sm font-bold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
-                <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"프로젝트 활동이 생기면 여기에 표시됩니다."}</UiText></p>
               </div>
             )}
 

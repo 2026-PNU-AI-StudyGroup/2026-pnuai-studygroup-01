@@ -14,7 +14,7 @@ import {
 const typeLabel: Record<NotificationType, string> = {
   APPLICATION_RESULT: "지원 결과",
   REPORT_ACTIVITY: "보고서",
-  PROJECT_REQUEST: "미팅·검토",
+  PROJECT_REQUEST: "회의·검토",
   DISCUSSION: "팀 대화",
   TOPIC_APPROVAL: "프로젝트 제안",
   DEADLINE: "마감",
@@ -43,8 +43,6 @@ export function NotificationCenter({
     <main className="page-enter w-full px-5 py-8 pb-24 sm:px-8 lg:px-12 lg:py-12">
       <header className="border-b border-[var(--line)] pb-8">
         <h1 className="text-[clamp(2.1rem,4vw,3rem)] font-bold leading-none tracking-[-0.055em]"><UiText>{"알림"}</UiText></h1>
-        <p className="mt-3 text-[0.9375rem] leading-6 text-[var(--muted)]">
-          <UiText>{"프로젝트 지원, 팀 활동, 제출 일정의 변화를 확인합니다."}</UiText></p>
       </header>
       <div className="pt-10">
         <section aria-labelledby="notification-list-title">
@@ -57,7 +55,7 @@ export function NotificationCenter({
             </div>
             {data.unreadCount ? (
               <form action={markAllRead}>
-                <button className="button-secondary"><UiText>{"모두 읽음"}</UiText></button>
+                <button className="button-secondary"><UiText>{"모두 읽음으로 표시"}</UiText></button>
               </form>
             ) : null}
           </div>
@@ -69,7 +67,6 @@ export function NotificationCenter({
               </span>
               <div>
                 <p className="text-sm font-bold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
-                <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"새로운 프로젝트 활동이 생기면 이곳에 표시됩니다."}</UiText></p>
               </div>
             </div>
           ) : (

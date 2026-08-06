@@ -26,7 +26,7 @@ const request: TopicApprovalRequestSummary = {
 };
 
 describe("ProjectApprovalLedger", () => {
-  it("승인 요청을 상태, 제안자, 요청 경로와 검토 액션을 갖춘 평면 행으로 표시한다", () => {
+  it("승인 요청을 상태, 제안자, 검토 요청 대상과 검토 액션을 갖춘 평면 행으로 표시한다", () => {
     const { container } = render(<ProjectApprovalLedger requests={[request]} student={false} />);
 
     expect(screen.getByRole("list", { name: "프로젝트 승인 요청 목록" })).toBeInTheDocument();

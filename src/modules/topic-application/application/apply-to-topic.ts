@@ -36,7 +36,7 @@ export class TeamMemberUnavailableError extends Error {
 
 export class TeamLeaderRequiredError extends Error {
   constructor() {
-    super("프로젝트 팀 지원은 지속형 팀의 팀장만 할 수 있습니다.");
+    super("프로젝트 팀 지원은 해당 팀의 팀장만 할 수 있습니다.");
     this.name = "TeamLeaderRequiredError";
   }
 }

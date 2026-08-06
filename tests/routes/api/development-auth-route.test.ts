@@ -43,7 +43,7 @@ describe("개발용 역할 로그인", () => {
     vi.unstubAllEnvs();
   });
 
-  it.each(["STUDENT", "PROFESSOR", "ADMIN"])("%s 데모 로그인도 실제 로그인과 같은 프로젝트 탐색으로 이동한다", async (role) => {
+  it.each(["STUDENT", "PROFESSOR", "ADMIN"])("%s 데모 로그인도 실제 로그인과 같은 프로젝트 찾기로 이동한다", async (role) => {
     const response = await POST(request(role));
 
     expect(response.status).toBe(303);

@@ -4,7 +4,7 @@ export const DEVELOPMENT_MOCK_ACCOUNTS = {
   STUDENT: {
     id: "20000000-0000-4000-8000-000000000001",
     label: "학생 화면 열기",
-    description: "주제 탐색, 지원과 팀 활동 화면을 확인합니다.",
+    description: "프로젝트 찾기, 지원과 팀 활동 화면을 확인합니다.",
   },
   PROFESSOR: {
     id: "10000000-0000-4000-8000-000000000001",

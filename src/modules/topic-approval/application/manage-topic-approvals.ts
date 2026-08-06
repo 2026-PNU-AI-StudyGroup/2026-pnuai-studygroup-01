@@ -69,7 +69,7 @@ export class TopicApprovalService {
     const program = await this.programs.findOpen(input.programId);
     if (!program) throw new TopicApprovalOperationError("현재 프로젝트를 등록할 수 있는 공개 프로그램이 아닙니다.");
     if (!program.studentProjectCreationEnabled) {
-      throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 생성을 허용하지 않습니다.");
+      throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     }
     if (!program.advisorEnabled && input.route !== "ADMIN") {
       throw new TopicApprovalOperationError("지도교수가 없는 프로그램은 관리자에게만 승인을 요청할 수 있습니다.");

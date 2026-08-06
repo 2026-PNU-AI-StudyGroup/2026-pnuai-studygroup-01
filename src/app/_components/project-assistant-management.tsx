@@ -20,9 +20,8 @@ export function ProjectAssistantManagementPanel({
   return (
     <section aria-labelledby="project-assistants-title" className="space-y-5 border-t border-[var(--line)] pt-7">
       <div>
-        <p className="eyebrow"><UiText>{"프로젝트 권한"}</UiText></p>
-        <h2 id="project-assistants-title" className="mt-1 text-xl font-bold"><UiText>{"조교 관리"}</UiText></h2>
-        <p className="muted mt-1 text-sm"><UiText>{management.advisorEnabled ? "초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트에서 지도교수와 동일한 운영 권한을 갖습니다." : "초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트의 운영 권한을 갖습니다."}</UiText></p>
+        <h2 id="project-assistants-title" className="text-xl font-bold"><UiText>{"조교 관리"}</UiText></h2>
+        <p className="muted mt-1 text-sm"><UiText>{"초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트의 관리 권한을 갖습니다."}</UiText></p>
       </div>
       <InviteProjectAssistantForm topicId={management.topicId} />
       <div className="grid gap-6 lg:grid-cols-2">

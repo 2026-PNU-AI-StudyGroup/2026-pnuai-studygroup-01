@@ -37,7 +37,7 @@ describe("학생 프로젝트 승인", () => {
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ authorId: actor.id, route: "ADMIN", requestedProfessorId: null, studentTeamId: input.studentTeamId }));
   });
 
-  it("프로그램에서 학생 프로젝트 생성을 허용하지 않으면 저장하지 않는다", async () => {
+  it("프로그램에서 학생 프로젝트 제안을 허용하지 않으면 저장하지 않는다", async () => {
     const { repository, programs } = dependencies();
     vi.mocked(programs.findOpen).mockResolvedValue({
       id: "program-1",
@@ -48,7 +48,7 @@ describe("학생 프로젝트 승인", () => {
     });
 
     await expect(new TopicApprovalService(repository, programs).createStudentProposal(actor, { ...input, route: "ADMIN" }))
-      .rejects.toThrow("이 프로그램은 학생 프로젝트 생성을 허용하지 않습니다.");
+      .rejects.toThrow("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     expect(repository.create).not.toHaveBeenCalled();
   });
 

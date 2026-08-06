@@ -10,7 +10,7 @@ export class TopicApplicationForbiddenError extends Error {
 
 export class InvalidTopicApplicationMessageError extends Error {
   constructor() {
-    super("지원 메시지는 1자 이상 2000자 이하여야 합니다.");
+    super("지원 내용은 1자 이상 2,000자 이하여야 합니다.");
     this.name = "InvalidTopicApplicationMessageError";
   }
 }
