@@ -36,7 +36,7 @@ export function AnnouncementForm({
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>
           <UiInput
-            className="field bg-white"
+            className="form-control bg-white"
             name="title"
             type="text"
             maxLength={120}
@@ -49,7 +49,7 @@ export function AnnouncementForm({
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"본문"}</UiText></span>
           <UiTextarea
-            className="field min-h-80 bg-white leading-7"
+            className="form-control min-h-80 bg-white leading-7"
             name="content"
             maxLength={20_000}
             defaultValue={initialContent}

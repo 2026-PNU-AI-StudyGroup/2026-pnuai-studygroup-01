@@ -16,6 +16,7 @@ describe("TopicForm", () => {
         programs={[{
           id: "program-1",
           startYear: 2026,
+          icon: "FOLDER",
           name: "창의융합 해커톤",
           category: "대회",
           description: "설명",

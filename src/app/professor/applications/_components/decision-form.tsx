@@ -32,7 +32,7 @@ export function ApplicationDecisionForm({ applicationId, impact }: {
           rows={3}
           disabled={pending}
           placeholder="선정 근거나 보완이 필요한 내용을 학생에게 전달하세요."
-          className="field min-h-24 resize-y"
+          className="form-control min-h-24 resize-y"
         />
       </label>
       <ConfirmSubmitButton

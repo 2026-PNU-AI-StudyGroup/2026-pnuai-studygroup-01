@@ -58,10 +58,10 @@ export function RecruitmentApplyForm({
         </div>
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">
           <input type="hidden" name="postId" value={postId} />
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"보유 기술"}</UiText><UiInput name="skills" required defaultValue={profile?.skills.join(", ")} className="field" placeholder="예: TypeScript, Python" /></label>
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required defaultValue={profile?.desiredRole} className="field" placeholder="팀에서 맡고 싶은 역할" /></label>
-          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"활동 가능 시간"}</UiText><UiInput name="availability" required defaultValue={profile?.availability} className="field" placeholder="회의와 작업이 가능한 시간" /></label>
-          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"지원 내용"}</UiText><UiTextarea aria-label="지원 내용" name="message" maxLength={2000} rows={6} required className="field resize-y" placeholder="관련 경험과 지원 동기를 구체적으로 작성해 주세요" /><span className="muted text-xs font-normal"><UiText>{"최대 2,000자"}</UiText></span></label>
+          <label className="grid gap-2 text-sm font-semibold"><UiText>{"보유 기술"}</UiText><UiInput name="skills" required defaultValue={profile?.skills.join(", ")} className="form-control" placeholder="예: TypeScript, Python" /></label>
+          <label className="grid gap-2 text-sm font-semibold"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required defaultValue={profile?.desiredRole} className="form-control" placeholder="팀에서 맡고 싶은 역할" /></label>
+          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"활동 가능 시간"}</UiText><UiInput name="availability" required defaultValue={profile?.availability} className="form-control" placeholder="회의와 작업이 가능한 시간" /></label>
+          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"지원 내용"}</UiText><UiTextarea aria-label="지원 내용" name="message" maxLength={2000} rows={6} required className="form-control resize-y" placeholder="관련 경험과 지원 동기를 구체적으로 작성해 주세요" /><span className="muted text-xs font-normal"><UiText>{"최대 2,000자"}</UiText></span></label>
           {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"><UiText>{state.message}</UiText></p> : null}
           <div className="sticky bottom-0 -mx-5 -mb-6 flex flex-col-reverse gap-2 border-t border-[var(--line)] bg-white px-5 py-4 sm:col-span-2 sm:-mx-7 sm:flex-row sm:justify-end sm:px-7">
             <button type="button" className="button-quiet" disabled={pending} onClick={() => dialogRef.current?.close()}><UiText>{"취소"}</UiText></button>

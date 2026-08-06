@@ -35,7 +35,7 @@ export function ProjectSearchForm({
           defaultValue={query}
           maxLength={100}
           placeholder="프로젝트명, 주제, 기술 스택, 교수명으로 검색"
-          className="field min-h-12 w-full bg-white pl-12 text-sm"
+          className="form-control min-h-12 w-full bg-white pl-12 text-sm"
         />
       </label>
       <button type="submit" className="button-primary min-h-12 px-5">

@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import { useId, useState } from "react";
 
 import type { PublicTopicSummary } from "@/modules/topic/application/topic-ports";
+import { TextInput, Textarea } from "@/shared/ui/form-system";
 
 type ApplicationQuestion = PublicTopicSummary["applicationQuestions"][number];
 
@@ -17,14 +18,14 @@ export function ApplicationAnswerField({ question }: { question: ApplicationQues
     required: question.required,
     value,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(event.target.value),
-    className: "field",
+    className: "form-control",
     "aria-describedby": descriptionId,
   };
 
   return (
     <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
       <UiText>{question.label}</UiText> <span className="muted text-xs font-medium"><UiText>{question.required ? "필수" : "선택"}</UiText></span>
-      {question.maxLength <= 200 ? <input {...common} /> : <textarea {...common} rows={5} />}
+      {question.maxLength <= 200 ? <TextInput {...common} /> : <Textarea {...common} rows={5} />}
       <span id={descriptionId} className="muted text-right text-xs">{value.length} / {question.maxLength}<UiText>{"자"}</UiText></span>
     </label>
   );

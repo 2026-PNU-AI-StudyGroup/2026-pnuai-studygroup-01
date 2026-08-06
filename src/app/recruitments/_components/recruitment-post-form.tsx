@@ -8,7 +8,7 @@ import { useActionState, useEffect } from "react";
 import { createRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
 import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { FormField, FormSection } from "@/shared/ui/form-system";
+import { FormField, FormSection, TextInput } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 export function RecruitmentPostForm({
@@ -55,10 +55,10 @@ export function RecruitmentPostForm({
           />
         </FormField>
         <FormField id="recruitment-title" label="모집 제목">
-          <UiInput id="recruitment-title" name="title" maxLength={200} required className="field" placeholder="필요한 역할이 드러나는 제목" />
+          <UiInput id="recruitment-title" name="title" maxLength={200} required className="form-control" placeholder="필요한 역할이 드러나는 제목" />
         </FormField>
         <FormField id="recruitment-content" label="모집 내용" description="최대 2,000자" className="sm:col-span-2">
-          <UiTextarea id="recruitment-content" name="content" maxLength={2000} rows={7} required className="field resize-y" placeholder="프로젝트 진행 상황과 담당할 작업을 구체적으로 작성해 주세요" />
+          <UiTextarea id="recruitment-content" name="content" maxLength={2000} rows={7} required className="form-control resize-y" placeholder="프로젝트 진행 상황과 담당할 작업을 구체적으로 작성해 주세요" />
         </FormField>
       </FormSection>
 
@@ -67,13 +67,13 @@ export function RecruitmentPostForm({
           <TagInput id="recruitment-skills" name="requiredSkills" ariaLabel="필요한 기술" required placeholder="TypeScript, Python" />
         </FormField>
         <FormField id="recruitment-role" label="맡을 역할">
-          <UiInput id="recruitment-role" name="roleNeeded" maxLength={500} required className="field" placeholder="예: 백엔드 API 설계와 구현" />
+          <UiInput id="recruitment-role" name="roleNeeded" maxLength={500} required className="form-control" placeholder="예: 백엔드 API 설계와 구현" />
         </FormField>
         <FormField id="recruitment-capacity" label="팀 정원" description="현재 인원을 포함한 총원입니다.">
-          <input id="recruitment-capacity" name="capacity" type="number" min="2" max="100" required defaultValue={4} className="field" />
+          <TextInput id="recruitment-capacity" name="capacity" type="number" min="2" max="100" required defaultValue={4} />
         </FormField>
         <FormField id="recruitment-availability" label="활동 가능 시간">
-          <UiInput id="recruitment-availability" name="availability" maxLength={500} required className="field" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
+          <UiInput id="recruitment-availability" name="availability" maxLength={500} required className="form-control" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
         </FormField>
       </FormSection>
 

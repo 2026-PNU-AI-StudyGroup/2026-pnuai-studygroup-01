@@ -23,13 +23,13 @@ export function StudentProfileForm({ profile }: { profile: StudentProfile | null
           <TagInput id="profile-skills" name="skills" ariaLabel="보유 기술" required maxLength={1_000} defaultValue={profile?.skills} placeholder="TypeScript, Python, Figma" />
         </FormField>
         <FormField id="profile-role" label="희망 역할" description="프로젝트에서 맡고 싶은 역할을 입력하세요.">
-          <UiInput id="profile-role" name="desiredRole" required maxLength={200} defaultValue={profile?.desiredRole} placeholder="프론트엔드 개발과 사용자 검증" className="field" />
+          <UiInput id="profile-role" name="desiredRole" required maxLength={200} defaultValue={profile?.desiredRole} placeholder="프론트엔드 개발과 사용자 검증" className="form-control" />
         </FormField>
         <FormField id="profile-availability" label="활동 가능 시간" description="정기적으로 참여할 수 있는 시간입니다.">
-          <UiInput id="profile-availability" name="availability" required maxLength={500} defaultValue={profile?.availability} placeholder="평일 18시 이후, 토요일 오전" className="field" />
+          <UiInput id="profile-availability" name="availability" required maxLength={500} defaultValue={profile?.availability} placeholder="평일 18시 이후, 토요일 오전" className="form-control" />
         </FormField>
         <FormField id="profile-bio" label="자기소개" description="관심 분야와 프로젝트 경험을 간단히 입력하세요." className="sm:col-span-2">
-          <UiTextarea id="profile-bio" name="bio" required maxLength={1_000} rows={5} defaultValue={profile?.bio} placeholder="관심 분야와 관련 경험을 작성해 주세요." className="field resize-y" />
+          <UiTextarea id="profile-bio" name="bio" required maxLength={1_000} rows={5} defaultValue={profile?.bio} placeholder="관심 분야와 관련 경험을 작성해 주세요." className="form-control resize-y" />
         </FormField>
       </FormSection>
       <div className="form-action-bar">

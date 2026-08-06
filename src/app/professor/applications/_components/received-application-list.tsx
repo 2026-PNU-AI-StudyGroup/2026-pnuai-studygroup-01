@@ -54,7 +54,7 @@ export function ReceivedApplicationList({
               name="q"
               defaultValue={query}
               maxLength={100}
-              className="field"
+              className="form-control"
               placeholder="주제명, 지원자 이름 또는 이메일"
             />
           </label>

@@ -122,7 +122,6 @@ export function StudentTeamPageIntro({ title, description, action, meta }: { tit
       title={<UiText>{title}</UiText>}
       description={description ? <UiText>{description}</UiText> : undefined}
       context={meta}
-      mark={<UiText>{title.replace(/\s/g, "").slice(0, 1)}</UiText>}
       action={action}
     />
   );

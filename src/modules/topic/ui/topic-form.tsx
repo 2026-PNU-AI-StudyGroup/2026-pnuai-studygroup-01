@@ -8,7 +8,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { ChoiceCard, FormField, FormSection } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, FormField, FormSection, TextInput, Textarea } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 export type TopicFormActionState = {
@@ -118,7 +118,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       <FormSection id="topic-basic" number="01" title="기본 정보" description="학생에게 공개되는 제목과 설명입니다.">
       {initialTopic ? <FormField label="프로그램">
           <input type="hidden" name="programId" value={initialTopic.programId} />
-          <span className="field bg-[var(--surface-subtle)]">{initialTopic.programName}</span>
+          <span className="form-static-value">{initialTopic.programName}</span>
         </FormField> : <FormField id="topic-program" label="프로그램">
           <CustomSelect
             id="topic-program"
@@ -140,10 +140,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           />
         </FormField>}
         <FormField id="topic-title" label="주제명">
-          <input id="topic-title" name="title" defaultValue={initialTopic?.title} maxLength={200} required className="field" />
+          <TextInput id="topic-title" name="title" defaultValue={initialTopic?.title} maxLength={200} required />
         </FormField>
         <FormField id="topic-description" label="설명">
-          <textarea id="topic-description" name="description" defaultValue={initialTopic?.description} maxLength={10000} required rows={6} className="field" />
+          <Textarea id="topic-description" name="description" defaultValue={initialTopic?.description} maxLength={10000} required rows={6} />
         </FormField>
       </FormSection>
       <FormSection id="topic-requirements" number="02" title="지원 조건" description="선발 판단에 실제로 필요한 기술과 참여 조건을 적습니다." contentClassName="sm:grid-cols-2">
@@ -154,10 +154,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <TagInput id="topic-preferred-skills" name="preferredSkills" ariaLabel="우대 기술" defaultValue={initialTopic?.preferredSkills} maxLength={1000} placeholder="Docker, Figma" />
         </FormField>
         <FormField id="topic-role-expectations" label="예상 역할">
-          <UiTextarea id="topic-role-expectations" name="roleExpectations" defaultValue={initialTopic?.roleExpectations} maxLength={500} required rows={3} className="field" placeholder="예: 프론트엔드 구현과 사용자 테스트" />
+          <UiTextarea id="topic-role-expectations" name="roleExpectations" defaultValue={initialTopic?.roleExpectations} maxLength={500} required rows={3} className="form-control" placeholder="예: 프론트엔드 구현과 사용자 테스트" />
         </FormField>
         <FormField id="topic-availability" label="활동 가능 시간 조건">
-          <UiTextarea id="topic-availability" name="availabilityRequirement" defaultValue={initialTopic?.availabilityRequirement} maxLength={500} required rows={3} className="field" placeholder="예: 매주 수요일 18시 정기 회의 참여" />
+          <UiTextarea id="topic-availability" name="availabilityRequirement" defaultValue={initialTopic?.availabilityRequirement} maxLength={500} required rows={3} className="form-control" placeholder="예: 매주 수요일 18시 정기 회의 참여" />
         </FormField>
       </FormSection>
       <FormSection id="topic-application" number="03" title="지원 방식과 지원서">
@@ -175,8 +175,8 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         </div>
         <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
           {questions.map((question, index) => <li key={question.localId} className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_auto] sm:items-end">
-            <label className="grid gap-2 text-sm font-medium"><UiText>{"문항"}</UiText>{" "}{index + 1}<UiInput name="questionLabel" defaultValue={question.label} maxLength={200} required className="field" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
-            <label className="grid gap-2 text-sm font-medium"><UiText>{"글자 수 제한"}</UiText><input name="questionMaxLength" type="number" min="1" max="5000" defaultValue={question.maxLength} required className="field" /></label>
+            <label className="grid gap-2 text-sm font-medium"><UiText>{"문항"}</UiText>{" "}{index + 1}<UiInput name="questionLabel" defaultValue={question.label} maxLength={200} required className="form-control" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
+            <label className="grid gap-2 text-sm font-medium"><UiText>{"글자 수 제한"}</UiText><TextInput name="questionMaxLength" type="number" min="1" max="5000" defaultValue={question.maxLength} required /></label>
             <label className="grid gap-2 text-sm font-medium"><UiText>{"응답 조건"}</UiText><CustomSelect name="questionRequired" ariaLabel={`문항 ${index + 1} 응답 조건`} density="compact" defaultValue={String(question.required)} options={[{ value: "true", label: "필수" }, { value: "false", label: "선택" }]} /></label>
             <UiButton type="button" className="button-quiet" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ localId }) => localId !== question.localId))} aria-label={`문항 ${index + 1} 삭제`}><UiText>{"삭제"}</UiText></UiButton>
           </li>)}
@@ -184,14 +184,14 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         <p className="muted text-sm"><UiText>{"문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다."}</UiText></p>
       </FormSection>
       <FormSection id="topic-schedule" number="04" title="정원과 운영 기간"><label className="grid gap-2 text-sm font-medium sm:max-w-xs">
-        <UiText>{"모집 인원"}</UiText><input name="capacity" type="number" min="1" max="100" defaultValue={initialTopic?.capacity ?? 4} required className="field" />
+        <UiText>{"모집 인원"}</UiText><TextInput name="capacity" type="number" min="1" max="100" defaultValue={initialTopic?.capacity ?? 4} required />
       </label>
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-3 font-semibold"><UiText>{"기간 설정"}</UiText></legend>
         {periodFields.map(([label, name]) => (
           <label key={name} className="grid gap-2 text-sm font-medium">
             <UiText>{label}</UiText>
-            <input name={name} type="datetime-local" defaultValue={initialTopic ? koreanDateTimeLocal(initialTopic[name]) : undefined} required className="field" />
+            <DateTimeInput name={name} defaultValue={initialTopic ? koreanDateTimeLocal(initialTopic[name]) : undefined} required />
           </label>
         ))}
       </fieldset>

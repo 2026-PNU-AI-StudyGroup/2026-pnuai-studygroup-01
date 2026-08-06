@@ -12,6 +12,7 @@ import { koreanDateTimeInput } from "@/app/teams/[teamId]/_lib/report-form-share
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
+import { ChoiceCard, DateTimeInput } from "@/shared/ui/form-system";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
@@ -132,28 +133,17 @@ export function ProjectGuidanceRequestForm({
                 ["MEETING", "회의 요청", "희망 일시를 함께 전달합니다."],
                 ["REVIEW", "검토 요청", "검토할 내용과 참고 링크를 전달합니다."],
               ] as const).map(([value, label, description]) => (
-                <label
+                <ChoiceCard
                   key={value}
-                  className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border px-4 py-3 transition-colors ${
-                    kind === value
-                      ? "border-[var(--primary)] bg-white text-[var(--ink)]"
-                      : "border-[var(--line-strong)] bg-white text-[var(--muted)]"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="kind"
-                    value={value}
-                    required
-                    checked={kind === value}
-                    onChange={() => setKind(value)}
-                    className="mt-1 size-4 shrink-0 accent-[var(--primary)]"
-                  />
-                  <span>
-                    <strong className="block text-sm"><UiText>{label}</UiText></strong>
-                    <span className="mt-1 block text-xs leading-5 text-[var(--muted)]"><UiText>{description}</UiText></span>
-                  </span>
-                </label>
+                  className="min-h-0 px-4 py-3"
+                  name="kind"
+                  value={value}
+                  required
+                  checked={kind === value}
+                  onChange={() => setKind(value)}
+                  label={label}
+                  description={description}
+                />
               ))}
             </div>
           </fieldset>
@@ -167,7 +157,7 @@ export function ProjectGuidanceRequestForm({
               minLength={2}
               maxLength={100}
               disabled={pending}
-              className="field"
+              className="form-control"
               placeholder="요청 목적을 간단히 적어 주세요."
             />
           </label>
@@ -182,7 +172,7 @@ export function ProjectGuidanceRequestForm({
               maxLength={2000}
               rows={5}
               disabled={pending}
-              className="field min-h-32 resize-y"
+              className="form-control min-h-32 resize-y"
               placeholder="확인받고 싶은 내용과 필요한 배경을 구체적으로 적어 주세요."
             />
           </label>
@@ -195,7 +185,7 @@ export function ProjectGuidanceRequestForm({
               type="url"
               maxLength={2048}
               disabled={pending}
-              className="field"
+              className="form-control"
               placeholder="https://"
             />
           </label>
@@ -203,15 +193,13 @@ export function ProjectGuidanceRequestForm({
           {kind === "MEETING" ? (
             <label htmlFor={`${fieldId}-preferred-at`} className="grid gap-2 text-sm font-semibold">
               <UiText>{"희망 일시"}</UiText>
-              <input
+              <DateTimeInput
                 id={`${fieldId}-preferred-at`}
                 name="preferredAt"
-                type="datetime-local"
                 required
                 min={minimumMeetingAt}
                 max={koreanDateTimeInput(executionEndsAt)}
                 disabled={pending}
-                className="field"
               />
             </label>
           ) : null}
@@ -291,7 +279,7 @@ export function ProjectGuidanceResponseForm({
               maxLength={2000}
               rows={4}
               disabled={pending}
-              className="field min-h-28 resize-y"
+              className="form-control min-h-28 resize-y"
               placeholder="요청에 대한 답변과 다음 행동을 적어 주세요."
             />
           </label>
@@ -299,14 +287,12 @@ export function ProjectGuidanceResponseForm({
           {kind === "MEETING" ? (
             <label htmlFor={`${fieldId}-scheduled-at`} className="grid gap-2 text-sm font-semibold">
               <span><UiText>{"확정 일시"}</UiText> <span className="font-normal text-[var(--muted)]"><UiText>{"(선택)"}</UiText></span></span>
-              <input
+              <DateTimeInput
                 id={`${fieldId}-scheduled-at`}
                 name="scheduledAt"
-                type="datetime-local"
                 min={minimumScheduledAt}
                 max={koreanDateTimeInput(executionEndsAt)}
                 disabled={pending}
-                className="field"
               />
             </label>
           ) : null}

@@ -14,6 +14,7 @@ import {
 } from "@/app/teams/_actions/student-team-actions";
 import type { StudentTeamActionState } from "@/app/teams/_actions/student-team-actions";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
+import { TextInput } from "@/shared/ui/form-system";
 
 const initialStudentTeamActionState: StudentTeamActionState = { status: "idle", message: "" };
 
@@ -30,8 +31,8 @@ export function CreateStudentTeamForm({ successHref }: { successHref?: string })
   }, [router, state.status, successHref]);
   return (
     <form action={action} className="grid gap-4" aria-busy={pending}>
-      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 이름"}</UiText><UiInput className="field" name="name" required maxLength={80} placeholder="예: 코드웨이브" /></label>
-      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 소개"}</UiText><UiTextarea className="field" name="description" rows={3} maxLength={1000} placeholder="팀의 주제나 활동 계획을 간단히 입력하세요." /></label>
+      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 이름"}</UiText><UiInput className="form-control" name="name" required maxLength={80} placeholder="예: 코드웨이브" /></label>
+      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 소개"}</UiText><UiTextarea className="form-control" name="description" rows={3} maxLength={1000} placeholder="팀의 주제나 활동 계획을 간단히 입력하세요." /></label>
       <button className="button-primary justify-self-start" type="submit" disabled={pending}><UiText>{pending ? "만드는 중" : "내 팀 만들기"}</UiText></button>
       <ActionMessage state={state} />
     </form>
@@ -43,7 +44,7 @@ export function InviteStudentTeamMemberForm({ teamId }: { teamId: string }) {
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" aria-busy={pending}>
       <input type="hidden" name="teamId" value={teamId} />
-      <label className="grid gap-2 text-sm font-semibold"><span><UiText>{"이메일로 초대"}</UiText></span><input className="field" type="email" name="email" required placeholder="student@pusan.ac.kr" /></label>
+      <label className="grid gap-2 text-sm font-semibold"><span><UiText>{"이메일로 초대"}</UiText></span><TextInput type="email" name="email" required placeholder="student@pusan.ac.kr" /></label>
       <button className="button-primary self-end" type="submit" disabled={pending}><UiText>{pending ? "보내는 중" : "초대 보내기"}</UiText></button>
       <div className="sm:col-span-2"><ActionMessage state={state} /></div>
     </form>

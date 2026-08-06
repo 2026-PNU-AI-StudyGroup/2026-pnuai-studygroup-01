@@ -10,6 +10,7 @@ import {
 } from "@/app/_actions/project-assistant-actions";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
+import { TextInput } from "@/shared/ui/form-system";
 
 const initialState: ProjectAssistantActionState = {
   status: "idle",
@@ -26,8 +27,7 @@ export function InviteProjectAssistantForm({ topicId }: { topicId: string }) {
       <input type="hidden" name="topicId" value={topicId} />
       <label className="grid gap-1.5">
         <span className="text-sm font-semibold"><UiText>{"사용자 이메일"}</UiText></span>
-        <input
-          className="field"
+        <TextInput
           type="email"
           name="email"
           autoComplete="email"

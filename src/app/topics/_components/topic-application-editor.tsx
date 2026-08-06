@@ -9,6 +9,7 @@ import { ApplicationAnswerField } from "@/app/topics/_components/application-ans
 import { applyTopicAction, type ApplyTopicActionState } from "@/app/topics/_actions/topic-explorer-actions";
 import type { PublicTopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
+import { ChoiceCard } from "@/shared/ui/form-system";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
@@ -114,21 +115,17 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                   ["INDIVIDUAL", "개인 지원", "혼자 지원서를 작성해 제출합니다.", applicationMode !== "TEAM_ONLY", "이 프로젝트는 팀 지원만 받습니다."],
                   ["TEAM", "팀 지원", "내가 팀장인 팀으로 지원합니다.", applicationMode !== "INDIVIDUAL_ONLY", "이 프로젝트는 개인 지원만 받습니다."],
                 ] as const).map(([value, label, description, enabled, disabledMessage]) => (
-                  <label
+                  <ChoiceCard
                     key={value}
-                    className={`grid min-h-40 gap-4 rounded-[var(--radius-control)] border p-5 ${
-                      enabled
-                        ? "cursor-pointer border-[var(--line)] has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-subtle)]"
-                        : "cursor-not-allowed border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted)]"
-                    }`}
-                  >
-                    <span className="flex items-start justify-between gap-3">
-                      <strong className="text-lg"><UiText>{label}</UiText></strong>
-                      <input type="radio" name="applicationKindChoice" value={value} checked={kind === value} disabled={!enabled} onChange={() => setKind(value)} />
-                    </span>
-                    <span className="text-sm leading-6 text-[var(--muted)]"><UiText>{enabled ? description : disabledMessage}</UiText></span>
-                    <span className="mt-auto text-xs font-semibold"><UiText>{enabled ? "선택 가능" : "선택할 수 없음"}</UiText></span>
-                  </label>
+                    className={`min-h-40 ${enabled ? "" : "bg-[var(--surface-subtle)]"}`}
+                    name="applicationKindChoice"
+                    value={value}
+                    checked={kind === value}
+                    disabled={!enabled}
+                    onChange={() => setKind(value)}
+                    label={label}
+                    description={enabled ? description : disabledMessage}
+                  />
                 ))}
               </fieldset>
               <div className="flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-6 sm:flex-row sm:justify-between">
