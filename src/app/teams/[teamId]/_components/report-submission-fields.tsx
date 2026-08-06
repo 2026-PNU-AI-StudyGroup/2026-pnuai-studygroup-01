@@ -1,5 +1,6 @@
-import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
+import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { FileInput } from "@/shared/ui/form-system";
 import { koreanDateTime, reportTypeLabel } from "@/app/teams/[teamId]/_lib/report-form-shared";
 import type { ReportType } from "@/modules/report/domain/report-policy";
 import { CustomSelect } from "@/shared/ui/custom-select";
@@ -21,11 +22,11 @@ export function ReportSubmissionFields({
       <label className="grid gap-2 text-sm font-semibold">
         <UiText>{"보고서 파일"}</UiText>
         <span className="muted text-xs font-normal"><UiText>{"PDF 또는 Word · 최대 25MB"}</UiText></span>
-        <UiInput aria-label="보고서 파일" name="file" type="file" required accept=".pdf,.doc,.docx" className="field" />
+        <FileInput aria-label="보고서 파일" name="file" required accept=".pdf,.doc,.docx" />
       </label>
       <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
         <UiText>{"버전 설명"}</UiText><span className="muted font-normal"><UiText>{"선택 입력"}</UiText></span>
-        <UiTextarea name="description" maxLength={2000} rows={2} placeholder="이번 버전에서 변경한 내용을 입력하세요." className="field" />
+        <UiTextarea name="description" maxLength={2000} rows={2} placeholder="이번 버전에서 변경한 내용을 입력하세요." className="form-control" />
       </label>
     </>
   );

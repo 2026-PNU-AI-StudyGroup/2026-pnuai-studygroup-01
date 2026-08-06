@@ -60,12 +60,25 @@ export class PrismaTeamWorkspaceQueryRepository
           submissionStartsAt: true,
           submissionEndsAt: true,
           program: { select: { advisorEnabled: true } },
-          manager: { select: { name: true } },
+          manager: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: { select: { updatedAt: true } },
+            },
+          },
           assistants: {
             orderBy: { createdAt: "asc" },
             select: {
               userId: true,
-              user: { select: { id: true, name: true, email: true } },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  profileImage: { select: { updatedAt: true } },
+                },
+              },
             },
           },
         } },
@@ -82,6 +95,7 @@ export class PrismaTeamWorkspaceQueryRepository
                 grade: true,
                 phoneNumber: true,
                 contactEmail: true,
+                profileImage: { select: { updatedAt: true } },
                 studentProfile: {
                   select: {
                     interests: true,
@@ -163,6 +177,7 @@ export class PrismaTeamWorkspaceQueryRepository
       topicTitle: team.topic.title,
       status: team.status,
       professorName: team.topic.manager!.name,
+      professor: team.topic.manager!,
       advisorEnabled: team.topic.program.advisorEnabled,
       access: {
         isPrimaryAdvisor: team.professorId === actor.id,
@@ -193,8 +208,9 @@ export class PrismaTeamWorkspaceQueryRepository
         (report) => report.versions.length > 0,
       ).length,
       assistants: team.topic.assistants.map(({ user }) => user),
-      members: team.members.map(({ student: { studentProfile, ...student } }) => ({
+      members: team.members.map(({ student: { studentProfile, profileImage, ...student } }) => ({
         ...student,
+        profileImage,
         profile: studentProfile,
       })),
       tasks: team.tasks.map((task) => ({

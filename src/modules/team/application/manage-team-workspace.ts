@@ -74,32 +74,18 @@ export class TeamTaskService {
     return task;
   }
 
-  async updateTaskStatus(
+  async updateTask(
     actor: CurrentActor,
-    input: { taskId: string; status: TaskStatus; assigneeIds?: string[] },
-  ): Promise<{ teamId: string }> {
-    const result = await this.taskWriter.updateTaskStatus(
-      input.taskId,
-      input.status,
-      [...new Set(input.assigneeIds ?? [])],
-      actor,
-    );
-    if (!result) {
-      throw new TaskNotFoundError();
-    }
-    return result;
-  }
-
-  async updateTaskDetails(
-    actor: CurrentActor,
-    input: { taskId: string; title: string; dueAt: Date },
+    input: { taskId: string; title: string; dueAt: Date; status: TaskStatus; assigneeIds?: string[] },
   ): Promise<{ teamId: string }> {
     assertValidTaskDueAt(input.dueAt);
-    const result = await this.taskWriter.updateTaskDetails({
+    const result = await this.taskWriter.updateTask({
       id: input.taskId,
       actor,
       title: normalizeTaskTitle(input.title),
       dueAt: input.dueAt,
+      status: input.status,
+      assigneeIds: [...new Set(input.assigneeIds ?? [])],
     });
     if (!result) throw new TaskNotFoundError();
     return result;

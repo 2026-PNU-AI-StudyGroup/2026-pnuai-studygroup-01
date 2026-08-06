@@ -184,8 +184,10 @@ async function main() {
     TeamNotFoundError,
   );
   await expectRejected(
-    () => taskService.updateTaskStatus(outsider, {
+    () => taskService.updateTask(outsider, {
       taskId: task.id,
+      title: "중간 발표",
+      dueAt: new Date("2026-08-01T00:00:00Z"),
       status: "DONE",
     }),
     TaskNotFoundError,
@@ -194,8 +196,10 @@ async function main() {
     () => queryService.get({ id: professorId, role: "STUDENT" }, team.id),
     TeamNotFoundError,
   );
-  await taskService.updateTaskStatus(student, {
+  await taskService.updateTask(student, {
     taskId: task.id,
+    title: "중간 발표",
+    dueAt: new Date("2026-08-01T00:00:00Z"),
     status: "DONE",
   });
 

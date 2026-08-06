@@ -1,13 +1,22 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TaskStatusForm } from "@/app/teams/[teamId]/_components/task-forms";
+import { TaskCreateDialog, TaskEditDialog } from "@/app/teams/[teamId]/_components/task-forms";
 
-const { updateTask } = vi.hoisted(() => ({ updateTask: vi.fn() }));
+const { createTask, deleteTask, updateTask } = vi.hoisted(() => ({
+  createTask: vi.fn(),
+  deleteTask: vi.fn(),
+  updateTask: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 vi.mock("@/app/teams/[teamId]/_actions/team-workspace-actions", () => ({
-  createTaskAction: vi.fn(),
-  updateTaskStatusAction: updateTask,
+  createTaskAction: createTask,
+  deleteTaskAction: deleteTask,
+  updateTaskAction: updateTask,
 }));
 
 const members = [
@@ -15,62 +24,57 @@ const members = [
   { id: "student-2", name: "윤서준" },
 ];
 
-describe("TaskStatusForm", () => {
+describe("할 일 대화상자", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    updateTask.mockReset();
-    updateTask.mockResolvedValue({ status: "error", message: "할 일을 저장하지 못했습니다." });
+    createTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 추가했습니다." });
+    deleteTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 삭제했습니다." });
+    updateTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 수정했습니다." });
+    HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
+    HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); };
   });
 
-  afterEach(() => vi.useRealTimers());
+  it("생성 입력은 새 할 일을 누른 뒤에만 표시한다", () => {
+    const { container } = render(<TaskCreateDialog teamId="team-1" members={members} />);
 
-  it("상태 자동 저장이 실패하면 낙관적으로 바꾼 값을 마지막 저장값으로 되돌린다", async () => {
-    const { container } = render(
-      <TaskStatusForm
+    expect(container.querySelector("dialog")).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "새 할 일" }));
+    expect(screen.getByRole("dialog", { name: "새 할 일" })).toHaveAttribute("open");
+  });
+
+  it("제목, 기한, 상태와 담당자를 자동 저장 없이 한 번에 제출한다", async () => {
+    render(
+      <TaskEditDialog
         teamId="team-1"
         taskId="task-1"
+        title="사용자 인터뷰"
+        dueAt={new Date("2026-08-15T14:59:00.000Z")}
         status="TODO"
         assigneeIds={["student-1"]}
         members={members}
       />,
     );
 
-    fireEvent.click(screen.getByRole("combobox", { name: "상태" }));
-    fireEvent.click(screen.getByRole("option", { name: "완료" }));
-    expect(container.querySelector<HTMLInputElement>('input[name="status"]')).toHaveValue("DONE");
-
-    await act(async () => vi.advanceTimersByTimeAsync(250));
-
-    expect(updateTask).toHaveBeenCalledTimes(1);
-    const submitted = updateTask.mock.calls[0][1] as FormData;
-    expect(submitted.get("status")).toBe("DONE");
-    expect(screen.getByRole("alert")).toHaveTextContent("할 일을 저장하지 못했습니다.");
-    expect(container.querySelector<HTMLInputElement>('input[name="status"]')).toHaveValue("TODO");
-  });
-
-  it("담당자 자동 저장이 실패하면 낙관적으로 바꾼 목록도 되돌린다", async () => {
-    const { container } = render(
-      <TaskStatusForm
-        teamId="team-1"
-        taskId="task-1"
-        status="TODO"
-        assigneeIds={["student-1"]}
-        members={members}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "담당자" }));
+    fireEvent.click(screen.getByRole("button", { name: "수정" }));
+    const dialog = screen.getByRole("dialog", { name: "할 일 수정" });
+    fireEvent.click(withinDialog(dialog, "combobox", "상태"));
+    fireEvent.click(screen.getByRole("option", { name: "진행 중" }));
+    fireEvent.click(dialog.querySelector(".custom-select button")!);
     fireEvent.click(screen.getByRole("option", { name: "윤서준" }));
-    expect([...container.querySelectorAll<HTMLInputElement>('input[name="assigneeIds"]')].map(({ value }) => value)).toEqual([
-      "student-1",
-      "student-2",
-    ]);
 
-    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(updateTask).not.toHaveBeenCalled();
+    fireEvent.submit(dialog.querySelector("form")!);
 
+    await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
     const submitted = updateTask.mock.calls[0][1] as FormData;
+    expect(submitted.get("title")).toBe("사용자 인터뷰");
+    expect(submitted.get("dueAt")).toBe("2026-08-15");
+    expect(submitted.get("status")).toBe("IN_PROGRESS");
     expect(submitted.getAll("assigneeIds")).toEqual(["student-1", "student-2"]);
-    expect(container.querySelectorAll('input[name="assigneeIds"]')).toHaveLength(1);
-    expect(container.querySelector<HTMLInputElement>('input[name="assigneeIds"]')).toHaveValue("student-1");
   });
 });
+
+function withinDialog(dialog: HTMLElement, role: "combobox", name: string) {
+  const element = Array.from(dialog.querySelectorAll<HTMLElement>(`[role="${role}"],button`)).find((candidate) => candidate.getAttribute("aria-label") === name || candidate.textContent?.trim() === name);
+  if (!element) throw new Error(`${name} 컨트롤을 찾을 수 없습니다.`);
+  return element;
+}

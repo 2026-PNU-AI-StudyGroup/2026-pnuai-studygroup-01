@@ -77,19 +77,20 @@ describe("TeamOverviewPage", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("사이드 내비 목적지를 본문에서 반복하지 않고 실제 일정과 구성원만 요약한다", async () => {
+  it("사이드 내비와 구성원 사이드바를 본문에서 반복하지 않고 일정과 다음 행동만 요약한다", async () => {
     loadTeamWorkspace.mockResolvedValue({ workspace });
 
     render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
     expect(screen.getByRole("heading", { name: "프로젝트 기간" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "팀원 1명" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "팀원 1명" })).not.toBeInTheDocument();
+    expect(screen.queryByText("student@pusan.ac.kr")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "프로젝트 작업" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /회의·검토 요청/ })).not.toBeInTheDocument();
     expect(screen.queryByText("프로젝트 관리자에게 요청하고 답변 확인")).not.toBeInTheDocument();
   });
 
-  it("배정된 조교가 있을 때만 개요에 조교 정보를 표시한다", async () => {
+  it("배정된 조교도 지속 노출되는 구성원 사이드바에만 표시한다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
@@ -99,9 +100,9 @@ describe("TeamOverviewPage", () => {
 
     render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.getByRole("heading", { name: "조교 1명" })).toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "프로젝트 조교" })).toHaveTextContent("박조교");
-    expect(screen.getByText("assistant@pusan.ac.kr")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "조교 1명" })).not.toBeInTheDocument();
+    expect(screen.queryByText("박조교")).not.toBeInTheDocument();
+    expect(screen.queryByText("assistant@pusan.ac.kr")).not.toBeInTheDocument();
   });
 
   it("감독자 헤더에는 사이드바와 중복되는 상태 대신 조교 관리 행동만 둔다", async () => {

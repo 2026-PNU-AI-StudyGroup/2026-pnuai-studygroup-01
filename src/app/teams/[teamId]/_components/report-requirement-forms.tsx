@@ -12,6 +12,7 @@ import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { SUCCESS_TOAST_DURATION_MS, useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 import { CustomSelect } from "@/shared/ui/custom-select";
+import { DateTimeInput } from "@/shared/ui/form-system";
 
 export function ReportRequirementForm({ teamId, executionStartsAt, submissionEndsAt }: {
   teamId: string;
@@ -37,7 +38,7 @@ export function ReportRequirementForm({ teamId, executionStartsAt, submissionEnd
             ]} />
           </label>
           <label className="grid gap-2 text-sm font-semibold">
-            <UiText>{"제출 기한"}</UiText><input name="dueAt" type="datetime-local" required min={koreanDateTimeInput(executionStartsAt)} max={koreanDateTimeInput(submissionEndsAt)} className="field" />
+            <UiText>{"제출 기한"}</UiText><DateTimeInput name="dueAt" required min={koreanDateTimeInput(executionStartsAt)} max={koreanDateTimeInput(submissionEndsAt)} />
           </label>
           {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
           <ReportFormActions pending={pending} pendingLabel="저장 중" submitLabel="일정 저장" onCancel={() => dialogRef.current?.close()} />

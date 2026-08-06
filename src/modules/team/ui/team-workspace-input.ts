@@ -20,18 +20,13 @@ export const taskInputSchema = z.object({
   assigneeIds: z.array(z.string().uuid()).max(100).default([]),
 });
 
-export const taskStatusInputSchema = z.object({
-  teamId: z.string().uuid(),
-  taskId: z.string().uuid(),
-  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
-  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
-});
-
-export const taskDetailsInputSchema = z.object({
+export const taskUpdateInputSchema = z.object({
   teamId: z.string().uuid(),
   taskId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   dueAt: calendarDate,
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
+  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
 });
 
 export const taskDeleteInputSchema = z.object({

@@ -24,8 +24,7 @@ function dependencies() {
   };
   const tasks: TaskWriter = {
     createTask: vi.fn(async () => ({ id: "task-1" })),
-    updateTaskStatus: vi.fn(),
-    updateTaskDetails: vi.fn(),
+    updateTask: vi.fn(),
     deleteTask: vi.fn(),
   };
   const discussion: DiscussionPostWriter = {
@@ -89,22 +88,24 @@ describe("팀 워크스페이스 기록", () => {
     expect(deps.tasks.createTask).not.toHaveBeenCalled();
   });
 
-  it("할 일 제목과 완료 예정일을 정규화해 수정한다", async () => {
+  it("할 일 내용과 상태, 담당자를 정규화해 한 번에 수정한다", async () => {
     const deps = dependencies();
-    vi.mocked(deps.tasks.updateTaskDetails).mockResolvedValue({ teamId: "team-1" });
+    vi.mocked(deps.tasks.updateTask).mockResolvedValue({ teamId: "team-1" });
     const service = new TeamTaskService(deps.tasks);
     const dueAt = new Date("2026-06-01T14:59:00.000Z");
 
-    await expect(service.updateTaskDetails(
+    await expect(service.updateTask(
       { id: "student-1", role: "STUDENT" },
-      { taskId: "task-1", title: "  사용자 인터뷰 정리  ", dueAt },
+      { taskId: "task-1", title: "  사용자 인터뷰 정리  ", dueAt, status: "IN_PROGRESS", assigneeIds: ["student-2", "student-2"] },
     )).resolves.toEqual({ teamId: "team-1" });
 
-    expect(deps.tasks.updateTaskDetails).toHaveBeenCalledWith({
+    expect(deps.tasks.updateTask).toHaveBeenCalledWith({
       id: "task-1",
       actor: { id: "student-1", role: "STUDENT" },
       title: "사용자 인터뷰 정리",
       dueAt,
+      status: "IN_PROGRESS",
+      assigneeIds: ["student-2"],
     });
   });
 

@@ -4,13 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ArtifactRegistrationForm } from "./artifact-registration-form";
 import { ReportDecisionForm } from "./report-decision-form";
 import { RemoveReportRequirementForm, ReportRequirementForm } from "./report-requirement-forms";
+import { ReportFeedbackForm, ReportScoreForm } from "./report-score-feedback-forms";
 import { ReportSubmissionForm } from "./report-submission-form";
 
-const { decideReport, refresh, registerArtifact, removeRequirement, setRequirement, submitReport } = vi.hoisted(() => ({
+const { addFeedback, decideReport, refresh, registerArtifact, removeRequirement, scoreReport, setRequirement, submitReport } = vi.hoisted(() => ({
+  addFeedback: vi.fn(),
   decideReport: vi.fn(),
   refresh: vi.fn(),
   registerArtifact: vi.fn(),
   removeRequirement: vi.fn(),
+  scoreReport: vi.fn(),
   setRequirement: vi.fn(),
   submitReport: vi.fn(),
 }));
@@ -20,9 +23,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/teams/[teamId]/_actions/team-report-actions", () => ({
+  addReportFeedbackAction: addFeedback,
   decideReportAction: decideReport,
   registerArtifactAction: registerArtifact,
   removeReportRequirementAction: removeRequirement,
+  scoreReportAction: scoreReport,
   setReportRequirementAction: setRequirement,
   submitReportVersionAction: submitReport,
 }));
@@ -80,9 +85,11 @@ describe("보고서 요구사항 화면", () => {
 
   beforeEach(() => {
     decideReport.mockReset();
+    addFeedback.mockReset();
     refresh.mockClear();
     registerArtifact.mockReset();
     removeRequirement.mockReset();
+    scoreReport.mockReset();
     setRequirement.mockReset();
     submitReport.mockReset();
     SuccessfulUploadRequest.instances = [];
@@ -101,6 +108,8 @@ describe("보고서 요구사항 화면", () => {
         reportVersionId="f4000000-0000-4000-8000-000000000001"
       />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "보고서 검토" }));
 
     const comment = screen.getByRole("textbox", { name: "학생에게 전달할 검토 의견" });
     const approve = screen.getByRole("button", { name: "승인하기" });
@@ -124,6 +133,21 @@ describe("보고서 요구사항 화면", () => {
     expect(confirm).toHaveAttribute("name", "decision");
     expect(confirm).toHaveAttribute("value", "APPROVED");
     expect(within(dialog).getByText("표의 근거와 조사 일자를 보완해 주세요.")).toBeInTheDocument();
+  });
+
+  it("점수와 피드백 입력은 각 행동을 선택한 뒤 대화상자에서 표시한다", () => {
+    render(<><ReportScoreForm teamId="team-1" reportId="report-1" currentScore={85} currentComment="좋습니다." /><ReportFeedbackForm teamId="team-1" reportId="report-1" /></>);
+
+    expect(screen.queryByRole("spinbutton", { name: /점수/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "피드백" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "점수 수정" }));
+    expect(screen.getByRole("dialog", { name: "점수 수정" })).toHaveAttribute("open");
+    expect(screen.getByRole("spinbutton", { name: /점수/ })).toHaveValue(85);
+
+    fireEvent.click(screen.getByRole("button", { name: "피드백 남기기" }));
+    expect(screen.getByRole("dialog", { name: "피드백 남기기" })).toHaveAttribute("open");
+    expect(screen.getByRole("textbox", { name: "피드백" })).toBeInTheDocument();
   });
 
   it("같은 화면에서 요구사항을 연속 저장해도 모달 종료와 성공 피드백을 반복한다", async () => {

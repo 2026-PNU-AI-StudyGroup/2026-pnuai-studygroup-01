@@ -11,7 +11,6 @@ import {
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -152,47 +151,6 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
         </ol>
       </section>
 
-      {workspace.assistants.length ? (
-        <section aria-labelledby="assistants-title">
-          <h2 id="assistants-title" className="text-2xl font-black tracking-[-0.04em]">
-            <UiText>{"조교"}</UiText>{" "}{workspace.assistants.length}<UiText>{"명"}</UiText>
-          </h2>
-          <UiUl aria-label="프로젝트 조교" className="mt-4 grid gap-4 md:grid-cols-2">
-            {workspace.assistants.map((assistant) => (
-              <li key={assistant.id} className="flex min-w-0 items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[0_10px_28px_rgba(31,35,48,0.05)]">
-                <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--warning-subtle)] text-sm font-black text-[var(--warning-ink)]">
-                  {assistant.name.slice(0, 1)}
-                </span>
-                <div className="min-w-0">
-                  <strong className="block text-base">{assistant.name}</strong>
-                  <span className="mt-1 block break-all text-sm font-medium text-[var(--muted)]">{assistant.email}</span>
-                </div>
-              </li>
-            ))}
-          </UiUl>
-        </section>
-      ) : null}
-
-      <section aria-labelledby="members-title">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 id="members-title" className="text-2xl font-black tracking-[-0.04em]"><UiText>{"팀원"}</UiText>{" "}{workspace.members.length}<UiText>{"명"}</UiText></h2>
-          </div>
-        </div>
-        <ul className="mt-4 grid gap-4 md:grid-cols-2">
-          {workspace.members.map((member) => (
-            <li key={member.id} className="flex min-w-0 items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[0_10px_28px_rgba(31,35,48,0.05)]">
-              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-sm font-black text-[var(--primary-hover)]">
-                {member.name.slice(0, 1)}
-              </span>
-              <div className="min-w-0">
-                <strong className="block text-base">{member.name}</strong>
-                <span className="mt-1 block break-all text-sm font-medium text-[var(--muted)]">{member.email}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

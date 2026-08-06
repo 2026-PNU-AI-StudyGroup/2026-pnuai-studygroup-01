@@ -16,12 +16,10 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
 }));
 
 vi.mock("@/app/teams/[teamId]/_components/task-forms", () => ({
-  TaskForm: () => <div data-testid="new-task-form" />,
-  TaskDetailsForm: () => <div data-testid="task-details-editor" />,
-  TaskStatusForm: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
-    <div data-testid="task-editor">{status}:{assigneeIds.join(",")}</div>
+  TaskCreateDialog: () => <button data-testid="new-task-dialog">새 할 일</button>,
+  TaskEditDialog: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
+    <button data-testid="task-edit-dialog">수정 {status}:{assigneeIds.join(",")}</button>
   ),
-  TaskDeleteForm: () => <div data-testid="task-delete-form" />,
 }));
 
 const workspace = {
@@ -80,7 +78,8 @@ describe("TeamTasksPage", () => {
 
     render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.getByTestId("task-editor")).toHaveTextContent("IN_PROGRESS:student-1");
+    expect(screen.getByTestId("task-edit-dialog")).toHaveTextContent("IN_PROGRESS:student-1");
+    expect(screen.getByTestId("new-task-dialog")).toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
@@ -95,7 +94,7 @@ describe("TeamTasksPage", () => {
 
     render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
@@ -162,8 +161,8 @@ describe("TeamTasksPage", () => {
 
     render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.queryByTestId("new-task-form")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("new-task-dialog")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
     expect(screen.getByText("정하늘")).toBeInTheDocument();
   });
 });

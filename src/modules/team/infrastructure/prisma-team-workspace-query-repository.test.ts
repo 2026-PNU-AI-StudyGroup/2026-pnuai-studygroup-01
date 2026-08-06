@@ -19,10 +19,19 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
         submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
         submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
         program: { advisorEnabled: true },
-        manager: { name: "김교수" },
+        manager: {
+          id: "professor-1",
+          name: "김교수",
+          profileImage: { updatedAt: new Date("2026-08-07T01:00:00Z") },
+        },
         assistants: [{
           userId: "assistant-1",
-          user: { id: "assistant-1", name: "박조교", email: "assistant@pusan.ac.kr" },
+          user: {
+            id: "assistant-1",
+            name: "박조교",
+            email: "assistant@pusan.ac.kr",
+            profileImage: { updatedAt: new Date("2026-08-07T02:00:00Z") },
+          },
         }],
       },
       members: [{
@@ -35,6 +44,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
           grade: 3,
           phoneNumber: "010-1234-5678",
           contactEmail: "sky@example.com",
+          profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
           studentProfile: {
             interests: ["접근성"],
             skills: ["TypeScript"],
@@ -60,11 +70,25 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       include: expect.objectContaining({
         topic: {
           select: expect.objectContaining({
+            manager: {
+              select: {
+                id: true,
+                name: true,
+                profileImage: { select: { updatedAt: true } },
+              },
+            },
             assistants: {
               orderBy: { createdAt: "asc" },
               select: {
                 userId: true,
-                user: { select: { id: true, name: true, email: true } },
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    profileImage: { select: { updatedAt: true } },
+                  },
+                },
               },
             },
           }),
@@ -78,6 +102,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
                 grade: true,
                 phoneNumber: true,
                 contactEmail: true,
+                profileImage: { select: { updatedAt: true } },
                 studentProfile: expect.any(Object),
               }),
             },
@@ -89,11 +114,22 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       id: "student-1",
       department: "정보컴퓨터공학부",
       phoneNumber: "010-1234-5678",
+      profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
       profile: expect.objectContaining({ desiredRole: "프론트엔드 개발" }),
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
+    expect(workspace?.professor).toEqual({
+      id: "professor-1",
+      name: "김교수",
+      profileImage: { updatedAt: new Date("2026-08-07T01:00:00Z") },
+    });
     expect(workspace?.assistants).toEqual([
-      { id: "assistant-1", name: "박조교", email: "assistant@pusan.ac.kr" },
+      {
+        id: "assistant-1",
+        name: "박조교",
+        email: "assistant@pusan.ac.kr",
+        profileImage: { updatedAt: new Date("2026-08-07T02:00:00Z") },
+      },
     ]);
     expect(workspace?.access.isAssistant).toBe(false);
 

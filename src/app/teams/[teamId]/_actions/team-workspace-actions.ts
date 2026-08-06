@@ -29,9 +29,8 @@ import { PrismaTeamTaskRepository } from "@/modules/team/infrastructure/prisma-t
 import {
   discussionPostInputSchema,
   taskDeleteInputSchema,
-  taskDetailsInputSchema,
   taskInputSchema,
-  taskStatusInputSchema,
+  taskUpdateInputSchema,
 } from "@/modules/team/ui/team-workspace-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -131,45 +130,23 @@ export async function createTaskAction(
   return { status: "success", message: "할 일을 추가했습니다." };
 }
 
-export async function updateTaskStatusAction(
+export async function updateTaskAction(
   _state: TeamActionState,
   formData: FormData,
 ): Promise<TeamActionState> {
   const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
-  const parsed = taskStatusInputSchema.safeParse(
+  const parsed = taskUpdateInputSchema.safeParse(
     {
       ...Object.fromEntries(formData),
       assigneeIds: formData.getAll("assigneeIds"),
     },
   );
   if (!parsed.success) {
-    return { status: "error", message: "변경할 할 일 상태를 다시 확인해 주세요." };
-  }
-  try {
-    const result = await taskService().updateTaskStatus(actor, parsed.data);
-    revalidatePath(`/teams/${result.teamId}`, "layout");
-  } catch (error) {
-    const message = expectedMessage(error);
-    if (message) return { status: "error", message };
-    throw error;
-  }
-  revalidatePath("/dashboard");
-  return { status: "success", message: "할 일 상태를 변경했습니다." };
-}
-
-export async function updateTaskDetailsAction(
-  _state: TeamActionState,
-  formData: FormData,
-): Promise<TeamActionState> {
-  const actor = await getCurrentOperationalActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = taskDetailsInputSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) {
     return { status: "error", message: "수정할 할 일 내용을 다시 확인해 주세요." };
   }
   try {
-    const result = await taskService().updateTaskDetails(actor, parsed.data);
+    const result = await taskService().updateTask(actor, parsed.data);
     revalidatePath(`/teams/${result.teamId}`, "layout");
   } catch (error) {
     const message = expectedMessage(error);

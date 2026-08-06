@@ -32,6 +32,11 @@ export type TeamListPage = {
 export type TeamWorkspace = TeamListItem & {
   topicId: string;
   professorName: string;
+  professor: {
+    id: string;
+    name: string;
+    profileImage: { updatedAt: Date } | null;
+  };
   advisorEnabled: boolean;
   access: {
     isPrimaryAdvisor: boolean;
@@ -49,7 +54,12 @@ export type TeamWorkspace = TeamListItem & {
     submissionStartsAt: Date;
     submissionEndsAt: Date;
   };
-  assistants: Array<{ id: string; name: string; email: string }>;
+  assistants: Array<{
+    id: string;
+    name: string;
+    email: string;
+    profileImage: { updatedAt: Date } | null;
+  }>;
   members: Array<{
     id: string;
     name: string;
@@ -59,6 +69,7 @@ export type TeamWorkspace = TeamListItem & {
     grade: number | null;
     phoneNumber: string | null;
     contactEmail: string | null;
+    profileImage: { updatedAt: Date } | null;
     profile: {
       interests: string[];
       skills: string[];
@@ -105,16 +116,12 @@ export interface TaskWriter {
     dueAt: Date;
     assigneeIds: string[];
   }): Promise<{ id: string } | null>;
-  updateTaskStatus(
-    id: string,
-    status: TaskStatus,
-    assigneeIds: string[],
-    actor: CurrentActor,
-  ): Promise<{ teamId: string } | null>;
-  updateTaskDetails(input: {
+  updateTask(input: {
     id: string;
     title: string;
     dueAt: Date;
+    status: TaskStatus;
+    assigneeIds: string[];
     actor: CurrentActor;
   }): Promise<{ teamId: string } | null>;
   deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null>;

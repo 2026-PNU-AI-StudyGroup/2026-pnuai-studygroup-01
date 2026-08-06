@@ -5,17 +5,18 @@ import { useEffect, useRef, useState } from "react";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
+import { PersonAvatar } from "@/shared/ui/person-avatar";
 
 type TeamMember = TeamWorkspace["members"][number];
 
 export function TeamPeopleSidebar({
   advisorEnabled,
-  professorName,
+  professor,
   assistants,
   members,
 }: {
   advisorEnabled: boolean;
-  professorName: string;
+  professor: TeamWorkspace["professor"];
   assistants: TeamWorkspace["assistants"];
   members: TeamWorkspace["members"];
 }) {
@@ -29,7 +30,7 @@ export function TeamPeopleSidebar({
   const people = (
     <PeopleContent
       advisorEnabled={advisorEnabled}
-      professorName={professorName}
+      professor={professor}
       assistants={assistants}
       members={members}
       onSelectMember={setActiveMember}
@@ -61,9 +62,7 @@ export function TeamPeopleSidebar({
           <div className="p-6 sm:p-8">
             <div className="flex items-start justify-between gap-5">
               <div className="flex min-w-0 items-center gap-4">
-                <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--primary-subtle)] text-sm font-black text-[var(--primary-hover)]">
-                  {activeMember.name.slice(0, 1)}
-                </span>
+                <PersonAvatar userId={activeMember.id} updatedAt={activeMember.profileImage?.updatedAt} className="size-12" />
                 <div className="min-w-0">
                   <h2 id="team-member-detail-title" className="text-xl font-black tracking-[-0.035em]">{activeMember.name}</h2>
                   <p className="mt-1 break-all text-sm text-[var(--muted)]">{activeMember.email}</p>
@@ -108,13 +107,13 @@ export function TeamPeopleSidebar({
 
 function PeopleContent({
   advisorEnabled,
-  professorName,
+  professor,
   assistants,
   members,
   onSelectMember,
 }: {
   advisorEnabled: boolean;
-  professorName: string;
+  professor: TeamWorkspace["professor"];
   assistants: TeamWorkspace["assistants"];
   members: TeamWorkspace["members"];
   onSelectMember: (member: TeamMember) => void;
@@ -124,7 +123,10 @@ function PeopleContent({
       {advisorEnabled ? (
         <div>
           <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"지도교수"}</UiText></p>
-          <p className="mt-1.5 text-sm font-semibold">{professorName}</p>
+          <div className="mt-2 flex min-w-0 items-center gap-2.5">
+            <PersonAvatar userId={professor.id} updatedAt={professor.profileImage?.updatedAt} className="size-8" />
+            <p className="truncate text-sm font-semibold">{professor.name}</p>
+          </div>
         </div>
       ) : null}
 
@@ -133,9 +135,12 @@ function PeopleContent({
           <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"조교"}</UiText></p>
           <UiUl aria-label="프로젝트 조교" className="mt-2 space-y-2">
             {assistants.map((assistant) => (
-              <li key={assistant.id} className="min-w-0">
-                <p className="truncate text-sm font-semibold">{assistant.name}</p>
-                <p className="truncate text-xs text-[var(--muted)]">{assistant.email}</p>
+              <li key={assistant.id} className="flex min-w-0 items-center gap-2.5">
+                <PersonAvatar userId={assistant.id} updatedAt={assistant.profileImage?.updatedAt} className="size-8" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{assistant.name}</p>
+                  <p className="truncate text-xs text-[var(--muted)]">{assistant.email}</p>
+                </div>
               </li>
             ))}
           </UiUl>
@@ -155,9 +160,7 @@ function PeopleContent({
                 className="flex min-h-10 w-full items-center gap-2 rounded-xl px-1.5 text-left text-sm font-semibold transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary-hover)]"
                 onClick={() => onSelectMember(member)}
               >
-                <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-[0.6875rem] font-black text-[var(--primary-hover)]">
-                  {member.name.slice(0, 1)}
-                </span>
+                <PersonAvatar userId={member.id} updatedAt={member.profileImage?.updatedAt} className="size-7" />
                 <span className="truncate">{member.name}</span>
               </UiButton>
             </li>

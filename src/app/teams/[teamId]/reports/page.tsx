@@ -357,20 +357,18 @@ function ReportVersionEntry({
 function ReportScoreFeedbackSection({
   teamId,
   report,
-  canScore,
-  canWriteFeedback,
+  canEvaluate,
 }: {
   teamId: string;
   report: ReportItem;
-  canScore: boolean;
-  canWriteFeedback: boolean;
+  canEvaluate: boolean;
 }) {
   const hasScore = report.score !== undefined;
   const feedback = report.feedback ?? [];
 
   return (
     <div className="mt-5 grid gap-5 border-t border-[var(--line)] pt-5 lg:grid-cols-2">
-      {hasScore || canScore ? (
+      {hasScore || canEvaluate ? (
         <section aria-labelledby={`report-score-${report.id}`}>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 id={`report-score-${report.id}`} className="text-sm font-bold"><UiText>{"보고서 점수"}</UiText></h3>
@@ -385,7 +383,7 @@ function ReportScoreFeedbackSection({
           {hasScore && report.scoreComment ? (
             <p className="mt-2 whitespace-pre-wrap text-sm leading-6"><UiText>{report.scoreComment}</UiText></p>
           ) : null}
-          {canScore ? (
+          {canEvaluate ? (
             <ReportScoreForm
               teamId={teamId}
               reportId={report.id}
@@ -396,7 +394,7 @@ function ReportScoreFeedbackSection({
         </section>
       ) : null}
 
-      <section aria-labelledby={`report-feedback-${report.id}`} className={hasScore || canScore ? "lg:border-l lg:border-[var(--line)] lg:pl-5" : "lg:col-span-2"}>
+      <section aria-labelledby={`report-feedback-${report.id}`} className={hasScore || canEvaluate ? "lg:border-l lg:border-[var(--line)] lg:pl-5" : "lg:col-span-2"}>
         <h3 id={`report-feedback-${report.id}`} className="text-sm font-bold">
           <UiText>{"피드백"}</UiText>
           {feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{feedback.length}</span> : null}
@@ -416,7 +414,7 @@ function ReportScoreFeedbackSection({
             ))}
           </ul>
         ) : <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"아직 피드백이 없습니다."}</UiText></p>}
-        {canWriteFeedback ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
+        {canEvaluate ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
       </section>
     </div>
   );
@@ -432,8 +430,7 @@ function ReportCard({
   canSupervise,
   isTeamMember,
   advisorEnabled,
-  canScore,
-  canWriteFeedback,
+  canEvaluate,
 }: {
   teamId: string;
   report: ReportItem;
@@ -444,8 +441,7 @@ function ReportCard({
   canSupervise: boolean;
   isTeamMember: boolean;
   advisorEnabled: boolean;
-  canScore: boolean;
-  canWriteFeedback: boolean;
+  canEvaluate: boolean;
 }) {
   const state = reportPresentationState(report);
   const stateView = reportStateView[state];
@@ -552,8 +548,7 @@ function ReportCard({
         <ReportScoreFeedbackSection
           teamId={teamId}
           report={report}
-          canScore={canScore}
-          canWriteFeedback={canWriteFeedback}
+          canEvaluate={canEvaluate}
         />
 
         {canManageRequirements ? (
@@ -576,8 +571,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   const now = new Date();
   const submittableReports = reportWorkspace.reports.filter((report) => isReportSubmissionOpen(report, now));
   const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
-  const canScore = workspace.access.canSupervise && workspace.status !== "FORMING";
-  const canWriteFeedback = workspace.access.canSupervise && workspace.status !== "FORMING";
+  const canEvaluate = workspace.access.canSupervise && workspace.status !== "FORMING";
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
   const hasNoSubmittableReports = workspace.status === "CONFIRMED"
     && workspace.access.canContribute
@@ -663,8 +657,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                 canSupervise={workspace.access.canSupervise}
                 isTeamMember={workspace.access.isTeamMember}
                 advisorEnabled={workspace.advisorEnabled}
-                canScore={canScore}
-                canWriteFeedback={canWriteFeedback}
+                canEvaluate={canEvaluate}
               />
             ))}
           </div>

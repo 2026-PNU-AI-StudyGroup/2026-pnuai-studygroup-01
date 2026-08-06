@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   taskDeleteInputSchema,
-  taskDetailsInputSchema,
   taskInputSchema,
+  taskUpdateInputSchema,
 } from "@/modules/team/ui/team-workspace-input";
 
 describe("할 일 폼 입력", () => {
@@ -40,11 +40,13 @@ describe("할 일 폼 입력", () => {
       taskId: "c728bb33-e62b-47fb-b86f-c5efe9967061",
     };
 
-    expect(taskDetailsInputSchema.parse({
+    expect(taskUpdateInputSchema.parse({
       ...ids,
       title: "  프로토타입 검증  ",
       dueAt: "2026-05-02",
-    })).toMatchObject({ ...ids, title: "프로토타입 검증" });
+      status: "IN_PROGRESS",
+      assigneeIds: ["d728bb33-e62b-47fb-b86f-c5efe9967062"],
+    })).toMatchObject({ ...ids, title: "프로토타입 검증", status: "IN_PROGRESS" });
     expect(taskDeleteInputSchema.parse(ids)).toEqual(ids);
     expect(taskDeleteInputSchema.safeParse({ taskId: ids.taskId }).success).toBe(false);
   });

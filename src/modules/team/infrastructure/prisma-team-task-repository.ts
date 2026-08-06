@@ -51,67 +51,47 @@ export class PrismaTeamTaskRepository implements TaskWriter {
     });
   }
 
-  updateTaskStatus(
-    id: string,
-    status: TaskStatus,
-    assigneeIds: string[],
-    actor: CurrentActor,
-  ): Promise<{ teamId: string } | null> {
-    const uniqueAssigneeIds = [...new Set(assigneeIds)];
+  updateTask(input: {
+    id: string;
+    title: string;
+    dueAt: Date;
+    status: TaskStatus;
+    assigneeIds: string[];
+    actor: CurrentActor;
+  }): Promise<{ teamId: string } | null> {
+    const uniqueAssigneeIds = [...new Set(input.assigneeIds)];
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{
         teamId: string;
       }>>(Prisma.sql`
         UPDATE "task"
-        SET "status" = ${status}::"TaskStatus",
-          "updatedAt" = ${new Date()}
-        FROM "team"
-        WHERE "task"."id" = ${id}
-          AND "team"."id" = "task"."teamId"
-          AND "team"."status" <> 'CLOSED'
-          AND ${teamRecordActorSql(actor)}
-          AND ${validTeamAssigneesSql(uniqueAssigneeIds)}
-        RETURNING "task"."teamId"
-      `);
-      const task = rows[0];
-      if (!task) return null;
-      await transaction.taskAssignee.deleteMany({
-        where: { taskId: id },
-      });
-      if (uniqueAssigneeIds.length > 0) {
-        await transaction.taskAssignee.createMany({
-          data: uniqueAssigneeIds.map((userId) => ({
-            taskId: id,
-            userId,
-          })),
-        });
-      }
-      return task;
-    });
-  }
-
-  updateTaskDetails(input: {
-    id: string;
-    title: string;
-    dueAt: Date;
-    actor: CurrentActor;
-  }): Promise<{ teamId: string } | null> {
-    return this.client.$transaction(async (transaction) => {
-      const rows = await transaction.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
-        UPDATE "task"
         SET "title" = ${input.title},
           "dueAt" = ${input.dueAt},
+          "status" = ${input.status}::"TaskStatus",
           "updatedAt" = ${new Date()}
         FROM "team"
         WHERE "task"."id" = ${input.id}
           AND "team"."id" = "task"."teamId"
           AND "team"."status" <> 'CLOSED'
           AND ${teamRecordActorSql(input.actor)}
+          AND ${validTeamAssigneesSql(uniqueAssigneeIds)}
         RETURNING "task"."teamId"
       `);
-      if (!rows[0]) return null;
+      const task = rows[0];
+      if (!task) return null;
       await enqueueTranslations(transaction, [input.title]);
-      return rows[0];
+      await transaction.taskAssignee.deleteMany({
+        where: { taskId: input.id },
+      });
+      if (uniqueAssigneeIds.length > 0) {
+        await transaction.taskAssignee.createMany({
+          data: uniqueAssigneeIds.map((userId) => ({
+            taskId: input.id,
+            userId,
+          })),
+        });
+      }
+      return task;
     });
   }
 

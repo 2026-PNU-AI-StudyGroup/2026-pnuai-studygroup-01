@@ -28,6 +28,11 @@ vi.mock("@/app/teams/[teamId]/_components/close-team-form", () => ({
 vi.mock("@/shared/ui/confirm-submit-button", () => ({
   ConfirmSubmitButton: ({ children }: { children: ReactNode }) => <button>{children}</button>,
 }));
+vi.mock("@/shared/ui/person-avatar", () => ({
+  PersonAvatar: ({ userId, updatedAt }: { userId: string; updatedAt: Date | null | undefined }) => (
+    <span data-testid={`person-avatar-${userId}`} data-updated-at={updatedAt?.toISOString()} />
+  ),
+}));
 
 const actor = {
   id: "student-1",
@@ -49,6 +54,11 @@ const workspace = {
   submittedReportCount: 0,
   tasks: [],
   professorName: "김도윤",
+  professor: {
+    id: "professor-1",
+    name: "김도윤",
+    profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
+  },
   advisorEnabled: true,
   canClose: false,
   access: {
@@ -66,7 +76,12 @@ const workspace = {
     submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
     submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
   },
-  assistants: [{ id: "assistant-1", name: "박조교", email: "assistant@pusan.ac.kr" }],
+  assistants: [{
+    id: "assistant-1",
+    name: "박조교",
+    email: "assistant@pusan.ac.kr",
+    profileImage: { updatedAt: new Date("2026-08-07T01:00:00Z") },
+  }],
   members: [{
     id: "student-1",
     name: "정하늘",
@@ -131,6 +146,8 @@ describe("TeamWorkspaceLayout", () => {
     expect(screen.getAllByText("김도윤").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("list", { name: "프로젝트 조교" })[0]).toHaveTextContent("박조교");
     expect(screen.getAllByRole("list", { name: "프로젝트 팀원" })[0]).toHaveTextContent("정하늘");
+    expect(screen.getAllByTestId("person-avatar-professor-1")[0]).toHaveAttribute("data-updated-at", "2026-08-07T00:00:00.000Z");
+    expect(screen.getAllByTestId("person-avatar-assistant-1")[0]).toHaveAttribute("data-updated-at", "2026-08-07T01:00:00.000Z");
   });
 
   it.each([

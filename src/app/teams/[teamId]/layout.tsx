@@ -56,7 +56,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
             <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation teamId={workspace.id} advisorEnabled={workspace.advisorEnabled} /></div>
             <TeamPeopleSidebar
               advisorEnabled={workspace.advisorEnabled}
-              professorName={workspace.professorName}
+              professor={workspace.professor}
               assistants={workspace.assistants}
               members={workspace.members}
             />

@@ -2,7 +2,7 @@
 
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { useActionState, useId, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { decideReportAction } from "@/app/teams/[teamId]/_actions/team-report-actions";
 import {
@@ -10,6 +10,8 @@ import {
   ReportFormDialogHeader,
 } from "@/app/teams/[teamId]/_components/report-form-layout";
 import { initialReportActionState } from "@/app/teams/[teamId]/_lib/report-form-shared";
+import { SuccessToast } from "@/shared/ui/success-toast";
+import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
 const MAX_COMMENT_LENGTH = 2_000;
 type PendingDecision = "APPROVED" | "REVISION_REQUESTED";
@@ -27,36 +29,46 @@ export function ReportDecisionForm({
   );
   const [comment, setComment] = useState("");
   const [pendingDecision, setPendingDecision] = useState<PendingDecision | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const editorDialogRef = useRef<HTMLDialogElement>(null);
+  const confirmationDialogRef = useRef<HTMLDialogElement>(null);
   const dialogTitleId = useId();
+  const editorTitleId = useId();
+  const toastMessage = useDialogSuccessToast(state, editorDialogRef);
+
+  useEffect(() => {
+    if (state.status === "success") confirmationDialogRef.current?.close();
+  }, [state]);
 
   function openConfirmation(decision: PendingDecision) {
     setPendingDecision(decision);
-    dialogRef.current?.showModal();
+    confirmationDialogRef.current?.showModal();
   }
 
   function closeConfirmation() {
-    dialogRef.current?.close();
+    confirmationDialogRef.current?.close();
     setPendingDecision(null);
   }
 
   return (
-    <section
-      aria-labelledby={`report-review-title-${reportVersionId}`}
-      className="mt-4 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] p-4 sm:p-5"
-    >
-      <div>
-        <h3
-          id={`report-review-title-${reportVersionId}`}
-          className="text-sm font-bold text-[var(--ink)]"
-        >
-          <UiText>{"보고서 검토"}</UiText>
-        </h3>
-        <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-          <UiText>{"검토 의견은 학생 화면에 그대로 표시됩니다. 수정 요청에는 의견이 필요합니다."}</UiText>
-        </p>
-      </div>
-      <form action={action} className="mt-4 grid gap-4">
+    <>
+      <button type="button" className="button-secondary mt-4" onClick={() => editorDialogRef.current?.showModal()}>
+        <UiText>{"보고서 검토"}</UiText>
+      </button>
+      <dialog
+        ref={editorDialogRef}
+        aria-labelledby={editorTitleId}
+        onCancel={(event) => { if (pending) event.preventDefault(); }}
+        className={`${reportDialogClassName} max-w-2xl`}
+      >
+        <ReportFormDialogHeader
+          title="보고서 검토"
+          description="검토 의견은 학생 화면에 그대로 표시되며, 수정 요청에는 의견이 필요합니다."
+          titleId={editorTitleId}
+          closeLabel="보고서 검토 닫기"
+          pending={pending}
+          onClose={() => editorDialogRef.current?.close()}
+        />
+      <form action={action} className="grid gap-4 px-5 py-6 sm:px-7">
         <input type="hidden" name="teamId" value={teamId} />
         <input type="hidden" name="reportVersionId" value={reportVersionId} />
         <div className="grid gap-2">
@@ -80,7 +92,7 @@ export function ReportDecisionForm({
             value={comment}
             onChange={(event) => setComment(event.currentTarget.value)}
             placeholder="잘된 점과 보완할 내용을 구체적으로 남겨 주세요."
-            className="field min-h-28 resize-y"
+            className="form-control min-h-28 resize-y"
           />
         </div>
         {state.message ? (
@@ -114,7 +126,7 @@ export function ReportDecisionForm({
           </button>
         </div>
         <dialog
-          ref={dialogRef}
+          ref={confirmationDialogRef}
           aria-labelledby={dialogTitleId}
           onCancel={(event) => {
             if (pending) event.preventDefault();
@@ -162,6 +174,8 @@ export function ReportDecisionForm({
           </div>
         </dialog>
       </form>
-    </section>
+      </dialog>
+      <SuccessToast message={toastMessage} />
+    </>
   );
 }

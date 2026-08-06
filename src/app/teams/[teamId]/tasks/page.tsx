@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 
 import {
-  TaskDeleteForm,
-  TaskDetailsForm,
-  TaskForm,
-  TaskStatusForm,
+  TaskCreateDialog,
+  TaskEditDialog,
 } from "@/app/teams/[teamId]/_components/task-forms";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import {
@@ -57,7 +55,7 @@ function TaskCard({
     >
       <div className="p-5 sm:p-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone={taskStatus[task.status][1]}><UiText>{taskStatus[task.status][0]}</UiText></StatusBadge>
               {deadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
@@ -66,15 +64,28 @@ function TaskCard({
               <UiText>{task.title}</UiText>
             </h3>
           </div>
-          <div className={`shrink-0 rounded-xl px-3 py-2 text-sm font-bold ${
-            deadlineState === "OVERDUE"
-              ? "bg-[var(--danger-subtle)] text-[var(--danger)]"
-              : deadlineState === "COMPLETE"
-                ? "bg-[var(--success-subtle)] text-[var(--success)]"
-                : "bg-[var(--primary-subtle)] text-[var(--primary-hover)]"
-          }`}>
-            <span className="mr-2 text-xs"><UiText>{"완료 예정"}</UiText></span>
-            <time dateTime={task.dueAt.toISOString()}><UiDate value={task.dueAt} mode="date" /></time>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <div className={`rounded-xl px-3 py-2 text-sm font-bold ${
+              deadlineState === "OVERDUE"
+                ? "bg-[var(--danger-subtle)] text-[var(--danger)]"
+                : deadlineState === "COMPLETE"
+                  ? "bg-[var(--success-subtle)] text-[var(--success)]"
+                  : "bg-[var(--primary-subtle)] text-[var(--primary-hover)]"
+            }`}>
+              <span className="mr-2 text-xs"><UiText>{"완료 예정"}</UiText></span>
+              <time dateTime={task.dueAt.toISOString()}><UiDate value={task.dueAt} mode="date" /></time>
+            </div>
+            {canEdit ? (
+              <TaskEditDialog
+                teamId={teamId}
+                taskId={task.id}
+                title={task.title}
+                dueAt={task.dueAt}
+                status={task.status}
+                assigneeIds={task.assignees.map(({ id }) => id)}
+                members={members}
+              />
+            ) : null}
           </div>
         </header>
 
@@ -86,25 +97,6 @@ function TaskCard({
             </dd>
           </div>
         </dl>
-
-        {canEdit ? (
-          <div className="mt-5 grid gap-4 rounded-2xl bg-[var(--surface-subtle)] p-4">
-            <TaskDetailsForm
-              teamId={teamId}
-              taskId={task.id}
-              title={task.title}
-              dueAt={task.dueAt}
-            />
-            <TaskStatusForm
-              teamId={teamId}
-              taskId={task.id}
-              status={task.status}
-              assigneeIds={task.assignees.map(({ id }) => id)}
-              members={members}
-            />
-            <TaskDeleteForm teamId={teamId} taskId={task.id} title={task.title} />
-          </div>
-        ) : null}
       </div>
     </article>
   );
@@ -134,9 +126,8 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
             </span>
           </div>
         )}
+        actions={canEditTasks ? <TaskCreateDialog teamId={workspace.id} members={workspace.members} /> : undefined}
       />
-
-      {canEditTasks ? <TaskForm teamId={workspace.id} members={workspace.members} /> : null}
 
       {workspace.tasks.length === 0 ? <EmptyState title="할 일이 없습니다" description={emptyDescription} /> : (
         <div className="space-y-6">
