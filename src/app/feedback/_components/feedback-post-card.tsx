@@ -1,7 +1,9 @@
 import { DeveloperControls } from "@/app/feedback/_components/developer-controls";
 import {
+  FEEDBACK_PRIORITY_LABEL,
   FEEDBACK_TYPE_LABEL,
   TARGET_SCREEN_LABEL,
+  type FeedbackPriorityValue,
   type FeedbackTypeValue,
   type TargetScreenValue,
 } from "@/app/feedback/_lib/feedback-options";
@@ -22,6 +24,7 @@ export type FeedbackPostView = {
   targetScreen: TargetScreenValue;
   area: string;
   type: FeedbackTypeValue;
+  priority: FeedbackPriorityValue;
   title: string;
   body: string;
   status: "OPEN" | "RESOLVED";
@@ -29,6 +32,13 @@ export type FeedbackPostView = {
   resolvedByName: string | null;
   createdAt: Date;
   comments: FeedbackCommentView[];
+};
+
+const priorityTone: Record<FeedbackPriorityValue, "neutral" | "info" | "warning" | "danger"> = {
+  LOW: "neutral",
+  NORMAL: "info",
+  HIGH: "warning",
+  URGENT: "danger",
 };
 
 function Chip({ children }: { children: string }) {
@@ -45,6 +55,7 @@ export function FeedbackPostCard({ post }: { post: FeedbackPostView }) {
     <article className="panel grid gap-4 p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge tone={post.type === "BUG" ? "warning" : "info"}>{FEEDBACK_TYPE_LABEL[post.type]}</StatusBadge>
+        <StatusBadge tone={priorityTone[post.priority]}>{FEEDBACK_PRIORITY_LABEL[post.priority]}</StatusBadge>
         <StatusBadge tone={resolved ? "success" : "neutral"}>{resolved ? "해결됨" : "미해결"}</StatusBadge>
         <Chip>{TARGET_SCREEN_LABEL[post.targetScreen]}</Chip>
         <Chip>{post.area}</Chip>

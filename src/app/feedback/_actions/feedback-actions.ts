@@ -7,6 +7,8 @@ import {
   FEEDBACK_AREAS,
   type FeedbackActionState,
   FEEDBACK_LIMITS,
+  FEEDBACK_PRIORITY_VALUES,
+  type FeedbackPriorityValue,
   FEEDBACK_TYPE_VALUES,
   type FeedbackTypeValue,
   TARGET_SCREEN_VALUES,
@@ -22,6 +24,7 @@ const postSchema = z.object({
   targetScreen: z.enum(TARGET_SCREEN_VALUES as [string, ...string[]]),
   area: z.enum(FEEDBACK_AREAS as unknown as [string, ...string[]]),
   type: z.enum(FEEDBACK_TYPE_VALUES as [string, ...string[]]),
+  priority: z.enum(FEEDBACK_PRIORITY_VALUES as [string, ...string[]]),
   title: z.string().trim().min(1).max(FEEDBACK_LIMITS.title),
   body: z.string().trim().min(1).max(FEEDBACK_LIMITS.body),
 });
@@ -40,11 +43,12 @@ export async function createFeedbackPostAction(
     targetScreen: formData.get("targetScreen"),
     area: formData.get("area"),
     type: formData.get("type"),
+    priority: formData.get("priority"),
     title: formData.get("title"),
     body: formData.get("body"),
   });
   if (!parsed.success) {
-    return { status: "error", message: "이름·대상 화면·유형·제목·내용을 모두 확인해 주세요." };
+    return { status: "error", message: "이름·대상 화면·유형·우선순위·제목·내용을 모두 확인해 주세요." };
   }
 
   await prisma.feedbackPost.create({
@@ -52,6 +56,7 @@ export async function createFeedbackPostAction(
       ...parsed.data,
       targetScreen: parsed.data.targetScreen as TargetScreenValue,
       type: parsed.data.type as FeedbackTypeValue,
+      priority: parsed.data.priority as FeedbackPriorityValue,
     },
   });
   revalidatePath("/feedback");

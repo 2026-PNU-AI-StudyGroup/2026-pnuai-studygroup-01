@@ -34,45 +34,48 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
   }, [commentState]);
 
   return (
-    <div className="mt-4 grid gap-4 border-t border-dashed border-[var(--line)] pt-4">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"개발자"}</UiText></span>
-        <UiInput
-          className="field h-9 max-w-52 bg-white py-1 text-sm"
-          type="text"
-          maxLength={FEEDBACK_LIMITS.name}
-          placeholder="개발자 이름"
-          value={developerName}
-          onChange={(event) => setDeveloperName(event.target.value)}
-        />
-      </div>
+    <details className="group mt-1 border-t border-dashed border-[var(--line)] pt-3">
+      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-[var(--radius-control)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
+        <UiText>{"개발자"}</UiText>
+      </summary>
+      <div className="mt-2 grid gap-3 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 sm:p-4">
+        <label className="grid max-w-52 gap-1.5">
+          <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"개발자 이름"}</UiText></span>
+          <UiInput
+            className="form-control h-9 bg-white py-1 text-sm"
+            type="text"
+            maxLength={FEEDBACK_LIMITS.name}
+            placeholder="개발자 이름"
+            value={developerName}
+            onChange={(event) => setDeveloperName(event.target.value)}
+          />
+        </label>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <form action={toggleFormAction}>
+        <form action={toggleFormAction} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="developerName" value={developerName} />
           <button className={resolved ? "button-secondary" : "button-primary"} type="submit" disabled={toggling}>
             <UiText>{resolved ? "미해결로 변경" : "해결 처리"}</UiText>
           </button>
+          <Notice state={toggleState} />
         </form>
-        <Notice state={toggleState} />
-      </div>
 
-      <form action={commentFormAction} className="grid gap-2">
-        <input type="hidden" name="developerName" value={developerName} />
-        <UiTextarea
-          ref={commentRef}
-          className="field min-h-16 bg-white text-sm leading-6"
-          name="body"
-          maxLength={FEEDBACK_LIMITS.comment}
-          placeholder="개발자 코멘트를 남겨 주세요."
-        />
-        <div className="flex items-center gap-3">
-          <button className="button-secondary" type="submit" disabled={commenting}>
-            <UiText>{"코멘트 추가"}</UiText>
-          </button>
-          <Notice state={commentState} />
-        </div>
-      </form>
-    </div>
+        <form action={commentFormAction} className="grid gap-2">
+          <input type="hidden" name="developerName" value={developerName} />
+          <UiTextarea
+            ref={commentRef}
+            className="form-control min-h-16 bg-white text-sm leading-6"
+            name="body"
+            maxLength={FEEDBACK_LIMITS.comment}
+            placeholder="개발자 코멘트를 남겨 주세요."
+          />
+          <div className="flex items-center gap-3">
+            <button className="button-secondary" type="submit" disabled={commenting}>
+              <UiText>{"코멘트 추가"}</UiText>
+            </button>
+            <Notice state={commentState} />
+          </div>
+        </form>
+      </div>
+    </details>
   );
 }

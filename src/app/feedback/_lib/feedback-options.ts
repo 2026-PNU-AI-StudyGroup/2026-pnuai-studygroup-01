@@ -12,6 +12,13 @@ export const FEEDBACK_TYPES = [
   { value: "BUG", label: "버그 수정" },
 ] as const;
 
+export const FEEDBACK_PRIORITIES = [
+  { value: "LOW", label: "낮음" },
+  { value: "NORMAL", label: "보통" },
+  { value: "HIGH", label: "높음" },
+  { value: "URGENT", label: "긴급" },
+] as const;
+
 export const FEEDBACK_AREAS = [
   "프로젝트 탐색·지원",
   "팀원 모집",
@@ -25,6 +32,7 @@ export const FEEDBACK_AREAS = [
 
 export type TargetScreenValue = (typeof TARGET_SCREENS)[number]["value"];
 export type FeedbackTypeValue = (typeof FEEDBACK_TYPES)[number]["value"];
+export type FeedbackPriorityValue = (typeof FEEDBACK_PRIORITIES)[number]["value"];
 export type FeedbackAreaValue = (typeof FEEDBACK_AREAS)[number];
 
 export const TARGET_SCREEN_LABEL = Object.fromEntries(
@@ -35,8 +43,13 @@ export const FEEDBACK_TYPE_LABEL = Object.fromEntries(
   FEEDBACK_TYPES.map((option) => [option.value, option.label]),
 ) as Record<FeedbackTypeValue, string>;
 
+export const FEEDBACK_PRIORITY_LABEL = Object.fromEntries(
+  FEEDBACK_PRIORITIES.map((option) => [option.value, option.label]),
+) as Record<FeedbackPriorityValue, string>;
+
 export const TARGET_SCREEN_VALUES = TARGET_SCREENS.map((option) => option.value);
 export const FEEDBACK_TYPE_VALUES = FEEDBACK_TYPES.map((option) => option.value);
+export const FEEDBACK_PRIORITY_VALUES = FEEDBACK_PRIORITIES.map((option) => option.value);
 
 // 입력 길이 제한
 export const FEEDBACK_LIMITS = {

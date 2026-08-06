@@ -10,7 +10,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiLink } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { Brand } from "@/shared/ui/brand";
-import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("피드백 게시판");
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FeedbackPage() {
   const posts = await prisma.feedbackPost.findMany({
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
     include: { comments: { orderBy: { createdAt: "asc" } } },
     take: 200,
   });
@@ -35,12 +35,6 @@ export default async function FeedbackPage() {
       </header>
 
       <main className="mx-auto grid max-w-4xl gap-8 px-5 py-8 sm:px-8 sm:py-10">
-        <PageHeader
-          eyebrow="사용자 피드백"
-          title="피드백 게시판"
-          description="화면과 기능을 써 보고 느낀 점, 버그, 새 기능 제안을 남겨 주세요. 개발자가 확인하고 처리 결과를 남깁니다."
-        />
-
         <FeedbackComposer />
 
         <section className="grid gap-4">
@@ -54,10 +48,7 @@ export default async function FeedbackPage() {
               <FeedbackPostCard key={post.id} post={post as FeedbackPostView} />
             ))
           ) : (
-            <EmptyState
-              title="아직 등록된 피드백이 없습니다."
-              description="첫 번째 의견을 남겨 주세요. 로그인 없이 바로 작성할 수 있습니다."
-            />
+            <EmptyState title="아직 등록된 피드백이 없습니다." />
           )}
         </section>
       </main>
