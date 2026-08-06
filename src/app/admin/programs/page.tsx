@@ -4,9 +4,6 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ProgramStatusForm } from "@/app/admin/programs/_components/program-status-form";
-import { ProgramIconForm } from "@/app/admin/programs/_components/program-icon-picker";
-import { StudentProjectCreationForm } from "@/app/admin/programs/_components/student-project-creation-form";
 import {
   AdminSection,
   AdminSectionEmpty,
@@ -67,7 +64,7 @@ export default async function ProgramsAdminPage() {
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"프로젝트 등록"}</UiText></dt><dd className="mt-1"><UiDate value={program.projectRegistrationStartsAt ?? program.startsAt} mode="date" /><br /> – <UiDate value={program.projectRegistrationEndsAt ?? program.endsAt} mode="date" /></dd></dl>
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 현황"}</UiText></dt><dd className="mt-1"><UiText>{"주제"}</UiText>{" "}{program.topicCount} {" "}<UiText>{"· 팀"}</UiText>{" "}{program.teamCount}</dd></dl>
                   </div>
-                  <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-auto 2xl:row-auto 2xl:row-span-1">
+                  <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-start-4 2xl:row-start-1 2xl:row-span-1">
                     <p className="text-xs font-bold text-[var(--muted)]">
                       <UiText>{program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}</UiText>
                       {" · "}
@@ -75,17 +72,9 @@ export default async function ProgramsAdminPage() {
                       {" · "}
                       <UiText>{program.votingPolicy ? "프로젝트 투표 사용" : "프로젝트 투표 미사용"}</UiText>
                     </p>
-                    <div className="mt-3 flex flex-wrap justify-end gap-2">
-                      <Link href={`/admin/programs/${program.id}/settings`} className="button-secondary"><UiText>{"등록·투표 설정"}</UiText></Link>
-                      {program.votingPolicy ? <Link href={`/admin/programs/${program.id}/votes`} className="button-secondary"><UiText>{"득표현황"}</UiText></Link> : null}
+                    <div className="mt-3 flex justify-end">
+                      <Link href={`/admin/programs/${program.id}/settings`} className="button-primary"><UiText>{"관리"}</UiText></Link>
                     </div>
-                    {program.status !== "CLOSED" ? (
-                      <div className="mt-2 flex flex-wrap justify-end gap-2">
-                        <ProgramIconForm id={program.id} icon={program.icon} />
-                        <StudentProjectCreationForm id={program.id} enabled={program.studentProjectCreationEnabled} />
-                        <ProgramStatusForm id={program.id} status={program.status} />
-                      </div>
-                    ) : <div className="mt-2 flex justify-end"><ProgramIconForm id={program.id} icon={program.icon} /></div>}
                   </div>
                 </li>
               ))}

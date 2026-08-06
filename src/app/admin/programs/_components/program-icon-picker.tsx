@@ -6,7 +6,7 @@ import { changeProgramIconAction } from "@/app/admin/programs/_actions/program-a
 import { initialProgramActionState } from "@/app/admin/programs/_lib/program-form-state";
 import { PROGRAM_ICON_KEYS, PROGRAM_ICON_LABEL, type ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard } from "@/shared/ui/form-system";
+import { ChoiceCard, FormSection } from "@/shared/ui/form-system";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 
 export function ProgramIconPicker({ name = "icon", value = "FOLDER", legend = "프로그램 아이콘" }: {
@@ -38,19 +38,15 @@ export function ProgramIconPicker({ name = "icon", value = "FOLDER", legend = "�
 export function ProgramIconForm({ id, icon }: { id: string; icon: ProgramIconKey }) {
   const [state, action, pending] = useActionState(changeProgramIconAction, initialProgramActionState);
   return (
-    <details className="relative text-left">
-      <summary className="button-secondary cursor-pointer list-none"><UiText>{"아이콘 변경"}</UiText></summary>
-      <form action={action} className="absolute right-0 z-20 mt-2 w-72 rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-3 shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+    <form action={action} aria-busy={pending}>
+      <FormSection title="프로그램 아이콘" description="프로그램 목록과 프로젝트 탐색에서 표시할 아이콘을 정합니다.">
         <input type="hidden" name="programId" value={id} />
-        <div className="grid grid-cols-4 gap-1">
-          {PROGRAM_ICON_KEYS.map((candidate) => (
-            <button key={candidate} type="submit" name="icon" value={candidate} disabled={pending} aria-label={`${PROGRAM_ICON_LABEL[candidate]} 아이콘으로 변경`} className={`grid size-11 place-items-center rounded-lg border transition-colors ${candidate === icon ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
-              <ProgramIcon icon={candidate} className="size-5" />
-            </button>
-          ))}
+        <ProgramIconPicker value={icon} legend="아이콘 선택" />
+        <div className="form-action-bar mt-5">
+          <div>{state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}</div>
+          <button type="submit" className="button-primary max-sm:w-full" disabled={pending}><UiText>{pending ? "저장 중" : "아이콘 저장"}</UiText></button>
         </div>
-        {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={`mt-2 text-xs font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
-      </form>
-    </details>
+      </FormSection>
+    </form>
   );
 }
