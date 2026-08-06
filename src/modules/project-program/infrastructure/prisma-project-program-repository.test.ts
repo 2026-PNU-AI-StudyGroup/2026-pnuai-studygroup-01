@@ -9,13 +9,17 @@ vi.mock("@/modules/translation/application/translation-queue", () => ({
 
 const input = {
   createdById: "admin-1",
+  icon: "FOLDER" as const,
   name: "캡스톤",
   category: "교과",
   description: "설명",
   startsAt: new Date("2026-03-01T00:00:00Z"),
   endsAt: new Date("2026-12-01T00:00:00Z"),
+  projectRegistrationStartsAt: new Date("2026-03-01T00:00:00Z"),
+  projectRegistrationEndsAt: new Date("2026-12-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
+  votingPolicy: null,
 };
 
 function uniqueConflict(target: string[]) {

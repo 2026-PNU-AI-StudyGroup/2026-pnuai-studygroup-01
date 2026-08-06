@@ -9,6 +9,7 @@ import {
   assertValidTopicSchedule,
   canCreateTopic,
 } from "@/modules/topic/domain/topic-policy";
+import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 
 export class TopicCreationForbiddenError extends Error {
   constructor() {
@@ -28,6 +29,7 @@ export class CreateTopicService {
   constructor(
     private readonly topicRepository: TopicCreator,
     private readonly programRepository: Pick<ProjectProgramRepository, "findOpen">,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   async execute(
@@ -58,6 +60,10 @@ export class CreateTopicService {
     if (!program) {
       throw new ProjectProgramNotOpenError();
     }
+    const registeredAt = this.now();
+    if (!isProjectRegistrationOpen(program, registeredAt)) {
+      throw new ProjectProgramNotOpenError();
+    }
     const topicTimes = [input.recruitmentStartsAt, input.recruitmentEndsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
     if (topicTimes.some((time) => time < program.startsAt || time > program.endsAt)) {
       throw new ProjectProgramNotOpenError();
@@ -66,7 +72,7 @@ export class CreateTopicService {
     const created = await this.topicRepository.createDraft({
       ...details,
       authorId: actor.id,
-    });
+    }, registeredAt);
     if (!created) {
       throw new ProjectProgramNotOpenError();
     }

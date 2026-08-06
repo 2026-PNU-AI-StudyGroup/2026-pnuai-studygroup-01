@@ -11,7 +11,7 @@ export type TopicDraft = TopicDetails &
   };
 
 export interface TopicCreator {
-  createDraft(topic: TopicDraft): Promise<{ id: string } | null>;
+  createDraft(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
 }
 
 export interface TopicScheduleUpdater {
@@ -81,6 +81,7 @@ export interface ManagedTopicReader {
 
 export type TopicStateRecord = {
   id: string;
+  programId?: string;
   authorId: string;
   managerId: string | null;
   assistantIds: string[];
@@ -96,6 +97,7 @@ export interface TopicStateRepository {
 
 export type PublicTopicSummary = TopicSummary & {
   authorName: string;
+  professorName: string | null;
   startYear: number;
   memberCount: number;
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;

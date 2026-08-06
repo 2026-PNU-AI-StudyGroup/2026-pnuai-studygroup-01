@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
 import type { PublicTopicPage, PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
@@ -14,7 +14,17 @@ const phaseLabel: Record<PublicTopicPhase, string> = {
 
 export function ProjectPortalHero({ view, program, action }: {
   view: "active" | "past";
-  program?: { id?: string; name: string; category: string; description?: string };
+  program?: {
+    id?: string;
+    name: string;
+    category: string;
+    description?: string;
+    startsAt?: Date | string;
+    endsAt?: Date | string;
+    projectRegistrationStartsAt?: Date | string;
+    projectRegistrationEndsAt?: Date | string;
+    votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
+  };
   action?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
@@ -22,11 +32,58 @@ export function ProjectPortalHero({ view, program, action }: {
   return (
     <ExplorerHero
       title={<UiText>{title}</UiText>}
+      details={program?.startsAt && program.endsAt ? (
+        <ProgramPeriods
+          startsAt={program.startsAt}
+          endsAt={program.endsAt}
+          projectRegistrationStartsAt={program.projectRegistrationStartsAt}
+          projectRegistrationEndsAt={program.projectRegistrationEndsAt}
+          votingPolicy={program.votingPolicy}
+        />
+      ) : undefined}
       description={<UiText>{description}</UiText>}
       context={program?.category ? <UiText>{program.category}</UiText> : undefined}
-      mark={program ? program.name.replace(/[^A-Za-z가-힣]/g, "").slice(0, 2) : "P"}
       action={action}
     />
+  );
+}
+
+function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, votingPolicy }: {
+  startsAt: Date | string;
+  endsAt: Date | string;
+  projectRegistrationStartsAt?: Date | string;
+  projectRegistrationEndsAt?: Date | string;
+  votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
+}) {
+  return (
+    <dl className="grid gap-1.5 text-xs sm:text-sm">
+      <ProgramPeriod label="운영 기간" startsAt={startsAt} endsAt={endsAt} />
+      <ProgramPeriod
+        label="프로젝트 등록 기간"
+        startsAt={projectRegistrationStartsAt ?? startsAt}
+        endsAt={projectRegistrationEndsAt ?? endsAt}
+      />
+      {votingPolicy ? (
+        <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
+      ) : null}
+    </dl>
+  );
+}
+
+function ProgramPeriod({ label, startsAt, endsAt }: {
+  label: string;
+  startsAt: Date | string;
+  endsAt: Date | string;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] gap-x-3">
+      <dt className="font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className="min-w-0 font-semibold text-[var(--ink)]">
+        <UiDate value={startsAt} mode="dateTime" />
+        <span aria-hidden="true"> – </span>
+        <UiDate value={endsAt} mode="dateTime" />
+      </dd>
+    </div>
   );
 }
 

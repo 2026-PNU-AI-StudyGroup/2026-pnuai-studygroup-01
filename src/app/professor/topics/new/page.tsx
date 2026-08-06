@@ -22,12 +22,12 @@ export default async function NewTopicPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
-  const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen();
+  const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listRegistrableOpen();
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
       <ProfessorWorkspace currentPath="/professor/topics/new" role={actor.role} title="새 프로젝트 주제" actions={programs.length ? <Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link> : undefined}>
-        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 공개된 프로그램이 없습니다" description="프로그램이 공개되면 새 프로젝트 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>} />}
+        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 프로젝트를 등록할 수 있는 프로그램이 없습니다" description="공개 프로그램의 프로젝트 등록 기간이 시작되면 새 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>} />}
       </ProfessorWorkspace>
     </AppShell>
   );

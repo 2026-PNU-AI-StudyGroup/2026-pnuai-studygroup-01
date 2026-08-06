@@ -61,7 +61,7 @@ describe("주제 초안 생성", () => {
       availabilityRequirement: "수요일 회의 참여",
       applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
       authorId: "professor-1",
-    });
+    }, expect.any(Date));
   });
 
   it("학생의 생성 요청은 저장소 호출 전에 거절한다", async () => {
@@ -82,6 +82,24 @@ describe("주제 초안 생성", () => {
     await expect(
       service.execute({ id: "professor-1", role: "PROFESSOR" }, topicInput),
     ).rejects.toBeInstanceOf(ProjectProgramNotOpenError);
+    expect(topics.createDraft).not.toHaveBeenCalled();
+  });
+
+  it("프로젝트 등록 기간 밖에서는 공개 프로그램이어도 초안을 만들지 않는다", async () => {
+    const { topics, programs } = repositories();
+    vi.mocked(programs.findOpen).mockResolvedValue({
+      id: "program-1",
+      startsAt: new Date("2026-01-01T00:00:00Z"),
+      endsAt: new Date("2026-12-31T00:00:00Z"),
+      projectRegistrationStartsAt: new Date("2026-01-01T00:00:00Z"),
+      projectRegistrationEndsAt: new Date("2026-02-01T00:00:00Z"),
+      advisorEnabled: true,
+      studentProjectCreationEnabled: false,
+    });
+    await expect(new CreateTopicService(topics, programs, () => new Date("2026-03-01T00:00:00Z")).execute(
+      { id: "professor-1", role: "PROFESSOR" },
+      topicInput,
+    )).rejects.toBeInstanceOf(ProjectProgramNotOpenError);
     expect(topics.createDraft).not.toHaveBeenCalled();
   });
 });

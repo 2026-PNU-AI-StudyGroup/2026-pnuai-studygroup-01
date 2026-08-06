@@ -11,6 +11,7 @@ import {
   TopicNotFoundError,
 } from "@/modules/topic/application/change-topic-status";
 import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import {
   TopicScheduleUpdateForbiddenError,
   TopicScheduleUpdateUnavailableError,
@@ -64,6 +65,7 @@ export async function changeTopicStatusAction(
 
   const service = new ChangeTopicStatusService(
     new PrismaTopicCommandRepository(prisma),
+    new PrismaProjectProgramRepository(prisma),
   );
 
   try {

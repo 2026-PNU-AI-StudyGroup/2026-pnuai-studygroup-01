@@ -10,6 +10,7 @@ import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-tea
 import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { ChangeTopicStatusService } from "@/modules/topic/application/change-topic-status";
 import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const suffix = randomUUID();
@@ -54,6 +55,8 @@ async function verify() {
       description: "프로젝트 조교 통합 권한 검증",
       startsAt,
       endsAt,
+      projectRegistrationStartsAt: startsAt,
+      projectRegistrationEndsAt: endsAt,
       status: "OPEN",
       openedAt: now,
     },
@@ -102,6 +105,7 @@ async function verify() {
   const studentAssistant = invitees[0];
   await new ChangeTopicStatusService(
     new PrismaTopicCommandRepository(prisma),
+    new PrismaProjectProgramRepository(prisma),
     () => now,
   ).publish(studentAssistant, topicId);
   await prisma.team.create({

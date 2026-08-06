@@ -19,11 +19,14 @@ export class PrismaTopicCommandRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
-  createDraft(topic: TopicDraft): Promise<{ id: string } | null> {
+  createDraft(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program"
-        WHERE "id" = ${topic.programId} AND "status" = 'OPEN'::"ProjectProgramStatus"
+        WHERE "id" = ${topic.programId}
+          AND "status" = 'OPEN'::"ProjectProgramStatus"
+          AND "projectRegistrationStartsAt" <= ${registeredAt}
+          AND "projectRegistrationEndsAt" > ${registeredAt}
         FOR SHARE
       `);
       if (!programs[0]) return null;
@@ -138,6 +141,7 @@ export class PrismaTopicCommandRepository
       where: { id },
       select: {
         id: true,
+        programId: true,
         authorId: true,
         managerId: true,
         assistants: { select: { userId: true } },
@@ -156,7 +160,10 @@ export class PrismaTopicCommandRepository
         SELECT "project_program"."id"
         FROM "project_program"
         JOIN "topic" ON "topic"."programId" = "project_program"."id"
-        WHERE "topic"."id" = ${id} AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
+        WHERE "topic"."id" = ${id}
+          AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
+          AND "project_program"."projectRegistrationStartsAt" <= ${publishedAt}
+          AND "project_program"."projectRegistrationEndsAt" > ${publishedAt}
         FOR SHARE OF "project_program"
       `);
       if (!programs[0]) return false;

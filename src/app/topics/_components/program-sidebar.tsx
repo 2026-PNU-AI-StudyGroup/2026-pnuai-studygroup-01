@@ -5,29 +5,24 @@ import { useId, useState } from "react";
 
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
+import { ProgramIcon } from "@/shared/ui/program-icon";
 
 export type ProgramSidebarItem = {
   id: string;
   name: string;
   category: string;
+  icon: ProgramIconKey;
   startYear: number;
   status: "active" | "past";
   href: string;
 };
 
-function ProgramMark({ value }: { value: string }) {
-  const variant = [...value].reduce((total, character) => total + character.charCodeAt(0), 0) % 3;
-  const paths = [
-    <path key="trophy" d="M8 5h8v3.5c0 3-1.6 5.2-4 5.2S8 11.5 8 8.5V5Zm0 2H5.5v1.3c0 2 1.2 3.2 3 3.2M16 7h2.5v1.3c0 2-1.2 3.2-3 3.2M12 14v3m-3 2h6" />,
-    <path key="spark" d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Zm6 12 .7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7L18 15Z" />,
-    <path key="cube" d="m12 3 7 4-7 4-7-4 7-4Zm-7 4v9l7 4 7-4V7m-7 4v9" />,
-  ];
+function ProgramMark({ icon }: { icon: ProgramIconKey }) {
   return (
     <span aria-hidden="true" data-program-mark className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)]">
-      <svg viewBox="0 0 24 24" className="size-[1.15rem] fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]">
-        {paths[variant]}
-      </svg>
+      <ProgramIcon icon={icon} className="size-[1.15rem]" />
     </span>
   );
 }
@@ -79,7 +74,7 @@ function YearProgramGroup({
               }`;
               const rowContent = (
                 <>
-                  <ProgramMark value={program.id} />
+                  <ProgramMark icon={program.icon} />
                   <span className="min-w-0">
                     <strong className="block truncate text-[0.8rem] font-black"><UiText>{program.name}</UiText></strong>
                     <span className="mt-1 flex items-center gap-1.5">

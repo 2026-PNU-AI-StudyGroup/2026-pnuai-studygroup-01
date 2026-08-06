@@ -6,6 +6,7 @@ import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 const items = [{
   id: "program-2026",
   name: "AI 부스터 2026",
+  icon: "FOLDER" as const,
   category: "교육 프로그램",
   startYear: 2026,
   status: "active" as const,
@@ -13,6 +14,7 @@ const items = [{
 }, {
   id: "program-2025",
   name: "캡스톤 2025",
+  icon: "GRADUATION_CAP" as const,
   category: "캡스톤",
   startYear: 2025,
   status: "past" as const,

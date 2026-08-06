@@ -54,8 +54,12 @@ async function main() {
     description: "하드코딩 없는 동적 프로그램 검증",
     startsAt: new Date(now.getTime() - day),
     endsAt: new Date(now.getTime() + 90 * day),
+    projectRegistrationStartsAt: new Date(now.getTime() - day),
+    projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
+    icon: "FOLDER",
+    votingPolicy: null,
   });
   const program = await prisma.projectProgram.findFirstOrThrow({ where: { name: programName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "OPEN", now);
@@ -157,8 +161,11 @@ async function main() {
   await programService.create({ id: adminId, role: "ADMIN" }, {
     name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
+    projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
+    icon: "FOLDER",
+    votingPolicy: null,
   });
   const raceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { name: raceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "OPEN", now);
@@ -181,8 +188,11 @@ async function main() {
   await programService.create({ id: adminId, role: "ADMIN" }, {
     name: approvalRaceName, category: "경합 검증", description: "학생 제안 생성 및 승인과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
+    projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: true,
+    icon: "FOLDER",
+    votingPolicy: null,
   });
   const approvalRaceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { name: approvalRaceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, approvalRaceProgram.id, "OPEN", now);

@@ -16,6 +16,7 @@ import { getProgramStartYear } from "@/modules/project-program/domain/project-pr
 
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
+  manager: { select: { name: true } },
   program: { select: { name: true, category: true, status: true, advisorEnabled: true, startsAt: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
@@ -154,7 +155,7 @@ export class PrismaTopicQueryRepository
       { description: { contains: escapedQuery, mode: "insensitive" } },
       { id: { in: skillTopicIds.map(({ id }) => id) } },
       {
-        author: { name: { contains: escapedQuery, mode: "insensitive" } },
+        manager: { name: { contains: escapedQuery, mode: "insensitive" } },
         program: { advisorEnabled: true },
       },
       { program: { name: { contains: escapedQuery, mode: "insensitive" } } },
@@ -250,13 +251,14 @@ function toTopicSummary(
 }
 
 function toPublicTopic(
-  { author, program, team, ...topic }: PublicTopicRow,
+  { author, manager, program, team, ...topic }: PublicTopicRow,
   ownApplicationStatus: PublicTopicSummary["ownApplicationStatus"] = null,
 ): PublicTopicSummary {
   return {
     ...topic,
     authorName: author.name,
     authorRole: author.role,
+    professorName: program.advisorEnabled ? manager?.name ?? null : null,
     startYear: getProgramStartYear(program.startsAt),
     programName: program.name,
     programCategory: program.category,

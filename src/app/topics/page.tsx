@@ -15,6 +15,7 @@ import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selec
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
@@ -101,9 +102,12 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
         <ProjectPortalHero
           view="active"
           program={selectedProgram}
-          action={actor.role === "STUDENT" && selectedProgram?.studentProjectCreationEnabled
-            ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 제안"}</UiText></Link>
-            : undefined}
+          action={selectedProgram ? <>
+            {actor.role === "STUDENT" && selectedProgram.studentProjectCreationEnabled && isProjectRegistrationOpen(selectedProgram, now)
+              ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 제안"}</UiText></Link>
+              : null}
+            {selectedProgram.votingPolicy ? <Link className="button-secondary" href={`/programs/${encodeURIComponent(selectedProgram.id)}/vote`}><UiText>{"프로젝트 투표"}</UiText></Link> : null}
+          </> : undefined}
         />
         <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} />
       </ExplorerLayout>

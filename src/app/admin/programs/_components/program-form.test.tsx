@@ -27,4 +27,11 @@ describe("ProgramForm", () => {
     expect(screen.getByLabelText("운영 종료")).toBeRequired();
     expect(screen.getByRole("button", { name: "초안 등록" })).toBeEnabled();
   });
+
+  it("고정 아이콘 목록에서 폴더 아이콘을 기본값으로 선택한다", () => {
+    render(<ProgramForm />);
+
+    expect(screen.getByRole("radio", { name: "일반" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "봉사" })).not.toBeChecked();
+  });
 });

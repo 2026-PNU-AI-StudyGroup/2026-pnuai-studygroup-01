@@ -1,4 +1,6 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
+import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 import type { TopicStateRepository } from "@/modules/topic/application/topic-ports";
 import { canManageTopic } from "@/modules/topic/domain/topic-policy";
 
@@ -24,10 +26,21 @@ export class InvalidTopicStatusTransitionError extends Error {
 }
 
 export class ChangeTopicStatusService {
+  private readonly programs: Pick<ProjectProgramRepository, "findOpen"> | undefined;
+  private readonly now: () => Date;
+
   constructor(
     private readonly repository: TopicStateRepository,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+    programsOrNow?: Pick<ProjectProgramRepository, "findOpen"> | (() => Date),
+    now: () => Date = () => new Date(),
+  ) {
+    if (typeof programsOrNow === "function") {
+      this.now = programsOrNow;
+    } else {
+      this.programs = programsOrNow;
+      this.now = now;
+    }
+  }
 
   async publish(actor: CurrentActor, topicId: string): Promise<void> {
     const topic = await this.requireManageableTopic(actor, topicId);
@@ -40,6 +53,12 @@ export class ChangeTopicStatusService {
       throw new InvalidTopicStatusTransitionError(
         "모집 종료 시각이 지난 주제는 공개할 수 없습니다.",
       );
+    }
+    if (this.programs && topic.programId) {
+      const program = await this.programs.findOpen(topic.programId);
+      if (!program || !isProjectRegistrationOpen(program, publishedAt)) {
+        throw new InvalidTopicStatusTransitionError("현재 프로젝트 등록 기간이 아니어서 공개할 수 없습니다.");
+      }
     }
 
     if (!(await this.repository.publishDraft(topic.id, actor, publishedAt))) {

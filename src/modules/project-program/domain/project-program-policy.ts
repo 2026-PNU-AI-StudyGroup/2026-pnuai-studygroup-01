@@ -1,4 +1,15 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { isProgramIconKey, type ProgramIconKey } from "@/modules/project-program/domain/program-icon";
+
+export type VotingIdentityVisibility = "ANONYMOUS" | "NAMED";
+
+export type ProgramVotingPolicyDetails = {
+  startsAt: Date;
+  endsAt: Date;
+  voteLimit: number;
+  selfVotingAllowed: boolean;
+  identityVisibility: VotingIdentityVisibility;
+};
 
 export type ProjectProgramDetails = {
   name: string;
@@ -6,8 +17,11 @@ export type ProjectProgramDetails = {
   description: string;
   startsAt: Date;
   endsAt: Date;
+  projectRegistrationStartsAt: Date;
+  projectRegistrationEndsAt: Date;
   advisorEnabled: boolean;
   studentProjectCreationEnabled: boolean;
+  icon: ProgramIconKey;
 };
 
 export class InvalidProjectProgramError extends Error {}
@@ -27,7 +41,39 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
   if (!value.category || value.category.length > 100) throw new InvalidProjectProgramError("분류는 1자 이상 100자 이하여야 합니다.");
   if (!value.description || value.description.length > 5000) throw new InvalidProjectProgramError("설명은 1자 이상 5000자 이하여야 합니다.");
   if (!Number.isFinite(value.startsAt.getTime()) || !Number.isFinite(value.endsAt.getTime()) || value.startsAt >= value.endsAt) throw new InvalidProjectProgramError("프로그램 시작 시각은 종료 시각보다 앞서야 합니다.");
+  assertProjectRegistrationPeriod(value.projectRegistrationStartsAt, value.projectRegistrationEndsAt);
+  if (!isProgramIconKey(value.icon)) throw new InvalidProjectProgramError("프로그램 아이콘을 다시 선택해 주세요.");
   return value;
+}
+
+export function normalizeProgramVotingPolicy(input: ProgramVotingPolicyDetails): ProgramVotingPolicyDetails {
+  assertValidPeriod(input.startsAt, input.endsAt, "투표 시작 시각은 종료 시각보다 앞서야 합니다.");
+  if (!Number.isSafeInteger(input.voteLimit) || input.voteLimit < 1) {
+    throw new InvalidProjectProgramError("인당 가능 투표수는 1 이상이어야 합니다.");
+  }
+  if (input.identityVisibility !== "ANONYMOUS" && input.identityVisibility !== "NAMED") {
+    throw new InvalidProjectProgramError("투표 공개 방식을 다시 선택해 주세요.");
+  }
+  return { ...input };
+}
+
+export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {
+  assertValidPeriod(startsAt, endsAt, "프로젝트 등록 시작 시각은 종료 시각보다 앞서야 합니다.");
+}
+
+export function isProjectRegistrationOpen(
+  program: Pick<ProjectProgramDetails, "startsAt" | "endsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">>,
+  now: Date,
+) {
+  const startsAt = program.projectRegistrationStartsAt ?? program.startsAt;
+  const endsAt = program.projectRegistrationEndsAt ?? program.endsAt;
+  return startsAt <= now && now < endsAt;
+}
+
+function assertValidPeriod(startsAt: Date, endsAt: Date, message: string) {
+  if (!Number.isFinite(startsAt.getTime()) || !Number.isFinite(endsAt.getTime()) || startsAt >= endsAt) {
+    throw new InvalidProjectProgramError(message);
+  }
 }
 
 export function assertProgramAdmin(actor: CurrentActor) {

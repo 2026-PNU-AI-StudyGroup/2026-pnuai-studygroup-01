@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProgramStatusForm } from "@/app/admin/programs/_components/program-status-form";
+import { ProgramIconForm } from "@/app/admin/programs/_components/program-icon-picker";
 import { StudentProjectCreationForm } from "@/app/admin/programs/_components/student-project-creation-form";
 import {
   AdminSection,
@@ -19,6 +20,7 @@ import { PrismaProjectProgramRepository } from "@/modules/project-program/infras
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { ProgramIcon } from "@/shared/ui/program-icon";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로그램 관리");
@@ -53,6 +55,7 @@ export default async function ProgramsAdminPage() {
                 <li key={program.id} className={`${adminRecordRowClassName} grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(14rem,auto)] xl:items-center 2xl:grid-cols-[minmax(0,1.5fr)_12rem_10rem_minmax(14rem,auto)]`}>
                   <div className="min-w-0 xl:col-start-1 xl:row-start-1 2xl:col-auto 2xl:row-auto">
                     <div className="flex flex-wrap items-center gap-3">
+                      <span aria-hidden="true" className="grid size-9 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)]"><ProgramIcon icon={program.icon} className="size-5" /></span>
                       <h3 className="text-lg font-semibold tracking-[-0.02em]">{program.name}</h3>
                       <StatusBadge tone={status[program.status][1]}>{status[program.status][0]}</StatusBadge>
                     </div>
@@ -61,6 +64,7 @@ export default async function ProgramsAdminPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4 xl:col-start-1 xl:row-start-2 2xl:contents">
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 기간"}</UiText></dt><dd className="mt-1"><UiDate value={program.startsAt} mode="date" /><br /> – <UiDate value={program.endsAt} mode="date" /></dd></dl>
+                    <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"프로젝트 등록"}</UiText></dt><dd className="mt-1"><UiDate value={program.projectRegistrationStartsAt ?? program.startsAt} mode="date" /><br /> – <UiDate value={program.projectRegistrationEndsAt ?? program.endsAt} mode="date" /></dd></dl>
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 현황"}</UiText></dt><dd className="mt-1"><UiText>{"주제"}</UiText>{" "}{program.topicCount} {" "}<UiText>{"· 팀"}</UiText>{" "}{program.teamCount}</dd></dl>
                   </div>
                   <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-auto 2xl:row-auto 2xl:row-span-1">
@@ -68,13 +72,20 @@ export default async function ProgramsAdminPage() {
                       <UiText>{program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}</UiText>
                       {" · "}
                       <UiText>{program.studentProjectCreationEnabled ? "학생 프로젝트 제안 허용" : "학생 프로젝트 제안 미허용"}</UiText>
+                      {" · "}
+                      <UiText>{program.votingPolicy ? "프로젝트 투표 사용" : "프로젝트 투표 미사용"}</UiText>
                     </p>
+                    <div className="mt-3 flex flex-wrap justify-end gap-2">
+                      <Link href={`/admin/programs/${program.id}/settings`} className="button-secondary"><UiText>{"등록·투표 설정"}</UiText></Link>
+                      {program.votingPolicy ? <Link href={`/admin/programs/${program.id}/votes`} className="button-secondary"><UiText>{"득표현황"}</UiText></Link> : null}
+                    </div>
                     {program.status !== "CLOSED" ? (
-                      <div className="mt-3 flex flex-wrap justify-end gap-2">
+                      <div className="mt-2 flex flex-wrap justify-end gap-2">
+                        <ProgramIconForm id={program.id} icon={program.icon} />
                         <StudentProjectCreationForm id={program.id} enabled={program.studentProjectCreationEnabled} />
                         <ProgramStatusForm id={program.id} status={program.status} />
                       </div>
-                    ) : null}
+                    ) : <div className="mt-2 flex justify-end"><ProgramIconForm id={program.id} icon={program.icon} /></div>}
                   </div>
                 </li>
               ))}

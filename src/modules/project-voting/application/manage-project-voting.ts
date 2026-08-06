@@ -1,0 +1,98 @@
+import type { CurrentActor, CurrentUser } from "@/modules/identity/domain/current-actor";
+import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
+import {
+  getProgramVotingPhase,
+  normalizeVoteSelection,
+  ProjectVotingPolicyError,
+  type ProgramVotingPhase,
+} from "@/modules/project-voting/domain/project-voting-policy";
+
+export type ProjectVoteCandidate = {
+  id: string;
+  title: string;
+  description: string;
+  isSelfProject: boolean;
+};
+
+export type ProgramVoteBallot = {
+  programId: string;
+  programName: string;
+  policy: ProgramVotingPolicyDetails;
+  phase: ProgramVotingPhase;
+  candidates: ProjectVoteCandidate[];
+  selectedTopicIds: string[];
+};
+
+export type ProgramVoteResult = {
+  topicId: string;
+  title: string;
+  description: string;
+  voteCount: number;
+  rank: number;
+  voters: Array<{ id: string; name: string; email: string }>;
+};
+
+export type ProgramVotingResults = {
+  programId: string;
+  programName: string;
+  policy: ProgramVotingPolicyDetails;
+  phase: ProgramVotingPhase;
+  totalVotes: number;
+  participantCount: number;
+  results: ProgramVoteResult[];
+};
+
+export type ReplaceProgramVotesOutcome =
+  | "SAVED"
+  | "NOT_FOUND"
+  | "INACTIVE_VOTER"
+  | "NOT_OPEN"
+  | "INVALID_CANDIDATE"
+  | "SELF_VOTE_FORBIDDEN";
+
+export interface ProjectVotingRepository {
+  findBallot(programId: string, voterId: string, now: Date): Promise<ProgramVoteBallot | null>;
+  replaceVotes(input: { programId: string; voterId: string; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome>;
+  findResults(programId: string, now: Date): Promise<ProgramVotingResults | null>;
+}
+
+export class ProjectVotingOperationError extends Error {}
+
+export class ProjectVotingService {
+  constructor(
+    private readonly repository: ProjectVotingRepository,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
+
+  getBallot(actor: CurrentUser, programId: string) {
+    return this.repository.findBallot(programId, actor.id, this.now());
+  }
+
+  async saveVotes(actor: CurrentUser, programId: string, topicIds: readonly string[]) {
+    const ballot = await this.repository.findBallot(programId, actor.id, this.now());
+    if (!ballot) throw new ProjectVotingOperationError("투표 설정이 없는 프로그램입니다.");
+    const selectedTopicIds = normalizeVoteSelection(topicIds, ballot.policy.voteLimit);
+    const outcome = await this.repository.replaceVotes({
+      programId,
+      voterId: actor.id,
+      topicIds: selectedTopicIds,
+      votedAt: this.now(),
+    });
+    if (outcome === "SAVED") return;
+    const message: Record<Exclude<ReplaceProgramVotesOutcome, "SAVED">, string> = {
+      NOT_FOUND: "투표 설정이 없는 프로그램입니다.",
+      INACTIVE_VOTER: "활성 상태인 사용자만 투표할 수 있습니다.",
+      NOT_OPEN: "현재 투표 가능한 기간이 아닙니다.",
+      INVALID_CANDIDATE: "공개 이력이 있는 같은 프로그램 프로젝트만 선택할 수 있습니다.",
+      SELF_VOTE_FORBIDDEN: "자기 프로젝트에는 투표할 수 없습니다.",
+    };
+    throw new ProjectVotingOperationError(message[outcome]);
+  }
+
+  async getResults(actor: CurrentActor, programId: string) {
+    if (actor.role !== "ADMIN") throw new ProjectVotingOperationError("관리자만 득표현황을 볼 수 있습니다.");
+    return this.repository.findResults(programId, this.now());
+  }
+}
+
+export { ProjectVotingPolicyError, getProgramVotingPhase };
