@@ -89,7 +89,6 @@ export function ProjectGuidanceRequestForm({
   const titleId = useId();
   const descriptionId = useId();
   const fieldId = useId();
-  const [minimumScheduledAt] = useState(() => koreanDateTimeInput(new Date()));
   const toastMessage = useDialogSuccessToast(state, dialogRef);
 
   useEffect(() => {
@@ -250,6 +249,7 @@ export function ProjectGuidanceResponseForm({
   const titleId = useId();
   const descriptionId = useId();
   const fieldId = useId();
+  const [minimumScheduledAt] = useState(() => koreanDateTimeInput(new Date()));
   const toastMessage = useDialogSuccessToast(state, dialogRef);
 
   return (

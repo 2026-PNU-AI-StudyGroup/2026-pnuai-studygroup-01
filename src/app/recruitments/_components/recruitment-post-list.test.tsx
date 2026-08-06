@@ -36,6 +36,7 @@ describe("RecruitmentPostList", () => {
             capacity: 4,
             createdAt: new Date("2026-08-01T00:00:00Z"),
             canApply: true,
+            isMember: false,
             ownApplication: null,
           }],
         }}

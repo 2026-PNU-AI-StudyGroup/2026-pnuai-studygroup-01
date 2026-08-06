@@ -1,16 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 
 vi.mock("@/modules/translation/application/translation-queue", () => ({
   enqueueTranslations: vi.fn(async () => undefined),
-}));
-
-vi.mock("@/modules/notification/infrastructure/notification-events", () => ({
-  createApplicationResultNotifications: vi.fn(async () => undefined),
-  createTopicApprovalNotification: vi.fn(async () => undefined),
 }));
 
 const requestedAt = new Date("2026-08-01T00:00:00Z");
@@ -199,6 +193,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         findUnique: vi.fn(async () => request),
         update: vi.fn(async () => ({ id: "request-1" })),
       },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -252,6 +247,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         findUnique: vi.fn(async () => request),
         update: updateRequest,
       },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -290,6 +286,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         findUnique: vi.fn(async () => request),
         update: updateRequest,
       },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -515,14 +512,12 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       where: { topicApplicationId: { in: ["other-application-1"] }, status: "PENDING" },
       data: { status: "REJECTED", decidedAt: requestedAt },
     });
-    expect(createApplicationResultNotifications).toHaveBeenCalledWith(
-      expect.anything(),
-      [expect.objectContaining({
+    expect(createNotifications).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.arrayContaining([expect.objectContaining({
         recipientId: "student-1",
-        applicationId: "other-application-1",
-        outcome: "REJECTED",
-      })],
-    );
+        dedupeKey: "application:other-application-1:REJECTED",
+      })]),
+    }));
     expect(updateTopic).toHaveBeenCalledWith({
       where: { id: "topic-1" },
       data: {

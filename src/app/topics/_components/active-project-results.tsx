@@ -62,13 +62,15 @@ function ProjectCard({ topic, canApply, leaderTeams, now, showProgramLabel = tru
       <article aria-labelledby={`topic-${topic.id}`} className={styles.card}>
         <ProjectGalleryCover
           id={topic.id}
-          href={href}
-          label={showProgramLabel ? `${topic.programCategory} · ${topic.programName}` : ""}
-          title={topic.title}
-          professorName={topic.advisorEnabled ? topic.authorName : undefined}
-          authorSuffix={topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}
         />
         <div className={styles.body}>
+          {showProgramLabel || topic.advisorEnabled ? (
+            <p className="mb-3 min-w-0 truncate text-xs font-bold text-[var(--muted)]">
+              {showProgramLabel ? <UiText>{`${topic.programCategory} · ${topic.programName}`}</UiText> : null}
+              {showProgramLabel && topic.advisorEnabled ? <span aria-hidden="true"> · </span> : null}
+              {topic.advisorEnabled ? <>{topic.authorName} <UiText>{topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}</UiText></> : null}
+            </p>
+          ) : null}
           <div className="flex items-start justify-between gap-3">
             <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
               <Link href={href} className={styles.titleLink}><UiText>{topic.title}</UiText></Link>
@@ -145,7 +147,7 @@ function groupByProgram(items: TopicItem[], programOrder: string[]) {
   );
 }
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, phase, query, sort, now, programOrder }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, phase, query, sort, now, programOrder = [] }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -154,7 +156,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   query: string;
   sort: PublicTopicSort;
   now: Date;
-  programOrder: string[];
+  programOrder?: string[];
 }) {
   const hasFilters = Boolean(
     programId
@@ -162,7 +164,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
     || phase !== "ACTIVE"
     || sort !== "LATEST",
   );
-  const grouped = !hasFilters && topics.items.length > 0
+  const grouped = !hasFilters && programOrder.length > 0 && topics.items.length > 0
     ? groupByProgram(topics.items, programOrder)
     : null;
 

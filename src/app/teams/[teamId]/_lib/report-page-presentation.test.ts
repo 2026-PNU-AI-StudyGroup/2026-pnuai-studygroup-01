@@ -26,6 +26,7 @@ function report({
     id,
     type,
     dueAt: new Date(dueAt),
+    feedback: [],
     versions: submitted
       ? [{
           id: `${id}-version`,

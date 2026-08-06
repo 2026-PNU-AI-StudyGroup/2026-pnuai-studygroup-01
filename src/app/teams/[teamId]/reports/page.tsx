@@ -366,6 +366,7 @@ function ReportScoreFeedbackSection({
   canFeedback: boolean;
 }) {
   const hasScore = report.score !== undefined;
+  const feedback = report.feedback ?? [];
 
   return (
     <div className="mt-5 grid gap-5 border-t border-[var(--line)] pt-5 lg:grid-cols-2">
@@ -398,11 +399,11 @@ function ReportScoreFeedbackSection({
       <section aria-labelledby={`report-feedback-${report.id}`} className={hasScore || canScore ? "lg:border-l lg:border-[var(--line)] lg:pl-5" : "lg:col-span-2"}>
         <h3 id={`report-feedback-${report.id}`} className="text-sm font-bold">
           <UiText>{"피드백"}</UiText>
-          {report.feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{report.feedback.length}</span> : null}
+          {feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{feedback.length}</span> : null}
         </h3>
-        {report.feedback.length ? (
+        {feedback.length ? (
           <ul className="mt-3 space-y-3">
-            {report.feedback.map((item) => (
+            {feedback.map((item) => (
               <li key={item.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3">
                 <p className="text-xs text-[var(--muted)]">
                   <span className="font-semibold text-[var(--ink)]">{item.authorName}</span>

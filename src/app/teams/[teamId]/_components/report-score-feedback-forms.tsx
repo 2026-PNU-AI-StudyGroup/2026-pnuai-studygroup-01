@@ -10,12 +10,13 @@ import {
 } from "@/app/teams/[teamId]/_actions/team-report-actions";
 import { initialReportActionState } from "@/app/teams/[teamId]/_lib/report-form-shared";
 
-function FormMessage({ status, message }: { status: "idle" | "error" | "success"; message: string }) {
+function FormMessage({ status, message }: { status: "idle" | "error" | "success" | "conflict"; message: string }) {
   if (!message) return null;
+  const isError = status === "error" || status === "conflict";
   return (
     <p
-      role={status === "error" ? "alert" : "status"}
-      className={`text-sm font-semibold ${status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}
+      role={isError ? "alert" : "status"}
+      className={`text-sm font-semibold ${isError ? "text-[var(--danger)]" : "text-[var(--success)]"}`}
     >
       <UiText>{message}</UiText>
     </p>
