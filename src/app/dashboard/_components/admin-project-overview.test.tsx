@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   AdminProjectOverview,
+  sortAdminProjects,
   summarizeProjectProgress,
 } from "@/app/dashboard/_components/admin-project-overview";
 import type { AdminProjectOverviewProgram } from "@/modules/team/application/list-admin-project-overview";
@@ -11,6 +12,7 @@ const programs: AdminProjectOverviewProgram[] = [
   {
     id: "program-1",
     name: "2026 캡스톤",
+    icon: "GRADUATION_CAP",
     category: "캡스톤",
     startYear: 2026,
     status: "OPEN",
@@ -23,6 +25,7 @@ const programs: AdminProjectOverviewProgram[] = [
   {
     id: "program-2",
     name: "AI 경진대회",
+    icon: "TROPHY",
     category: "경진대회",
     startYear: 2026,
     status: "DRAFT",
@@ -32,6 +35,7 @@ const programs: AdminProjectOverviewProgram[] = [
   {
     id: "program-3",
     name: "지난 캡스톤",
+    icon: "GRADUATION_CAP",
     category: "캡스톤",
     startYear: 2025,
     status: "CLOSED",
@@ -77,12 +81,18 @@ describe("관리자 프로젝트 현황", () => {
     expect(progressRow).not.toBeNull();
     expect(within(progressRow!).getAllByText("33%")).toHaveLength(1);
     expect(within(progressRow!).getAllByText("진행 팀 보고서 제출률")).toHaveLength(1);
-    expect(screen.getAllByText("제출 기한 초과").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "시작 전 팀" }).parentElement).toHaveTextContent("제출 기한 초과");
     expect(screen.getAllByRole("link", { name: "프로젝트 열기" })[0]).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByText("전체 보기")).not.toBeInTheDocument();
     const programLink = Array.from(container.querySelectorAll('nav[aria-label="프로그램 선택"] a'))
       .find((link) => link.getAttribute("href")?.includes("programId=program-1"));
     expect(programLink).toHaveAttribute("aria-current", "page");
+    const progressNavigation = screen.getByRole("navigation", { name: "프로젝트 진행 구간" });
+    expect(within(progressNavigation).getByRole("link", { name: "전체 2개" })).toHaveAttribute("aria-current", "page");
+    expect(within(progressNavigation).getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute(
+      "href",
+      "/dashboard?programId=program-1&progress=overdue",
+    );
   });
 
   it("프로젝트가 없는 프로그램에는 보고서 진행 통계를 만들지 않는다", () => {
@@ -193,5 +203,58 @@ describe("관리자 프로젝트 현황", () => {
       .find((link) => link.getAttribute("aria-current") === "page");
 
     expect(selectedProgramLink).toHaveAttribute("href", "/dashboard?programId=program-1");
+  });
+
+  it("일정이 있는 프로젝트를 진행률 순으로 정렬하고 일정 없는 프로젝트는 뒤로 보낸다", () => {
+    const items = [
+      { id: "unscheduled", name: "일정 없음", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 0, submittedReportCount: 0, overdueReportCount: 0 },
+      { id: "middle", name: "중반", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 2, overdueReportCount: 0 },
+      { id: "overdue", name: "기한 초과 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 1 },
+      { id: "not-started", name: "일반 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 0 },
+    ];
+
+    expect(sortAdminProjects(items).map(({ id }) => id)).toEqual([
+      "overdue",
+      "not-started",
+      "middle",
+      "unscheduled",
+    ]);
+  });
+
+  it("선택한 진행 구간만 보여주고 필터 변경 시 페이지를 초기화한다", () => {
+    render(<AdminProjectOverview programs={programs} selectedProgress="overdue" requestedPage={4} />);
+
+    const progressNavigation = screen.getByRole("navigation", { name: "프로젝트 진행 구간" });
+    expect(within(progressNavigation).getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute("aria-current", "page");
+    expect(within(progressNavigation).getByRole("link", { name: "전체 2개" })).toHaveAttribute(
+      "href",
+      "/dashboard?programId=program-1",
+    );
+    expect(screen.getByRole("heading", { name: "시작 전 팀" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "진행 팀" })).not.toBeInTheDocument();
+  });
+
+  it("프로젝트를 20개씩 나누고 범위를 벗어난 페이지를 마지막 페이지로 정규화한다", () => {
+    const manyProjects = Array.from({ length: 41 }, (_, index) => ({
+      id: `team-${index + 1}`,
+      name: `팀 ${String(index + 1).padStart(2, "0")}`,
+      topicTitle: "주제",
+      professorName: "김교수",
+      advisorEnabled: true,
+      status: "CONFIRMED" as const,
+      memberCount: 4,
+      reportCount: 4,
+      submittedReportCount: index % 4,
+      overdueReportCount: 0,
+    }));
+    render(<AdminProjectOverview programs={[{ ...programs[0], projects: manyProjects }]} requestedPage={99} />);
+
+    const pagination = screen.getByRole("navigation", { name: "관리자 프로젝트 현황 페이지" });
+    expect(pagination).toHaveTextContent("3 / 3 페이지");
+    expect(screen.getAllByRole("link", { name: "프로젝트 열기" })).toHaveLength(1);
+    expect(within(pagination).getByRole("link", { name: "이전" })).toHaveAttribute(
+      "href",
+      "/dashboard?programId=program-1&page=2",
+    );
   });
 });

@@ -59,6 +59,7 @@ export class PrismaAdminProjectOverviewReader
       id: program.id,
       name: program.name,
       category: program.category,
+      icon: program.icon,
       startYear: getProgramStartYear(program.startsAt),
       status: program.status,
       advisorEnabled: program.advisorEnabled,

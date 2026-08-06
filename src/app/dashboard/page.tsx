@@ -10,6 +10,10 @@ import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-das
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
 import { AdminProjectOverview } from "@/app/dashboard/_components/admin-project-overview";
+import {
+  parseAdminProjectPage,
+  parseAdminProjectProgressFilter,
+} from "@/app/dashboard/_lib/admin-project-overview-query";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
@@ -62,6 +66,7 @@ export default async function DashboardPage({
     view?: SearchParamValue;
     page?: SearchParamValue;
     programId?: SearchParamValue;
+    progress?: SearchParamValue;
   }>;
 }) {
   const actor = await getCurrentActor();
@@ -78,12 +83,16 @@ export default async function DashboardPage({
       new PrismaAdminProjectOverviewReader(prisma),
     ).execute(actor);
     const selectedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200);
+    const selectedProgress = parseAdminProjectProgressFilter(firstSearchParam(params.progress));
+    const adminPage = parseAdminProjectPage(firstSearchParam(params.page));
 
     return (
       <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
         <AdminProjectOverview
           programs={programs}
           selectedProgramId={selectedProgramId}
+          selectedProgress={selectedProgress}
+          requestedPage={adminPage}
         />
       </AppShell>
     );

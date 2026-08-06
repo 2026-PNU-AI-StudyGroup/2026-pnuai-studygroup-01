@@ -43,7 +43,6 @@ export function ProjectDashboardHero({ role }: { role: ProjectDashboardRole }) {
       <ExplorerHero
         title={<UiText>{title}</UiText>}
         description={<UiText>{description}</UiText>}
-        mark={<UiText>{role === "STUDENT" ? "내" : "지"}</UiText>}
         action={<DashboardActions role={role} />}
       />
     </div>

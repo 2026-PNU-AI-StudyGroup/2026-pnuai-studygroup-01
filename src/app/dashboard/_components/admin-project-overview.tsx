@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import type { AdminProjectProgressFilter } from "@/app/dashboard/_lib/admin-project-overview-query";
 import type {
   AdminProjectOverviewItem,
   AdminProjectOverviewProgram,
@@ -13,6 +14,10 @@ import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentati
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
+import { ProgramIcon } from "@/shared/ui/program-icon";
+import { ProjectPagination } from "@/shared/ui/project-pagination";
+
+const ADMIN_PROJECTS_PER_PAGE = 20;
 
 const programStatus = {
   DRAFT: { label: "초안", tone: "neutral" },
@@ -82,48 +87,118 @@ export function summarizeProjectProgress(
   return summary;
 }
 
-function StatCard({
-  label,
-  value,
-  suffix = "개",
-  accent = false,
-  danger = false,
-}: {
+const progressFilterPresentation: Array<{
+  id: AdminProjectProgressFilter;
   label: string;
-  value: number;
-  suffix?: string;
-  accent?: boolean;
-  danger?: boolean;
+  count: (summary: ProjectProgressSummary) => number;
+}> = [
+  { id: "all", label: "전체", count: (summary) => summary.total },
+  { id: "overdue", label: "기한 초과", count: (summary) => summary.overdue },
+  { id: "unscheduled", label: "일정 없음", count: (summary) => summary.withoutReportSchedule },
+  { id: "not-started", label: "착수 전", count: (summary) => summary.notStarted },
+  { id: "early", label: "초기", count: (summary) => summary.early },
+  { id: "middle", label: "중반", count: (summary) => summary.middle },
+  { id: "late", label: "후반", count: (summary) => summary.late },
+  { id: "finalizing", label: "마무리", count: (summary) => summary.finalizing },
+  { id: "completed", label: "완료", count: (summary) => summary.completed },
+];
+
+function adminProjectOverviewHref({
+  programId,
+  progress = "all",
+  page = 1,
+}: {
+  programId: string;
+  progress?: AdminProjectProgressFilter;
+  page?: number;
+}) {
+  const params = new URLSearchParams({ programId });
+  if (progress !== "all") params.set("progress", progress);
+  if (page > 1) params.set("page", String(page));
+  return `/dashboard?${params.toString()}`;
+}
+
+function ProgressSummary({
+  summary,
+  programId,
+  selectedProgress,
+}: {
+  summary: ProjectProgressSummary;
+  programId: string;
+  selectedProgress: AdminProjectProgressFilter;
 }) {
   return (
-    <div className={`rounded-xl border border-l-[3px] bg-white px-3 py-3 ${
-      danger
-        ? "border-[color-mix(in_srgb,var(--danger)_32%,var(--line))] border-l-[var(--danger)] bg-[var(--danger-subtle)]"
-        : accent
-          ? "border-[var(--line)] border-l-[var(--primary)]"
-          : "border-[var(--line)] border-l-[var(--line-strong)]"
-    }`}>
-      <dt className={`text-[0.8125rem] font-bold leading-5 ${danger ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}><UiText>{label}</UiText></dt>
-      <dd className={`mt-1 text-2xl font-black tracking-[-0.04em] ${danger ? "text-[var(--danger)]" : ""}`}>
-        {value}<span className="ml-1 text-xs font-bold text-[var(--muted)]"><UiText>{suffix}</UiText></span>
-      </dd>
-    </div>
+    <UiNav aria-label="프로젝트 진행 구간" className="rounded-[var(--radius-control)] border border-[var(--line)] bg-white p-2 shadow-[0_1px_2px_rgba(31,35,48,0.025)]">
+      <ul className="grid gap-1 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-9">
+        {progressFilterPresentation.map((item) => {
+          const selected = item.id === selectedProgress;
+          const danger = item.id === "overdue" && item.count(summary) > 0;
+          return (
+            <li key={item.id}>
+              <Link
+                href={adminProjectOverviewHref({ programId, progress: item.id })}
+                aria-current={selected ? "page" : undefined}
+                aria-label={`${item.label} ${item.count(summary)}개`}
+                className={`flex min-h-14 items-center justify-between gap-2 rounded-lg border px-3 py-2 transition-colors ${
+                  selected
+                    ? danger
+                      ? "border-[var(--danger)] bg-[var(--danger-subtle)] text-[var(--danger)]"
+                      : "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]"
+                    : danger
+                      ? "border-transparent text-[var(--danger)] hover:border-[color-mix(in_srgb,var(--danger)_30%,var(--line))] hover:bg-[var(--danger-subtle)]"
+                      : "border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
+                }`}
+              >
+                <span className="text-xs font-black"><UiText>{item.label}</UiText></span>
+                <strong className="text-base font-black tabular-nums">{item.count(summary)}</strong>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </UiNav>
   );
 }
 
-function ProgressSummary({ summary }: { summary: ProjectProgressSummary }) {
+function matchesProgressFilter(
+  project: AdminProjectOverviewItem,
+  progress: AdminProjectProgressFilter,
+): boolean {
+  if (progress === "all") return true;
+  if (progress === "overdue") return project.overdueReportCount > 0;
+  if (progress === "unscheduled") return !hasReportSchedule(project.reportCount);
+  if (!hasReportSchedule(project.reportCount)) return false;
+
+  const band = classifyProjectProgressBand(calculateReportSubmissionRate(
+    project.submittedReportCount,
+    project.reportCount,
+  ));
   return (
-    <dl className="grid grid-cols-2 gap-3 xl:grid-cols-4 2xl:grid-cols-8">
-      <StatCard label="제출 기한 초과" value={summary.overdue} danger={summary.overdue > 0} />
-      {summary.withoutReportSchedule > 0 ? <StatCard label="보고서 일정이 없습니다" value={summary.withoutReportSchedule} /> : null}
-      <StatCard label="착수 전 · 0%" value={summary.notStarted} accent={summary.notStarted > 0} />
-      <StatCard label="초기 · 1–25%" value={summary.early} accent={summary.early > 0} />
-      <StatCard label="중반 · 26–50%" value={summary.middle} accent={summary.middle > 0} />
-      <StatCard label="후반 · 51–75%" value={summary.late} accent={summary.late > 0} />
-      <StatCard label="마무리 · 76–99%" value={summary.finalizing} accent={summary.finalizing > 0} />
-      <StatCard label="완료 · 100%" value={summary.completed} accent={summary.completed > 0} />
-    </dl>
+    (progress === "not-started" && band === "NOT_STARTED")
+    || (progress === "early" && band === "EARLY")
+    || (progress === "middle" && band === "MIDDLE")
+    || (progress === "late" && band === "LATE")
+    || (progress === "finalizing" && band === "FINALIZING")
+    || (progress === "completed" && band === "COMPLETED")
   );
+}
+
+export function sortAdminProjects(
+  projects: AdminProjectOverviewItem[],
+): AdminProjectOverviewItem[] {
+  return [...projects].sort((a, b) => {
+    const aScheduled = hasReportSchedule(a.reportCount);
+    const bScheduled = hasReportSchedule(b.reportCount);
+    if (aScheduled !== bScheduled) return aScheduled ? -1 : 1;
+    if (aScheduled && bScheduled) {
+      const progressDifference = calculateReportSubmissionRate(a.submittedReportCount, a.reportCount)
+        - calculateReportSubmissionRate(b.submittedReportCount, b.reportCount);
+      if (progressDifference !== 0) return progressDifference;
+      const overdueDifference = Number(b.overdueReportCount > 0) - Number(a.overdueReportCount > 0);
+      if (overdueDifference !== 0) return overdueDifference;
+    }
+    return a.name.localeCompare(b.name, "ko");
+  });
 }
 
 function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
@@ -187,27 +262,32 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
 function ProgramSection({
   program,
   sectionId,
+  selectedProgress,
+  requestedPage,
 }: {
   program: AdminProjectOverviewProgram;
   sectionId: string;
+  selectedProgress: AdminProjectProgressFilter;
+  requestedPage: number;
 }) {
   const summary = summarizeProjectProgress(program.projects);
   const status = programStatus[program.status];
   const programSectionId = `${sectionId}-program-${program.id}`;
   const attentionCount = program.projects.filter(projectNeedsAttention).length;
-  // 느린 팀을 맨 위로, 그다음 진행률 낮은 순으로 정렬해 관리자가 문제 팀을 먼저 보게 한다.
-  const sortedProjects = [...program.projects].sort((a, b) => {
-    const aa = projectNeedsAttention(a) ? 0 : 1;
-    const bb = projectNeedsAttention(b) ? 0 : 1;
-    if (aa !== bb) return aa - bb;
-    return (
-      calculateReportSubmissionRate(a.submittedReportCount, a.reportCount) -
-      calculateReportSubmissionRate(b.submittedReportCount, b.reportCount)
-    );
-  });
+  const filteredProjects = sortAdminProjects(
+    program.projects.filter((project) => matchesProgressFilter(project, selectedProgress)),
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / ADMIN_PROJECTS_PER_PAGE));
+  const page = Math.min(requestedPage, totalPages);
+  const pageProjects = filteredProjects.slice(
+    (page - 1) * ADMIN_PROJECTS_PER_PAGE,
+    page * ADMIN_PROJECTS_PER_PAGE,
+  );
+  const selectedFilter = progressFilterPresentation.find(({ id }) => id === selectedProgress)
+    ?? progressFilterPresentation[0];
 
   return (
-    <section id={programSectionId} aria-labelledby={`${programSectionId}-title`} className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
+    <section id={programSectionId} aria-labelledby={`${programSectionId}-title`} className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[var(--shadow-admin-panel)]">
       <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-5 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -236,12 +316,49 @@ function ProgramSection({
             ) : null}
           </strong>
         </div>
-        {summary.total > 0 ? <div className="mt-5"><ProgressSummary summary={summary} /></div> : null}
+        {summary.total > 0 ? (
+          <div className="mt-5">
+            <ProgressSummary
+              summary={summary}
+              programId={program.id}
+              selectedProgress={selectedProgress}
+            />
+          </div>
+        ) : null}
       </header>
       {program.projects.length > 0 ? (
-        <ol>
-          {sortedProjects.map((project) => <ProjectRow key={project.id} project={project} />)}
-        </ol>
+        <>
+          <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-4 py-3 sm:px-5">
+            <h4 className="text-sm font-black"><UiText>{selectedFilter.label}</UiText></h4>
+            <p className="text-xs font-bold text-[var(--muted)]">
+              <strong className="text-[var(--ink)]">{filteredProjects.length}</strong><UiText>{"개"}</UiText>
+            </p>
+          </div>
+          {pageProjects.length > 0 ? (
+            <ol>
+              {pageProjects.map((project) => <ProjectRow key={project.id} project={project} />)}
+            </ol>
+          ) : (
+            <div className="px-5 py-10 text-center">
+              <p className="text-sm font-bold text-[var(--ink)]"><UiText>{"해당 진행 구간의 프로젝트가 없습니다."}</UiText></p>
+              <Link href={adminProjectOverviewHref({ programId: program.id })} className="button-secondary mt-4">
+                <UiText>{"전체 프로젝트 보기"}</UiText>
+              </Link>
+            </div>
+          )}
+          <div className="px-4 pb-6 sm:px-5">
+            <ProjectPagination
+              page={page}
+              totalPages={totalPages}
+              ariaLabel="관리자 프로젝트 현황 페이지"
+              href={(nextPage) => adminProjectOverviewHref({
+                programId: program.id,
+                progress: selectedProgress,
+                page: nextPage,
+              })}
+            />
+          </div>
+        </>
       ) : (
         <p className="px-5 py-8 text-center text-sm text-[var(--muted)]">
           <UiText>{"이 프로그램에는 아직 운영 중인 프로젝트가 없습니다."}</UiText>
@@ -287,8 +404,8 @@ function ProgramNavigation({ groups, selectedProgramId, idPrefix, ariaLabel = "�
                             : "hover:bg-[var(--surface-subtle)]"
                         }`}
                       >
-                        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line-strong)] bg-white text-xs font-black text-[var(--primary)]">
-                          {program.name.replace(/[^A-Za-z가-힣]/g, "").slice(0, 2) || "P"}
+                        <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--primary)]">
+                          <ProgramIcon icon={program.icon} className="size-5" />
                         </span>
                         <span className="min-w-0">
                           <strong className="block break-words text-sm font-black leading-5"><UiText>{program.name}</UiText></strong>
@@ -362,9 +479,13 @@ function AdminProjectSidebar({
 export function AdminProjectOverview({
   programs,
   selectedProgramId: requestedProgramId,
+  selectedProgress = "all",
+  requestedPage = 1,
 }: {
   programs: AdminProjectOverviewProgram[];
   selectedProgramId?: string;
+  selectedProgress?: AdminProjectProgressFilter;
+  requestedPage?: number;
 }) {
   const defaultProgram = programs.find(({ status }) => status !== "CLOSED")
     ?? programs[0];
@@ -392,6 +513,8 @@ export function AdminProjectOverview({
               <ProgramSection
                 program={selectedProgram}
                 sectionId="selected"
+                selectedProgress={selectedProgress}
+                requestedPage={requestedPage}
               />
             ) : (
               <p className="rounded-xl border border-dashed border-[var(--line)] px-5 py-10 text-center text-sm text-[var(--muted)]">

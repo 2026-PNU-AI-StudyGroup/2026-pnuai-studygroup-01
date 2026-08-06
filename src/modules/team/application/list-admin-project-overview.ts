@@ -1,4 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 
 export type AdminProjectOverviewItem = {
   id: string;
@@ -17,6 +18,7 @@ export type AdminProjectOverviewProgram = {
   id: string;
   name: string;
   category: string;
+  icon: ProgramIconKey;
   startYear: number;
   status: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
