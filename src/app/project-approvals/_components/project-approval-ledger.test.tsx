@@ -4,9 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 
-vi.mock("@/app/_components/topic-approval-decision-form", () => ({
-  TopicApprovalDecisionForm: ({ requestId }: { requestId: string }) => <button>요청 {requestId} 검토</button>,
-}));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor: vi.fn() }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 
@@ -34,16 +31,16 @@ describe("ProjectApprovalLedger", () => {
     expect(screen.getByText("검토 대기")).toBeInTheDocument();
     expect(screen.getByText("김학생")).toBeInTheDocument();
     expect(screen.getByText("박교수 교수")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "요청 request-1 검토" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "검토" })).toHaveAttribute("href", "/project-approvals/request-1");
     expect(container.querySelector("li")).toHaveClass("record-row");
     expect(container.querySelector("li")?.className).not.toContain("rounded-[var(--radius-panel)]");
   });
 
-  it("학생에게 처리된 검토 의견을 같은 열에 표시한다", () => {
+  it("학생에게도 처리 결과를 확인할 상세 경로를 제공한다", () => {
     render(<ProjectApprovalLedger requests={[{ ...request, status: "APPROVED", reviewComment: "공개 승인" }]} student />);
 
-    expect(screen.getByText("공개 승인")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /검토/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "상세" })).toHaveAttribute("href", "/project-approvals/request-1");
+    expect(screen.queryByText("공개 승인")).not.toBeInTheDocument();
   });
 
   it("관리자 화면에서는 공통 관리 패널과 넓은 화면 전용 열 구조를 사용한다", () => {

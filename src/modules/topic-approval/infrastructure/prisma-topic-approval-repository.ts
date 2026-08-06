@@ -5,11 +5,26 @@ import {
   createApplicationResultNotifications,
   createTopicApprovalNotification,
 } from "@/modules/notification/infrastructure/notification-events";
-import type { TopicApprovalRepository, TopicApprovalRequestPage, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
+import type { TopicApprovalRepository, TopicApprovalRequestDetail, TopicApprovalRequestPage, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 const DECISION_ATTEMPTS = 3;
+
+function visibleApprovalRequest(actor: CurrentUser): Prisma.TopicApprovalRequestWhereInput {
+  if (actor.role === "STUDENT") {
+    return {
+      OR: [
+        { requesterId: actor.id },
+        { studentTeam: { leaderId: actor.id, deletedAt: null } },
+      ],
+    };
+  }
+  if (actor.role === "PROFESSOR") {
+    return { route: "PROFESSOR", requestedProfessorId: actor.id };
+  }
+  return { route: "ADMIN" };
+}
 
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -25,8 +40,10 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         status: "DRAFT" | "OPEN" | "CLOSED";
         advisorEnabled: boolean;
         studentProjectCreationEnabled: boolean;
+        projectRegistrationStartsAt: Date;
+        projectRegistrationEndsAt: Date;
       }>>(Prisma.sql`
-        SELECT "id", "status", "advisorEnabled", "studentProjectCreationEnabled"
+        SELECT "id", "status", "advisorEnabled", "studentProjectCreationEnabled", "projectRegistrationStartsAt", "projectRegistrationEndsAt"
         FROM "project_program"
         WHERE "id" = ${input.programId}
         FOR SHARE
@@ -35,6 +52,8 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       if (
         !program ||
         program.status !== "OPEN" ||
+        program.projectRegistrationStartsAt > input.requestedAt ||
+        program.projectRegistrationEndsAt <= input.requestedAt ||
         !program.studentProjectCreationEnabled
       ) return null;
       if (!program.advisorEnabled && input.route !== "ADMIN") return null;
@@ -114,21 +133,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     pageSize: number,
     status?: TopicApprovalRequestSummary["status"],
   ): Promise<TopicApprovalRequestPage> {
-    const visibility: Prisma.TopicApprovalRequestWhereInput = actor.role === "STUDENT"
-      ? {
-        OR: [
-          { requesterId: actor.id },
-          {
-            studentTeam: {
-              leaderId: actor.id,
-              deletedAt: null,
-            },
-          },
-        ],
-      }
-      : actor.role === "PROFESSOR"
-        ? { route: "PROFESSOR", requestedProfessorId: actor.id }
-        : { route: "ADMIN" };
+    const visibility = visibleApprovalRequest(actor);
     const where: Prisma.TopicApprovalRequestWhereInput = status
       ? { AND: [visibility, { status }] }
       : visibility;
@@ -157,6 +162,49 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       page,
       totalPages,
       total,
+    };
+  }
+
+  async findVisible(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null> {
+    const request = await this.client.topicApprovalRequest.findFirst({
+      where: { AND: [{ id: requestId }, visibleApprovalRequest(actor)] },
+      include: {
+        requester: { select: { name: true } },
+        requestedProfessor: { select: { name: true } },
+        topic: {
+          include: {
+            program: { select: { name: true, category: true } },
+            applicationQuestions: {
+              orderBy: { position: "asc" },
+              select: { id: true, label: true, maxLength: true, required: true },
+            },
+          },
+        },
+      },
+    });
+    if (!request) return null;
+    const { requester, requestedProfessor, topic, ...summary } = request;
+    return {
+      ...summary,
+      topicTitle: topic.title,
+      requesterName: requester.name,
+      requestedProfessorName: requestedProfessor?.name ?? null,
+      programName: topic.program.name,
+      programCategory: topic.program.category,
+      description: topic.description,
+      requiredSkills: topic.requiredSkills,
+      preferredSkills: topic.preferredSkills,
+      roleExpectations: topic.roleExpectations,
+      availabilityRequirement: topic.availabilityRequirement,
+      applicationMode: topic.applicationMode,
+      capacity: topic.capacity,
+      recruitmentStartsAt: topic.recruitmentStartsAt,
+      recruitmentEndsAt: topic.recruitmentEndsAt,
+      executionStartsAt: topic.executionStartsAt,
+      executionEndsAt: topic.executionEndsAt,
+      submissionStartsAt: topic.submissionStartsAt,
+      submissionEndsAt: topic.submissionEndsAt,
+      applicationQuestions: topic.applicationQuestions,
     };
   }
 
@@ -192,14 +240,22 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           return "REJECTED";
         }
 
-        const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
-          SELECT "project_program"."status"
+        const programs = await transaction.$queryRaw<Array<{
+          status: "DRAFT" | "OPEN" | "CLOSED";
+          projectRegistrationStartsAt: Date;
+          projectRegistrationEndsAt: Date;
+        }>>(Prisma.sql`
+          SELECT "project_program"."status", "project_program"."projectRegistrationStartsAt", "project_program"."projectRegistrationEndsAt"
           FROM "project_program"
           JOIN "topic" ON "topic"."programId" = "project_program"."id"
           WHERE "topic"."id" = ${initialRequest.topicId}
           FOR UPDATE OF "project_program"
         `);
-        if (programs[0]?.status !== "OPEN") return "UNAVAILABLE";
+        if (
+          programs[0]?.status !== "OPEN" ||
+          programs[0].projectRegistrationStartsAt > input.decidedAt ||
+          programs[0].projectRegistrationEndsAt <= input.decidedAt
+        ) return "UNAVAILABLE";
 
         const topics = await transaction.$queryRaw<Array<LockedApprovalTopic>>(Prisma.sql`
           SELECT "id", "programId", "authorId", "title", "capacity", "recruitmentEnabled", "recruitmentEndsAt", "status"

@@ -397,6 +397,60 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     }));
   });
 
+  it("승인 상세는 지정된 교수에게만 전체 제안 정보를 반환한다", async () => {
+    const findFirst = vi.fn(async () => ({
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      route: "PROFESSOR" as const,
+      requestedProfessorId: "professor-1",
+      studentTeamId: null,
+      status: "PENDING" as const,
+      reviewComment: "",
+      decidedById: null,
+      decidedAt: null,
+      createdAt: requestedAt,
+      updatedAt: requestedAt,
+      requester: { name: "김학생" },
+      requestedProfessor: { name: "박교수" },
+      topic: {
+        title: "학생 제안",
+        description: "상세 설명",
+        requiredSkills: ["TypeScript"],
+        preferredSkills: ["Figma"],
+        roleExpectations: "개발",
+        availabilityRequirement: "주 1회",
+        applicationMode: "INDIVIDUAL_OR_TEAM" as const,
+        capacity: 4,
+        recruitmentStartsAt: proposal.recruitmentStartsAt,
+        recruitmentEndsAt: proposal.recruitmentEndsAt,
+        executionStartsAt: proposal.executionStartsAt,
+        executionEndsAt: proposal.executionEndsAt,
+        submissionStartsAt: proposal.submissionStartsAt,
+        submissionEndsAt: proposal.submissionEndsAt,
+        program: { name: "캡스톤", category: "교과" },
+        applicationQuestions: [{ id: "question-1", label: "지원 동기", maxLength: 500, required: true }],
+      },
+    }));
+    const client = { topicApprovalRequest: { findFirst } } as unknown as PrismaClient;
+    const professor = { id: "professor-1", role: "PROFESSOR" as const, name: "박교수", email: "professor@pusan.ac.kr", image: null };
+
+    const result = await new PrismaTopicApprovalRepository(client).findVisible(professor, "request-1");
+
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { AND: [{ id: "request-1" }, { route: "PROFESSOR", requestedProfessorId: "professor-1" }] },
+    }));
+    expect(result).toMatchObject({
+      id: "request-1",
+      topicTitle: "학생 제안",
+      requesterName: "김학생",
+      requestedProfessorName: "박교수",
+      description: "상세 설명",
+      programName: "캡스톤",
+      applicationQuestions: [{ label: "지원 동기" }],
+    });
+  });
+
   it("승인 시 기존 팀원을 모두 확정 참여시키고 실행 팀을 바로 확정한다", async () => {
     const createApplications = vi.fn(async () => ({ count: 2 }));
     const createExecutionTeam = vi.fn(async () => ({ id: "execution-team-1" }));

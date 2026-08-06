@@ -16,7 +16,7 @@ const input = {
 function dependencies() {
   const repository: TopicApprovalRepository = {
     listProfessors: vi.fn(async () => []), create: vi.fn(async () => "topic-1"),
-    listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), decide: vi.fn(async () => "APPROVED" as const),
+    listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), findVisible: vi.fn(async () => null), decide: vi.fn(async () => "APPROVED" as const),
   };
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
     findOpen: vi.fn(async () => ({ id: "program-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
@@ -84,5 +84,14 @@ describe("학생 프로젝트 승인", () => {
     await new TopicApprovalService(repository, programs).listPendingForReview(professor);
 
     expect(repository.listVisiblePage).toHaveBeenCalledWith(professor, 1, 5, "PENDING");
+  });
+
+  it("승인 상세 조회도 현재 사용자에게 보이는 요청만 저장소에 위임한다", async () => {
+    const { repository, programs } = dependencies();
+    const professor = { ...actor, id: "professor-1", role: "PROFESSOR" as const };
+
+    await new TopicApprovalService(repository, programs).get(professor, "request-1");
+
+    expect(repository.findVisible).toHaveBeenCalledWith(professor, "request-1");
   });
 });

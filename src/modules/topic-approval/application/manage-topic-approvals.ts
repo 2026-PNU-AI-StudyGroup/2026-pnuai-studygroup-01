@@ -2,6 +2,7 @@ import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { assertValidTopicDetails, assertValidTopicSchedule } from "@/modules/topic/domain/topic-policy";
+import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 
 export type TopicApprovalRoute = "PROFESSOR" | "ADMIN";
 export type TopicApprovalRequestSummary = {
@@ -26,6 +27,25 @@ export type TopicApprovalRequestPage = {
   total: number;
 };
 
+export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
+  programName: string;
+  programCategory: string;
+  description: string;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  roleExpectations: string;
+  availabilityRequirement: string;
+  applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
+  capacity: number;
+  recruitmentStartsAt: Date;
+  recruitmentEndsAt: Date;
+  executionStartsAt: Date;
+  executionEndsAt: Date;
+  submissionStartsAt: Date;
+  submissionEndsAt: Date;
+  applicationQuestions: Array<{ id: string; label: string; maxLength: number; required: boolean }>;
+};
+
 export interface TopicApprovalRepository {
   listProfessors(): Promise<Array<{ id: string; name: string; email: string }>>;
   create(input: TopicDraft & { route: TopicApprovalRoute; requestedProfessorId: string | null; studentTeamId?: string; requestedAt: Date }): Promise<string | null>;
@@ -35,6 +55,7 @@ export interface TopicApprovalRepository {
     pageSize: number,
     status?: TopicApprovalRequestSummary["status"],
   ): Promise<TopicApprovalRequestPage>;
+  findVisible(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null>;
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "UNAVAILABLE">;
 }
 
@@ -68,6 +89,10 @@ export class TopicApprovalService {
     assertValidTopicSchedule(input);
     const program = await this.programs.findOpen(input.programId);
     if (!program) throw new TopicApprovalOperationError("현재 프로젝트를 등록할 수 있는 공개 프로그램이 아닙니다.");
+    const requestedAt = this.now();
+    if (!isProjectRegistrationOpen(program, requestedAt)) {
+      throw new TopicApprovalOperationError("현재 프로젝트 등록 기간이 아닙니다.");
+    }
     if (!program.studentProjectCreationEnabled) {
       throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     }
@@ -83,7 +108,7 @@ export class TopicApprovalService {
       authorId: actor.id,
       route: input.route,
       requestedProfessorId: input.route === "PROFESSOR" ? input.requestedProfessorId! : null,
-      requestedAt: this.now(),
+      requestedAt,
     });
     if (!id) throw new TopicApprovalOperationError("승인 대상 교수 또는 프로그램 상태를 확인해 주세요.");
     return id;
@@ -95,6 +120,10 @@ export class TopicApprovalService {
       return this.repository.listVisiblePage(actor, page, pageSize);
     }
     return { items: [], page: 1, totalPages: 1, total: 0 };
+  }
+
+  async get(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null> {
+    return this.repository.findVisible(actor, requestId);
   }
 
   async listPendingForReview(actor: CurrentUser, pageSize = 5) {

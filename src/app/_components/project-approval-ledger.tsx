@@ -1,13 +1,13 @@
+import Link from "next/link";
 import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { AdminSection, adminRecordListClassName, adminRecordRowClassName } from "@/app/_components/admin-section";
-import { TopicApprovalDecisionForm } from "@/app/_components/topic-approval-decision-form";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 const status = { PENDING: ["검토 대기", "info"], APPROVED: ["승인", "success"], REJECTED: ["반려", "danger"] } as const;
-const approvalLedgerColumns = "xl:grid-cols-[minmax(16rem,1.45fr)_7.5rem_8.5rem_11rem_minmax(18rem,1fr)]";
-const adminApprovalLedgerColumns = "2xl:grid-cols-[minmax(13rem,1.4fr)_6.5rem_7rem_8.5rem_minmax(14rem,1fr)]";
+const approvalLedgerColumns = "xl:grid-cols-[minmax(16rem,1.45fr)_7.5rem_8.5rem_11rem_6rem]";
+const adminApprovalLedgerColumns = "2xl:grid-cols-[minmax(13rem,1.4fr)_6.5rem_7rem_8.5rem_6rem]";
 
 export function ProjectApprovalLedger({ requests, student, adminSurface = false }: {
   requests: TopicApprovalRequestSummary[];
@@ -25,14 +25,14 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
         <span><UiText>{"상태"}</UiText></span>
         <span><UiText>{"제안자"}</UiText></span>
         <span><UiText>{"검토 요청 대상"}</UiText></span>
-        <span><UiText>{student ? "검토 의견" : "검토"}</UiText></span>
+        <span><UiText>{"상세"}</UiText></span>
       </div>
       <UiUl aria-label="프로젝트 승인 요청 목록" className={adminSurface ? adminRecordListClassName : "divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white xl:border-t-0"}>
         {requests.map((request) => {
           const route = request.route === "PROFESSOR"
             ? `${request.requestedProfessorName ?? "지정 교수"} 교수`
             : "관리자";
-          const showDecision = !student && request.status === "PENDING";
+          const actionLabel = !student && request.status === "PENDING" ? "검토" : "상세";
           return (
             <li key={request.id} className={`${adminSurface ? adminRecordRowClassName : "record-row px-2 py-6"} grid gap-5 ${adminSurface ? "2xl:items-start 2xl:gap-5" : "xl:items-start xl:gap-5"} ${columns}`}>
               <div className="min-w-0">
@@ -52,14 +52,10 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
                 <p className="text-sm font-semibold">{route}</p>
               </div>
               <div className="min-w-0">
-                <p className={`mb-2 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{student ? "검토 의견" : "검토"}</UiText></p>
-                {showDecision ? (
-                  <TopicApprovalDecisionForm requestId={request.id} />
-                ) : (
-                  <p className={`text-sm leading-6 ${request.reviewComment ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}>
-                    {request.reviewComment || (request.status === "PENDING" ? "검토 대기 중" : "—")}
-                  </p>
-                )}
+                <p className={`mb-2 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"상세"}</UiText></p>
+                <Link href={`/project-approvals/${request.id}`} className={actionLabel === "검토" ? "button-primary" : "button-secondary"}>
+                  <UiText>{actionLabel}</UiText>
+                </Link>
               </div>
             </li>
           );
