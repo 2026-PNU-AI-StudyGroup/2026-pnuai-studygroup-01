@@ -1551,5 +1551,21 @@
   "OLLAMA_BASE_URL은 로컬 HTTP 주소만 허용합니다.": "The OLLAMA_BASE_URL only accepts local HTTP addresses.",
   "PDF 또는 Word · 최대 25MB": "PDF or Word · Up to 25 MB",
   "PDF 또는 Word 파일만 제출할 수 있으며 최대 용량은 25MB입니다.": "Only PDF or Word files can be submitted, up to 25 MB.",
-  "PNU 프로젝트 관리 시스템": "PNU Project Management System"
+  "PNU 프로젝트 관리 시스템": "PNU Project Management System",
+  "보조 운영 설정": "Supporting operation settings",
+  "등록과 투표 정책을 정하고, 학생 제안과 공개 상태를 운영합니다.": "Set registration and voting policies, then manage student proposals and publication status.",
+  "투표 설정을 조정한 뒤 같은 화면에서 현재 집계와 최종 결과를 확인합니다.": "After adjusting voting settings, review current counts and final results on the same screen.",
+  "프로그램 목록과 프로젝트 탐색에서 표시할 아이콘을 정합니다.": "Choose the icon shown in program lists and project discovery.",
+  "아이콘 선택": "Select icon",
+  "아이콘 저장": "Save icon",
+  "초안 상태입니다. 공개 전에는 사용자에게 표시되지 않습니다.": "This is a draft and is not visible to users until published.",
+  "공개 상태입니다. 프로그램을 마감하면 공개 주제와 팀원 모집도 함께 마감됩니다.": "This program is public. Closing it also closes public topics and team recruitment.",
+  "마감된 프로그램입니다. 공개 상태로 되돌릴 수 없습니다.": "This program is closed and cannot be reopened.",
+  "공개 상태": "Publication status",
+  "마감 상태": "Closed status",
+  "프로그램 공개": "Publish program",
+  "학생이 새 프로젝트를 제안할 수 있는지 관리합니다.": "Manage whether students can propose new projects.",
+  "현재 학생 프로젝트 제안이 허용되어 있습니다.": "Student project proposals are currently enabled.",
+  "현재 학생 프로젝트 제안이 중지되어 있습니다.": "Student project proposals are currently disabled.",
+  "마감된 프로그램에서는 이 설정을 변경할 수 없습니다.": "This setting cannot be changed for a closed program."
 }
