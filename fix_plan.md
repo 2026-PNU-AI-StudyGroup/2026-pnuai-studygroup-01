@@ -9,3 +9,5 @@
 - [x] `npm run db:seed-demo`가 재실행 시 실패함(유니크 제약 위반 + 트랜잭션 타임아웃) — `scripts/seed-demo-data.ts` — 커밋 2efdd41 — 2026-08-05
 - [x] 팀 대화(채팅)에 메시지를 보내도 다른 팀원에게 알림이 전혀 가지 않음 — `src/modules/team/infrastructure/prisma-team-discussion-repository.ts` 외 — 커밋 c9f3753 — 2026-08-05
 - [x] 한국어 시각 표시(`오전`/`오후`)에서 서버·클라이언트 hydration 불일치 — Node ICU가 ko-KR AM/PM을 "AM"/"PM"으로 렌더링하는 게 원인 — `src/shared/i18n/i18n-provider.tsx`의 `UiDate` — 커밋 fdffd97 — 2026-08-05
+- [x] 학생 프로젝트 제안을 승인/반려해도 제안한 학생에게 알림이 가지 않음 — `src/modules/topic-approval/infrastructure/prisma-topic-approval-repository.ts` 외 — 커밋 3e26aee — 2026-08-06
+- [x] 위 hydration 수정(fdffd97)이 밤 시간대(21시~05시대)를 "오후/오전" 대신 "밤/새벽"으로 바꾸는 회귀를 일으킴 — dayPeriod 옵션이 Node·브라우저 모두에서 더 넓은 시간대 어휘를 쓰게 만든 게 원인 — 시(hour) 숫자를 직접 계산하는 방식으로 재수정 — `src/shared/i18n/i18n-provider.tsx` — 커밋 c437800 — 2026-08-06
