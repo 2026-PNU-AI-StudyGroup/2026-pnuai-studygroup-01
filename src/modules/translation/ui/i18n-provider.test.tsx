@@ -11,12 +11,12 @@ describe("I18nProvider", () => {
   it("renders fixed UI copy from the selected English catalog", () => {
     render(
       <I18nProvider locale="en">
-        <UiText>프로젝트 탐색</UiText>
+        <UiText>프로젝트 찾기</UiText>
       </I18nProvider>,
     );
 
-    expect(screen.getByText("Explore projects")).toBeInTheDocument();
-    expect(screen.queryByText("프로젝트 탐색")).not.toBeInTheDocument();
+    expect(screen.getByText("Find Projects")).toBeInTheDocument();
+    expect(screen.queryByText("프로젝트 찾기")).not.toBeInTheDocument();
   });
 
   it("formats dates using the selected locale", () => {

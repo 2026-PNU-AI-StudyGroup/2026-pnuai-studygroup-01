@@ -11,6 +11,7 @@ import {
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -156,7 +157,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
           <h2 id="assistants-title" className="text-2xl font-black tracking-[-0.04em]">
             <UiText>{"조교"}</UiText>{" "}{workspace.assistants.length}<UiText>{"명"}</UiText>
           </h2>
-          <ul aria-label="프로젝트 조교" className="mt-4 grid gap-4 md:grid-cols-2">
+          <UiUl aria-label="프로젝트 조교" className="mt-4 grid gap-4 md:grid-cols-2">
             {workspace.assistants.map((assistant) => (
               <li key={assistant.id} className="flex min-w-0 items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[0_10px_28px_rgba(31,35,48,0.05)]">
                 <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--warning-subtle)] text-sm font-black text-[var(--warning-ink)]">
@@ -168,7 +169,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
                 </div>
               </li>
             ))}
-          </ul>
+          </UiUl>
         </section>
       ) : null}
 

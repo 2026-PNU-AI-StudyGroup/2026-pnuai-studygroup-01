@@ -49,7 +49,7 @@ describe("request locale", () => {
 
     await expect(getRequestLocale()).resolves.toBe("en");
     await expect(getServerTranslator()).resolves.toEqual(expect.any(Function));
-    expect((await getServerTranslator())("프로젝트 탐색")).toBe("Explore projects");
+    expect((await getServerTranslator())("프로젝트 찾기")).toBe("Find Projects");
   });
 
   it("falls back to Korean for a missing or unsupported cookie", async () => {

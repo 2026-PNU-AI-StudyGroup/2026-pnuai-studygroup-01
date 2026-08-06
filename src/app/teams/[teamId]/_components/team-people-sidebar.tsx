@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
 
 type TeamMember = TeamWorkspace["members"][number];
 
@@ -68,14 +69,14 @@ export function TeamPeopleSidebar({
                   <p className="mt-1 break-all text-sm text-[var(--muted)]">{activeMember.email}</p>
                 </div>
               </div>
-              <button
+              <UiButton
                 type="button"
                 aria-label="닫기"
                 className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] text-xl text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
                 onClick={() => dialogRef.current?.close()}
               >
                 ×
-              </button>
+              </UiButton>
             </div>
 
             <dl className="mt-7 grid gap-x-8 gap-y-5 border-t border-[var(--line)] pt-6 text-sm sm:grid-cols-2">
@@ -130,14 +131,14 @@ function PeopleContent({
       {assistants.length ? (
         <div>
           <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"조교"}</UiText></p>
-          <ul aria-label="프로젝트 조교" className="mt-2 space-y-2">
+          <UiUl aria-label="프로젝트 조교" className="mt-2 space-y-2">
             {assistants.map((assistant) => (
               <li key={assistant.id} className="min-w-0">
                 <p className="truncate text-sm font-semibold">{assistant.name}</p>
                 <p className="truncate text-xs text-[var(--muted)]">{assistant.email}</p>
               </li>
             ))}
-          </ul>
+          </UiUl>
         </div>
       ) : null}
 
@@ -145,10 +146,10 @@ function PeopleContent({
         <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
           <UiText>{"팀원"}</UiText>{" "}{members.length}<UiText>{"명"}</UiText>
         </p>
-        <ul aria-label="프로젝트 팀원" className="mt-2 space-y-1">
+        <UiUl aria-label="프로젝트 팀원" className="mt-2 space-y-1">
           {members.map((member) => (
             <li key={member.id}>
-              <button
+              <UiButton
                 type="button"
                 aria-label={`${member.name} 상세 정보`}
                 className="flex min-h-10 w-full items-center gap-2 rounded-xl px-1.5 text-left text-sm font-semibold transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary-hover)]"
@@ -158,10 +159,10 @@ function PeopleContent({
                   {member.name.slice(0, 1)}
                 </span>
                 <span className="truncate">{member.name}</span>
-              </button>
+              </UiButton>
             </li>
           ))}
-        </ul>
+        </UiUl>
       </div>
     </div>
   );
