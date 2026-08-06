@@ -881,16 +881,9 @@ async function seed() {
       { id: ids.studentTeamMembers[5], teamId: ids.studentTeams[2], studentId: ids.students[8], role: "MEMBER", joinedAt: new Date("2026-07-10T19:30:00+09:00") },
       { id: ids.studentTeamMembers[6], teamId: ids.studentTeams[2], studentId: ids.students[9], role: "MEMBER", joinedAt: new Date("2026-07-12T16:00:00+09:00") },
     ] });
-    await tx.studentTeamInvitation.createMany({ data: [
-      {
-        id: ids.studentTeamInvitations[0],
-        teamId: ids.studentTeams[0],
-        email: studentTeamViewer.email,
-        inviteeId: studentTeamViewer.id,
-        invitedById: ids.students[0],
-        status: "PENDING",
-        createdAt: new Date("2026-07-18T19:00:00+09:00"),
-      },
+    // 뷰어 폴백이 students[0]이면 students[0]은 이미 studentTeams[0]의 팀장이라
+    // "자기 팀에 자기 자신을 초대"하는 행이 된다. 뷰어가 별도 계정일 때만 추가한다.
+    const studentTeamInvitationRows: Prisma.StudentTeamInvitationCreateManyInput[] = [
       {
         id: ids.studentTeamInvitations[1],
         teamId: ids.studentTeams[1],
@@ -900,7 +893,19 @@ async function seed() {
         status: "PENDING",
         createdAt: new Date("2026-07-19T11:00:00+09:00"),
       },
-    ] });
+    ];
+    if (studentTeamViewer.id !== ids.students[0]) {
+      studentTeamInvitationRows.unshift({
+        id: ids.studentTeamInvitations[0],
+        teamId: ids.studentTeams[0],
+        email: studentTeamViewer.email,
+        inviteeId: studentTeamViewer.id,
+        invitedById: ids.students[0],
+        status: "PENDING",
+        createdAt: new Date("2026-07-18T19:00:00+09:00"),
+      });
+    }
+    await tx.studentTeamInvitation.createMany({ data: studentTeamInvitationRows });
     await tx.studentTeamRecruitmentPost.createMany({ data: [
       {
         id: ids.studentTeamRecruitments[0],
@@ -955,18 +960,10 @@ async function seed() {
         createdAt: new Date("2026-07-08T12:00:00+09:00"),
       },
     ] });
-    await tx.studentTeamRecruitmentApplication.createMany({ data: [
-      {
-        id: ids.studentTeamRecruitmentApplications[0],
-        postId: ids.studentTeamRecruitments[1],
-        studentId: studentTeamViewer.id,
-        message: "데이터를 실제 사용자가 이해할 수 있는 화면으로 만드는 역할을 맡고 싶습니다.",
-        skills: ["TypeScript", "PostgreSQL", "데이터 시각화"],
-        desiredRole: "데이터 시각화와 프론트엔드 연동",
-        availability: "평일 저녁, 주말 협의 가능",
-        status: "PENDING",
-        createdAt: new Date("2026-07-23T20:00:00+09:00"),
-      },
+    // DEMO_VIEWER_EMAIL 미지정 시 studentTeamViewer가 students[0]로 폴백하는데,
+    // students[0]는 아래 엔트리에서 이미 recruitments[1]에 지원한다. 그대로 두면
+    // (postId, studentId) 유니크 제약 위반 → 뷰어가 별도 계정일 때만 뷰어 지원 행을 추가한다.
+    const studentTeamRecruitmentApplicationRows: Prisma.StudentTeamRecruitmentApplicationCreateManyInput[] = [
       {
         id: ids.studentTeamRecruitmentApplications[1],
         postId: ids.studentTeamRecruitments[2],
@@ -1001,7 +998,23 @@ async function seed() {
         status: "PENDING",
         createdAt: new Date("2026-07-24T20:00:00+09:00"),
       },
-    ] });
+    ];
+    if (studentTeamViewer.id !== ids.students[0]) {
+      studentTeamRecruitmentApplicationRows.unshift({
+        id: ids.studentTeamRecruitmentApplications[0],
+        postId: ids.studentTeamRecruitments[1],
+        studentId: studentTeamViewer.id,
+        message: "데이터를 실제 사용자가 이해할 수 있는 화면으로 만드는 역할을 맡고 싶습니다.",
+        skills: ["TypeScript", "PostgreSQL", "데이터 시각화"],
+        desiredRole: "데이터 시각화와 프론트엔드 연동",
+        availability: "평일 저녁, 주말 협의 가능",
+        status: "PENDING",
+        createdAt: new Date("2026-07-23T20:00:00+09:00"),
+      });
+    }
+    await tx.studentTeamRecruitmentApplication.createMany({
+      data: studentTeamRecruitmentApplicationRows,
+    });
 
     await tx.milestone.createMany({ data: [
       { id: ids.milestones[0], teamId: ids.teams[0], createdById: ids.students[0], title: "교내 접근성 경로 현장 조사", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE" },

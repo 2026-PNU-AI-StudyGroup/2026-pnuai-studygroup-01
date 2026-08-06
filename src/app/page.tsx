@@ -45,7 +45,7 @@ export default async function Home({
           </header>
           <main className="grid min-h-[calc(100vh-4.5rem)] place-items-center px-5 py-10 sm:px-8 lg:min-h-screen">
             <section aria-labelledby="sign-in-title" className="w-full max-w-[31rem] border-t-4 border-[var(--primary)] bg-white p-6 sm:p-9">
-              <h1 id="sign-in-title" className="text-3xl font-black tracking-[-0.05em]"><UiText>{"로그인"}</UiText></h1>
+              <h1 id="sign-in-title" className="text-3xl font-bold tracking-[-0.05em]"><UiText>{"로그인"}</UiText></h1>
               <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
                 <UiText>{"부산대학교 계정으로 로그인하세요."}</UiText>
               </p>
@@ -53,7 +53,7 @@ export default async function Home({
                 <GoogleSignInButton />
               </div>
               <p className="mt-5 text-sm leading-6 text-[var(--muted)]">
-                <strong className="font-bold text-[var(--ink)]">@pusan.ac.kr</strong> {" "}<UiText>{"계정만 사용할 수 있습니다."}</UiText>
+                <strong className="font-semibold text-[var(--ink)]">@pusan.ac.kr</strong> {" "}<UiText>{"계정만 사용할 수 있습니다."}</UiText>
               </p>
               {showDevelopmentLogin ? (
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />

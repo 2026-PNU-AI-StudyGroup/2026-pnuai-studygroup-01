@@ -18,7 +18,7 @@ describe("지난 프로젝트 이전 주소", () => {
     });
 
     expect(redirect).toHaveBeenCalledWith(
-      "/topics?view=past&page=2&q=%EB%A1%9C%EB%B4%87&year=2025&category=%EC%BA%A1%EC%8A%A4%ED%86%A4",
+      "/topics?view=past&page=2&q=%EB%A1%9C%EB%B4%87",
     );
   });
 });

@@ -38,21 +38,29 @@ export type TeamActionState = {
   message: string;
 };
 
-export async function confirmTeamAction(formData: FormData) {
+export async function confirmTeamAction(
+  _state: TeamActionState,
+  formData: FormData,
+): Promise<TeamActionState> {
   const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
   const teamId = formData.get("teamId");
-  if (typeof teamId !== "string") return;
+  if (typeof teamId !== "string") {
+    return { status: "error", message: "팀 확정 요청을 확인해 주세요." };
+  }
   try {
     await new ConfirmTeamService(
       new PrismaTeamConfirmationRepository(prisma),
     ).confirm(actor, teamId);
   } catch (error) {
-    if (error instanceof TeamConfirmationNotAllowedError) return;
+    if (error instanceof TeamConfirmationNotAllowedError) {
+      return { status: "error", message: error.message };
+    }
     throw error;
   }
   revalidatePath(`/teams/${teamId}`, "layout");
   revalidatePath("/dashboard");
+  return { status: "success", message: "팀을 확정했습니다." };
 }
 
 export async function closeTeamAction(

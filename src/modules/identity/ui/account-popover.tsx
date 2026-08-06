@@ -108,7 +108,7 @@ export function AccountPopover({
                 </svg>
               </span>
               <span className="min-w-0">
-                <strong className="block truncate text-sm font-extrabold">{userName}</strong>
+                <strong className="block truncate text-sm font-bold">{userName}</strong>
                 <span className="mt-0.5 block text-xs font-semibold text-[var(--muted)]"><UiText>{roleLabel}</UiText></span>
               </span>
             </header>
@@ -116,7 +116,7 @@ export function AccountPopover({
             <Link
               href="/account"
               onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-bold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
+              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
             >
               {copy.myAccount}
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
@@ -127,7 +127,7 @@ export function AccountPopover({
               type="button"
               onClick={signOut}
               disabled={isPending}
-              className="flex min-h-12 w-full items-center px-5 text-left text-sm font-bold text-[var(--muted)] hover:bg-[var(--danger-subtle)] hover:text-[var(--danger)] disabled:cursor-wait disabled:opacity-60"
+              className="flex min-h-12 w-full items-center px-5 text-left text-sm font-semibold text-[var(--muted)] hover:bg-[var(--danger-subtle)] hover:text-[var(--danger)] disabled:cursor-wait disabled:opacity-60"
             >
               {isPending ? copy.signingOut : copy.signOut}
             </button>

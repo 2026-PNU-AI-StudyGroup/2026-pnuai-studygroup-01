@@ -63,10 +63,10 @@ export default async function StudentTeamsPage({
             <section aria-labelledby="my-teams-title">
               <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
-                  <h2 id="my-teams-title" className="text-2xl font-black tracking-[-0.035em]"><UiText>{"참여 중인 팀"}</UiText></h2>
+                  <h2 id="my-teams-title" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"참여 중인 팀"}</UiText></h2>
                   <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"팀을 선택해 구성원과 초대를 관리하세요."}</UiText></p>
                 </div>
-                <span className="text-sm font-bold text-[var(--muted)]">{teams.length}<UiText>{"개"}</UiText></span>
+                <span className="text-sm font-semibold text-[var(--muted)]">{teams.length}<UiText>{"개"}</UiText></span>
               </div>
 
               {teams.length === 0 ? (

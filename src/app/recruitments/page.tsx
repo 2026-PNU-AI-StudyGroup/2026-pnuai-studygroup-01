@@ -49,10 +49,10 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
             <section aria-labelledby="open-recruitments-title" className="space-y-6">
               <div className="flex items-end justify-between gap-6">
                 <div>
-                  <h2 id="open-recruitments-title" className="text-2xl font-black tracking-[-0.035em] text-[var(--ink)]"><UiText>{"팀원 모집"}</UiText></h2>
+                  <h2 id="open-recruitments-title" className="text-2xl font-bold tracking-[-0.035em] text-[var(--ink)]"><UiText>{"팀원 모집"}</UiText></h2>
                   <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"필요한 역할과 기술, 활동 가능 시간을 비교할 수 있습니다."}</UiText></p>
                 </div>
-                <span className="text-sm font-bold text-[var(--ink)]">{data.total}<UiText>{"개"}</UiText></span>
+                <span className="text-sm font-semibold text-[var(--ink)]">{data.total}<UiText>{"개"}</UiText></span>
               </div>
               <RecruitmentPostList actorId={actor.id} data={data} profile={profile} />
               <StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />

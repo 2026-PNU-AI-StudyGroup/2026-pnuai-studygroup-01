@@ -42,7 +42,7 @@ export function ProjectStatusNavigation({ phase, counts, programId, query, sort 
     <UiNav aria-label="프로젝트 상태" className="flex min-w-0 flex-1 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {(Object.keys(phaseLabel) as PublicTopicPhase[]).map((item) => {
         const selected = phase === item;
-        return <Link key={item} href={activeUrl(item)} aria-current={selected ? "page" : undefined} className={`flex min-h-9 shrink-0 items-center justify-center rounded-lg border px-3 text-xs font-bold transition-colors ${selected ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-[var(--line)] bg-white text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}>{phaseLabel[item]} <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[0.65rem] font-bold ${selected ? "bg-white text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>{counts[item]}</span></Link>;
+        return <Link key={item} href={activeUrl(item)} aria-current={selected ? "page" : undefined} className={`flex min-h-9 shrink-0 items-center justify-center rounded-lg border px-3 text-xs font-semibold transition-colors ${selected ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-[var(--line)] bg-white text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}>{phaseLabel[item]} <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold ${selected ? "bg-white text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>{counts[item]}</span></Link>;
       })}
     </UiNav>
   );

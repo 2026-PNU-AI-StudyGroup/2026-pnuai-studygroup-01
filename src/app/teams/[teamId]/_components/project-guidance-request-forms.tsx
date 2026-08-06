@@ -67,7 +67,7 @@ export function ProjectGuidanceRequestForm({
       <input type="hidden" name="teamId" value={teamId} />
 
       <fieldset disabled={pending} className="grid gap-2">
-        <legend className="text-sm font-bold text-[var(--ink)]"><UiText>{"요청 유형"}</UiText></legend>
+        <legend className="text-sm font-semibold text-[var(--ink)]"><UiText>{"요청 유형"}</UiText></legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {([
             ["MEETING", "회의 요청", "희망 일시를 함께 전달합니다."],
@@ -171,16 +171,19 @@ export function ProjectGuidanceResponseForm({
   teamId,
   requestId,
   kind,
+  executionEndsAt,
 }: {
   teamId: string;
   requestId: string;
   kind: ProjectGuidanceRequestKind;
+  executionEndsAt: Date;
 }) {
   const [state, action, pending] = useActionState(
     respondProjectGuidanceRequestAction,
     initialState,
   );
   const fieldId = useId();
+  const [minimumScheduledAt] = useState(() => koreanDateTimeInput(new Date()));
 
   return (
     <form
@@ -213,6 +216,8 @@ export function ProjectGuidanceResponseForm({
             id={`${fieldId}-scheduled-at`}
             name="scheduledAt"
             type="datetime-local"
+            min={minimumScheduledAt}
+            max={koreanDateTimeInput(executionEndsAt)}
             disabled={pending}
             className="field"
           />

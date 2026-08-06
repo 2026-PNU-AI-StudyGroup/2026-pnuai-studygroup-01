@@ -59,7 +59,7 @@ function ApplicationRow({
               <UiText>{application.applicationKind === "TEAM" ? "팀 지원" : "개인 지원"}</UiText>
             </span>
           </div>
-          <h3 className="mt-3 text-xl font-black leading-tight tracking-[-0.025em]">
+          <h3 className="mt-3 text-xl font-bold leading-tight tracking-[-0.025em]">
             <UiText>{application.topicTitle}</UiText>
           </h3>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -71,7 +71,7 @@ function ApplicationRow({
             </p>
           ) : application.reviewComment ? (
             <div className="mt-4 border-l-2 border-[var(--line-strong)] pl-4">
-              <p className="text-xs font-bold text-[var(--muted)]">
+              <p className="text-xs font-semibold text-[var(--muted)]">
                 <UiText>{"검토 의견"}</UiText>
               </p>
               <p className="mt-1 whitespace-pre-wrap text-sm leading-6">
@@ -87,7 +87,7 @@ function ApplicationRow({
           {isApplicationPublic(application) ? (
             <Link
               href={`/topics/${application.topicId}`}
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-[var(--primary)]"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--primary)]"
             >
               <UiText>{"프로젝트 보기"}</UiText>
               <ArrowIcon />
@@ -119,14 +119,14 @@ export function ProjectApplicationList({
     >
       <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
         <div>
-          <h2 id={`${view}-projects-title`} className="text-2xl font-black tracking-[-0.03em]">
+          <h2 id={`${view}-projects-title`} className="text-2xl font-bold tracking-[-0.03em]">
             <UiText>{copy.title}</UiText>
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             <UiText>{copy.description}</UiText>
           </p>
         </div>
-        <span className="shrink-0 text-sm font-bold text-[var(--muted)]">
+        <span className="shrink-0 text-sm font-semibold text-[var(--muted)]">
           {page.total}<UiText>{"건"}</UiText>
         </span>
       </header>
@@ -137,9 +137,9 @@ export function ProjectApplicationList({
         ))}</div>
       ) : (
         <div className="px-6 py-8 sm:px-7">
-          <p className="font-bold"><UiText>{copy.empty}</UiText></p>
+          <p className="font-semibold"><UiText>{copy.empty}</UiText></p>
           {status === "PENDING" ? (
-            <Link href="/topics" className="mt-3 inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
+            <Link href="/topics" className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
               <UiText>{"프로젝트 둘러보기"}</UiText>
             </Link>
           ) : null}
@@ -148,7 +148,7 @@ export function ProjectApplicationList({
 
       {preview && page.total > items.length ? (
         <div className="border-t border-[var(--line)] px-6 py-4 text-right sm:px-7">
-          <Link href={`/dashboard?view=${view}`} className="inline-flex min-h-11 items-center text-sm font-black text-[var(--primary)]">
+          <Link href={`/dashboard?view=${view}`} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
             <UiText>{`${copy.title} 전체 보기`}</UiText>
           </Link>
         </div>

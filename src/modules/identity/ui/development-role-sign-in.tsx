@@ -7,9 +7,9 @@ export function DevelopmentRoleSignIn({ seedRequired = false }: { seedRequired?:
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <p className="eyebrow"><UiText>{"로컬 개발 전용"}</UiText></p>
-          <h3 id="development-login-title" className="mt-1 text-lg font-extrabold"><UiText>{"역할별 화면 미리보기"}</UiText></h3>
+          <h3 id="development-login-title" className="mt-1 text-lg font-bold"><UiText>{"역할별 화면 미리보기"}</UiText></h3>
         </div>
-        <span className="rounded bg-[var(--primary-subtle)] px-2 py-1 text-xs font-bold text-[var(--primary-hover)]">LOCAL</span>
+        <span className="rounded bg-[var(--primary-subtle)] px-2 py-1 text-xs font-semibold text-[var(--primary-hover)]">LOCAL</span>
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"역할별 화면을 데모 계정으로 바로 엽니다."}</UiText></p>
       {seedRequired ? (

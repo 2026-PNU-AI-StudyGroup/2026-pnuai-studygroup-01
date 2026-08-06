@@ -10,12 +10,14 @@ import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-deci
 import { RemoveReportRequirementForm, ReportRequirementForm } from "@/app/teams/[teamId]/_components/report-requirement-forms";
 import { ReportSubmissionForm } from "@/app/teams/[teamId]/_components/report-submission-form";
 import { MobileFieldLabel, WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
+import { ReportFeedbackForm, ReportScoreForm } from "@/app/teams/[teamId]/_components/report-score-feedback-forms";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 보고서");
 }
 const reportTypeLabel = { START: "착수 보고서", MIDTERM: "중간 보고서", FINAL: "결과 보고서" } as const;
+const feedbackRoleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자" } as const;
 
 function ReportStatusStrip({ title, description }: { title: string; description: string }) {
   return (
@@ -56,7 +58,7 @@ function ReportReviewFeedback({
       }`}
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <h3 id={`report-feedback-title-${versionId}`} className="text-sm font-extrabold text-[var(--ink)]">
+        <h3 id={`report-feedback-title-${versionId}`} className="text-sm font-bold text-[var(--ink)]">
           <UiText>{title}</UiText>
         </h3>
         <p className="text-xs leading-5 text-[var(--muted)]">
@@ -90,6 +92,8 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   const now = new Date();
   const submittableReports = reportWorkspace.reports.filter((report) => report.dueAt >= now).map(({ type, dueAt }) => ({ type, dueAt }));
   const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
+  const canScore = workspace.access.canSupervise && workspace.status !== "FORMING";
+  const canFeedback = (workspace.access.isTeamMember || workspace.access.canSupervise) && workspace.status !== "FORMING";
   const canSubmit = workspace.status === "CONFIRMED" && workspace.access.canContribute && submittableReports.length > 0;
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
   const nextReport = [...reportWorkspace.reports]
@@ -115,17 +119,17 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
         actions={canManageRequirements || canSubmit ? <>{canManageRequirements ? <ReportRequirementForm teamId={workspace.id} executionStartsAt={earliestDueAt} submissionEndsAt={workspace.schedule.submissionEndsAt} /> : null}{canSubmit ? <ReportSubmissionForm teamId={workspace.id} requirements={submittableReports} /> : null}</> : undefined}
       />
 
-      {nextReport ? <UiAside aria-label="다음 보고서 기한" className="grid gap-2 border-b border-[var(--line)] pb-6 sm:grid-cols-[9rem_minmax(0,1fr)_auto] sm:items-center"><p className="text-xs font-extrabold text-[var(--accent-ink)]"><UiText>{"다음 마감"}</UiText></p><strong className="text-lg">{reportTypeLabel[nextReport.type]}</strong><time className="font-bold text-[var(--accent-ink)]" dateTime={nextReport.dueAt.toISOString()}><UiDate value={nextReport.dueAt} mode="dateTime" /></time></UiAside> : null}
+      {nextReport ? <UiAside aria-label="다음 보고서 기한" className="grid gap-2 border-b border-[var(--line)] pb-6 sm:grid-cols-[9rem_minmax(0,1fr)_auto] sm:items-center"><p className="text-xs font-bold text-[var(--accent-ink)]"><UiText>{"다음 마감"}</UiText></p><strong className="text-lg">{reportTypeLabel[nextReport.type]}</strong><time className="font-semibold text-[var(--accent-ink)]" dateTime={nextReport.dueAt.toISOString()}><UiDate value={nextReport.dueAt} mode="dateTime" /></time></UiAside> : null}
 
       {hasNoSubmittableReports ? <ReportStatusStrip title="현재 제출 가능한 보고서가 없습니다" description="기존 제출·검토 이력은 아래에서 확인할 수 있습니다." /> : null}
       {workspace.status === "FORMING" ? <ReportStatusStrip title="팀 확정 후 제출할 수 있습니다" description={workspace.advisorEnabled ? "지도교수가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다." : "프로젝트 관리자가 팀을 확정하면 제출 기간 내 보고서 버전을 등록할 수 있습니다."} /> : workspace.status === "CLOSED" ? <ReportStatusStrip title="종료된 프로젝트입니다" description="새 보고서를 제출할 수 없으며 기존 제출·승인 이력만 확인할 수 있습니다." /> : null}
       {reportWorkspace.reports.length === 0 ? <EmptyState title="보고서 일정이 없습니다" description={emptyDescription} /> : (
         <div>
-          <div className="hidden grid-cols-[9rem_minmax(0,1fr)_9rem_7rem] border-b border-[var(--line-strong)] px-2 pb-3 text-xs font-bold text-[var(--muted)] md:grid"><span><UiText>{"보고서"}</UiText></span><span><UiText>{"제출 이력"}</UiText></span><span><UiText>{"마감 기한"}</UiText></span><span className="text-right"><UiText>{"관리"}</UiText></span></div>
+          <div className="hidden grid-cols-[9rem_minmax(0,1fr)_9rem_7rem] border-b border-[var(--line-strong)] px-2 pb-3 text-xs font-semibold text-[var(--muted)] md:grid"><span><UiText>{"보고서"}</UiText></span><span><UiText>{"제출 이력"}</UiText></span><span><UiText>{"마감 기한"}</UiText></span><span className="text-right"><UiText>{"관리"}</UiText></span></div>
           <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
             {reportWorkspace.reports.map((report) => (
               <article key={report.type} className="grid gap-5 px-2 py-6 md:grid-cols-[9rem_minmax(0,1fr)_9rem_7rem]">
-                <div><MobileFieldLabel><UiText>{"보고서"}</UiText></MobileFieldLabel><h2 className="font-extrabold">{reportTypeLabel[report.type]}</h2><p className="muted mt-1 text-xs">{report.versions.length}<UiText>{"개 버전"}</UiText></p></div>
+                <div><MobileFieldLabel><UiText>{"보고서"}</UiText></MobileFieldLabel><h2 className="font-bold">{reportTypeLabel[report.type]}</h2><p className="muted mt-1 text-xs">{report.versions.length}<UiText>{"개 버전"}</UiText></p></div>
                 <div>
                   <MobileFieldLabel><UiText>{"제출 이력"}</UiText></MobileFieldLabel>
                   {!report.versions.length ? <p className="muted text-sm"><UiText>{"아직 제출된 버전이 없습니다."}</UiText></p> : (
@@ -160,6 +164,45 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                       ))}
                     </ol>
                   )}
+                  {report.score != null || canScore ? (
+                    <div className="mt-5 border-t border-[var(--line)] pt-4">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="text-sm font-bold"><UiText>{"보고서 점수"}</UiText></h3>
+                        {report.score != null ? (
+                          <p className="text-sm">
+                            <strong className="text-lg tabular-nums text-[var(--primary)]">{report.score}</strong>
+                            <span className="text-[var(--muted)]"> / 100</span>
+                            {report.scoredByName ? <span className="ml-2 text-xs text-[var(--muted)]">· {report.scoredByName}</span> : null}
+                          </p>
+                        ) : <span className="text-xs text-[var(--muted)]"><UiText>{"아직 점수가 없습니다."}</UiText></span>}
+                      </div>
+                      {report.score != null && report.scoreComment ? (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6"><UiText>{report.scoreComment}</UiText></p>
+                      ) : null}
+                      {canScore ? (
+                        <ReportScoreForm teamId={workspace.id} reportId={report.id} currentScore={report.score} currentComment={report.scoreComment} />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="mt-5 border-t border-[var(--line)] pt-4">
+                    <h3 className="text-sm font-bold"><UiText>{"피드백"}</UiText>{report.feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{report.feedback.length}</span> : null}</h3>
+                    {report.feedback.length ? (
+                      <ul className="mt-3 space-y-3">
+                        {report.feedback.map((item) => (
+                          <li key={item.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3">
+                            <p className="text-xs text-[var(--muted)]">
+                              <span className="font-semibold text-[var(--ink)]">{item.authorName}</span>
+                              <span className="ml-1"><UiText>{feedbackRoleLabel[item.authorRole]}</UiText></span>
+                              <span aria-hidden="true"> · </span>
+                              <time dateTime={item.createdAt.toISOString()}><UiDate value={item.createdAt} mode="dateTime" /></time>
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap text-sm leading-6"><UiText>{item.body}</UiText></p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"아직 피드백이 없습니다."}</UiText></p>}
+                    {canFeedback ? <ReportFeedbackForm teamId={workspace.id} reportId={report.id} /> : null}
+                  </div>
                 </div>
                 <div><MobileFieldLabel><UiText>{"마감 기한"}</UiText></MobileFieldLabel><time className="text-sm font-semibold" dateTime={report.dueAt.toISOString()}><UiDate value={report.dueAt} mode="date" /></time></div>
                 <div className="md:justify-self-end">{canManageRequirements ? <><MobileFieldLabel><UiText>{"관리"}</UiText></MobileFieldLabel><RemoveReportRequirementForm teamId={workspace.id} type={report.type} disabled={report.versions.length > 0} /></> : null}</div>

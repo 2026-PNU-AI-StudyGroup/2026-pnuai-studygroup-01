@@ -19,8 +19,8 @@ function visiblePages(page: number, totalPages: number): PageItem[] {
   });
 }
 
-const directionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white px-3 text-sm font-black text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]";
-const disabledDirectionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] px-3 text-sm font-black text-[var(--muted)] opacity-50";
+const directionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white px-3 text-sm font-bold text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]";
+const disabledDirectionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] px-3 text-sm font-bold text-[var(--muted)] opacity-50";
 
 export function ProjectPagination({
   page,
@@ -38,7 +38,7 @@ export function ProjectPagination({
   return (
     <UiNav aria-label={ariaLabel} className="mt-8 border-t border-[var(--line)] pt-6">
       <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-bold text-[var(--muted)]">
+        <p className="text-sm font-semibold text-[var(--muted)]">
           <strong className="text-[var(--ink)]">{page}</strong> / {totalPages}{" "}
           <UiText>{"페이지"}</UiText>
         </p>
@@ -56,12 +56,12 @@ export function ProjectPagination({
           )}
 
           {visiblePages(page, totalPages).map((item, index) => item === "ellipsis" ? (
-            <span key={`ellipsis-${index}`} aria-hidden="true" className="grid size-10 place-items-center text-sm font-bold text-[var(--muted)]">…</span>
+            <span key={`ellipsis-${index}`} aria-hidden="true" className="grid size-10 place-items-center text-sm font-semibold text-[var(--muted)]">…</span>
           ) : item === page ? (
             <span
               key={item}
               aria-current="page"
-              className="grid size-10 place-items-center rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-sm font-black text-white"
+              className="grid size-10 place-items-center rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-sm font-bold text-white"
             >
               {item}
             </span>
@@ -70,7 +70,7 @@ export function ProjectPagination({
               key={item}
               href={href(item)}
               aria-label={`${item} 페이지`}
-              className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-white text-sm font-black text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-white text-sm font-bold text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
             >
               {item}
             </Link>

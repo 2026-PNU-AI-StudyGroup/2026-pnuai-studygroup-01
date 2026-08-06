@@ -22,7 +22,7 @@ export function DiscussionPostForm({ teamId, authorName }: { teamId: string; aut
         </span>
         <div className="min-w-0 flex-1">
           <label htmlFor="discussion-message" className="sr-only"><UiText>{"메시지"}</UiText></label>
-          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--focus-ring)]">
+          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--focus)]">
             <UiTextarea
               id="discussion-message"
               name="content"

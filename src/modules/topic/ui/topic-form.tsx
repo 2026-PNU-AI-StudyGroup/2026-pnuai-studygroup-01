@@ -79,7 +79,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         <UiText>{"주제명"}</UiText><input name="title" maxLength={200} required className="field" />
       </label>
       <label className="grid gap-2 text-sm font-medium">
-        <UiText>{"설명"}</UiText><textarea name="description" maxLength={10000} required rows={6} className="field" />
+        <UiText>{"설명"}</UiText><textarea name="description" maxLength={8000} required rows={6} className="field" />
       </label>
       </section>
       <section className="grid gap-4 border-t border-[var(--line)] py-7 sm:grid-cols-2">

@@ -38,8 +38,8 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
   return (
     <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
       <div className="hidden px-2 lg:block">
-        <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
-        <h2 className="mt-1 text-sm font-black tracking-[-0.02em]"><UiText>{"관리 메뉴"}</UiText></h2>
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
+        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"관리 메뉴"}</UiText></h2>
       </div>
 
       <UiNav aria-label="관리자 업무" className="lg:mt-5">
@@ -50,7 +50,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
                 <AdminNavigationIcon name={current.icon} />
               </span>
               <span className="min-w-0 text-left">
-                <strong className="block truncate text-sm font-black"><UiText>{current.label}</UiText></strong>
+                <strong className="block truncate text-sm font-bold"><UiText>{current.label}</UiText></strong>
                 <span className="block truncate text-xs text-[var(--muted)]"><UiText>{current.hint}</UiText></span>
               </span>
             </span>
@@ -98,7 +98,7 @@ function AdminNavigationLink({ item, active, compact = false }: {
         <AdminNavigationIcon name={item.icon} />
       </span>
       <span className="min-w-0">
-        <strong className="block truncate text-[0.82rem] font-black"><UiText>{item.label}</UiText></strong>
+        <strong className="block truncate text-[0.82rem] font-bold"><UiText>{item.label}</UiText></strong>
         <span className={`mt-0.5 block truncate text-[0.66rem] font-semibold ${active ? "text-[var(--primary)]/75" : "text-[var(--muted)]"}`}><UiText>{item.hint}</UiText></span>
       </span>
     </Link>

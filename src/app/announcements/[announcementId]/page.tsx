@@ -62,10 +62,10 @@ export default async function AnnouncementDetailPage({
           </div>
           <article className="panel overflow-hidden">
             <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
-              <p className="text-xs font-black tracking-[0.14em] text-[var(--primary)]">
+              <p className="text-xs font-bold tracking-[0.14em] text-[var(--primary)]">
                 <UiText>{"공지사항"}</UiText>
               </p>
-              <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-black leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
+              <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
                 <UiText>{announcement.title}</UiText>
               </h1>
               <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted)]">

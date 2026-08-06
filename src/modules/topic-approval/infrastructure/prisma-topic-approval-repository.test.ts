@@ -7,6 +7,11 @@ vi.mock("@/modules/translation/application/translation-queue", () => ({
   enqueueTranslations: vi.fn(async () => undefined),
 }));
 
+vi.mock("@/modules/notification/infrastructure/notification-events", () => ({
+  createApplicationResultNotification: vi.fn(async () => undefined),
+  createTopicApprovalNotification: vi.fn(async () => undefined),
+}));
+
 const requestedAt = new Date("2026-08-01T00:00:00Z");
 const proposal = {
   academicCycleId: "cycle-1",
@@ -231,6 +236,11 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     const createExecutionTeam = vi.fn(async () => ({ id: "execution-team-1" }));
     const createMembers = vi.fn(async () => ({ count: 2 }));
     const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
+    const rejectConflicting = vi.fn(async () => ({ count: 1 }));
+    const rejectRecruitment = vi.fn(async () => ({ count: 0 }));
+    const conflictingFindMany = vi.fn()
+      .mockResolvedValueOnce([{ id: "other-app-1", groupId: null }])
+      .mockResolvedValueOnce([{ id: "other-app-1", studentId: "student-1", topic: { title: "다른 주제" } }]);
     const queryRaw = vi.fn()
       .mockResolvedValueOnce([{
         id: "request-1",
@@ -264,7 +274,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       },
       teamMember: { count: vi.fn(async () => 0), createMany: createMembers },
       topicApplicationGroup: { create: vi.fn(async () => ({ id: "group-1" })) },
-      topicApplication: { createMany: createApplications },
+      topicApplication: { createMany: createApplications, findMany: conflictingFindMany, updateMany: rejectConflicting },
+      recruitmentApplication: { updateMany: rejectRecruitment },
       team: { create: createExecutionTeam },
       topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
@@ -300,7 +311,13 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         managerId: "admin-1",
         status: "PUBLISHED",
         publishedAt: requestedAt,
+        capacity: 2,
       },
+    });
+    // 확정된 팀원의 다른 PENDING 지원이 자동 거절된다.
+    expect(rejectConflicting).toHaveBeenCalledWith({
+      where: { id: { in: ["other-app-1"] }, status: "PENDING" },
+      data: { status: "REJECTED", decidedAt: requestedAt },
     });
   });
 });

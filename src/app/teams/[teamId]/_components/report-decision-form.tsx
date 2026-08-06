@@ -48,7 +48,7 @@ export function ReportDecisionForm({
       <div>
         <h3
           id={`report-review-title-${reportVersionId}`}
-          className="text-sm font-extrabold text-[var(--ink)]"
+          className="text-sm font-bold text-[var(--ink)]"
         >
           <UiText>{"보고서 검토"}</UiText>
         </h3>
@@ -132,7 +132,7 @@ export function ReportDecisionForm({
           />
           <div className="grid gap-5 px-5 py-6 sm:px-7">
             <div className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-4">
-              <p className="text-xs font-bold text-[var(--muted)]"><UiText>{"학생에게 전달되는 검토 의견"}</UiText></p>
+              <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"학생에게 전달되는 검토 의견"}</UiText></p>
               <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-[var(--ink)]">
                 <UiText>{comment.trim() || "등록된 검토 의견이 없습니다."}</UiText>
               </p>

@@ -95,7 +95,7 @@ describe("프로젝트 지도 요청 폼", () => {
   it("회의 답변에만 확정 일시를 제공하고 오류 피드백과 액션 필드를 전달한다", async () => {
     respondRequest.mockResolvedValue({ status: "error", message: "답변 내용을 확인해 주세요." });
     const { container, rerender } = render(
-      <ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="MEETING" />,
+      <ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="MEETING" executionEndsAt={executionEndsAt} />,
     );
 
     expect(screen.getByLabelText("답변")).toHaveAttribute("minlength", "2");
@@ -104,7 +104,7 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(screen.getByLabelText("확정 일시 (선택)")).toHaveAttribute("name", "scheduledAt");
     expect(screen.getByLabelText("확정 일시 (선택)")).not.toBeRequired();
 
-    rerender(<ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="REVIEW" />);
+    rerender(<ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="REVIEW" executionEndsAt={executionEndsAt} />);
     expect(screen.queryByLabelText("확정 일시 (선택)")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("답변"), { target: { value: "확인했습니다." } });

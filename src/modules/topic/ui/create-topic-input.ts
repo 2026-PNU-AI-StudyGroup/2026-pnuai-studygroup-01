@@ -51,7 +51,7 @@ const skillList = z.string().transform((value, context) => {
 export const createTopicInputSchema = z.object({
   programId: z.string().min(1).max(200),
   title: z.string().trim().min(1).max(200),
-  description: z.string().trim().min(1).max(10_000),
+  description: z.string().trim().min(1).max(8_000),
   requiredSkills: skillList.refine((skills) => skills.length > 0),
   preferredSkills: skillList,
   roleExpectations: z.string().trim().min(1).max(500),

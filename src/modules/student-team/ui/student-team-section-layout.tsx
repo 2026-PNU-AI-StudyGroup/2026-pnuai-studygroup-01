@@ -53,13 +53,13 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
       <UiAside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
           <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
-            <p className="text-base font-extrabold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
+            <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
             <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"팀 구성과 모집을 관리합니다."}</UiText></p>
           </div>
 
           <details className="group lg:hidden">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 border-y border-[var(--line)] py-2.5 [&::-webkit-details-marker]:hidden">
-              <span className="flex min-w-0 items-center gap-2.5 text-sm font-extrabold text-[var(--primary-hover)]">
+              <span className="flex min-w-0 items-center gap-2.5 text-sm font-bold text-[var(--primary-hover)]">
                 <StudentTeamIcon name={current.icon} />
                 <UiText>{current.label}</UiText>
               </span>
@@ -76,7 +76,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                       <Link
                         href={item.href}
                         aria-current={active ? "page" : undefined}
-                        className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-bold ${
+                        className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-semibold ${
                           active
                             ? "border-[var(--primary)] text-[var(--primary-hover)]"
                             : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
@@ -101,7 +101,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`snap-color relative flex min-h-11 items-center gap-3 border-l-2 px-3 text-sm font-bold ${
+                      className={`snap-color relative flex min-h-11 items-center gap-3 border-l-2 px-3 text-sm font-semibold ${
                         active
                           ? "border-[var(--primary)] text-[var(--primary)]"
                           : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"

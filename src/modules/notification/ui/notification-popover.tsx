@@ -100,7 +100,7 @@ export function NotificationPopover({
           </svg>
         )}
         {unreadCount ? (
-          <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-black leading-4 text-white">
+          <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-bold leading-4 text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
@@ -127,7 +127,7 @@ export function NotificationPopover({
           />
           <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
             <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4">
-              <h2 className="text-base font-extrabold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
+              <h2 className="text-base font-bold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
               <span className="text-xs font-semibold text-[var(--muted)]">
                 <UiText>{unreadCount ? `읽지 않음 ${accessibleCount}` : "모두 확인함"}</UiText>
               </span>
@@ -149,14 +149,14 @@ export function NotificationPopover({
                         />
                         <span className="min-w-0">
                           <span className="flex items-center justify-between gap-3">
-                            <span className={`text-xs font-bold ${item.read ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
+                            <span className={`text-xs font-semibold ${item.read ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
                               <UiText>{typeLabel[item.type]}</UiText>
                             </span>
                             <time className="shrink-0 text-[11px] font-medium text-[var(--muted)]" dateTime={item.createdAt}>
                               <UiDate value={new Date(item.createdAt)} mode="dateTime" />
                             </time>
                           </span>
-                          <strong className="mt-1.5 block truncate text-sm font-extrabold"><UiText>{item.title}</UiText></strong>
+                          <strong className="mt-1.5 block truncate text-sm font-bold"><UiText>{item.title}</UiText></strong>
                           <span className="mt-1 line-clamp-1 block text-xs leading-5 text-[var(--muted)]"><UiText>{item.body}</UiText></span>
                           {!item.read ? <span className="sr-only"><UiText>{"읽지 않은 알림"}</UiText></span> : null}
                         </span>
@@ -167,7 +167,7 @@ export function NotificationPopover({
               </ol>
             ) : (
               <div className="px-5 py-10 text-center">
-                <p className="text-sm font-extrabold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
+                <p className="text-sm font-bold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
                 <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"프로젝트 활동이 생기면 여기에 표시됩니다."}</UiText></p>
               </div>
             )}
@@ -175,7 +175,7 @@ export function NotificationPopover({
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-extrabold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
+              className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-bold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
             >
               <UiText>{"전체 알림 보기"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
                 <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />

@@ -216,6 +216,8 @@ model User {
   storedFiles                        StoredFile[]
   reportVersionsSubmitted            ReportVersion[]
   approvalDecisions                  ApprovalDecision[]
+  reportsScored                      Report[]                           @relation("ReportScorer")
+  reportFeedback                     ReportFeedback[]                   @relation("ReportFeedbackAuthor")
   artifactsRegistered                Artifact[]
   recruitmentPosts                   RecruitmentPost[]
   recruitmentApplications            RecruitmentApplication[]
@@ -925,18 +927,37 @@ model ObjectDeletionJob {
 }
 
 model Report {
-  id        String          @id @default(uuid())
-  teamId    String
-  type      ReportType
-  dueAt     DateTime
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  team      Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  versions  ReportVersion[]
+  id           String           @id @default(uuid())
+  teamId       String
+  type         ReportType
+  dueAt        DateTime
+  score        Int?
+  scoreComment String?
+  scoredById   String?
+  scoredAt     DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  team         Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  versions     ReportVersion[]
+  feedback     ReportFeedback[]
+  scoredBy     User?            @relation("ReportScorer", fields: [scoredById], references: [id])
 
   @@unique([teamId, type])
   @@index([teamId, dueAt])
   @@map("report")
+}
+
+model ReportFeedback {
+  id        String   @id @default(uuid())
+  reportId  String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  author    User     @relation("ReportFeedbackAuthor", fields: [authorId], references: [id])
+
+  @@index([reportId, createdAt])
+  @@map("report_feedback")
 }
 
 model ReportVersion {

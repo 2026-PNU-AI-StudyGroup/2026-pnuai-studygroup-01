@@ -43,10 +43,10 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--line)] pb-6">
         <div className="max-w-2xl">
           <p className="eyebrow"><UiText>{"프로젝트 채널"}</UiText></p>
-          <h1 id="discussion-title" className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-black leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
+          <h1 id="discussion-title" className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
           <p className="muted mt-2 text-sm leading-6 sm:text-base"><UiText>{"프로젝트 결정과 피드백을 팀원과 바로 공유합니다."}</UiText></p>
         </div>
-        <p className="muted text-sm"><strong className="font-bold text-[var(--ink)]">{participants.length}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
+        <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participants.length}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
       </header>
 
       <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_15rem]">
@@ -106,7 +106,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
         <UiAside aria-label="대화 참여자" className="hidden px-6 py-8 xl:block">
           <div className="sticky top-8">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-sm font-extrabold"><UiText>{"참여자"}</UiText></h2>
+              <h2 className="text-sm font-bold"><UiText>{"참여자"}</UiText></h2>
               <span className="muted text-xs">{participants.length}</span>
             </div>
             <ul className="mt-5 space-y-4">
