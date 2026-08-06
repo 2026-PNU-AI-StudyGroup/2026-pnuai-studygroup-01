@@ -93,6 +93,27 @@ export function UiText({ children }: { children: ReactNode }) {
   return <>{stored === undefined ? t(children) : translateUiMessage(locale, stored)}</>;
 }
 
+// Node's ICU renders ko-KR AM/PM as "AM"/"PM" instead of "오전"/"오후" when
+// formatting via Intl (dateStyle/timeStyle or hour+minute alone), unlike
+// browsers — causing a hydration mismatch. Passing `dayPeriod` explicitly
+// "fixes" Node but switches both Node and the browser to a wider day-period
+// vocabulary ("밤", "새벽", …) that changes the visible text late at night.
+// Building the 오전/오후 prefix ourselves from the numeric hour keeps the
+// exact original two-period format and matches on server and client.
+function formatKoreanClock(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Asia/Seoul",
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  const period = hour < 12 ? "오전" : "오후";
+  const hour12 = hour % 12 || 12;
+  return `${period} ${hour12}:${minute}`;
+}
+
 export function UiDate({
   value,
   mode = "date",
@@ -102,15 +123,18 @@ export function UiDate({
 }) {
   const { locale } = useI18n();
   const isKorean = locale === "ko";
-  // Node's ICU renders ko-KR AM/PM as "AM"/"PM" instead of "오전"/"오후" when
-  // formatting via dateStyle/timeStyle, unlike browsers — causing a hydration
-  // mismatch. Requesting the day period explicitly keeps server and client
-  // output identical without changing the visible format in either.
+  const date = new Date(value);
+
+  if (isKorean && (mode === "time" || mode === "dateTime")) {
+    const clock = formatKoreanClock(date);
+    if (mode === "time") return <>{clock}</>;
+    const datePart = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(date);
+    return <>{datePart} {clock}</>;
+  }
+
   const options: Intl.DateTimeFormatOptions =
     mode === "dateTime"
-      ? isKorean
-        ? { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit", dayPeriod: "short" }
-        : { dateStyle: "medium", timeStyle: "short" }
+      ? { dateStyle: "medium", timeStyle: "short" }
       : mode === "day"
         ? {
             year: "numeric",
@@ -119,16 +143,14 @@ export function UiDate({
             weekday: "short",
           }
         : mode === "time"
-          ? isKorean
-            ? { hour: "numeric", minute: "2-digit", dayPeriod: "short" }
-            : { hour: "numeric", minute: "2-digit" }
+          ? { hour: "numeric", minute: "2-digit" }
           : { dateStyle: "medium" };
   return (
     <>
       {new Intl.DateTimeFormat(isKorean ? "ko-KR" : "en-US", {
         ...options,
         timeZone: "Asia/Seoul",
-      }).format(new Date(value))}
+      }).format(date)}
     </>
   );
 }
