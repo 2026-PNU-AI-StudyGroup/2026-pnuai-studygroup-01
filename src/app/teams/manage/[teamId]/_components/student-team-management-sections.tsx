@@ -34,7 +34,7 @@ export function StudentTeamManagementSections({
             <span className="text-sm text-[var(--muted)]"><UiText>{"구성원"}</UiText>{" "}{team.members.length}<UiText>{"명"}</UiText></span>
           </div>
           <h1 className="mt-3 text-[clamp(2.3rem,4vw,3.5rem)] font-bold leading-none tracking-[-0.055em] text-[var(--ink)]">{team.name}</h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--muted)]"><UiText>{team.description || "등록된 팀 소개 없음"}</UiText></p>
+          {team.description ? <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
         </div>
         {isLeader ? <Link className="button-secondary shrink-0" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><UiText>{"팀원 모집 공고"}</UiText></Link> : null}
       </header>
@@ -44,7 +44,6 @@ export function StudentTeamManagementSections({
           <div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
             <div>
               <h2 id="members-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"구성원"}</UiText></h2>
-              <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"현재 참여 중인 팀원과 역할입니다."}</UiText></p>
             </div>
             <span className="text-sm font-semibold text-[var(--muted)]">{team.members.length}<UiText>{"명"}</UiText></span>
           </div>
@@ -103,7 +102,7 @@ export function StudentTeamManagementSections({
         <section aria-labelledby="danger-title" className="flex flex-col gap-5 border-y border-[var(--line)] bg-white px-2 py-7 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="danger-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 삭제"}</UiText></h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"팀을 삭제해도 이미 결성된 프로젝트와 아카이브 기록은 유지됩니다."}</UiText></p>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"팀을 삭제해도 이미 결성된 프로젝트와 지난 프로젝트 기록은 유지됩니다."}</UiText></p>
           </div>
           <div className="shrink-0"><DeleteStudentTeamForm teamId={team.id} teamName={team.name} /></div>
         </section>

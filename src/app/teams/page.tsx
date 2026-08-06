@@ -48,7 +48,7 @@ export default async function StudentTeamsPage({
           <div className="space-y-5">
             <StudentTeamPageIntro
               title="내 팀"
-              description="프로젝트에 지원할 팀을 만들고 관리합니다. 프로젝트 지원은 팀장만 할 수 있습니다."
+              description="프로젝트 지원은 팀장만 할 수 있습니다."
               action={teams.length > 0 || invitations.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {invitations.length > 0 ? (
@@ -65,7 +65,6 @@ export default async function StudentTeamsPage({
               <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
                   <h2 id="my-teams-title" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"참여 중인 팀"}</UiText></h2>
-                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"팀을 선택해 구성원과 초대를 관리하세요."}</UiText></p>
                 </div>
                 <span className="text-sm font-semibold text-[var(--muted)]">{teams.length}<UiText>{"개"}</UiText></span>
               </div>
@@ -102,7 +101,7 @@ export default async function StudentTeamsPage({
           {modal === "invitations" ? (
             <TeamModal title="받은 팀 초대" description="참여할 팀인지 확인한 뒤 응답하세요.">
               {invitations.length === 0 ? (
-                <EmptyState variant="embedded" title="응답할 초대가 없습니다" description="새 초대가 오면 이곳에서 확인할 수 있습니다." />
+                <EmptyState variant="embedded" title="응답할 초대가 없습니다" />
               ) : (
                 <ul className="max-h-[60vh] divide-y divide-[var(--line)] overflow-y-auto border-y border-[var(--line)]">
                   {invitations.map((invitation) => (

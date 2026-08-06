@@ -30,9 +30,7 @@ export function StudentTeamLedger({ teams, actorId }: {
                 <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
                   {team.name}
                 </h3>
-                <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
-                  <UiText>{team.description || "등록된 팀 소개 없음"}</UiText>
-                </p>
+                {team.description ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
               </div>
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-[var(--muted)] xl:hidden"><UiText>{"내 역할"}</UiText></p>

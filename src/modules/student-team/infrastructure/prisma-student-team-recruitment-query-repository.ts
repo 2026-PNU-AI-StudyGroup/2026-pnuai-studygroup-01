@@ -112,7 +112,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       posts: posts.map(({ team, applications, _count, ...post }) => ({
         ...post,
         teamName: team.name,
-        topicTitle: "지속형 팀",
+        topicTitle: "프로젝트 미지정 팀",
         memberCount: team._count.members,
         applicationCount: _count.applications,
         pendingApplicationCount: applications.length,
@@ -153,7 +153,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
         ...application,
         postTitle: post.title,
         teamName: post.team.name,
-        topicTitle: "지속형 팀",
+        topicTitle: "프로젝트 미지정 팀",
         recruiterName: post.author.name,
       })),
     };
@@ -194,7 +194,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       content: post.content,
       status: post.status,
       teamName: post.team.name,
-      topicTitle: "지속형 팀",
+      topicTitle: "프로젝트 미지정 팀",
       applications: post.applications.map(({ student, ...application }) => ({
         ...application,
         studentName: student.name,

@@ -29,7 +29,6 @@ export function RecruitmentApplicationsView({
     <div className="space-y-5">
       <StudentTeamPageIntro
         title={post.title}
-        description="지원자의 경험, 희망 역할, 실제 활동 가능 시간을 함께 검토합니다."
         meta={<><span><UiText>{post.topicTitle}</UiText></span><span aria-hidden="true">·</span><strong className="text-[var(--ink)]">{post.teamName}</strong></>}
         action={
           <Link className="button-quiet gap-2" href={actorRole === "STUDENT" ? "/recruitments/mine" : "/dashboard"}>
@@ -55,7 +54,7 @@ export function RecruitmentApplicationsView({
           </div>
           {post.applications.length === 0 ? (
             <div className="px-7 lg:px-9">
-              <EmptyState variant="embedded" title="아직 지원자가 없습니다" description="지원이 도착하면 이곳에서 검토할 수 있습니다." />
+              <EmptyState variant="embedded" title="아직 지원자가 없습니다" />
             </div>
           ) : (
             <ol>
@@ -76,7 +75,7 @@ export function RecruitmentApplicationsView({
                         <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"활동 가능 시간"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{application.availability}</UiText></dd></div>
                       </dl>
                       <div className="mt-5 border-t border-[var(--line)] pt-4">
-                        <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"지원 메시지"}</UiText></p>
+                        <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"지원 내용"}</UiText></p>
                         <TranslatedText text={application.message} className="mt-1 text-sm leading-6" />
                       </div>
                     </div>
