@@ -77,3 +77,38 @@ export function createProjectRequestNotifications(
     skipDuplicates: true,
   });
 }
+
+export function createDiscussionNotifications(
+  transaction: NotificationTransaction,
+  inputs: Array<{
+    dedupeKey: string;
+    recipientId: string;
+    title: string;
+    body: string;
+    href: string;
+    createdAt: Date;
+  }>,
+) {
+  if (!inputs.length) return Promise.resolve({ count: 0 });
+  return transaction.notification.createMany({
+    data: inputs.map((input) => ({ ...input, type: "DISCUSSION" as const })),
+    skipDuplicates: true,
+  });
+}
+
+export function createTopicApprovalNotification(
+  transaction: NotificationTransaction,
+  input: {
+    dedupeKey: string;
+    recipientId: string;
+    title: string;
+    body: string;
+    href: string;
+    createdAt: Date;
+  },
+) {
+  return transaction.notification.createMany({
+    data: [{ ...input, type: "TOPIC_APPROVAL" as const }],
+    skipDuplicates: true,
+  });
+}

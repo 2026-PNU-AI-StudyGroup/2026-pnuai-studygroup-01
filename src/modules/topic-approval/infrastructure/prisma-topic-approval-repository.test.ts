@@ -9,6 +9,7 @@ vi.mock("@/modules/translation/application/translation-queue", () => ({
 
 vi.mock("@/modules/notification/infrastructure/notification-events", () => ({
   createApplicationResultNotification: vi.fn(async () => undefined),
+  createTopicApprovalNotification: vi.fn(async () => undefined),
 }));
 
 const requestedAt = new Date("2026-08-01T00:00:00Z");
@@ -132,6 +133,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       $queryRaw: vi.fn(async () => [{
         id: "request-1",
         topicId: "topic-1",
+        topicTitle: "학생 제안",
+        requesterId: "student-1",
         route: "PROFESSOR",
         requestedProfessorId: "professor-1",
         studentTeamId: null,
@@ -149,6 +152,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         update: updateTopic,
       },
       topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -241,6 +245,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       .mockResolvedValueOnce([{
         id: "request-1",
         topicId: "topic-1",
+        topicTitle: "학생 제안",
+        requesterId: "student-1",
         route: "ADMIN",
         requestedProfessorId: null,
         studentTeamId: "student-team-1",
@@ -272,6 +278,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       recruitmentApplication: { updateMany: rejectRecruitment },
       team: { create: createExecutionTeam },
       topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
+      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),

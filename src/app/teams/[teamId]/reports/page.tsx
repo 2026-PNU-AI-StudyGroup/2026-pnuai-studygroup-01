@@ -96,7 +96,9 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
   const canFeedback = (workspace.access.isTeamMember || workspace.access.canSupervise) && workspace.status !== "FORMING";
   const canSubmit = workspace.status === "CONFIRMED" && workspace.access.canContribute && submittableReports.length > 0;
   const earliestDueAt = workspace.schedule.executionStartsAt > now ? workspace.schedule.executionStartsAt : now;
-  const nextReport = [...reportWorkspace.reports].filter((report) => report.dueAt >= now).sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime())[0];
+  const nextReport = [...reportWorkspace.reports]
+    .filter((report) => report.dueAt >= now && report.versions[0]?.decision?.decision !== "APPROVED")
+    .sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime())[0];
   const hasNoSubmittableReports = workspace.status === "CONFIRMED"
     && workspace.access.canContribute
     && reportWorkspace.reports.length > 0

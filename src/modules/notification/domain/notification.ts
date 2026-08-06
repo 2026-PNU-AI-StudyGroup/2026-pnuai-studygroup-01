@@ -2,6 +2,8 @@ export type NotificationType =
   | "APPLICATION_RESULT"
   | "REPORT_ACTIVITY"
   | "PROJECT_REQUEST"
+  | "DISCUSSION"
+  | "TOPIC_APPROVAL"
   | "DEADLINE"
   | "SYSTEM";
 

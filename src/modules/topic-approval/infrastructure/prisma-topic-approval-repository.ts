@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
+import { createApplicationResultNotification, createTopicApprovalNotification } from "@/modules/notification/infrastructure/notification-events";
 import type { TopicApprovalRepository, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
-import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
@@ -129,9 +129,12 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     for (let attempt = 1; attempt <= DECISION_ATTEMPTS; attempt += 1) {
       try {
       return await this.client.$transaction(async (transaction) => {
-      const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId: string | null; status: string }>>(Prisma.sql`
-        SELECT "id", "topicId", "route", "requestedProfessorId", "studentTeamId", "status"
-        FROM "topic_approval_request" WHERE "id" = ${input.requestId} FOR UPDATE
+      const rows = await transaction.$queryRaw<Array<{ id: string; topicId: string; topicTitle: string; requesterId: string; route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId: string | null; status: string }>>(Prisma.sql`
+        SELECT "topic_approval_request"."id", "topic_approval_request"."topicId", "topic"."title" AS "topicTitle", "topic_approval_request"."requesterId", "topic_approval_request"."route", "topic_approval_request"."requestedProfessorId", "topic_approval_request"."studentTeamId", "topic_approval_request"."status"
+        FROM "topic_approval_request"
+        JOIN "topic" ON "topic"."id" = "topic_approval_request"."topicId"
+        WHERE "topic_approval_request"."id" = ${input.requestId}
+        FOR UPDATE OF "topic_approval_request"
       `);
       const request = rows[0];
       if (!request || request.status !== "PENDING") return "UNAVAILABLE";
@@ -287,6 +290,16 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       }
       const status = input.decision === "APPROVE" ? "APPROVED" : "REJECTED";
       await transaction.topicApprovalRequest.update({ where: { id: request.id }, data: { status, reviewComment: input.reviewComment, decidedById: input.actorId, decidedAt: input.decidedAt } });
+      await createTopicApprovalNotification(transaction, {
+        recipientId: request.requesterId,
+        title: status === "APPROVED" ? "프로젝트 제안이 승인되었습니다" : "프로젝트 제안이 반려되었습니다",
+        body: status === "APPROVED"
+          ? `${request.topicTitle} 제안이 승인되어 공개되었습니다.`
+          : `${request.topicTitle} 제안이 반려되었습니다. 검토 의견을 확인해 주세요.`,
+        href: "/project-approvals",
+        dedupeKey: `topic-approval:${request.id}:${status}`,
+        createdAt: input.decidedAt,
+      });
       return status;
       });
       } catch (error) {
