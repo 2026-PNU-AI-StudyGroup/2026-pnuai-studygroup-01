@@ -95,3 +95,20 @@ export function createDiscussionNotifications(
     skipDuplicates: true,
   });
 }
+
+export function createTopicApprovalNotification(
+  transaction: NotificationTransaction,
+  input: {
+    dedupeKey: string;
+    recipientId: string;
+    title: string;
+    body: string;
+    href: string;
+    createdAt: Date;
+  },
+) {
+  return transaction.notification.createMany({
+    data: [{ ...input, type: "TOPIC_APPROVAL" as const }],
+    skipDuplicates: true,
+  });
+}

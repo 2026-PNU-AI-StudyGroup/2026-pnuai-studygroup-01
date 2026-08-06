@@ -3,6 +3,7 @@ export type NotificationType =
   | "REPORT_ACTIVITY"
   | "PROJECT_REQUEST"
   | "DISCUSSION"
+  | "TOPIC_APPROVAL"
   | "DEADLINE"
   | "SYSTEM";
 
