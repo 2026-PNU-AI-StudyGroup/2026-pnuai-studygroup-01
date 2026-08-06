@@ -34,11 +34,10 @@ export default async function ProfessorsPage() {
   const entries = await service.list(actor);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
-      <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="교수 기능을 사용할 부산대학교 이메일을 승인하고, 더 이상 필요하지 않은 접근 권한을 회수합니다." actions={<>{entries.length ? <Link className="button-primary" href="/admin/professors/new"><UiText>{"교수 이메일 등록"}</UiText></Link> : null}<Link className="button-secondary" href="/admin/professors/history"><UiText>{"변경 이력"}</UiText></Link></>}>
+      <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="교수 권한을 부여할 부산대학교 이메일을 등록하고, 더 이상 필요하지 않은 권한을 회수합니다." actions={<>{entries.length ? <Link className="button-primary" href="/admin/professors/new"><UiText>{"교수 이메일 등록"}</UiText></Link> : null}<Link className="button-secondary" href="/admin/professors/history"><UiText>{"변경 이력"}</UiText></Link></>}>
         <AdminSection
           id="professor-list-title"
           title="교수 권한 목록"
-          description="허용한 이메일의 계정 연결 상태와 권한 부여 시점을 확인합니다."
           meta={<><UiText>{"총"}</UiText>{" "}{entries.length}<UiText>{"개"}</UiText></>}
         >
           {entries.length === 0 ? (
@@ -70,7 +69,7 @@ export default async function ProfessorsPage() {
                     {entry.revokedAt ? (
                       <StatusBadge tone="neutral"><UiDate value={entry.revokedAt} mode="date" /> {" "}<UiText>{"회수"}</UiText></StatusBadge>
                     ) : (
-                      <><StatusBadge><UiText>{"허용"}</UiText></StatusBadge><RevokeProfessorAccessForm email={entry.email} activeResponsibilityCount={entry.activeResponsibilityCount} /></>
+                      <><StatusBadge><UiText>{"권한 부여"}</UiText></StatusBadge><RevokeProfessorAccessForm email={entry.email} activeResponsibilityCount={entry.activeResponsibilityCount} /></>
                     )}
                   </div>
                 </li>

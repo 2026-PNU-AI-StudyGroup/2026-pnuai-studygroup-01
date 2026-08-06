@@ -18,7 +18,7 @@ describe("교수 지원 결정 입력", () => {
     }} />);
 
     expect(screen.getByRole("textbox", { name: /검토 의견/ })).toHaveAttribute("maxlength", "2000");
-    expect(screen.getByRole("button", { name: "수락" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "거절" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "선정" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "미선정" })).toBeInTheDocument();
   });
 });

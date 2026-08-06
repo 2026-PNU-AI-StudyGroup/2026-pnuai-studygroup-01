@@ -33,11 +33,10 @@ export default async function ProfessorHistoryPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors/history">
-      <AdminWorkspace currentPath="/admin/professors/history" eyebrow="교수 권한 · 변경 이력" title="교수 권한 변경 이력" description="권한을 허용하거나 회수한 기록과 처리자를 시간순으로 살펴봅니다." actions={<Link className="button-secondary" href="/admin/professors"><UiText>{"권한 목록"}</UiText></Link>}>
+      <AdminWorkspace currentPath="/admin/professors/history" title="교수 권한 변경 이력" description="권한을 부여하거나 회수한 기록과 처리자를 시간순으로 확인합니다." actions={<Link className="button-secondary" href="/admin/professors"><UiText>{"권한 목록"}</UiText></Link>}>
         <AdminSection
           id="professor-audit-title"
           title="최근 권한 변경 기록"
-          description="교수 이메일 권한의 허용·회수 이력과 처리자를 최신순으로 표시합니다."
           meta={<><UiText>{"최근"}</UiText>{" "}{entries.length}<UiText>{"건"}</UiText></>}
         >
           {entries.length === 0 ? (
@@ -53,7 +52,7 @@ export default async function ProfessorHistoryPage() {
                 >
                   <div className="min-w-0">
                     <strong className="break-words font-semibold">{entry.targetEmail}</strong>
-                    <p className="muted mt-1 text-xs"><UiText>{entry.action === "PROFESSOR_ACCESS_GRANTED" ? "교수 권한 허용" : "교수 권한 회수"}</UiText></p>
+                    <p className="muted mt-1 text-xs"><UiText>{entry.action === "PROFESSOR_ACCESS_GRANTED" ? "교수 권한 부여" : "교수 권한 회수"}</UiText></p>
                   </div>
                   <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 sm:items-end xl:contents">
                     <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 xl:block">

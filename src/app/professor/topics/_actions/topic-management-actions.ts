@@ -59,7 +59,7 @@ export async function changeTopicStatusAction(
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { status: "error", message: "잘못된 상태 변경 요청입니다." };
+    return { status: "error", message: "변경할 주제 상태를 다시 확인해 주세요." };
   }
 
   const service = new ChangeTopicStatusService(

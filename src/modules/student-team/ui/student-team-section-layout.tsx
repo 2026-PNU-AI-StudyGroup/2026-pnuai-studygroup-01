@@ -6,10 +6,10 @@ import { ExplorerHero } from "@/shared/ui/explorer-hero";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 
 const navigation = [
-  { href: "/recruitments", label: "팀 찾기", icon: "search" },
+  { href: "/recruitments", label: "팀원 모집", icon: "search" },
   { href: "/teams", label: "팀 관리", icon: "document" },
-  { href: "/recruitments/applications", label: "지원 상태", icon: "send" },
-  { href: "/recruitments/mine", label: "내 공고", icon: "document" },
+  { href: "/recruitments/applications", label: "지원 내역", icon: "send" },
+  { href: "/recruitments/mine", label: "내 모집", icon: "document" },
 ] as const;
 
 type StudentTeamIconName = "search" | "send" | "document" | "plus" | "chevron-left" | "chevron-right";
@@ -55,7 +55,6 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
         <div className="lg:sticky lg:top-8">
           <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
             <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
-            <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"팀 구성과 모집을 관리합니다."}</UiText></p>
           </div>
 
           <ResponsiveSectionNavigation
@@ -117,11 +116,11 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
   );
 }
 
-export function StudentTeamPageIntro({ title, description, action, meta }: { title: string; description: string; action?: ReactNode; meta?: ReactNode }) {
+export function StudentTeamPageIntro({ title, description, action, meta }: { title: string; description?: ReactNode; action?: ReactNode; meta?: ReactNode }) {
   return (
     <ExplorerHero
       title={<UiText>{title}</UiText>}
-      description={<UiText>{description}</UiText>}
+      description={description ? <UiText>{description}</UiText> : undefined}
       context={meta}
       mark={<UiText>{title.replace(/\s/g, "").slice(0, 1)}</UiText>}
       action={action}

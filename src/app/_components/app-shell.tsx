@@ -27,7 +27,7 @@ type NavigationItem = {
 function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
-        explore: "프로젝트 탐색",
+        explore: "프로젝트 찾기",
         projects: "내 프로젝트",
         teamWorkspace: "팀",
         announcements: "공지사항",
@@ -134,7 +134,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자"
     : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : "Administrator";
   const shellCopy = locale === "ko"
-    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 탐색 모바일" }
+    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
     : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
   return (
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>

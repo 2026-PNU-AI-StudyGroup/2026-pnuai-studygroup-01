@@ -22,7 +22,7 @@ import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("감사 기록");
+  return getLocalizedMetadata("관리 이력");
 }
 
 const actionLabel: Record<AuditAction, string> = {
@@ -51,11 +51,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const data = await new ListAuditLogService(new PrismaAuditLogReader(prisma)).execute(actor, page);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/audit">
-      <AdminWorkspace currentPath="/admin/audit" title="감사 기록" description="권한, 사용자 접근, 팀 확정과 보고서 승인처럼 운영에 영향을 주는 변경을 시간순으로 추적합니다.">
+      <AdminWorkspace currentPath="/admin/audit" title="관리 이력" description="권한, 사용자 접근, 팀 확정과 보고서 승인처럼 운영에 영향을 주는 변경을 시간순으로 확인합니다.">
         <AdminSection
           id="audit-list-title"
           title="최근 변경"
-          description="운영에 영향을 준 변경의 대상과 처리자를 최신순으로 표시합니다."
           meta={<><UiText>{"총"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></>}
         >
           {data.items.length === 0 ? (
@@ -82,7 +81,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             </ol>
           )}
           {data.totalPages > 1 ? (
-            <UiNav aria-label="감사 기록 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
+            <UiNav aria-label="관리 이력 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
               <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
                 {data.page > 1 ? <Link className="button-quiet" href={`/admin/audit?page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}

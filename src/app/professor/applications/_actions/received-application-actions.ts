@@ -37,7 +37,7 @@ export async function decideTopicApplicationAction(
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { status: "error", message: "잘못된 지원서 처리 요청입니다." };
+    return { status: "error", message: "처리할 지원서와 선정 결과를 다시 확인해 주세요." };
   }
 
   const service = new DecideTopicApplicationService(
@@ -65,6 +65,6 @@ export async function decideTopicApplicationAction(
   revalidatePath(`/professor/applications/${parsed.data.applicationId}`);
   return {
     status: "success",
-    message: parsed.data.decision === "accept" ? "지원서를 수락했습니다." : "지원서를 거절했습니다.",
+    message: parsed.data.decision === "accept" ? "지원서를 선정했습니다." : "지원서를 미선정 처리했습니다.",
   };
 }

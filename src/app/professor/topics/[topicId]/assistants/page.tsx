@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { ProjectAssistantManagementPanel } from "@/app/_components/project-assistant-management";
 import { AppShell } from "@/app/_components/app-shell";
-import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
+import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectAssistantOperationError, ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
@@ -55,8 +55,8 @@ export default async function ProjectAssistantManagementPage({
     >
       <ProfessorWorkspace
         currentPath={`/professor/topics/${topic.id}/assistants`}
+        role={actor.role}
         title={topic.title}
-        description="조교 초대와 프로젝트 운영 권한을 한곳에서 관리합니다."
         actions={(
           <>
             <Link

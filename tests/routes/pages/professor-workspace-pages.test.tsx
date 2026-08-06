@@ -118,7 +118,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
     expect(listOpenPrograms).not.toHaveBeenCalled();
     expect(screen.getByRole("heading", { name: "담당 주제" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "배정된 프로젝트" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "새 주제 만들기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "학생 제안 검토" })).not.toBeInTheDocument();
   });
 
@@ -158,7 +158,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
     render(await ProfessorTopicsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByRole("link", { name: "새 주제 만들기" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "새 주제 등록" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "학생 제안 검토" })).toBeInTheDocument();
   });
 

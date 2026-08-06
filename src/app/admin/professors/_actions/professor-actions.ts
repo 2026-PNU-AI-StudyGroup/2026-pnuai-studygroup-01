@@ -47,7 +47,7 @@ export async function grantProfessorAccessAction(
     throw error;
   }
   revalidatePath("/admin/professors");
-  return { status: "success", message: "교수 권한을 허용했습니다." };
+  return { status: "success", message: "교수 권한을 부여했습니다." };
 }
 
 export async function revokeProfessorAccessAction(

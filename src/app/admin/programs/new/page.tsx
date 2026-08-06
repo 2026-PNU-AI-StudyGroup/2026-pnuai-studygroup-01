@@ -20,7 +20,7 @@ export default async function NewProgramPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/programs/new">
-      <AdminWorkspace currentPath="/admin/programs/new" eyebrow="프로그램 · 새로 만들기" title="새 프로그램" description="운영 기간과 공개할 프로그램 정보를 설정합니다." actions={<Link className="button-secondary" href="/admin/programs"><UiText>{"프로그램 목록"}</UiText></Link>}>
+      <AdminWorkspace currentPath="/admin/programs/new" title="새 프로그램" actions={<Link className="button-secondary" href="/admin/programs"><UiText>{"프로그램 목록"}</UiText></Link>}>
         <ProgramForm successHref="/admin/programs" />
       </AdminWorkspace>
     </AppShell>

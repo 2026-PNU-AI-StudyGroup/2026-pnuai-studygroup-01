@@ -84,14 +84,15 @@ describe("화면 책임 분리", () => {
     getStudentProfileMock.mockResolvedValue(profile);
     const account = render(await AccountPage());
 
-    expect(screen.getByRole("link", { name: "프로필 수정" })).toHaveAttribute("href", "/account/profile");
+    expect(screen.getByRole("link", { name: "지원 정보 수정" })).toHaveAttribute("href", "/account/profile");
     expect(screen.queryByRole("textbox", { name: "관심 분야" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "바로가기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "로그인 세션" })).not.toBeInTheDocument();
     account.unmount();
 
-    render(await StudentProfilePage());
-    expect(screen.getByRole("textbox", { name: "관심 분야" })).toHaveValue("접근성");
+    const profileEdit = render(await StudentProfilePage());
+    expect(screen.getByRole("button", { name: "접근성 삭제" })).toBeInTheDocument();
+    expect(profileEdit.container.querySelector<HTMLInputElement>('input[name="interests"]')).toHaveValue("접근성");
     expect(screen.getAllByRole("link", { name: "계정 정보" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "계정 정보" })).toHaveAttribute("href", "/account");
   });

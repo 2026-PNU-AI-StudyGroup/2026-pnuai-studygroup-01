@@ -76,7 +76,7 @@ describe("관리 화면의 중복·가짜 컨트롤", () => {
 
     render(await ProgramsAdminPage());
 
-    expect(screen.getByText(/학생 프로젝트 생성 허용/)).toBeInTheDocument();
+    expect(screen.getByText(/학생 프로젝트 제안 허용/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "학생 생성 설정" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "프로그램 상태 변경" })).not.toBeInTheDocument();
   });

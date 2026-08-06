@@ -36,7 +36,6 @@ export default async function ProgramsAdminPage() {
         <AdminSection
           id="program-list-title"
           title="프로그램 목록"
-          description="운영 기간과 공개 상태, 프로젝트 생성 정책을 한곳에서 관리합니다."
           meta={<><UiText>{"총"}</UiText>{" "}{programs.length}<UiText>{"개"}</UiText></>}
         >
           {programs.length === 0 ? (
@@ -44,7 +43,7 @@ export default async function ProgramsAdminPage() {
               <EmptyState
                 variant="embedded"
                 title="아직 만든 프로그램이 없습니다"
-                description="첫 프로그램을 만들어 프로젝트 운영을 시작하세요."
+                description="프로그램을 등록해 프로젝트 운영을 시작하세요."
                 action={<Link className="button-primary" href="/admin/programs/new"><UiText>{"새 프로그램"}</UiText></Link>}
               />
             </AdminSectionEmpty>
@@ -68,7 +67,7 @@ export default async function ProgramsAdminPage() {
                     <p className="text-xs font-bold text-[var(--muted)]">
                       <UiText>{program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}</UiText>
                       {" · "}
-                      <UiText>{program.studentProjectCreationEnabled ? "학생 프로젝트 생성 허용" : "학생 프로젝트 생성 미허용"}</UiText>
+                      <UiText>{program.studentProjectCreationEnabled ? "학생 프로젝트 제안 허용" : "학생 프로젝트 제안 미허용"}</UiText>
                     </p>
                     {program.status !== "CLOSED" ? (
                       <div className="mt-3 flex flex-wrap justify-end gap-2">

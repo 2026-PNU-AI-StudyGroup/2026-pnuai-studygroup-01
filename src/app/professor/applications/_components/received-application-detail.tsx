@@ -78,11 +78,11 @@ export function ReceivedApplicationDetail({
         <section aria-labelledby="review-decision-title" className="border-y border-[var(--line)] py-6">
           <div className="mb-5 border-b border-[var(--line)] pb-4">
             <h3 id="review-decision-title" className="text-lg font-semibold"><UiText>{"결정과 의견 전달"}</UiText></h3>
-            <p className="muted mt-2 text-sm leading-6"><UiText>{"수락 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다."}</UiText></p>
+            <p className="muted mt-2 text-sm leading-6"><UiText>{"선정 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다."}</UiText></p>
           </div>
           {application.decisionImpact ? <div className="mb-5 grid gap-3 bg-[var(--surface-subtle)] p-4 text-sm sm:grid-cols-3">
-            <p><strong><UiText>{"수락 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.acceptedMemberCount}<UiText>{"명"}</UiText></span></p>
-            <p><strong><UiText>{"수락 후 정원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.currentMemberCount + application.decisionImpact.acceptedMemberCount} / {application.decisionImpact.capacity}<UiText>{"명"}</UiText></span></p>
+            <p><strong><UiText>{"선정 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.acceptedMemberCount}<UiText>{"명"}</UiText></span></p>
+            <p><strong><UiText>{"선정 후 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.currentMemberCount + application.decisionImpact.acceptedMemberCount} / {application.decisionImpact.capacity}<UiText>{"명"}</UiText></span></p>
             <p><strong><UiText>{"자동 미선정"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.automaticallyRejectedApplicationCount}<UiText>{"건"}</UiText>{application.decisionImpact.closesRecruitment ? <UiText>{" · 모집 마감"}</UiText> : null}</span></p>
           </div> : null}
           {application.decisionImpact ? <ApplicationDecisionForm applicationId={application.id} impact={application.decisionImpact} /> : null}

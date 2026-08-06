@@ -115,7 +115,7 @@ export function ReceivedApplicationList({
               </h2>
             </div>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">{application.studentName}<UiText>{application.applicationKind === "TEAM" ? " 외 팀원" : ""}</UiText></p>
+              <p className="truncate font-bold">{application.studentName}<UiText>{application.applicationKind === "TEAM" && application.teamMemberCount > 1 ? ` 외 ${application.teamMemberCount - 1}명` : ""}</UiText></p>
               <p className="muted mt-2 text-xs">
                 <time dateTime={application.createdAt.toISOString()}>
                   <UiDate value={application.createdAt} mode="dateTime" /> <UiText>{"지원"}</UiText></time>

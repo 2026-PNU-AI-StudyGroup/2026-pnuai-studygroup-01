@@ -16,7 +16,7 @@ export function StudentProjectCreationForm({ id, enabled }: {
       <input type="hidden" name="programId" value={id} />
       <input type="hidden" name="enabled" value={enabled ? "false" : "true"} />
       <button type="submit" className="button-quiet min-h-9 px-3 text-xs" disabled={pending}>
-        <UiText>{pending ? "변경 중" : enabled ? "학생 생성 중지" : "학생 생성 허용"}</UiText>
+        <UiText>{pending ? "변경 중" : enabled ? "학생 제안 중지" : "학생 제안 허용"}</UiText>
       </button>
       {state.message ? <p aria-live="polite" className={`mt-1 text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
     </form>

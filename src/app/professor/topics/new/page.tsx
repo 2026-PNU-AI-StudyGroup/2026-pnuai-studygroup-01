@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createTopicAction } from "@/app/_actions/create-topic-action";
-import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
+import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -26,7 +26,7 @@ export default async function NewTopicPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
-      <ProfessorWorkspace currentPath="/professor/topics/new" eyebrow="주제 설계 · 새로 만들기" title="새 프로젝트 주제" description="학생이 목표와 기대 역할을 바로 이해할 수 있도록 핵심부터 작성합니다." actions={programs.length ? <Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link> : undefined}>
+      <ProfessorWorkspace currentPath="/professor/topics/new" role={actor.role} title="새 프로젝트 주제" actions={programs.length ? <Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link> : undefined}>
         {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 공개된 프로그램이 없습니다" description="프로그램이 공개되면 새 프로젝트 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>} />}
       </ProfessorWorkspace>
     </AppShell>

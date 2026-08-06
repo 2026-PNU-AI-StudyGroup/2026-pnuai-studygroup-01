@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
-import { ProfessorWorkspace } from "@/app/professor/_components/professor-workspace";
+import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   GetReceivedTopicApplicationService,
@@ -44,7 +44,7 @@ export default async function ProfessorApplicationDetailPage({
       userName={actor.name}
       currentPath="/professor/applications"
     >
-      <ProfessorWorkspace currentPath="/professor/applications" eyebrow="지원 검토 · 지원서" title="지원서 상세" description="지원자와 팀 구성, 문항별 답변을 차례로 확인한 뒤 참여 여부를 결정합니다." actions={
+      <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원서 상세" actions={
             <Link href="/professor/applications" className="button-secondary">
               <UiText>{"목록으로"}</UiText></Link>
           }>
