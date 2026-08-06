@@ -102,7 +102,8 @@ const ids = {
   ],
   opusAdvisors: Array.from({ length: opusAdvisors.length }, (_, index) => `11000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   students: Array.from({ length: demoStudentNames.length }, (_, index) => `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
-  programs: Array.from({ length: 12 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  programs: Array.from({ length: 11 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  retiredPrograms: ["40000000-0000-4000-8000-000000000012"],
   topics: Array.from({ length: 6 + archivedProjectCount }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   applications: Array.from({ length: 13 + archivedProjectMemberNames.length }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   localViewerApplication: "61000000-0000-4000-8000-000000000001",
@@ -257,6 +258,7 @@ async function seed() {
     await tx.team.deleteMany({ where: { id: { in: ids.teams } } });
     await tx.topicApplication.deleteMany({ where: { id: { in: [...ids.applications, ids.localViewerApplication] } } });
     await tx.topic.deleteMany({ where: { id: { in: ids.topics } } });
+    await tx.projectProgram.deleteMany({ where: { id: { in: ids.retiredPrograms } } });
 
     const people: Array<[string, string, string, UserRole]> = [
       [ids.admin, "박지은", "demo.admin@pusan.ac.kr", UserRole.ADMIN],
@@ -281,7 +283,7 @@ async function seed() {
       {
         authorId: ids.admin,
         title: "2026학년도 2학기 졸업과제 운영 일정 안내",
-        content: "졸업과제 주제 확정부터 최종 발표까지의 주요 일정을 안내합니다.\n\n- 팀·주제 확정: 8월 14일\n- 수행계획서 제출: 8월 31일\n- 중간보고서 제출: 10월 16일\n- 최종보고서 제출: 12월 11일\n- 작품 전시 및 최종 발표: 12월 18일\n\n산학협력 트랙은 기업 멘토 일정이 추가될 수 있으니 각 프로젝트 화면도 확인해 주세요.",
+        content: "졸업과제 주제 확정부터 최종 발표까지의 주요 일정을 안내합니다.\n\n- 팀·주제 확정: 8월 14일\n- 수행계획서 제출: 8월 31일\n- 중간보고서 제출: 10월 16일\n- 최종보고서 제출: 12월 11일\n- 작품 전시 및 최종 발표: 12월 18일",
         createdAt: new Date("2026-08-05T09:00:00+09:00"),
       },
       {
@@ -403,15 +405,14 @@ async function seed() {
       }
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
-        create: { ...input, createdById: ids.professors[0], openedAt: input.startsAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
+        create: { ...input, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, openedAt: input.startsAt },
       });
     }
     const activePrograms = [
       await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
       await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-05-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), status: "OPEN" }),
       await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-04-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[11], name: "2026학년도 CSE 졸업과제 산학협력 트랙", category: opusProgramCategories.capstone, description: "기업·기관이 제안한 현장 문제를 바탕으로 요구사항 분석, 중간 기술 검토, 현장 피드백과 결과물 인수인계까지 수행하는 졸업과제 트랙", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
     ];
     const pastPrograms = [
       await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), status: "CLOSED" }),
@@ -430,7 +431,7 @@ async function seed() {
     // 해커톤·AI 교육 주제는 공개 아카이브의 프로그램 다양성을 유지할 정도로만 포함한다.
     const activeTopics = [
       ["캠퍼스 이동약자를 위한 실내 길찾기", "강의동 내부의 경사로, 엘리베이터, 자동문과 공사 구간을 반영해 휠체어 사용자가 실제로 이동 가능한 경로를 안내하고 사용자 평가로 정확도를 검증합니다.", ["Next.js", "PostgreSQL", "PostGIS"], ["접근성", "지도 UI"], "프론트엔드 또는 공간 데이터 담당", "주 1회 지도교수 대면 회의와 주 6시간 이상 개발", 4, 0, 0],
-      ["졸업과제 전시 관람객 혼잡도 예측 및 동선 안내", "작품 전시장의 익명 출입 인원과 부스별 체류 시간을 분석해 혼잡 구간을 예측하고 운영진과 관람객에게 추천 동선을 제공합니다.", ["TypeScript", "Python"], ["시계열 분석", "데이터 시각화"], "데이터 분석 또는 웹 개발 담당", "기업 멘토 월 2회 기술 검토와 화요일 팀 회의 참여", 4, 3, 1],
+      ["졸업과제 전시 관람객 혼잡도 예측 및 동선 안내", "작품 전시장의 익명 출입 인원과 부스별 체류 시간을 분석해 혼잡 구간을 예측하고 운영진과 관람객에게 추천 동선을 제공합니다.", ["TypeScript", "Python"], ["시계열 분석", "데이터 시각화"], "데이터 분석 또는 웹 개발 담당", "기업 멘토 월 2회 기술 검토와 화요일 팀 회의 참여", 4, 0, 1],
       ["졸업과제 수행 기록 및 결과물 아카이브", "주제 제안, 팀 구성, 지도 기록, 보고서 승인과 공개 결과물을 한 흐름으로 연결해 졸업과제 운영 누락을 줄이고 후배가 이전 결과물을 검색할 수 있게 합니다.", ["Next.js", "Prisma", "PostgreSQL"], ["UX 리서치", "테스트 자동화"], "제품 설계 또는 풀스택 개발 담당", "주 1회 지도교수 면담과 주 2회 온라인 진행 공유", 5, 0, 2],
       ["실내 재난 상황 인지 및 대피 경로 안내", "재난문자와 교내 건물·출입구 데이터를 결합해 상황별 행동 요령과 접근 가능한 대피 경로를 안내하고 모의 대피 시나리오로 응답 정확도를 검증합니다.", ["React", "공공데이터 API"], ["RAG", "지도 UI"], "AI 서비스 또는 데이터 연동 담당", "주 1회 지도교수 면담과 학기 중 모의 대피 검증 참여", 4, 0, 0],
       ["캠퍼스 행사 수요 예측 AI", "이전 행사 신청, 학사 일정과 날씨 데이터를 이용해 예상 참여 인원과 준비 물품 수량을 제안하는 대시보드를 만듭니다.", ["Python", "SQL"], ["예측 모델", "데이터 시각화"], "데이터 분석 또는 서비스 기획 담당", "격주 목요일 회의와 최종 해커톤 참여", 3, 1, 1],
@@ -641,7 +642,7 @@ async function seed() {
       [0, activePrograms[0].id, ids.professors[0], "배리어프리 캠퍼스", "CONFIRMED"],
       [2, activePrograms[0].id, ids.professors[2], "캡스톤 아카이브", "FORMING"],
       ...pastTopics.map((topic, offset) => [offset + 6, pastPrograms[topic[4]].id, topic[5], pastTeamNames[offset], "CLOSED"] as const),
-      [1, activePrograms[3].id, ids.professors[1], "스마트 전시 동선", "CONFIRMED"],
+      [1, activePrograms[0].id, ids.professors[1], "스마트 전시 동선", "CONFIRMED"],
     ];
     await tx.team.createMany({ data: teamRows.map(([topicIndex, programId, professorId, name, status], index) => ({
       id: ids.teams[index], programId, topicId: ids.topics[topicIndex], professorId, name, status,

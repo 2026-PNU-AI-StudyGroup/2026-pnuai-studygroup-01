@@ -110,7 +110,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `동시성 검증 프로그램 ${professorId}`, category: "검증", description: "동시성 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   createdProgramId = program.id;
   const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
@@ -189,7 +189,7 @@ async function main() {
 
   const crossProgram = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `교차 프로그램 검증 ${professorId}`, category: "검증", description: "교차 프로그램 참여 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   crossProgramId = crossProgram.id;
   const crossProgramTopic = await createTopic("교차 프로그램 참여", 2, crossProgram.id);

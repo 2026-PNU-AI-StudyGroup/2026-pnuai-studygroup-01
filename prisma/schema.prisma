@@ -186,6 +186,13 @@ enum FeedbackType {
   BUG
 }
 
+enum FeedbackPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 enum FeedbackStatus {
   OPEN
   RESOLVED
@@ -250,6 +257,9 @@ model User {
   studentTeamRecruitments            StudentTeamRecruitmentPost[]        @relation("StudentTeamRecruitmentAuthor")
   studentTeamRecruitmentApplications StudentTeamRecruitmentApplication[] @relation("StudentTeamRecruitmentApplicant")
   announcements                      Announcement[]
+  profileImage                       UserProfileImage?
+  profileImageUploads                ProfileImageUpload[]              @relation("ProfileImageUploadOwner")
+  projectVotes                       ProjectVote[]
 
   @@map("user")
 }
@@ -423,18 +433,43 @@ model ProjectProgram {
   description                   String
   startsAt                      DateTime
   endsAt                        DateTime
+  projectRegistrationStartsAt   DateTime
+  projectRegistrationEndsAt     DateTime
   advisorEnabled                Boolean              @default(true)
   studentProjectCreationEnabled Boolean              @default(false)
+  icon                          ProgramIcon          @default(FOLDER)
   status                        ProjectProgramStatus @default(DRAFT)
   openedAt                      DateTime?
   createdAt                     DateTime             @default(now())
   updatedAt                     DateTime             @updatedAt
   createdBy                     User?                @relation(fields: [createdById], references: [id])
   topics                        Topic[]
+  votingPolicy                  ProgramVotingPolicy?
+  votes                         ProjectVote[]
 
   @@unique([name, startsAt])
   @@index([status, startsAt, endsAt])
   @@map("project_program")
+}
+
+enum ProgramIcon {
+  FOLDER
+  GRADUATION_CAP
+  TROPHY
+  CODE
+  FLASK
+  PALETTE
+  ROCKET
+  BRIEFCASE
+  GLOBE
+  USERS
+  BOOK_OPEN
+  HANDSHAKE
+}
+
+enum VotingIdentityVisibility {
+  ANONYMOUS
+  NAMED
 }
 
 model Topic {
@@ -472,12 +507,44 @@ model Topic {
   approvalRequest         TopicApprovalRequest?
   assistants              ProjectAssistant[]
   assistantInvitations    ProjectAssistantInvitation[]
+  votes                   ProjectVote[]
 
   @@unique([id, programId, managerId])
+  @@unique([id, programId])
   @@index([programId, status])
   @@index([authorId])
   @@index([managerId, status])
   @@map("topic")
+}
+
+model ProgramVotingPolicy {
+  programId          String                   @id
+  startsAt           DateTime
+  endsAt             DateTime
+  voteLimit          Int
+  selfVotingAllowed  Boolean                  @default(false)
+  identityVisibility VotingIdentityVisibility @default(ANONYMOUS)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  program            ProjectProgram           @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@map("program_voting_policy")
+}
+
+model ProjectVote {
+  id        String         @id @default(uuid())
+  programId String
+  topicId   String
+  voterId   String
+  createdAt DateTime       @default(now())
+  program   ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  topic     Topic          @relation(fields: [topicId, programId], references: [id, programId], onDelete: Cascade)
+  voter     User           @relation(fields: [voterId], references: [id], onDelete: Restrict)
+
+  @@unique([programId, voterId, topicId])
+  @@index([programId, topicId])
+  @@index([programId, voterId])
+  @@map("project_vote")
 }
 
 model ProjectAssistant {
@@ -911,6 +978,38 @@ model StoredFile {
   @@map("stored_file")
 }
 
+model UserProfileImage {
+  userId      String   @id
+  objectKey   String   @unique
+  contentType String
+  size        Int
+  sha256      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profile_image")
+}
+
+model ProfileImageUpload {
+  id              String   @id @default(uuid())
+  ownerId         String
+  objectKey       String   @unique
+  uploadObjectKey String   @unique
+  originalName    String
+  contentType     String
+  size            Int
+  sha256          String
+  expiresAt       DateTime
+  cleanupAfter    DateTime
+  createdAt       DateTime @default(now())
+  owner           User     @relation("ProfileImageUploadOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, cleanupAfter])
+  @@index([cleanupAfter])
+  @@map("profile_image_upload")
+}
+
 model ObjectDeletionJob {
   id            String    @id @default(uuid())
   objectKey     String    @unique
@@ -1013,6 +1112,7 @@ model FeedbackPost {
   targetScreen   FeedbackTargetScreen
   area           String
   type           FeedbackType
+  priority       FeedbackPriority     @default(NORMAL)
   title          String
   body           String
   status         FeedbackStatus       @default(OPEN)
@@ -1021,7 +1121,7 @@ model FeedbackPost {
   createdAt      DateTime             @default(now())
   comments       FeedbackComment[]
 
-  @@index([status, createdAt])
+  @@index([status, priority, createdAt])
   @@map("feedback_post")
 }
 

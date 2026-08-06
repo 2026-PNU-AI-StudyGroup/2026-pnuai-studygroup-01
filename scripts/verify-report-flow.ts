@@ -86,7 +86,7 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `보고서 검증 프로그램 ${professorId}`, category: "검증", description: "보고서 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
