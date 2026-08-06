@@ -1,6 +1,7 @@
 import {
   CopyObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   type S3Client,
@@ -49,6 +50,17 @@ export class S3ObjectStorage implements ObjectStorage {
         ? Buffer.from(result.ChecksumSHA256, "base64").toString("hex")
         : undefined,
     };
+  }
+
+  async readPrefix(objectKey: string, length: number): Promise<Uint8Array> {
+    const result = await this.client.send(new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: objectKey,
+      Range: `bytes=0-${Math.max(0, length - 1)}`,
+    }));
+    const body = result.Body as { transformToByteArray?: () => Promise<Uint8Array> } | undefined;
+    if (!body?.transformToByteArray) throw new Error("객체 내용을 읽을 수 없습니다.");
+    return body.transformToByteArray();
   }
 
   async remove(objectKey: string) {

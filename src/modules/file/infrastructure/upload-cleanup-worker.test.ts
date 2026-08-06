@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { cleanup } = vi.hoisted(() => ({ cleanup: vi.fn(async () => undefined) }));
+const { cleanup, cleanupProfileImages } = vi.hoisted(() => ({
+  cleanup: vi.fn(async () => undefined),
+  cleanupProfileImages: vi.fn(async () => undefined),
+}));
 
 vi.mock("@/modules/file/application/manage-upload", () => ({
   UploadService: class {
     cleanup = cleanup;
   },
+}));
+vi.mock("@/modules/identity/application/manage-profile-image", () => ({
+  ProfileImageService: class {
+    cleanupExpired = cleanupProfileImages;
+  },
+}));
+vi.mock("@/modules/identity/infrastructure/prisma-profile-image-repository", () => ({
+  PrismaProfileImageRepository: class {},
 }));
 vi.mock("@/modules/file/infrastructure/prisma-upload-intent-repository", () => ({
   PrismaUploadIntentRepository: class {},
@@ -26,6 +37,7 @@ describe("업로드 정리 worker", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     cleanup.mockClear();
+    cleanupProfileImages.mockClear();
     delete workerGlobal.pmsUploadCleanupTimer;
   });
 
@@ -41,9 +53,11 @@ describe("업로드 정리 worker", () => {
     await Promise.resolve();
 
     expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(cleanupProfileImages).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(1);
 
     await vi.advanceTimersByTimeAsync(15 * 60_000);
     expect(cleanup).toHaveBeenCalledTimes(2);
+    expect(cleanupProfileImages).toHaveBeenCalledTimes(2);
   });
 });
