@@ -1,4 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 
 export type ArchivedProject = {
   id: string;
@@ -38,7 +39,13 @@ export type ArchivedProgramOption = {
   id: string;
   name: string;
   category: string;
+  icon: ProgramIconKey;
   startYear: number;
+  startsAt: Date;
+  endsAt: Date;
+  projectRegistrationStartsAt: Date;
+  projectRegistrationEndsAt: Date;
+  votingPolicy: { startsAt: Date; endsAt: Date } | null;
 };
 
 export interface ArchivedProjectReader {

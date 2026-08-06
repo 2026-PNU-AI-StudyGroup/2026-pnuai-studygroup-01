@@ -40,9 +40,6 @@ function ProjectCard({ topic, canApply, leaderTeams, now }: {
   const href = `/topics/${topic.id}`;
   const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
   const application = topic.ownApplicationStatus;
-  const skills = [...new Set([...topic.requiredSkills, ...topic.preferredSkills])];
-  const visibleSkills = skills.slice(0, 2);
-  const remainingSkillCount = Math.max(0, skills.length - visibleSkills.length);
   const deadlineDays = daysUntil(topic.recruitmentEndsAt, now);
   const availability = !topic.recruitmentEnabled
     ? { label: "기존 팀 참여", tone: "neutral" as const }
@@ -61,18 +58,18 @@ function ProjectCard({ topic, canApply, leaderTeams, now }: {
       <article aria-labelledby={`topic-${topic.id}`} className={styles.card}>
         <ProjectGalleryCover
           id={topic.id}
+          programName={topic.programName}
+          title={topic.title}
         />
         <div className={styles.body}>
-          <p className="mb-3 min-w-0 truncate text-xs font-bold text-[var(--muted)]">
-            <UiText>{`${topic.programCategory} · ${topic.programName}`}</UiText>
-            {topic.advisorEnabled ? <><span aria-hidden="true"> · </span>{topic.authorName} <UiText>{topic.authorRole === "PROFESSOR" ? "교수" : "학생 제안"}</UiText></> : null}
-          </p>
           <div className="flex items-start justify-between gap-3">
             <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
               <Link href={href} className={styles.titleLink}><UiText>{topic.title}</UiText></Link>
             </h3>
             <StatusBadge tone={availability.tone}><UiText>{availability.label}</UiText></StatusBadge>
           </div>
+          {topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : null}
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{topic.description}</UiText></p>
 
           <dl className="mt-5 grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
             <div>
@@ -87,15 +84,6 @@ function ProjectCard({ topic, canApply, leaderTeams, now }: {
               </dd>
             </div>
           </dl>
-
-          {visibleSkills.length ? (
-            <UiUl aria-label="필요 기술" className="mt-4 flex min-w-0 flex-wrap items-center gap-1.5">
-              {visibleSkills.map((skill) => (
-                <li key={skill} className="max-w-[9rem] truncate rounded-md bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--muted)]"><UiText>{skill}</UiText></li>
-              ))}
-              {remainingSkillCount ? <li className="text-xs font-semibold text-[var(--muted)]"><UiText>{"외"}</UiText>{" "}{remainingSkillCount}<UiText>{"개"}</UiText></li> : null}
-            </UiUl>
-          ) : null}
 
           <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
             {application === "ACCEPTED" ? (

@@ -31,6 +31,13 @@ describe("지난 프로젝트 기술 검색", () => {
       name: "캡스톤 2025",
       category: "캡스톤",
       startsAt: new Date("2025-12-31T15:00:00.000Z"),
+      endsAt: new Date("2026-12-20T14:59:59.000Z"),
+      projectRegistrationStartsAt: new Date("2025-12-01T00:00:00.000Z"),
+      projectRegistrationEndsAt: new Date("2025-12-31T00:00:00.000Z"),
+      votingPolicy: {
+        startsAt: new Date("2026-12-01T00:00:00.000Z"),
+        endsAt: new Date("2026-12-07T00:00:00.000Z"),
+      },
     }]);
     const client = {
       projectProgram: { findMany },
@@ -40,11 +47,23 @@ describe("지난 프로젝트 기술 검색", () => {
       id: "program-2025",
       name: "캡스톤 2025",
       category: "캡스톤",
+      startsAt: new Date("2025-12-31T15:00:00.000Z"),
+      endsAt: new Date("2026-12-20T14:59:59.000Z"),
+      projectRegistrationStartsAt: new Date("2025-12-01T00:00:00.000Z"),
+      projectRegistrationEndsAt: new Date("2025-12-31T00:00:00.000Z"),
+      votingPolicy: {
+        startsAt: new Date("2026-12-01T00:00:00.000Z"),
+        endsAt: new Date("2026-12-07T00:00:00.000Z"),
+      },
       startYear: 2026,
     }]);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       select: expect.objectContaining({
         startsAt: true,
+        endsAt: true,
+        projectRegistrationStartsAt: true,
+        projectRegistrationEndsAt: true,
+        votingPolicy: { select: { startsAt: true, endsAt: true } },
       }),
     }));
   });

@@ -68,12 +68,17 @@ export class PrismaTeamArchiveQueryRepository
         id: true,
         name: true,
         category: true,
+        icon: true,
         startsAt: true,
+        endsAt: true,
+        projectRegistrationStartsAt: true,
+        projectRegistrationEndsAt: true,
+        votingPolicy: { select: { startsAt: true, endsAt: true } },
       },
     });
-    return programs.map(({ startsAt, ...program }) => ({
+    return programs.map((program) => ({
       ...program,
-      startYear: getProgramStartYear(startsAt),
+      startYear: getProgramStartYear(program.startsAt),
     }));
   }
 

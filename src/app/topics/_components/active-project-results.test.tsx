@@ -36,14 +36,15 @@ function topicsWithStatus(status: "PENDING" | "ACCEPTED" | "REJECTED", advisorEn
       executionEndsAt: new Date("2026-11-30T00:00:00Z"),
       submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
       submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
-      authorName: "김교수",
-      authorRole: "PROFESSOR",
+      authorName: "학생 제안자",
+      authorRole: "STUDENT",
       status: "PUBLISHED",
       publishedAt: new Date("2026-07-01T00:00:00Z"),
       programName: "캡스톤",
       programCategory: "교과",
       programStatus: "OPEN",
       advisorEnabled,
+      professorName: advisorEnabled ? "김교수" : null,
       startYear: 2026,
       memberCount: 1,
       ownApplicationStatus: status,
@@ -82,7 +83,8 @@ describe("ActiveProjectResults", () => {
       />,
     );
 
-    expect(screen.queryByText("김교수 교수")).not.toBeInTheDocument();
+    expect(screen.queryByText("김교수")).not.toBeInTheDocument();
+    expect(screen.getByText("설명")).toHaveClass("line-clamp-2");
   });
 
   it("프로젝트 카드 전체 클릭 영역을 제목 기반 상세 링크 하나로 제공한다", () => {
@@ -120,7 +122,21 @@ describe("ActiveProjectResults", () => {
 
     const article = screen.getByRole("article");
     expect(article.querySelector("[data-project-cover]")).toBeInTheDocument();
-    expect(article.querySelector("p")).toHaveTextContent("교과 · 캡스톤 · 김교수 교수");
+    expect(article.querySelector("[data-project-cover-fallback]")).toHaveTextContent("캡스톤");
+    expect(article.querySelector("[data-project-cover] [data-pnu-mark]")).toBeInTheDocument();
+    const title = screen.getByRole("heading", { name: "실내 길찾기" });
+    const professor = screen.getByText("김교수");
+    const description = screen.getByText("설명");
+    const details = article.querySelector("dl");
+    expect(article).not.toHaveTextContent("교과 · 캡스톤");
+    expect(article).not.toHaveTextContent("학생 제안자");
+    expect(description).toHaveClass("line-clamp-2");
+    if (!details) throw new Error("카드 상세 정보를 찾을 수 없습니다.");
+    expect(title.compareDocumentPosition(professor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(professor.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(description.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "필요 기술" })).not.toBeInTheDocument();
+    expect(article).not.toHaveTextContent("TypeScript");
     expect(article.querySelector("img")).not.toBeInTheDocument();
     expect(article.querySelectorAll('a[href="/topics/50000000-0000-4000-8000-000000000001"]')).toHaveLength(1);
   });

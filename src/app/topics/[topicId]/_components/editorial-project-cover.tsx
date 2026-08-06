@@ -1,19 +1,11 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import styles from "@/app/topics/[topicId]/_components/editorial-project-cover.module.css";
 
-const variants = ["", styles.variant1, styles.variant2, styles.variant3, styles.variant4, styles.variant5];
-
-function stableVariant(value: string) {
-  let hash = 0;
-  for (const character of value) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  return variants[hash % variants.length];
-}
-
-export function EditorialProjectCover({ id, label }: { id: string; label: string }) {
+export function EditorialProjectCover({ label }: { label: string }) {
   return (
-    <div className={`${styles.cover} ${stableVariant(id)}`}>
+    <div data-editorial-project-cover className={styles.cover}>
+      <span aria-hidden="true" data-pnu-mark className={styles.brandMark} />
       <span className={styles.label}><UiText>{label}</UiText></span>
-      <span className={styles.wash} aria-hidden="true" />
     </div>
   );
 }

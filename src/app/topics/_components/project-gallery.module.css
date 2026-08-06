@@ -23,7 +23,7 @@
 .cover {
   position: relative;
   isolation: isolate;
-  min-height: 11.5rem;
+  aspect-ratio: 640 / 433;
   overflow: hidden;
   border-bottom: 1px solid rgb(255 255 255 / 0.5);
   background: var(--cover-base);
@@ -39,6 +39,63 @@
 .coverImage {
   z-index: 0;
   object-fit: cover;
+}
+
+.fallbackCover {
+  display: flex;
+  align-items: flex-end;
+  padding: 1.35rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, #fff) 0%, #f6f7f9 100%);
+}
+
+.fallbackCover::before,
+.fallbackCover::after {
+  display: none;
+}
+
+.fallbackMark {
+  position: absolute;
+  top: 1.35rem;
+  right: 1.35rem;
+  width: 2.5rem;
+  height: 2.25rem;
+  background: var(--primary);
+  opacity: 0.82;
+  mask-image: url('/brand/pusan-national-university.png');
+  mask-position: left center;
+  mask-repeat: no-repeat;
+  mask-size: auto 100%;
+}
+
+.fallbackContent {
+  max-width: min(100%, 28rem);
+  border-left: 3px solid color-mix(in srgb, var(--primary) 72%, #fff);
+  padding-left: 0.85rem;
+}
+
+.fallbackEyebrow {
+  display: block;
+  overflow: hidden;
+  color: var(--primary);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fallbackTitle {
+  display: -webkit-box;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  color: #182037;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .cover::before {

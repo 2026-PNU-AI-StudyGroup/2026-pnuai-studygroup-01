@@ -28,9 +28,21 @@ describe("팀 종료", () => {
 
 describe("아카이브 페이지", () => {
   it("페이지 번호를 offset과 제한으로 변환한다", async () => {
+    const program = {
+      id: "program-1",
+      name: "캡스톤 2026",
+      category: "캡스톤",
+      startYear: 2026,
+      icon: "FOLDER" as const,
+      startsAt: new Date("2026-03-01T00:00:00+09:00"),
+      endsAt: new Date("2026-12-20T23:59:59+09:00"),
+      projectRegistrationStartsAt: new Date("2026-02-01T00:00:00+09:00"),
+      projectRegistrationEndsAt: new Date("2026-03-31T23:59:59+09:00"),
+      votingPolicy: null,
+    };
     const reader = {
       listProgramCategories: vi.fn(async () => ["캡스톤", "대회"]),
-      listPrograms: vi.fn(async () => [{ id: "program-1", name: "캡스톤 2026", category: "캡스톤", startYear: 2026 }]),
+      listPrograms: vi.fn(async () => [program]),
       countClosed: vi.fn(async () => 41),
       listClosed: vi.fn(async () => []),
       findClosed: vi.fn(async () => null),
@@ -39,7 +51,7 @@ describe("아카이브 페이지", () => {
     expect(reader.listClosed).toHaveBeenCalledWith({ offset: 20, limit: 20, filters: {} });
     expect(result.totalPages).toBe(3);
     expect(result.programCategories).toEqual(["캡스톤", "대회"]);
-    expect(result.programs).toEqual([{ id: "program-1", name: "캡스톤 2026", category: "캡스톤", startYear: 2026 }]);
+    expect(result.programs).toEqual([program]);
   });
 
   it("범위를 벗어나거나 안전하지 않은 페이지를 유효 범위로 제한한다", async () => {

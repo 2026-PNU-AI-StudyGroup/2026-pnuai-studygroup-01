@@ -75,7 +75,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
     </UiNav>
 
     <ProjectDetailShell
-      cover={<EditorialProjectCover id={topic.id} label={`${topic.programCategory} · ${topic.programName}`} />}
+      cover={<EditorialProjectCover label={topic.programName} />}
       marker={
         <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6 fill-none stroke-current stroke-[1.75]"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" /></svg>
       }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UiSection, UiUl } from "@/modules/translation/ui/localized-elements";
+import { UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
@@ -52,22 +52,17 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             <ol className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
               {projects.map((project) => {
                 const href = `/topics/archive/${project.id}`;
-                const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
-                const visibleSkills = skills.slice(0, 2);
-                const remainingSkillCount = Math.max(0, skills.length - visibleSkills.length);
 
                 return (
                   <li key={project.id} className="min-w-0">
                     <article aria-labelledby={`past-project-${project.id}`} className={styles.card}>
-                      <ProjectGalleryCover id={project.id} imagePath={project.thumbnailPath} />
+                      <ProjectGalleryCover id={project.id} imagePath={project.thumbnailPath} programName={project.programName} title={project.topicTitle} />
                       <div className={styles.body}>
-                        <p className="mb-3 min-w-0 truncate text-xs font-bold text-[var(--muted)]">
-                          <UiText>{`${project.programCategory} · ${project.programName}`}</UiText>
-                          {project.advisorEnabled ? <><span aria-hidden="true"> · </span>{project.professorName} <UiText>{project.advisorRole}</UiText></> : null}
-                        </p>
                         <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
                           <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
                         </h3>
+                        {project.advisorEnabled ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{project.professorName}</p> : null}
+                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{project.topicDescription}</UiText></p>
 
                         <dl className="mt-5 grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
                           <div>
@@ -80,15 +75,6 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                           </div>
                         </dl>
 
-                        <div className="mt-4 flex items-end justify-between gap-4">
-                          <UiUl aria-label="프로젝트 기술" className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            {visibleSkills.map((skill) => (
-                              <li key={skill} className="max-w-[8rem] truncate rounded-md bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--muted)]"><UiText>{skill}</UiText></li>
-                            ))}
-                            {remainingSkillCount ? <li className="text-xs font-semibold text-[var(--muted)]"><UiText>{"외"}</UiText>{" "}{remainingSkillCount}</li> : null}
-                          </UiUl>
-                          <span className="shrink-0 text-xs font-black text-[var(--muted)]">{project.startYear}</span>
-                        </div>
                       </div>
                     </article>
                   </li>

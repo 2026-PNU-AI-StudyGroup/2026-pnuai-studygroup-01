@@ -64,7 +64,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             {project.startYear} · {project.programName}
           </span>
         </div>
-      ) : <EditorialProjectCover id={project.id} label={`${project.startYear} · ${project.programName}`} />}
+      ) : <EditorialProjectCover label={project.programName} />}
       marker={<ProjectIcon className="size-6" />}
       heading={
         <div>
