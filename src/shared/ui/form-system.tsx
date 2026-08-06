@@ -1,6 +1,7 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 
 import { UiText } from "@/shared/i18n/i18n-provider";
+export { DateTimeInput } from "@/shared/ui/date-time-input";
 
 type FormFieldProps = {
   id?: string;
@@ -89,14 +90,6 @@ export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInput
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...props} className={withFormControl(className)} />;
-}
-
-type DateTimeInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
-  type?: "date" | "datetime-local";
-};
-
-export function DateTimeInput({ className, type = "datetime-local", ...props }: DateTimeInputProps) {
-  return <input {...props} type={type} className={withFormControl(`form-control--datetime ${className ?? ""}`)} />;
 }
 
 type FileInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;

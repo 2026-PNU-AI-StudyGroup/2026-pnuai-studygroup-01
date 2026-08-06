@@ -1567,5 +1567,12 @@
   "학생이 새 프로젝트를 제안할 수 있는지 관리합니다.": "Manage whether students can propose new projects.",
   "현재 학생 프로젝트 제안이 허용되어 있습니다.": "Student project proposals are currently enabled.",
   "현재 학생 프로젝트 제안이 중지되어 있습니다.": "Student project proposals are currently disabled.",
-  "마감된 프로그램에서는 이 설정을 변경할 수 없습니다.": "This setting cannot be changed for a closed program."
+  "마감된 프로그램에서는 이 설정을 변경할 수 없습니다.": "This setting cannot be changed for a closed program.",
+  "날짜 선택": "Select date",
+  "다음 달": "Next month",
+  "시간": "Time",
+  "오늘": "Today",
+  "이전 달": "Previous month",
+  "일시 선택": "Select date and time",
+  "지우기": "Clear"
 }

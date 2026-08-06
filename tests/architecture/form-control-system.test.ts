@@ -23,9 +23,10 @@ describe("form control system architecture", () => {
     expect(globals).toMatch(/\.form-control:focus-visible,[\s\S]*?border-color: var\(--focus\);[\s\S]*?0 0 0 3px var\(--focus-halo\)/);
   });
 
-  it("WebKit을 포함한 네이티브 날짜·파일·선택·체크 제어의 host appearance를 제거한다", () => {
+  it("네이티브 날짜 팝업 대신 공용 달력과 PMS 제어 스타일을 사용한다", () => {
     expect(globals).toContain("-webkit-appearance: none");
-    expect(globals).toContain('input[type="date"].form-control::-webkit-calendar-picker-indicator');
+    expect(globals).toContain(".date-time-input__calendar");
+    expect(globals).not.toContain('input[type="date"].form-control::-webkit-calendar-picker-indicator');
     expect(globals).toContain('input[type="file"].form-control::file-selector-button');
     expect(globals).toContain('input[type="checkbox"]');
     expect(globals).toContain(".form-control:-webkit-autofill");
