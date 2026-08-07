@@ -457,6 +457,7 @@ model ProjectProgram {
   votingPolicy                  ProgramVotingPolicy?
   votes                         ProjectVote[]
   tracks                        ProgramTrack[]
+  rubricCriteria                RubricCriterion[]
 
   @@unique([name, startsAt])
   @@index([status, startsAt, endsAt])
@@ -475,6 +476,44 @@ model ProgramTrack {
   @@unique([programId, name])
   @@index([programId, position])
   @@map("program_track")
+}
+
+model RubricCriterion {
+  id        String              @id @default(uuid())
+  programId String
+  label     String
+  maxPoints Int                 @default(10)
+  position  Int                 @default(0)
+  createdAt DateTime            @default(now())
+  program   ProjectProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  scores    ReportRubricScore[]
+
+  @@index([programId, position])
+  @@map("rubric_criterion")
+}
+
+model ReportRubricScore {
+  id           String          @id @default(uuid())
+  reportId     String
+  criterionId  String
+  points       Int
+  scoredByName String
+  updatedAt    DateTime        @updatedAt
+  report       Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, criterionId])
+  @@index([reportId])
+  @@map("report_rubric_score")
+}
+
+model ReportRubricRelease {
+  reportId       String   @id
+  releasedAt     DateTime @default(now())
+  releasedByName String
+  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("report_rubric_release")
 }
 
 enum ProgramIcon {
@@ -1061,10 +1100,12 @@ model Report {
   scoredAt     DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
-  team         Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  versions     ReportVersion[]
-  feedback     ReportFeedback[]
-  scoredBy     User?            @relation("ReportScorer", fields: [scoredById], references: [id])
+  team          Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  versions      ReportVersion[]
+  feedback      ReportFeedback[]
+  scoredBy      User?                @relation("ReportScorer", fields: [scoredById], references: [id])
+  rubricScores  ReportRubricScore[]
+  rubricRelease ReportRubricRelease?
 
   @@unique([teamId, type])
   @@index([teamId, dueAt])
