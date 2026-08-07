@@ -116,7 +116,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               : null}
           </> : undefined}
         />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} ballot={ballot} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} ballot={ballot ?? undefined} />
       </ExplorerLayout>
     );
   }
