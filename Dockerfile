@@ -25,13 +25,26 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     npm run build
 
 FROM base AS demo-seeder
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev \
-    && npm install --omit=dev --no-save --package-lock=false prisma@7.8.0 tsx@4.23.1 \
+RUN npm install --no-save --package-lock=false \
+    @aws-sdk/client-s3@3.1085.0 \
+    @prisma/adapter-pg@7.8.0 \
+    @prisma/client@7.8.0 \
+    dotenv@17.4.2 \
+    pdfkit@0.19.1 \
+    pg@8.22.0 \
+    prisma@7.8.0 \
+    tsx@4.23.1 \
+    zod@4.4.3 \
     && npm cache clean --force
-COPY . .
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build ./node_modules/.bin/prisma generate
-CMD ["npm", "run", "db:seed-demo"]
+COPY tsconfig.json ./tsconfig.json
+COPY scripts ./scripts
+COPY src/shared/infrastructure/object-storage ./src/shared/infrastructure/object-storage
+COPY public/fonts/pretendard ./public/fonts/pretendard
+COPY public/mock ./public/mock
+CMD ["./node_modules/.bin/tsx", "scripts/seed-demo-data.ts"]
 
 FROM base AS runner
 ENV NODE_ENV=production
