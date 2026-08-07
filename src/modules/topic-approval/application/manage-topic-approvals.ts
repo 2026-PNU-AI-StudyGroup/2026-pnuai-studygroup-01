@@ -38,7 +38,7 @@ export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
   applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
   capacity: number;
   recruitmentStartsAt: Date;
-  recruitmentEndsAt: Date;
+  programRecruitmentEndsAt: Date;
   executionStartsAt: Date;
   executionEndsAt: Date;
   submissionStartsAt: Date;
@@ -101,8 +101,11 @@ export class TopicApprovalService {
     }
     if (input.route === "PROFESSOR" && !input.requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
     if (input.route === "ADMIN" && input.requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
-    const times = [input.recruitmentStartsAt, input.recruitmentEndsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
-    if (times.some((time) => time < program.startsAt || time > program.endsAt)) throw new TopicApprovalOperationError("프로젝트 일정은 프로그램 운영 기간 안에 있어야 합니다.");
+    const times = [input.recruitmentStartsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
+    if (
+      times.some((time) => time < program.startsAt || time > program.endsAt) ||
+      input.recruitmentStartsAt >= program.recruitmentEndsAt
+    ) throw new TopicApprovalOperationError("프로젝트 일정은 프로그램 운영 기간과 모집 마감 이전에 있어야 합니다.");
     const id = await this.repository.create({
       ...details,
       authorId: actor.id,

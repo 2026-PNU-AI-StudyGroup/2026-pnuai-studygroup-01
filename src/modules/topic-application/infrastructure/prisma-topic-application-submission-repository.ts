@@ -17,7 +17,7 @@ export class PrismaTopicApplicationSubmissionRepository
 
   async findConfiguration(topicId: string, appliedAt: Date): Promise<TopicApplicationConfiguration | null> {
     const topic = await this.client.topic.findFirst({
-      where: { id: topicId, status: "PUBLISHED", recruitmentEnabled: true, recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt }, program: { status: "OPEN" } },
+      where: { id: topicId, status: "PUBLISHED", recruitmentEnabled: true, recruitmentStartsAt: { lte: appliedAt }, program: { status: "OPEN", recruitmentEndsAt: { gt: appliedAt } } },
       select: { id: true, applicationMode: true, capacity: true, applicationQuestions: { orderBy: { position: "asc" }, select: { id: true, label: true, maxLength: true, required: true } } },
     });
     return topic ? { topicId: topic.id, mode: topic.applicationMode, capacity: topic.capacity, questions: topic.applicationQuestions } : null;
@@ -28,8 +28,8 @@ export class PrismaTopicApplicationSubmissionRepository
   ): Promise<CreateTopicApplicationResult> {
     const id = randomUUID();
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
-        SELECT "project_program"."status"
+      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED"; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."status", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
@@ -43,11 +43,10 @@ export class PrismaTopicApplicationSubmissionRepository
           AND "topic"."status" = 'PUBLISHED'
           AND "topic"."recruitmentEnabled" = true
           AND "topic"."recruitmentStartsAt" <= ${input.appliedAt}
-          AND "topic"."recruitmentEndsAt" > ${input.appliedAt}
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (programs[0]?.status !== "OPEN" || !topic) {
+      if (programs[0]?.status !== "OPEN" || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
         return { outcome: "TOPIC_UNAVAILABLE" } as const;
       }
       if (topic.applicationMode === "TEAM_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
@@ -128,8 +127,8 @@ export class PrismaTopicApplicationSubmissionRepository
     input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
   ): Promise<CreateTopicApplicationResult> {
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
-        SELECT "project_program"."status"
+      const programs = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED"; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."status", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
@@ -138,11 +137,11 @@ export class PrismaTopicApplicationSubmissionRepository
         SELECT "id", "programId", "capacity", "applicationMode" FROM "topic"
         WHERE "id" = ${input.topicId} AND "status" = 'PUBLISHED'
           AND "recruitmentEnabled" = true
-          AND "recruitmentStartsAt" <= ${input.appliedAt} AND "recruitmentEndsAt" > ${input.appliedAt}
+          AND "recruitmentStartsAt" <= ${input.appliedAt}
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (programs[0]?.status !== "OPEN" || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
+      if (programs[0]?.status !== "OPEN" || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const studentTeams = await transaction.$queryRaw<Array<{ id: string; leaderId: string }>>(Prisma.sql`
         SELECT "id", "leaderId" FROM "student_team"

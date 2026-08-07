@@ -14,7 +14,8 @@ export type AuditAction =
   | "PROJECT_ASSISTANT_INVITED"
   | "PROJECT_ASSISTANT_ACCEPTED"
   | "PROJECT_ASSISTANT_REMOVED"
-  | "TOPIC_CLOSED";
+  | "TOPIC_CLOSED"
+  | "TOPIC_RECRUITMENT_CLOSED";
 
 type AuditEntry = {
   id: string;

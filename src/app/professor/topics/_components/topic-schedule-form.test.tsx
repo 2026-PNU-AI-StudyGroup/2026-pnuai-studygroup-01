@@ -6,10 +6,9 @@ import { TopicScheduleForm } from "@/app/professor/topics/_components/topic-sche
 vi.mock("@/app/professor/topics/_actions/topic-management-actions", () => ({ updateTopicScheduleAction: vi.fn() }));
 
 describe("주제 일정 변경 흐름", () => {
-  it("독립 일정 페이지에서 여섯 기간을 한 흐름으로 편집한다", () => {
+  it("독립 일정 페이지에서 모집 시작과 수행·제출 기간을 편집한다", () => {
     render(<TopicScheduleForm topicId="topic" values={{
       recruitmentStartsAt: "2026-08-01T09:00",
-      recruitmentEndsAt: "2026-08-31T18:00",
       executionStartsAt: "2026-09-01T09:00",
       executionEndsAt: "2026-12-01T18:00",
       submissionStartsAt: "2026-11-01T09:00",

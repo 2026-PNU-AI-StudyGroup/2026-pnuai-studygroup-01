@@ -11,7 +11,7 @@ export class TopicScheduleUpdateForbiddenError extends Error {
 
 export class TopicScheduleUpdateUnavailableError extends Error {
   constructor() {
-    super("마감되지 않은 본인 주제의 일정만 프로그램 운영 기간 안에서 변경할 수 있습니다.");
+    super("마감되지 않은 본인 주제의 일정만 프로그램 운영 기간과 모집 마감 이전에서 변경할 수 있습니다.");
     this.name = "TopicScheduleUpdateUnavailableError";
   }
 }

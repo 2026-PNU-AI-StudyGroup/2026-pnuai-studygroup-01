@@ -40,6 +40,14 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
 
   listAll(): Promise<ProjectProgramRecord[]> { return this.list({}); }
   listOpen(): Promise<ProjectProgramRecord[]> { return this.list({ status: "OPEN" }); }
+  listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]> {
+    return this.list({
+      OR: [
+        { status: "OPEN" },
+        { votingPolicy: { is: { startsAt: { lte: now }, endsAt: { gt: now } } } },
+      ],
+    });
+  }
   async findById(id: string): Promise<ProjectProgramRecord | null> {
     return (await this.list({ id }))[0] ?? null;
   }
@@ -114,6 +122,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         data: {
           projectRegistrationStartsAt: input.projectRegistrationStartsAt,
           projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+          recruitmentEndsAt: input.recruitmentEndsAt,
         },
       });
       return "UPDATED";
@@ -190,6 +199,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     endsAt: Date;
     projectRegistrationStartsAt: Date;
     projectRegistrationEndsAt: Date;
+    recruitmentEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
   } | null> {
@@ -201,6 +211,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         endsAt: true,
         projectRegistrationStartsAt: true,
         projectRegistrationEndsAt: true,
+        recruitmentEndsAt: true,
         advisorEnabled: true,
         studentProjectCreationEnabled: true,
       },

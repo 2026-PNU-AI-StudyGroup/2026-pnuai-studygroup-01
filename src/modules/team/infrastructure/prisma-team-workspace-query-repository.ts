@@ -54,12 +54,11 @@ export class PrismaTeamWorkspaceQueryRepository
           id: true,
           title: true,
           recruitmentStartsAt: true,
-          recruitmentEndsAt: true,
           executionStartsAt: true,
           executionEndsAt: true,
           submissionStartsAt: true,
           submissionEndsAt: true,
-          program: { select: { advisorEnabled: true } },
+          program: { select: { advisorEnabled: true, recruitmentEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -191,7 +190,7 @@ export class PrismaTeamWorkspaceQueryRepository
       },
       schedule: {
         recruitmentStartsAt: team.topic.recruitmentStartsAt,
-        recruitmentEndsAt: team.topic.recruitmentEndsAt,
+        programRecruitmentEndsAt: team.topic.program.recruitmentEndsAt,
         executionStartsAt: team.topic.executionStartsAt,
         executionEndsAt: team.topic.executionEndsAt,
         submissionStartsAt: team.topic.submissionStartsAt,

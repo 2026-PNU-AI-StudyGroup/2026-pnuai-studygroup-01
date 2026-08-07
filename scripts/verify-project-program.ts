@@ -56,6 +56,7 @@ async function main() {
     endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day),
     projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
+    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
     icon: "FOLDER",
@@ -78,7 +79,6 @@ async function main() {
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 3,
     recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    recruitmentEndsAt: new Date(now.getTime() + 30 * day),
     executionStartsAt: new Date(now.getTime() + 20 * day),
     executionEndsAt: new Date(now.getTime() + 70 * day),
     submissionStartsAt: new Date(now.getTime() + 60 * day),
@@ -89,7 +89,6 @@ async function main() {
   if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
     recruitmentStartsAt: new Date(now.getTime() - 30 * 60_000),
-    recruitmentEndsAt: new Date(now.getTime() + 40 * day),
     executionStartsAt: new Date(now.getTime() + 10 * day),
     executionEndsAt: new Date(now.getTime() + 75 * day),
     submissionStartsAt: new Date(now.getTime() + 65 * day),
@@ -101,7 +100,7 @@ async function main() {
     changedSchedule,
   );
   const scheduledTopic = await prisma.topic.findUniqueOrThrow({ where: { id: topic.id } });
-  if (scheduledTopic.recruitmentEndsAt.getTime() !== changedSchedule.recruitmentEndsAt.getTime()) {
+  if (scheduledTopic.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
     throw new Error("주제 작성자가 변경한 일정이 저장되지 않았습니다.");
   }
 
@@ -125,7 +124,6 @@ async function main() {
     description: "프로그램 종료 시 대기 승인 요청도 함께 종료되는지 검증",
     capacity: 2,
     recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    recruitmentEndsAt: new Date(now.getTime() + 30 * day),
     executionStartsAt: new Date(now.getTime() + 20 * day),
     executionEndsAt: new Date(now.getTime() + 70 * day),
     submissionStartsAt: new Date(now.getTime() + 60 * day),
@@ -162,6 +160,7 @@ async function main() {
     name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
+    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
     icon: "FOLDER",
@@ -174,7 +173,7 @@ async function main() {
       programId: raceProgram.id, title: "마감 경합 주제", description: "원자적 생성 검증", requiredSkills: ["TypeScript"], preferredSkills: [],
       roleExpectations: "구현", availabilityRequirement: "주 1회", capacity: 2,
       applicationMode: "INDIVIDUAL_ONLY", applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
-      recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000), recruitmentEndsAt: new Date(now.getTime() + 30 * day),
+      recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
       executionStartsAt: new Date(now.getTime() + 20 * day), executionEndsAt: new Date(now.getTime() + 70 * day),
       submissionStartsAt: new Date(now.getTime() + 60 * day), submissionEndsAt: new Date(now.getTime() + 80 * day),
     }),
@@ -189,6 +188,7 @@ async function main() {
     name: approvalRaceName, category: "경합 검증", description: "학생 제안 생성 및 승인과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
+    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
     advisorEnabled: true,
     studentProjectCreationEnabled: true,
     icon: "FOLDER",
@@ -209,7 +209,6 @@ async function main() {
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 2,
     recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    recruitmentEndsAt: new Date(now.getTime() + 30 * day),
     executionStartsAt: new Date(now.getTime() + 20 * day),
     executionEndsAt: new Date(now.getTime() + 70 * day),
     submissionStartsAt: new Date(now.getTime() + 60 * day),

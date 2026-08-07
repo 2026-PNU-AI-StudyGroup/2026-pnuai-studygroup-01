@@ -54,9 +54,11 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programCategory: string;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
+  programRecruitmentEndsAt: Date;
 };
 
 export type ManagedTopicSummary = TopicSummary & {
+  managerId: string | null;
   pendingApplicationCount: number;
   openRecruitmentPostCount: number;
 };
@@ -86,13 +88,14 @@ export type TopicStateRecord = {
   managerId: string | null;
   assistantIds: string[];
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
-  recruitmentEndsAt: Date;
+  recruitmentEnabled: boolean;
 };
 
 export interface TopicStateRepository {
   findState(id: string): Promise<TopicStateRecord | null>;
   publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean>;
   closePublished(id: string, actor: CurrentActor): Promise<boolean>;
+  closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean>;
 }
 
 export type PublicTopicSummary = TopicSummary & {

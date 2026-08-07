@@ -8,6 +8,7 @@ const programInput = {
   description: "설명",
   startsAt: new Date("2026-03-01T00:00:00Z"),
   endsAt: new Date("2026-12-01T00:00:00Z"),
+  recruitmentEndsAt: new Date("2026-11-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
   icon: "FOLDER" as const,
@@ -18,6 +19,7 @@ function repository(overrides: Partial<ProjectProgramRepository> = {}): ProjectP
     create: vi.fn(),
     listAll: vi.fn(),
     listOpen: vi.fn(),
+    listSidebarVisible: vi.fn(),
     findById: vi.fn(),
     updateSettings: vi.fn(async () => "UPDATED" as const),
     changeStatus: vi.fn(),
@@ -54,6 +56,15 @@ describe("프로젝트 프로그램 관리", () => {
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
     }));
+  });
+
+  it("운영이 종료됐어도 진행 중인 투표 프로그램은 사이드바 목록에 포함한다", async () => {
+    const now = new Date("2026-08-07T12:00:00+09:00");
+    const value = repository({ listSidebarVisible: vi.fn(async () => []) });
+
+    await new ProjectProgramService(value).listSidebarVisible(now);
+
+    expect(value.listSidebarVisible).toHaveBeenCalledWith(now);
   });
 
   it("교수의 프로그램 개설을 거부한다", async () => {

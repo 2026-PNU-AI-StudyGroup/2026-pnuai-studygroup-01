@@ -87,7 +87,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `워크스페이스 검증 프로그램 ${professorId}`, category: "검증", description: "워크스페이스 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({
@@ -99,7 +99,6 @@ async function main() {
       description: "워크스페이스 통합 검증",
       capacity: 2,
       recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
-      recruitmentEndsAt: new Date("2026-12-31T00:00:00Z"),
       executionStartsAt: new Date("2026-01-01T00:00:00Z"),
       executionEndsAt: new Date("2026-12-31T00:00:00Z"),
       submissionStartsAt: new Date("2026-01-01T00:00:00Z"),

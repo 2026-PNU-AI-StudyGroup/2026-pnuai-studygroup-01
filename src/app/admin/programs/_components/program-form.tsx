@@ -50,6 +50,12 @@ export function ProgramForm({ successHref }: { successHref?: string }) {
       </FormField>
     </FormSection>
 
+    <FormSection title="프로젝트 모집 마감" description="이 프로그램의 모든 프로젝트 지원은 같은 시각에 마감됩니다.">
+      <FormField id="program-recruitment-ends-at" label="모집 마감" required>
+        <DateTimeInput id="program-recruitment-ends-at" name="recruitmentEndsAt" required />
+      </FormField>
+    </FormSection>
+
     <FormSection title="운영 방식" description="지도교수와 학생 제안 정책을 선택합니다.">
       <fieldset className="grid gap-3 sm:grid-cols-2">
         <legend className="sr-only"><UiText>{"지도교수 배정 여부"}</UiText></legend>

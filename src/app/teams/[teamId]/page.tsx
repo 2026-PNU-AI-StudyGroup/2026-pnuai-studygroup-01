@@ -56,7 +56,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
   const { focus: nextTask } = presentTasks(workspace.tasks, now);
   const focusDeadlineState = nextTask ? taskDeadlineState(nextTask, now) : null;
   const schedule = [
-    ["모집", workspace.schedule.recruitmentStartsAt, workspace.schedule.recruitmentEndsAt],
+    ["모집", workspace.schedule.recruitmentStartsAt, workspace.schedule.programRecruitmentEndsAt],
     ["수행", workspace.schedule.executionStartsAt, workspace.schedule.executionEndsAt],
     ["제출", workspace.schedule.submissionStartsAt, workspace.schedule.submissionEndsAt],
   ] as const;

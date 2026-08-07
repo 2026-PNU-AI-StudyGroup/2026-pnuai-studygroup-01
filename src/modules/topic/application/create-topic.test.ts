@@ -20,7 +20,6 @@ const topicInput = {
   applicationQuestions: [{ label: " 참여 동기 ", maxLength: 500, required: true }],
   capacity: 4,
   recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
-  recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
   executionStartsAt: new Date("2026-03-05T00:00:00Z"),
   executionEndsAt: new Date("2026-06-10T00:00:00Z"),
   submissionStartsAt: new Date("2026-06-01T00:00:00Z"),
@@ -36,6 +35,7 @@ function repositories(programExists = true) {
       id: "program-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
     } : null),
@@ -93,6 +93,7 @@ describe("주제 초안 생성", () => {
       endsAt: new Date("2026-12-31T00:00:00Z"),
       projectRegistrationStartsAt: new Date("2026-01-01T00:00:00Z"),
       projectRegistrationEndsAt: new Date("2026-02-01T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
     });

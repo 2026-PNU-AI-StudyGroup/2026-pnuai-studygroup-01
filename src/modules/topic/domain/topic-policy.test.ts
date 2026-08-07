@@ -62,7 +62,6 @@ describe("주제 내용 정책", () => {
 function validSchedule(): TopicSchedule {
   return {
     recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
-    recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
     executionStartsAt: new Date("2026-03-05T00:00:00Z"),
     executionEndsAt: new Date("2026-06-10T00:00:00Z"),
     submissionStartsAt: new Date("2026-06-01T00:00:00Z"),
@@ -75,7 +74,7 @@ describe("주제 기간 정책", () => {
     expect(() => assertValidTopicSchedule(validSchedule())).not.toThrow();
   });
 
-  it.each(["recruitment", "execution", "submission"] as const)(
+  it.each(["execution", "submission"] as const)(
     "%s 시작 시각이 종료 시각과 같거나 늦으면 거절한다",
     (period) => {
       const schedule = validSchedule();

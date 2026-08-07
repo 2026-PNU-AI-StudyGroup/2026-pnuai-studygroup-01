@@ -50,7 +50,7 @@ const workspace = {
   },
   schedule: {
     recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
-    recruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
+    programRecruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
     executionStartsAt: new Date("2026-03-01T00:00:00Z"),
     executionEndsAt: new Date("2026-10-01T00:00:00Z"),
     submissionStartsAt: new Date("2026-09-01T00:00:00Z"),

@@ -56,15 +56,17 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       : Promise.resolve([]),
   ]);
   const now = new Date();
-  const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.recruitmentEndsAt > now && topic.memberCount < topic.capacity;
-  const daysUntilDeadline = Math.max(0, Math.ceil((topic.recruitmentEndsAt.getTime() - now.getTime()) / 86_400_000));
+  const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
   const recruitmentStatusLabel = !topic.recruitmentEnabled
-    ? "기존 팀 참여"
+    ? `모집 종료 · ${memberLabel}`
+    : topic.memberCount >= topic.capacity
+      ? `정원 마감 · ${memberLabel}`
     : topic.recruitmentStartsAt > now
-      ? "모집 예정"
+      ? `모집 예정 · ${memberLabel}`
       : recruiting
-        ? `모집 중 · D-${daysUntilDeadline}`
-        : "모집 종료";
+        ? `모집 중 · ${memberLabel}`
+        : `모집 종료 · ${memberLabel}`;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
     <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} />}>
@@ -90,11 +92,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       }
       headerAside={
         <>
-          <dl className="flex items-end justify-between gap-5">
-            <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"참여 인원"}</UiText></dt><dd className="mt-1 text-2xl font-bold">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></dd></div>
-            <div className="text-right"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 마감"}</UiText></dt><dd className="mt-1 text-sm font-semibold"><UiDate value={topic.recruitmentEndsAt} mode="dateTime" /></dd></div>
-          </dl>
-          <div className="mt-5">
+          <div>
             {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{topicApplicationStatusPresentation[application.status].label}</Link>
               : actor.role === "STUDENT" && recruiting ? <TopicApplicationEditor topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} leaderTeams={leaderTeams} />
                 : null}
@@ -105,7 +103,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       rail={
         <>
           <h2 id="topic-schedule" className="text-xl font-bold"><UiText>{"프로젝트 일정"}</UiText></h2>
-          <dl className="mt-5"><Period label="모집 기간" startsAt={topic.recruitmentStartsAt} endsAt={topic.recruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.executionStartsAt} endsAt={topic.executionEndsAt} /><Period label="제출 기간" startsAt={topic.submissionStartsAt} endsAt={topic.submissionEndsAt} /></dl>
+          <dl className="mt-5"><Period label="프로그램 모집 기간" startsAt={topic.recruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.executionStartsAt} endsAt={topic.executionEndsAt} /><Period label="제출 기간" startsAt={topic.submissionStartsAt} endsAt={topic.submissionEndsAt} /></dl>
         </>
       }
     >

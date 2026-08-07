@@ -5,7 +5,6 @@ import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/pri
 
 const schedule = {
   recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
-  recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
   executionStartsAt: new Date("2026-03-11T00:00:00Z"),
   executionEndsAt: new Date("2026-05-31T00:00:00Z"),
   submissionStartsAt: new Date("2026-06-01T00:00:00Z"),
@@ -13,7 +12,7 @@ const schedule = {
 };
 
 describe("Prisma 주제 저장소", () => {
-  it("공개 상태와 모집 종료 시각을 하나의 조건부 갱신으로 검사한다", async () => {
+  it("공개 상태와 프로그램 모집 마감을 하나의 조건부 갱신으로 검사한다", async () => {
     const updateMany = vi.fn(async () => ({ count: 0 }));
     const transaction = { $queryRaw: vi.fn(async () => [{ id: "program-1" }]), topic: { updateMany } };
     const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
@@ -31,7 +30,6 @@ describe("Prisma 주제 저장소", () => {
       where: {
         id: "topic-1",
         status: "DRAFT",
-        recruitmentEndsAt: { gt: publishedAt },
         requiredSkills: { isEmpty: false },
         roleExpectations: { not: "" },
         availabilityRequirement: { not: "" },

@@ -44,7 +44,7 @@ const request = {
   applicationMode: "INDIVIDUAL_OR_TEAM" as const,
   capacity: 4,
   recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
-  recruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
+  programRecruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
   executionStartsAt: new Date("2026-08-11T00:00:00Z"),
   executionEndsAt: new Date("2026-09-10T00:00:00Z"),
   submissionStartsAt: new Date("2026-09-01T00:00:00Z"),

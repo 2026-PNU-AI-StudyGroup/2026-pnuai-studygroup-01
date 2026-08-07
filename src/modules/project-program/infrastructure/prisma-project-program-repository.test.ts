@@ -17,6 +17,7 @@ const input = {
   endsAt: new Date("2026-12-01T00:00:00Z"),
   projectRegistrationStartsAt: new Date("2026-03-01T00:00:00Z"),
   projectRegistrationEndsAt: new Date("2026-12-01T00:00:00Z"),
+  recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
   votingPolicy: null,

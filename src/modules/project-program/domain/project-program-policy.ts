@@ -19,6 +19,7 @@ export type ProjectProgramDetails = {
   endsAt: Date;
   projectRegistrationStartsAt: Date;
   projectRegistrationEndsAt: Date;
+  recruitmentEndsAt: Date;
   advisorEnabled: boolean;
   studentProjectCreationEnabled: boolean;
   icon: ProgramIconKey;
@@ -42,6 +43,7 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
   if (!value.description || value.description.length > 5000) throw new InvalidProjectProgramError("설명은 1자 이상 5000자 이하여야 합니다.");
   if (!Number.isFinite(value.startsAt.getTime()) || !Number.isFinite(value.endsAt.getTime()) || value.startsAt >= value.endsAt) throw new InvalidProjectProgramError("프로그램 시작 시각은 종료 시각보다 앞서야 합니다.");
   assertProjectRegistrationPeriod(value.projectRegistrationStartsAt, value.projectRegistrationEndsAt);
+  assertProgramRecruitmentDeadline(value.recruitmentEndsAt, value.startsAt, value.endsAt);
   if (!isProgramIconKey(value.icon)) throw new InvalidProjectProgramError("프로그램 아이콘을 다시 선택해 주세요.");
   return value;
 }
@@ -61,6 +63,23 @@ export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {
   assertValidPeriod(startsAt, endsAt, "프로젝트 등록 시작 시각은 종료 시각보다 앞서야 합니다.");
 }
 
+export function assertProgramRecruitmentDeadline(recruitmentEndsAt: Date, startsAt: Date, endsAt: Date) {
+  if (
+    !Number.isFinite(recruitmentEndsAt.getTime()) ||
+    recruitmentEndsAt < startsAt ||
+    recruitmentEndsAt > endsAt
+  ) {
+    throw new InvalidProjectProgramError("프로젝트 모집 마감은 프로그램 운영 기간 안에 있어야 합니다.");
+  }
+}
+
+export function isProgramRecruitmentOpen(
+  program: Pick<ProjectProgramDetails, "recruitmentEndsAt">,
+  now: Date,
+) {
+  return now < program.recruitmentEndsAt;
+}
+
 export function isProjectRegistrationOpen(
   program: Pick<ProjectProgramDetails, "startsAt" | "endsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">>,
   now: Date,
@@ -68,6 +87,13 @@ export function isProjectRegistrationOpen(
   const startsAt = program.projectRegistrationStartsAt ?? program.startsAt;
   const endsAt = program.projectRegistrationEndsAt ?? program.endsAt;
   return startsAt <= now && now < endsAt;
+}
+
+export function isProgramVotingOpen(
+  policy: ProgramVotingPolicyDetails | null | undefined,
+  now: Date,
+) {
+  return Boolean(policy && policy.startsAt <= now && now < policy.endsAt);
 }
 
 function assertValidPeriod(startsAt: Date, endsAt: Date, message: string) {

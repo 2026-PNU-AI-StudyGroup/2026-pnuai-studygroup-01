@@ -99,7 +99,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
       applicationQuestions: [],
       capacity: 4,
       recruitmentStartsAt: new Date("2026-07-01T00:00:00Z"),
-      recruitmentEndsAt: new Date("2026-08-15T00:00:00Z"),
+      programRecruitmentEndsAt: new Date("2026-08-15T00:00:00Z"),
       executionStartsAt: new Date("2026-08-16T00:00:00Z"),
       executionEndsAt: new Date("2026-11-30T00:00:00Z"),
       submissionStartsAt: new Date("2026-11-01T00:00:00Z"),

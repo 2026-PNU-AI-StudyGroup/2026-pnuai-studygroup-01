@@ -42,6 +42,7 @@ const program = {
   description: "프로그램 설명",
   startsAt: new Date("2026-03-01T00:00:00.000Z"),
   endsAt: new Date("2026-06-30T00:00:00.000Z"),
+  recruitmentEndsAt: new Date("2026-04-30T00:00:00.000Z"),
   status: "CLOSED" as const,
   topicCount: 1,
   teamCount: 1,

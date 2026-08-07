@@ -85,10 +85,14 @@ export class PrismaTopicCommandRepository
       if (current.programId !== topic.programId) return "PROGRAM_UNAVAILABLE" as const;
       const program = await transaction.projectProgram.findFirst({
         where: { id: current.programId, status: "OPEN" },
-        select: { startsAt: true, endsAt: true },
+        select: { startsAt: true, endsAt: true, recruitmentEndsAt: true },
       });
-      const times = [topic.recruitmentStartsAt, topic.recruitmentEndsAt, topic.executionStartsAt, topic.executionEndsAt, topic.submissionStartsAt, topic.submissionEndsAt];
-      if (!program || times.some((time) => time < program.startsAt || time > program.endsAt)) {
+      const times = [topic.recruitmentStartsAt, topic.executionStartsAt, topic.executionEndsAt, topic.submissionStartsAt, topic.submissionEndsAt];
+      if (
+        !program ||
+        times.some((time) => time < program.startsAt || time > program.endsAt) ||
+        topic.recruitmentStartsAt >= program.recruitmentEndsAt
+      ) {
         return "PROGRAM_UNAVAILABLE" as const;
       }
       const formChanged = current.applicationMode !== topic.applicationMode ||
@@ -146,7 +150,7 @@ export class PrismaTopicCommandRepository
         managerId: true,
         assistants: { select: { userId: true } },
         status: true,
-        recruitmentEndsAt: true,
+        recruitmentEnabled: true,
       },
     }).then((topic) => topic ? {
       ...topic,
@@ -164,6 +168,7 @@ export class PrismaTopicCommandRepository
           AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
           AND "project_program"."projectRegistrationStartsAt" <= ${publishedAt}
           AND "project_program"."projectRegistrationEndsAt" > ${publishedAt}
+          AND "project_program"."recruitmentEndsAt" > ${publishedAt}
         FOR SHARE OF "project_program"
       `);
       if (!programs[0]) return false;
@@ -171,7 +176,6 @@ export class PrismaTopicCommandRepository
         where: {
           id,
           status: "DRAFT",
-          recruitmentEndsAt: { gt: publishedAt },
           requiredSkills: { isEmpty: false },
           roleExpectations: { not: "" },
           availabilityRequirement: { not: "" },
@@ -245,6 +249,71 @@ export class PrismaTopicCommandRepository
     });
   }
 
+  async closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const result = await transaction.topic.updateMany({
+        where: {
+          id,
+          status: "PUBLISHED",
+          recruitmentEnabled: true,
+          ...topicSupervisorWhere(actor),
+        },
+        data: { recruitmentEnabled: false },
+      });
+      if (result.count !== 1) return false;
+
+      const applications = await transaction.topicApplication.findMany({
+        where: { topicId: id, status: "PENDING" },
+        select: {
+          id: true,
+          studentId: true,
+          topic: { select: { title: true } },
+        },
+      });
+      const rejectedApplications = await transaction.topicApplication.updateMany({
+        where: { topicId: id, status: "PENDING" },
+        data: {
+          status: "REJECTED",
+          decidedAt: closedAt,
+          decidedById: actor.id,
+          reviewComment: "담당 교수가 프로젝트 모집을 마감하여 자동 미선정되었습니다.",
+        },
+      });
+      const closedRecruitmentPosts = await transaction.recruitmentPost.updateMany({
+        where: { team: { topicId: id }, status: "OPEN" },
+        data: { status: "CLOSED" },
+      });
+      await transaction.recruitmentApplication.updateMany({
+        where: { post: { team: { topicId: id } }, status: "PENDING" },
+        data: { status: "REJECTED", decidedAt: closedAt },
+      });
+      await createApplicationResultNotifications(
+        transaction,
+        applications.map((application) => ({
+          applicationId: application.id,
+          recipientId: application.studentId,
+          topicTitle: application.topic.title,
+          outcome: "REJECTED",
+          createdAt: closedAt,
+        })),
+      );
+      await transaction.auditLog.create({
+        data: {
+          actorId: actor.id,
+          action: "TOPIC_RECRUITMENT_CLOSED",
+          targetType: "TOPIC",
+          targetId: id,
+          metadata: {
+            rejectedApplicationCount: rejectedApplications.count,
+            closedRecruitmentPostCount: closedRecruitmentPosts.count,
+          },
+          createdAt: closedAt,
+        },
+      });
+      return true;
+    });
+  }
+
   async updateSchedule(
     id: string,
     actor: CurrentActor,
@@ -254,7 +323,6 @@ export class PrismaTopicCommandRepository
       UPDATE "topic"
       SET
         "recruitmentStartsAt" = ${schedule.recruitmentStartsAt},
-        "recruitmentEndsAt" = ${schedule.recruitmentEndsAt},
         "executionStartsAt" = ${schedule.executionStartsAt},
         "executionEndsAt" = ${schedule.executionEndsAt},
         "submissionStartsAt" = ${schedule.submissionStartsAt},
@@ -267,7 +335,7 @@ export class PrismaTopicCommandRepository
         AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
         AND ${topicSupervisorSql(actor)}
         AND ${schedule.recruitmentStartsAt} >= "project_program"."startsAt"
-        AND ${schedule.recruitmentEndsAt} <= "project_program"."endsAt"
+        AND ${schedule.recruitmentStartsAt} < "project_program"."recruitmentEndsAt"
         AND ${schedule.executionStartsAt} >= "project_program"."startsAt"
         AND ${schedule.executionEndsAt} <= "project_program"."endsAt"
         AND ${schedule.submissionStartsAt} >= "project_program"."startsAt"

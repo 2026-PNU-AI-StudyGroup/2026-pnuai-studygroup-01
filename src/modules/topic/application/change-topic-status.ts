@@ -1,6 +1,6 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
-import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
+import { isProgramRecruitmentOpen, isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 import type { TopicStateRepository } from "@/modules/topic/application/topic-ports";
 import { canManageTopic } from "@/modules/topic/domain/topic-policy";
 
@@ -49,15 +49,13 @@ export class ChangeTopicStatusService {
     }
 
     const publishedAt = this.now();
-    if (topic.recruitmentEndsAt.getTime() <= publishedAt.getTime()) {
-      throw new InvalidTopicStatusTransitionError(
-        "모집 종료 시각이 지난 주제는 공개할 수 없습니다.",
-      );
-    }
     if (this.programs && topic.programId) {
       const program = await this.programs.findOpen(topic.programId);
       if (!program || !isProjectRegistrationOpen(program, publishedAt)) {
         throw new InvalidTopicStatusTransitionError("현재 프로젝트 등록 기간이 아니어서 공개할 수 없습니다.");
+      }
+      if (!isProgramRecruitmentOpen(program, publishedAt)) {
+        throw new InvalidTopicStatusTransitionError("프로그램 모집 마감이 지나 주제를 공개할 수 없습니다.");
       }
     }
 
@@ -73,6 +71,20 @@ export class ChangeTopicStatusService {
     }
 
     if (!(await this.repository.closePublished(topic.id, actor))) {
+      throw new InvalidTopicStatusTransitionError();
+    }
+  }
+
+  async closeRecruitment(actor: CurrentActor, topicId: string): Promise<void> {
+    const topic = await this.requireManageableTopic(actor, topicId);
+    if (
+      topic.status !== "PUBLISHED" ||
+      !topic.recruitmentEnabled ||
+      !(actor.role === "ADMIN" || (actor.role === "PROFESSOR" && actor.id === topic.managerId))
+    ) {
+      throw new InvalidTopicStatusTransitionError("담당 교수 또는 관리자만 공개된 프로젝트 모집을 마감할 수 있습니다.");
+    }
+    if (!(await this.repository.closeRecruitment(topic.id, actor, this.now()))) {
       throw new InvalidTopicStatusTransitionError();
     }
   }

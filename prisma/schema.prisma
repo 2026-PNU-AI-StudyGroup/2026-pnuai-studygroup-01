@@ -155,6 +155,7 @@ enum AuditAction {
   PROJECT_ASSISTANT_ACCEPTED
   PROJECT_ASSISTANT_REMOVED
   TOPIC_CLOSED
+  TOPIC_RECRUITMENT_CLOSED
 }
 
 enum NotificationType {
@@ -435,6 +436,7 @@ model ProjectProgram {
   endsAt                        DateTime
   projectRegistrationStartsAt   DateTime
   projectRegistrationEndsAt     DateTime
+  recruitmentEndsAt             DateTime
   advisorEnabled                Boolean              @default(true)
   studentProjectCreationEnabled Boolean              @default(false)
   icon                          ProgramIcon          @default(FOLDER)
@@ -488,7 +490,6 @@ model Topic {
   recruitmentEnabled      Boolean                      @default(true)
   capacity                Int
   recruitmentStartsAt     DateTime
-  recruitmentEndsAt       DateTime
   executionStartsAt       DateTime
   executionEndsAt         DateTime
   submissionStartsAt      DateTime

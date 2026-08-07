@@ -17,7 +17,7 @@ import { getProgramStartYear } from "@/modules/project-program/domain/project-pr
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
-  program: { select: { name: true, category: true, status: true, advisorEnabled: true, startsAt: true } },
+  program: { select: { name: true, category: true, status: true, advisorEnabled: true, startsAt: true, recruitmentEndsAt: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -34,6 +34,7 @@ const publicTopicInclude = {
 const managedTopicSelect = {
   id: true,
   authorId: true,
+  managerId: true,
   author: { select: { name: true, role: true } },
   title: true,
   description: true,
@@ -56,7 +57,6 @@ const managedTopicSelect = {
   },
   capacity: true,
   recruitmentStartsAt: true,
-  recruitmentEndsAt: true,
   executionStartsAt: true,
   executionEndsAt: true,
   submissionStartsAt: true,
@@ -77,7 +77,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, status: true, advisorEnabled: true } },
+  program: { select: { name: true, category: true, status: true, advisorEnabled: true, recruitmentEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -189,7 +189,7 @@ export class PrismaTopicQueryRepository
     const topics = await this.client.topic.findMany({
       where,
       orderBy: query.sort === "DEADLINE"
-        ? [{ recruitmentEndsAt: "asc" }, { id: "asc" }]
+        ? [{ program: { recruitmentEndsAt: "asc" } }, { id: "asc" }]
         : [{ publishedAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * query.pageSize,
       take: query.pageSize,
@@ -245,6 +245,7 @@ function toTopicSummary(
     programCategory: program.category,
     programStatus: program.status,
     advisorEnabled: program.advisorEnabled,
+    programRecruitmentEndsAt: program.recruitmentEndsAt,
     pendingApplicationCount: _count.applications,
     openRecruitmentPostCount: team?._count.recruitmentPosts ?? 0,
   };
@@ -264,6 +265,7 @@ function toPublicTopic(
     programCategory: program.category,
     programStatus: program.status,
     advisorEnabled: program.advisorEnabled,
+    programRecruitmentEndsAt: program.recruitmentEndsAt,
     memberCount: team?._count.members ?? 0,
     ownApplicationStatus,
   };
@@ -277,7 +279,7 @@ function phaseWhere(
     return {
       recruitmentEnabled: true,
       recruitmentStartsAt: { lte: now },
-      recruitmentEndsAt: { gt: now },
+      program: { recruitmentEndsAt: { gt: now } },
     };
   }
   if (phase === "CLOSING_SOON") {
@@ -285,7 +287,7 @@ function phaseWhere(
     return {
       recruitmentEnabled: true,
       recruitmentStartsAt: { lte: now },
-      recruitmentEndsAt: { gt: now, lte: sevenDaysLater },
+      program: { recruitmentEndsAt: { gt: now, lte: sevenDaysLater } },
     };
   }
   return {};

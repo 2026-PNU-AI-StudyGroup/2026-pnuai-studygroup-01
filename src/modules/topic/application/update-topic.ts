@@ -34,7 +34,7 @@ export class UpdateTopicService {
     if (outcome === "UPDATED") return;
     if (outcome === "NOT_FOUND") throw new TopicUpdateError("수정할 수 있는 주제를 찾지 못했습니다.");
     if (outcome === "CLOSED") throw new TopicUpdateError("마감된 주제는 수정할 수 없습니다.");
-    if (outcome === "PROGRAM_UNAVAILABLE") throw new TopicUpdateError("주제의 프로그램이나 운영 기간을 변경할 수 없습니다.");
+    if (outcome === "PROGRAM_UNAVAILABLE") throw new TopicUpdateError("주제의 프로그램, 운영 기간 또는 모집 마감을 벗어나 변경할 수 없습니다.");
     if (outcome === "APPLICATION_FORM_LOCKED") throw new TopicUpdateError("제출된 지원서가 있어 지원 방식과 문항은 변경할 수 없습니다.");
     throw new TopicUpdateError("현재 팀 인원보다 모집 정원을 작게 설정할 수 없습니다.");
   }

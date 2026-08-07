@@ -173,7 +173,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         requestedProfessor: { select: { name: true } },
         topic: {
           include: {
-            program: { select: { name: true, category: true } },
+            program: { select: { name: true, category: true, recruitmentEndsAt: true } },
             applicationQuestions: {
               orderBy: { position: "asc" },
               select: { id: true, label: true, maxLength: true, required: true },
@@ -199,7 +199,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       applicationMode: topic.applicationMode,
       capacity: topic.capacity,
       recruitmentStartsAt: topic.recruitmentStartsAt,
-      recruitmentEndsAt: topic.recruitmentEndsAt,
+      programRecruitmentEndsAt: topic.program.recruitmentEndsAt,
       executionStartsAt: topic.executionStartsAt,
       executionEndsAt: topic.executionEndsAt,
       submissionStartsAt: topic.submissionStartsAt,
@@ -244,8 +244,9 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           status: "DRAFT" | "OPEN" | "CLOSED";
           projectRegistrationStartsAt: Date;
           projectRegistrationEndsAt: Date;
+          recruitmentEndsAt: Date;
         }>>(Prisma.sql`
-          SELECT "project_program"."status", "project_program"."projectRegistrationStartsAt", "project_program"."projectRegistrationEndsAt"
+          SELECT "project_program"."status", "project_program"."projectRegistrationStartsAt", "project_program"."projectRegistrationEndsAt", "project_program"."recruitmentEndsAt"
           FROM "project_program"
           JOIN "topic" ON "topic"."programId" = "project_program"."id"
           WHERE "topic"."id" = ${initialRequest.topicId}
@@ -254,11 +255,12 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         if (
           programs[0]?.status !== "OPEN" ||
           programs[0].projectRegistrationStartsAt > input.decidedAt ||
-          programs[0].projectRegistrationEndsAt <= input.decidedAt
+          programs[0].projectRegistrationEndsAt <= input.decidedAt ||
+          programs[0].recruitmentEndsAt <= input.decidedAt
         ) return "UNAVAILABLE";
 
         const topics = await transaction.$queryRaw<Array<LockedApprovalTopic>>(Prisma.sql`
-          SELECT "id", "programId", "authorId", "title", "capacity", "recruitmentEnabled", "recruitmentEndsAt", "status"
+          SELECT "id", "programId", "authorId", "title", "capacity", "recruitmentEnabled", "status"
           FROM "topic"
           WHERE "id" = ${initialRequest.topicId}
           FOR UPDATE
@@ -266,8 +268,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         const topic = topics[0];
         if (
           !topic ||
-          topic.status !== "DRAFT" ||
-          topic.recruitmentEndsAt <= input.decidedAt
+          topic.status !== "DRAFT"
         ) return "UNAVAILABLE";
 
         const studentTeam = topic.recruitmentEnabled
@@ -439,7 +440,6 @@ type LockedApprovalTopic = {
   title: string;
   capacity: number;
   recruitmentEnabled: boolean;
-  recruitmentEndsAt: Date;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
 };
 

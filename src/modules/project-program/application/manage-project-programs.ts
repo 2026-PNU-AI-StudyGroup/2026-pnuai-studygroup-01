@@ -1,6 +1,7 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import {
   assertProjectRegistrationPeriod,
+  assertProgramRecruitmentDeadline,
   assertProgramAdmin,
   isProjectRegistrationOpen,
   normalizeProgramVotingPolicy,
@@ -20,7 +21,7 @@ export type ProjectProgramCreateInput = Omit<ProjectProgramDetails, "projectRegi
   votingPolicy?: ProgramVotingPolicyDetails | null;
 };
 
-export type ProjectProgramSettings = Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt"> & {
+export type ProjectProgramSettings = Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt" | "recruitmentEndsAt"> & {
   votingPolicy: ProgramVotingPolicyDetails | null;
 };
 
@@ -37,6 +38,7 @@ export interface ProjectProgramRepository {
   create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
+  listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]>;
   findById(id: string): Promise<ProjectProgramRecord | null>;
   updateSettings(id: string, input: ProjectProgramSettings): Promise<UpdateProjectProgramSettingsOutcome>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
@@ -48,6 +50,7 @@ export interface ProjectProgramRepository {
     endsAt: Date;
     projectRegistrationStartsAt?: Date;
     projectRegistrationEndsAt?: Date;
+    recruitmentEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
   } | null>;
@@ -58,6 +61,7 @@ export class ProjectProgramOperationError extends Error {}
 export class ProjectProgramService {
   constructor(private readonly repository: ProjectProgramRepository) {}
   listOpen() { return this.repository.listOpen(); }
+  listSidebarVisible(now = new Date()) { return this.repository.listSidebarVisible(now); }
   async listRegistrableOpen(now = new Date()) {
     return (await this.listOpen()).filter((program) => isProjectRegistrationOpen(program, now));
   }
@@ -103,13 +107,17 @@ export class ProjectProgramService {
   }
   async updateSettings(actor: CurrentActor, id: string, input: ProjectProgramSettings) {
     assertProgramAdmin(actor);
+    const program = await this.repository.findById(id);
+    if (!program) throw new ProjectProgramOperationError("설정할 프로그램이 없습니다.");
     const settings: ProjectProgramSettings = {
       projectRegistrationStartsAt: input.projectRegistrationStartsAt,
       projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+      recruitmentEndsAt: input.recruitmentEndsAt,
       votingPolicy: input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
     };
     // 등록기간은 운영기간 및 기존 등록 이력과 독립적으로 수정한다.
     assertProjectRegistrationPeriod(settings.projectRegistrationStartsAt, settings.projectRegistrationEndsAt);
+    assertProgramRecruitmentDeadline(settings.recruitmentEndsAt, program.startsAt, program.endsAt);
     const outcome = await this.repository.updateSettings(id, settings);
     if (outcome === "UPDATED") return;
     const messages: Record<Exclude<UpdateProjectProgramSettingsOutcome, "UPDATED">, string> = {

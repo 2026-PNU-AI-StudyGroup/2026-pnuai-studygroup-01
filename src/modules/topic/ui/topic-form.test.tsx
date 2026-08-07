@@ -22,6 +22,7 @@ describe("TopicForm", () => {
           description: "설명",
           startsAt: new Date("2026-07-01T00:00:00Z"),
           endsAt: new Date("2026-12-31T00:00:00Z"),
+          recruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
           advisorEnabled: false,
           studentProjectCreationEnabled: true,
           status: "OPEN",

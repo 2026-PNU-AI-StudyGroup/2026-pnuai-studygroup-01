@@ -12,6 +12,7 @@ type ProgramPolicyFormProps = {
   programId: string;
   registrationStartsAt: Date;
   registrationEndsAt: Date;
+  recruitmentEndsAt: Date;
   votingPolicy: ProgramVotingPolicyDetails | null;
 };
 
@@ -29,7 +30,7 @@ function koreanDateTimeLocal(value: Date): string {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function ProgramPolicyForm({ programId, registrationStartsAt, registrationEndsAt, votingPolicy }: ProgramPolicyFormProps) {
+export function ProgramPolicyForm({ programId, registrationStartsAt, registrationEndsAt, recruitmentEndsAt, votingPolicy }: ProgramPolicyFormProps) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
   const [state, action, pending] = useActionState(updateProgramSettingsAction, initialProgramActionState);
 
@@ -42,6 +43,12 @@ export function ProgramPolicyForm({ programId, registrationStartsAt, registratio
         </FormField>
         <FormField id="settings-registration-ends-at" label="등록 종료" required>
           <DateTimeInput id="settings-registration-ends-at" name="projectRegistrationEndsAt" defaultValue={koreanDateTimeLocal(registrationEndsAt)} required />
+        </FormField>
+      </FormSection>
+
+      <FormSection title="프로젝트 모집 마감" description="개별 프로젝트가 아닌 프로그램 전체에 적용되는 학생 지원 마감입니다.">
+        <FormField id="settings-recruitment-ends-at" label="모집 마감" required>
+          <DateTimeInput id="settings-recruitment-ends-at" name="recruitmentEndsAt" defaultValue={koreanDateTimeLocal(recruitmentEndsAt)} required />
         </FormField>
       </FormSection>
 

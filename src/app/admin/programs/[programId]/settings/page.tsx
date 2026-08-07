@@ -50,6 +50,7 @@ export default async function ProgramSettingsPage({ params }: { params: Promise<
                 programId={program.id}
                 registrationStartsAt={program.projectRegistrationStartsAt ?? program.startsAt}
                 registrationEndsAt={program.projectRegistrationEndsAt ?? program.endsAt}
+                recruitmentEndsAt={program.recruitmentEndsAt}
                 votingPolicy={program.votingPolicy ?? null}
               />
               {votingResults ? (

@@ -39,12 +39,12 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `업로드 검증 프로그램 ${professorId}`, category: "검증", description: "업로드 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
     programId: program.id, authorId: professorId, managerId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
-    recruitmentStartsAt: new Date("2026-01-01"), recruitmentEndsAt: new Date("2026-12-31"),
+    recruitmentStartsAt: new Date("2026-01-01"),
     executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
     submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),
     status: "PUBLISHED", publishedAt: new Date("2026-01-01"),

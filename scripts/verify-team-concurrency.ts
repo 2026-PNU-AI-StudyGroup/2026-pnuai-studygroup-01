@@ -60,7 +60,6 @@ async function createTopic(title: string, capacity: number, programId = createdP
       applicationMode: "INDIVIDUAL_ONLY",
       capacity,
       recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
-      recruitmentEndsAt: new Date("2026-12-31T00:00:00Z"),
       executionStartsAt: new Date("2026-01-01T00:00:00Z"),
       executionEndsAt: new Date("2026-12-31T00:00:00Z"),
       submissionStartsAt: new Date("2026-01-01T00:00:00Z"),
@@ -110,7 +109,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `동시성 검증 프로그램 ${professorId}`, category: "검증", description: "동시성 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   createdProgramId = program.id;
   const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
@@ -189,7 +188,7 @@ async function main() {
 
   const crossProgram = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `교차 프로그램 검증 ${professorId}`, category: "검증", description: "교차 프로그램 참여 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, status: "OPEN", openedAt: new Date("2025-01-01"),
   } });
   crossProgramId = crossProgram.id;
   const crossProgramTopic = await createTopic("교차 프로그램 참여", 2, crossProgram.id);
@@ -277,7 +276,6 @@ async function main() {
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 1,
     recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
-    recruitmentEndsAt: new Date("2026-12-31T00:00:00Z"),
     executionStartsAt: new Date("2026-01-01T00:00:00Z"),
     executionEndsAt: new Date("2026-12-31T00:00:00Z"),
     submissionStartsAt: new Date("2026-01-01T00:00:00Z"),
@@ -354,7 +352,6 @@ async function main() {
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 2,
     recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
-    recruitmentEndsAt: new Date("2026-12-31T00:00:00Z"),
     executionStartsAt: new Date("2026-01-01T00:00:00Z"),
     executionEndsAt: new Date("2026-12-31T00:00:00Z"),
     submissionStartsAt: new Date("2026-01-01T00:00:00Z"),

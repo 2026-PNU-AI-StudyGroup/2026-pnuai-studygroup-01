@@ -20,6 +20,7 @@ const votingIdentityVisibilitySchema = z.enum(["ANONYMOUS", "NAMED"]);
 const programSettingsSchema = z.object({
   projectRegistrationStartsAt: koreanLocalDateTime,
   projectRegistrationEndsAt: koreanLocalDateTime,
+  recruitmentEndsAt: koreanLocalDateTime,
   votingEnabled: z.boolean(),
   votingStartsAt: koreanLocalDateTime.optional(),
   votingEndsAt: koreanLocalDateTime.optional(),
@@ -46,12 +47,13 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
     studentProjectCreationEnabled: formData.get("studentProjectCreationEnabled") === "true",
   });
   const settings = parseProgramSettings(formData);
-  if (!parsed.success || !settings.success) return { status: "error", message: "프로그램 내용과 등록·투표 기간을 확인해 주세요." };
+  if (!parsed.success || !settings.success) return { status: "error", message: "프로그램 내용과 등록·모집·투표 기간을 확인해 주세요." };
   try {
     await service().create(await actor(), {
       ...parsed.data,
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
+      recruitmentEndsAt: settings.data.recruitmentEndsAt,
       votingPolicy: settings.data.votingEnabled ? {
         startsAt: settings.data.votingStartsAt!,
         endsAt: settings.data.votingEndsAt!,
@@ -68,11 +70,12 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
 export async function updateProgramSettingsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const programId = z.string().uuid().safeParse(formData.get("programId"));
   const settings = parseProgramSettings(formData);
-  if (!programId.success || !settings.success) return { status: "error", message: "등록·투표 기간과 투표 정책을 확인해 주세요." };
+  if (!programId.success || !settings.success) return { status: "error", message: "등록·모집·투표 기간과 투표 정책을 확인해 주세요." };
   try {
     await service().updateSettings(await actor(), programId.data, {
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
+      recruitmentEndsAt: settings.data.recruitmentEndsAt,
       votingPolicy: settings.data.votingEnabled ? {
         startsAt: settings.data.votingStartsAt!,
         endsAt: settings.data.votingEndsAt!,
@@ -92,7 +95,7 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
   revalidatePath("/projects/new");
   revalidatePath("/professor/topics/new");
   revalidatePath("/project-approvals");
-  return { status: "success", message: "프로그램 등록·투표 설정을 저장했습니다." };
+  return { status: "success", message: "프로그램 등록·모집·투표 설정을 저장했습니다." };
 }
 
 export async function changeProgramIconAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {

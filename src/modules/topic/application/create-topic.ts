@@ -64,8 +64,11 @@ export class CreateTopicService {
     if (!isProjectRegistrationOpen(program, registeredAt)) {
       throw new ProjectProgramNotOpenError();
     }
-    const topicTimes = [input.recruitmentStartsAt, input.recruitmentEndsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
-    if (topicTimes.some((time) => time < program.startsAt || time > program.endsAt)) {
+    const topicTimes = [input.recruitmentStartsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
+    if (
+      topicTimes.some((time) => time < program.startsAt || time > program.endsAt) ||
+      input.recruitmentStartsAt >= program.recruitmentEndsAt
+    ) {
       throw new ProjectProgramNotOpenError();
     }
 

@@ -405,8 +405,8 @@ async function seed() {
       }
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
-        create: { ...input, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, openedAt: input.startsAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
+        create: { ...input, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, openedAt: input.startsAt },
       });
     }
     const activePrograms = [
@@ -425,6 +425,18 @@ async function seed() {
       await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), status: "CLOSED" }),
       await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), status: "CLOSED" }),
     ];
+
+    // 운영 종료 뒤에도 공개 프로젝트를 대상으로 별도 투표를 진행할 수 있다.
+    // 시드를 실행한 시점에는 2025 캡스톤과 제6회 해커톤의 투표가 열려 있어, 사이드바와 투표 화면을 바로 검증할 수 있다.
+    const votingStartsAt = new Date(Date.now() - 86_400_000);
+    const votingEndsAt = new Date(Date.now() + 6 * 86_400_000);
+    for (const program of pastPrograms.slice(0, 2)) {
+      await tx.programVotingPolicy.upsert({
+        where: { programId: program.id },
+        update: { startsAt: votingStartsAt, endsAt: votingEndsAt, voteLimit: 3, selfVotingAllowed: false, identityVisibility: "ANONYMOUS" },
+        create: { programId: program.id, startsAt: votingStartsAt, endsAt: votingEndsAt, voteLimit: 3, selfVotingAllowed: false, identityVisibility: "ANONYMOUS" },
+      });
+    }
 
     // OPUS의 2026 캡스톤, 제7회 AI해커톤, AI부스터 2기 공개 API에는 아직 프로젝트가 없다.
     // 아래 진행 주제는 실제 졸업과제 운영 흐름을 중심으로 구성한 생성 데이터다.
@@ -447,22 +459,22 @@ async function seed() {
       const [title, description, requiredSkills, preferredSkills, roleExpectations, availabilityRequirement, capacity, programIndex, professorIndex] = data;
       const schedules = [
         {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-15T23:59:59+09:00"),
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
           executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
           submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
         },
         {
-          recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-07-31T23:59:59+09:00"),
+          recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"),
           executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
           submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
         },
         {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-10T23:59:59+09:00"),
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
           executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
           submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
         },
         {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-08-15T23:59:59+09:00"),
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
           executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
           submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
         },
@@ -470,7 +482,6 @@ async function seed() {
       const schedule = index === 0
         ? {
           recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"),
-          recruitmentEndsAt: new Date("2026-03-20T23:59:59+09:00"),
           executionStartsAt: new Date("2026-03-23T00:00:00+09:00"),
           executionEndsAt: new Date("2026-08-20T23:59:59+09:00"),
           submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"),
@@ -533,7 +544,7 @@ async function seed() {
         update: {
           programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
+          capacity, recruitmentStartsAt: targetProgram.startsAt,
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
           submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
@@ -541,7 +552,7 @@ async function seed() {
         create: {
           id: ids.topics[topicIndex], programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt, recruitmentEndsAt: new Date(targetProgram.startsAt.getTime() + 60 * 86_400_000),
+          capacity, recruitmentStartsAt: targetProgram.startsAt,
           executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
           submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
@@ -1216,7 +1227,6 @@ async function seed() {
         (SELECT count(*)::int FROM "topic" AS topic
           JOIN "project_program" AS program ON program."id" = topic."programId"
           WHERE topic."recruitmentStartsAt" < program."startsAt"
-            OR topic."recruitmentEndsAt" > program."endsAt"
             OR topic."executionStartsAt" < program."startsAt"
             OR topic."executionEndsAt" > program."endsAt"
             OR topic."submissionStartsAt" < program."startsAt"

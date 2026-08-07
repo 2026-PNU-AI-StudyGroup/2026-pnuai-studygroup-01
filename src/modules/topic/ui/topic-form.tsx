@@ -50,7 +50,6 @@ type TopicFormQuestion = {
 
 const periodFields = [
   ["모집 시작", "recruitmentStartsAt"],
-  ["모집 종료", "recruitmentEndsAt"],
   ["수행 시작", "executionStartsAt"],
   ["수행 종료", "executionEndsAt"],
   ["제출 시작", "submissionStartsAt"],
@@ -195,6 +194,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           </label>
         ))}
       </fieldset>
+      <p className="muted text-sm"><UiText>{selectedProgram ? `모집 마감은 프로그램 전체에 적용되는 ${programDate.format(selectedProgram.recruitmentEndsAt)}입니다.` : "프로그램을 선택하면 프로그램 모집 마감이 표시됩니다."}</UiText></p>
       <p className="muted text-sm"><UiText>{"모집·수행·제출 기간은 서로 겹칠 수 있습니다."}</UiText></p>
       </FormSection>
       {studentApproval ? <FormSection id="topic-approval" number="05" title="참여 팀과 승인" description="기존 팀 참여 여부와 프로젝트 공개 전 승인 경로를 정합니다.">

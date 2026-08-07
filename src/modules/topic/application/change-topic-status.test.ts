@@ -14,12 +14,13 @@ function repository(status: "DRAFT" | "PUBLISHED" | "CLOSED" = "DRAFT") {
     managerId: "professor-1",
     assistantIds: [] as string[],
     status,
-    recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
+    recruitmentEnabled: true,
   };
   return {
     findState: vi.fn(async () => value),
     publishDraft: vi.fn(async () => true),
     closePublished: vi.fn(async () => true),
+    closeRecruitment: vi.fn(async () => true),
   } satisfies TopicStateRepository;
 }
 
@@ -56,7 +57,7 @@ describe("주제 공개", () => {
       managerId: "professor-1",
       assistantIds: ["student-assistant-1"],
       status: "DRAFT",
-      recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
+      recruitmentEnabled: true,
     });
     const now = new Date("2026-03-01T00:00:00Z");
 
@@ -72,18 +73,6 @@ describe("주제 공개", () => {
     );
   });
 
-  it("모집 종료 시각이 지난 초안을 공개하지 않는다", async () => {
-    const topics = repository();
-    const service = new ChangeTopicStatusService(
-      topics,
-      () => new Date("2026-03-10T00:00:00Z"),
-    );
-
-    await expect(
-      service.publish({ id: "professor-1", role: "PROFESSOR" }, "topic-1"),
-    ).rejects.toBeInstanceOf(InvalidTopicStatusTransitionError);
-    expect(topics.publishDraft).not.toHaveBeenCalled();
-  });
 });
 
 describe("주제 마감", () => {
@@ -96,6 +85,22 @@ describe("주제 마감", () => {
     expect(topics.closePublished).toHaveBeenCalledWith(
       "topic-1",
       { id: "professor-1", role: "PROFESSOR" },
+    );
+  });
+
+  it("담당 교수가 프로젝트를 종료하지 않고 모집만 수동 마감한다", async () => {
+    const topics = repository("PUBLISHED");
+    const now = new Date("2026-03-01T00:00:00Z");
+
+    await new ChangeTopicStatusService(topics, () => now).closeRecruitment(
+      { id: "professor-1", role: "PROFESSOR" },
+      "topic-1",
+    );
+
+    expect(topics.closeRecruitment).toHaveBeenCalledWith(
+      "topic-1",
+      { id: "professor-1", role: "PROFESSOR" },
+      now,
     );
   });
 });

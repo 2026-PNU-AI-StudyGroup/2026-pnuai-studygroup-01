@@ -64,7 +64,6 @@ export const createTopicInputSchema = z.object({
   })).min(1).max(20),
   capacity: z.coerce.number().int().min(1).max(100),
   recruitmentStartsAt: koreanLocalDateTime,
-  recruitmentEndsAt: koreanLocalDateTime,
   executionStartsAt: koreanLocalDateTime,
   executionEndsAt: koreanLocalDateTime,
   submissionStartsAt: koreanLocalDateTime,

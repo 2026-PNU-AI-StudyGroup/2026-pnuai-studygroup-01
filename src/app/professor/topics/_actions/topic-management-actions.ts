@@ -37,7 +37,6 @@ export type TopicDeleteActionState = TopicManagementActionState;
 const topicScheduleInputSchema = z.object({
   topicId: z.string().uuid(),
   recruitmentStartsAt: koreanLocalDateTime,
-  recruitmentEndsAt: koreanLocalDateTime,
   executionStartsAt: koreanLocalDateTime,
   executionEndsAt: koreanLocalDateTime,
   submissionStartsAt: koreanLocalDateTime,
@@ -56,7 +55,7 @@ export async function changeTopicStatusAction(
   const parsed = z
     .object({
       topicId: z.string().uuid(),
-      intent: z.enum(["publish", "close"]),
+      intent: z.enum(["publish", "close", "closeRecruitment"]),
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -71,8 +70,10 @@ export async function changeTopicStatusAction(
   try {
     if (parsed.data.intent === "publish") {
       await service.publish(actor, parsed.data.topicId);
-    } else {
+    } else if (parsed.data.intent === "close") {
       await service.close(actor, parsed.data.topicId);
+    } else {
+      await service.closeRecruitment(actor, parsed.data.topicId);
     }
   } catch (error) {
     if (
@@ -87,9 +88,15 @@ export async function changeTopicStatusAction(
 
   revalidatePath("/professor/topics");
   revalidatePath(`/professor/topics/${parsed.data.topicId}`);
+  revalidatePath("/topics");
+  revalidatePath(`/topics/${parsed.data.topicId}`);
   return {
     status: "success",
-    message: parsed.data.intent === "publish" ? "주제가 공개되었습니다." : "주제가 마감되었습니다.",
+    message: parsed.data.intent === "publish"
+      ? "주제가 공개되었습니다."
+      : parsed.data.intent === "closeRecruitment"
+        ? "프로젝트 모집을 마감했습니다."
+        : "주제가 마감되었습니다.",
   };
 }
 
@@ -144,7 +151,7 @@ export async function updateTopicScheduleAction(
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const parsed = topicScheduleInputSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "모집·수행·제출 기간을 확인해 주세요." };
+  if (!parsed.success) return { status: "error", message: "모집 시작·수행·제출 기간을 확인해 주세요." };
   const { topicId, ...schedule } = parsed.data;
   try {
     await new UpdateTopicScheduleService(
