@@ -2,10 +2,10 @@
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";
+import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef } from "react";
-import { useI18n } from "@/shared/i18n/i18n-provider";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const focusableSelector = [
   "a[href]",
@@ -39,11 +39,11 @@ export function TeamModal({
   size?: "default" | "wide";
 }) {
   const router = useRouter();
-  const { t } = useI18n();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const initialFormSnapshotsRef = useRef(new Map<HTMLFormElement, string>());
+  const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
 
   const hasUnsavedChanges = useCallback(() => {
     const dialog = dialogRef.current;
@@ -55,11 +55,12 @@ export function TeamModal({
   }, []);
 
   const requestClose = useCallback(() => {
-    if (hasUnsavedChanges() && !window.confirm(t("작성 중인 내용이 있습니다. 닫으면 입력한 내용이 사라집니다. 계속하시겠습니까?"))) {
+    if (hasUnsavedChanges()) {
+      setDiscardConfirmationOpen(true);
       return;
     }
     router.replace(closeHref);
-  }, [closeHref, hasUnsavedChanges, router, t]);
+  }, [closeHref, hasUnsavedChanges, router]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement instanceof HTMLElement
@@ -73,7 +74,7 @@ export function TeamModal({
     );
     closeButtonRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || event.defaultPrevented) return;
       event.preventDefault();
       requestClose();
     };
@@ -94,6 +95,7 @@ export function TeamModal({
   }, [requestClose]);
 
   function trapFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.target instanceof Element && event.target.closest("[data-confirmation-dialog]")) return;
     if (event.key !== "Tab") return;
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -144,6 +146,15 @@ export function TeamModal({
         </div>
         <div className="mt-6"><UiText>{children}</UiText></div>
       </section>
+      <ConfirmationDialog
+        open={discardConfirmationOpen}
+        title="작성 중인 내용 삭제"
+        description="작성 중인 내용이 있습니다. 닫으면 입력한 내용이 사라집니다. 계속하시겠습니까?"
+        confirmLabel="계속"
+        onConfirm={() => router.replace(closeHref)}
+        onCancel={() => setDiscardConfirmationOpen(false)}
+        returnFocusRef={closeButtonRef}
+      />
     </div>
   );
 }

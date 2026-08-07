@@ -15,6 +15,7 @@ import {
 import { createPortal } from "react-dom";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import { IconButton } from "@/shared/ui/icon-button";
 
 type DateTimeInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -311,7 +312,7 @@ export function DateTimeInput({
           ) : null}
           <footer className="date-time-input__calendar-footer">
             <button type="button" onClick={() => selectDate(today())}>{t("오늘")}</button>
-            {hasValue ? <button type="button" onClick={() => { commit(""); close(); }}>{t("지우기")}</button> : null}
+            {hasValue ? <IconButton type="button" onClick={() => { commit(""); close(); }} aria-label="지우기" title="지우기">×</IconButton> : null}
           </footer>
         </section>,
         portalHost,
@@ -458,6 +459,8 @@ function useFloatingCalendar(
     function position() {
       const rect = rootRef.current?.getBoundingClientRect();
       if (!rect) return;
+      const dialog = rootRef.current?.closest("dialog");
+      const dialogRect = dialog?.getBoundingClientRect();
       const gutter = 8;
       const minimumWidth = type === "datetime-local" && window.innerWidth >= 480 ? 440 : 320;
       const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, minimumWidth));
@@ -466,9 +469,12 @@ function useFloatingCalendar(
       const desiredHeight = type === "datetime-local" && window.innerWidth >= 480 ? 320 : 450;
       const openAbove = availableBelow < desiredHeight && availableAbove > availableBelow;
       const maxHeight = Math.max(180, openAbove ? availableAbove : availableBelow);
+      const top = openAbove ? Math.max(gutter, rect.top - Math.min(desiredHeight, maxHeight) - gutter) : rect.bottom + gutter;
       setStyle({
-        left: Math.max(gutter, Math.min(rect.left, window.innerWidth - width - gutter)),
-        top: openAbove ? Math.max(gutter, rect.top - Math.min(desiredHeight, maxHeight) - gutter) : rect.bottom + gutter,
+        // Modal dialogs establish a top-layer containing block in Chromium.
+        // Convert viewport coordinates before rendering into the dialog portal.
+        left: Math.max(gutter, Math.min(rect.left, window.innerWidth - width - gutter)) - (dialogRect?.left ?? 0) + (dialog?.scrollLeft ?? 0),
+        top: top - (dialogRect?.top ?? 0) + (dialog?.scrollTop ?? 0),
         width,
         maxHeight,
       });

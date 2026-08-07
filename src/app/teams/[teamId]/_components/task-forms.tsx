@@ -19,8 +19,10 @@ import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { CustomMultiSelect, CustomSelect } from "@/shared/ui/custom-select";
 import { DateTimeInput } from "@/shared/ui/form-system";
+import { IconButton } from "@/shared/ui/icon-button";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
+import { EditIcon } from "@/shared/ui/workspace-icons";
 
 type AssignableMember = { id: string; name: string };
 
@@ -129,9 +131,7 @@ export function TaskEditDialog({
 
   return (
     <>
-      <button type="button" className="button-secondary shrink-0" onClick={() => dialogRef.current?.showModal()}>
-        <UiText>{"수정"}</UiText>
-      </button>
+      <IconButton type="button" onClick={() => dialogRef.current?.showModal()} aria-label={`${title} 수정`} title="할 일 수정"><EditIcon className="size-5" /></IconButton>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-2xl`}>
         <ReportFormDialogHeader title="할 일 수정" description="제목, 기한, 담당자와 상태를 한 번에 저장합니다." titleId={titleId} closeLabel="할 일 수정 닫기" pending={pending} onClose={() => dialogRef.current?.close()} />
         <form action={action} className="grid gap-5 px-5 py-6 sm:px-7">

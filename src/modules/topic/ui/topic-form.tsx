@@ -1,6 +1,6 @@
 "use client";
 
-import { UiButton, UiInput, UiNav, UiTextarea } from "@/modules/translation/ui/localized-elements";
+import { UiInput, UiNav, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -9,7 +9,9 @@ import type { ProjectProgramRecord } from "@/modules/project-program/application
 import type { TopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { ChoiceCard, DateTimeInput, FormField, FormSection, TextInput, Textarea } from "@/shared/ui/form-system";
+import { IconButton } from "@/shared/ui/icon-button";
 import { TagInput } from "@/shared/ui/tag-input";
+import { TrashIcon } from "@/shared/ui/workspace-icons";
 
 export type TopicFormActionState = {
   status: "idle" | "error" | "success";
@@ -177,7 +179,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
             <label className="grid gap-2 text-sm font-medium"><UiText>{"문항"}</UiText>{" "}{index + 1}<UiInput name="questionLabel" defaultValue={question.label} maxLength={200} required className="form-control" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
             <label className="grid gap-2 text-sm font-medium"><UiText>{"글자 수 제한"}</UiText><TextInput name="questionMaxLength" type="number" min="1" max="5000" defaultValue={question.maxLength} required /></label>
             <label className="grid gap-2 text-sm font-medium"><UiText>{"응답 조건"}</UiText><CustomSelect name="questionRequired" ariaLabel={`문항 ${index + 1} 응답 조건`} density="compact" defaultValue={String(question.required)} options={[{ value: "true", label: "필수" }, { value: "false", label: "선택" }]} /></label>
-            <UiButton type="button" className="button-quiet" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ localId }) => localId !== question.localId))} aria-label={`문항 ${index + 1} 삭제`}><UiText>{"삭제"}</UiText></UiButton>
+            <IconButton type="button" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ localId }) => localId !== question.localId))} aria-label={`문항 ${index + 1} 삭제`} title={`문항 ${index + 1} 삭제`}><TrashIcon className="size-5" /></IconButton>
           </li>)}
         </ol>
         <p className="muted text-sm"><UiText>{"문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다."}</UiText></p>

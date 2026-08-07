@@ -9,8 +9,8 @@ describe("ProjectPagination", () => {
 
     expect(screen.getByText("1", { selector: "[aria-current='page']" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "2 페이지" })).toHaveAttribute("href", "/topics?view=past&page=2");
-    expect(screen.getByText("이전").closest("[aria-disabled='true']")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "다음" })).toHaveAttribute("href", "/topics?view=past&page=2");
+    expect(screen.getByLabelText("이전 페이지")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("link", { name: "다음 페이지" })).toHaveAttribute("href", "/topics?view=past&page=2");
   });
 
   it("페이지가 많으면 현재 페이지 주변과 양 끝만 노출한다", () => {

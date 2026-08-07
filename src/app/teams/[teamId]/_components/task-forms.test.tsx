@@ -54,7 +54,7 @@ describe("할 일 대화상자", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "수정" }));
+    fireEvent.click(screen.getByRole("button", { name: "사용자 인터뷰 수정" }));
     const dialog = screen.getByRole("dialog", { name: "할 일 수정" });
     fireEvent.click(withinDialog(dialog, "combobox", "상태"));
     fireEvent.click(screen.getByRole("option", { name: "진행 중" }));

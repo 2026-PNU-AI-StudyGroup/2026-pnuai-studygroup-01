@@ -20,26 +20,26 @@ export function StudentTeamManagementSections({
   const isLeader = team.leaderId === actorId;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]" href="/teams">
         <svg aria-hidden="true" viewBox="0 0 20 20" className="mr-2 size-4 fill-none stroke-current stroke-[1.75]">
           <path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <UiText>{"내 팀"}</UiText></Link>
 
-      <header className="flex flex-col gap-6 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[#e8efff] p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+      <header className="flex flex-col gap-5 overflow-hidden rounded-[var(--radius-panel)] border border-[#d9e3fa] bg-[#f1f5ff] p-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge tone={isLeader ? "info" : "neutral"}><UiText>{isLeader ? "내가 팀장" : "팀원"}</UiText></StatusBadge>
             <span className="text-sm text-[var(--muted)]"><UiText>{"구성원"}</UiText>{" "}{team.members.length}<UiText>{"명"}</UiText></span>
           </div>
-          <h1 className="mt-3 text-[clamp(2.3rem,4vw,3.5rem)] font-bold leading-none tracking-[-0.055em] text-[var(--ink)]">{team.name}</h1>
-          {team.description ? <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
+          <h1 className="mt-3 text-[clamp(2rem,3.25vw,2.85rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--ink)]">{team.name}</h1>
+          {team.description ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)] sm:text-base"><UiText>{team.description}</UiText></p> : null}
         </div>
-        {isLeader ? <Link className="button-secondary shrink-0" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><UiText>{"팀원 모집 공고"}</UiText></Link> : null}
+        {isLeader ? <Link className="button-secondary shrink-0" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><UiText>{"모집 공고 작성"}</UiText></Link> : null}
       </header>
 
-      <div className={`grid gap-6 ${isLeader ? "2xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]" : ""}`}>
+      <div className={`grid gap-6 ${isLeader ? "xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)] xl:items-start" : ""}`}>
         <section aria-labelledby="members-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-7">
           <div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
             <div>
@@ -88,7 +88,7 @@ export function StudentTeamManagementSections({
                   {team.invitations.map((invite) => (
                     <li key={invite.id} className="grid gap-2 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                       <span className="min-w-0 truncate font-semibold">{invite.email}</span>
-                      <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"응답 대기"}</UiText></span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]"><span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--primary)]" /><UiText>{"응답 대기"}</UiText></span>
                     </li>
                   ))}
                 </UiUl>
@@ -99,7 +99,7 @@ export function StudentTeamManagementSections({
       </div>
 
       {isLeader ? (
-        <section aria-labelledby="danger-title" className="flex flex-col gap-5 rounded-[var(--radius-panel)] border border-[#f0c5bf] bg-[var(--danger-subtle)] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+        <section aria-labelledby="danger-title" className="flex flex-col gap-5 border-t border-[#e9b6ae] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="danger-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 삭제"}</UiText></h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"팀을 삭제해도 이미 결성된 프로젝트와 지난 프로젝트 기록은 유지됩니다."}</UiText></p>

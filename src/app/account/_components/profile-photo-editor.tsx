@@ -11,7 +11,10 @@ import {
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useI18n } from "@/shared/i18n/i18n-provider";
 import { FileInput } from "@/shared/ui/form-system";
+import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
+import { IconButton } from "@/shared/ui/icon-button";
 import { PersonAvatar } from "@/shared/ui/person-avatar";
+import { TrashIcon } from "@/shared/ui/workspace-icons";
 
 type UploadState = "idle" | "uploading" | "complete" | "failed" | "cancelled";
 
@@ -33,6 +36,7 @@ export function ProfilePhotoEditor({
   const [state, setState] = useState<UploadState>("idle");
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   useEffect(() => () => {
     controllerRef.current?.abort();
@@ -91,7 +95,6 @@ export function ProfilePhotoEditor({
 
   async function removePhoto() {
     if (!updatedAt || state === "uploading") return;
-    if (!window.confirm(t("프로필 사진을 삭제할까요? 삭제한 사진은 복구할 수 없습니다."))) return;
     setMessage(null);
     const response = await fetch("/api/profile-images", { method: "DELETE" });
     if (!response.ok) {
@@ -137,9 +140,20 @@ export function ProfilePhotoEditor({
             />
           </label>
           {state === "uploading" ? <button type="button" className="button-quiet" onClick={() => controllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
-          {updatedAt ? <button type="button" className="button-quiet text-[var(--danger)]" onClick={() => void removePhoto()}><UiText>{"사진 삭제"}</UiText></button> : null}
+          {updatedAt ? <IconButton type="button" className="text-[var(--danger)] hover:text-[var(--danger)]" onClick={() => setDeleteConfirmationOpen(true)} aria-label="프로필 사진 삭제" title="프로필 사진 삭제"><TrashIcon className="size-5" /></IconButton> : null}
         </div>
       </div>
+      <ConfirmationDialog
+        open={deleteConfirmationOpen}
+        title="프로필 사진 삭제"
+        description="프로필 사진을 삭제할까요? 삭제한 사진은 복구할 수 없습니다."
+        confirmLabel="삭제"
+        onConfirm={() => {
+          setDeleteConfirmationOpen(false);
+          void removePhoto();
+        }}
+        onCancel={() => setDeleteConfirmationOpen(false)}
+      />
     </div>
   );
 }

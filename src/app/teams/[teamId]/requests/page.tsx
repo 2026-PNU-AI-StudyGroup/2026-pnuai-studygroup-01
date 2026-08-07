@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -21,6 +20,7 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiArticle, UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
@@ -135,8 +135,8 @@ export default async function ProjectGuidanceRequestsPage({
           <UiNav aria-label="회의·검토 요청 페이지" className="mt-6 flex items-center justify-between gap-3">
             <span className="muted text-sm">{requestPage.page} / {requestPage.totalPages}<UiText>{" 페이지"}</UiText></span>
             <div className="flex gap-2">
-              {requestPage.page > 1 ? <Link className="button-secondary" href={`/teams/${teamId}/requests?page=${requestPage.page - 1}`}><UiText>{"이전"}</UiText></Link> : <span />}
-              {requestPage.page < requestPage.totalPages ? <Link className="button-secondary" href={`/teams/${teamId}/requests?page=${requestPage.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}
+              {requestPage.page > 1 ? <PaginationDirectionLink direction="previous" href={`/teams/${teamId}/requests?page=${requestPage.page - 1}`} /> : <span />}
+              {requestPage.page < requestPage.totalPages ? <PaginationDirectionLink direction="next" href={`/teams/${teamId}/requests?page=${requestPage.page + 1}`} /> : null}
             </div>
           </UiNav>
         ) : null}

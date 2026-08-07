@@ -16,6 +16,8 @@ import {
   UiText,
 } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { IconLink } from "@/shared/ui/icon-button";
+import { EditIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항 상세");
@@ -55,7 +57,7 @@ export default async function AnnouncementDetailPage({
             <Link className="button-quiet" href="/announcements"><UiText>{"공지 목록"}</UiText></Link>
             {canManage ? (
               <div className="flex items-start gap-2">
-                <Link className="button-secondary" href={`/announcements/${announcement.id}/edit`}><UiText>{"수정"}</UiText></Link>
+                <IconLink href={`/announcements/${announcement.id}/edit`} aria-label="공지 수정" title="공지 수정"><EditIcon className="size-5" /></IconLink>
                 <DeleteAnnouncementForm announcementId={announcement.id} />
               </div>
             ) : null}

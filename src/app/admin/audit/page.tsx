@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
@@ -17,6 +16,7 @@ import { ListAuditLogService, type AuditAction } from "@/modules/audit/applicati
 import { PrismaAuditLogReader } from "@/modules/audit/infrastructure/prisma-audit-log-reader";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -85,8 +85,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <UiNav aria-label="관리 이력 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
               <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
-                {data.page > 1 ? <Link className="button-quiet" href={`/admin/audit?page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}
-                {data.page < data.totalPages ? <Link className="button-quiet" href={`/admin/audit?page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}
+                {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/admin/audit?page=${data.page - 1}`} /> : null}
+                {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/admin/audit?page=${data.page + 1}`} /> : null}
               </div>
             </UiNav>
           ) : null}

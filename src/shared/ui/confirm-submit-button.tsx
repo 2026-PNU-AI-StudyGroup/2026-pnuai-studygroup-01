@@ -1,16 +1,44 @@
 "use client";
 
-import type { ComponentProps, MouseEvent } from "react";
+import { useRef, useState, type ComponentProps, type MouseEvent } from "react";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import { UiButton } from "@/shared/i18n/localized-elements";
+import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 
 type Props = Omit<ComponentProps<"button">, "type" | "onClick"> & { confirmMessage: string };
 
 export function ConfirmSubmitButton({ confirmMessage, ...buttonProps }: Props) {
   const { t } = useI18n();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+
   function confirmSubmission(event: MouseEvent<HTMLButtonElement>) {
-    if (!window.confirm(t(confirmMessage))) event.preventDefault();
+    const form = event.currentTarget.form;
+    if (form && !form.checkValidity()) {
+      event.preventDefault();
+      form.reportValidity();
+      return;
+    }
+    event.preventDefault();
+    setOpen(true);
   }
 
-  return <button {...buttonProps} type="submit" onClick={confirmSubmission} />;
+  function submitConfirmed() {
+    setOpen(false);
+    buttonRef.current?.form?.requestSubmit(buttonRef.current);
+  }
+
+  return (
+    <>
+      <UiButton {...buttonProps} ref={buttonRef} type="submit" onClick={confirmSubmission} />
+      <ConfirmationDialog
+        open={open}
+        description={t(confirmMessage)}
+        onConfirm={submitConfirmed}
+        onCancel={() => setOpen(false)}
+        returnFocusRef={buttonRef}
+      />
+    </>
+  );
 }

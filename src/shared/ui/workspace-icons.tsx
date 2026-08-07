@@ -64,6 +64,23 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+export function EditIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="m5 19 3.75-.75L18 9l-3-3-9.25 9.25L5 19Z" />
+      <path d="m13.5 7.5 3 3M5 20h14" />
+    </svg>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M4.5 7.5h15M9.5 4.5h5M7 7.5l.75 12h8.5l.75-12M10 11v5M14 11v5" />
+    </svg>
+  );
+}
+
 export function SearchIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>

@@ -58,8 +58,7 @@ describe("TeamModal", () => {
     previous.remove();
   });
 
-  it("작성한 내용이 있으면 배경 클릭과 Escape 이탈 전에 확인한다", () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("작성한 내용이 있으면 이탈 전에 확인한다", () => {
     render(
       <TeamModal title="새 팀 만들기" closeHref="/teams">
         <form><input aria-label="팀 이름" name="name" /></form>
@@ -68,23 +67,20 @@ describe("TeamModal", () => {
 
     fireEvent.change(screen.getByRole("textbox", { name: "팀 이름" }), { target: { value: "코드웨이브" } });
     fireEvent.click(screen.getByRole("button", { name: "모달 닫기" }));
-    fireEvent.keyDown(window, { key: "Escape" });
 
-    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("alertdialog", { name: "작성 중인 내용 삭제" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
-    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    fireEvent.click(screen.getByRole("button", { name: "계속" }));
     expect(replace).toHaveBeenCalledWith("/teams");
   });
 
   it("입력 변경이 없으면 추가 확인 없이 닫는다", () => {
-    const confirm = vi.spyOn(window, "confirm");
     render(<TeamModal title="받은 팀 초대" closeHref="/teams"><p>초대가 없습니다.</p></TeamModal>);
 
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
-    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(replace).toHaveBeenCalledWith("/teams");
   });
 });

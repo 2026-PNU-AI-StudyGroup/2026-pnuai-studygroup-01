@@ -252,7 +252,7 @@ describe("관리자 프로젝트 현황", () => {
     const pagination = screen.getByRole("navigation", { name: "관리자 프로젝트 현황 페이지" });
     expect(pagination).toHaveTextContent("3 / 3 페이지");
     expect(screen.getAllByRole("link", { name: /프로젝트 열기$/ })).toHaveLength(1);
-    expect(within(pagination).getByRole("link", { name: "이전" })).toHaveAttribute(
+    expect(within(pagination).getByRole("link", { name: "이전 페이지" })).toHaveAttribute(
       "href",
       "/dashboard?programId=program-1&page=2",
     );

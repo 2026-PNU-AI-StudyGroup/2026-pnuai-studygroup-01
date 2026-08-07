@@ -619,6 +619,8 @@ function useFloatingMenu(
     function position() {
       const rect = rootRef.current?.getBoundingClientRect();
       if (!rect) return;
+      const dialog = rootRef.current?.closest("dialog");
+      const dialogRect = dialog?.getBoundingClientRect();
       const gutter = 8;
       const width = Math.max(rect.width, 224);
       const left = Math.min(rect.left, window.innerWidth - width - gutter);
@@ -626,9 +628,12 @@ function useFloatingMenu(
       const spaceAbove = rect.top - gutter;
       const openAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
       const maxHeight = Math.max(120, Math.min(352, openAbove ? spaceAbove : spaceBelow));
+      const top = openAbove ? Math.max(gutter, rect.top - maxHeight - gutter) : rect.bottom + gutter;
       setStyle({
-        left: Math.max(gutter, left),
-        top: openAbove ? Math.max(gutter, rect.top - maxHeight - gutter) : rect.bottom + gutter,
+        // Modal dialogs establish a top-layer containing block in Chromium.
+        // Convert viewport coordinates before rendering into the dialog portal.
+        left: Math.max(gutter, left) - (dialogRect?.left ?? 0) + (dialog?.scrollLeft ?? 0),
+        top: top - (dialogRect?.top ?? 0) + (dialog?.scrollTop ?? 0),
         width,
         maxHeight,
       });

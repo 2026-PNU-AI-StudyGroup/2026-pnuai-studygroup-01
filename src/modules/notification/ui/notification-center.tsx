@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -11,6 +10,7 @@ import {
   ChevronIcon,
   ProfileIcon,
 } from "@/shared/ui/workspace-icons";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 const typeLabel: Record<NotificationType, string> = {
   APPLICATION_RESULT: "지원 결과",
   REPORT_ACTIVITY: "보고서",
@@ -129,8 +129,8 @@ export function NotificationCenter({
           <UiNav aria-label="알림 페이지" className="flex items-center justify-between border-b border-[var(--line)] py-6">
             <span className="text-xs font-semibold text-[var(--muted)]">{data.page} / {data.totalPages}</span>
             <div className="flex gap-5">
-              {data.page > 1 ? <Link className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--primary)]" href={`/notifications?page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}
-              {data.page < data.totalPages ? <Link className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--primary)]" href={`/notifications?page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}
+              {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/notifications?page=${data.page - 1}`} /> : null}
+              {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/notifications?page=${data.page + 1}`} /> : null}
             </div>
           </UiNav>
         ) : null}

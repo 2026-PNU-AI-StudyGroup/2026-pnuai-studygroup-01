@@ -18,6 +18,7 @@ import { UserAdministrationService } from "@/modules/identity/application/manage
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaUserAdministrationRepository } from "@/modules/identity/infrastructure/prisma-user-administration-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -87,8 +88,8 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
             <UiNav aria-label="사용자 목록 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
               <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
-                {data.page > 1 ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link> : null}
-                {data.page < data.totalPages ? <Link className="button-quiet" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link> : null}
+                {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page - 1}`} /> : null}
+                {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/admin/users?q=${encodeURIComponent(query)}&page=${data.page + 1}`} /> : null}
               </div>
             </UiNav>
           ) : null}

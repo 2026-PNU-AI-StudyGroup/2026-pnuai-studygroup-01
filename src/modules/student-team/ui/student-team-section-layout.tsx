@@ -3,6 +3,7 @@ import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 
 const navigation = [
@@ -133,16 +134,8 @@ export function StudentTeamPagination({ page, totalPages, total, href }: { page:
     <UiNav aria-label="페이지 이동" className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-6">
       <span className="text-sm text-[var(--muted)]"><UiText>{"전체"}</UiText>{" "}{total}<UiText>{"개 ·"}</UiText>{" "}{page}/{totalPages} {" "}<UiText>{"페이지"}</UiText></span>
       <div className="flex items-center gap-1">
-        {page > 1 ? (
-          <Link className="button-quiet gap-2" href={href(page - 1)}>
-            <StudentTeamIcon name="chevron-left" className="size-4" />
-            <UiText>{"이전"}</UiText></Link>
-        ) : null}
-        {page < totalPages ? (
-          <Link className="button-quiet gap-2" href={href(page + 1)}>
-            <UiText>{"다음"}</UiText><StudentTeamIcon name="chevron-right" className="size-4" />
-          </Link>
-        ) : null}
+        {page > 1 ? <PaginationDirectionLink direction="previous" href={href(page - 1)} /> : null}
+        {page < totalPages ? <PaginationDirectionLink direction="next" href={href(page + 1)} /> : null}
       </div>
     </UiNav>
   );

@@ -14,6 +14,7 @@ import {
 } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
@@ -117,10 +118,10 @@ export default async function AnnouncementsPage({
               </span>
               <div className="flex gap-2">
                 {data.page > 1 ? (
-                  <Link className="button-secondary" href={data.page === 2 ? "/announcements" : `/announcements?page=${data.page - 1}`}><UiText>{"이전"}</UiText></Link>
+                  <PaginationDirectionLink direction="previous" href={data.page === 2 ? "/announcements" : `/announcements?page=${data.page - 1}`} />
                 ) : null}
                 {data.page < data.totalPages ? (
-                  <Link className="button-secondary" href={`/announcements?page=${data.page + 1}`}><UiText>{"다음"}</UiText></Link>
+                  <PaginationDirectionLink direction="next" href={`/announcements?page=${data.page + 1}`} />
                 ) : null}
               </div>
             </UiNav>

@@ -13,6 +13,8 @@ import { SuccessToast } from "@/shared/ui/success-toast";
 import { SUCCESS_TOAST_DURATION_MS, useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { DateTimeInput } from "@/shared/ui/form-system";
+import { iconControlClassName } from "@/shared/ui/icon-button";
+import { TrashIcon } from "@/shared/ui/workspace-icons";
 
 export function ReportRequirementForm({ teamId, executionStartsAt, submissionEndsAt }: {
   teamId: string;
@@ -72,8 +74,8 @@ function ActiveRemoveReportRequirementForm({ teamId, type }: { teamId: string; t
     <form action={action}>
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="type" value={type} />
-      <ConfirmSubmitButton disabled={pending} className="button-quiet text-[var(--danger)]" confirmMessage={`${reportTypeLabel[type]} 일정을 삭제하시겠습니까?`}>
-        <UiText>{pending ? "삭제 중" : "일정 삭제"}</UiText>
+      <ConfirmSubmitButton disabled={pending} className={`${iconControlClassName} text-[var(--danger)] hover:text-[var(--danger)]`} aria-label={`${reportTypeLabel[type]} 일정 삭제`} title={`${reportTypeLabel[type]} 일정 삭제`} confirmMessage={`${reportTypeLabel[type]} 일정을 삭제하시겠습니까?`}>
+        <TrashIcon className="size-5" />
       </ConfirmSubmitButton>
       {state.status === "error" ? <p role="alert" className="mt-2 max-w-sm text-xs font-semibold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
       {state.status === "conflict" ? <p role="status" className="mt-2 max-w-sm text-xs font-semibold text-[var(--muted)]"><UiText>{state.message}</UiText></p> : null}

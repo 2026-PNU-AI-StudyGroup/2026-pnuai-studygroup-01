@@ -9,6 +9,7 @@ import type {
 } from "@/modules/topic-application/application/topic-application-ports";
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 
 const presentation = {
   PENDING: {
@@ -151,10 +152,10 @@ export function ProjectApplicationList({
           <span className="text-sm text-[var(--muted)]">{page.page} / {page.totalPages} <UiText>{"페이지"}</UiText></span>
           <div className="flex gap-2">
             {page.page > 1 ? (
-              <Link href={`/dashboard?view=${view}&page=${page.page - 1}`} className="button-quiet"><UiText>{"이전"}</UiText></Link>
+              <PaginationDirectionLink direction="previous" href={`/dashboard?view=${view}&page=${page.page - 1}`} />
             ) : null}
             {page.page < page.totalPages ? (
-              <Link href={`/dashboard?view=${view}&page=${page.page + 1}`} className="button-quiet"><UiText>{"다음"}</UiText></Link>
+              <PaginationDirectionLink direction="next" href={`/dashboard?view=${view}&page=${page.page + 1}`} />
             ) : null}
           </div>
         </UiNav>

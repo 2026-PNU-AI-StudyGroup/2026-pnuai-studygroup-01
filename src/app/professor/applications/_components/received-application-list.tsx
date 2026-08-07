@@ -9,6 +9,7 @@ import type {
   ProfessorTopicApplicationStatus,
 } from "@/modules/topic-application/application/topic-application-ports";
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
+import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 function applicationsHref({ page = 1, status, query }: {
@@ -134,8 +135,8 @@ export function ReceivedApplicationList({
         <UiNav aria-label="지원서 페이지" className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-5">
           <span className="muted text-sm">{page.page} / {page.totalPages} <UiText>{"페이지"}</UiText></span>
           <div className="flex gap-2">
-            {page.page > 1 ? <Link className="button-quiet" href={applicationsHref({ page: page.page - 1, status, query })}><UiText>{"이전"}</UiText></Link> : null}
-            {page.page < page.totalPages ? <Link className="button-quiet" href={applicationsHref({ page: page.page + 1, status, query })}><UiText>{"다음"}</UiText></Link> : null}
+            {page.page > 1 ? <PaginationDirectionLink direction="previous" href={applicationsHref({ page: page.page - 1, status, query })} /> : null}
+            {page.page < page.totalPages ? <PaginationDirectionLink direction="next" href={applicationsHref({ page: page.page + 1, status, query })} /> : null}
           </div>
         </UiNav>
       ) : null}

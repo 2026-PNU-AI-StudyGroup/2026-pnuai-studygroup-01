@@ -202,7 +202,7 @@ describe("보고서 요구사항 화면", () => {
     });
     render(<RemoveReportRequirementForm teamId="70000000-0000-4000-8000-000000000001" type="FINAL" disabled={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "일정 삭제" }));
+    fireEvent.click(screen.getByRole("button", { name: "결과 보고서 일정 삭제" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("최신 상태를 다시 불러옵니다");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));

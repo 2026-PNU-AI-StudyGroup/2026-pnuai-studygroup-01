@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { UiNav } from "@/shared/i18n/localized-elements";
 import { UiText } from "@/shared/i18n/i18n-provider";
+import { DisabledPaginationDirection, PaginationDirectionLink } from "@/shared/ui/icon-button";
 
 type PageItem = number | "ellipsis";
 
@@ -15,9 +16,6 @@ function visiblePages(page: number, totalPages: number): PageItem[] {
   });
 }
 
-const directionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line-strong)] bg-white px-3 text-sm font-black text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]";
-const disabledDirectionClassName = "inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] px-3 text-sm font-black text-[var(--muted)] opacity-50";
-
 export function ProjectPagination({ page, totalPages, href, ariaLabel }: {
   page: number;
   totalPages: number;
@@ -30,9 +28,9 @@ export function ProjectPagination({ page, totalPages, href, ariaLabel }: {
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm font-bold text-[var(--muted)]"><strong className="text-[var(--ink)]">{page}</strong> / {totalPages} <UiText>{"페이지"}</UiText></p>
         <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {page > 1 ? <Link className={directionClassName} href={href(page - 1)}><span aria-hidden="true" className="mr-1">←</span><UiText>{"이전"}</UiText></Link> : <span aria-disabled="true" className={disabledDirectionClassName}><span aria-hidden="true" className="mr-1">←</span><UiText>{"이전"}</UiText></span>}
+          {page > 1 ? <PaginationDirectionLink direction="previous" href={href(page - 1)} /> : <DisabledPaginationDirection direction="previous" />}
           {visiblePages(page, totalPages).map((item, index) => item === "ellipsis" ? <span key={`ellipsis-${index}`} aria-hidden="true" className="grid size-10 place-items-center text-sm font-bold text-[var(--muted)]">…</span> : item === page ? <span key={item} aria-current="page" className="grid size-10 place-items-center rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-sm font-black text-white">{item}</span> : <Link key={item} href={href(item)} aria-label={`${item} 페이지`} className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-white text-sm font-black text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]">{item}</Link>)}
-          {page < totalPages ? <Link className={directionClassName} href={href(page + 1)}><UiText>{"다음"}</UiText><span aria-hidden="true" className="ml-1">→</span></Link> : <span aria-disabled="true" className={disabledDirectionClassName}><UiText>{"다음"}</UiText><span aria-hidden="true" className="ml-1">→</span></span>}
+          {page < totalPages ? <PaginationDirectionLink direction="next" href={href(page + 1)} /> : <DisabledPaginationDirection direction="next" />}
         </div>
       </div>
     </UiNav>
