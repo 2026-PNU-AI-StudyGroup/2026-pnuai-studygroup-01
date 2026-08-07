@@ -17,6 +17,7 @@ const announcement: AnnouncementRecord = {
   authorRole: "PROFESSOR",
   title: "프로젝트 일정 안내",
   content: "일정을 확인해 주세요.",
+  category: "GENERAL",
   createdAt: new Date("2026-07-27T00:00:00.000Z"),
   updatedAt: new Date("2026-07-27T00:00:00.000Z"),
 };
@@ -43,7 +44,7 @@ describe("공지사항 관리", () => {
 
     await expect(service.create(
       { id: "professor-1", role: "PROFESSOR" },
-      { title: announcement.title, content: announcement.content },
+      { title: announcement.title, content: announcement.content, category: "GENERAL" },
     )).resolves.toEqual(announcement);
   });
 
@@ -53,7 +54,7 @@ describe("공지사항 관리", () => {
 
     await expect(service.create(
       { id: "student-1", role: "STUDENT" },
-      { title: announcement.title, content: announcement.content },
+      { title: announcement.title, content: announcement.content, category: "GENERAL" },
     )).rejects.toBeInstanceOf(AnnouncementForbiddenError);
     expect(announcements.create).not.toHaveBeenCalled();
   });
@@ -66,7 +67,7 @@ describe("공지사항 관리", () => {
     await expect(service.update(
       { id: "professor-2", role: "PROFESSOR" },
       announcement.id,
-      { title: announcement.title, content: announcement.content },
+      { title: announcement.title, content: announcement.content, category: "GENERAL" },
     )).rejects.toBeInstanceOf(AnnouncementForbiddenError);
   });
 

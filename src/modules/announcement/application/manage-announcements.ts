@@ -1,4 +1,5 @@
 import type {
+  AnnouncementCategory,
   AnnouncementPage,
   AnnouncementRecord,
   AnnouncementRepository,
@@ -27,9 +28,9 @@ const DEFAULT_PAGE_SIZE = 20;
 export class AnnouncementService {
   constructor(private readonly repository: AnnouncementRepository) {}
 
-  list(page: number): Promise<AnnouncementPage> {
+  list(page: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
     const safePage = Number.isInteger(page) && page > 0 ? page : 1;
-    return this.repository.list(safePage, DEFAULT_PAGE_SIZE);
+    return this.repository.list(safePage, DEFAULT_PAGE_SIZE, category);
   }
 
   async get(id: string): Promise<AnnouncementRecord> {

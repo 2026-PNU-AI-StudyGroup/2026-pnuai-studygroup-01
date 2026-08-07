@@ -5,6 +5,10 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/app/_components/app-shell";
 import { DeleteAnnouncementForm } from "@/app/announcements/_components/delete-announcement-form";
 import {
+  ANNOUNCEMENT_CATEGORY_BADGE,
+  ANNOUNCEMENT_CATEGORY_LABELS,
+} from "@/app/announcements/_lib/announcement-categories";
+import {
   AnnouncementNotFoundError,
   AnnouncementService,
 } from "@/modules/announcement/application/manage-announcements";
@@ -64,9 +68,9 @@ export default async function AnnouncementDetailPage({
           </div>
           <article className="panel overflow-hidden">
             <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
-              <p className="text-xs font-bold tracking-[0.14em] text-[var(--primary)]">
-                <UiText>{"공지사항"}</UiText>
-              </p>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
+                <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
+              </span>
               <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
                 <UiText>{announcement.title}</UiText>
               </h1>

@@ -23,6 +23,7 @@ describe("FeedbackPostCard", () => {
       resolvedByName: null,
       createdAt: new Date("2026-08-07T09:00:00+09:00"),
       comments: [],
+      statusChanges: [],
     }} />);
 
     expect(screen.getByText("긴급")).toHaveClass("bg-[var(--danger-subtle)]");

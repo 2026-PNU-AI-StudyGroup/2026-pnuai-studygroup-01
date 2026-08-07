@@ -60,6 +60,7 @@ export default async function EditAnnouncementPage({
             announcementId={announcement.id}
             initialTitle={announcement.title}
             initialContent={announcement.content}
+            initialCategory={announcement.category}
           />
         </div>
       </main>

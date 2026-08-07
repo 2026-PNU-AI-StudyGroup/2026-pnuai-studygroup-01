@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type {
+  AnnouncementCategory,
   AnnouncementMutationOutcome,
   AnnouncementPage,
   AnnouncementRecord,
@@ -13,6 +14,7 @@ const selectAnnouncement = {
   authorId: true,
   title: true,
   content: true,
+  category: true,
   createdAt: true,
   updatedAt: true,
   author: {
@@ -28,6 +30,7 @@ type SelectedAnnouncement = {
   authorId: string;
   title: string;
   content: string;
+  category: AnnouncementCategory;
   createdAt: Date;
   updatedAt: Date;
   author: {
@@ -44,6 +47,7 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     authorRole: value.author.role,
     title: value.title,
     content: value.content,
+    category: value.category,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   };
@@ -52,20 +56,22 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
 export class PrismaAnnouncementRepository implements AnnouncementRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(page: number, pageSize: number): Promise<AnnouncementPage> {
+  async list(page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
+    const where = category ? { category } : {};
     const [items, total] = await this.client.$transaction([
       this.client.announcement.findMany({
+        where,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: selectAnnouncement,
       }),
-      this.client.announcement.count(),
+      this.client.announcement.count({ where }),
     ]);
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, totalPages);
-    if (currentPage !== page) return this.list(currentPage, pageSize);
+    if (currentPage !== page) return this.list(currentPage, pageSize, category);
 
     return {
       items: items.map(toRecord),

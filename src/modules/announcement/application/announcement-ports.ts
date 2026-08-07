@@ -1,6 +1,8 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
+export type AnnouncementCategory = "GENERAL" | "HACKATHON" | "GRADUATION_PROJECT";
+
 export type AnnouncementRecord = {
   id: string;
   authorId: string;
@@ -8,6 +10,7 @@ export type AnnouncementRecord = {
   authorRole: UserRole;
   title: string;
   content: string;
+  category: AnnouncementCategory;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -22,6 +25,7 @@ export type AnnouncementPage = {
 export type AnnouncementWriteInput = {
   title: string;
   content: string;
+  category: AnnouncementCategory;
 };
 
 export type AnnouncementMutationOutcome =
@@ -31,7 +35,7 @@ export type AnnouncementMutationOutcome =
   | "FORBIDDEN";
 
 export interface AnnouncementRepository {
-  list(page: number, pageSize: number): Promise<AnnouncementPage>;
+  list(page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage>;
   findById(id: string): Promise<AnnouncementRecord | null>;
   create(
     authorId: string,

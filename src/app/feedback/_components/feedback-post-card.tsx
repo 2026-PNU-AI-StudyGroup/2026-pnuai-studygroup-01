@@ -18,6 +18,14 @@ type FeedbackCommentView = {
   createdAt: Date;
 };
 
+type FeedbackStatusChangeView = {
+  id: string;
+  status: "OPEN" | "RESOLVED";
+  changedByName: string;
+  note: string | null;
+  createdAt: Date;
+};
+
 export type FeedbackPostView = {
   id: string;
   authorName: string;
@@ -32,6 +40,7 @@ export type FeedbackPostView = {
   resolvedByName: string | null;
   createdAt: Date;
   comments: FeedbackCommentView[];
+  statusChanges: FeedbackStatusChangeView[];
 };
 
 const priorityTone: Record<FeedbackPriorityValue, "neutral" | "info" | "warning" | "danger"> = {
@@ -79,6 +88,30 @@ export function FeedbackPostCard({ post }: { post: FeedbackPostView }) {
           <UiDate value={post.resolvedAt} mode="dateTime" />
           {post.resolvedByName ? <>{" · "}{post.resolvedByName}</> : null}
         </p>
+      ) : null}
+
+      {post.statusChanges.length ? (
+        <details className="group border-t border-[var(--line)] pt-3">
+          <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
+            <UiText>{"처리 이력"}</UiText>
+            <span>{post.statusChanges.length}</span>
+          </summary>
+          <ol className="mt-3 grid gap-2 border-l border-[var(--line)] pl-4">
+            <li className="text-xs text-[var(--muted)]">
+              <span className="font-semibold text-[var(--ink)]"><UiText>{"등록됨"}</UiText></span>
+              {" · "}<UiDate value={post.createdAt} mode="dateTime" />{" · "}{post.authorName}
+            </li>
+            {post.statusChanges.map((change) => (
+              <li key={change.id} className="text-xs text-[var(--muted)]">
+                <span className={`font-semibold ${change.status === "RESOLVED" ? "text-[var(--success)]" : "text-[var(--ink)]"}`}>
+                  <UiText>{change.status === "RESOLVED" ? "해결 처리" : "미해결로 변경"}</UiText>
+                </span>
+                {" · "}<UiDate value={change.createdAt} mode="dateTime" />{" · "}{change.changedByName}
+                {change.note ? <span className="mt-0.5 block whitespace-pre-wrap text-[var(--ink)]">{change.note}</span> : null}
+              </li>
+            ))}
+          </ol>
+        </details>
       ) : null}
 
       {post.comments.length ? (

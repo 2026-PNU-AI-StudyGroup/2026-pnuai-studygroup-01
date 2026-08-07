@@ -51,12 +51,21 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
           />
         </label>
 
-        <form action={toggleFormAction} className="flex flex-wrap items-center gap-3">
+        <form action={toggleFormAction} className="grid gap-2">
           <input type="hidden" name="developerName" value={developerName} />
-          <button className={resolved ? "button-secondary" : "button-primary"} type="submit" disabled={toggling}>
-            <UiText>{resolved ? "미해결로 변경" : "해결 처리"}</UiText>
-          </button>
-          <Notice state={toggleState} />
+          <UiInput
+            className="form-control h-9 bg-white py-1 text-sm"
+            type="text"
+            name="note"
+            maxLength={FEEDBACK_LIMITS.comment}
+            placeholder="처리 메모 (선택)"
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <button className={resolved ? "button-secondary" : "button-primary"} type="submit" disabled={toggling}>
+              <UiText>{resolved ? "미해결로 변경" : "해결 처리"}</UiText>
+            </button>
+            <Notice state={toggleState} />
+          </div>
         </form>
 
         <form action={commentFormAction} className="grid gap-2">

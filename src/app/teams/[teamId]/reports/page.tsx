@@ -5,6 +5,7 @@ import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-deci
 import { RemoveReportRequirementForm, ReportRequirementForm } from "@/app/teams/[teamId]/_components/report-requirement-forms";
 import { ReportFeedbackForm, ReportScoreForm } from "@/app/teams/[teamId]/_components/report-score-feedback-forms";
 import { ReportSubmissionForm } from "@/app/teams/[teamId]/_components/report-submission-form";
+import { RubricSection, type ReportRubricView } from "@/app/teams/[teamId]/_components/rubric-section";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import {
   isReportSubmissionOpen,
@@ -19,6 +20,7 @@ import type { ReportWorkspace } from "@/modules/report/application/report-ports"
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiAside } from "@/modules/translation/ui/localized-elements";
+import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -431,6 +433,8 @@ function ReportCard({
   isTeamMember,
   advisorEnabled,
   canEvaluate,
+  canRelease,
+  rubric,
 }: {
   teamId: string;
   report: ReportItem;
@@ -442,6 +446,8 @@ function ReportCard({
   isTeamMember: boolean;
   advisorEnabled: boolean;
   canEvaluate: boolean;
+  canRelease: boolean;
+  rubric: ReportRubricView;
 }) {
   const state = reportPresentationState(report);
   const stateView = reportStateView[state];
@@ -551,6 +557,14 @@ function ReportCard({
           canEvaluate={canEvaluate}
         />
 
+        <RubricSection
+          reportId={report.id}
+          teamId={teamId}
+          rubric={rubric}
+          canEvaluate={canEvaluate}
+          canRelease={canRelease}
+        />
+
         {canManageRequirements ? (
           <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-[var(--surface-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -565,10 +579,50 @@ function ReportCard({
   );
 }
 
+async function loadRubricByReport(teamId: string, reportIds: string[]): Promise<Map<string, ReportRubricView>> {
+  const map = new Map<string, ReportRubricView>();
+  const team = await prisma.team.findUnique({ where: { id: teamId }, select: { programId: true } });
+  if (!team) return map;
+  const criteria = await prisma.rubricCriterion.findMany({
+    where: { programId: team.programId },
+    orderBy: { position: "asc" },
+    select: { id: true, label: true, maxPoints: true },
+  });
+  const scores = criteria.length && reportIds.length
+    ? await prisma.reportRubricScore.findMany({ where: { reportId: { in: reportIds } }, select: { reportId: true, criterionId: true, points: true } })
+    : [];
+  const releases = reportIds.length
+    ? await prisma.reportRubricRelease.findMany({ where: { reportId: { in: reportIds } }, select: { reportId: true, releasedByName: true } })
+    : [];
+  const pointsByReport = new Map<string, Map<string, number>>();
+  for (const score of scores) {
+    const byCriterion = pointsByReport.get(score.reportId) ?? new Map<string, number>();
+    byCriterion.set(score.criterionId, score.points);
+    pointsByReport.set(score.reportId, byCriterion);
+  }
+  const releaseByReport = new Map(releases.map((release) => [release.reportId, release.releasedByName]));
+  for (const reportId of reportIds) {
+    const byCriterion = pointsByReport.get(reportId);
+    map.set(reportId, {
+      criteria: criteria.map((criterion) => ({
+        id: criterion.id,
+        label: criterion.label,
+        maxPoints: criterion.maxPoints,
+        points: byCriterion?.get(criterion.id) ?? null,
+      })),
+      released: releaseByReport.has(reportId),
+      releasedByName: releaseByReport.get(reportId) ?? null,
+    });
+  }
+  return map;
+}
+
 export default async function TeamReportsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
+  const { actor, workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
   const now = new Date();
+  const rubricByReport = await loadRubricByReport(workspace.id, reportWorkspace.reports.map((report) => report.id));
+  const canRelease = actor.role === "ADMIN";
   const submittableReports = reportWorkspace.reports.filter((report) => isReportSubmissionOpen(report, now));
   const canManageRequirements = workspace.status !== "CLOSED" && workspace.access.canSupervise;
   const canEvaluate = workspace.access.canSupervise && workspace.status !== "FORMING";
@@ -634,7 +688,15 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
             <div>
               <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 제출 현황"}</UiText></h2>
             </div>
-            <div className="flex flex-wrap gap-2 text-sm font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-bold">
+              {submittedCount > 0 ? (
+                <a
+                  href={`/api/teams/${workspace.id}/submissions`}
+                  className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--primary-hover)] transition-colors hover:bg-[var(--surface-subtle)]"
+                >
+                  <UiText>{"제출물 전체 다운로드"}</UiText>
+                </a>
+              ) : null}
               <span className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--ink)]">
                 <UiText>{"제출"}</UiText>{" "}{submittedCount}/{reportWorkspace.reports.length}
               </span>
@@ -658,6 +720,8 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
                 isTeamMember={workspace.access.isTeamMember}
                 advisorEnabled={workspace.advisorEnabled}
                 canEvaluate={canEvaluate}
+                canRelease={canRelease}
+                rubric={rubricByReport.get(report.id) ?? { criteria: [], released: false, releasedByName: null }}
               />
             ))}
           </div>
