@@ -31,7 +31,7 @@ const team: StudentTeamSummary = {
 };
 
 describe("StudentTeamManagementSections", () => {
-  it("팀장 화면을 평면 구성원 ledger, 초대 목록, 경계형 삭제 영역으로 구성한다", () => {
+  it("팀장 화면을 강조된 팀 헤더, 구성원 패널, 초대 패널과 삭제 영역으로 구성한다", () => {
     const { container } = render(<StudentTeamManagementSections team={team} actorId="student-1" />);
 
     expect(screen.getByRole("heading", { name: "코드웨이브" })).toBeInTheDocument();
@@ -42,9 +42,10 @@ describe("StudentTeamManagementSections", () => {
     expect(screen.getByRole("list", { name: "응답 대기 중인 팀 초대" })).toBeInTheDocument();
     expect(screen.getByText("three@pusan.ac.kr")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "팀 삭제 실행" })).toBeInTheDocument();
-    expect(container.querySelector("header")?.className).not.toContain("rounded-[var(--radius-panel)]");
+    expect(container.querySelector("header")).toHaveClass("rounded-[var(--radius-panel)]");
+    expect(container.querySelector("header")?.className).toContain("bg-[#e8efff]");
     expect(screen.getByRole("heading", { name: "구성원" }).closest("section")?.parentElement).toHaveClass("2xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]");
-    expect(screen.getByRole("heading", { name: "팀 삭제" }).closest("section")).toHaveClass("border-y");
+    expect(screen.getByRole("heading", { name: "팀 삭제" }).closest("section")).toHaveClass("bg-[var(--danger-subtle)]");
   });
 
   it("팀원에게는 초대와 삭제 기능을 표시하지 않는다", () => {

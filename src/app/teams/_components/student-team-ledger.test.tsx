@@ -24,7 +24,7 @@ const team: StudentTeamSummary = {
 };
 
 describe("StudentTeamLedger", () => {
-  it("팀 소개, 내 역할, 구성원, 검토 대기와 관리 기능을 한 평면 행에 유지한다", () => {
+  it("팀별 상태와 관리 동작을 계층화된 카드에 표시한다", () => {
     const { container } = render(<StudentTeamLedger teams={[team]} actorId="student-1" />);
 
     expect(screen.getByRole("list", { name: "참여 중인 팀 목록" })).toBeInTheDocument();
@@ -35,10 +35,12 @@ describe("StudentTeamLedger", () => {
     expect(screen.getByText("2명")).toBeInTheDocument();
     expect(screen.getByText("김학생, 이학생")).toBeInTheDocument();
     expect(screen.getByText("3명")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "팀 관리" })).toHaveAttribute("href", "/teams/manage/team-1");
+    const manageLink = screen.getByRole("link", { name: "팀 관리" });
+    expect(manageLink).toHaveAttribute("href", "/teams/manage/team-1");
+    expect(manageLink).toHaveClass("button-primary");
     expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(container.querySelector("li")).toHaveClass("record-row");
-    expect(container.querySelector("li")?.className).toContain("minmax(13rem,1.55fr)");
-    expect(container.querySelector("li")?.className).not.toContain("rounded-[var(--radius-panel)]");
+    expect(container.querySelector("article")).toHaveClass("rounded-[var(--radius-panel)]");
+    expect(container.querySelector("article > div")?.className).not.toContain("bg-[#e8efff]");
+    expect(container.querySelector("li")).not.toHaveClass("record-row");
   });
 });

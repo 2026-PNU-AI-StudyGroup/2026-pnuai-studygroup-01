@@ -20,14 +20,14 @@ export function StudentTeamManagementSections({
   const isLeader = team.leaderId === actorId;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]" href="/teams">
         <svg aria-hidden="true" viewBox="0 0 20 20" className="mr-2 size-4 fill-none stroke-current stroke-[1.75]">
           <path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <UiText>{"내 팀"}</UiText></Link>
 
-      <header className="flex flex-col gap-6 border-y border-[var(--line)] bg-white px-2 py-7 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-6 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[#e8efff] p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge tone={isLeader ? "info" : "neutral"}><UiText>{isLeader ? "내가 팀장" : "팀원"}</UiText></StatusBadge>
@@ -99,7 +99,7 @@ export function StudentTeamManagementSections({
       </div>
 
       {isLeader ? (
-        <section aria-labelledby="danger-title" className="flex flex-col gap-5 border-y border-[var(--line)] bg-white px-2 py-7 sm:flex-row sm:items-center sm:justify-between">
+        <section aria-labelledby="danger-title" className="flex flex-col gap-5 rounded-[var(--radius-panel)] border border-[#f0c5bf] bg-[var(--danger-subtle)] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
           <div>
             <h2 id="danger-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 삭제"}</UiText></h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"팀을 삭제해도 이미 결성된 프로젝트와 지난 프로젝트 기록은 유지됩니다."}</UiText></p>
