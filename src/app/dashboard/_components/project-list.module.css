@@ -38,10 +38,11 @@
 }
 
 .projectCard {
+  position: relative;
   display: grid;
   min-width: 0;
   min-height: 23rem;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr;
   gap: 1.25rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
@@ -61,6 +62,12 @@
 
 .projectCard:hover {
   border-color: var(--line-strong);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.projectCard:focus-within {
+  border-color: var(--primary);
   box-shadow: var(--shadow-card);
   transform: translateY(-2px);
 }
@@ -103,12 +110,11 @@
   .projectCard:only-child {
     min-height: 0;
     grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-rows: auto auto 1fr;
     grid-template-areas:
       "header header"
       "identity progress"
-      "task progress"
-      "action action";
+      "task progress";
   }
 
   .projectCard:only-child .cardHeader {
@@ -126,10 +132,6 @@
 
   .projectCard:only-child .nextTask {
     grid-area: task;
-  }
-
-  .projectCard:only-child .cardAction {
-    grid-area: action;
   }
 
   .projectCard:only-child .topic {
@@ -220,25 +222,16 @@
   font-weight: 750;
 }
 
-.cardAction {
-  display: flex;
-  min-height: 2.75rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 1px solid var(--line);
-  padding-top: 1rem;
-  color: var(--primary);
-  font-size: 0.86rem;
-  font-weight: 850;
+.cardLink {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
 }
 
-.cardAction span:last-child {
-  transition: transform var(--snap-duration) var(--snap-ease);
-}
-
-.cardAction:hover span:last-child {
-  transform: translateX(3px);
+.cardLink:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 @media (max-width: 640px) {

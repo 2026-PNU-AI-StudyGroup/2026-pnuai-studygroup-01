@@ -82,7 +82,7 @@ describe("관리자 프로젝트 현황", () => {
     expect(within(progressRow!).getAllByText("33%")).toHaveLength(1);
     expect(within(progressRow!).getAllByText("진행 팀 보고서 제출률")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "시작 전 팀" }).parentElement).toHaveTextContent("제출 기한 초과");
-    expect(screen.getAllByRole("link", { name: "프로젝트 열기" })[0]).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "시작 전 팀 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
     expect(screen.queryByText("전체 보기")).not.toBeInTheDocument();
     const programLink = Array.from(container.querySelectorAll('nav[aria-label="프로그램 선택"] a'))
       .find((link) => link.getAttribute("href")?.includes("programId=program-1"));
@@ -251,7 +251,7 @@ describe("관리자 프로젝트 현황", () => {
 
     const pagination = screen.getByRole("navigation", { name: "관리자 프로젝트 현황 페이지" });
     expect(pagination).toHaveTextContent("3 / 3 페이지");
-    expect(screen.getAllByRole("link", { name: "프로젝트 열기" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: /프로젝트 열기$/ })).toHaveLength(1);
     expect(within(pagination).getByRole("link", { name: "이전" })).toHaveAttribute(
       "href",
       "/dashboard?programId=program-1&page=2",

@@ -23,14 +23,6 @@ const presentation = {
   },
 } as const;
 
-function ArrowIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
-      <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function isApplicationPublic(application: TopicApplicationSummary) {
   return application.topicStatus === "PUBLISHED" &&
     application.programStatus === "OPEN";
@@ -43,11 +35,14 @@ function ApplicationRow({
   application: TopicApplicationSummary;
   status: OwnTopicApplicationStatus;
 }) {
+  const titleId = `project-application-${application.id}-title`;
+  const actionId = `project-application-${application.id}-action`;
   const statusPresentation = topicApplicationStatusPresentation[status];
   const decisionDate = application.decidedAt ?? application.createdAt;
+  const publicApplication = isApplicationPublic(application);
 
   return (
-    <article className="border-b border-[var(--line)] px-6 py-5 last:border-b-0 sm:px-7">
+    <article className={`group relative border-b border-[var(--line)] px-6 py-5 last:border-b-0 sm:px-7 ${publicApplication ? "transition-colors hover:bg-[var(--surface-subtle)] focus-within:bg-[var(--primary-subtle)]" : ""}`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -56,7 +51,7 @@ function ApplicationRow({
               <UiText>{application.applicationKind === "TEAM" ? "팀 지원" : "개인 지원"}</UiText>
             </span>
           </div>
-          <h3 className="mt-3 text-xl font-bold leading-tight tracking-[-0.025em]">
+          <h3 id={titleId} className="mt-3 text-xl font-bold leading-tight tracking-[-0.025em]">
             <UiText>{application.topicTitle}</UiText>
           </h3>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -81,13 +76,13 @@ function ApplicationRow({
           <time className="text-sm font-medium text-[var(--muted)]" dateTime={decisionDate.toISOString()}>
             <UiDate value={decisionDate} mode="date" />
           </time>
-          {isApplicationPublic(application) ? (
+          {publicApplication ? (
             <Link
               href={`/topics/${application.topicId}`}
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--primary)]"
+              aria-labelledby={`${titleId} ${actionId}`}
+              className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary)]"
             >
-              <UiText>{"프로젝트 보기"}</UiText>
-              <ArrowIcon />
+              <span id={actionId} className="sr-only"><UiText>{"프로젝트 보기"}</UiText></span>
             </Link>
           ) : null}
         </div>

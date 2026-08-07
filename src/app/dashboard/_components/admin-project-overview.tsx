@@ -202,6 +202,8 @@ export function sortAdminProjects(
 }
 
 function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
+  const titleId = `admin-project-${project.id}-title`;
+  const actionId = `admin-project-${project.id}-action`;
   const progress = calculateReportSubmissionRate(
     project.submittedReportCount,
     project.reportCount,
@@ -211,10 +213,10 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
   const needsAttention = projectNeedsAttention(project);
 
   return (
-    <li className={`grid gap-4 border-t border-[var(--line)] px-4 py-5 first:border-t-0 sm:px-5 xl:grid-cols-[minmax(0,1fr)_9rem_auto] xl:items-center 2xl:grid-cols-[minmax(0,1.5fr)_9rem_minmax(10rem,0.7fr)_auto] ${needsAttention ? "border-l-2 border-l-[var(--danger)]" : ""}`}>
+    <li className={`group relative grid gap-4 border-t border-[var(--line)] px-4 py-5 transition-colors hover:bg-[var(--surface-subtle)] focus-within:bg-[var(--primary-subtle)] first:border-t-0 sm:px-5 xl:grid-cols-[minmax(0,1fr)_9rem_auto] xl:items-center 2xl:grid-cols-[minmax(0,1.5fr)_9rem_minmax(10rem,0.7fr)_auto] ${needsAttention ? "border-l-2 border-l-[var(--danger)]" : ""}`}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="break-words font-bold tracking-[-0.02em]">{project.name}</h3>
+          <h3 id={titleId} className="break-words font-bold tracking-[-0.02em]">{project.name}</h3>
           <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
           {project.overdueReportCount > 0 ? (
             <StatusBadge tone="danger">
@@ -251,9 +253,10 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
       )}
       <Link
         href={`/teams/${project.id}`}
-        className="button-secondary justify-self-start xl:col-start-3 xl:row-start-1 xl:justify-self-end 2xl:col-start-4"
+        aria-labelledby={`${titleId} ${actionId}`}
+        className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary)]"
       >
-        <UiText>{"프로젝트 열기"}</UiText>
+        <span id={actionId} className="sr-only"><UiText>{"프로젝트 열기"}</UiText></span>
       </Link>
     </li>
   );

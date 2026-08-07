@@ -101,7 +101,7 @@ export function ReceivedApplicationList({
         {page.items.map((application) => (
           <li
             key={application.id}
-            className="grid gap-5 py-7 md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-center"
+            className="group relative grid gap-5 py-7 transition-colors hover:bg-[var(--surface-subtle)] focus-within:bg-[var(--primary-subtle)] md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-center"
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -123,10 +123,9 @@ export function ReceivedApplicationList({
             </div>
             <UiLink
               href={`/professor/applications/${application.id}`}
-              className="button-secondary justify-center text-sm"
+              className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary)]"
               aria-label={`${application.studentName}의 ${application.topicTitle} 지원서 상세 보기`}
-            >
-              <UiText>{"상세 보기"}</UiText></UiLink>
+            />
           </li>
         ))}
       </UiUl>}

@@ -67,7 +67,7 @@ function applicationPage(item = listItem) {
 }
 
 describe("교수 지원서 목록과 상세", () => {
-  it("목록은 판단에 필요한 요약과 상세 링크만 표시한다", () => {
+  it("목록은 판단에 필요한 요약과 행 전체 상세 링크를 표시한다", () => {
     render(<ReceivedApplicationList page={applicationPage()} query="" />);
 
     const item = within(screen.getByRole("list", { name: "지원서 결과" })).getByRole("listitem");

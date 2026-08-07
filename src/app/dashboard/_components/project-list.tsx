@@ -28,6 +28,8 @@ function ProjectCard({
   role: UserRole;
   team: TeamListItem;
 }) {
+  const titleId = `project-${team.id}-title`;
+  const actionId = `project-${team.id}-action`;
   const status = teamStatusPresentation[team.status];
   const task = nextTask(team);
   const progress = calculateReportSubmissionRate(
@@ -42,14 +44,14 @@ function ProjectCard({
       : "프로젝트 열기";
 
   return (
-    <article className={styles.projectCard} aria-labelledby={`project-${team.id}-title`}>
+    <article className={styles.projectCard} aria-labelledby={titleId}>
       <div className={styles.cardHeader}>
         <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
         <span><UiText>{"팀원"}</UiText> {team.memberCount}<UiText>{"명"}</UiText></span>
       </div>
 
       <div className={styles.projectIdentity}>
-        <h3 id={`project-${team.id}-title`}><UiText>{team.name}</UiText></h3>
+        <h3 id={titleId}><UiText>{team.name}</UiText></h3>
         <p className={styles.topic}><UiText>{team.topicTitle}</UiText></p>
       </div>
 
@@ -92,9 +94,12 @@ function ProjectCard({
         )}
       </div>
 
-      <Link href={`/teams/${team.id}`} className={styles.cardAction}>
-        <UiText>{actionLabel}</UiText>
-        <span aria-hidden="true">→</span>
+      <Link
+        href={`/teams/${team.id}`}
+        aria-labelledby={`${titleId} ${actionId}`}
+        className={styles.cardLink}
+      >
+        <span id={actionId} className="sr-only"><UiText>{actionLabel}</UiText></span>
       </Link>
     </article>
   );
