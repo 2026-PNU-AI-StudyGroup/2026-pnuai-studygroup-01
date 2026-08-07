@@ -1138,3 +1138,62 @@ model FeedbackComment {
   @@index([postId, createdAt])
   @@map("feedback_comment")
 }
+
+model ProjectShowcase {
+  id          String          @id @default(uuid())
+  teamId      String          @unique
+  summary     String
+  githubUrl   String?
+  youtubeUrl  String?
+  demoUrl     String?
+  isPublished Boolean         @default(false)
+  publishedAt DateTime?
+  awardName   String?
+  awardColor  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  images      ShowcaseImage[]
+  likes       ShowcaseLike[]
+  comments    ShowcaseComment[]
+
+  @@index([isPublished, publishedAt])
+  @@map("project_showcase")
+}
+
+model ShowcaseLike {
+  id         String          @id @default(uuid())
+  showcaseId String
+  userId     String
+  createdAt  DateTime        @default(now())
+  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+
+  @@unique([showcaseId, userId])
+  @@index([showcaseId])
+  @@map("showcase_like")
+}
+
+model ShowcaseComment {
+  id         String          @id @default(uuid())
+  showcaseId String
+  authorId   String
+  authorName String
+  body       String
+  createdAt  DateTime        @default(now())
+  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+
+  @@index([showcaseId, createdAt])
+  @@map("showcase_comment")
+}
+
+model ShowcaseImage {
+  id         String          @id @default(uuid())
+  showcaseId String
+  fileId     String          @unique
+  position   Int             @default(0)
+  isCover    Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+
+  @@index([showcaseId, position])
+  @@map("showcase_image")
+}
