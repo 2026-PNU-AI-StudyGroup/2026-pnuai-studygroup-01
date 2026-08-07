@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { StudentTeamRecruitmentCommandService, StudentTeamRecruitmentError } from "@/modules/student-team/application/manage-student-team-recruitment";
+import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { PrismaStudentTeamRecruitmentCommandRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-command-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -15,16 +16,16 @@ const service = () => new StudentTeamRecruitmentCommandService(
 async function actor() { const value = await getCurrentOperationalActor(); if (!value) redirect("/sign-in"); return value; }
 
 export async function createRecruitmentPostAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
-  const parsed = z.object({ teamId: z.string().uuid(), title: z.string(), content: z.string(), requiredSkills: list, roleNeeded: z.string(), availability: z.string(), capacity: z.coerce.number().int() }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ teamId: z.string().uuid(), title: z.string(), content: z.string(), requiredSkills: list, roleNeeded: z.string(), availability: z.string(), capacity: z.coerce.number().int(), deadlineAt: koreanLocalDateTime }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "모집 정보를 확인해 주세요." };
   try { await service().createPost(await actor(), parsed.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/recruitments/mine"); return { status: "success", message: "모집 글을 등록했습니다." };
+  revalidatePath("/recruitments"); revalidatePath("/recruitments/mine"); return { status: "success", message: "모집 글을 등록했습니다." };
 }
 
 export async function applyRecruitmentAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
   const parsed = z.object({ postId: z.string().uuid(), message: z.string(), skills: list, desiredRole: z.string(), availability: z.string() }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "지원 정보를 확인해 주세요." };
+  if (!parsed.success) return { status: "error", message: "입력값을 확인해 주세요." };
   try { await service().apply(await actor(), parsed.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/recruitments"); return { status: "success", message: "모집 글에 지원했습니다." };

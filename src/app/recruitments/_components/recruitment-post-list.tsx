@@ -1,4 +1,4 @@
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { RecruitmentApplyForm } from "@/app/recruitments/_components/recruitment-apply-form";
 import type { StudentProfile } from "@/modules/identity/domain/student-profile";
 import type { StudentTeamRecruitmentPostList } from "@/modules/student-team/application/manage-student-team-recruitment";
@@ -52,6 +52,7 @@ export function RecruitmentPostList({
                     {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText>
                   </span>
                 </div>
+                <p className="mt-2 text-xs font-semibold text-[var(--muted)]"><UiText>{"마감"}</UiText>{" "}<UiDate value={post.deadlineAt} mode="dateTime" /></p>
                 <p className="mt-3 text-xl font-black leading-tight tracking-[-0.03em] text-[var(--ink)]">{post.roleNeeded}</p>
               </div>
 
@@ -60,15 +61,6 @@ export function RecruitmentPostList({
                   <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.authorName}</p>
                   <h3 className="mt-2 text-[1.35rem] font-bold leading-snug tracking-[-0.025em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
                   <TranslatedText text={post.content} className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]" />
-                  <details className="group/details mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)]">
-                    <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-bold text-[var(--primary-hover)]">
-                      <UiText>{"모집 내용 전체 보기"}</UiText>
-                      <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 shrink-0 fill-none stroke-current stroke-[1.8] transition-transform group-open/details:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
-                    </summary>
-                    <div className="border-t border-[var(--line)] px-4 py-3">
-                      <TranslatedText text={post.content} className="whitespace-pre-wrap break-words text-sm leading-6 text-[var(--ink)]" />
-                    </div>
-                  </details>
                 </div>
 
                 <dl className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-5 gap-y-4 border-t border-[var(--line)] pt-5 text-sm">

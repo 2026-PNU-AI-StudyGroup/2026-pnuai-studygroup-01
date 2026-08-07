@@ -4,7 +4,7 @@ import { normalizeApplicationMessage, normalizeApplicationProfile } from "@/modu
 type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
-  memberCount: number; capacity: number; createdAt: Date; canApply: boolean; isMember: boolean;
+  memberCount: number; capacity: number; createdAt: Date; deadlineAt: Date; canApply: boolean; isMember: boolean;
   ownApplication: { status: "PENDING" | "ACCEPTED" | "REJECTED" } | null;
 };
 
@@ -15,7 +15,7 @@ export type StudentTeamRecruitmentPostList = {
 
 type StudentTeamAuthoredRecruitmentPost = {
   id: string; teamName: string; topicTitle: string; title: string; status: "OPEN" | "CLOSED";
-  memberCount: number; capacity: number; applicationCount: number; pendingApplicationCount: number; createdAt: Date;
+  memberCount: number; capacity: number; applicationCount: number; pendingApplicationCount: number; createdAt: Date; deadlineAt: Date;
 };
 
 type StudentTeamRecruitmentApplication = {
@@ -42,7 +42,7 @@ export interface StudentTeamRecruitmentReader {
 }
 
 export interface StudentTeamRecruitmentWriter {
-  createPost(input: { teamId: string; leaderId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number }): Promise<boolean>;
+  createPost(input: { teamId: string; leaderId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number; deadlineAt: Date; createdAt: Date }): Promise<boolean>;
   apply(input: { postId: string; studentId: string; message: string; skills: string[]; desiredRole: string; availability: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
   decide(input: { applicationId: string; actorId: string; isAdmin: boolean; decision: "ACCEPT" | "REJECT"; decidedAt: Date }): Promise<"ACCEPTED" | "REJECTED" | "UNAVAILABLE" | "FORBIDDEN">;
 }
@@ -79,13 +79,17 @@ export class StudentTeamRecruitmentCommandService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async createPost(actor: CurrentUser, input: { teamId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number }) {
+  async createPost(actor: CurrentUser, input: { teamId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number; deadlineAt: Date }) {
     assertStudent(actor);
+    const createdAt = this.now();
     const requiredSkills = [...new Set(input.requiredSkills.map((value) => value.trim()).filter(Boolean))];
     if (!requiredSkills.length || requiredSkills.length > 20 || requiredSkills.some((value) => value.length > 50)) throw new StudentTeamRecruitmentError("필요 기술을 확인해 주세요.");
     if (!Number.isSafeInteger(input.capacity) || input.capacity < 2 || input.capacity > 100) throw new StudentTeamRecruitmentError("팀 정원을 확인해 주세요.");
+    if (!Number.isFinite(input.deadlineAt.getTime()) || input.deadlineAt <= createdAt || input.deadlineAt > oneMonthAfter(createdAt)) {
+      throw new StudentTeamRecruitmentError("모집 마감은 등록 시점부터 최대 1개월 안에서 정해 주세요.");
+    }
     const created = await this.writer.createPost({
-      teamId: input.teamId, leaderId: actor.id, capacity: input.capacity, requiredSkills,
+      teamId: input.teamId, leaderId: actor.id, capacity: input.capacity, requiredSkills, deadlineAt: input.deadlineAt, createdAt,
       title: text(input.title, 200, "제목"), content: text(input.content, 2_000, "내용"),
       roleNeeded: text(input.roleNeeded, 500, "역할"), availability: text(input.availability, 500, "활동 가능 시간"),
     });
@@ -97,7 +101,7 @@ export class StudentTeamRecruitmentCommandService {
     let profile: ReturnType<typeof normalizeApplicationProfile>;
     let message: string;
     try { profile = normalizeApplicationProfile(input); message = normalizeApplicationMessage(input.message); }
-    catch { throw new StudentTeamRecruitmentError("지원 내용과 지원 정보를 확인해 주세요."); }
+    catch { throw new StudentTeamRecruitmentError("입력값을 확인해 주세요."); }
     const result = await this.writer.apply({ postId: input.postId, studentId: actor.id, message, ...profile, appliedAt: this.now() });
     if (result !== "CREATED") throw new StudentTeamRecruitmentError(result === "ALREADY_MEMBER" ? "이미 이 팀의 팀원입니다." : result === "ALREADY_APPLIED" ? "이미 지원한 모집입니다." : "현재 지원할 수 없는 모집입니다.");
   }
@@ -106,4 +110,14 @@ export class StudentTeamRecruitmentCommandService {
     const result = await this.writer.decide({ applicationId, actorId: actor.id, isAdmin: actor.role === "ADMIN", decision, decidedAt: this.now() });
     if (result !== "ACCEPTED" && result !== "REJECTED") throw new StudentTeamRecruitmentError(result === "FORBIDDEN" ? "팀장만 팀원 지원을 처리할 수 있습니다." : "팀 인원 또는 지원 상태가 변경되었습니다.");
   }
+}
+
+function oneMonthAfter(date: Date) {
+  const result = new Date(date);
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(day, lastDay));
+  return result;
 }

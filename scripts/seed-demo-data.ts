@@ -994,6 +994,7 @@ async function seed() {
         capacity: 5,
         status: "OPEN",
         createdAt: new Date("2026-07-20T10:00:00+09:00"),
+        deadlineAt: new Date("2026-08-20T10:00:00+09:00"),
       },
       {
         id: ids.studentTeamRecruitments[1],
@@ -1007,6 +1008,7 @@ async function seed() {
         capacity: 4,
         status: "OPEN",
         createdAt: new Date("2026-07-21T13:00:00+09:00"),
+        deadlineAt: new Date("2026-08-21T13:00:00+09:00"),
       },
       {
         id: ids.studentTeamRecruitments[2],
@@ -1020,6 +1022,7 @@ async function seed() {
         capacity: 5,
         status: "OPEN",
         createdAt: new Date("2026-07-22T16:00:00+09:00"),
+        deadlineAt: new Date("2026-08-22T16:00:00+09:00"),
       },
       {
         id: ids.studentTeamRecruitments[3],
@@ -1033,6 +1036,7 @@ async function seed() {
         capacity: 3,
         status: "CLOSED",
         createdAt: new Date("2026-07-08T12:00:00+09:00"),
+        deadlineAt: new Date("2026-08-08T12:00:00+09:00"),
       },
     ] });
     // DEMO_VIEWER_EMAIL 미지정 시 studentTeamViewer가 students[0]로 폴백하는데,

@@ -35,6 +35,7 @@ describe("RecruitmentPostList", () => {
             memberCount: 2,
             capacity: 4,
             createdAt: new Date("2026-08-01T00:00:00Z"),
+            deadlineAt: new Date("2026-08-14T09:00:00Z"),
             canApply: true,
             isMember: false,
             ownApplication: null,
@@ -46,7 +47,7 @@ describe("RecruitmentPostList", () => {
     expect(screen.getAllByText("2/4명")).toHaveLength(1);
     expect(screen.queryByText("2자리 남음")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("모집자 김하늘")).not.toBeInTheDocument();
-    expect(screen.getByText("모집 내용 전체 보기")).toBeInTheDocument();
+    expect(screen.queryByText("모집 내용 전체 보기")).not.toBeInTheDocument();
     expect(screen.getByText("React")).not.toHaveClass("truncate");
     expect(screen.getByText("평일 저녁")).not.toHaveClass("truncate");
     expect(Array.from(container.querySelectorAll("div")).some((element) => (

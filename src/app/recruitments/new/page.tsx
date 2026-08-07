@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("새 모집");
+  return getLocalizedMetadata("모집 등록");
 }
 
 export default async function NewRecruitmentPage({

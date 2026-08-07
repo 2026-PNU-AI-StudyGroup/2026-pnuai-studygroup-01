@@ -41,6 +41,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
   ): Promise<StudentTeamRecruitmentPostList> {
     const where: Prisma.StudentTeamRecruitmentPostWhereInput = {
       status: "OPEN",
+      deadlineAt: { gt: new Date() },
       team: { deletedAt: null },
     };
     const total = await this.client.studentTeamRecruitmentPost.count({ where });
@@ -84,6 +85,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
 
   async listAuthoredPosts(actorId: string, requested: number) {
     const where = { team: { leaderId: actorId, deletedAt: null } };
+    const now = new Date();
     const total = await this.client.studentTeamRecruitmentPost.count({ where });
     const { page, totalPages } = pageOf(requested, total);
     const posts = await this.client.studentTeamRecruitmentPost.findMany({
@@ -109,14 +111,18 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       total,
       page,
       totalPages,
-      posts: posts.map(({ team, applications, _count, ...post }) => ({
-        ...post,
-        teamName: team.name,
-        topicTitle: "프로젝트 미지정 팀",
-        memberCount: team._count.members,
-        applicationCount: _count.applications,
-        pendingApplicationCount: applications.length,
-      })),
+      posts: posts.map(({ team, applications, _count, ...post }) => {
+        const status: "OPEN" | "CLOSED" = post.status === "OPEN" && post.deadlineAt > now ? "OPEN" : "CLOSED";
+        return {
+          ...post,
+          status,
+          teamName: team.name,
+          topicTitle: "프로젝트 미지정 팀",
+          memberCount: team._count.members,
+          applicationCount: _count.applications,
+          pendingApplicationCount: applications.length,
+        };
+      }),
     };
   }
 

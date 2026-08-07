@@ -15,7 +15,7 @@ describe("팀원 모집 지원 흐름", () => {
     const { container } = render(<RecruitmentApplyForm postId="post" postTitle="백엔드 개발자 모집" teamName="PNU AI" profile={null} />);
 
     expect(container.querySelector("details")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "이 팀에 지원하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "지원하기" }));
     expect(screen.getByRole("dialog", { name: "백엔드 개발자 모집 지원" })).toHaveAttribute("open");
     expect(screen.getByRole("textbox", { name: "지원 내용" })).toBeInTheDocument();
   });

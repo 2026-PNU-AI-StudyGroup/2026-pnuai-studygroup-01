@@ -806,13 +806,14 @@ model StudentTeamRecruitmentPost {
   availability   String
   capacity       Int
   status         RecruitmentPostStatus               @default(OPEN)
+  deadlineAt     DateTime
   createdAt      DateTime                            @default(now())
   updatedAt      DateTime                            @updatedAt
   team           StudentTeam                         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   author         User                                @relation("StudentTeamRecruitmentAuthor", fields: [authorId], references: [id])
   applications   StudentTeamRecruitmentApplication[]
 
-  @@index([status, createdAt])
+  @@index([status, deadlineAt])
   @@index([teamId, status])
   @@map("student_team_recruitment_post")
 }

@@ -27,7 +27,7 @@ export function RecruitmentDecisionForm({
       <input type="hidden" name="postId" value={postId} />
       <input type="hidden" name="decision" value={decision} />
       {decision === "REJECT" ? (
-        <ConfirmSubmitButton className="button-danger" confirmMessage="이 팀원 지원을 거절하시겠습니까?" disabled={pending}>
+        <ConfirmSubmitButton className="button-danger" confirmMessage="지원자를 거절하시겠습니까?" disabled={pending}>
           <UiText>{pending ? "처리 중" : "거절"}</UiText>
         </ConfirmSubmitButton>
       ) : (

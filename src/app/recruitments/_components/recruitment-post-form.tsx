@@ -8,8 +8,27 @@ import { useActionState, useEffect } from "react";
 import { createRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
 import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { FormField, FormSection, TextInput } from "@/shared/ui/form-system";
+import { DateTimeInput, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
+
+function koreanDateTimeLocal(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(date);
+  const value = new Map(parts.map((part) => [part.type, part.value]));
+  return `${value.get("year")}-${value.get("month")}-${value.get("day")}T${value.get("hour")}:${value.get("minute")}`;
+}
+
+function addMonths(date: Date, months: number) {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() + months);
+  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDay));
+  return result;
+}
 
 export function RecruitmentPostForm({
   teams,
@@ -33,6 +52,9 @@ export function RecruitmentPostForm({
   }, [router, state.status, successHref]);
 
   if (!teams.length) return null;
+  const now = new Date();
+  const defaultDeadlineAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const maximumDeadlineAt = addMonths(now, 1);
 
   return (
     <form
@@ -75,11 +97,13 @@ export function RecruitmentPostForm({
         <FormField id="recruitment-availability" label="활동 가능 시간">
           <UiInput id="recruitment-availability" name="availability" maxLength={500} required className="form-control" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
         </FormField>
+        <FormField id="recruitment-deadline" label="모집 마감" description="등록 시점부터 최대 1개월">
+          <DateTimeInput id="recruitment-deadline" name="deadlineAt" required min={koreanDateTimeLocal(now)} max={koreanDateTimeLocal(maximumDeadlineAt)} defaultValue={koreanDateTimeLocal(defaultDeadlineAt)} />
+        </FormField>
       </FormSection>
 
       <div className="form-action-bar">
-        <p className="text-sm text-[var(--muted)]"><UiText>{"등록 후 지원자는 내 모집에서 검토할 수 있습니다."}</UiText></p>
-        <button type="submit" className="button-primary shrink-0" disabled={pending}><UiText>{pending ? "등록 중" : "모집 등록"}</UiText></button>
+        <button type="submit" className="button-primary shrink-0" disabled={pending}><UiText>{pending ? "등록 중" : "모집 공고 작성"}</UiText></button>
       </div>
       {state.message ? (
         <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`px-1 text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>

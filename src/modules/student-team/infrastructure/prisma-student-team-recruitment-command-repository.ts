@@ -18,6 +18,8 @@ export class PrismaStudentTeamRecruitmentCommandRepository
     roleNeeded: string;
     availability: string;
     capacity: number;
+    deadlineAt: Date;
+    createdAt: Date;
   }): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
@@ -67,6 +69,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
         JOIN "student_team" ON "student_team"."id" = "student_team_recruitment_post"."teamId"
         WHERE "student_team_recruitment_post"."id" = ${input.postId}
           AND "student_team_recruitment_post"."status" = 'OPEN'
+          AND "student_team_recruitment_post"."deadlineAt" > ${input.appliedAt}
           AND "student_team"."deletedAt" IS NULL
         FOR UPDATE OF "student_team_recruitment_post", "student_team"
       `);

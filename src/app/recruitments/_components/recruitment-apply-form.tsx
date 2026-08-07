@@ -33,7 +33,7 @@ export function RecruitmentApplyForm({
   return (
     <>
       <button type="button" className="button-primary w-full gap-2" onClick={() => dialogRef.current?.showModal()}>
-        <UiText>{"이 팀에 지원하기"}</UiText><svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
+        <UiText>{"지원하기"}</UiText><svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9.5 5 7 7-7 7" />
         </svg>
       </button>
@@ -48,7 +48,7 @@ export function RecruitmentApplyForm({
           <div>
             <p className="text-sm font-bold text-[var(--primary)]">{teamName}</p>
             <h3 id={titleId} className="mt-1 text-2xl font-bold tracking-[-0.035em]"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
-            <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"팀에 전달할 희망 역할과 활동 가능 시간을 확인해 주세요."}</UiText></p>
+            <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"희망 역할과 활동 가능 시간을 입력해 주세요."}</UiText></p>
           </div>
           <UiButton type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
@@ -65,7 +65,7 @@ export function RecruitmentApplyForm({
           {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"><UiText>{state.message}</UiText></p> : null}
           <div className="sticky bottom-0 -mx-5 -mb-6 flex flex-col-reverse gap-2 border-t border-[var(--line)] bg-white px-5 py-4 sm:col-span-2 sm:-mx-7 sm:flex-row sm:justify-end sm:px-7">
             <button type="button" className="button-quiet" disabled={pending} onClick={() => dialogRef.current?.close()}><UiText>{"취소"}</UiText></button>
-            <button className="button-primary" disabled={pending}><UiText>{pending ? "지원 중" : "지원서 보내기"}</UiText></button>
+            <button className="button-primary" disabled={pending}><UiText>{pending ? "지원 중" : "지원하기"}</UiText></button>
           </div>
         </form>
       </dialog>

@@ -45,6 +45,7 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
             <StudentTeamPageIntro
               title="팀원 모집"
               meta={<span><UiText>{"모집 중"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></span>}
+              action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"모집 공고 작성"}</UiText></Link>}
             />
             <UiSection aria-label="팀원 모집 목록" className="space-y-6">
               <RecruitmentPostList actorId={actor.id} data={data} profile={profile} />
@@ -56,3 +57,4 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
     </AppShell>
   );
 }
+import Link from "next/link";
