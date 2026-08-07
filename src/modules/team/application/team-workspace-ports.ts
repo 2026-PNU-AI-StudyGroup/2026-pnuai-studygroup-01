@@ -48,7 +48,7 @@ export type TeamWorkspace = TeamListItem & {
   canClose: boolean;
   schedule: {
     recruitmentStartsAt: Date;
-    recruitmentEndsAt: Date;
+    programRecruitmentEndsAt: Date;
     executionStartsAt: Date;
     executionEndsAt: Date;
     submissionStartsAt: Date;

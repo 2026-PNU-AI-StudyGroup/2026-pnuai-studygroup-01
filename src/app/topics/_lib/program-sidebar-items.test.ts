@@ -23,6 +23,7 @@ describe("buildProgramSidebarItems", () => {
     description: "",
     startsAt: new Date(),
     endsAt: new Date(),
+    recruitmentEndsAt: new Date(),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
   };
@@ -47,6 +48,36 @@ describe("buildProgramSidebarItems", () => {
         href: "/topics?view=past&programId=open-2026",
       }),
     ]);
+  });
+
+  it("진행 중 투표는 활성·지난 화면 모두에서 사이드바 최상단 표시용 마감 시각을 유지한다", () => {
+    const now = new Date("2026-08-07T12:00:00+09:00");
+    const votingEndsAt = new Date("2026-08-10T18:00:00+09:00");
+    const votingProgram = {
+      ...openProgram,
+      votingPolicy: {
+        startsAt: new Date("2026-08-06T09:00:00+09:00"),
+        endsAt: votingEndsAt,
+        voteLimit: 3,
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS" as const,
+      },
+    };
+    const archiveEntry = { id: "open-2026", name: "AI 부스터 2026", category: "교육", startYear: 2026, icon: "FOLDER" as const, ...archivedProgramPeriod };
+
+    expect(buildProgramSidebarItems([votingProgram], [], "active", {}, now)[0]).toEqual(expect.objectContaining({ votingEndsAt }));
+    expect(buildProgramSidebarItems([votingProgram], [archiveEntry], "past", {}, now)[0]).toEqual(expect.objectContaining({
+      status: "past",
+      href: "/topics?view=past&programId=open-2026",
+      votingEndsAt,
+    }));
+
+    const archivedVotingProgram = { ...votingProgram, status: "CLOSED" as const };
+    expect(buildProgramSidebarItems([archivedVotingProgram], [], "active", {}, now)[0]).toEqual(expect.objectContaining({
+      status: "past",
+      href: "/topics?view=past&programId=open-2026",
+      votingEndsAt,
+    }));
   });
 
   it("프로그램을 바꿀 때 대상 화면과 호환되는 검색·상태·정렬만 보존한다", () => {

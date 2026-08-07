@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
+import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 
 const project: ArchivedProject = {
   id: "project-1",
+  topicId: "50000000-0000-4000-8000-000000000001",
   startYear: 2025,
   teamName: "모두의 길",
   programId: "program-1",
@@ -23,7 +25,39 @@ const project: ArchivedProject = {
   artifacts: [],
 };
 
+const ballot: ProgramVoteBallot = {
+  programId: "program-1",
+  programName: "CSE 캡스톤디자인 2025",
+  policy: {
+    startsAt: new Date("2026-08-01T00:00:00Z"),
+    endsAt: new Date("2026-08-31T00:00:00Z"),
+    voteLimit: 3,
+    selfVotingAllowed: false,
+    identityVisibility: "ANONYMOUS",
+  },
+  phase: "OPEN",
+  candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false }],
+  selectedTopicIds: [],
+};
+
 describe("PastProjectsView", () => {
+  it("투표 중인 과거 프로젝트 카드에서도 바로 투표할 수 있다", () => {
+    render(
+      <PastProjectsView
+        projects={[project]}
+        total={1}
+        page={1}
+        totalPages={1}
+        query=""
+        programId="program-1"
+        ballot={ballot}
+      />,
+    );
+
+    expect(screen.queryByText("선택한 프로젝트")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+  });
+
   it("썸네일 카드에는 프로그램 정보 대신 제목 아래 교수 이름만 표시한다", () => {
     render(
       <PastProjectsView

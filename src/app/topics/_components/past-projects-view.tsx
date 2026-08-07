@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -5,8 +7,10 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
 import { ProjectPagination } from "@/app/topics/_components/project-pagination";
 import { ProjectSearchForm } from "@/app/topics/_components/project-search-form";
+import { ProjectVoteButton, useProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
 import styles from "@/app/topics/_components/project-gallery.module.css";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
+import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 function pastHref({ query, programId, page }: {
@@ -21,15 +25,17 @@ function pastHref({ query, programId, page }: {
   return `/topics?${target.toString()}`;
 }
 
-export function PastProjectsView({ projects, total, page, totalPages, query, programId }: {
+export function PastProjectsView({ projects, total, page, totalPages, query, programId, ballot }: {
   projects: ArchivedProject[];
   total: number;
   page: number;
   totalPages: number;
   query: string;
   programId?: string;
+  ballot?: ProgramVoteBallot;
 }) {
   const hasFilters = Boolean(query);
+  const voteSelection = useProjectVoteSelection(ballot);
   return (
     <div className="min-w-0">
       <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
@@ -52,11 +58,12 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             <ol className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
               {projects.map((project) => {
                 const href = `/topics/archive/${project.id}`;
+                const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === project.topicId);
 
                 return (
                   <li key={project.id} className="min-w-0">
                     <article aria-labelledby={`past-project-${project.id}`} className={styles.card}>
-                      <ProjectGalleryCover id={project.id} imagePath={project.thumbnailPath} programName={project.programName} title={project.topicTitle} />
+                      <ProjectGalleryCover imagePath={project.thumbnailPath} programName={project.programName} title={project.topicTitle} />
                       <div className={styles.body}>
                         <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
                           <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
@@ -74,6 +81,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                             <dd className="mt-1 font-bold">{project.memberNames.length}<UiText>{"명 ·"}</UiText>{" "}{project.artifacts.length}<UiText>{"개"}</UiText></dd>
                           </div>
                         </dl>
+                        {voteCandidate ? <div className={`mt-5 ${styles.actionLayer}`}><ProjectVoteButton candidate={voteCandidate} selection={voteSelection} /></div> : null}
 
                       </div>
                     </article>

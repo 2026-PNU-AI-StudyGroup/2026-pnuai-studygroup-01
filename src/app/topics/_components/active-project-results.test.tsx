@@ -3,12 +3,27 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ActiveProjectResults } from "@/app/topics/_components/active-project-results";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
+import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 
 vi.mock("@/app/topics/_components/topic-application-editor", () => ({
   TopicApplicationEditor: () => <button type="button">지원</button>,
 }));
 
 const now = new Date("2026-07-27T00:00:00Z");
+const ballot: ProgramVoteBallot = {
+  programId: "program-1",
+  programName: "캡스톤",
+  policy: {
+    startsAt: new Date("2026-07-01T00:00:00Z"),
+    endsAt: new Date("2026-08-31T00:00:00Z"),
+    voteLimit: 3,
+    selfVotingAllowed: false,
+    identityVisibility: "ANONYMOUS",
+  },
+  phase: "OPEN",
+  candidates: [{ id: "50000000-0000-4000-8000-000000000001", title: "실내 길찾기", description: "설명", isSelfProject: false }],
+  selectedTopicIds: [],
+};
 
 function topicsWithStatus(status: "PENDING" | "ACCEPTED" | "REJECTED", advisorEnabled = true): PublicTopicPage {
   return {
@@ -31,7 +46,6 @@ function topicsWithStatus(status: "PENDING" | "ACCEPTED" | "REJECTED", advisorEn
       applicationQuestions: [{ id: "question-1", label: "동기", maxLength: 500, required: true }],
       capacity: 4,
       recruitmentStartsAt: new Date("2026-07-01T00:00:00Z"),
-      recruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
       executionStartsAt: new Date("2026-08-01T00:00:00Z"),
       executionEndsAt: new Date("2026-11-30T00:00:00Z"),
       submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
@@ -44,6 +58,7 @@ function topicsWithStatus(status: "PENDING" | "ACCEPTED" | "REJECTED", advisorEn
       programCategory: "교과",
       programStatus: "OPEN",
       advisorEnabled,
+      programRecruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
       professorName: advisorEnabled ? "김교수" : null,
       startYear: 2026,
       memberCount: 1,
@@ -53,6 +68,24 @@ function topicsWithStatus(status: "PENDING" | "ACCEPTED" | "REJECTED", advisorEn
 }
 
 describe("ActiveProjectResults", () => {
+  it("투표 기간에는 기존 프로젝트 카드에서 바로 투표할 수 있다", () => {
+    render(
+      <ActiveProjectResults
+        topics={topicsWithStatus("PENDING")}
+        canApply
+        leaderTeams={[]}
+        phase="ACTIVE"
+        query=""
+        sort="LATEST"
+        now={now}
+        ballot={ballot}
+      />,
+    );
+
+    expect(screen.queryByText("선택한 프로젝트")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+  });
+
   it("참여가 확정된 프로젝트는 비활성 버튼 대신 내 프로젝트 이동 링크를 표시한다", () => {
     render(
       <ActiveProjectResults
@@ -107,6 +140,25 @@ describe("ActiveProjectResults", () => {
     expect(detailLinks[0]).toHaveAccessibleName("실내 길찾기");
   });
 
+  it("정원이 차면 모집 상태에 현재 인원을 표시하고 지원 버튼을 숨긴다", () => {
+    const topics = topicsWithStatus("PENDING");
+    topics.items[0] = { ...topics.items[0], memberCount: topics.items[0].capacity };
+    render(
+      <ActiveProjectResults
+        topics={topics}
+        canApply
+        leaderTeams={[]}
+        phase="ACTIVE"
+        query=""
+        sort="LATEST"
+        now={now}
+      />,
+    );
+
+    expect(screen.getByText("정원 마감 · 4 / 4명")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "지원" })).not.toBeInTheDocument();
+  });
+
   it("실제 이미지가 없어도 현재 프로젝트의 장식 커버를 유지한다", () => {
     render(
       <ActiveProjectResults
@@ -127,14 +179,13 @@ describe("ActiveProjectResults", () => {
     const title = screen.getByRole("heading", { name: "실내 길찾기" });
     const professor = screen.getByText("김교수");
     const description = screen.getByText("설명");
-    const details = article.querySelector("dl");
     expect(article).not.toHaveTextContent("교과 · 캡스톤");
     expect(article).not.toHaveTextContent("학생 제안자");
     expect(description).toHaveClass("line-clamp-2");
-    if (!details) throw new Error("카드 상세 정보를 찾을 수 없습니다.");
     expect(title.compareDocumentPosition(professor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(professor.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(description.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("모집 중 · 1 / 4명")).toBeInTheDocument();
+    expect(article.querySelector("dl")).not.toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "필요 기술" })).not.toBeInTheDocument();
     expect(article).not.toHaveTextContent("TypeScript");
     expect(article.querySelector("img")).not.toBeInTheDocument();

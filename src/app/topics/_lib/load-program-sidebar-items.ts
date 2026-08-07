@@ -10,9 +10,10 @@ export async function loadProgramSidebarItems(
   view: "active" | "past" = "active",
   query: ProgramSidebarQuery = {},
 ): Promise<ProgramSidebarItem[]> {
-  const [openPrograms, archivedPrograms] = await Promise.all([
-    new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listOpen(),
+  const now = new Date();
+  const [sidebarPrograms, archivedPrograms] = await Promise.all([
+    new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listSidebarVisible(now),
     new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma)).listPrograms(),
   ]);
-  return buildProgramSidebarItems(openPrograms, archivedPrograms, view, query);
+  return buildProgramSidebarItems(sidebarPrograms, archivedPrograms, view, query, now);
 }

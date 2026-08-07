@@ -3,29 +3,13 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import styles from "@/app/topics/_components/project-gallery.module.css";
 
-const coverVariants = [
-  styles.cover0,
-  styles.cover1,
-  styles.cover2,
-  styles.cover3,
-  styles.cover4,
-  styles.cover5,
-];
-
-function stableVariant(value: string) {
-  let hash = 0;
-  for (const character of value) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  return coverVariants[hash % coverVariants.length];
-}
-
-export function ProjectGalleryCover({ id, imagePath, programName, title }: {
-  id: string;
+export function ProjectGalleryCover({ imagePath, programName, title }: {
   imagePath?: string;
   programName: string;
   title: string;
 }) {
   return (
-    <div aria-hidden="true" data-project-cover className={imagePath ? `${styles.cover} ${stableVariant(id)}` : `${styles.cover} ${styles.fallbackCover}`}>
+    <div aria-hidden="true" data-project-cover className={imagePath ? styles.cover : `${styles.cover} ${styles.fallbackCover}`}>
       {imagePath ? (
         <Image
           alt=""

@@ -23,6 +23,7 @@ export function ProjectPortalHero({ view, program, action }: {
     endsAt?: Date | string;
     projectRegistrationStartsAt?: Date | string;
     projectRegistrationEndsAt?: Date | string;
+    recruitmentEndsAt?: Date | string;
     votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
   };
   action?: ReactNode;
@@ -38,6 +39,7 @@ export function ProjectPortalHero({ view, program, action }: {
           endsAt={program.endsAt}
           projectRegistrationStartsAt={program.projectRegistrationStartsAt}
           projectRegistrationEndsAt={program.projectRegistrationEndsAt}
+          recruitmentEndsAt={program.recruitmentEndsAt}
           votingPolicy={program.votingPolicy}
         />
       ) : undefined}
@@ -48,11 +50,12 @@ export function ProjectPortalHero({ view, program, action }: {
   );
 }
 
-function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, votingPolicy }: {
+function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, recruitmentEndsAt, votingPolicy }: {
   startsAt: Date | string;
   endsAt: Date | string;
   projectRegistrationStartsAt?: Date | string;
   projectRegistrationEndsAt?: Date | string;
+  recruitmentEndsAt?: Date | string;
   votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
 }) {
   return (
@@ -63,10 +66,20 @@ function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, project
         startsAt={projectRegistrationStartsAt ?? startsAt}
         endsAt={projectRegistrationEndsAt ?? endsAt}
       />
+      {recruitmentEndsAt ? <ProgramDeadline label="프로젝트 모집 마감" endsAt={recruitmentEndsAt} /> : null}
       {votingPolicy ? (
         <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
       ) : null}
     </dl>
+  );
+}
+
+function ProgramDeadline({ label, endsAt }: { label: string; endsAt: Date | string }) {
+  return (
+    <div className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] gap-x-3">
+      <dt className="font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className="min-w-0 font-semibold text-[var(--ink)]"><UiDate value={endsAt} mode="dateTime" /></dd>
+    </div>
   );
 }
 

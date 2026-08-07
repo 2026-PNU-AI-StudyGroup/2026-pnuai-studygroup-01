@@ -13,6 +13,7 @@ const archivedProjectSelect = {
   thumbnailPath: true,
   posterPath: true,
   topic: { select: {
+    id: true,
     title: true,
     description: true,
     advisorRole: true,
@@ -137,6 +138,7 @@ export class PrismaTeamArchiveQueryRepository
 function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
   return {
     id: team.id,
+    topicId: team.topic.id,
     startYear: getProgramStartYear(team.topic.program.startsAt),
     teamName: team.name,
     programId: team.topic.program.id,

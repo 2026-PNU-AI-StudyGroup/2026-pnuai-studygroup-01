@@ -22,6 +22,8 @@ import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prism
 import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
+import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
+import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -58,13 +60,14 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const topicService = new ListPublishedTopicsService(topicRepository);
   const programService = new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
   const archiveService = new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma));
+  const votingService = new ProjectVotingService(new PrismaProjectVotingRepository(prisma));
   let content: ReactNode;
 
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const [archive, openPrograms] = await Promise.all([
+    const [archive, sidebarPrograms] = await Promise.all([
       archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId }),
-      programService.listOpen(),
+      programService.listSidebarVisible(now),
     ]);
     const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
     if (programId && programId !== requestedArchiveProgramId) {
@@ -74,29 +77,34 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       redirect(`/topics?${target.toString()}`);
     }
     const selectedProgram = archive.programs.find((program) => program.id === programId);
-    const sidebarItems = buildProgramSidebarItems(openPrograms, archive.programs, "past", { query });
+    const ballot = programId ? await votingService.getBallot(actor, programId) : undefined;
+    const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero view="past" program={selectedProgram} />
-        <PastProjectsView {...archive} query={query} programId={programId} />
+        <PastProjectsView {...archive} query={query} programId={programId} ballot={ballot ?? undefined} />
       </ExplorerLayout>
     );
   } else {
-    const programs = await programService.listOpen();
+    const [programs, sidebarPrograms] = await Promise.all([
+      programService.listOpen(),
+      programService.listSidebarVisible(now),
+    ]);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const programId = resolveProgramSelection(requestedProgramId, programs);
     if (programId && programId !== requestedProgramId) {
       redirect(activeProjectsHref({ phase, programId, query, sort, page: requestedPage }));
     }
-    const [topics, archivedPrograms, leaderTeams] = await Promise.all([
+    const [topics, archivedPrograms, leaderTeams, ballot] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, query, phase, sort, page: requestedPage, now }),
       archiveService.listPrograms(),
       actor.role === "STUDENT"
         ? new PrismaStudentTeamRecruitmentQueryRepository(prisma).listLeaderTeams(actor.id)
         : Promise.resolve([]),
+      programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
     ]);
     const selectedProgram = programs.find((program) => program.id === programId);
-    const sidebarItems = buildProgramSidebarItems(programs, archivedPrograms, "active", { query, phase, sort });
+    const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query, phase, sort }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero
@@ -106,10 +114,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
             {actor.role === "STUDENT" && selectedProgram.studentProjectCreationEnabled && isProjectRegistrationOpen(selectedProgram, now)
               ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 제안"}</UiText></Link>
               : null}
-            {selectedProgram.votingPolicy ? <Link className="button-secondary" href={`/programs/${encodeURIComponent(selectedProgram.id)}/vote`}><UiText>{"프로젝트 투표"}</UiText></Link> : null}
           </> : undefined}
         />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} ballot={ballot} />
       </ExplorerLayout>
     );
   }

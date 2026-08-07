@@ -14,6 +14,7 @@ import { ReadStoredTranslationService } from "@/modules/translation/application/
 import { PrismaStoredTranslationReader } from "@/modules/translation/infrastructure/prisma-stored-translation-reader";
 import { getUserLocale } from "@/modules/translation/infrastructure/user-locale";
 import { I18nProvider } from "@/modules/translation/ui/i18n-provider";
+import { AppToaster } from "@/shared/ui/app-toaster";
 import { LanguagePopover } from "@/modules/translation/ui/language-popover";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { Brand } from "@/shared/ui/brand";
@@ -189,6 +190,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;
           })}
         </nav>
+        <AppToaster />
       </div>
     </div>
     </I18nProvider>

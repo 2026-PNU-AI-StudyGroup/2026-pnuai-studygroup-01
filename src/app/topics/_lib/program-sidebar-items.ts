@@ -1,5 +1,6 @@
 import type { ProgramSidebarItem } from "@/app/topics/_components/program-sidebar";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
+import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
 import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 
@@ -8,6 +9,29 @@ export type ProgramSidebarQuery = {
   phase?: PublicTopicPhase;
   sort?: PublicTopicSort;
 };
+
+function activeVotingEndsAt(program: ProjectProgramRecord | undefined, now: Date) {
+  if (!isProgramVotingOpen(program?.votingPolicy, now)) return undefined;
+  return program?.votingPolicy?.endsAt;
+}
+
+function visibleProgramSidebarItem(
+  program: ProjectProgramRecord,
+  query: ProgramSidebarQuery,
+  now: Date,
+): ProgramSidebarItem {
+  const status = program.status === "OPEN" ? "active" : "past";
+  return {
+    id: program.id,
+    name: program.name,
+    category: program.category,
+    icon: program.icon,
+    startYear: program.startYear,
+    status,
+    href: programHref(program.id, status, query),
+    votingEndsAt: activeVotingEndsAt(program, now),
+  };
+}
 
 function programHref(
   programId: string,
@@ -28,40 +52,27 @@ export function buildProgramSidebarItems(
   archivedPrograms: ArchivedProgramOption[],
   view: "active" | "past" = "active",
   query: ProgramSidebarQuery = {},
+  now = new Date(),
 ): ProgramSidebarItem[] {
   if (view === "past") {
     const archivedIds = new Set(archivedPrograms.map((program) => program.id));
+    const openProgramsById = new Map(openPrograms.map((program) => [program.id, program]));
     return [
       ...archivedPrograms.map((program) => ({
         ...program,
         status: "past" as const,
         href: programHref(program.id, "past", query),
+        votingEndsAt: activeVotingEndsAt(openProgramsById.get(program.id), now),
       })),
       ...openPrograms
         .filter((program) => !archivedIds.has(program.id))
-        .map((program) => ({
-          id: program.id,
-          name: program.name,
-          category: program.category,
-          icon: program.icon,
-          startYear: program.startYear,
-          status: "active" as const,
-          href: programHref(program.id, "active", query),
-        })),
+        .map((program) => visibleProgramSidebarItem(program, query, now)),
     ];
   }
 
   const activeIds = new Set(openPrograms.map((program) => program.id));
   return [
-    ...openPrograms.map((program) => ({
-      id: program.id,
-      name: program.name,
-      category: program.category,
-      icon: program.icon,
-      startYear: program.startYear,
-      status: "active" as const,
-      href: programHref(program.id, "active", query),
-    })),
+    ...openPrograms.map((program) => visibleProgramSidebarItem(program, query, now)),
     ...archivedPrograms
       .filter((program) => !activeIds.has(program.id))
       .map((program) => ({

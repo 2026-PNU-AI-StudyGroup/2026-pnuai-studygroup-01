@@ -26,14 +26,7 @@
   aspect-ratio: 640 / 433;
   overflow: hidden;
   border-bottom: 1px solid rgb(255 255 255 / 0.5);
-  background: var(--cover-base);
-}
-
-.cover::before,
-.cover::after {
-  position: absolute;
-  content: "";
-  pointer-events: none;
+  background: #f1f3f5;
 }
 
 .coverImage {
@@ -96,70 +89,6 @@
   line-height: 1.35;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-}
-
-.cover::before {
-  inset: -30%;
-  z-index: -2;
-  background: var(--cover-shape);
-  transform: rotate(-7deg);
-}
-
-.cover::after {
-  inset: 0;
-  z-index: -1;
-  background:
-    linear-gradient(115deg, rgb(255 255 255 / 0.28), transparent 42%),
-    radial-gradient(circle at 82% 18%, rgb(255 255 255 / 0.68) 0 5%, transparent 5.4%),
-    radial-gradient(circle at 76% 24%, rgb(255 255 255 / 0.34) 0 10%, transparent 10.4%);
-}
-
-.cover0 {
-  --cover-base: #dce7ff;
-  --cover-shape:
-    radial-gradient(ellipse at 22% 70%, #4c78ed 0 20%, transparent 20.5%),
-    radial-gradient(ellipse at 62% 42%, #92b0ff 0 27%, transparent 27.5%),
-    linear-gradient(135deg, transparent 38%, #bed0ff 38% 61%, transparent 61%);
-}
-
-.cover1 {
-  --cover-base: #f2e4ff;
-  --cover-shape:
-    radial-gradient(circle at 25% 35%, #a979e8 0 18%, transparent 18.5%),
-    radial-gradient(ellipse at 72% 68%, #d2b5f7 0 30%, transparent 30.5%),
-    linear-gradient(40deg, transparent 33%, #8e6bd4 33% 48%, transparent 48%);
-}
-
-.cover2 {
-  --cover-base: #d9f3ed;
-  --cover-shape:
-    radial-gradient(ellipse at 28% 72%, #55b9a5 0 24%, transparent 24.5%),
-    radial-gradient(circle at 72% 30%, #9cdbca 0 24%, transparent 24.5%),
-    linear-gradient(150deg, transparent 42%, #d7ab54 42% 55%, transparent 55%);
-}
-
-.cover3 {
-  --cover-base: #fff0d8;
-  --cover-shape:
-    radial-gradient(circle at 24% 32%, #e9a94d 0 18%, transparent 18.5%),
-    radial-gradient(ellipse at 74% 66%, #f5cd88 0 28%, transparent 28.5%),
-    linear-gradient(135deg, transparent 36%, #df7b5b 36% 50%, transparent 50%);
-}
-
-.cover4 {
-  --cover-base: #dfeaf5;
-  --cover-shape:
-    radial-gradient(ellipse at 25% 64%, #527caa 0 22%, transparent 22.5%),
-    radial-gradient(circle at 70% 30%, #a9c4de 0 27%, transparent 27.5%),
-    linear-gradient(38deg, transparent 36%, #7696b6 36% 53%, transparent 53%);
-}
-
-.cover5 {
-  --cover-base: #f7dfe2;
-  --cover-shape:
-    radial-gradient(circle at 24% 68%, #d96f82 0 20%, transparent 20.5%),
-    radial-gradient(ellipse at 70% 34%, #efaeb7 0 29%, transparent 29.5%),
-    linear-gradient(145deg, transparent 41%, #7f72c8 41% 54%, transparent 54%);
 }
 
 .body {

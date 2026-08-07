@@ -3,6 +3,7 @@ import type { ProgramIconKey } from "@/modules/project-program/domain/program-ic
 
 export type ArchivedProject = {
   id: string;
+  topicId: string;
   startYear: number;
   teamName: string;
   programId: string;
