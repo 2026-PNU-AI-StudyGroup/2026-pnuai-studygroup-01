@@ -13,6 +13,10 @@ import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const authEnvironment = parseAuthEnvironment(process.env);
+const developmentMockAuthEnabled = isDevelopmentMockAuthEnabled({
+  nodeEnv: authEnvironment.NODE_ENV,
+  explicitlyEnabled: authEnvironment.ENABLE_DEVELOPMENT_MOCK_AUTH,
+});
 
 async function reconcileProfessorRole(userId: string): Promise<void> {
   await prisma.$transaction(async (transaction) => {
@@ -107,18 +111,17 @@ export const auth = betterAuth({
       },
     },
   },
-  socialProviders: {
-    google: {
-      clientId: authEnvironment.GOOGLE_CLIENT_ID,
-      clientSecret: authEnvironment.GOOGLE_CLIENT_SECRET,
-      hd: "pusan.ac.kr",
-      prompt: "select_account",
-    },
-  },
-  plugins: isDevelopmentMockAuthEnabled({
-    nodeEnv: authEnvironment.NODE_ENV,
-    explicitlyEnabled: authEnvironment.ENABLE_DEVELOPMENT_MOCK_AUTH,
-  }) ? [testUtils()] : [],
+  socialProviders: developmentMockAuthEnabled
+    ? {}
+    : {
+        google: {
+          clientId: authEnvironment.GOOGLE_CLIENT_ID!,
+          clientSecret: authEnvironment.GOOGLE_CLIENT_SECRET!,
+          hd: "pusan.ac.kr",
+          prompt: "select_account",
+        },
+      },
+  plugins: developmentMockAuthEnabled ? [testUtils()] : [],
   databaseHooks: {
     user: {
       create: {

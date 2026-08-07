@@ -7,11 +7,21 @@ const authEnvironmentSchema = z.object({
     (value) => !/replace|change.?me|example|0123456789/i.test(value),
     "공개된 예시 값이 아닌 무작위 인증 비밀키가 필요합니다.",
   ),
-  GOOGLE_CLIENT_ID: z.string().min(1),
-  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   ENABLE_DEVELOPMENT_MOCK_AUTH: z.enum(["true", "false"]).optional(),
   DEVELOPMENT_MOCK_AUTH_HOSTS: z.string().optional(),
 }).superRefine((value, context) => {
+  const mockAuthEnabled = value.NODE_ENV === "development"
+    || value.ENABLE_DEVELOPMENT_MOCK_AUTH === "true";
+  if (!mockAuthEnabled) {
+    if (!value.GOOGLE_CLIENT_ID) {
+      context.addIssue({ code: "custom", path: ["GOOGLE_CLIENT_ID"], message: "Google OAuth 클라이언트 ID가 필요합니다." });
+    }
+    if (!value.GOOGLE_CLIENT_SECRET) {
+      context.addIssue({ code: "custom", path: ["GOOGLE_CLIENT_SECRET"], message: "Google OAuth 클라이언트 비밀키가 필요합니다." });
+    }
+  }
   if (value.NODE_ENV === "production" && !value.BETTER_AUTH_URL.startsWith("https://")) {
     context.addIssue({ code: "custom", path: ["BETTER_AUTH_URL"], message: "운영 환경 인증 URL은 HTTPS여야 합니다." });
   }

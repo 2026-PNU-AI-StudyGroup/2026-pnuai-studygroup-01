@@ -46,4 +46,21 @@ describe("auth environment", () => {
       DEVELOPMENT_MOCK_AUTH_HOSTS: "pnu-pms.jun0.dev",
     }).DEVELOPMENT_MOCK_AUTH_HOSTS).toBe("pnu-pms.jun0.dev");
   });
+
+  it("명시적으로 목 인증을 허용한 배포에서는 Google OAuth 설정을 요구하지 않는다", () => {
+    expect(parseAuthEnvironment({
+      NODE_ENV: "production",
+      BETTER_AUTH_URL: "https://pnu-pms.jun0.dev",
+      BETTER_AUTH_SECRET: validEnvironment.BETTER_AUTH_SECRET,
+      ENABLE_DEVELOPMENT_MOCK_AUTH: "true",
+      DEVELOPMENT_MOCK_AUTH_HOSTS: "pnu-pms.jun0.dev",
+    }).GOOGLE_CLIENT_ID).toBeUndefined();
+  });
+
+  it("목 인증을 사용하지 않는 배포에서는 Google OAuth 설정을 요구한다", () => {
+    expect(() => parseAuthEnvironment({
+      BETTER_AUTH_URL: validEnvironment.BETTER_AUTH_URL,
+      BETTER_AUTH_SECRET: validEnvironment.BETTER_AUTH_SECRET,
+    })).toThrow();
+  });
 });

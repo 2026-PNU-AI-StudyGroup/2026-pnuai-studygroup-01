@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { authClient } from "@/modules/identity/infrastructure/auth-client";
 
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ disabled = false }: { disabled?: boolean }) {
   const [errorMessage, setErrorMessage] = useState<string>();
   const [isPending, setIsPending] = useState(false);
 
@@ -29,8 +29,8 @@ export function GoogleSignInButton() {
       <button
         type="button"
         onClick={signIn}
-        disabled={isPending}
-        className="button-primary w-full"
+        disabled={disabled || isPending}
+        className={disabled ? "button-secondary w-full cursor-not-allowed opacity-60" : "button-primary w-full"}
       >
         <UiText>{isPending ? "Google로 이동 중" : "부산대학교 Google 계정으로 로그인"}</UiText>
       </button>

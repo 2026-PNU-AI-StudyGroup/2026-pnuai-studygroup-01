@@ -52,7 +52,7 @@ export default async function Home({
             <section aria-labelledby="sign-in-title" className="w-full max-w-[31rem] border-t-4 border-[var(--primary)] bg-white p-6 sm:p-9">
               <h1 id="sign-in-title" className="text-3xl font-bold tracking-[-0.05em]"><UiText>{"로그인"}</UiText></h1>
               <div className="mt-7 border-y border-[var(--line)] py-6">
-                <GoogleSignInButton />
+                <GoogleSignInButton disabled={showDevelopmentLogin} />
               </div>
               <p className="mt-5 text-sm leading-6 text-[var(--muted)]">
                 <strong className="font-semibold text-[var(--ink)]">@pusan.ac.kr</strong> {" "}<UiText>{"계정만 사용할 수 있습니다."}</UiText>

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getCurrentActorMock, redirectMock } = vi.hoisted(() => ({
   getCurrentActorMock: vi.fn(),
@@ -18,6 +18,8 @@ describe("Home", () => {
     getCurrentActorMock.mockReset();
     redirectMock.mockReset();
   });
+
+  afterEach(() => vi.unstubAllEnvs());
 
   it("비로그인 사용자에게 단순한 통합 로그인 화면을 제공한다", async () => {
     getCurrentActorMock.mockResolvedValue(null);
@@ -39,5 +41,15 @@ describe("Home", () => {
     await Home({});
 
     expect(redirectMock).toHaveBeenCalledWith("/topics");
+  });
+
+  it("명시적으로 허용한 목 인증 배포에서는 Google 로그인을 비활성화한다", async () => {
+    vi.stubEnv("ENABLE_DEVELOPMENT_MOCK_AUTH", "true");
+    getCurrentActorMock.mockResolvedValue(null);
+
+    render(await Home({}));
+
+    expect(screen.getByRole("button", { name: "부산대학교 Google 계정으로 로그인" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /학생 화면 열기/ })).toBeInTheDocument();
   });
 });
