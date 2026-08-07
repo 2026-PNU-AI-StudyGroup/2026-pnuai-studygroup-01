@@ -896,6 +896,8 @@
   "제출 기한이 지났습니다. 새 버전 제출 일정은 지도교수에게 확인해 주세요.": "The submission deadline has passed. Ask your advisor about the schedule for a new version.",
   "제출 기한이 지났습니다. 새 버전 제출 일정은 프로젝트 관리자에게 확인해 주세요.": "The submission deadline has passed. Ask the project manager about the schedule for a new version.",
   "제출 내역 확인": "View submission details",
+  "다운로드할 제출물이 없습니다.": "There are no submissions to download.",
+  "제출물 전체 다운로드": "Download all submissions",
   "제출 보고서": "Start Submissions",
   "제출 시작": "Submissions History",
   "제출 영역 보기": "View submission section",

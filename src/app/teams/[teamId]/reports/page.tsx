@@ -634,7 +634,15 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
             <div>
               <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 제출 현황"}</UiText></h2>
             </div>
-            <div className="flex flex-wrap gap-2 text-sm font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-bold">
+              {submittedCount > 0 ? (
+                <a
+                  href={`/api/teams/${workspace.id}/submissions`}
+                  className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--primary-hover)] transition-colors hover:bg-[var(--surface-subtle)]"
+                >
+                  <UiText>{"제출물 전체 다운로드"}</UiText>
+                </a>
+              ) : null}
               <span className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--ink)]">
                 <UiText>{"제출"}</UiText>{" "}{submittedCount}/{reportWorkspace.reports.length}
               </span>
