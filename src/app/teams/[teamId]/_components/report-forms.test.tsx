@@ -190,8 +190,8 @@ describe("보고서 요구사항 화면", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog.querySelector('input[name="type"]')).toHaveValue("START");
     expect(screen.getByRole("combobox", { name: "제출 보고서" })).toHaveTextContent("착수 보고서");
-    expect(screen.getByLabelText("제출 기한")).toHaveAttribute("min", "2026-08-01T00:00");
-    expect(screen.getByLabelText("제출 기한")).toHaveAttribute("max", "2026-12-15T23:59");
+    expect(dialog.querySelector('input[name="dueAt"]')).toHaveAttribute("min", "2026-08-01T00:00");
+    expect(dialog.querySelector('input[name="dueAt"]')).toHaveAttribute("max", "2026-12-15T23:59");
   });
 
   it("일정 삭제 중 상태 충돌이 생기면 수동 안내 대신 최신 데이터를 즉시 요청한다", async () => {

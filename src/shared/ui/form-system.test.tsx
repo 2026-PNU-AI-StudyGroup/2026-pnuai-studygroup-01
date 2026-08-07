@@ -71,8 +71,9 @@ describe("form-system controls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
     expect(screen.getByLabelText("시간")).toHaveValue("13:20");
+    fireEvent.change(screen.getByLabelText("시간"), { target: { value: "15:45" } });
     fireEvent.click(screen.getByRole("gridcell", { name: "2026년 8월 8일" }));
 
-    expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-08T13:20");
+    expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-08T15:45");
   });
 });

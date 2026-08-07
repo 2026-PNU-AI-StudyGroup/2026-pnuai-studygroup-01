@@ -23,8 +23,10 @@ describe("ProgramForm", () => {
     render(<ProgramForm />);
 
     expect(screen.queryByRole("combobox", { name: "학기" })).not.toBeInTheDocument();
-    expect(screen.getByLabelText("운영 시작")).toBeRequired();
-    expect(screen.getByLabelText("운영 종료")).toBeRequired();
+    expect(document.querySelector('input[name="startsAt"]')).toBeRequired();
+    expect(document.querySelector('input[name="endsAt"]')).toBeRequired();
+    expect(screen.getByRole("button", { name: "운영 시작" })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByRole("button", { name: "운영 종료" })).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByRole("button", { name: "초안 등록" })).toBeEnabled();
   });
 

@@ -56,7 +56,7 @@ export function DateTimeInput({
 }: DateTimeInputProps) {
   const { locale, t } = useI18n();
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
-  const [draftTime, setDraftTime] = useState(() => getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
+  const [timeInputValue, setTimeInputValue] = useState(() => getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
   const [open, setOpen] = useState(false);
   const [invalid, setInvalid] = useState(false);
   const [portalHost, setPortalHost] = useState<Element | null>(null);
@@ -66,12 +66,13 @@ export function DateTimeInput({
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const proxyRef = useRef<HTMLInputElement>(null);
+  const draftTimeRef = useRef(getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
   const dayRefs = useRef(new Map<string, HTMLButtonElement>());
   const calendarId = useId();
   const value = controlledValue ?? uncontrolledValue;
   const selectedDate = parseDateValue(value, type);
   const visibleDays = calendarDays(visibleMonth);
-  const floatingStyle = useFloatingCalendar(rootRef, open);
+  const floatingStyle = useFloatingCalendar(rootRef, open, type);
   const hasValue = Boolean(selectedDate);
   const showInvalid = invalid && Boolean(required && !disabled && !hasValue);
 
@@ -108,7 +109,9 @@ export function DateTimeInput({
   function openCalendar() {
     const date = selectedDate ?? today();
     setVisibleMonth(monthStart(date));
-    setDraftTime(getTime(value) ?? DEFAULT_TIME);
+    const nextDraftTime = getTime(value) ?? DEFAULT_TIME;
+    draftTimeRef.current = nextDraftTime;
+    setTimeInputValue(nextDraftTime);
     setPortalHost(getPortalHost(triggerRef.current));
     setOpen(true);
   }
@@ -116,7 +119,11 @@ export function DateTimeInput({
   function commit(nextValue: string) {
     if (nextValue === value) return;
     if (controlledValue === undefined) setUncontrolledValue(nextValue);
-    if (type === "datetime-local") setDraftTime(getTime(nextValue) ?? DEFAULT_TIME);
+    if (type === "datetime-local") {
+      const nextDraftTime = getTime(nextValue) ?? DEFAULT_TIME;
+      draftTimeRef.current = nextDraftTime;
+      setTimeInputValue(nextDraftTime);
+    }
     setInvalid(false);
 
     const proxy = proxyRef.current;
@@ -129,9 +136,9 @@ export function DateTimeInput({
 
   function selectDate(date: CalendarDate) {
     if (!isDateAllowed(date, min, max)) return;
-    const preservedValue = composeValue(date, draftTime, type);
+    const preservedValue = composeValue(date, draftTimeRef.current, type);
     const time = isValueAllowed(preservedValue, min, max)
-      ? draftTime
+      ? draftTimeRef.current
       : boundaryTime(date, min, max) ?? DEFAULT_TIME;
     const nextValue = composeValue(date, time, type);
     if (isValueAllowed(nextValue, min, max)) commit(nextValue);
@@ -139,8 +146,10 @@ export function DateTimeInput({
   }
 
   function changeTime(nextTime: string) {
-    const next = nextTime || DEFAULT_TIME;
-    setDraftTime(next);
+    setTimeInputValue(nextTime);
+    if (!isValidTime(nextTime)) return;
+    const next = nextTime;
+    draftTimeRef.current = next;
     if (!selectedDate) return;
     const nextValue = composeValue(selectedDate, next, type);
     if (isValueAllowed(nextValue, min, max)) commit(nextValue);
@@ -188,8 +197,11 @@ export function DateTimeInput({
         form={form}
         type="text"
         value={value}
+        min={min}
+        max={max}
         required={required}
         disabled={disabled}
+        readOnly
         tabIndex={-1}
         aria-hidden="true"
         className="date-time-input__validation-proxy"
@@ -207,7 +219,7 @@ export function DateTimeInput({
         ref={triggerRef}
         type="button"
         className={`date-time-input__trigger ${className}`}
-        aria-label={inputLabel}
+        aria-label={ariaLabel}
         aria-describedby={ariaDescribedBy}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -237,6 +249,7 @@ export function DateTimeInput({
           id={calendarId}
           role="dialog"
           aria-label={inputLabel}
+          data-type={type}
           className="date-time-input__calendar"
           style={floatingStyle}
           onKeyDown={(event) => {
@@ -284,12 +297,15 @@ export function DateTimeInput({
             <label className="date-time-input__time-field">
               <span>{t("시간")}</span>
               <input
-                type="time"
-                value={draftTime}
-                step="60"
-                min={timeBoundary(min, selectedDate ?? today())?.min}
-                max={timeBoundary(max, selectedDate ?? today())?.max}
+                type="text"
+                value={timeInputValue}
+                inputMode="numeric"
+                maxLength={5}
+                pattern="[0-2][0-9]:[0-5][0-9]"
+                placeholder="09:00"
+                aria-invalid={!isValidTime(timeInputValue) || undefined}
                 onChange={(event) => changeTime(event.target.value)}
+                onBlur={() => setTimeInputValue(draftTimeRef.current)}
               />
             </label>
           ) : null}
@@ -317,6 +333,11 @@ function parseDateValue(value: string | undefined, type: "date" | "datetime-loca
 function getTime(value: string) {
   const match = /T(\d{2}):(\d{2})$/.exec(value);
   return match ? `${match[1]}:${match[2]}` : undefined;
+}
+
+function isValidTime(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  return Boolean(match && Number(match[1]) <= 23 && Number(match[2]) <= 59);
 }
 
 function composeValue(date: CalendarDate, time: string, type: "date" | "datetime-local") {
@@ -398,12 +419,6 @@ function boundaryTime(date: CalendarDate, min: string | number | undefined, max:
   return undefined;
 }
 
-function timeBoundary(boundary: string | number | undefined, date: CalendarDate) {
-  if (typeof boundary !== "string" || boundary.slice(0, 10) !== dateKey(date)) return undefined;
-  const time = getTime(boundary);
-  return time ? { min: time, max: time } : undefined;
-}
-
 function firstAllowedDate(days: Array<CalendarDate | undefined>, min: string | number | undefined, max: string | number | undefined) {
   return days.find((date): date is CalendarDate => Boolean(date && isDateAllowed(date, min, max)));
 }
@@ -431,7 +446,11 @@ function getPortalHost(trigger: HTMLButtonElement | null): Element {
   return trigger?.closest("dialog") ?? document.body;
 }
 
-function useFloatingCalendar(rootRef: RefObject<HTMLDivElement | null>, open: boolean): CSSProperties {
+function useFloatingCalendar(
+  rootRef: RefObject<HTMLDivElement | null>,
+  open: boolean,
+  type: "date" | "datetime-local",
+): CSSProperties {
   const [style, setStyle] = useState<CSSProperties>({});
 
   useLayoutEffect(() => {
@@ -440,10 +459,11 @@ function useFloatingCalendar(rootRef: RefObject<HTMLDivElement | null>, open: bo
       const rect = rootRef.current?.getBoundingClientRect();
       if (!rect) return;
       const gutter = 8;
-      const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, 320));
+      const minimumWidth = type === "datetime-local" && window.innerWidth >= 480 ? 440 : 320;
+      const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, minimumWidth));
       const availableBelow = window.innerHeight - rect.bottom - gutter;
       const availableAbove = rect.top - gutter;
-      const desiredHeight = 450;
+      const desiredHeight = type === "datetime-local" && window.innerWidth >= 480 ? 320 : 450;
       const openAbove = availableBelow < desiredHeight && availableAbove > availableBelow;
       const maxHeight = Math.max(180, openAbove ? availableAbove : availableBelow);
       setStyle({
@@ -460,7 +480,7 @@ function useFloatingCalendar(rootRef: RefObject<HTMLDivElement | null>, open: bo
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, rootRef]);
+  }, [open, rootRef, type]);
 
   return style;
 }

@@ -73,14 +73,14 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(screen.getByLabelText("참고 링크 (선택)")).toHaveAttribute("type", "url");
     expect(screen.getByLabelText("참고 링크 (선택)")).not.toBeRequired();
 
-    const preferredAt = screen.getByLabelText("희망 일시");
+    const preferredAt = container.querySelector('input[name="preferredAt"]');
     expect(preferredAt).toBeRequired();
     expect(preferredAt).toHaveAttribute("min", "2026-08-03T14:00");
     expect(preferredAt).toHaveAttribute("max", "2026-12-15T23:59");
 
     fireEvent.click(screen.getByRole("radio", { name: /검토 요청/ }));
 
-    expect(screen.queryByLabelText("희망 일시")).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="preferredAt"]')).not.toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /검토 요청/ })).toBeChecked();
   });
 
@@ -95,7 +95,11 @@ describe("프로젝트 지도 요청 폼", () => {
     fireEvent.change(screen.getByLabelText("제목"), { target: { value: "중간 점검 회의" } });
     fireEvent.change(screen.getByLabelText("요청 내용"), { target: { value: "구현 현황을 함께 점검하고 싶습니다." } });
     fireEvent.change(screen.getByLabelText("참고 링크 (선택)"), { target: { value: "https://example.com/progress" } });
-    fireEvent.change(screen.getByLabelText("희망 일시"), { target: { value: "2026-08-10T14:00" } });
+    fireEvent.click(screen.getByRole("button", { name: "희망 일시" }));
+    fireEvent.change(screen.getByLabelText("시간"), { target: { value: "14:00" } });
+    fireEvent.click(screen.getByRole("button", { name: "오늘" }));
+    const preferredAt = container.querySelector<HTMLInputElement>('input[name="preferredAt"]')!.value;
+    expect(preferredAt).toMatch(/T14:00$/);
     fireEvent.submit(screen.getByLabelText("제목").closest("form")!);
 
     await waitFor(() => expect(createRequest).toHaveBeenCalledTimes(1));
@@ -103,7 +107,7 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(formData.get("teamId")).toBe(teamId);
     expect(formData.get("kind")).toBe("MEETING");
     expect(formData.get("title")).toBe("중간 점검 회의");
-    expect(formData.get("preferredAt")).toBe("2026-08-10T14:00");
+    expect(formData.get("preferredAt")).toBe(preferredAt);
     expect(await screen.findByRole("status")).toHaveTextContent("요청을 보냈습니다.");
     expect(container.querySelector('input[name="referenceUrl"]')).toHaveValue("");
     expect(container.querySelector("dialog")).not.toHaveAttribute("open");
@@ -126,11 +130,11 @@ describe("프로젝트 지도 요청 폼", () => {
     expect(screen.getByLabelText("답변")).toHaveAttribute("minlength", "2");
     expect(screen.getByLabelText("답변")).toHaveAttribute("maxlength", "2000");
     expect(screen.getByLabelText("답변")).toBeRequired();
-    expect(screen.getByLabelText("확정 일시 (선택)")).toHaveAttribute("name", "scheduledAt");
-    expect(screen.getByLabelText("확정 일시 (선택)")).not.toBeRequired();
+    expect(container.querySelector('input[name="scheduledAt"]')).not.toBeRequired();
+    expect(screen.getByRole("button", { name: "확정 일시 (선택)" })).toHaveAttribute("aria-haspopup", "dialog");
 
     rerender(<ProjectGuidanceResponseForm teamId={teamId} requestId={requestId} kind="REVIEW" executionEndsAt={executionEndsAt} />);
-    expect(screen.queryByLabelText("확정 일시 (선택)")).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="scheduledAt"]')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("답변"), { target: { value: "확인했습니다." } });
     fireEvent.submit(screen.getByLabelText("답변").closest("form")!);

@@ -1053,6 +1053,11 @@ body {
     box-shadow: 0 0 0 3px var(--focus-halo);
   }
 
+  .date-time-input__time-field input[aria-invalid="true"] {
+    border-color: var(--danger);
+    background: var(--danger-subtle);
+  }
+
   .date-time-input__calendar-footer {
     display: flex;
     justify-content: space-between;
@@ -1074,6 +1079,39 @@ body {
   .date-time-input__calendar-footer button:hover,
   .date-time-input__calendar-footer button:focus-visible {
     background: var(--primary-subtle);
+  }
+
+  @media (min-width: 480px) {
+    .date-time-input__calendar[data-type="datetime-local"] {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 7rem;
+      column-gap: 0.75rem;
+    }
+
+    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__calendar-header,
+    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__weekdays,
+    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__days {
+      grid-column: 1;
+    }
+
+    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__time-field {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      grid-template-columns: minmax(0, 1fr);
+      align-self: start;
+      gap: 0.375rem;
+      margin-top: 0;
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__calendar-footer {
+      grid-column: 2;
+      grid-row: 3;
+      align-self: end;
+      margin-top: 0;
+      padding-top: 0;
+    }
   }
 
   input[type="number"].form-control,
