@@ -26,7 +26,7 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
 
 FROM dependencies AS demo-seeder
 COPY . .
-RUN npx prisma generate
+RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build npx prisma generate
 CMD ["npm", "run", "db:seed-demo"]
 
 FROM base AS runner
