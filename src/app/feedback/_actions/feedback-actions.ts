@@ -95,13 +95,21 @@ export async function toggleFeedbackResolvedAction(
   if (!parsedId.success || !parsedName.success) {
     return { status: "error", message: "개발자 이름을 입력해야 상태를 바꿀 수 있습니다." };
   }
+  const noteRaw = formData.get("note");
+  const note = typeof noteRaw === "string" && noteRaw.trim() ? noteRaw.trim().slice(0, FEEDBACK_LIMITS.comment) : null;
+  const nextStatus = resolve ? "RESOLVED" : "OPEN";
 
-  await prisma.feedbackPost.update({
-    where: { id: parsedId.data },
-    data: resolve
-      ? { status: "RESOLVED", resolvedAt: new Date(), resolvedByName: parsedName.data }
-      : { status: "OPEN", resolvedAt: null, resolvedByName: null },
-  });
+  await prisma.$transaction([
+    prisma.feedbackPost.update({
+      where: { id: parsedId.data },
+      data: resolve
+        ? { status: "RESOLVED", resolvedAt: new Date(), resolvedByName: parsedName.data }
+        : { status: "OPEN", resolvedAt: null, resolvedByName: null },
+    }),
+    prisma.feedbackStatusChange.create({
+      data: { postId: parsedId.data, status: nextStatus, changedByName: parsedName.data, note },
+    }),
+  ]);
   revalidatePath("/feedback");
   return {
     status: "success",

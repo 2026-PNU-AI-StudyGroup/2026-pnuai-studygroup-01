@@ -19,7 +19,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FeedbackPage() {
   const posts = await prisma.feedbackPost.findMany({
     orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
-    include: { comments: { orderBy: { createdAt: "asc" } } },
+    include: {
+      comments: { orderBy: { createdAt: "asc" } },
+      statusChanges: { orderBy: { createdAt: "asc" } },
+    },
     take: 200,
   });
 

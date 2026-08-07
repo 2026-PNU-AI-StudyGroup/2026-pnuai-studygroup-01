@@ -1147,9 +1147,23 @@ model FeedbackPost {
   resolvedByName String?
   createdAt      DateTime             @default(now())
   comments       FeedbackComment[]
+  statusChanges  FeedbackStatusChange[]
 
   @@index([status, priority, createdAt])
   @@map("feedback_post")
+}
+
+model FeedbackStatusChange {
+  id            String         @id @default(uuid())
+  postId        String
+  status        FeedbackStatus
+  changedByName String
+  note          String?
+  createdAt     DateTime       @default(now())
+  post          FeedbackPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("feedback_status_change")
 }
 
 model FeedbackComment {
