@@ -24,6 +24,11 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     OLLAMA_MODEL=qwen3.5:2b \
     npm run build
 
+FROM dependencies AS demo-seeder
+COPY . .
+RUN npx prisma generate
+CMD ["npm", "run", "db:seed-demo"]
+
 FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000

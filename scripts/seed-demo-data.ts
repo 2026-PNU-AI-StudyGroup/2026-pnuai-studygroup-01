@@ -14,15 +14,20 @@ import { opusArchivedProjects } from "./opus-project-catalog";
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL 환경변수가 필요합니다.");
 if (process.env.ALLOW_LOCAL_DEMO_SEED !== "true") {
-  throw new Error("ALLOW_LOCAL_DEMO_SEED=true인 로컬 환경에서만 실행할 수 있습니다.");
+  throw new Error("ALLOW_LOCAL_DEMO_SEED=true으로 명시적으로 허용한 환경에서만 실행할 수 있습니다.");
 }
 const databaseUrl = new URL(connectionString);
-if (!["127.0.0.1", "localhost"].includes(databaseUrl.hostname)) {
-  throw new Error("데모 데이터는 로컬 PostgreSQL에만 생성할 수 있습니다.");
-}
 const s3Endpoint = process.env.S3_ENDPOINT;
-if (!s3Endpoint || !["127.0.0.1", "localhost"].includes(new URL(s3Endpoint).hostname)) {
-  throw new Error("데모 결과물은 로컬 S3 호환 저장소에만 생성할 수 있습니다.");
+if (!s3Endpoint) throw new Error("S3_ENDPOINT 환경변수가 필요합니다.");
+
+const localHosts = ["127.0.0.1", "localhost"];
+const isLocalSeed = localHosts.includes(databaseUrl.hostname)
+  && localHosts.includes(new URL(s3Endpoint).hostname);
+const isDevelopmentComposeSeed = process.env.ENABLE_DEVELOPMENT_MOCK_AUTH === "true"
+  && databaseUrl.hostname === "postgres"
+  && new URL(s3Endpoint).hostname === "minio";
+if (!isLocalSeed && !isDevelopmentComposeSeed) {
+  throw new Error("데모 데이터는 로컬 환경 또는 목 인증 Compose 배포에서만 생성할 수 있습니다.");
 }
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
