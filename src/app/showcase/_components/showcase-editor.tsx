@@ -8,6 +8,7 @@ import {
   publishShowcaseAction,
   removeShowcaseImageAction,
   saveShowcaseAction,
+  setShowcaseAwardAction,
   setShowcaseCoverAction,
 } from "@/app/showcase/_actions/showcase-actions";
 import { uploadShowcaseImage, ShowcaseImageUploadError } from "@/app/showcase/_lib/showcase-image-upload";
@@ -25,6 +26,9 @@ export type ShowcaseEditorData = {
   demoUrl: string | null;
   isPublished: boolean;
   images: ShowcaseEditorImage[];
+  isAdmin: boolean;
+  awardName: string | null;
+  awardColor: string | null;
 };
 
 function Notice({ status, message }: { status: string; message: string }) {
@@ -135,7 +139,38 @@ export function ShowcaseEditor({ data }: { data: ShowcaseEditorData }) {
 
       {/* 공개 */}
       <PublishControl teamId={teamId} isPublished={data.isPublished} />
+
+      {/* 시상 (관리자) */}
+      {data.isAdmin ? <AwardControl teamId={teamId} awardName={data.awardName} awardColor={data.awardColor} /> : null}
     </div>
+  );
+}
+
+function AwardControl({ teamId, awardName, awardColor }: { teamId: string; awardName: string | null; awardColor: string | null }) {
+  const [state, action, pending] = useActionState(setShowcaseAwardAction.bind(null, teamId), showcaseInitialState);
+  return (
+    <form action={action} className="panel grid gap-4 p-5 sm:p-7">
+      <div>
+        <h2 className="text-lg font-semibold text-[var(--ink)]"><UiText>{"시상 (관리자)"}</UiText></h2>
+        <p className="muted mt-1 text-sm"><UiText>{"수상명을 입력하면 갤러리·상세에 뱃지로 표시됩니다. 비우면 제거됩니다."}</UiText></p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="grid gap-2">
+          <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{"수상명"}</UiText></span>
+          <UiInput className="form-control bg-white" name="awardName" type="text" maxLength={40} defaultValue={awardName ?? ""} placeholder="예: 대상" />
+        </label>
+        <label className="grid gap-2">
+          <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{"뱃지 색"}</UiText></span>
+          <input className="form-control h-11 w-20 bg-white" name="awardColor" type="color" defaultValue={awardColor ?? "#2F5BEA"} />
+        </label>
+      </div>
+      <div className="flex items-center gap-3">
+        <button className="button-secondary" type="submit" disabled={pending}>
+          <UiText>{"시상 저장"}</UiText>
+        </button>
+        <Notice status={state.status} message={state.message} />
+      </div>
+    </form>
   );
 }
 

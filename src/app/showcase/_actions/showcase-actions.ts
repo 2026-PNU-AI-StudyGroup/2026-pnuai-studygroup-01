@@ -188,3 +188,94 @@ export async function publishShowcaseAction(
     message: publish ? "쇼케이스를 공개했습니다." : "공개를 해제했습니다.",
   };
 }
+
+async function publishedShowcaseId(teamId: string): Promise<string | null> {
+  const showcase = await prisma.projectShowcase.findUnique({
+    where: { teamId },
+    select: { id: true, isPublished: true },
+  });
+  return showcase?.isPublished ? showcase.id : null;
+}
+
+export async function toggleShowcaseLikeAction(
+  teamId: string,
+  _previous: ShowcaseActionState,
+  _formData: FormData,
+): Promise<ShowcaseActionState> {
+  void _formData;
+  const actor = await getCurrentActor();
+  if (!actor) return { status: "error", message: "로그인이 필요합니다." };
+  const showcaseId = await publishedShowcaseId(teamId);
+  if (!showcaseId) return { status: "error", message: "공개된 프로젝트가 아닙니다." };
+
+  const existing = await prisma.showcaseLike.findUnique({
+    where: { showcaseId_userId: { showcaseId, userId: actor.id } },
+    select: { id: true },
+  });
+  if (existing) await prisma.showcaseLike.delete({ where: { id: existing.id } });
+  else await prisma.showcaseLike.create({ data: { showcaseId, userId: actor.id } });
+
+  revalidateShowcase(teamId);
+  return { status: "success", message: "" };
+}
+
+export async function addShowcaseCommentAction(
+  teamId: string,
+  _previous: ShowcaseActionState,
+  formData: FormData,
+): Promise<ShowcaseActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) return { status: "error", message: "로그인이 필요합니다." };
+  const showcaseId = await publishedShowcaseId(teamId);
+  if (!showcaseId) return { status: "error", message: "공개된 프로젝트가 아닙니다." };
+  const body = String(formData.get("body") ?? "").trim();
+  if (!body || body.length > 1000) {
+    return { status: "error", message: "댓글은 1자 이상 1,000자 이내로 입력해 주세요." };
+  }
+  await prisma.showcaseComment.create({
+    data: { showcaseId, authorId: actor.id, authorName: actor.name, body },
+  });
+  revalidateShowcase(teamId);
+  return { status: "success", message: "댓글을 남겼습니다." };
+}
+
+export async function deleteShowcaseCommentAction(
+  commentId: string,
+  _previous: ShowcaseActionState,
+  _formData: FormData,
+): Promise<ShowcaseActionState> {
+  void _formData;
+  const actor = await getCurrentActor();
+  if (!actor) return { status: "error", message: "로그인이 필요합니다." };
+  const comment = await prisma.showcaseComment.findUnique({
+    where: { id: commentId },
+    select: { authorId: true, showcase: { select: { teamId: true } } },
+  });
+  if (!comment) return { status: "error", message: "댓글을 찾을 수 없습니다." };
+  if (comment.authorId !== actor.id && actor.role !== "ADMIN") {
+    return { status: "error", message: "댓글을 삭제할 권한이 없습니다." };
+  }
+  await prisma.showcaseComment.delete({ where: { id: commentId } });
+  revalidateShowcase(comment.showcase.teamId);
+  return { status: "success", message: "댓글을 삭제했습니다." };
+}
+
+export async function setShowcaseAwardAction(
+  teamId: string,
+  _previous: ShowcaseActionState,
+  formData: FormData,
+): Promise<ShowcaseActionState> {
+  const actor = await requireActor();
+  if (actor.role !== "ADMIN") {
+    return { status: "error", message: "시상은 관리자만 지정할 수 있습니다." };
+  }
+  const awardName = String(formData.get("awardName") ?? "").trim().slice(0, 40);
+  const awardColor = String(formData.get("awardColor") ?? "").trim();
+  const validColor = /^#[0-9a-fA-F]{6}$/.test(awardColor) ? awardColor : null;
+  await prisma.projectShowcase.update({
+    where: { teamId },
+    data: { awardName: awardName || null, awardColor: awardName ? validColor : null },
+  });
+  revalidateShowcase(teamId);
+  return { status: "success", message: awardName ? "시상 정보를 저장했습니다." : "시상 정보를 지웠습니다." };
+}

@@ -39,6 +39,8 @@ export default async function ShowcaseEditPage({ params }: { params: Promise<{ t
       youtubeUrl: true,
       demoUrl: true,
       isPublished: true,
+      awardName: true,
+      awardColor: true,
       images: { orderBy: { position: "asc" }, select: { id: true, isCover: true } },
     },
   });
@@ -51,6 +53,9 @@ export default async function ShowcaseEditPage({ params }: { params: Promise<{ t
     demoUrl: showcase?.demoUrl ?? null,
     isPublished: showcase?.isPublished ?? false,
     images: showcase?.images ?? [],
+    isAdmin: actor.role === "ADMIN",
+    awardName: showcase?.awardName ?? null,
+    awardColor: showcase?.awardColor ?? null,
   };
 
   return (
