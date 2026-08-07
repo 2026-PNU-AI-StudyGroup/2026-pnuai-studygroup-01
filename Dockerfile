@@ -24,9 +24,13 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     OLLAMA_MODEL=qwen3.5:2b \
     npm run build
 
-FROM dependencies AS demo-seeder
+FROM base AS demo-seeder
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev \
+    && npm install --omit=dev --no-save --package-lock=false prisma@7.8.0 tsx@4.23.1 \
+    && npm cache clean --force
 COPY . .
-RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build npx prisma generate
+RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build ./node_modules/.bin/prisma generate
 CMD ["npm", "run", "db:seed-demo"]
 
 FROM base AS runner
