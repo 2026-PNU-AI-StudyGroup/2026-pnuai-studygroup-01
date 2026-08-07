@@ -265,17 +265,25 @@ model User {
   @@map("user")
 }
 
+enum AnnouncementCategory {
+  GENERAL
+  HACKATHON
+  GRADUATION_PROJECT
+}
+
 model Announcement {
-  id        String   @id @default(uuid())
+  id        String               @id @default(uuid())
   authorId  String
   title     String
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
+  category  AnnouncementCategory @default(GENERAL)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  author    User                 @relation(fields: [authorId], references: [id])
 
   @@index([createdAt])
   @@index([authorId])
+  @@index([category, createdAt])
   @@map("announcement")
 }
 

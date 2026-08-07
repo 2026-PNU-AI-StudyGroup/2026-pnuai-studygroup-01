@@ -20,6 +20,7 @@ export type AnnouncementActionState = {
 const announcementSchema = z.object({
   title: z.string().trim().min(1).max(120),
   content: z.string().trim().min(1).max(20_000),
+  category: z.enum(["GENERAL", "HACKATHON", "GRADUATION_PROJECT"]).catch("GENERAL"),
 });
 const idSchema = z.string().uuid();
 
@@ -37,6 +38,7 @@ function parseAnnouncement(formData: FormData) {
   return announcementSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
+    category: formData.get("category") ?? undefined,
   });
 }
 

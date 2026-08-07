@@ -7,8 +7,19 @@ import {
   type AnnouncementActionState,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
+import {
+  ANNOUNCEMENT_CATEGORIES,
+  ANNOUNCEMENT_CATEGORY_LABELS,
+} from "@/app/announcements/_lib/announcement-categories";
+import type { AnnouncementCategory } from "@/modules/announcement/application/announcement-ports";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { CustomSelect } from "@/shared/ui/custom-select";
+
+const CATEGORY_OPTIONS = ANNOUNCEMENT_CATEGORIES.map((value) => ({
+  value,
+  label: ANNOUNCEMENT_CATEGORY_LABELS[value],
+}));
 
 const initialState: AnnouncementActionState = {
   status: "idle",
@@ -19,10 +30,12 @@ export function AnnouncementForm({
   announcementId,
   initialTitle = "",
   initialContent = "",
+  initialCategory = "GENERAL",
 }: {
   announcementId?: string;
   initialTitle?: string;
   initialContent?: string;
+  initialCategory?: AnnouncementCategory;
 }) {
   const action = announcementId
     ? updateAnnouncementAction.bind(null, announcementId)
@@ -33,6 +46,15 @@ export function AnnouncementForm({
   return (
     <form action={formAction} className="panel overflow-hidden">
       <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
+        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
+          <span><UiText>{"분류"}</UiText></span>
+          <CustomSelect
+            name="category"
+            ariaLabel="공지 분류"
+            options={CATEGORY_OPTIONS}
+            defaultValue={initialCategory}
+          />
+        </label>
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>
           <UiInput
