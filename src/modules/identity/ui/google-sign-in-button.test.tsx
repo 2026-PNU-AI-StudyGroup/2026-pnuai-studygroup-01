@@ -19,4 +19,12 @@ describe("Google 로그인 진입", () => {
       callbackURL: "/topics",
     }));
   });
+
+  it("비활성화된 경우 테스트 계정 안내를 표시한다", () => {
+    render(<GoogleSignInButton disabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "부산대학교 Google 계정으로 로그인" }));
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent("테스트 서버에서는 테스트 계정으로 로그인하세요.");
+  });
 });

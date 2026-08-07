@@ -49,7 +49,7 @@ describe("Home", () => {
 
     render(await Home({}));
 
-    expect(screen.getByRole("button", { name: "부산대학교 Google 계정으로 로그인" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "부산대학교 Google 계정으로 로그인" })).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByRole("button", { name: /학생 화면 열기/ })).toBeInTheDocument();
   });
 });
