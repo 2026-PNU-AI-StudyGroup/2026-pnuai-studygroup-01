@@ -116,13 +116,13 @@ export default async function AnnouncementsPage({
                   <li key={announcement.id}>
                     <Link
                       href={`/announcements/${announcement.id}`}
-                      className="record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6"
+                      className={`record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6 ${announcement.pinned ? "bg-[var(--surface-subtle)]" : ""}`}
                     >
                       <div className="min-w-0">
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
                           {announcement.pinned ? (
-                            <span className="inline-flex items-center rounded-full bg-[var(--primary)] px-2 py-0.5 text-[0.6875rem] font-bold text-white">
-                              <UiText>{"고정"}</UiText>
+                            <span className="inline-flex items-center text-[0.8125rem] leading-none">
+                              <span aria-hidden="true">📌</span><span className="sr-only"><UiText>{"고정"}</UiText></span>
                             </span>
                           ) : null}
                           {isRecentAnnouncement(announcement.createdAt) ? (

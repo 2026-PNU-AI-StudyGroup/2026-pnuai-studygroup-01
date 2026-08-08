@@ -3,11 +3,11 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
-import { ArtifactPoster } from "@/app/teams/[teamId]/_components/artifact-poster";
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { ArtifactPoster } from "@/shared/ui/artifact-poster";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,8 +37,8 @@ function ArtifactMedia({ type, title, fileId, externalUrl }: {
       </div>
     );
   }
-  if (type === "POSTER" && fileId) {
-    return <ArtifactPoster fileId={fileId} title={title} />;
+  if (type === "POSTER" && (fileId || externalUrl)) {
+    return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
   }
   if (externalUrl) {
     return (

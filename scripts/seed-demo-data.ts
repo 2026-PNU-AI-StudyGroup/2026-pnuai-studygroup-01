@@ -832,7 +832,7 @@ async function seed() {
         registeredById: ids.students[0],
         type: "POSTER",
         title: "최종 발표 포스터",
-        fileId: ids.activeStoredFiles[4],
+        externalUrl: "/mock/opus/100-poster.webp",
         createdAt: new Date("2026-08-05T19:00:00+09:00"),
       },
       {

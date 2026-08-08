@@ -86,6 +86,19 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
       }
     >
       <div className="max-w-3xl space-y-11">
+        {videoArtifacts.length ? (
+          <div className="space-y-4">
+            {videoArtifacts.map(({ artifact, embedUrl }) => (
+              <div key={artifact.id}>
+                <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span>
+                <div className="mt-1.5 aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
+                  <iframe className="size-full" src={embedUrl} title={artifact.title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         <section aria-labelledby="archive-description">
           <h2 id="archive-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2>
           <TranslatedText text={project.topicDescription} className="mt-3 whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" />
@@ -101,43 +114,35 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
           ) : null}
         </section>
 
-        <section aria-labelledby="archive-artifacts">
-          <h2 id="archive-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>
-          {project.artifacts.length ? (
-            <div className="mt-3 space-y-4">
-              {videoArtifacts.map(({ artifact, embedUrl }) => (
-                <div key={artifact.id}>
-                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span>
-                  <div className="mt-1.5 aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
-                    <iframe className="size-full" src={embedUrl} title={artifact.title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
-                  </div>
-                </div>
-              ))}
-              {linkArtifacts.length ? (
-                <ul className="grid gap-2.5 sm:grid-cols-2">
-                  {linkArtifacts.map((artifact) => {
-                    const interactive = Boolean(artifact.fileId || artifact.externalUrl);
-                    const content = (
-                      <>
-                        <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--primary-subtle)] text-[var(--primary)]">
-                          <DocumentIcon className="size-4" />
-                        </span>
-                        <span className="min-w-0 flex-1"><span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span></span>
-                        {interactive ? <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /> : null}
-                      </>
-                    );
-                    const base = "flex min-h-16 items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] px-3.5 py-3";
-                    return <li key={artifact.id}>
-                      {artifact.fileId ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={`/api/files/${artifact.fileId}`}>{content}</a>
-                        : artifact.externalUrl ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
-                          : <span className={`${base} text-[var(--muted)]`}>{content}</span>}
-                    </li>;
-                  })}
-                </ul>
-              ) : null}
-            </div>
-          ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
-        </section>
+        {project.artifacts.length === 0 || linkArtifacts.length > 0 ? (
+          <section aria-labelledby="archive-artifacts">
+            <h2 id="archive-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>
+            {linkArtifacts.length ? (
+              <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                {linkArtifacts.map((artifact) => {
+                  const interactive = Boolean(artifact.fileId || artifact.externalUrl);
+                  const content = (
+                    <>
+                      <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--primary-subtle)] text-[var(--primary)]">
+                        {artifact.type === "SOURCE_CODE"
+                          ? <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4 fill-current"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.02-1.49-2.22.48-2.69-.94-2.69-.94-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.87.88 2.33.67.07-.52.28-.88.51-1.08-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.27.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+                          : <DocumentIcon className="size-4" />}
+                      </span>
+                      <span className="min-w-0 flex-1"><span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span></span>
+                      {interactive ? <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /> : null}
+                    </>
+                  );
+                  const base = "flex min-h-16 items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] px-3.5 py-3";
+                  return <li key={artifact.id}>
+                    {artifact.fileId ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={`/api/files/${artifact.fileId}`}>{content}</a>
+                      : artifact.externalUrl ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
+                        : <span className={`${base} text-[var(--muted)]`}>{content}</span>}
+                  </li>;
+                })}
+              </ul>
+            ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
+          </section>
+        ) : null}
 
         <section aria-labelledby="archive-team">
           <h2 id="archive-team" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"참여자"}</UiText></h2>
