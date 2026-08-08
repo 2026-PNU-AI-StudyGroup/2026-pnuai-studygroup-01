@@ -51,7 +51,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
 
     <ProjectDetailShell
       cover={project.thumbnailPath ? (
-        <div className="relative min-h-64 bg-[var(--surface-subtle)] lg:min-h-72">
+        <div className="relative min-h-56 bg-[var(--surface-subtle)] lg:min-h-64">
           <Image
             alt={`${project.topicTitle} 대표 이미지`}
             className="object-cover"
@@ -60,7 +60,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             sizes="(min-width: 1024px) 72vw, 100vw"
             src={project.thumbnailPath}
           />
-          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-bold text-[var(--ink)] backdrop-blur">
+          <span className="absolute left-4 top-4 rounded-[var(--radius-control)] border border-white/60 bg-white/85 px-2.5 py-1.5 text-xs font-semibold text-[var(--ink)] backdrop-blur">
             {project.startYear} · {project.programName}
           </span>
         </div>
@@ -69,62 +69,62 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
       heading={
         <div>
           <p className="text-sm font-semibold text-[var(--muted)]">{project.teamName}{project.advisorEnabled ? ` · ${project.professorName} ${project.advisorRole}` : ""}</p>
-          <h1 className="mt-4 max-w-5xl text-[clamp(2.45rem,5vw,4.25rem)] font-bold leading-[1.03] tracking-[-0.055em]"><UiText>{project.topicTitle}</UiText></h1>
+          <h1 className="mt-3 max-w-4xl text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{project.topicTitle}</UiText></h1>
         </div>
       }
-      railLabelledBy="archive-artifacts"
-      rail={
-        <>
-          <h2 id="archive-artifacts" className="text-xl font-bold"><UiText>{"공개 결과물"}</UiText></h2>
-          {project.artifacts.length ? (
-            <ul className="mt-5 border-y border-[var(--line)]">
-              {project.artifacts.map((artifact) => {
-                const content = (
-                  <>
-                    <span className="grid size-9 shrink-0 place-items-center bg-[var(--surface-subtle)] text-[var(--primary)]">
-                      <DocumentIcon className="size-4" />
-                    </span>
-                    <span className="min-w-0"><span className="block text-xs text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate font-semibold"><UiText>{artifact.title}</UiText></span></span>
-                    <ExternalLinkIcon className="ml-auto size-4 shrink-0" />
-                  </>
-                );
-                return <li key={artifact.id} className="border-t border-[var(--line)] first:border-t-0">
-                  {artifact.fileId ? <a className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--primary-hover)]" href={`/api/files/${artifact.fileId}`}>{content}</a>
-                    : artifact.externalUrl ? <a className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--primary-hover)]" href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
-                      : <span className="flex min-h-16 items-center gap-3 py-3 text-sm text-[var(--muted)]">{content}</span>}
-                </li>;
-              })}
-            </ul>
-          ) : <p className="mt-4 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
-        </>
-      }
     >
-      <div className="space-y-12">
+      <div className="max-w-3xl space-y-11">
         <section aria-labelledby="archive-description">
-          <h2 id="archive-description" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"프로젝트 소개"}</UiText></h2>
-          <TranslatedText text={project.topicDescription} className="mt-5 max-w-3xl whitespace-pre-wrap text-[1.05rem] leading-8 text-[var(--muted)]" />
+          <h2 id="archive-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2>
+          <TranslatedText text={project.topicDescription} className="mt-3 whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" />
           {project.posterPath ? (
             <Image
               alt={`${project.topicTitle} 프로젝트 포스터`}
-              className="mt-8 h-auto w-full max-w-3xl border border-[var(--line)] bg-white"
+              className="mt-7 h-auto w-full rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]"
               height={1697}
-              sizes="(min-width: 1024px) 52rem, 100vw"
+              sizes="(min-width: 1024px) 48rem, 100vw"
               src={project.posterPath}
               width={1200}
             />
           ) : null}
         </section>
 
+        <section aria-labelledby="archive-artifacts">
+          <h2 id="archive-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>
+          {project.artifacts.length ? (
+            <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
+              {project.artifacts.map((artifact) => {
+                const interactive = Boolean(artifact.fileId || artifact.externalUrl);
+                const content = (
+                  <>
+                    <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--primary-subtle)] text-[var(--primary)]">
+                      <DocumentIcon className="size-4" />
+                    </span>
+                    <span className="min-w-0 flex-1"><span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span></span>
+                    {interactive ? <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /> : null}
+                  </>
+                );
+                const base = "flex min-h-16 items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] px-3.5 py-3";
+                return <li key={artifact.id}>
+                  {artifact.fileId ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={`/api/files/${artifact.fileId}`}>{content}</a>
+                    : artifact.externalUrl ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
+                      : <span className={`${base} text-[var(--muted)]`}>{content}</span>}
+                </li>;
+              })}
+            </ul>
+          ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
+        </section>
+
         <section aria-labelledby="archive-team">
-          <h2 id="archive-team" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"참여자"}</UiText></h2>
-          <dl className="mt-5 border-y border-[var(--line)]">
-            <div className="grid gap-2 py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <h2 id="archive-team" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"참여자"}</UiText></h2>
+          <dl className="mt-3 border-t border-[var(--line)]">
+            <div className="grid gap-1 py-4 sm:grid-cols-[7rem_minmax(0,1fr)]">
               <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"참여자"}</UiText></dt>
-              <dd className="font-semibold leading-7">{project.memberNames.join(", ")}</dd>
+              <dd className="text-sm font-semibold leading-6 text-[var(--ink)]">{project.memberNames.join(", ")}</dd>
             </div>
-            <div className="grid gap-2 border-t border-[var(--line)] py-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
+            <div className="grid gap-1 border-t border-[var(--line)] py-4 sm:grid-cols-[7rem_minmax(0,1fr)]">
               <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"사용 기술"}</UiText></dt>
-              <dd className="font-semibold leading-7"><UiText>{skills.join(", ") || "—"}</UiText></dd>
+              <dd className="text-sm font-semibold leading-6 text-[var(--ink)]"><UiText>{skills.join(", ") || "—"}</UiText></dd>
             </div>
           </dl>
         </section>
