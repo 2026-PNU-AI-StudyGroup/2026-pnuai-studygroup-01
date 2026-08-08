@@ -73,7 +73,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
     <section aria-labelledby="approval-ledger-title">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h2 id="approval-ledger-title" className="text-xl font-black tracking-[-0.03em]"><UiText>{title}</UiText></h2>
+          <h2 id="approval-ledger-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{title}</UiText></h2>
           <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{description}</UiText></p>
         </div>
         <span className="shrink-0 text-sm font-bold text-[var(--muted)]">{requests.length}<UiText>{"건"}</UiText></span>

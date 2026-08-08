@@ -28,6 +28,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항");
 }
 
+const NEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+// 컴포넌트 렌더 밖(모듈 스코프)에서 시각을 읽어 react-hooks/purity 위반 회피.
+function isRecentAnnouncement(createdAt: Date): boolean {
+  return Date.now() - createdAt.getTime() < NEW_WINDOW_MS;
+}
+
 export default async function AnnouncementsPage({
   searchParams,
 }: {
@@ -49,7 +55,6 @@ export default async function AnnouncementsPage({
     const suffix = query.toString();
     return suffix ? `/announcements?${suffix}` : "/announcements";
   };
-
   return (
     <AppShell
       role={actor.role}
@@ -114,9 +119,19 @@ export default async function AnnouncementsPage({
                       className="record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6"
                     >
                       <div className="min-w-0">
-                        <span className={`mb-2 inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                          <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-                        </span>
+                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                          {announcement.pinned ? (
+                            <span className="inline-flex items-center rounded-full bg-[var(--primary)] px-2 py-0.5 text-[0.6875rem] font-bold text-white">
+                              <UiText>{"고정"}</UiText>
+                            </span>
+                          ) : null}
+                          {isRecentAnnouncement(announcement.createdAt) ? (
+                            <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--danger)]">NEW</span>
+                          ) : null}
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
+                            <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
+                          </span>
+                        </div>
                         <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                           <UiText>{announcement.title}</UiText>
                         </h3>

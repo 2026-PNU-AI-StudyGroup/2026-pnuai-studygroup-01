@@ -82,7 +82,7 @@ function ReportDocumentIcon({ className }: { className: string }) {
 
 function ReportStatusCard({ title, description }: { title: string; description: string }) {
   return (
-    <aside role="status" className="flex gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 shadow-[0_10px_32px_rgba(31,35,48,0.055)] sm:px-6">
+    <aside role="status" className="flex gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 shadow-[0_10px_32px_rgba(31,35,48,0.055)] sm:px-6">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--primary-subtle)] text-[var(--primary-hover)]">
         <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]">
           <path d="M10 6v4M10 14h.01" />
@@ -183,12 +183,12 @@ function StudentReportFocusCard({ focus, advisorEnabled }: { focus: StudentRepor
   const complete = focus.kind === "COMPLETE";
   const revision = focus.kind === "REVISION";
   const shellClassName = blocked
-    ? "border-[var(--danger)] bg-[linear-gradient(135deg,var(--danger-subtle),#fff_76%)]"
+    ? "border-[var(--danger)] bg-[var(--danger-subtle)]"
     : complete
-      ? "border-[var(--success)] bg-[linear-gradient(135deg,var(--success-subtle),#fff_76%)]"
+      ? "border-[var(--success)] bg-[var(--success-subtle)]"
       : revision
-        ? "border-[var(--warning)] bg-[linear-gradient(135deg,var(--warning-subtle),#fff_76%)]"
-        : "border-[#b9c8fb] bg-[linear-gradient(135deg,var(--primary-subtle),#fff_76%)]";
+        ? "border-[var(--warning)] bg-[var(--warning-subtle)]"
+        : "border-[color-mix(in_srgb,var(--primary)_30%,var(--line))] bg-[var(--primary-subtle)]";
   const iconClassName = blocked
     ? "bg-[var(--danger)] text-white"
     : complete
@@ -198,8 +198,7 @@ function StudentReportFocusCard({ focus, advisorEnabled }: { focus: StudentRepor
         : "bg-[var(--primary)] text-white";
 
   return (
-    <UiAside aria-labelledby="student-report-focus-title" className={`relative overflow-hidden rounded-[var(--radius-panel)] border p-5 shadow-[0_14px_38px_rgba(31,35,48,0.07)] sm:p-7 ${shellClassName}`}>
-      <div aria-hidden="true" className="absolute -right-14 -top-16 size-44 rounded-full bg-white/55" />
+    <UiAside aria-labelledby="student-report-focus-title" className={`relative overflow-hidden rounded-[var(--radius-panel)] border p-5 sm:p-7 ${shellClassName}`}>
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 gap-4">
           <span className={`grid size-12 shrink-0 place-items-center rounded-2xl shadow-sm ${iconClassName}`}>
@@ -208,8 +207,8 @@ function StudentReportFocusCard({ focus, advisorEnabled }: { focus: StudentRepor
             </svg>
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-black tracking-[0.12em] text-[var(--primary-hover)]"><UiText>{copy.eyebrow}</UiText></p>
-            <h2 id="student-report-focus-title" className="mt-1.5 text-xl font-black leading-tight tracking-[-0.035em] text-[var(--ink)] sm:text-2xl">
+            <p className="text-xs font-bold tracking-[0.12em] text-[var(--primary-hover)]"><UiText>{copy.eyebrow}</UiText></p>
+            <h2 id="student-report-focus-title" className="mt-1.5 text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--ink)] sm:text-2xl">
               <UiText>{copy.title}</UiText>
             </h2>
             <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[var(--ink)]"><UiText>{copy.description}</UiText></p>
@@ -461,14 +460,14 @@ function ReportCard({
     <article
       id={`report-${report.type.toLowerCase()}`}
       aria-labelledby={titleId}
-      className="scroll-mt-6 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)]"
+      className="scroll-mt-6 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] shadow-[0_12px_34px_rgba(31,35,48,0.06)]"
     >
       <div className="p-5 sm:p-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 gap-3.5">
             <ReportDocumentIcon className={stateView.iconClassName} />
             <div className="min-w-0">
-              <h2 id={titleId} className="text-lg font-black tracking-[-0.03em] text-[var(--ink)] sm:text-xl">
+              <h2 id={titleId} className="text-lg font-bold tracking-[-0.03em] text-[var(--ink)] sm:text-xl">
                 <UiText>{reportTypeLabel[report.type]}</UiText>
               </h2>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] font-medium leading-5 text-[var(--muted)]">
@@ -686,18 +685,18 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ te
         <div id="report-list" className="space-y-4 scroll-mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 제출 현황"}</UiText></h2>
+              <h2 className="text-2xl font-bold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"보고서 제출 현황"}</UiText></h2>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm font-bold">
               {submittedCount > 0 ? (
                 <a
                   href={`/api/teams/${workspace.id}/submissions`}
-                  className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--primary-hover)] transition-colors hover:bg-[var(--surface-subtle)]"
+                  className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-[var(--primary-hover)] transition-colors hover:bg-[var(--surface-subtle)]"
                 >
                   <UiText>{"제출물 전체 다운로드"}</UiText>
                 </a>
               ) : null}
-              <span className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[var(--ink)]">
+              <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-[var(--ink)]">
                 <UiText>{"제출"}</UiText>{" "}{submittedCount}/{reportWorkspace.reports.length}
               </span>
               <span className="rounded-full bg-[var(--success-subtle)] px-3 py-1.5 text-[var(--success)]">

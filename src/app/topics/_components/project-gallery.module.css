@@ -6,13 +6,13 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 1.1rem;
-  background: #fff;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
   transition: border-color 180ms ease;
 }
 
 .card:hover {
-  border-color: color-mix(in srgb, var(--primary) 38%, var(--line));
+  border-color: var(--field-border-hover);
 }
 
 .card:focus-within {
@@ -25,8 +25,8 @@
   isolation: isolate;
   aspect-ratio: 640 / 433;
   overflow: hidden;
-  border-bottom: 1px solid rgb(255 255 255 / 0.5);
-  background: #f1f3f5;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-subtle);
 }
 
 .coverImage {
@@ -38,7 +38,7 @@
   display: flex;
   align-items: flex-end;
   padding: 1.35rem;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, #fff) 0%, #f6f7f9 100%);
+  background: var(--surface-subtle);
 }
 
 .fallbackCover::before,
@@ -50,10 +50,10 @@
   position: absolute;
   top: 1.35rem;
   right: 1.35rem;
-  width: 2.5rem;
-  height: 2.25rem;
-  background: var(--primary);
-  opacity: 0.82;
+  width: 2.25rem;
+  height: 2rem;
+  background: var(--muted);
+  opacity: 0.22;
   mask-image: url('/brand/pusan-national-university.png');
   mask-position: left center;
   mask-repeat: no-repeat;
@@ -62,17 +62,15 @@
 
 .fallbackContent {
   max-width: min(100%, 28rem);
-  border-left: 3px solid color-mix(in srgb, var(--primary) 72%, #fff);
-  padding-left: 0.85rem;
 }
 
 .fallbackEyebrow {
   display: block;
   overflow: hidden;
-  color: var(--primary);
-  font-size: 0.625rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -80,11 +78,11 @@
 
 .fallbackTitle {
   display: -webkit-box;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   overflow: hidden;
-  color: #182037;
+  color: var(--ink);
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 750;
   letter-spacing: -0.025em;
   line-height: 1.35;
   -webkit-box-orient: vertical;

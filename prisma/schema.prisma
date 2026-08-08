@@ -277,6 +277,7 @@ model Announcement {
   title     String
   content   String
   category  AnnouncementCategory @default(GENERAL)
+  pinned    Boolean              @default(false)
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   author    User                 @relation(fields: [authorId], references: [id])
@@ -284,6 +285,7 @@ model Announcement {
   @@index([createdAt])
   @@index([authorId])
   @@index([category, createdAt])
+  @@index([pinned, createdAt])
   @@map("announcement")
 }
 

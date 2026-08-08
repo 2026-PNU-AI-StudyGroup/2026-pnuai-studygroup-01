@@ -15,6 +15,7 @@ const selectAnnouncement = {
   title: true,
   content: true,
   category: true,
+  pinned: true,
   createdAt: true,
   updatedAt: true,
   author: {
@@ -31,6 +32,7 @@ type SelectedAnnouncement = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  pinned: boolean;
   createdAt: Date;
   updatedAt: Date;
   author: {
@@ -48,6 +50,7 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     title: value.title,
     content: value.content,
     category: value.category,
+    pinned: value.pinned,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   };
@@ -61,7 +64,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     const [items, total] = await this.client.$transaction([
       this.client.announcement.findMany({
         where,
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: selectAnnouncement,

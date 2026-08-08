@@ -8,43 +8,42 @@
   font-display: swap;
 }
 
+/* 밝은 뉴트럴 페이퍼 그라운드 + 파스텔 슬레이트 액센트 1개. 헤어라인·크리스프 radius로 위계. 라이트 전용. */
 :root {
-  /* 라이트 전용 UI. 다크 모드 OS에서 네이티브 컨트롤(select/스크롤바)이
-     어둡게 렌더되지 않도록 명시한다. */
   color-scheme: light;
-  --workspace: #fafbfd;
+  --workspace: #f6f7f9;
   --sidebar: #2347b8;
   --surface: #ffffff;
-  --surface-subtle: #f7f8fa;
-  --ink: #171921;
-  --muted: #656b76;
-  --line: #e5e7eb;
-  --line-strong: #cfd3da;
-  --field-border: #c9d0dc;
-  --field-border-hover: #8f9bad;
+  --surface-subtle: #f1f3f6;
+  --ink: #2b2d34;
+  --muted: #6c707a;
+  --line: #eaecef;
+  --line-strong: #dbdee4;
+  --field-border: #d3d7de;
+  --field-border-hover: #9ea3ad;
   --field-surface: #ffffff;
-  --primary: #2f5bea;
-  --primary-hover: #2148c9;
-  --primary-subtle: #e9efff;
-  --accent: #d58a00;
-  --accent-hover: #ad7000;
-  --accent-ink: #6f4900;
-  --accent-subtle: #fff4d6;
+  --primary: #5a67a8;
+  --primary-hover: #45508a;
+  --primary-subtle: #eef0f8;
+  --accent: #97711a;
+  --accent-hover: #7a5a12;
+  --accent-ink: #5c4408;
+  --accent-subtle: #f6efda;
   --focus: var(--primary);
   --focus-halo: color-mix(in srgb, var(--focus) 16%, transparent);
   --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
-  --success: #18794e;
-  --success-subtle: #eaf7f0;
-  --warning: #9a6700;
-  --warning-ink: #755000;
-  --warning-subtle: #fff7df;
-  --danger: #b42318;
-  --danger-subtle: #fff0ee;
-  --radius-control: 0.875rem;
-  --radius-panel: 1.25rem;
+  --success: #256a45;
+  --success-subtle: #e7f1ea;
+  --warning: #8a5e0a;
+  --warning-ink: #684807;
+  --warning-subtle: #f7efd6;
+  --danger: #a52a20;
+  --danger-subtle: #f8ebe8;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
   --shadow-card: none;
-  --shadow-admin-panel: 0 1px 2px rgb(31 35 48 / 0.03), 0 8px 24px rgb(31 35 48 / 0.045);
-  --shadow-float: 0 18px 48px rgb(31 35 48 / 0.12);
+  --shadow-admin-panel: 0 1px 2px rgb(28 27 23 / 0.04), 0 1px 0 rgb(28 27 23 / 0.025);
+  --shadow-float: 0 12px 32px rgb(28 27 23 / 0.14);
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
@@ -605,7 +604,7 @@ body {
     place-items: center;
     border: 1.5px solid var(--field-border-hover);
     border-radius: 50%;
-    background: white;
+    background: var(--surface);
   }
 
   .choice-card:has(input[type="checkbox"]) .choice-card__indicator {
@@ -1361,8 +1360,8 @@ body {
   }
 
   .button-secondary {
-    border: 1px solid var(--line);
-    background: white;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
     color: var(--ink);
   }
 

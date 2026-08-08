@@ -7,7 +7,7 @@ import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artif
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
@@ -16,22 +16,10 @@ const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "�
 type ArtifactType = keyof typeof artifactTypeLabel;
 
 const artifactTypePresentation = {
-  PRESENTATION_VIDEO: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--warning-subtle)] text-[var(--warning-ink)]",
-  },
-  SOURCE_CODE: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--primary-subtle)] text-[var(--primary)]",
-  },
-  POSTER: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--success-subtle)] text-[var(--success)]",
-  },
-  OTHER: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--surface-subtle)] text-[var(--muted)]",
-  },
+  PRESENTATION_VIDEO: { cover: "bg-[var(--warning-subtle)]", icon: "text-[var(--warning-ink)]" },
+  SOURCE_CODE: { cover: "bg-[var(--primary-subtle)]", icon: "text-[var(--primary)]" },
+  POSTER: { cover: "bg-[var(--success-subtle)]", icon: "text-[var(--success)]" },
+  OTHER: { cover: "bg-[var(--surface-subtle)]", icon: "text-[var(--muted)]" },
 } as const;
 
 function ArtifactTypeIcon({ type }: { type: ArtifactType }) {
@@ -43,9 +31,7 @@ function ArtifactTypeIcon({ type }: { type: ArtifactType }) {
         ? <><rect x="5" y="3" width="14" height="18" rx="1.5" /><path d="M8 8h8M8 12h8M8 16h5" /></>
         : <><path d="M4 7h6l2 2h8v10H4z" /></>;
   return (
-    <span aria-hidden="true" className={`grid size-11 shrink-0 place-items-center rounded-xl ${artifactTypePresentation[type].iconClassName}`}>
-      <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]">{icon}</svg>
-    </span>
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-10 fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round] ${artifactTypePresentation[type].icon}`}>{icon}</svg>
   );
 }
 
@@ -91,7 +77,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6"
         >
           <div>
             <p id="artifact-registration-restriction-title" className="text-sm font-extrabold text-[var(--ink)]"><UiText>{registrationPeriodState === "BEFORE" ? "결과물 등록 기간 전" : "결과물 등록 기간 종료"}</UiText></p>
@@ -108,7 +94,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         </aside>
       ) : null}
       {reportWorkspace.artifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {reportWorkspace.artifacts.map((artifact) => {
             const titleId = `artifact-title-${artifact.id}`;
             const presentation = artifactTypePresentation[artifact.type];
@@ -117,20 +103,24 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
                 <article
                   aria-labelledby={titleId}
                   data-artifact-type={artifact.type.toLowerCase()}
-                  className="flex h-full min-h-56 flex-col rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:p-6"
+                  className="flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] transition-colors hover:border-[var(--field-border-hover)]"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className={`relative flex aspect-[16/9] items-center justify-center border-b border-[var(--line)] ${presentation.cover}`}>
                     <ArtifactTypeIcon type={artifact.type} />
-                    <StatusBadge tone={presentation.tone}><UiText>{artifactTypeLabel[artifact.type]}</UiText></StatusBadge>
+                    <span className="absolute right-3 top-3 inline-flex items-center rounded-[0.375rem] border border-[var(--line-strong)] bg-[var(--surface)] px-2 py-0.5 text-xs font-semibold text-[var(--muted)]">
+                      <UiText>{artifactTypeLabel[artifact.type]}</UiText>
+                    </span>
                   </div>
-                  <h2 id={titleId} className="mt-5 text-lg font-black leading-7 tracking-[-0.025em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
-                  <time className="muted mt-2 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
-                  <div className="mt-auto pt-6">
-                    {artifact.fileId ? (
-                      <a className="button-secondary w-full gap-2" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
-                    ) : (
-                      <a className="button-secondary w-full gap-2" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
-                    )}
+                  <div className="flex flex-1 flex-col p-5">
+                    <h2 id={titleId} className="text-base font-bold leading-6 tracking-[-0.02em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
+                    <time className="muted mt-1.5 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
+                    <div className="mt-auto pt-5">
+                      {artifact.fileId ? (
+                        <a className="button-secondary w-full gap-2" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
+                      ) : (
+                        <a className="button-secondary w-full gap-2" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
+                      )}
+                    </div>
                   </div>
                 </article>
               </li>

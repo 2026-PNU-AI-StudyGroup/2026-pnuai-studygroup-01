@@ -61,6 +61,7 @@ export default async function EditAnnouncementPage({
             initialTitle={announcement.title}
             initialContent={announcement.content}
             initialCategory={announcement.category}
+            initialPinned={announcement.pinned}
           />
         </div>
       </main>

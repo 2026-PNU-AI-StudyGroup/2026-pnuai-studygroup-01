@@ -60,7 +60,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
             sizes="(min-width: 1024px) 72vw, 100vw"
             src={project.thumbnailPath}
           />
-          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-black text-[var(--ink)] backdrop-blur">
+          <span className="absolute left-4 top-4 rounded-lg border border-white/60 bg-white/85 px-3 py-2 text-xs font-bold text-[var(--ink)] backdrop-blur">
             {project.startYear} · {project.programName}
           </span>
         </div>

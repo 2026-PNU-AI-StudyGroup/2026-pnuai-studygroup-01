@@ -102,12 +102,12 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
     <form action={action} aria-busy={pending} className="mx-auto grid max-w-6xl gap-5 xl:grid-cols-[13rem_minmax(0,1fr)] xl:items-start">
       {initialTopic ? <input type="hidden" name="topicId" value={initialTopic.id} /> : null}
       <UiNav aria-label="주제 작성 섹션" className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 xl:sticky xl:top-6 xl:overflow-visible">
-        <p className="px-2 pb-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"작성 순서"}</UiText></p>
+        <p className="px-2 pb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"작성 순서"}</UiText></p>
         <ol className="flex min-w-max gap-1 xl:grid xl:min-w-0">
           {formSections.map(([id, label], index) => (
             <li key={id}>
               <a href={`#${id}`} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-bold text-[var(--muted)] transition-colors hover:bg-white hover:text-[var(--ink)] focus-visible:bg-white">
-                <span className="text-xs font-black text-[var(--primary)]">{String(index + 1).padStart(2, "0")}</span>
+                <span className="text-xs font-bold text-[var(--primary)]">{String(index + 1).padStart(2, "0")}</span>
                 <UiText>{label}</UiText>
               </a>
             </li>

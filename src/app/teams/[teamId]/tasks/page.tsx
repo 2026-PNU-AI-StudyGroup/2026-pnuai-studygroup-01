@@ -45,7 +45,7 @@ function TaskCard({
   return (
     <article
       aria-labelledby={titleId}
-      className={`overflow-hidden rounded-[var(--radius-panel)] border bg-white shadow-[0_10px_30px_rgba(31,35,48,0.055)] ${
+      className={`overflow-hidden rounded-[var(--radius-panel)] border bg-[var(--surface)] shadow-[0_10px_30px_rgba(31,35,48,0.055)] ${
         deadlineState === "OVERDUE"
           ? "border-[color-mix(in_srgb,var(--danger)_35%,var(--line))]"
           : deadlineState === "COMPLETE"
@@ -60,7 +60,7 @@ function TaskCard({
               <StatusBadge tone={taskStatus[task.status][1]}><UiText>{taskStatus[task.status][0]}</UiText></StatusBadge>
               {deadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
             </div>
-            <h3 id={titleId} className="mt-3 break-words text-lg font-black leading-7 tracking-[-0.025em] text-[var(--ink)]">
+            <h3 id={titleId} className="mt-3 break-words text-lg font-bold leading-7 tracking-[-0.025em] text-[var(--ink)]">
               <UiText>{task.title}</UiText>
             </h3>
           </div>
@@ -134,7 +134,7 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
           {active.length > 0 ? (
             <section aria-labelledby="active-tasks-title">
               <div className="flex items-center justify-between gap-4">
-                <h2 id="active-tasks-title" className="text-xl font-black tracking-[-0.035em]"><UiText>{"남은 할 일"}</UiText></h2>
+                <h2 id="active-tasks-title" className="text-xl font-bold tracking-[-0.035em]"><UiText>{"남은 할 일"}</UiText></h2>
                 <span className="text-sm font-bold text-[var(--muted)]">{active.length}<UiText>{"건"}</UiText></span>
               </div>
               <ol className="mt-4 grid gap-4">
@@ -152,14 +152,14 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
               </ol>
             </section>
           ) : (
-            <div className="rounded-[var(--radius-panel)] border border-[color-mix(in_srgb,var(--success)_24%,var(--line))] bg-[linear-gradient(135deg,var(--success-subtle),#fff_76%)] px-5 py-6 sm:px-6">
-              <h2 className="text-lg font-black text-[var(--ink)]"><UiText>{"모든 할 일 완료"}</UiText></h2>
+            <div className="rounded-[var(--radius-panel)] border border-[color-mix(in_srgb,var(--success)_24%,var(--line))] bg-[var(--success-subtle)] px-5 py-6 sm:px-6">
+              <h2 className="text-lg font-bold text-[var(--ink)]"><UiText>{"모든 할 일 완료"}</UiText></h2>
             </div>
           )}
 
           {completed.length > 0 ? (
             <details className="group">
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-4 font-black text-[var(--ink)] shadow-[0_8px_24px_rgba(31,35,48,0.045)] [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 font-bold text-[var(--ink)] shadow-[0_8px_24px_rgba(31,35,48,0.045)] [&::-webkit-details-marker]:hidden">
                 <span><UiText>{"완료"}</UiText>{" "}<UiText>{"할 일"}</UiText>{" "}{completed.length}<UiText>{"건"}</UiText></span>
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180 [stroke-linecap:round] [stroke-linejoin:round]"><path d="m6 8 4 4 4-4" /></svg>
               </summary>

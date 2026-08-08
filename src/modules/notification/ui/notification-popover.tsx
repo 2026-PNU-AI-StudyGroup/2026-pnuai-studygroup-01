@@ -120,7 +120,7 @@ export function NotificationPopover({
             </svg>
           )}
           {unreadCount ? (
-            <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-black leading-4 text-white">
+            <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-[var(--danger)] px-1 text-center text-[0.625rem] font-bold leading-4 text-white">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : null}
