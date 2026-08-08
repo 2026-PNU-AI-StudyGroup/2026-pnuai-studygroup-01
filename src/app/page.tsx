@@ -61,9 +61,6 @@ export default async function Home({
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />
               ) : null}
               <div className="mt-6 grid gap-2 border-t border-[var(--line)] pt-5">
-                <Link href="/showcase" className="button-secondary w-full justify-center">
-                  <UiText>{"프로젝트 쇼케이스"}</UiText>
-                </Link>
                 <Link href="/feedback" className="button-primary w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
                 </Link>
