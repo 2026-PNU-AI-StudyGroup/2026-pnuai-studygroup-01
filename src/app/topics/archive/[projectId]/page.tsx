@@ -29,6 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 const artifactType = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
 
+// YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
+function toYoutubeEmbedUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
+
 export default async function ArchivedProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
@@ -41,6 +48,11 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   ]);
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
+  const videoArtifacts = project.artifacts
+    .map((artifact) => ({ artifact, embedUrl: artifact.type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(artifact.externalUrl) : null }))
+    .filter((entry): entry is { artifact: typeof entry.artifact; embedUrl: string } => entry.embedUrl !== null);
+  const embeddedIds = new Set(videoArtifacts.map((entry) => entry.artifact.id));
+  const linkArtifacts = project.artifacts.filter((artifact) => !embeddedIds.has(artifact.id));
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
     <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
@@ -92,26 +104,38 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
         <section aria-labelledby="archive-artifacts">
           <h2 id="archive-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>
           {project.artifacts.length ? (
-            <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
-              {project.artifacts.map((artifact) => {
-                const interactive = Boolean(artifact.fileId || artifact.externalUrl);
-                const content = (
-                  <>
-                    <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--primary-subtle)] text-[var(--primary)]">
-                      <DocumentIcon className="size-4" />
-                    </span>
-                    <span className="min-w-0 flex-1"><span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span></span>
-                    {interactive ? <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /> : null}
-                  </>
-                );
-                const base = "flex min-h-16 items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] px-3.5 py-3";
-                return <li key={artifact.id}>
-                  {artifact.fileId ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={`/api/files/${artifact.fileId}`}>{content}</a>
-                    : artifact.externalUrl ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
-                      : <span className={`${base} text-[var(--muted)]`}>{content}</span>}
-                </li>;
-              })}
-            </ul>
+            <div className="mt-3 space-y-4">
+              {videoArtifacts.map(({ artifact, embedUrl }) => (
+                <div key={artifact.id}>
+                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span>
+                  <div className="mt-1.5 aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
+                    <iframe className="size-full" src={embedUrl} title={artifact.title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                  </div>
+                </div>
+              ))}
+              {linkArtifacts.length ? (
+                <ul className="grid gap-2.5 sm:grid-cols-2">
+                  {linkArtifacts.map((artifact) => {
+                    const interactive = Boolean(artifact.fileId || artifact.externalUrl);
+                    const content = (
+                      <>
+                        <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--primary-subtle)] text-[var(--primary)]">
+                          <DocumentIcon className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1"><span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{artifactType[artifact.type]}</span><span className="mt-0.5 block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span></span>
+                        {interactive ? <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /> : null}
+                      </>
+                    );
+                    const base = "flex min-h-16 items-center gap-3 rounded-[var(--radius-control)] border border-[var(--line)] px-3.5 py-3";
+                    return <li key={artifact.id}>
+                      {artifact.fileId ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={`/api/files/${artifact.fileId}`}>{content}</a>
+                        : artifact.externalUrl ? <a className={`${base} transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{content}<span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
+                          : <span className={`${base} text-[var(--muted)]`}>{content}</span>}
+                    </li>;
+                  })}
+                </ul>
+              ) : null}
+            </div>
           ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
         </section>
 
