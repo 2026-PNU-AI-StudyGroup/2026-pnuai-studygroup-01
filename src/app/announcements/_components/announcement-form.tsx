@@ -11,6 +11,7 @@ import {
   ANNOUNCEMENT_CATEGORIES,
   ANNOUNCEMENT_CATEGORY_LABELS,
 } from "@/app/announcements/_lib/announcement-categories";
+import { AnnouncementTargetPicker } from "@/app/announcements/_components/announcement-target-picker";
 import type { AnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
 import type { AnnouncementCategory } from "@/modules/announcement/application/announcement-ports";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
@@ -21,10 +22,6 @@ const CATEGORY_OPTIONS = ANNOUNCEMENT_CATEGORIES.map((value) => ({
   value,
   label: ANNOUNCEMENT_CATEGORY_LABELS[value],
 }));
-
-const TARGET_ALL_LABEL = "전체 공개";
-const TARGET_PROGRAM_LABEL = "프로그램";
-const TARGET_TEAM_LABEL = "팀";
 
 const initialState: AnnouncementActionState = {
   status: "idle",
@@ -48,11 +45,6 @@ export function AnnouncementForm({
   initialPinned?: boolean;
   initialTarget?: string;
 }) {
-  const targetOptions = [
-    { value: "", label: TARGET_ALL_LABEL },
-    ...targets.programs.map((program) => ({ value: `program:${program.id}`, label: `${TARGET_PROGRAM_LABEL} · ${program.name}` })),
-    ...targets.teams.map((team) => ({ value: `team:${team.id}`, label: `${TARGET_TEAM_LABEL} · ${team.name}` })),
-  ];
   const action = announcementId
     ? updateAnnouncementAction.bind(null, announcementId)
     : createAnnouncementAction;
@@ -62,26 +54,19 @@ export function AnnouncementForm({
   return (
     <form action={formAction} className="panel overflow-hidden">
       <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
-            <span><UiText>{"분류"}</UiText></span>
-            <CustomSelect
-              name="category"
-              ariaLabel="공지 분류"
-              options={CATEGORY_OPTIONS}
-              defaultValue={initialCategory}
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
-            <span><UiText>{"대상"}</UiText></span>
-            <CustomSelect
-              name="target"
-              ariaLabel="공지 대상"
-              options={targetOptions}
-              defaultValue={initialTarget}
-            />
-            <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"프로그램·팀을 지정하면 해당 소속 구성원만 받습니다."}</UiText></span>
-          </label>
+        <label className="grid max-w-xs gap-2 text-sm font-semibold text-[var(--ink)]">
+          <span><UiText>{"분류"}</UiText></span>
+          <CustomSelect
+            name="category"
+            ariaLabel="공지 분류"
+            options={CATEGORY_OPTIONS}
+            defaultValue={initialCategory}
+          />
+        </label>
+        <div className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
+          <span><UiText>{"대상"}</UiText></span>
+          <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} initialValue={initialTarget} />
+          <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"프로그램·팀을 지정하면 해당 소속 구성원만 받습니다."}</UiText></span>
         </div>
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>

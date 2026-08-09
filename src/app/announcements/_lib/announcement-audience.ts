@@ -28,14 +28,14 @@ export async function resolveAnnouncementAudience(actor: CurrentActor): Promise<
 
 export type AnnouncementTargets = {
   programs: { id: string; name: string }[];
-  teams: { id: string; name: string }[];
+  teams: { id: string; name: string; programId: string }[];
 };
 
 // 공지 작성 시 지정 가능한 대상. 관리자는 전체, 교수는 본인 소관.
 export async function resolveAnnouncementTargets(actor: CurrentActor): Promise<AnnouncementTargets> {
   if (actor.role === "ADMIN") {
     const programs = await prisma.projectProgram.findMany({ select: { id: true, name: true }, orderBy: [{ startsAt: "desc" }, { name: "asc" }] });
-    const teams = await prisma.team.findMany({ select: { id: true, name: true }, orderBy: { createdAt: "desc" } });
+    const teams = await prisma.team.findMany({ select: { id: true, name: true, programId: true }, orderBy: { createdAt: "desc" } });
     return { programs, teams };
   }
   const supervisedTeams = await prisma.team.findMany({ where: { professorId: actor.id }, select: { id: true, name: true, programId: true }, orderBy: { createdAt: "desc" } });
@@ -46,6 +46,6 @@ export async function resolveAnnouncementTargets(actor: CurrentActor): Promise<A
     : [];
   return {
     programs,
-    teams: supervisedTeams.map((t) => ({ id: t.id, name: t.name })),
+    teams: supervisedTeams.map((t) => ({ id: t.id, name: t.name, programId: t.programId })),
   };
 }
