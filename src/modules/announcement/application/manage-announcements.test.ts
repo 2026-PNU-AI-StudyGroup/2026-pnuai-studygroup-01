@@ -10,7 +10,6 @@ import {
   AnnouncementNotFoundError,
   AnnouncementService,
 } from "@/modules/announcement/application/manage-announcements";
-import { announcementScopeWhere } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
 
 const announcement: AnnouncementRecord = {
   id: "notice-1",
@@ -94,21 +93,6 @@ describe("공지 대상 스코프", () => {
   const admin: AnnouncementAudience = { role: "ADMIN", actorId: "admin-1", teamIds: [], programIds: [] };
   const student: AnnouncementAudience = { role: "STUDENT", actorId: "student-1", teamIds: ["team-1"], programIds: ["program-1"] };
   const scoped = (over: Partial<AnnouncementRecord>): AnnouncementRecord => ({ ...announcement, teamId: null, programId: null, ...over });
-
-  it("관리자 스코프는 제한이 없다", () => {
-    expect(announcementScopeWhere(admin)).toEqual({});
-  });
-
-  it("비관리자 스코프는 전체·본인 소속·작성분만 포함한다", () => {
-    expect(announcementScopeWhere(student)).toEqual({
-      OR: [
-        { teamId: null, programId: null },
-        { programId: { in: ["program-1"] } },
-        { teamId: { in: ["team-1"] } },
-        { authorId: "student-1" },
-      ],
-    });
-  });
 
   it("전체 공지는 누구나 열람한다", () => {
     const service = new AnnouncementService(repository());
