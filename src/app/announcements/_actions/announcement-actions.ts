@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { resolveAnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
 import {
   AnnouncementError,
   AnnouncementService,
 } from "@/modules/announcement/application/manage-announcements";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
+import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -44,6 +46,24 @@ function parseAnnouncement(formData: FormData) {
   });
 }
 
+// 폼의 대상 선택("", "program:<id>", "team:<id>")을 검증해 scope로 변환.
+// 지정한 대상이 작성자의 소관이 아니면 null(거부).
+async function resolveTarget(
+  current: CurrentActor,
+  raw: FormDataEntryValue | null,
+): Promise<{ teamId: string | null; programId: string | null } | null> {
+  const value = typeof raw === "string" ? raw : "";
+  if (value === "" || value === "GLOBAL") return { teamId: null, programId: null };
+  const separator = value.indexOf(":");
+  const kind = value.slice(0, separator);
+  const id = value.slice(separator + 1);
+  if (!id) return null;
+  const targets = await resolveAnnouncementTargets(current);
+  if (kind === "program" && targets.programs.some((p) => p.id === id)) return { teamId: null, programId: id };
+  if (kind === "team" && targets.teams.some((t) => t.id === id)) return { teamId: id, programId: null };
+  return null;
+}
+
 export async function createAnnouncementAction(
   _previous: AnnouncementActionState,
   formData: FormData,
@@ -56,9 +76,15 @@ export async function createAnnouncementAction(
     };
   }
 
+  const current = await actor();
+  const target = await resolveTarget(current, formData.get("target"));
+  if (!target) {
+    return { status: "error", message: "공지 대상을 확인해 주세요." };
+  }
+
   let announcementId: string;
   try {
-    const created = await service().create(await actor(), parsed.data);
+    const created = await service().create(current, { ...parsed.data, ...target });
     announcementId = created.id;
   } catch (error) {
     if (error instanceof AnnouncementError) {
@@ -85,8 +111,14 @@ export async function updateAnnouncementAction(
     };
   }
 
+  const current = await actor();
+  const target = await resolveTarget(current, formData.get("target"));
+  if (!target) {
+    return { status: "error", message: "공지 대상을 확인해 주세요." };
+  }
+
   try {
-    await service().update(await actor(), parsedId.data, parsed.data);
+    await service().update(current, parsedId.data, { ...parsed.data, ...target });
   } catch (error) {
     if (error instanceof AnnouncementError) {
       return { status: "error", message: error.message };

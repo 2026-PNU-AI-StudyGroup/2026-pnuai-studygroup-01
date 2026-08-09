@@ -1,4 +1,5 @@
 import type {
+  AnnouncementAudience,
   AnnouncementCategory,
   AnnouncementPage,
   AnnouncementRecord,
@@ -8,6 +9,7 @@ import type {
 import {
   canCreateAnnouncement,
   canManageAnnouncement,
+  canViewAnnouncement,
 } from "@/modules/announcement/domain/announcement-policy";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
@@ -28,9 +30,9 @@ const DEFAULT_PAGE_SIZE = 20;
 export class AnnouncementService {
   constructor(private readonly repository: AnnouncementRepository) {}
 
-  list(page: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
+  list(audience: AnnouncementAudience, page: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
     const safePage = Number.isInteger(page) && page > 0 ? page : 1;
-    return this.repository.list(safePage, DEFAULT_PAGE_SIZE, category);
+    return this.repository.list(audience, safePage, DEFAULT_PAGE_SIZE, category);
   }
 
   async get(id: string): Promise<AnnouncementRecord> {
@@ -73,5 +75,9 @@ export class AnnouncementService {
 
   canManage(actor: CurrentActor, announcement: AnnouncementRecord): boolean {
     return canManageAnnouncement(actor, announcement.authorId);
+  }
+
+  canView(audience: AnnouncementAudience, announcement: AnnouncementRecord): boolean {
+    return canViewAnnouncement(audience, announcement);
   }
 }

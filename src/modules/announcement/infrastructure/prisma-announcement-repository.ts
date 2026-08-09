@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type {
+  AnnouncementAudience,
   AnnouncementCategory,
   AnnouncementMutationOutcome,
   AnnouncementPage,
@@ -16,14 +17,13 @@ const selectAnnouncement = {
   content: true,
   category: true,
   pinned: true,
+  teamId: true,
+  programId: true,
   createdAt: true,
   updatedAt: true,
-  author: {
-    select: {
-      name: true,
-      role: true,
-    },
-  },
+  author: { select: { name: true, role: true } },
+  team: { select: { name: true } },
+  program: { select: { name: true } },
 } as const;
 
 type SelectedAnnouncement = {
@@ -33,12 +33,13 @@ type SelectedAnnouncement = {
   content: string;
   category: AnnouncementCategory;
   pinned: boolean;
+  teamId: string | null;
+  programId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  author: {
-    name: string;
-    role: "STUDENT" | "PROFESSOR" | "ADMIN";
-  };
+  author: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" };
+  team: { name: string } | null;
+  program: { name: string } | null;
 };
 
 function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
@@ -51,16 +52,36 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     content: value.content,
     category: value.category,
     pinned: value.pinned,
+    teamId: value.teamId,
+    teamName: value.team?.name ?? null,
+    programId: value.programId,
+    programName: value.program?.name ?? null,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+  };
+}
+
+// 대상이 지정된 공지는 소속·작성자만 조회. ADMIN은 제한 없음.
+export function announcementScopeWhere(audience: AnnouncementAudience) {
+  if (audience.role === "ADMIN") return {};
+  return {
+    OR: [
+      { teamId: null, programId: null },
+      { programId: { in: audience.programIds } },
+      { teamId: { in: audience.teamIds } },
+      { authorId: audience.actorId },
+    ],
   };
 }
 
 export class PrismaAnnouncementRepository implements AnnouncementRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
-    const where = category ? { category } : {};
+  async list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
+    const where = {
+      ...(category ? { category } : {}),
+      ...announcementScopeWhere(audience),
+    };
     const [items, total] = await this.client.$transaction([
       this.client.announcement.findMany({
         where,
@@ -74,7 +95,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, totalPages);
-    if (currentPage !== page) return this.list(currentPage, pageSize, category);
+    if (currentPage !== page) return this.list(audience, currentPage, pageSize, category);
 
     return {
       items: items.map(toRecord),

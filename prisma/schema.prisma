@@ -278,14 +278,20 @@ model Announcement {
   content   String
   category  AnnouncementCategory @default(GENERAL)
   pinned    Boolean              @default(false)
+  teamId    String?
+  programId String?
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   author    User                 @relation(fields: [authorId], references: [id])
+  team      Team?                @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  program   ProjectProgram?      @relation(fields: [programId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([authorId])
   @@index([category, createdAt])
   @@index([pinned, createdAt])
+  @@index([teamId, createdAt])
+  @@index([programId, createdAt])
   @@map("announcement")
 }
 
@@ -460,6 +466,7 @@ model ProjectProgram {
   votes                         ProjectVote[]
   tracks                        ProgramTrack[]
   rubricCriteria                RubricCriterion[]
+  announcements                 Announcement[]
 
   @@unique([name, startsAt])
   @@index([status, startsAt, endsAt])
@@ -773,6 +780,7 @@ model Team {
   artifacts        Artifact[]
   recruitmentPosts RecruitmentPost[]
   guidanceRequests ProjectGuidanceRequest[]
+  announcements    Announcement[]
 
   @@unique([topicId, programId, professorId])
   @@unique([id, programId, topicId])
