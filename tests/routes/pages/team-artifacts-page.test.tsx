@@ -74,7 +74,7 @@ describe("TeamArtifactsPage", () => {
     vi.useRealTimers();
   });
 
-  it("결과물을 종류, 제목, 날짜, 열기 행동 순서의 흰 카드로 보여준다", async () => {
+  it("결과물을 종류·제목과 함께 본문에 인라인으로 보여준다", async () => {
     loadTeamReportWorkspace.mockResolvedValue({
       actor,
       workspace,
@@ -106,17 +106,16 @@ describe("TeamArtifactsPage", () => {
     expect(pageTitle.closest("header")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "결과물 등록" })).toBeInTheDocument();
 
-    const posterCard = screen.getByRole("article", { name: "모두의 길 프로젝트 소개 포스터" });
-    expect(posterCard).toHaveAttribute("data-artifact-type", "poster");
-    expect(posterCard).toHaveClass("bg-white", "rounded-[var(--radius-panel)]");
-    expect(within(posterCard).getByText("포스터")).toBeInTheDocument();
-    expect(within(posterCard).getByRole("link", { name: "파일 받기" })).toHaveAttribute("href", "/api/files/file-poster");
+    const posterItem = screen.getByRole("heading", { name: "모두의 길 프로젝트 소개 포스터" }).closest("li");
+    expect(posterItem).toHaveAttribute("data-artifact-type", "poster");
+    expect(within(posterItem!).getByText("포스터")).toBeInTheDocument();
 
-    const sourceCard = screen.getByRole("article", { name: "접근성 길찾기 프로토타입 소스 코드" });
-    expect(sourceCard).toHaveAttribute("data-artifact-type", "source_code");
-    expect(within(sourceCard).getByText("소스 코드")).toBeInTheDocument();
-    expect(within(sourceCard).getByRole("link", { name: /링크 열기/ })).toHaveAttribute("href", "https://example.com/source");
-    expect(within(sourceCard).getByRole("link", { name: /링크 열기/ })).toHaveAttribute("target", "_blank");
+    const sourceItem = screen.getByRole("heading", { name: "접근성 길찾기 프로토타입 소스 코드" }).closest("li");
+    expect(sourceItem).toHaveAttribute("data-artifact-type", "source_code");
+    expect(within(sourceItem!).getByText("소스 코드")).toBeInTheDocument();
+    const sourceLink = within(sourceItem!).getByRole("link");
+    expect(sourceLink).toHaveAttribute("href", "https://example.com/source");
+    expect(sourceLink).toHaveAttribute("target", "_blank");
   });
 
   it("팀 확정 전에는 등록 행동을 숨기고 역할에 맞는 빈 상태를 유지한다", async () => {
@@ -188,7 +187,7 @@ describe("TeamArtifactsPage", () => {
     const restriction = screen.getByRole("complementary", { name: "결과물 등록 기간 종료" });
     expect(within(restriction).getByText("등록 기간이 종료되어 기존 결과물만 확인할 수 있습니다.")).toBeInTheDocument();
     expect(within(restriction).getByText(/등록 종료/)).toBeInTheDocument();
-    expect(screen.getByRole("article", { name: "기존 결과물" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "기존 결과물" })).toBeInTheDocument();
   });
 
   it("관리자는 결과물 등록 기간과 관계없이 운영 중인 프로젝트에 결과물을 등록할 수 있다", async () => {
