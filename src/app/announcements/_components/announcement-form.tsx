@@ -31,11 +31,13 @@ export function AnnouncementForm({
   initialTitle = "",
   initialContent = "",
   initialCategory = "GENERAL",
+  initialPinned = false,
 }: {
   announcementId?: string;
   initialTitle?: string;
   initialContent?: string;
   initialCategory?: AnnouncementCategory;
+  initialPinned?: boolean;
 }) {
   const action = announcementId
     ? updateAnnouncementAction.bind(null, announcementId)
@@ -58,7 +60,7 @@ export function AnnouncementForm({
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>
           <UiInput
-            className="form-control bg-white"
+            className="form-control bg-[var(--surface)]"
             name="title"
             type="text"
             maxLength={120}
@@ -71,13 +73,17 @@ export function AnnouncementForm({
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"본문"}</UiText></span>
           <UiTextarea
-            className="form-control min-h-80 bg-white leading-7"
+            className="form-control min-h-80 bg-[var(--surface)] leading-7"
             name="content"
             maxLength={20_000}
             defaultValue={initialContent}
             placeholder="구성원이 알아야 할 내용을 입력하세요"
             required
           />
+        </label>
+        <label className="flex items-center gap-2.5 text-sm font-semibold text-[var(--ink)]">
+          <input type="checkbox" name="pinned" defaultChecked={initialPinned} />
+          <span><UiText>{"목록 상단에 고정"}</UiText></span>
         </label>
         {state.message ? (
           <p

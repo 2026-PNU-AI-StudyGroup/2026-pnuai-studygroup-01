@@ -87,7 +87,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
             {topic.advisorEnabled ? <p className="text-sm font-semibold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
             <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruitmentStatusLabel}</UiText></StatusBadge>
           </div>
-          <h1 className="mt-4 max-w-4xl text-[clamp(2.45rem,5vw,4.25rem)] font-bold leading-[1.03] tracking-[-0.055em]"><UiText>{topic.title}</UiText></h1>
+          <h1 className="mt-3 max-w-4xl text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{topic.title}</UiText></h1>
         </div>
       }
       headerAside={

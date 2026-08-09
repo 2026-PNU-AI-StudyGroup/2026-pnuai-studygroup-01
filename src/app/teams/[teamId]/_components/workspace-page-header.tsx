@@ -14,8 +14,8 @@ export function WorkspacePageHeader({ eyebrow, title, titleId, description, meta
     <header className={`flex flex-wrap items-end justify-between gap-5 ${bordered ? "border-b border-[var(--line)] pb-6" : ""}`}>
       <div className="max-w-2xl">
         {eyebrow ? <p className="eyebrow"><UiText>{eyebrow}</UiText></p> : null}
-        <h1 id={titleId} className={`${eyebrow ? "mt-2" : ""} text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]`}><UiText>{title}</UiText></h1>
-        {description ? <p className="muted mt-2 max-w-xl text-sm leading-6 sm:text-base"><UiText>{description}</UiText></p> : null}
+        <h1 id={titleId} className={`${eyebrow ? "mt-1.5" : ""} text-[clamp(1.375rem,2.2vw,1.75rem)] font-bold leading-[1.2] tracking-[-0.035em]`}><UiText>{title}</UiText></h1>
+        {description ? <p className="muted mt-2 max-w-xl text-sm leading-6"><UiText>{description}</UiText></p> : null}
       </div>
       {actions || meta ? (
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">

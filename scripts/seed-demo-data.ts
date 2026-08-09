@@ -289,6 +289,7 @@ async function seed() {
         authorId: ids.admin,
         title: "2026학년도 2학기 졸업과제 운영 일정 안내",
         content: "졸업과제 주제 확정부터 최종 발표까지의 주요 일정을 안내합니다.\n\n- 팀·주제 확정: 8월 14일\n- 수행계획서 제출: 8월 31일\n- 중간보고서 제출: 10월 16일\n- 최종보고서 제출: 12월 11일\n- 작품 전시 및 최종 발표: 12월 18일",
+        pinned: true,
         createdAt: new Date("2026-08-05T09:00:00+09:00"),
       },
       {
@@ -831,7 +832,7 @@ async function seed() {
         registeredById: ids.students[0],
         type: "POSTER",
         title: "최종 발표 포스터",
-        fileId: ids.activeStoredFiles[4],
+        externalUrl: "/mock/opus/100-poster.webp",
         createdAt: new Date("2026-08-05T19:00:00+09:00"),
       },
       {
@@ -849,7 +850,7 @@ async function seed() {
         registeredById: ids.students[0],
         type: "PRESENTATION_VIDEO",
         title: "최종 시연 영상",
-        externalUrl: "https://example.com/mock/modu-ui-path/demo",
+        externalUrl: "https://www.youtube.com/watch?v=Uou5iwWqTDA",
         createdAt: new Date("2026-08-05T19:20:00+09:00"),
       },
     ] });

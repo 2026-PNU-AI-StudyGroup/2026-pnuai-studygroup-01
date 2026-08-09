@@ -65,7 +65,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                     <article aria-labelledby={`past-project-${project.id}`} className={styles.card}>
                       <ProjectGalleryCover imagePath={project.thumbnailPath} programName={project.programName} title={project.topicTitle} />
                       <div className={styles.body}>
-                        <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-black leading-7 tracking-[-0.03em]">
+                        <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
                           <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
                         </h3>
                         {project.advisorEnabled ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{project.professorName}</p> : null}

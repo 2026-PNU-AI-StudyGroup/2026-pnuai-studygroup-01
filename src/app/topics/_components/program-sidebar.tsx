@@ -23,7 +23,7 @@ export type ProgramSidebarItem = {
 
 function ProgramMark({ icon }: { icon: ProgramIconKey }) {
   return (
-    <span aria-hidden="true" data-program-mark className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-white text-[var(--primary)]">
+    <span aria-hidden="true" data-program-mark className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--primary)]">
       <ProgramIcon icon={icon} className="size-[1.15rem]" />
     </span>
   );
@@ -42,16 +42,15 @@ function VotingProgramCarousel({
 }) {
   const carouselId = useId();
   const currentIndex = activeIndex % programs.length;
-  const selected = programs.some((program) => program.id === selectedId);
   const currentProgram = programs[currentIndex];
 
   return (
-    <section id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className={`relative overflow-hidden rounded-xl border p-3.5 text-white ${selected ? "border-[var(--primary)] bg-[var(--primary)] shadow-[var(--shadow-admin-panel)]" : "border-[#244cc4] bg-[#2F5BEA]"}`}>
+    <section id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--primary-hover)] bg-[var(--primary)] p-3.5 text-white">
       <span aria-hidden="true" className="absolute -right-7 -top-8 size-24 rounded-full border border-white/15" />
       <span aria-hidden="true" className="absolute -right-2 -top-2 size-12 rounded-full bg-white/10" />
       <div className="relative">
         <div className="flex min-h-6 items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-1 text-[0.62rem] font-black tracking-[0.08em]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="M5 4.5h10M5 10h10M5 15.5h6" strokeLinecap="round" /><circle cx="3.5" cy="4.5" r=".65" fill="currentColor" /><circle cx="3.5" cy="10" r=".65" fill="currentColor" /><circle cx="3.5" cy="15.5" r=".65" fill="currentColor" /></svg>
             <UiText>{"투표 진행 중"}</UiText>
           </span>
@@ -59,17 +58,17 @@ function VotingProgramCarousel({
         </div>
         <div key={currentProgram.id} className={`mt-3 ${styles.destinationText}`}>
           <div className="flex min-w-0 items-center gap-2.5">
-            <span data-program-mark aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-[var(--primary)]">
+            <span data-program-mark aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface)] text-[var(--primary)]">
               <ProgramIcon icon={currentProgram.icon} className="size-[1.15rem]" />
             </span>
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-black tracking-[-0.02em]"><UiText>{currentProgram.name}</UiText></h3>
+              <h3 className="truncate text-sm font-bold tracking-[-0.02em]"><UiText>{currentProgram.name}</UiText></h3>
               <p className="mt-0.5 truncate text-[0.68rem] font-semibold text-white/75"><UiText>{currentProgram.category}</UiText></p>
             </div>
           </div>
         </div>
         <div className="mt-3">
-          <Link href={currentProgram.href} aria-current={currentProgram.id === selectedId ? "page" : undefined} className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-white px-2 text-xs font-black text-[var(--primary)] transition-colors hover:bg-[#edf2ff]">
+          <Link href={currentProgram.href} aria-current={currentProgram.id === selectedId ? "page" : undefined} className="inline-flex min-h-9 w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--surface)] px-2 text-xs font-bold text-[var(--primary)] transition-colors hover:bg-[var(--primary-subtle)]">
             <UiText>{"투표하러 가기"}</UiText>
           </Link>
         </div>
@@ -143,9 +142,9 @@ function YearProgramGroup({
                 <>
                   <ProgramMark icon={program.icon} />
                   <span className="min-w-0">
-                    <strong className="block truncate text-[0.8rem] font-black"><UiText>{program.name}</UiText></strong>
+                    <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
                     <span className="mt-1 flex items-center gap-1.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black ${
+                      <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold ${
                         votingOpen ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : program.status === "active" ? "bg-[var(--success-subtle)] text-[var(--success)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
                       }`}>
                         <UiText>{votingOpen ? "투표 중" : program.status === "active" ? "진행 중" : "종료"}</UiText>
@@ -253,7 +252,7 @@ export function ProgramSidebar({ items, selectedId }: {
         meta={selectedProgram ? <UiText>{selectedProgram.votingEndsAt ? "투표 중" : selectedProgram.status === "active" ? "진행 중" : "종료"}</UiText> : undefined}
       >
         <div className="mb-3 px-2">
-          <strong className="text-xs font-black text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
+          <strong className="text-xs font-bold text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
         </div>
         <UiNav aria-label="프로그램 선택 모바일">
           {navigationContent("mobile")}
@@ -262,7 +261,7 @@ export function ProgramSidebar({ items, selectedId }: {
 
       <div className="hidden lg:block">
         <div className="mb-4 px-2">
-          <h2 className="text-sm font-black tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
+          <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
         </div>
         <UiNav aria-label="프로그램 선택">
           {navigationContent("desktop")}

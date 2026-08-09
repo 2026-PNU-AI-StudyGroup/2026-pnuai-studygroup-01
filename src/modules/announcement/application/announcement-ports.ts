@@ -11,6 +11,7 @@ export type AnnouncementRecord = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  pinned: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -26,6 +27,7 @@ export type AnnouncementWriteInput = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  pinned: boolean;
 };
 
 export type AnnouncementMutationOutcome =

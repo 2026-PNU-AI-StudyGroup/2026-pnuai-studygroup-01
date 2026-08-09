@@ -15,8 +15,8 @@ export function ProjectDetailShell({
   heading: ReactNode;
   headerAside?: ReactNode;
   children: ReactNode;
-  rail: ReactNode;
-  railLabelledBy: string;
+  rail?: ReactNode;
+  railLabelledBy?: string;
 }) {
   return (
     <article className="min-w-0">
@@ -51,15 +51,19 @@ export function ProjectDetailShell({
           ) : null}
         </header>
 
-        <div className="grid gap-12 pt-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
-          <div className="min-w-0"><UiText>{children}</UiText></div>
-          <aside
-            aria-labelledby={railLabelledBy}
-            className="border-t border-[var(--line)] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"
-          >
-            {rail}
-          </aside>
-        </div>
+        {rail ? (
+          <div className="grid gap-12 pt-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+            <div className="min-w-0"><UiText>{children}</UiText></div>
+            <aside
+              aria-labelledby={railLabelledBy}
+              className="border-t border-[var(--line)] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"
+            >
+              {rail}
+            </aside>
+          </div>
+        ) : (
+          <div className="min-w-0 pt-10"><UiText>{children}</UiText></div>
+        )}
       </div>
     </article>
   );

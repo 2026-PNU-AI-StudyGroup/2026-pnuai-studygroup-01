@@ -44,7 +44,7 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
           <div className="overflow-hidden lg:rounded-[var(--radius-panel)] lg:border lg:border-[var(--line)] lg:bg-white lg:shadow-[var(--shadow-admin-panel)]">
             <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4 lg:bg-[var(--surface-subtle)] lg:px-6 lg:py-5">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"주제 관리"}</UiText></p>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"주제 관리"}</UiText></p>
                 <h2 id="topic-list-title" className="mt-1 text-lg font-bold">
                   <UiText>{actor.role === "ADMIN" ? "전체 주제" : actor.role === "STUDENT" ? "담당 주제" : "내 주제"}</UiText>
                 </h2>

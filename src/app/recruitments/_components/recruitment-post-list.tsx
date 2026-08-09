@@ -46,14 +46,14 @@ export function RecruitmentPostList({
             <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition-colors duration-200 hover:border-[#c8d2e5]">
               <div className={`border-b border-[var(--line)] ${posterTheme.background} px-5 py-4 sm:px-6`}>
                 <div className="flex items-start justify-between gap-4">
-                  <p className={`text-sm font-black ${posterTheme.accent}`}>{post.teamName}</p>
+                  <p className={`text-sm font-bold ${posterTheme.accent}`}>{post.teamName}</p>
                   <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
                     <CapacityIcon />
                     {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText>
                   </span>
                 </div>
                 <p className="mt-2 text-xs font-semibold text-[var(--muted)]"><UiText>{"마감"}</UiText>{" "}<UiDate value={post.deadlineAt} mode="dateTime" /></p>
-                <p className="mt-3 text-xl font-black leading-tight tracking-[-0.03em] text-[var(--ink)]">{post.roleNeeded}</p>
+                <p className="mt-3 text-xl font-bold leading-tight tracking-[-0.03em] text-[var(--ink)]">{post.roleNeeded}</p>
               </div>
 
               <div className="flex flex-1 flex-col px-5 py-5 sm:px-6">
