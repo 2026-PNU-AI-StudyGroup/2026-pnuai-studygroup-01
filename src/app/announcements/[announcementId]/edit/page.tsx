@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { AnnouncementForm } from "@/app/announcements/_components/announcement-form";
+import { resolveAnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
 import {
   AnnouncementNotFoundError,
   AnnouncementService,
@@ -40,6 +41,12 @@ export default async function EditAnnouncementPage({
   if (!service.canManage(actor, announcement)) {
     redirect(`/announcements/${announcement.id}`);
   }
+  const targets = await resolveAnnouncementTargets(actor);
+  const initialTarget = announcement.teamId
+    ? `team:${announcement.teamId}`
+    : announcement.programId
+      ? `program:${announcement.programId}`
+      : "";
 
   return (
     <AppShell
@@ -58,10 +65,12 @@ export default async function EditAnnouncementPage({
           />
           <AnnouncementForm
             announcementId={announcement.id}
+            targets={targets}
             initialTitle={announcement.title}
             initialContent={announcement.content}
             initialCategory={announcement.category}
             initialPinned={announcement.pinned}
+            initialTarget={initialTarget}
           />
         </div>
       </main>

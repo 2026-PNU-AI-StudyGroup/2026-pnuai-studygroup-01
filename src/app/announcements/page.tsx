@@ -9,6 +9,8 @@ import {
   ANNOUNCEMENT_CATEGORY_LABELS,
   isAnnouncementCategory,
 } from "@/app/announcements/_lib/announcement-categories";
+import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
+import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { canCreateAnnouncement } from "@/modules/announcement/domain/announcement-policy";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
@@ -45,9 +47,10 @@ export default async function AnnouncementsPage({
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const categoryParam = firstSearchParam(params.category);
   const activeCategory = isAnnouncementCategory(categoryParam) ? categoryParam : undefined;
+  const audience = await resolveAnnouncementAudience(actor);
   const data = await new AnnouncementService(
     new PrismaAnnouncementRepository(prisma),
-  ).list(requestedPage, activeCategory);
+  ).list(audience, requestedPage, activeCategory);
   const pageHref = (page: number) => {
     const query = new URLSearchParams();
     if (page > 1) query.set("page", String(page));
@@ -131,6 +134,7 @@ export default async function AnnouncementsPage({
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
                             <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
                           </span>
+                          <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} />
                         </div>
                         <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                           <UiText>{announcement.title}</UiText>

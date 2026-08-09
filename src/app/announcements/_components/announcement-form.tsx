@@ -11,6 +11,8 @@ import {
   ANNOUNCEMENT_CATEGORIES,
   ANNOUNCEMENT_CATEGORY_LABELS,
 } from "@/app/announcements/_lib/announcement-categories";
+import { AnnouncementTargetPicker } from "@/app/announcements/_components/announcement-target-picker";
+import type { AnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
 import type { AnnouncementCategory } from "@/modules/announcement/application/announcement-ports";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -28,16 +30,20 @@ const initialState: AnnouncementActionState = {
 
 export function AnnouncementForm({
   announcementId,
+  targets,
   initialTitle = "",
   initialContent = "",
   initialCategory = "GENERAL",
   initialPinned = false,
+  initialTarget = "",
 }: {
   announcementId?: string;
+  targets: AnnouncementTargets;
   initialTitle?: string;
   initialContent?: string;
   initialCategory?: AnnouncementCategory;
   initialPinned?: boolean;
+  initialTarget?: string;
 }) {
   const action = announcementId
     ? updateAnnouncementAction.bind(null, announcementId)
@@ -48,7 +54,7 @@ export function AnnouncementForm({
   return (
     <form action={formAction} className="panel overflow-hidden">
       <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
-        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
+        <label className="grid max-w-xs gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"분류"}</UiText></span>
           <CustomSelect
             name="category"
@@ -57,6 +63,11 @@ export function AnnouncementForm({
             defaultValue={initialCategory}
           />
         </label>
+        <div className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
+          <span><UiText>{"대상"}</UiText></span>
+          <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} initialValue={initialTarget} />
+          <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"프로그램·팀을 지정하면 해당 소속 구성원만 받습니다."}</UiText></span>
+        </div>
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"제목"}</UiText></span>
           <UiInput
