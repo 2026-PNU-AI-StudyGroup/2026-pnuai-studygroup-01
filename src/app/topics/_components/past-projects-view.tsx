@@ -81,7 +81,12 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                             <dd className="mt-1 font-bold">{project.memberNames.length}<UiText>{"명 ·"}</UiText>{" "}{project.artifacts.length}<UiText>{"개"}</UiText></dd>
                           </div>
                         </dl>
-                        {voteCandidate ? <div className={`mt-5 ${styles.actionLayer}`}><ProjectVoteButton candidate={voteCandidate} selection={voteSelection} /></div> : null}
+                        {voteCandidate ? (
+                          <div className={`mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 ${styles.actionLayer}`}>
+                            <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
+                            <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"득표"}</UiText>{" "}<strong className="tabular-nums text-[var(--ink)]">{voteCandidate.voteCount}</strong></span>
+                          </div>
+                        ) : null}
 
                       </div>
                     </article>

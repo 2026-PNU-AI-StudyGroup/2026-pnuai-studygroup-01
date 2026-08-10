@@ -25,7 +25,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       },
     });
     if (!program?.votingPolicy) return null;
-    const [candidates, votes] = await Promise.all([
+    const [candidates, votes, tallies] = await Promise.all([
       this.client.topic.findMany({
         where: { programId, publishedAt: { not: null }, status: { in: VOTABLE_TOPIC_STATUSES } },
         orderBy: [{ title: "asc" }, { id: "asc" }],
@@ -40,7 +40,10 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         },
       }),
       this.client.projectVote.findMany({ where: { programId, voterId }, select: { topicId: true } }),
+      // 팀별 득표수(집계만) — 모든 사용자에게 실시간 공개. 투표자 신원은 findResults(관리자)만.
+      this.client.projectVote.groupBy({ by: ["topicId"], where: { programId }, _count: { topicId: true } }),
     ]);
+    const voteCounts = new Map(tallies.map((tally) => [tally.topicId, tally._count.topicId]));
     return {
       programId: program.id,
       programName: program.name,
@@ -54,6 +57,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           candidate.managerId === voterId ||
           candidate.assistants.length > 0 ||
           (candidate.team?.members.length ?? 0) > 0,
+        voteCount: voteCounts.get(candidate.id) ?? 0,
       })),
       selectedTopicIds: votes.map(({ topicId }) => topicId),
     };

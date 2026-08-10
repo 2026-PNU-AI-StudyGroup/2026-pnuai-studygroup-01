@@ -75,7 +75,7 @@ const opusAdvisorIndex = new Map(
 );
 const archivedProjectCount = opusArchivedProjects.length;
 const externalArtifactCount = opusArchivedProjects.reduce(
-  (count, project) => count + 1
+  (count, project) => count
     + Number(Boolean(project.githubUrl))
     + Number(Boolean(project.youtubeUrl))
     + Number(Boolean(project.productionUrl)),
@@ -1205,7 +1205,6 @@ async function seed() {
       } });
       const project = opusArchivedProjects[index];
       const externalArtifacts = [
-        { type: "OTHER" as const, title: "OPUS 원본 페이지", externalUrl: `https://opus.pusan.ac.kr/contest/${project.sourceContestId}/teams/view/${project.sourceTeamId}` },
         ...(project.githubUrl ? [{ type: "SOURCE_CODE" as const, title: "GitHub 저장소", externalUrl: project.githubUrl }] : []),
         ...(project.youtubeUrl ? [{ type: "PRESENTATION_VIDEO" as const, title: "발표 영상", externalUrl: project.youtubeUrl }] : []),
         ...(project.productionUrl ? [{ type: "OTHER" as const, title: "프로젝트 서비스", externalUrl: project.productionUrl }] : []),
