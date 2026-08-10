@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
+import { CloseRecruitmentPostForm } from "@/app/recruitments/_components/close-recruitment-post-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
@@ -79,9 +80,12 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
                         <span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden"><UiText>{"지원"}</UiText></span>{post.applicationCount}<UiText>{"명"}</UiText></p>
                       <p className="mt-0.5 text-xs text-[var(--muted)]"><UiText>{"검토 대기"}</UiText>{" "}{post.pendingApplicationCount}<UiText>{"명"}</UiText></p>
                     </div>
-                    <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}>
-                      <UiText>{post.pendingApplicationCount ? `${post.pendingApplicationCount}명 검토` : "지원자 보기"}</UiText>
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}>
+                        <UiText>{post.pendingApplicationCount ? `${post.pendingApplicationCount}명 검토` : "지원자 보기"}</UiText>
+                      </Link>
+                      {post.status === "OPEN" ? <CloseRecruitmentPostForm postId={post.id} /> : null}
+                    </div>
                   </li>
                 ))}
                 </ol>

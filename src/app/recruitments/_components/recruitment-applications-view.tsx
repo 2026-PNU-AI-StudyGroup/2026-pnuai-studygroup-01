@@ -14,6 +14,7 @@ const statusPresentation = {
   PENDING: { label: "검토 중", tone: "info" },
   ACCEPTED: { label: "수락", tone: "success" },
   REJECTED: { label: "거절", tone: "danger" },
+  CLOSED: { label: "모집 종료", tone: "neutral" },
 } as const;
 
 export function RecruitmentApplicationsView({

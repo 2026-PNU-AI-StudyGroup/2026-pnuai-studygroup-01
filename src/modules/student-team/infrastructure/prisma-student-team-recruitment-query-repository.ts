@@ -145,6 +145,8 @@ export class PrismaStudentTeamRecruitmentQueryRepository
           post: {
             select: {
               title: true,
+              status: true,
+              deadlineAt: true,
               author: { select: { name: true } },
               team: { select: { name: true } },
             },
@@ -157,6 +159,9 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       totalPages,
       applications: applications.map(({ post, ...application }) => ({
         ...application,
+        status: application.status === "PENDING" && (post.status !== "OPEN" || post.deadlineAt <= new Date())
+          ? "CLOSED" as const
+          : application.status,
         postTitle: post.title,
         teamName: post.team.name,
         topicTitle: "프로젝트 미지정 팀",
@@ -194,11 +199,12 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       },
     });
     if (!post) return null;
+    const status = post.status === "OPEN" && post.deadlineAt > new Date() ? "OPEN" : "CLOSED";
     return {
       id: post.id,
       title: post.title,
       content: post.content,
-      status: post.status,
+      status,
       teamName: post.team.name,
       topicTitle: "프로젝트 미지정 팀",
       applications: post.applications.map(({ student, ...application }) => ({

@@ -61,7 +61,7 @@ export class PrismaAdminProjectOverviewReader
       category: program.category,
       icon: program.icon,
       startYear: getProgramStartYear(program.startsAt),
-      status: program.status,
+      status: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
       advisorEnabled: program.advisorEnabled,
       projects: topics.flatMap(({ title, team }) => team ? [{
         id: team.id,

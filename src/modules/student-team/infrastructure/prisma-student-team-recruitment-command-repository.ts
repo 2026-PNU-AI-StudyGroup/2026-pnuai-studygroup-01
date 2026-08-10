@@ -149,6 +149,8 @@ export class PrismaStudentTeamRecruitmentCommandRepository
         JOIN "student_team_recruitment_post" p ON p."id" = a."postId"
         JOIN "student_team" t ON t."id" = p."teamId"
         WHERE a."id" = ${input.applicationId} AND t."deletedAt" IS NULL
+          AND p."status" = 'OPEN'
+          AND p."deadlineAt" > ${input.decidedAt}
         FOR UPDATE OF a, p, t
       `);
       const target = rows[0];
@@ -190,8 +192,12 @@ export class PrismaStudentTeamRecruitmentCommandRepository
         where: { id: target.id },
         data: { status: "ACCEPTED", decidedAt: input.decidedAt },
       });
-      // 정원이 찬 이 팀의 모든 OPEN 모집 공고를 닫고 대기 지원을 거절한다.
-      // (초대 수락 경로 respond()와 동일 — 한 팀에 여러 공고가 있어도 전부 정리.)
+      await transaction.studentTeam.update({
+        where: { id: target.teamId },
+        data: { compositionVersion: { increment: 1 }, updatedAt: input.decidedAt },
+      });
+      // 정원이 찬 이 팀의 모든 OPEN 모집 공고를 닫는다. 대기 지원은 모집 종료로
+      // 조회해 실제 거절과 자동 종료를 구분한다.
       const memberCount = await transaction.studentTeamMember.count({
         where: { teamId: target.teamId },
       });
@@ -205,12 +211,22 @@ export class PrismaStudentTeamRecruitmentCommandRepository
           where: { id: { in: filledPostIds } },
           data: { status: "CLOSED" },
         });
-        await transaction.studentTeamRecruitmentApplication.updateMany({
-          where: { postId: { in: filledPostIds }, status: "PENDING" },
-          data: { status: "REJECTED", decidedAt: input.decidedAt },
-        });
       }
       return "ACCEPTED";
+    });
+  }
+
+  closePost(input: { postId: string; leaderId: string; closedAt: Date }): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const updated = await transaction.studentTeamRecruitmentPost.updateMany({
+        where: {
+          id: input.postId,
+          status: "OPEN",
+          team: { leaderId: input.leaderId, deletedAt: null },
+        },
+        data: { status: "CLOSED", updatedAt: input.closedAt },
+      });
+      return updated.count === 1;
     });
   }
 }

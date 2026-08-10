@@ -9,6 +9,8 @@ export type ArchivedProject = {
   programId: string;
   programName: string;
   programCategory: string;
+  divisionId?: string | null;
+  divisionName?: string | null;
   topicTitle: string;
   topicDescription: string;
   requiredSkills: string[];
@@ -34,6 +36,7 @@ export type ArchiveFilters = {
   query?: string;
   programId?: string;
   programCategory?: string;
+  divisionId?: string | "UNASSIGNED";
 };
 
 export type ArchivedProgramOption = {
@@ -47,6 +50,7 @@ export type ArchivedProgramOption = {
   projectRegistrationStartsAt: Date;
   projectRegistrationEndsAt: Date;
   votingPolicy: { startsAt: Date; endsAt: Date } | null;
+  divisions?: Array<{ id: string; name: string }>;
 };
 
 export interface ArchivedProjectReader {
@@ -93,6 +97,7 @@ export class ListArchivedProjectsService {
       query: filters.query?.trim().slice(0, 100) || undefined,
       programId: filters.programId?.trim().slice(0, 200) || undefined,
       programCategory: filters.programCategory?.trim().slice(0, 100) || undefined,
+      divisionId: filters.divisionId?.trim().slice(0, 200) || undefined,
     };
     const [total, programCategories, programs] = await Promise.all([
       this.reader.countClosed(normalizedFilters),
