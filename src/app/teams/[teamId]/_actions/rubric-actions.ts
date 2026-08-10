@@ -39,24 +39,33 @@ export async function saveRubricScoresAction(
   const report = await findScorableReport(reportId, actor);
   if (!report) return { status: "error", message: "채점 권한이 없습니다." };
 
-  const criteria = await prisma.rubricCriterion.findMany({
-    where: { programId: report.team.programId },
-    select: { id: true, maxPoints: true },
+  const outcome = await prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw`
+      SELECT "id" FROM "project_program" WHERE "id" = ${report.team.programId} FOR UPDATE
+    `;
+    const criteria = await transaction.rubricCriterion.findMany({
+      where: { programId: report.team.programId },
+      select: { id: true, maxPoints: true },
+    });
+    if (criteria.length === 0) return "MISSING" as const;
+
+    const updates: { criterionId: string; points: number }[] = [];
+    for (const criterion of criteria) {
+      const parsed = z.coerce.number().int().min(0).max(criterion.maxPoints).safeParse(formData.get(`points_${criterion.id}`));
+      if (!parsed.success) return "INVALID" as const;
+      updates.push({ criterionId: criterion.id, points: parsed.data });
+    }
+    for (const update of updates) {
+      await transaction.reportRubricScore.upsert({
+        where: { reportId_criterionId: { reportId, criterionId: update.criterionId } },
+        create: { reportId, criterionId: update.criterionId, points: update.points, scoredByName: actor.name },
+        update: { points: update.points, scoredByName: actor.name },
+      });
+    }
+    return "SAVED" as const;
   });
-  if (criteria.length === 0) return { status: "error", message: "먼저 채점표를 등록해 주세요." };
-
-  const updates: { criterionId: string; points: number }[] = [];
-  for (const criterion of criteria) {
-    const parsed = z.coerce.number().int().min(0).max(criterion.maxPoints).safeParse(formData.get(`points_${criterion.id}`));
-    if (!parsed.success) return { status: "error", message: "입력한 점수를 배점 범위 안에서 확인해 주세요." };
-    updates.push({ criterionId: criterion.id, points: parsed.data });
-  }
-
-  await prisma.$transaction(updates.map((update) => prisma.reportRubricScore.upsert({
-    where: { reportId_criterionId: { reportId, criterionId: update.criterionId } },
-    create: { reportId, criterionId: update.criterionId, points: update.points, scoredByName: actor.name },
-    update: { points: update.points, scoredByName: actor.name },
-  })));
+  if (outcome === "MISSING") return { status: "error", message: "먼저 채점표를 등록해 주세요." };
+  if (outcome === "INVALID") return { status: "error", message: "입력한 점수를 배점 범위 안에서 확인해 주세요." };
   revalidatePath(`/teams/${teamId}/reports`);
   return { status: "success", message: "채점을 저장했습니다." };
 }
@@ -72,10 +81,20 @@ export async function toggleRubricReleaseAction(
   const actor = await requireActor();
   if (actor.role !== "ADMIN") return { status: "error", message: "점수 공개는 관리자만 할 수 있습니다." };
   if (!idSchema.safeParse(reportId).success) return { status: "error", message: "보고서를 찾을 수 없습니다." };
-  const report = await prisma.report.findUnique({ where: { id: reportId }, select: { id: true } });
+  const report = await prisma.report.findUnique({ where: { id: reportId }, select: { id: true, team: { select: { programId: true } } } });
   if (!report) return { status: "error", message: "보고서를 찾을 수 없습니다." };
 
   if (release) {
+    const criteria = await prisma.rubricCriterion.findMany({
+      where: { programId: report.team.programId },
+      select: { id: true },
+    });
+    const scoredCount = criteria.length === 0 ? 0 : await prisma.reportRubricScore.count({
+      where: { reportId, criterionId: { in: criteria.map((criterion) => criterion.id) } },
+    });
+    if (criteria.length === 0 || scoredCount !== criteria.length) {
+      return { status: "error", message: "모든 채점 항목의 점수를 저장한 뒤에만 공개할 수 있습니다." };
+    }
     await prisma.reportRubricRelease.upsert({
       where: { reportId },
       create: { reportId, releasedByName: actor.name },

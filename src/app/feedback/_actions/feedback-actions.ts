@@ -14,6 +14,7 @@ import {
   TARGET_SCREEN_VALUES,
   type TargetScreenValue,
 } from "@/app/feedback/_lib/feedback-options";
+import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const name = z.string().trim().min(1).max(FEEDBACK_LIMITS.name);
@@ -29,10 +30,12 @@ const postSchema = z.object({
   body: z.string().trim().min(1).max(FEEDBACK_LIMITS.body),
 });
 
-const commentSchema = z.object({
-  developerName: name,
-  body: z.string().trim().min(1).max(FEEDBACK_LIMITS.comment),
-});
+const commentSchema = z.object({ body: z.string().trim().min(1).max(FEEDBACK_LIMITS.comment) });
+
+async function getFeedbackModerator() {
+  const actor = await getCurrentActor();
+  return actor && (actor.role === "ADMIN" || actor.role === "PROFESSOR") ? actor : null;
+}
 
 export async function createFeedbackPostAction(
   _previous: FeedbackActionState,
@@ -69,16 +72,15 @@ export async function addFeedbackCommentAction(
   formData: FormData,
 ): Promise<FeedbackActionState> {
   const parsedId = idSchema.safeParse(postId);
-  const parsed = commentSchema.safeParse({
-    developerName: formData.get("developerName"),
-    body: formData.get("body"),
-  });
+  const parsed = commentSchema.safeParse({ body: formData.get("body") });
   if (!parsedId.success || !parsed.success) {
-    return { status: "error", message: "개발자 이름과 코멘트를 입력해 주세요." };
+    return { status: "error", message: "답변 내용을 입력해 주세요." };
   }
+  const actor = await getFeedbackModerator();
+  if (!actor) return { status: "error", message: "피드백 답변은 관리자 또는 교수만 남길 수 있습니다." };
 
   await prisma.feedbackComment.create({
-    data: { postId: parsedId.data, ...parsed.data },
+    data: { postId: parsedId.data, body: parsed.data.body, authorId: actor.id, authorName: actor.name },
   });
   revalidatePath("/feedback");
   return { status: "success", message: "코멘트를 남겼습니다." };
@@ -91,10 +93,9 @@ export async function toggleFeedbackResolvedAction(
   formData: FormData,
 ): Promise<FeedbackActionState> {
   const parsedId = idSchema.safeParse(postId);
-  const parsedName = name.safeParse(formData.get("developerName"));
-  if (!parsedId.success || !parsedName.success) {
-    return { status: "error", message: "개발자 이름을 입력해야 상태를 바꿀 수 있습니다." };
-  }
+  if (!parsedId.success) return { status: "error", message: "피드백을 찾을 수 없습니다." };
+  const actor = await getFeedbackModerator();
+  if (!actor) return { status: "error", message: "상태 변경은 관리자 또는 교수만 할 수 있습니다." };
   const noteRaw = formData.get("note");
   const note = typeof noteRaw === "string" && noteRaw.trim() ? noteRaw.trim().slice(0, FEEDBACK_LIMITS.comment) : null;
   const nextStatus = resolve ? "RESOLVED" : "OPEN";
@@ -103,11 +104,11 @@ export async function toggleFeedbackResolvedAction(
     prisma.feedbackPost.update({
       where: { id: parsedId.data },
       data: resolve
-        ? { status: "RESOLVED", resolvedAt: new Date(), resolvedByName: parsedName.data }
-        : { status: "OPEN", resolvedAt: null, resolvedByName: null },
+        ? { status: "RESOLVED", resolvedAt: new Date(), resolvedById: actor.id, resolvedByName: actor.name }
+        : { status: "OPEN", resolvedAt: null, resolvedById: null, resolvedByName: null },
     }),
     prisma.feedbackStatusChange.create({
-      data: { postId: parsedId.data, status: nextStatus, changedByName: parsedName.data, note },
+      data: { postId: parsedId.data, status: nextStatus, changedById: actor.id, changedByName: actor.name, note },
     }),
   ]);
   revalidatePath("/feedback");

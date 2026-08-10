@@ -26,20 +26,26 @@ export class PrismaAuditLogReader implements AuditLogReader {
       if (entry.targetType === "PROJECT_ASSISTANT_INVITATION" && isMetadata(entry.metadata) && typeof entry.metadata.topicId === "string") return [entry.metadata.topicId];
       return [];
     });
-    const [users, teams, topics] = await Promise.all([
+    const divisionIds = entries.filter(({ targetType }) => targetType === "PROGRAM_DIVISION").map(({ targetId }) => targetId);
+    const programIds = entries.filter(({ targetType }) => targetType === "PROJECT_PROGRAM").map(({ targetId }) => targetId);
+    const [users, teams, topics, divisions, programs] = await Promise.all([
       this.client.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } }),
       this.client.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
       this.client.topic.findMany({ where: { id: { in: topicIds } }, select: { id: true, title: true } }),
+      this.client.programDivision.findMany({ where: { id: { in: divisionIds } }, select: { id: true, name: true } }),
+      this.client.projectProgram.findMany({ where: { id: { in: programIds } }, select: { id: true, name: true } }),
     ]);
     const userById = new Map(users.map((user) => [user.id, `${user.name} · ${user.email}`]));
     const teamById = new Map(teams.map((team) => [team.id, team.name]));
     const topicById = new Map(topics.map((topic) => [topic.id, topic.title]));
+    const divisionById = new Map(divisions.map((division) => [division.id, division.name]));
+    const programById = new Map(programs.map((program) => [program.id, program.name]));
     return {
       items: entries.map((entry) => ({
         id: entry.id,
         action: entry.action,
         actorName: entry.actor.name,
-        targetLabel: resolveTargetLabel(entry, userById, teamById, topicById),
+        targetLabel: resolveTargetLabel(entry, userById, teamById, topicById, divisionById, programById),
         createdAt: entry.createdAt,
       })),
       page,
@@ -58,13 +64,17 @@ function resolveTargetLabel(
   userById: Map<string, string>,
   teamById: Map<string, string>,
   topicById: Map<string, string>,
+  divisionById: Map<string, string>,
+  programById: Map<string, string>,
 ) {
   if (entry.targetType === "PUSAN_EMAIL") return entry.targetId;
   if (entry.targetType === "USER") return userById.get(entry.targetId) ?? "탈퇴한 사용자";
   if (entry.targetType === "TEAM") return teamById.get(entry.targetId) ?? "종료된 팀";
-  if (entry.targetType === "TOPIC") return topicById.get(entry.targetId) ?? "삭제된 주제";
+  if (entry.targetType === "TOPIC") return topicById.get(entry.targetId) ?? "삭제된 프로젝트";
+  if (entry.targetType === "PROGRAM_DIVISION") return divisionById.get(entry.targetId) ?? (isMetadata(entry.metadata) && typeof entry.metadata.name === "string" ? entry.metadata.name : "삭제된 분과");
+  if (entry.targetType === "PROJECT_PROGRAM") return programById.get(entry.targetId) ?? entry.targetId;
   if (entry.targetType === "PROJECT_ASSISTANT_INVITATION" && isMetadata(entry.metadata) && typeof entry.metadata.topicId === "string") {
-    return `${topicById.get(entry.metadata.topicId) ?? "주제"} 조교 초대`;
+    return `${topicById.get(entry.metadata.topicId) ?? "프로젝트"} 조교 초대`;
   }
   if (entry.targetType === "REPORT" && isMetadata(entry.metadata) && typeof entry.metadata.teamId === "string") {
     return `${teamById.get(entry.metadata.teamId) ?? "프로젝트"} 보고서 요구사항`;

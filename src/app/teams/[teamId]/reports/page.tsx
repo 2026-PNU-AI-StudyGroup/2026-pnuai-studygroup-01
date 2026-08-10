@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { ReportDecisionForm } from "@/app/teams/[teamId]/_components/report-decision-form";
 import { RemoveReportRequirementForm, ReportRequirementForm } from "@/app/teams/[teamId]/_components/report-requirement-forms";
-import { ReportFeedbackForm, ReportScoreForm } from "@/app/teams/[teamId]/_components/report-score-feedback-forms";
+import { ReportFeedbackForm } from "@/app/teams/[teamId]/_components/report-score-feedback-forms";
 import { ReportSubmissionForm } from "@/app/teams/[teamId]/_components/report-submission-form";
 import { RubricSection, type ReportRubricView } from "@/app/teams/[teamId]/_components/rubric-section";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
@@ -356,7 +356,7 @@ function ReportVersionEntry({
   );
 }
 
-function ReportScoreFeedbackSection({
+function ReportFeedbackSection({
   teamId,
   report,
   canEvaluate,
@@ -365,38 +365,10 @@ function ReportScoreFeedbackSection({
   report: ReportItem;
   canEvaluate: boolean;
 }) {
-  const hasScore = report.score !== undefined;
   const feedback = report.feedback ?? [];
 
   return (
-    <div className="mt-5 grid gap-5 border-t border-[var(--line)] pt-5 lg:grid-cols-2">
-      {hasScore || canEvaluate ? (
-        <section aria-labelledby={`report-score-${report.id}`}>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 id={`report-score-${report.id}`} className="text-sm font-bold"><UiText>{"보고서 점수"}</UiText></h3>
-            {hasScore ? (
-              <p className="text-sm">
-                <strong className="text-lg tabular-nums text-[var(--primary)]">{report.score}</strong>
-                <span className="text-[var(--muted)]"> / 100</span>
-                {report.scoredByName ? <span className="ml-2 text-xs text-[var(--muted)]">· {report.scoredByName}</span> : null}
-              </p>
-            ) : <span className="text-xs text-[var(--muted)]"><UiText>{"아직 점수가 없습니다."}</UiText></span>}
-          </div>
-          {hasScore && report.scoreComment ? (
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6"><UiText>{report.scoreComment}</UiText></p>
-          ) : null}
-          {canEvaluate ? (
-            <ReportScoreForm
-              teamId={teamId}
-              reportId={report.id}
-              currentScore={report.score}
-              currentComment={report.scoreComment}
-            />
-          ) : null}
-        </section>
-      ) : null}
-
-      <section aria-labelledby={`report-feedback-${report.id}`} className={hasScore || canEvaluate ? "lg:border-l lg:border-[var(--line)] lg:pl-5" : "lg:col-span-2"}>
+    <section aria-labelledby={`report-feedback-${report.id}`} className="mt-5 border-t border-[var(--line)] pt-5">
         <h3 id={`report-feedback-${report.id}`} className="text-sm font-bold">
           <UiText>{"피드백"}</UiText>
           {feedback.length ? <span className="ml-1 text-xs font-normal text-[var(--muted)]">{feedback.length}</span> : null}
@@ -417,8 +389,7 @@ function ReportScoreFeedbackSection({
           </ul>
         ) : <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"아직 피드백이 없습니다."}</UiText></p>}
         {canEvaluate ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
-      </section>
-    </div>
+    </section>
   );
 }
 
@@ -551,7 +522,7 @@ function ReportCard({
           </details>
         ) : null}
 
-        <ReportScoreFeedbackSection
+        <ReportFeedbackSection
           teamId={teamId}
           report={report}
           canEvaluate={canEvaluate}

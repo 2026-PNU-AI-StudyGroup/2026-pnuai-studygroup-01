@@ -39,8 +39,12 @@ const actionLabel: Record<AuditAction, string> = {
   PROJECT_ASSISTANT_INVITED: "프로젝트 조교 초대",
   PROJECT_ASSISTANT_ACCEPTED: "프로젝트 조교 수락",
   PROJECT_ASSISTANT_REMOVED: "프로젝트 조교 권한 해제",
-  TOPIC_CLOSED: "프로젝트 주제 마감",
+  TOPIC_CLOSED: "프로젝트 마감",
   TOPIC_RECRUITMENT_CLOSED: "프로젝트 모집 마감",
+  PROGRAM_DIVISION_CREATED: "분과 추가",
+  PROGRAM_DIVISION_UPDATED: "분과 변경",
+  PROGRAM_DIVISION_DELETED: "분과 삭제",
+  PROGRAM_VOTING_RESET: "프로그램 투표 초기화",
 };
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {

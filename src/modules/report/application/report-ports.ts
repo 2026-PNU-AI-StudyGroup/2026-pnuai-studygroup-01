@@ -10,10 +10,6 @@ export type ReportWorkspace = {
     id: string;
     type: ReportType;
     dueAt: Date;
-    score?: number;
-    scoreComment?: string;
-    scoredByName?: string;
-    scoredAt?: Date;
     versions: Array<{
       id: string;
       version: number;
@@ -88,16 +84,6 @@ export interface ReportDecisionWriter {
   }): Promise<boolean>;
 }
 
-export interface ReportScoreWriter {
-  score(input: {
-    reportId: string;
-    actor: CurrentActor;
-    score: number;
-    comment: string;
-    scoredAt: Date;
-  }): Promise<boolean>;
-}
-
 export interface ReportFeedbackWriter {
   add(input: {
     reportId: string;
@@ -117,4 +103,18 @@ export interface ArtifactWriter {
     externalUrl?: string;
     createdAt: Date;
   }): Promise<{ id: string } | null>;
+  updateArtifact(input: {
+    artifactId: string;
+    teamId: string;
+    actor: CurrentActor;
+    type: ArtifactType;
+    title: string;
+    updatedAt: Date;
+  }): Promise<boolean>;
+  removeArtifact(input: {
+    artifactId: string;
+    teamId: string;
+    actor: CurrentActor;
+    removedAt: Date;
+  }): Promise<boolean>;
 }

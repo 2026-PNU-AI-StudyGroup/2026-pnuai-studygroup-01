@@ -57,7 +57,7 @@ export function RubricSection({
   return (
     <section aria-labelledby={headingId} className="mt-5 grid gap-4 border-t border-[var(--line)] pt-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id={headingId} className="text-sm font-bold text-[var(--ink)]"><UiText>{"채점표 점수"}</UiText></h3>
+        <h3 id={headingId} className="text-sm font-bold text-[var(--ink)]"><UiText>{"공식 평가"}</UiText></h3>
         <div className="flex items-center gap-2">
           <StatusBadge tone={rubric.released ? "success" : "neutral"}>{rubric.released ? "공개됨" : "비공개"}</StatusBadge>
           <p className="text-sm font-bold">

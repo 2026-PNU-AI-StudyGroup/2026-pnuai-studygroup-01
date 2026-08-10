@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ProgramManagementNav } from "@/app/admin/programs/_components/program-management-nav";
 import { RubricManager, type CriterionRow } from "@/app/admin/programs/[programId]/rubric/_components/rubric-manager";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
@@ -23,6 +24,10 @@ export default async function ProgramRubricPage({ params }: { params: Promise<{ 
     orderBy: { position: "asc" },
     select: { id: true, label: true, maxPoints: true },
   });
+  const editable = !(await prisma.reportRubricScore.findFirst({
+    where: { criterion: { programId } },
+    select: { id: true },
+  }));
   const rows: CriterionRow[] = criteria.map((criterion) => ({ id: criterion.id, label: criterion.label, maxPoints: criterion.maxPoints }));
 
   return (
@@ -32,10 +37,11 @@ export default async function ProgramRubricPage({ params }: { params: Promise<{ 
         eyebrow="프로그램 관리"
         title={program.name}
         description="보고서를 항목별로 채점할 채점표(루브릭)를 정의합니다. 지도교수·관리자가 이 항목으로 점수를 매깁니다."
-        actions={<Link href={`/admin/programs/${program.id}/settings`} className="button-secondary"><UiText>{"설정으로"}</UiText></Link>}
+        actions={<Link href="/admin/programs" className="button-secondary"><UiText>{"프로그램 목록"}</UiText></Link>}
       >
+        <ProgramManagementNav programId={program.id} current="rubric" />
         <FormSection title="채점표(루브릭)" description="항목과 배점을 정하면, 보고서 화면에서 항목별 점수를 입력하고 합산 결과를 학생에게 공개할 수 있습니다.">
-          <RubricManager programId={program.id} criteria={rows} />
+          <RubricManager programId={program.id} criteria={rows} editable={editable} />
         </FormSection>
       </AdminWorkspace>
     </AppShell>

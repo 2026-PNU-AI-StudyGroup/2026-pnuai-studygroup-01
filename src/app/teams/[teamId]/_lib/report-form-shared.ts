@@ -352,6 +352,7 @@ export async function uploadTeamFile(
     body: JSON.stringify({
       teamId,
       purpose,
+      consumer: purpose,
       originalName: file.name,
       contentType: file.type,
       size: file.size,

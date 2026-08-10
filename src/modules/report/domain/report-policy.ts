@@ -33,15 +33,6 @@ export function normalizeDecisionComment(decision: ApprovalDecision, value: stri
   return normalized;
 }
 
-export function normalizeReportScore(score: number, comment: string) {
-  if (!Number.isInteger(score) || score < 0 || score > 100) {
-    throw new InvalidReportInputError();
-  }
-  const normalized = comment.trim();
-  if (normalized.length > 2_000) throw new InvalidReportInputError();
-  return { score, comment: normalized };
-}
-
 export function normalizeReportFeedback(body: string) {
   const normalized = body.trim();
   if (normalized.length < 1 || normalized.length > 2_000) {

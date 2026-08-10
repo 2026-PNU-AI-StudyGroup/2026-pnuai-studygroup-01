@@ -4,7 +4,6 @@ import type {
   ReportDecisionWriter,
   ReportFeedbackWriter,
   ReportRequirementWriter,
-  ReportScoreWriter,
   ReportSubmissionWriter,
   ReportWorkspaceReader,
 } from "@/modules/report/application/report-ports";
@@ -16,7 +15,6 @@ import {
   normalizeDecisionComment,
   normalizeDescription,
   normalizeReportFeedback,
-  normalizeReportScore,
   type ReportType,
   validateReportDueAt,
 } from "@/modules/report/domain/report-policy";
@@ -132,23 +130,35 @@ export class ArtifactRegistrationService {
   }
 }
 
-export class ReportScoreService {
-  constructor(private readonly scoreWriter: ReportScoreWriter) {}
+export class ArtifactManagementService {
+  constructor(private readonly artifactWriter: ArtifactWriter) {}
 
-  async score(actor: CurrentActor, input: {
-    reportId: string;
-    score: number;
-    comment: string;
+  async updateArtifact(actor: CurrentActor, input: {
+    artifactId: string;
+    teamId: string;
+    type: ArtifactType;
+    title: string;
   }, now = new Date()) {
-    const normalized = normalizeReportScore(input.score, input.comment);
-    const scored = await this.scoreWriter.score({
-      reportId: input.reportId,
+    const normalized = normalizeArtifact(input);
+    const updated = await this.artifactWriter.updateArtifact({
+      ...input,
+      ...normalized,
       actor,
-      score: normalized.score,
-      comment: normalized.comment,
-      scoredAt: now,
+      updatedAt: now,
     });
-    if (!scored) throw new ReportOperationNotAllowedError();
+    if (!updated) throw new ReportOperationNotAllowedError();
+  }
+
+  async removeArtifact(actor: CurrentActor, input: {
+    artifactId: string;
+    teamId: string;
+  }, now = new Date()) {
+    const removed = await this.artifactWriter.removeArtifact({
+      ...input,
+      actor,
+      removedAt: now,
+    });
+    if (!removed) throw new ReportOperationNotAllowedError();
   }
 }
 

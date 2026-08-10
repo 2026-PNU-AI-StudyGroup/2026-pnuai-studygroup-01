@@ -26,7 +26,6 @@ vi.mock("@/app/teams/[teamId]/_components/report-requirement-forms", () => ({
 
 vi.mock("@/app/teams/[teamId]/_components/report-score-feedback-forms", () => ({
   ReportFeedbackForm: () => <button type="button">피드백 남기기</button>,
-  ReportScoreForm: () => <button type="button">점수 입력</button>,
 }));
 
 vi.mock("@/app/teams/[teamId]/_components/report-submission-form", () => ({

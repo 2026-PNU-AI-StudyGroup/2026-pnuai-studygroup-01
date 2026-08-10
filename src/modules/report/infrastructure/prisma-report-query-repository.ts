@@ -22,10 +22,6 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
             id: true,
             type: true,
             dueAt: true,
-            score: true,
-            scoreComment: true,
-            scoredAt: true,
-            scoredBy: { select: { name: true } },
             feedback: {
               orderBy: { createdAt: "asc" },
               select: {
@@ -77,10 +73,6 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         id: report.id,
         type: report.type,
         dueAt: report.dueAt,
-        score: report.score ?? undefined,
-        scoreComment: report.scoreComment ?? undefined,
-        scoredByName: report.scoredBy?.name ?? undefined,
-        scoredAt: report.scoredAt ?? undefined,
         feedback: report.feedback.map((item) => ({
           id: item.id,
           authorName: item.author.name,
