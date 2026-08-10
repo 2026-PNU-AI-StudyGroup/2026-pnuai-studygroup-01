@@ -1,61 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
-
-import {
-  createTrackAction,
-  deleteTrackAction,
-  moveTrackAction,
-  trackInitialState,
-} from "@/app/admin/programs/[programId]/tracks/_actions/track-actions";
+import { useActionState, useEffect, useState } from "react";
+import { createTrackAction, deleteTrackAction, moveTrackAction, renameTrackAction, trackInitialState } from "@/app/admin/programs/[programId]/tracks/_actions/track-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
-export type TrackRow = { id: string; name: string; topicCount: number };
-
+export type TrackRow = { id: string; name: string; projectCount: number };
 export function TrackManager({ programId, tracks }: { programId: string; tracks: TrackRow[] }) {
-  const [state, action, pending] = useActionState(createTrackAction.bind(null, programId), trackInitialState);
-
-  return (
-    <div className="grid gap-5">
-      <form action={action} className="flex flex-wrap items-end gap-3">
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{"트랙 이름"}</UiText></span>
-          <UiInput className="form-control bg-white" name="name" type="text" maxLength={40} placeholder="예: 창업 트랙" required />
-        </label>
-        <button className="button-primary" type="submit" disabled={pending}>
-          <UiText>{pending ? "추가 중" : "트랙 추가"}</UiText>
-        </button>
-        {state.message ? (
-          <span className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></span>
-        ) : null}
-      </form>
-
-      {tracks.length ? (
-        <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-          {tracks.map((track, index) => (
-            <li key={track.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div>
-                <strong className="text-[var(--ink)]">{track.name}</strong>
-                <span className="muted ml-2 text-xs"><UiText>{"주제"}</UiText>{" "}{track.topicCount}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <form action={async (fd) => { await moveTrackAction(track.id, "up", trackInitialState, fd); }}>
-                  <button className="button-quiet text-xs" type="submit" disabled={index === 0}><UiText>{"위로"}</UiText></button>
-                </form>
-                <form action={async (fd) => { await moveTrackAction(track.id, "down", trackInitialState, fd); }}>
-                  <button className="button-quiet text-xs" type="submit" disabled={index === tracks.length - 1}><UiText>{"아래로"}</UiText></button>
-                </form>
-                <form action={async (fd) => { await deleteTrackAction(track.id, trackInitialState, fd); }}>
-                  <button className="button-quiet text-xs text-[var(--danger)]" type="submit"><UiText>{"삭제"}</UiText></button>
-                </form>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="muted text-sm"><UiText>{"아직 트랙이 없습니다. 창업·융합 등 세부 트랙을 추가해 주세요."}</UiText></p>
-      )}
-    </div>
-  );
+  const [state, create, pending] = useActionState(createTrackAction.bind(null, programId), trackInitialState);
+  const [editing, setEditing] = useState<string | null>(null);
+  return <div className="grid gap-5">
+    <form action={create} className="flex flex-wrap items-end gap-3"><label className="grid gap-2"><span className="text-sm font-semibold"><UiText>{"분과 이름"}</UiText></span><UiInput className="form-control bg-white" name="name" maxLength={40} required placeholder="예: 창업 분과" /></label><button className="button-primary" disabled={pending}><UiText>{pending ? "추가 중" : "분과 추가"}</UiText></button></form>
+    {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}
+    {tracks.length ? <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{tracks.map((track, index) => <li key={track.id} className="py-3">
+      {editing === track.id ? <RenameRow track={track} programId={programId} onDone={() => setEditing(null)} /> : <div className="flex flex-wrap items-center justify-between gap-3"><div><strong>{track.name}</strong><span className="muted ml-2 text-xs"><UiText>{"프로젝트"}</UiText>{` ${track.projectCount}개`}</span></div><div className="flex gap-1"><Move track={track} programId={programId} direction="up" disabled={index === 0} /><Move track={track} programId={programId} direction="down" disabled={index === tracks.length - 1} /><button type="button" className="button-quiet text-xs" onClick={() => setEditing(track.id)}><UiText>{"이름 수정"}</UiText></button><DeleteRow track={track} programId={programId} /></div></div>}
+    </li>)}</ul> : <p className="muted text-sm"><UiText>{"아직 분과가 없습니다. 창업·융합 등 내부 분과를 추가해 주세요."}</UiText></p>}
+  </div>;
 }
+function Move({ track, programId, direction, disabled }: { track: TrackRow; programId: string; direction: "up" | "down"; disabled: boolean }) { const [state, action, pending] = useActionState(moveTrackAction.bind(null, track.id, programId, direction), trackInitialState); return <form action={action}><button className="button-quiet text-xs" disabled={disabled || pending}><UiText>{direction === "up" ? "위로" : "아래로"}</UiText></button>{state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}</form>; }
+function RenameRow({ track, programId, onDone }: { track: TrackRow; programId: string; onDone: () => void }) { const [state, action, pending] = useActionState(renameTrackAction.bind(null, track.id, programId), trackInitialState); useEffect(() => { if (state.status === "success") onDone(); }, [onDone, state.status]); return <form action={action} className="flex flex-wrap gap-2"><UiInput name="name" defaultValue={track.name} className="form-control max-w-xs" maxLength={40} required /><button className="button-primary text-sm" disabled={pending}><UiText>{"저장"}</UiText></button><button type="button" className="button-quiet text-sm" onClick={onDone}><UiText>{"취소"}</UiText></button>{state.message ? <span role="status" className="text-sm"><UiText>{state.message}</UiText></span> : null}</form>; }
+function DeleteRow({ track, programId }: { track: TrackRow; programId: string }) { const [state, action, pending] = useActionState(deleteTrackAction.bind(null, track.id), trackInitialState); return <form action={action} className="inline-flex items-center gap-2"><input type="hidden" name="programId" value={programId} />{state.status === "confirm" ? <><input type="hidden" name="confirmed" value="true" /><input type="hidden" name="expectedProjectCount" value={state.projectCount ?? 0} /><input type="hidden" name="expectedVoteCount" value={state.voteCount ?? 0} /><input type="hidden" name="expectedSwitchesVotingScope" value={String(state.switchesVotingScope ?? false)} /><span className="text-xs text-[var(--danger)]"><UiText>{`${state.projectCount ?? 0}개 프로젝트를 미분과로 옮기고 ${state.voteCount ?? 0}표를 초기화합니다.${state.switchesVotingScope ? " 마지막 분과 삭제로 프로그램 전체 투표로 전환합니다." : ""}`}</UiText></span><button className="button-danger text-xs" disabled={pending}><UiText>{"삭제 확인"}</UiText></button></> : <button className="button-quiet text-xs text-[var(--danger)]" disabled={pending}><UiText>{"삭제"}</UiText></button>}{state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}</form>; }

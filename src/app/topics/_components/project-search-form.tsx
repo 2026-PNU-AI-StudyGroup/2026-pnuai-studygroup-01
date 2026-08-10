@@ -9,12 +9,14 @@ export function ProjectSearchForm({
   programId,
   query,
   sort,
+  divisionId,
 }: {
   view: "active" | "past";
   phase?: PublicTopicPhase;
   programId?: string;
   query: string;
   sort?: PublicTopicSort;
+  divisionId?: string | "UNASSIGNED";
 }) {
   return (
     <form
@@ -26,6 +28,7 @@ export function ProjectSearchForm({
       {phase ? <input type="hidden" name="phase" value={phase} /> : null}
       {programId ? <input type="hidden" name="programId" value={programId} /> : null}
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
+      {divisionId ? <input type="hidden" name="divisionId" value={divisionId} /> : null}
       <label className="relative block">
         <span className="sr-only"><UiText>{"프로젝트 검색"}</UiText></span>
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--muted)]" />
@@ -34,7 +37,7 @@ export function ProjectSearchForm({
           name="q"
           defaultValue={query}
           maxLength={100}
-          placeholder="프로젝트명, 주제, 기술 스택, 교수명으로 검색"
+          placeholder="프로젝트명, 기술 스택, 교수명으로 검색"
           className="form-control min-h-12 w-full bg-white pl-12 text-sm"
         />
       </label>

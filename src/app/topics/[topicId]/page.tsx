@@ -85,6 +85,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <div>
           <div className="flex flex-wrap items-center gap-3">
             {topic.advisorEnabled ? <p className="text-sm font-semibold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
+            <p className="text-sm font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
             <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruitmentStatusLabel}</UiText></StatusBadge>
           </div>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.45rem,5vw,4.25rem)] font-bold leading-[1.03] tracking-[-0.055em]"><UiText>{topic.title}</UiText></h1>
@@ -103,6 +104,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       rail={
         <>
           <h2 id="topic-schedule" className="text-xl font-bold"><UiText>{"프로젝트 일정"}</UiText></h2>
+          <p className="mt-2 text-sm font-semibold text-[var(--muted)]"><UiText>{`소속 프로그램 · 분과: ${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
           <dl className="mt-5"><Period label="프로그램 모집 기간" startsAt={topic.recruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.executionStartsAt} endsAt={topic.executionEndsAt} /><Period label="제출 기간" startsAt={topic.submissionStartsAt} endsAt={topic.submissionEndsAt} /></dl>
         </>
       }

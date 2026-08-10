@@ -13,16 +13,17 @@ import { enqueueTranslations } from "@/modules/translation/application/translati
 export class PrismaProjectProgramRepository implements ProjectProgramRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE"> {
+  async create(input: ProjectProgramDetails & { divisionNames?: string[]; votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE"> {
     try {
       return await this.client.$transaction(async (transaction) => {
-        const { votingPolicy, ...program } = input;
+        const { votingPolicy, divisionNames = [], ...program } = input;
         await transaction.projectProgram.create({
           data: {
             ...program,
-            status: "DRAFT",
-            openedAt: null,
+            isPublic: false,
+            lifecycleStatus: "ACTIVE",
             votingPolicy: votingPolicy ? { create: votingPolicy } : undefined,
+            divisions: divisionNames.length ? { create: divisionNames.map((name, position) => ({ name, position })) } : undefined,
           },
         });
         await enqueueTranslations(transaction, [input.name, input.category, input.description]);
@@ -39,12 +40,12 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   }
 
   listAll(): Promise<ProjectProgramRecord[]> { return this.list({}); }
-  listOpen(): Promise<ProjectProgramRecord[]> { return this.list({ status: "OPEN" }); }
+  listPublic(): Promise<ProjectProgramRecord[]> { return this.list({ isPublic: true }); }
+  listOpen(): Promise<ProjectProgramRecord[]> { return this.listPublic(); }
   listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]> {
     return this.list({
       OR: [
-        { status: "OPEN" },
-        { votingPolicy: { is: { startsAt: { lte: now }, endsAt: { gt: now } } } },
+        { isPublic: true },
       ],
     });
   }
@@ -56,19 +57,21 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     const programs = await this.client.projectProgram.findMany({
       where, orderBy: [{ startsAt: "desc" }, { name: "asc" }],
       include: {
-        topics: { select: { status: true, team: { select: { id: true } } } },
+        topics: { select: { team: { select: { id: true } } } },
+        divisions: { orderBy: { position: "asc" }, select: { id: true, name: true, position: true } },
         votingPolicy: true,
       },
     });
     return programs.map(({ topics, ...program }) => ({
       ...program,
+      status: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
       startYear: getProgramStartYear(program.startsAt),
-      topicCount: topics.filter(({ status }) => status === "PUBLISHED").length,
+      topicCount: topics.length,
       teamCount: topics.filter(({ team }) => team !== null).length,
     }));
   }
 
-  async updateSettings(id: string, input: ProjectProgramSettings): Promise<UpdateProjectProgramSettingsOutcome> {
+  async updateSettings(id: string, input: ProjectProgramSettings, actorId: string): Promise<UpdateProjectProgramSettingsOutcome> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
@@ -79,15 +82,53 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       const voteCount = currentPolicy
         ? await transaction.projectVote.count({ where: { programId: id } })
         : 0;
+      const scheduleConflict = await transaction.topic.findFirst({
+        where: {
+          programId: id,
+          OR: [
+            { recruitmentStartsAt: { lt: input.startsAt } },
+            { executionStartsAt: { lt: input.startsAt } },
+            { executionEndsAt: { lt: input.startsAt } },
+            { submissionStartsAt: { lt: input.startsAt } },
+            { submissionEndsAt: { lt: input.startsAt } },
+            { recruitmentStartsAt: { gt: input.endsAt } },
+            { executionStartsAt: { gt: input.endsAt } },
+            { executionEndsAt: { gt: input.endsAt } },
+            { submissionStartsAt: { gt: input.endsAt } },
+            { submissionEndsAt: { gt: input.endsAt } },
+            { recruitmentStartsAt: { gte: input.recruitmentEndsAt } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (scheduleConflict) return "TOPIC_SCHEDULE_CONFLICT";
+
+      const divisionCount = await transaction.programDivision.count({ where: { programId: id } });
+      if (input.votingPolicy?.voteLimitScope === "DIVISION" && divisionCount === 0) return "DIVISIONS_REQUIRED";
 
       if (!input.votingPolicy) {
         if (currentPolicy && voteCount > 0) return "VOTING_POLICY_HAS_VOTES";
         if (currentPolicy) await transaction.programVotingPolicy.delete({ where: { programId: id } });
       } else if (currentPolicy) {
+        const requestedScope = input.votingPolicy.voteLimitScope ?? "PROGRAM";
+        const policyChanged = currentPolicy.voteLimit !== input.votingPolicy.voteLimit || currentPolicy.voteLimitScope !== requestedScope;
+        const resetConfirmed = input.confirmVoteReset?.voteCount === voteCount &&
+          input.confirmVoteReset.from.voteLimit === currentPolicy.voteLimit &&
+          input.confirmVoteReset.from.voteLimitScope === currentPolicy.voteLimitScope &&
+          input.confirmVoteReset.to.voteLimit === input.votingPolicy.voteLimit &&
+          input.confirmVoteReset.to.voteLimitScope === requestedScope;
+        if (voteCount > 0 && policyChanged && !resetConfirmed) return {
+          status: "VOTE_RESET_CONFIRMATION_REQUIRED" as const,
+          impact: {
+            voteCount,
+            from: { voteLimit: currentPolicy.voteLimit, voteLimitScope: currentPolicy.voteLimitScope },
+            to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope },
+          },
+        };
         if (voteCount > 0 && currentPolicy.identityVisibility !== input.votingPolicy.identityVisibility) {
           return "IDENTITY_VISIBILITY_LOCKED";
         }
-        if (input.votingPolicy.voteLimit < currentPolicy.voteLimit) {
+        if (!policyChanged && input.votingPolicy.voteLimit < currentPolicy.voteLimit) {
           const voterCounts = await transaction.projectVote.groupBy({
             by: ["voterId"],
             where: { programId: id },
@@ -112,6 +153,10 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           const selfVote = await findSelfVote(transaction, id);
           if (selfVote) return "SELF_VOTE_CONFLICT";
         }
+        if (voteCount > 0 && policyChanged) {
+          await transaction.projectVote.deleteMany({ where: { programId: id } });
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "POLICY_CHANGED", voteCount, from: { voteLimit: currentPolicy.voteLimit, voteLimitScope: currentPolicy.voteLimitScope }, to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope } } } });
+        }
         await transaction.programVotingPolicy.update({ where: { programId: id }, data: input.votingPolicy });
       } else {
         await transaction.programVotingPolicy.create({ data: { programId: id, ...input.votingPolicy } });
@@ -120,6 +165,12 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       await transaction.projectProgram.update({
         where: { id },
         data: {
+          name: input.name,
+          category: input.category,
+          description: input.description,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+          advisorEnabled: input.advisorEnabled,
           projectRegistrationStartsAt: input.projectRegistrationStartsAt,
           projectRegistrationEndsAt: input.projectRegistrationEndsAt,
           recruitmentEndsAt: input.recruitmentEndsAt,
@@ -129,20 +180,22 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     });
   }
 
-  changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean> {
+  setPublic(id: string, isPublic: boolean): Promise<boolean> {
+    return this.client.projectProgram.updateMany({ where: { id }, data: { isPublic } }).then(({ count }) => count === 1);
+  }
+
+  close(id: string, changedById: string, changedAt: Date): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
       `);
       if (!rows[0]) return false;
       const result = await transaction.projectProgram.updateMany({
-        where: status === "OPEN"
-          ? { id, status: "DRAFT", endsAt: { gt: changedAt } }
-          : { id, status: "OPEN" },
-        data: status === "OPEN" ? { status, openedAt: changedAt } : { status },
+        where: { id, lifecycleStatus: "ACTIVE" },
+        data: { lifecycleStatus: "CLOSED" },
       });
       if (result.count !== 1) return false;
-      if (status === "CLOSED") {
+      {
         const topicIds = (await transaction.topic.findMany({ where: { programId: id }, select: { id: true } })).map(({ id: topicId }) => topicId);
         const applications = await transaction.topicApplication.findMany({
           where: { topicId: { in: topicIds }, status: "PENDING" },
@@ -153,9 +206,11 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           data: {
             status: "REJECTED",
             reviewComment: "프로그램 종료로 승인 요청이 자동 종료되었습니다.",
+            decidedById: changedById,
             decidedAt: changedAt,
           },
         });
+        await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PENDING_APPROVAL" }, data: { status: "REJECTED" } });
         await transaction.topic.updateMany({ where: { id: { in: topicIds }, status: "PUBLISHED" }, data: { status: "CLOSED" } });
         await transaction.topicApplication.updateMany({
           where: { topicId: { in: topicIds }, status: "PENDING" },
@@ -180,9 +235,13 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     });
   }
 
+  changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean> {
+    return status === "OPEN" ? this.setPublic(id, true) : this.close(id, changedById, changedAt);
+  }
+
   async changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean> {
     const result = await this.client.projectProgram.updateMany({
-      where: { id, status: { not: "CLOSED" } },
+      where: { id, lifecycleStatus: "ACTIVE" },
       data: { studentProjectCreationEnabled: enabled },
     });
     return result.count === 1;
@@ -193,7 +252,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     return result.count === 1;
   }
 
-  findOpen(id: string): Promise<{
+  findPublicActive(id: string): Promise<{
     id: string;
     startsAt: Date;
     endsAt: Date;
@@ -204,7 +263,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     studentProjectCreationEnabled: boolean;
   } | null> {
     return this.client.projectProgram.findFirst({
-      where: { id, status: "OPEN" },
+      where: { id, isPublic: true, lifecycleStatus: "ACTIVE" },
       select: {
         id: true,
         startsAt: true,
@@ -216,6 +275,10 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         studentProjectCreationEnabled: true,
       },
     });
+  }
+
+  findOpen(id: string) {
+    return this.findPublicActive(id);
   }
 }
 

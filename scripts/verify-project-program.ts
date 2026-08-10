@@ -84,7 +84,6 @@ async function main() {
     submissionStartsAt: new Date(now.getTime() + 60 * day),
     submissionEndsAt: new Date(now.getTime() + 80 * day),
   });
-  if (!(await topicCommands.publishDraft(topic.id, { id: professorId, role: "PROFESSOR" }, now))) throw new Error("공개 프로그램의 주제를 공개하지 못했습니다.");
   const filtered = await topicQueries.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
   if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
@@ -128,7 +127,7 @@ async function main() {
     executionEndsAt: new Date(now.getTime() + 70 * day),
     submissionStartsAt: new Date(now.getTime() + 60 * day),
     submissionEndsAt: new Date(now.getTime() + 80 * day),
-    status: "DRAFT",
+    status: "PENDING_APPROVAL",
     approvalRequest: {
       create: {
         requesterId: applicantId,
@@ -136,7 +135,8 @@ async function main() {
         status: "PENDING",
       },
     },
-  }, include: { approvalRequest: true } });
+  } });
+  const pendingApprovalRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({ where: { topicId: pendingApprovalTopic.id } });
 
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "CLOSED", new Date(now.getTime() + 1_000));
   const [closedTopic, rejectedTopicApplication, closedPost, rejectedRecruitmentApplication, rejectedApprovalRequest] = await Promise.all([
@@ -144,7 +144,7 @@ async function main() {
     prisma.topicApplication.findUniqueOrThrow({ where: { id: pending.id } }),
     prisma.recruitmentPost.findUniqueOrThrow({ where: { id: post.id } }),
     prisma.recruitmentApplication.findUniqueOrThrow({ where: { topicApplicationId: pending.id } }),
-    prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: pendingApprovalTopic.approvalRequest!.id } }),
+    prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: pendingApprovalRequest.id } }),
   ]);
   if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED" || rejectedApprovalRequest.status !== "REJECTED") {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
@@ -153,7 +153,6 @@ async function main() {
   if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
   }
-  if (await topicCommands.publishDraft(topic.id, { id: professorId, role: "PROFESSOR" }, new Date(now.getTime() + 2_000))) throw new Error("마감 프로그램의 주제가 다시 공개되었습니다.");
 
   const raceName = `마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
@@ -250,13 +249,13 @@ async function main() {
     prisma.topicApprovalRequest.count({ where: { topic: { programId: approvalRaceProgram.id }, status: "PENDING" } }),
   ]);
   if (
-    approvalRaceProgramState.status !== "CLOSED" ||
+    approvalRaceProgramState.lifecycleStatus !== "CLOSED" ||
     approvalRacePublishedTopics !== 0 ||
     approvalRacePendingRequests !== 0 ||
     !["APPROVED", "UNAVAILABLE"].includes(approvalCloseRace[0].value)
   ) {
     throw new Error(
-      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: program=${approvalRaceProgramState.status}, published=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
+      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: program=${approvalRaceProgramState.lifecycleStatus}, published=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
     );
   }
 

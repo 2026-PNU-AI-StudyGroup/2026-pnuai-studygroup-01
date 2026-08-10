@@ -40,6 +40,7 @@ type TopicsSearchParams = {
   q?: SearchParamValue;
   phase?: SearchParamValue;
   sort?: SearchParamValue;
+  divisionId?: SearchParamValue;
 };
 
 type ProjectView = "active" | "past";
@@ -65,8 +66,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
 
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
+    const requestedArchiveDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     const [archive, sidebarPrograms] = await Promise.all([
-      archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId }),
+      archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, divisionId: requestedArchiveDivisionId }),
       programService.listSidebarVisible(now),
     ]);
     const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
@@ -77,12 +79,29 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       redirect(`/topics?${target.toString()}`);
     }
     const selectedProgram = archive.programs.find((program) => program.id === programId);
+    const divisionId = (selectedProgram?.divisions ?? []).some((division) => division.id === requestedArchiveDivisionId)
+      ? requestedArchiveDivisionId
+      : requestedArchiveDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
+    if (requestedArchiveDivisionId && divisionId !== requestedArchiveDivisionId) {
+      const target = new URLSearchParams({ view: "past", ...(programId ? { programId } : {}) });
+      if (query) target.set("q", query);
+      redirect(`/topics?${target.toString()}`);
+    }
+    const hasUnassigned = programId && (selectedProgram?.divisions?.length ?? 0) > 0
+      ? Boolean(await prisma.topic.findFirst({ where: { programId, divisionId: null, team: { is: { status: "CLOSED" } } }, select: { id: true } }))
+      : false;
+    if (divisionId === "UNASSIGNED" && !hasUnassigned) {
+      const target = new URLSearchParams({ view: "past", ...(programId ? { programId } : {}) });
+      if (query) target.set("q", query);
+      if (requestedPage > 1) target.set("page", String(requestedPage));
+      redirect(`/topics?${target.toString()}`);
+    }
     const ballot = programId ? await votingService.getBallot(actor, programId) : undefined;
     const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero view="past" program={selectedProgram} />
-        <PastProjectsView {...archive} query={query} programId={programId} ballot={ballot ?? undefined} />
+        <PastProjectsView {...archive} query={query} programId={programId} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} ballot={ballot ?? undefined} />
       </ExplorerLayout>
     );
   } else {
@@ -92,18 +111,29 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     ]);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const programId = resolveProgramSelection(requestedProgramId, programs);
+    const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
       redirect(activeProjectsHref({ phase, programId, query, sort, page: requestedPage }));
     }
+    const selectedProgram = programs.find((program) => program.id === programId);
+    const divisionId = selectedProgram?.divisions?.some((division) => division.id === requestedDivisionId)
+      ? requestedDivisionId
+      : requestedDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
+    if (requestedDivisionId && divisionId !== requestedDivisionId) redirect(activeProjectsHref({ phase, programId, query, sort, page: requestedPage }));
     const [topics, archivedPrograms, leaderTeams, ballot] = await Promise.all([
-      topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, query, phase, sort, page: requestedPage, now }),
+      topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, phase, sort, page: requestedPage, now }),
       archiveService.listPrograms(),
       actor.role === "STUDENT"
         ? new PrismaStudentTeamRecruitmentQueryRepository(prisma).listLeaderTeams(actor.id)
         : Promise.resolve([]),
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
     ]);
-    const selectedProgram = programs.find((program) => program.id === programId);
+    const hasUnassigned = programId && selectedProgram?.divisions?.length
+      ? Boolean(await prisma.topic.findFirst({ where: { programId, divisionId: null, status: "PUBLISHED" }, select: { id: true } }))
+      : false;
+    if (divisionId === "UNASSIGNED" && !hasUnassigned) {
+      redirect(activeProjectsHref({ phase, programId, query, sort, page: requestedPage }));
+    }
     const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query, phase, sort }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
@@ -116,7 +146,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               : null}
           </> : undefined}
         />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} now={now} ballot={ballot ?? undefined} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} phase={phase} query={query} sort={sort} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} />
       </ExplorerLayout>
     );
   }

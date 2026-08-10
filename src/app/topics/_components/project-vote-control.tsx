@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { toggleProjectVoteAction } from "@/app/programs/_actions/project-vote-actions";
+import { toggleProjectVoteAction } from "@/app/_actions/project-vote-actions";
 import type { ProgramVoteBallot, ProjectVoteCandidate } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiSection } from "@/modules/translation/ui/localized-elements";
 
 export type ProjectVoteSelection = {
   ballot?: ProgramVoteBallot;
@@ -14,6 +15,17 @@ export type ProjectVoteSelection = {
   pendingTopicId: string | null;
   toggle: (topicId: string) => void;
 };
+
+export function voteBucketSummary(ballot: ProgramVoteBallot, selectedTopicIds: ReadonlySet<string>) {
+  const buckets = new Map<string, { name: string; selected: number }>();
+  for (const candidate of ballot.candidates) {
+    const key = ballot.policy.voteLimitScope === "DIVISION" ? candidate.divisionId ?? "UNASSIGNED" : "PROGRAM";
+    const current = buckets.get(key) ?? { name: ballot.policy.voteLimitScope === "DIVISION" ? candidate.divisionName ?? "미분과" : "프로그램 전체", selected: 0 };
+    if (selectedTopicIds.has(candidate.id)) current.selected += 1;
+    buckets.set(key, current);
+  }
+  return [...buckets.values()];
+}
 
 export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVoteSelection {
   const ballotKey = ballot ? `${ballot.programId}:${ballot.selectedTopicIds.join(":")}` : "";
@@ -29,7 +41,6 @@ export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVote
 
   function toggle(topicId: string) {
     if (!ballot || pending) return;
-    const removed = selectedTopicIds.has(topicId);
     setPendingTopicId(topicId);
     startTransition(async () => {
       try {
@@ -37,17 +48,9 @@ export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVote
         const nextSelectedTopicIds = result.selectedTopicIds;
         if (result.status === "success" && nextSelectedTopicIds) {
           setSelectedTopicIds(new Set(nextSelectedTopicIds));
-          toast.success(
-            result.remainingVotes === 0
-              ? <UiText>{"가능한 투표를 모두 사용했습니다."}</UiText>
-              : <><UiText>{removed ? "투표를 취소했습니다." : "투표가 반영되었습니다."}</UiText>{" "}<strong>{result.remainingVotes}</strong><UiText>{"장 남았습니다."}</UiText></>,
-          );
+          toast.success(<UiText>{result.message}</UiText>);
         } else {
-          toast.error(
-            result.remainingVotes === 0
-              ? <UiText>{"가능한 투표를 모두 사용했습니다."}</UiText>
-              : <UiText>{result.message}</UiText>,
-          );
+          toast.error(<UiText>{result.message}</UiText>);
         }
       } finally {
         setPendingTopicId(null);
@@ -63,12 +66,21 @@ export function ProjectVoteButton({ candidate, selection }: {
   selection: ProjectVoteSelection;
 }) {
   const ballot = selection.ballot;
-  if (!ballot || !candidate || ballot.phase !== "OPEN") return null;
+  if (!ballot || !candidate) return null;
+  if (ballot.phase !== "OPEN") return <button type="button" disabled className="button-secondary w-full"><UiText>{ballot.phase === "UPCOMING" ? "투표 시작 전" : "투표 기간 종료"}</UiText></button>;
 
   const selected = selection.selectedTopicIds.has(candidate.id);
   const selfVoteBlocked = !ballot.policy.selfVotingAllowed && candidate.isSelfProject;
-  const disabled = selection.pending || selfVoteBlocked;
-  const label = selected ? "투표 취소" : selfVoteBlocked ? "투표 불가" : "투표하기";
+  const bucketSelected = ballot.policy.voteLimitScope === "PROGRAM" ? selection.selectedTopicIds.size : [...selection.selectedTopicIds].filter((id) => (ballot.candidates.find((item) => item.id === id)?.divisionId ?? "UNASSIGNED") === (candidate.divisionId ?? "UNASSIGNED")).length;
+  const limitReached = !selected && bucketSelected >= ballot.policy.voteLimit;
+  const disabled = selection.pending || selfVoteBlocked || limitReached;
+  const scopeName = ballot.policy.voteLimitScope === "DIVISION" ? candidate.divisionName ?? "미분과" : "프로그램 전체";
+  const label = selection.pending
+    ? selection.pendingTopicId === candidate.id ? "저장 중" : "다른 투표 저장 중"
+    : selected ? "투표 취소"
+      : selfVoteBlocked ? "자기 프로젝트 투표 불가"
+        : limitReached ? `${scopeName} 한도 도달`
+          : "투표하기";
 
   return (
     <button
@@ -77,7 +89,19 @@ export function ProjectVoteButton({ candidate, selection }: {
       disabled={disabled}
       className={`${selected ? "button-secondary" : "button-primary"} w-full`}
     >
-      <UiText>{selection.pendingTopicId === candidate.id ? "저장 중" : label}</UiText>
+      <UiText>{label}</UiText>
     </button>
   );
+}
+
+export function ProjectVoteStatusPanel({ selection }: { selection: ProjectVoteSelection }) {
+  const ballot = selection.ballot;
+  if (!ballot) return null;
+  const buckets = voteBucketSummary(ballot, selection.selectedTopicIds);
+  const phaseLabel = ballot.phase === "OPEN" ? "투표 진행 중" : ballot.phase === "UPCOMING" ? "투표 시작 전" : "투표 종료";
+  return <UiSection aria-label="투표 현황" className="border border-[var(--line)] bg-[var(--surface-subtle)] p-4 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold"><UiText>{ballot.policy.voteLimitScope === "DIVISION" ? "분과별 투표" : "프로그램 전체 투표"}</UiText></p><span className="text-xs font-semibold text-[var(--muted)]"><UiText>{phaseLabel}</UiText></span></div>
+    <p className="mt-1 text-[var(--muted)]"><UiText>{ballot.policy.voteLimitScope === "DIVISION" ? `각 분과에서 ${ballot.policy.voteLimit}표까지 선택할 수 있습니다.` : `프로그램 전체에서 ${ballot.policy.voteLimit}표까지 선택할 수 있습니다.`}</UiText></p>
+    {buckets.length ? <div className="mt-3 flex gap-2 overflow-x-auto">{buckets.map((bucket) => <span key={bucket.name} className="shrink-0 rounded-full border border-[var(--line)] bg-white px-3 py-1 text-xs font-semibold">{bucket.name} {bucket.selected}/{ballot.policy.voteLimit}</span>)}</div> : null}
+  </UiSection>;
 }

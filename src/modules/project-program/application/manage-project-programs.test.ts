@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ProjectProgramOperationError, ProjectProgramService, type ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
+import { ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError, ProjectProgramService, type ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import { getProgramStartYear, InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
 
 const programInput = {
@@ -71,6 +71,23 @@ describe("프로젝트 프로그램 관리", () => {
     await expect(new ProjectProgramService(repository()).create({ id: "professor", role: "PROFESSOR" }, programInput)).rejects.toBeInstanceOf(InvalidProjectProgramError);
   });
 
+  it("분과가 없으면 분과별 투표 프로그램 생성을 거부한다", async () => {
+    const value = repository({ create: vi.fn(async () => "CREATED" as const) });
+    await expect(new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      divisionNames: [],
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 1,
+        voteLimitScope: "DIVISION",
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS",
+      },
+    })).rejects.toThrow("분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.");
+    expect(value.create).not.toHaveBeenCalled();
+  });
+
   it("같은 시작 시각의 동일한 프로그램명을 거부한다", async () => {
     await expect(new ProjectProgramService(repository({ create: vi.fn(async () => "DUPLICATE" as const) })).create({ id: "admin", role: "ADMIN" }, programInput)).rejects.toThrow(new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다."));
   });
@@ -89,6 +106,32 @@ describe("프로젝트 프로그램 관리", () => {
     const value = repository({ changeIcon: vi.fn(async () => true) });
     await new ProjectProgramService(value).changeIcon({ id: "admin", role: "ADMIN" }, "program-1", "ROCKET");
     expect(value.changeIcon).toHaveBeenCalledWith("program-1", "ROCKET");
+  });
+
+  it("표가 있는 투표 규칙 변경은 영향 정보를 포함한 확인 오류로 전달한다", async () => {
+    const impact = {
+      voteCount: 7,
+      from: { voteLimit: 2, voteLimitScope: "PROGRAM" as const },
+      to: { voteLimit: 1, voteLimitScope: "DIVISION" as const },
+    };
+    const value = repository({
+      findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, status: "OPEN" as const, openedAt: new Date(), topicCount: 2, teamCount: 1 })),
+      updateSettings: vi.fn(async () => ({ status: "VOTE_RESET_CONFIRMATION_REQUIRED" as const, impact })),
+    });
+    const result = new ProjectProgramService(value).updateSettings({ id: "admin", role: "ADMIN" }, "program-1", {
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      recruitmentEndsAt: programInput.recruitmentEndsAt,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 1,
+        voteLimitScope: "DIVISION",
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS",
+      },
+    });
+    await expect(result).rejects.toMatchObject({ impact } satisfies Partial<ProgramVoteResetConfirmationRequiredError>);
   });
 
   it("관리자가 아닌 사용자의 아이콘 변경을 거부한다", async () => {

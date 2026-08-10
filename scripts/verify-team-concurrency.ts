@@ -318,7 +318,7 @@ async function main() {
     !["APPROVED", "UNAVAILABLE"].includes(approvalDeleteOutcome) ||
     proposalRequestState.status === "PENDING" ||
     (approvalWon && (proposalTopicState.status !== "PUBLISHED" || proposalRequestState.status !== "APPROVED" || proposalMemberships !== 1)) ||
-    (!approvalWon && (proposalTopicState.status !== "DRAFT" || proposalRequestState.status !== "REJECTED" || proposalMemberships !== 0))
+    (!approvalWon && (proposalTopicState.status !== "REJECTED" || proposalRequestState.status !== "REJECTED" || proposalMemberships !== 0))
   ) {
     throw new Error(
       `기존 팀 승인과 삭제 경합 불변식이 깨졌습니다: approval=${approvalDeleteOutcome}, deleted=${approvalDeleteRace[1].value}, topic=${proposalTopicState.status}, request=${proposalRequestState.status}, memberships=${proposalMemberships}`,
@@ -393,7 +393,7 @@ async function main() {
     approvalMemberRemovalRace[1].value !== true ||
     !["APPROVED", "UNAVAILABLE"].includes(memberRemovalApprovalOutcome) ||
     (memberRemovalApprovalWon && (memberRemovalTopicState.status !== "PUBLISHED" || memberRemovalRequestState.status !== "APPROVED" || memberRemovalMemberships !== 2)) ||
-    (!memberRemovalApprovalWon && (memberRemovalTopicState.status !== "DRAFT" || memberRemovalRequestState.status !== "PENDING" || memberRemovalMemberships !== 0))
+    (!memberRemovalApprovalWon && (memberRemovalTopicState.status !== "PENDING_APPROVAL" || memberRemovalRequestState.status !== "PENDING" || memberRemovalMemberships !== 0))
   ) {
     throw new Error(
       `기존 팀 승인과 팀원 제거 경합 불변식이 깨졌습니다: approval=${memberRemovalApprovalOutcome}, removed=${approvalMemberRemovalRace[1].value}, topic=${memberRemovalTopicState.status}, request=${memberRemovalRequestState.status}, memberships=${memberRemovalMemberships}`,

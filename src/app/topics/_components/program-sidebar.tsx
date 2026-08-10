@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 
-import { UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiNav, UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
@@ -46,7 +46,7 @@ function VotingProgramCarousel({
   const currentProgram = programs[currentIndex];
 
   return (
-    <section id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className={`relative overflow-hidden rounded-xl border p-3.5 text-white ${selected ? "border-[var(--primary)] bg-[var(--primary)] shadow-[var(--shadow-admin-panel)]" : "border-[#244cc4] bg-[#2F5BEA]"}`}>
+    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className={`relative overflow-hidden rounded-xl border p-3.5 text-white ${selected ? "border-[var(--primary)] bg-[var(--primary)] shadow-[var(--shadow-admin-panel)]" : "border-[#244cc4] bg-[#2F5BEA]"}`}>
       <span aria-hidden="true" className="absolute -right-7 -top-8 size-24 rounded-full border border-white/15" />
       <span aria-hidden="true" className="absolute -right-2 -top-2 size-12 rounded-full bg-white/10" />
       <div className="relative">
@@ -89,7 +89,7 @@ function VotingProgramCarousel({
           </button>
         </div>
       ) : null}
-    </section>
+    </UiSection>
   );
 }
 

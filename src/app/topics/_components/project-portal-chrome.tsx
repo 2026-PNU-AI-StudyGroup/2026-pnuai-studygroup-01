@@ -100,10 +100,11 @@ function ProgramPeriod({ label, startsAt, endsAt }: {
   );
 }
 
-export function ProjectStatusNavigation({ phase, counts, programId, query, sort }: { phase: PublicTopicPhase; counts: PublicTopicPage["counts"]; programId?: string; query?: string; sort?: PublicTopicSort }) {
+export function ProjectStatusNavigation({ phase, counts, programId, query, sort, divisionId }: { phase: PublicTopicPhase; counts: PublicTopicPage["counts"]; programId?: string; query?: string; sort?: PublicTopicSort; divisionId?: string | "UNASSIGNED" }) {
   const activeUrl = (item: PublicTopicPhase) => {
     const params = new URLSearchParams({ phase: item });
     if (programId) params.set("programId", programId);
+    if (divisionId) params.set("divisionId", divisionId);
     if (query) params.set("q", query);
     if (sort === "DEADLINE") params.set("sort", sort);
     return `/topics?${params.toString()}`;

@@ -5,7 +5,7 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { TopicApplicationEditor } from "@/app/topics/_components/topic-application-editor";
-import { ProjectVoteButton, useProjectVoteSelection, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
+import { ProjectVoteButton, ProjectVoteStatusPanel, useProjectVoteSelection, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
 import { ProjectPagination } from "@/app/topics/_components/project-pagination";
 import styles from "@/app/topics/_components/project-gallery.module.css";
@@ -64,6 +64,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
             </h3>
             <StatusBadge tone={availability.tone}><UiText>{availability.label}</UiText></StatusBadge>
           </div>
+          <p className="mt-2 text-xs font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
           {topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : null}
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{topic.description}</UiText></p>
 
@@ -96,7 +97,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
 
 const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, phase, query, sort, now, ballot }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, phase, query, sort, divisionId, now, ballot }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -104,13 +105,15 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   phase: PublicTopicPhase;
   query: string;
   sort: PublicTopicSort;
+  divisionId?: string | "UNASSIGNED";
   now: Date;
   ballot?: ProgramVoteBallot;
 }) {
-  const hasFilters = Boolean(query || phase !== "ACTIVE" || sort !== "LATEST");
+  const hasFilters = Boolean(query || phase !== "ACTIVE" || sort !== "LATEST" || divisionId);
   const voteSelection = useProjectVoteSelection(ballot);
   return (
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
+      <div className="mb-4"><ProjectVoteStatusPanel selection={voteSelection} /></div>
       <div className="mb-4 flex justify-end">
         <h2 id="project-results-title" className="sr-only"><UiText>{"프로젝트 목록"}</UiText></h2>
         <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
@@ -133,7 +136,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
         page={topics.page}
         totalPages={topics.totalPages}
         ariaLabel="프로젝트 페이지"
-        href={(page) => activeProjectsHref({ phase, programId, query, sort, page })}
+        href={(page) => activeProjectsHref({ phase, programId, query, sort, divisionId, page })}
       />
     </section>
   );

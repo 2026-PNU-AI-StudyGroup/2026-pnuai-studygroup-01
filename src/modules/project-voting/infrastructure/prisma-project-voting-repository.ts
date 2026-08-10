@@ -7,6 +7,7 @@ import {
   type ProjectVotingRepository,
   type ReplaceProgramVotesOutcome,
 } from "@/modules/project-voting/application/manage-project-voting";
+import { normalizeVoteSelection } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUSES: Array<"PUBLISHED" | "CLOSED"> = ["PUBLISHED", "CLOSED"];
 
@@ -21,10 +22,13 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       select: {
         id: true,
         name: true,
+        isPublic: true,
+        lifecycleStatus: true,
         votingPolicy: true,
       },
     });
-    if (!program?.votingPolicy) return null;
+    if (!program?.votingPolicy || !program.isPublic || program.lifecycleStatus !== "ACTIVE") return null;
+    const policy = program.votingPolicy;
     const [candidates, votes] = await Promise.all([
       this.client.topic.findMany({
         where: { programId, publishedAt: { not: null }, status: { in: VOTABLE_TOPIC_STATUSES } },
@@ -33,6 +37,8 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           id: true,
           title: true,
           description: true,
+          divisionId: true,
+          division: { select: { name: true, position: true } },
           authorId: true,
           managerId: true,
           assistants: { where: { userId: voterId }, select: { id: true } },
@@ -44,17 +50,20 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     return {
       programId: program.id,
       programName: program.name,
-      policy: program.votingPolicy,
-      phase: getProgramVotingPhase(program.votingPolicy, now),
+      policy,
+      phase: getProgramVotingPhase(policy, now),
       candidates: candidates.map((candidate) => ({
         id: candidate.id,
         title: candidate.title,
         description: candidate.description,
+        divisionId: candidate.divisionId,
+        divisionName: candidate.division?.name ?? null,
+        divisionPosition: candidate.division?.position ?? null,
         isSelfProject: candidate.authorId === voterId ||
           candidate.managerId === voterId ||
           candidate.assistants.length > 0 ||
           (candidate.team?.members.length ?? 0) > 0,
-      })),
+      })).sort((left, right) => policySort(left, right, policy.voteLimitScope)),
       selectedTopicIds: votes.map(({ topicId }) => topicId),
     };
   }
@@ -74,18 +83,20 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           "program_voting_policy"."startsAt",
           "program_voting_policy"."endsAt",
           "program_voting_policy"."voteLimit",
+          "program_voting_policy"."voteLimitScope",
           "program_voting_policy"."selfVotingAllowed",
           "program_voting_policy"."identityVisibility"
         FROM "project_program"
         JOIN "program_voting_policy"
           ON "program_voting_policy"."programId" = "project_program"."id"
         WHERE "project_program"."id" = ${input.programId}
+          AND "project_program"."isPublic" = true
+          AND "project_program"."lifecycleStatus" = 'ACTIVE'
         FOR UPDATE OF "project_program", "program_voting_policy"
       `);
       const policy = policies[0];
       if (!policy) return "NOT_FOUND";
       if (getProgramVotingPhase(policy, input.votedAt) !== "OPEN") return "NOT_OPEN";
-      if (input.topicIds.length > policy.voteLimit) return "INVALID_CANDIDATE";
 
       const candidates = input.topicIds.length
         ? await transaction.topic.findMany({
@@ -97,6 +108,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           },
           select: {
             id: true,
+            divisionId: true,
             authorId: true,
             managerId: true,
             assistants: { where: { userId: input.voterId }, select: { id: true } },
@@ -105,6 +117,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         })
         : [];
       if (candidates.length !== input.topicIds.length) return "INVALID_CANDIDATE";
+      try { normalizeVoteSelection(input.topicIds, policy, candidates.map(({ id, divisionId }) => ({ id, divisionId }))); } catch { return "INVALID_CANDIDATE"; }
       if (!policy.selfVotingAllowed && candidates.some((candidate) =>
         candidate.authorId === input.voterId ||
         candidate.managerId === input.voterId ||
@@ -133,8 +146,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       select: { id: true, name: true, votingPolicy: true },
     });
     if (!program?.votingPolicy) return null;
-    const named = program.votingPolicy.identityVisibility === "NAMED";
-    const [topics, totalVotes, voters] = await Promise.all([
+    const policy = program.votingPolicy;
+    const named = policy.identityVisibility === "NAMED";
+    const [topics, totalVotes, voters, namedVotes] = await Promise.all([
       this.client.topic.findMany({
         where: { programId, publishedAt: { not: null }, status: { in: VOTABLE_TOPIC_STATUSES } },
         orderBy: [{ title: "asc" }, { id: "asc" }],
@@ -142,37 +156,72 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           id: true,
           title: true,
           description: true,
+          divisionId: true,
+          division: { select: { name: true, position: true } },
           _count: { select: { votes: { where: { programId } } } },
-          votes: { where: { programId }, select: { voter: { select: { id: true, name: true, email: true } } } },
         },
       }),
       this.client.projectVote.count({ where: { programId } }),
       this.client.projectVote.groupBy({ by: ["voterId"], where: { programId } }),
+      named
+        ? this.client.projectVote.findMany({
+          where: { programId },
+          select: { topicId: true, voter: { select: { id: true, name: true, email: true } } },
+        })
+        : Promise.resolve([]),
     ]);
+    const votersByTopic = new Map<string, Array<{ id: string; name: string; email: string }>>();
+    for (const vote of namedVotes) {
+      votersByTopic.set(vote.topicId, [...(votersByTopic.get(vote.topicId) ?? []), vote.voter]);
+    }
     const sorted = topics
       .map((topic) => ({
         topicId: topic.id,
         title: topic.title,
         description: topic.description,
+        divisionId: topic.divisionId,
+        divisionName: topic.division?.name ?? null,
+        divisionPosition: topic.division?.position ?? null,
         voteCount: topic._count.votes,
-        voters: named ? topic.votes.map(({ voter }) => voter) : [],
+        voters: votersByTopic.get(topic.id) ?? [],
       }))
-      .sort((left, right) => right.voteCount - left.voteCount || left.title.localeCompare(right.title, "ko"));
-    let priorVoteCount: number | undefined;
-    let rank = 0;
-    const results = sorted.map((result, index) => {
-      if (priorVoteCount !== result.voteCount) rank = index + 1;
-      priorVoteCount = result.voteCount;
-      return { ...result, rank };
+      .sort((left, right) => {
+        return policySort(left, right, policy.voteLimitScope);
+      });
+    const divisionRanking = new Map<string, { count: number; priorVoteCount?: number; rank: number }>();
+    const results = sorted.map((result) => {
+      const key = policy.voteLimitScope === "DIVISION" ? result.divisionId ?? "UNASSIGNED" : "PROGRAM";
+      const state = divisionRanking.get(key) ?? { count: 0, rank: 0 };
+      state.count += 1;
+      if (state.priorVoteCount !== result.voteCount) state.rank = state.count;
+      state.priorVoteCount = result.voteCount;
+      divisionRanking.set(key, state);
+      return { ...result, rank: state.rank };
     });
     return {
       programId: program.id,
       programName: program.name,
-      policy: program.votingPolicy,
-      phase: getProgramVotingPhase(program.votingPolicy, now),
+      policy,
+      phase: getProgramVotingPhase(policy, now),
       totalVotes,
       participantCount: voters.length,
       results,
     };
   }
+}
+
+function policySort(
+  left: { title: string; divisionPosition?: number | null; voteCount?: number },
+  right: { title: string; divisionPosition?: number | null; voteCount?: number },
+  scope: ProgramVotingPolicyDetails["voteLimitScope"],
+) {
+  if (scope === "DIVISION") {
+    const divisionComparison = divisionSortPosition(left.divisionPosition) - divisionSortPosition(right.divisionPosition);
+    if (divisionComparison) return divisionComparison;
+  }
+  return (right.voteCount ?? 0) - (left.voteCount ?? 0) || left.title.localeCompare(right.title, "ko");
+}
+
+function divisionSortPosition(position: number | null | undefined) {
+  return position ?? Number.MAX_SAFE_INTEGER;
 }

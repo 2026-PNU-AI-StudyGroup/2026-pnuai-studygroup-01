@@ -2,11 +2,13 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { isProgramIconKey, type ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 
 export type VotingIdentityVisibility = "ANONYMOUS" | "NAMED";
+export type VoteLimitScope = "PROGRAM" | "DIVISION";
 
 export type ProgramVotingPolicyDetails = {
   startsAt: Date;
   endsAt: Date;
   voteLimit: number;
+  voteLimitScope?: VoteLimitScope;
   selfVotingAllowed: boolean;
   identityVisibility: VotingIdentityVisibility;
 };
@@ -56,7 +58,10 @@ export function normalizeProgramVotingPolicy(input: ProgramVotingPolicyDetails):
   if (input.identityVisibility !== "ANONYMOUS" && input.identityVisibility !== "NAMED") {
     throw new InvalidProjectProgramError("투표 공개 방식을 다시 선택해 주세요.");
   }
-  return { ...input };
+  if (input.voteLimitScope !== undefined && input.voteLimitScope !== "PROGRAM" && input.voteLimitScope !== "DIVISION") {
+    throw new InvalidProjectProgramError("투표 범위를 다시 선택해 주세요.");
+  }
+  return { ...input, voteLimitScope: input.voteLimitScope ?? "PROGRAM" };
 }
 
 export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {
