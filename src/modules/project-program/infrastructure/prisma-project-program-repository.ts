@@ -13,20 +13,21 @@ import { enqueueTranslations } from "@/modules/translation/application/translati
 export class PrismaProjectProgramRepository implements ProjectProgramRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE"> {
+  async create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<string | "DUPLICATE"> {
     try {
       return await this.client.$transaction(async (transaction) => {
         const { votingPolicy, ...program } = input;
-        await transaction.projectProgram.create({
+        const created = await transaction.projectProgram.create({
           data: {
             ...program,
             status: "DRAFT",
             openedAt: null,
             votingPolicy: votingPolicy ? { create: votingPolicy } : undefined,
           },
+          select: { id: true },
         });
         await enqueueTranslations(transaction, [input.name, input.category, input.description]);
-        return "CREATED" as const;
+        return created.id;
       });
     } catch (error) {
       if (

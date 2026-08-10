@@ -15,11 +15,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("새 공지 작성");
 }
 
-export default async function NewAnnouncementPage() {
+export default async function NewAnnouncementPage({ searchParams }: { searchParams: Promise<{ target?: string | string[] }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (!canCreateAnnouncement(actor.role)) redirect("/announcements");
   const targets = await resolveAnnouncementTargets(actor);
+  // ?target=program:<id> 로 들어오면 소관인 경우에만 대상 미리 선택.
+  const requested = (await searchParams).target;
+  const requestedTarget = Array.isArray(requested) ? requested[0] : requested;
+  const initialTarget = requestedTarget && (
+    targets.programs.some((program) => `program:${program.id}` === requestedTarget) ||
+    targets.teams.some((team) => `team:${team.id}` === requestedTarget)
+  ) ? requestedTarget : "";
 
   return (
     <AppShell
@@ -36,7 +43,7 @@ export default async function NewAnnouncementPage() {
             description="모든 구성원이 확인해야 할 운영 안내를 작성합니다."
             actions={<Link className="button-secondary" href="/announcements"><UiText>{"목록으로"}</UiText></Link>}
           />
-          <AnnouncementForm targets={targets} />
+          <AnnouncementForm targets={targets} initialTarget={initialTarget} />
         </div>
       </main>
     </AppShell>
