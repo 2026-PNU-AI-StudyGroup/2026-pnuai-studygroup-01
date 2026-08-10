@@ -14,8 +14,9 @@ enum UserRole {
 }
 
 enum TopicStatus {
-  DRAFT
+  PENDING_APPROVAL
   PUBLISHED
+  REJECTED
   CLOSED
 }
 
@@ -62,6 +63,12 @@ enum StoredFileStatus {
 enum FilePurpose {
   REPORT
   ARTIFACT
+}
+
+enum UploadConsumer {
+  REPORT
+  ARTIFACT
+  SHOWCASE_IMAGE
 }
 
 enum ReportType {
@@ -116,9 +123,8 @@ enum TopicApprovalStatus {
   REJECTED
 }
 
-enum ProjectProgramStatus {
-  DRAFT
-  OPEN
+enum ProgramLifecycleStatus {
+  ACTIVE
   CLOSED
 }
 
@@ -156,6 +162,10 @@ enum AuditAction {
   PROJECT_ASSISTANT_REMOVED
   TOPIC_CLOSED
   TOPIC_RECRUITMENT_CLOSED
+  PROGRAM_DIVISION_CREATED
+  PROGRAM_DIVISION_UPDATED
+  PROGRAM_DIVISION_DELETED
+  PROGRAM_VOTING_RESET
 }
 
 enum NotificationType {
@@ -238,8 +248,10 @@ model User {
   storedFiles                        StoredFile[]
   reportVersionsSubmitted            ReportVersion[]
   approvalDecisions                  ApprovalDecision[]
-  reportsScored                      Report[]                            @relation("ReportScorer")
   reportFeedback                     ReportFeedback[]                    @relation("ReportFeedbackAuthor")
+  feedbackPostsResolved              FeedbackPost[]                      @relation("FeedbackPostResolver")
+  feedbackStatusChanges              FeedbackStatusChange[]              @relation("FeedbackStatusChangeActor")
+  feedbackComments                   FeedbackComment[]                   @relation("FeedbackCommentAuthor")
   artifactsRegistered                Artifact[]
   recruitmentPosts                   RecruitmentPost[]
   recruitmentApplications            RecruitmentApplication[]
@@ -448,32 +460,36 @@ model ProjectProgram {
   advisorEnabled                Boolean              @default(true)
   studentProjectCreationEnabled Boolean              @default(false)
   icon                          ProgramIcon          @default(FOLDER)
-  status                        ProjectProgramStatus @default(DRAFT)
-  openedAt                      DateTime?
+  isPublic                      Boolean              @default(false)
+  lifecycleStatus               ProgramLifecycleStatus @default(ACTIVE)
   createdAt                     DateTime             @default(now())
   updatedAt                     DateTime             @updatedAt
   createdBy                     User?                @relation(fields: [createdById], references: [id])
   topics                        Topic[]
   votingPolicy                  ProgramVotingPolicy?
   votes                         ProjectVote[]
-  tracks                        ProgramTrack[]
+  divisions                     ProgramDivision[]
   rubricCriteria                RubricCriterion[]
 
   @@unique([name, startsAt])
-  @@index([status, startsAt, endsAt])
+  @@index([lifecycleStatus, startsAt, endsAt])
+  @@index([isPublic, startsAt, endsAt])
   @@map("project_program")
 }
 
-model ProgramTrack {
+model ProgramDivision {
   id        String         @id @default(uuid())
   programId String
   name      String
   position  Int            @default(0)
   createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   program   ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
   topics    Topic[]
 
   @@unique([programId, name])
+  @@unique([id, programId])
+  @@unique([programId, position])
   @@index([programId, position])
   @@map("program_track")
 }
@@ -500,7 +516,7 @@ model ReportRubricScore {
   scoredByName String
   updatedAt    DateTime        @updatedAt
   report       Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
 
   @@unique([reportId, criterionId])
   @@index([reportId])
@@ -536,10 +552,15 @@ enum VotingIdentityVisibility {
   NAMED
 }
 
+enum VoteLimitScope {
+  PROGRAM
+  DIVISION
+}
+
 model Topic {
   id                      String                       @id @default(uuid())
   programId               String
-  trackId                 String?
+  divisionId              String?                       @map("trackId")
   authorId                String
   managerId               String?
   title                   String
@@ -557,12 +578,12 @@ model Topic {
   executionEndsAt         DateTime
   submissionStartsAt      DateTime
   submissionEndsAt        DateTime
-  status                  TopicStatus                  @default(DRAFT)
+  status                  TopicStatus
   publishedAt             DateTime?
   createdAt               DateTime                     @default(now())
   updatedAt               DateTime                     @updatedAt
   program                 ProjectProgram               @relation(fields: [programId], references: [id])
-  track                   ProgramTrack?                @relation(fields: [trackId], references: [id])
+  division                ProgramDivision?             @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
   author                  User                         @relation("TopicAuthor", fields: [authorId], references: [id])
   manager                 User?                        @relation("TopicManager", fields: [managerId], references: [id], onDelete: Restrict)
   applications            TopicApplication[]
@@ -577,6 +598,7 @@ model Topic {
   @@unique([id, programId, managerId])
   @@unique([id, programId])
   @@index([programId, status])
+  @@index([programId, divisionId])
   @@index([authorId])
   @@index([managerId, status])
   @@map("topic")
@@ -587,6 +609,7 @@ model ProgramVotingPolicy {
   startsAt           DateTime
   endsAt             DateTime
   voteLimit          Int
+  voteLimitScope     VoteLimitScope         @default(PROGRAM)
   selfVotingAllowed  Boolean                  @default(false)
   identityVisibility VotingIdentityVisibility @default(ANONYMOUS)
   createdAt          DateTime                 @default(now())
@@ -717,6 +740,7 @@ model TopicApprovalRequest {
   route                TopicApprovalRoute
   requestedProfessorId String?
   studentTeamId        String?
+  studentTeamVersion   Int?
   status               TopicApprovalStatus @default(PENDING)
   reviewComment        String              @default("")
   decidedById          String?
@@ -810,6 +834,7 @@ model StudentTeam {
   name              String
   description       String                       @default("")
   leaderId          String
+  compositionVersion Int                          @default(1)
   deletedAt         DateTime?
   createdAt         DateTime                     @default(now())
   updatedAt         DateTime                     @updatedAt
@@ -1023,6 +1048,7 @@ model StoredFile {
   teamId          String
   ownerId         String
   purpose         FilePurpose
+  consumer        UploadConsumer
   status          StoredFileStatus @default(PENDING)
   objectKey       String           @unique
   uploadObjectKey String           @unique
@@ -1094,16 +1120,11 @@ model Report {
   teamId       String
   type         ReportType
   dueAt        DateTime
-  score        Int?
-  scoreComment String?
-  scoredById   String?
-  scoredAt     DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   team          Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
   versions      ReportVersion[]
   feedback      ReportFeedback[]
-  scoredBy      User?                @relation("ReportScorer", fields: [scoredById], references: [id])
   rubricScores  ReportRubricScore[]
   rubricRelease ReportRubricRelease?
 
@@ -1185,10 +1206,12 @@ model FeedbackPost {
   body           String
   status         FeedbackStatus       @default(OPEN)
   resolvedAt     DateTime?
+  resolvedById   String?
   resolvedByName String?
   createdAt      DateTime             @default(now())
   comments       FeedbackComment[]
   statusChanges  FeedbackStatusChange[]
+  resolvedBy     User?                @relation("FeedbackPostResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([status, priority, createdAt])
   @@map("feedback_post")
@@ -1198,10 +1221,12 @@ model FeedbackStatusChange {
   id            String         @id @default(uuid())
   postId        String
   status        FeedbackStatus
+  changedById   String?
   changedByName String
   note          String?
   createdAt     DateTime       @default(now())
   post          FeedbackPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  changedBy     User?          @relation("FeedbackStatusChangeActor", fields: [changedById], references: [id], onDelete: SetNull)
 
   @@index([postId, createdAt])
   @@map("feedback_status_change")
@@ -1210,10 +1235,12 @@ model FeedbackStatusChange {
 model FeedbackComment {
   id            String       @id @default(uuid())
   postId        String
-  developerName String
+  authorId      String?
+  authorName    String
   body          String
   createdAt     DateTime     @default(now())
   post          FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author        User?        @relation("FeedbackCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([postId, createdAt])
   @@map("feedback_comment")
