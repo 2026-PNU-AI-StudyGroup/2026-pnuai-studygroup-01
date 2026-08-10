@@ -131,13 +131,13 @@ function YearProgramGroup({
                 selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
               }`;
               const status = votingOpen
-                ? { dot: "bg-[var(--primary)]", text: "text-[var(--primary)]", label: "투표 중" }
+                ? { dot: "bg-[#2f6bed]", text: "text-[var(--primary)]", label: "투표 중" }
                 : program.status === "active"
-                  ? { dot: "bg-[var(--success)]", text: "text-[var(--success)]", label: "진행 중" }
+                  ? { dot: "bg-[#16a34a]", text: "text-[var(--success)]", label: "진행 중" }
                   : { dot: "bg-[var(--muted)]", text: "text-[var(--muted)]", label: "종료" };
               const rowContent = (
                 <>
-                  <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${status.dot}`} />
+                  <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${status.dot}`} />
                   <span className="min-w-0">
                     <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
                     <span className="mt-0.5 flex items-center gap-1 text-[0.64rem]">
