@@ -42,7 +42,7 @@ function isTeamNavigationActive(href: string, currentPath: string) {
   if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/");
   if (href === "/recruitments") return currentPath === "/recruitments";
   if (href === "/recruitments/mine") {
-    return currentPath === "/recruitments/mine" || currentPath === "/recruitments/new";
+    return currentPath === "/recruitments/mine";
   }
   return currentPath === href;
 }

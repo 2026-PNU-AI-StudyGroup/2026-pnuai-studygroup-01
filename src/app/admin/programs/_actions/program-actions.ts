@@ -93,7 +93,6 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
   }
   revalidatePath("/admin/programs");
   revalidatePath(`/admin/programs/${programId.data}/settings`);
-  revalidatePath(`/programs/${programId.data}/vote`);
   revalidatePath("/topics");
   revalidatePath("/projects/new");
   revalidatePath("/professor/topics/new");
