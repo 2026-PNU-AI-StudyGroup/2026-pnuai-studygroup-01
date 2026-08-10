@@ -79,6 +79,20 @@ describe("학생 프로젝트 승인", () => {
     expect(repository.decide).toHaveBeenCalledWith(expect.objectContaining({ actorId: "professor-1", actorRole: "PROFESSOR", reviewComment: "승인" }));
   });
 
+  it("기존 팀 구성이 달라진 요청은 새 제안을 안내한다", async () => {
+    const { repository, programs } = dependencies();
+    vi.mocked(repository.decide).mockResolvedValue("TEAM_CHANGED");
+    const administrator = { ...actor, id: "admin-1", role: "ADMIN" as const };
+
+    await expect(new TopicApprovalService(repository, programs).decide(administrator, {
+      requestId: "request-1",
+      decision: "APPROVE",
+      reviewComment: "승인",
+      studentTeamVersion: 2,
+      teamCompositionConfirmed: true,
+    })).rejects.toThrow("승인 요청 뒤 팀 구성이 변경되었습니다.");
+  });
+
   it("교수 지도 화면에는 승인 대기 요청만 조회한다", async () => {
     const { repository, programs } = dependencies();
     const professor = { ...actor, id: "professor-1", role: "PROFESSOR" as const };

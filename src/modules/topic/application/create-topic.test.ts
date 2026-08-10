@@ -28,16 +28,25 @@ const topicInput = {
 
 function repositories(programExists = true) {
   const topics: TopicCreator = {
-    createDraft: vi.fn(async () => ({ id: "topic-1" })),
+    createPublished: vi.fn(async () => ({ id: "topic-1" })),
   };
-  const programs: Pick<ProjectProgramRepository, "findOpen"> = {
-    findOpen: vi.fn(async () => programExists ? {
+  const programs: Pick<ProjectProgramRepository, "findById"> = {
+    findById: vi.fn(async () => programExists ? {
       id: "program-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
       recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
+      isPublic: false,
+      lifecycleStatus: "ACTIVE" as const,
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      name: "프로그램",
+      category: "교과",
+      description: "설명",
+      icon: "FOLDER" as const,
     } : null),
   };
   return { topics, programs };
@@ -51,7 +60,7 @@ describe("주제 초안 생성", () => {
     await expect(
       service.execute({ id: "professor-1", role: "PROFESSOR" }, topicInput),
     ).resolves.toEqual({ id: "topic-1" });
-    expect(topics.createDraft).toHaveBeenCalledWith({
+    expect(topics.createPublished).toHaveBeenCalledWith({
       ...topicInput,
       title: "로컬 번역",
       description: "졸업과제 번역",
@@ -71,8 +80,8 @@ describe("주제 초안 생성", () => {
     await expect(
       service.execute({ id: "student-1", role: "STUDENT" }, topicInput),
     ).rejects.toBeInstanceOf(TopicCreationForbiddenError);
-    expect(programs.findOpen).not.toHaveBeenCalled();
-    expect(topics.createDraft).not.toHaveBeenCalled();
+    expect(programs.findById).not.toHaveBeenCalled();
+    expect(topics.createPublished).not.toHaveBeenCalled();
   });
 
   it("공개되지 않은 프로그램의 주제를 거절한다", async () => {
@@ -82,12 +91,12 @@ describe("주제 초안 생성", () => {
     await expect(
       service.execute({ id: "professor-1", role: "PROFESSOR" }, topicInput),
     ).rejects.toBeInstanceOf(ProjectProgramNotOpenError);
-    expect(topics.createDraft).not.toHaveBeenCalled();
+    expect(topics.createPublished).not.toHaveBeenCalled();
   });
 
   it("프로젝트 등록 기간 밖에서는 공개 프로그램이어도 초안을 만들지 않는다", async () => {
     const { topics, programs } = repositories();
-    vi.mocked(programs.findOpen).mockResolvedValue({
+    vi.mocked(programs.findById).mockResolvedValue({
       id: "program-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
@@ -96,11 +105,20 @@ describe("주제 초안 생성", () => {
       recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
+      isPublic: false,
+      lifecycleStatus: "ACTIVE",
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      name: "프로그램",
+      category: "교과",
+      description: "설명",
+      icon: "FOLDER",
     });
     await expect(new CreateTopicService(topics, programs, () => new Date("2026-03-01T00:00:00Z")).execute(
       { id: "professor-1", role: "PROFESSOR" },
       topicInput,
     )).rejects.toBeInstanceOf(ProjectProgramNotOpenError);
-    expect(topics.createDraft).not.toHaveBeenCalled();
+    expect(topics.createPublished).not.toHaveBeenCalled();
   });
 });

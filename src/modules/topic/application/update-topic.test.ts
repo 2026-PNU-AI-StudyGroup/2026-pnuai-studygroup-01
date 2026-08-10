@@ -5,6 +5,7 @@ import type { TopicEditor } from "@/modules/topic/application/topic-ports";
 
 const input = {
   programId: "program-1",
+  divisionId: "division-forged",
   title: "  접근성 지도  ",
   description: "  교내 이동 경로를 개선합니다.  ",
   requiredSkills: [" TypeScript ", "TypeScript"],
@@ -25,7 +26,6 @@ const input = {
 function repository(outcome: Awaited<ReturnType<TopicEditor["update"]>> = "UPDATED"): TopicEditor {
   return {
     update: vi.fn(async () => outcome),
-    deleteDraft: vi.fn(async () => true),
   };
 }
 
@@ -45,6 +45,7 @@ describe("주제 내용 수정", () => {
       availabilityRequirement: "주 1회 회의",
       applicationQuestions: [{ label: "지원 동기", maxLength: 500, required: true }],
     }));
+    expect(target.update).not.toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ divisionId: expect.anything() }));
   });
 
   it("지원서가 제출된 뒤 지원 양식 변경을 명시적으로 거부한다", async () => {
@@ -55,12 +56,4 @@ describe("주제 내용 수정", () => {
     )).rejects.toThrow("제출된 지원서가 있어 지원 방식과 문항은 변경할 수 없습니다.");
   });
 
-  it("기록이 연결된 초안 삭제 실패를 사용자 오류로 변환한다", async () => {
-    const target = repository();
-    vi.mocked(target.deleteDraft).mockResolvedValue(false);
-    await expect(new UpdateTopicService(target).deleteDraft(
-      { id: "professor-1", role: "PROFESSOR" },
-      "topic-1",
-    )).rejects.toBeInstanceOf(TopicUpdateError);
-  });
 });

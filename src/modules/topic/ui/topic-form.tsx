@@ -84,6 +84,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   const nextQuestionId = useRef(initialQuestions.length + 1);
   const [questions, setQuestions] = useState(initialQuestions);
   const [selectedProgramId, setSelectedProgramId] = useState(initialTopic?.programId ?? defaultProgramId ?? "");
+  const [selectedDivisionId, setSelectedDivisionId] = useState(initialTopic?.divisionId ?? "");
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const advisorEnabled = selectedProgram?.advisorEnabled;
@@ -101,7 +102,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   return (
     <form action={action} aria-busy={pending} className="mx-auto grid max-w-6xl gap-5 xl:grid-cols-[13rem_minmax(0,1fr)] xl:items-start">
       {initialTopic ? <input type="hidden" name="topicId" value={initialTopic.id} /> : null}
-      <UiNav aria-label="주제 작성 섹션" className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 xl:sticky xl:top-6 xl:overflow-visible">
+      <UiNav aria-label="프로젝트 작성 섹션" className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 xl:sticky xl:top-6 xl:overflow-visible">
         <p className="px-2 pb-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"작성 순서"}</UiText></p>
         <ol className="flex min-w-max gap-1 xl:grid xl:min-w-0">
           {formSections.map(([id, label], index) => (
@@ -120,6 +121,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       {initialTopic ? <FormField label="프로그램">
           <input type="hidden" name="programId" value={initialTopic.programId} />
           <span className="form-static-value">{initialTopic.programName}</span>
+          <span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{initialTopic.divisionName ? `분과 · ${initialTopic.divisionName}` : "미분과"}</UiText></span>
         </FormField> : <FormField id="topic-program" label="프로그램">
           <CustomSelect
             id="topic-program"
@@ -131,6 +133,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
             placeholder="프로그램을 선택하세요"
             onValueChange={(value) => {
               setSelectedProgramId(value);
+              setSelectedDivisionId("");
               if (!programs.find(({ id }) => id === value)?.advisorEnabled) setApprovalRoute("ADMIN");
             }}
             options={programs.map((program) => ({
@@ -140,7 +143,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
             }))}
           />
         </FormField>}
-        <FormField id="topic-title" label="주제명">
+        {!initialTopic && selectedProgram?.divisions?.length ? <FormField id="topic-division" label="분과" description="프로젝트 하나는 하나의 분과에 속합니다.">
+          <CustomSelect id="topic-division" name="divisionId" ariaLabel="분과" required invalidMessage="분과를 선택하세요" value={selectedDivisionId} onValueChange={setSelectedDivisionId} placeholder="분과를 선택하세요" options={selectedProgram.divisions.map((division) => ({ value: division.id, label: division.name }))} />
+        </FormField> : null}
+        <FormField id="topic-title" label="프로젝트명">
           <TextInput id="topic-title" name="title" defaultValue={initialTopic?.title} maxLength={200} required />
         </FormField>
         <FormField id="topic-description" label="설명">

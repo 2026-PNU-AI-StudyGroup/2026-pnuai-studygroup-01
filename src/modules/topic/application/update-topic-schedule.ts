@@ -4,14 +4,14 @@ import { assertValidTopicSchedule, type TopicSchedule } from "@/modules/topic/do
 
 export class TopicScheduleUpdateForbiddenError extends Error {
   constructor() {
-    super("교수 또는 관리자만 주제 일정을 변경할 수 있습니다.");
+    super("교수 또는 관리자만 프로젝트 일정을 변경할 수 있습니다.");
     this.name = "TopicScheduleUpdateForbiddenError";
   }
 }
 
 export class TopicScheduleUpdateUnavailableError extends Error {
   constructor() {
-    super("마감되지 않은 본인 주제의 일정만 프로그램 운영 기간과 모집 마감 이전에서 변경할 수 있습니다.");
+    super("마감되지 않은 본인 프로젝트의 일정만 프로그램 운영 기간과 모집 마감 이전에서 변경할 수 있습니다.");
     this.name = "TopicScheduleUpdateUnavailableError";
   }
 }

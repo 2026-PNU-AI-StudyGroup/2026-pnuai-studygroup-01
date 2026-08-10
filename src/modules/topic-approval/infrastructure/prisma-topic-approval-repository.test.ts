@@ -79,14 +79,19 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{
           id: "program-1",
-          status: "OPEN",
+          isPublic: true,
+          lifecycleStatus: "ACTIVE",
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
+          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
         }])
-        .mockResolvedValueOnce([{ id: "student-team-1" }]),
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
       studentTeam: {
         findFirst: vi.fn(async () => ({
           id: "student-team-1",
+          compositionVersion: 1,
           members: [
             { studentId: "student-1", student: { role: "STUDENT", isActive: true } },
             { studentId: "student-2", student: { role: "STUDENT", isActive: true } },
@@ -121,19 +126,24 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     );
     expect(lockSql[0]).toContain('FROM "project_program"');
     expect(lockSql[0]).toContain("FOR SHARE");
-    expect(lockSql[1]).toContain('FROM "student_team"');
-    expect(lockSql[1]).toContain("FOR UPDATE");
+    expect(lockSql[2]).toContain('FROM "student_team"');
+    expect(lockSql[2]).toContain("FOR UPDATE");
   });
 
   it("기존 팀을 선택하지 않으면 기존 모집 설정을 그대로 유지한다", async () => {
     const createTopic = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
-      $queryRaw: vi.fn(async () => [{
-        id: "program-1",
-        status: "OPEN",
-        advisorEnabled: true,
-        studentProjectCreationEnabled: true,
-      }]),
+      $queryRaw: vi.fn()
+        .mockResolvedValueOnce([{
+          id: "program-1",
+          isPublic: true,
+          lifecycleStatus: "ACTIVE",
+          advisorEnabled: true,
+          studentProjectCreationEnabled: true,
+          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+        }])
+        .mockResolvedValueOnce([]),
       studentTeam: { findFirst: vi.fn() },
       teamMember: { count: vi.fn() },
       topic: { create: createTopic },
@@ -145,7 +155,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     await new PrismaTopicApprovalRepository(client).create(proposal);
 
     expect(transaction.studentTeam.findFirst).not.toHaveBeenCalled();
-    expect(transaction.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(transaction.$queryRaw).toHaveBeenCalledTimes(2);
     expect(createTopic).toHaveBeenCalledWith({
       data: expect.objectContaining({
         managerId: null,
@@ -172,7 +182,12 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       status: "PENDING" as const,
     };
     const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{
+        lifecycleStatus: "ACTIVE",
+        projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+        projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+        recruitmentEndsAt,
+      }])
       .mockResolvedValueOnce([{
         id: "topic-1",
         programId: "program-1",
@@ -181,7 +196,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         capacity: 4,
         recruitmentEnabled: true,
         recruitmentEndsAt,
-        status: "DRAFT",
+        status: "PENDING_APPROVAL",
       }])
       .mockResolvedValueOnce([request]);
     const transaction = {
@@ -239,10 +254,10 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       studentTeamId: null,
       status: "PENDING" as const,
     };
-    const queryRaw = vi.fn().mockResolvedValueOnce([{ status: "CLOSED" }]);
+    const queryRaw = vi.fn().mockResolvedValueOnce([{ lifecycleStatus: "CLOSED" }]);
     const transaction = {
       $queryRaw: queryRaw,
-      topic: { update: updateTopic },
+      topic: { update: updateTopic, updateMany: vi.fn(async () => ({ count: 0 })) },
       topicApprovalRequest: {
         findUnique: vi.fn(async () => request),
         update: updateRequest,
@@ -282,6 +297,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     const queryRaw = vi.fn().mockResolvedValueOnce([request]);
     const transaction = {
       $queryRaw: queryRaw,
+      topic: { updateMany: vi.fn(async () => ({ count: 1 })) },
       topicApprovalRequest: {
         findUnique: vi.fn(async () => request),
         update: updateRequest,
@@ -474,10 +490,16 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       route: "ADMIN" as const,
       requestedProfessorId: null,
       studentTeamId: "student-team-1",
+      studentTeamVersion: 1,
       status: "PENDING" as const,
     };
     const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{
+        lifecycleStatus: "ACTIVE",
+        projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+        projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+        recruitmentEndsAt,
+      }])
       .mockResolvedValueOnce([{
         id: "topic-1",
         programId: "program-1",
@@ -486,9 +508,9 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         capacity: 2,
         recruitmentEnabled: false,
         recruitmentEndsAt,
-        status: "DRAFT",
+        status: "PENDING_APPROVAL",
       }])
-      .mockResolvedValueOnce([{ id: "student-team-1", leaderId: "student-2", name: "기존 팀" }])
+      .mockResolvedValueOnce([{ id: "student-team-1", leaderId: "student-2", name: "기존 팀", compositionVersion: 1 }])
       .mockResolvedValueOnce([request]);
     const transaction = {
       $queryRaw: queryRaw,
@@ -526,6 +548,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       actorRole: "ADMIN",
       decision: "APPROVE",
       reviewComment: "승인",
+      studentTeamVersion: 1,
+      teamCompositionConfirmed: true,
       decidedAt: requestedAt,
     });
 

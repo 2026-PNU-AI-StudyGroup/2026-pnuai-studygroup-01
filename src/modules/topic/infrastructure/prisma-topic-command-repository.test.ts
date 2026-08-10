@@ -12,38 +12,6 @@ const schedule = {
 };
 
 describe("Prisma 주제 저장소", () => {
-  it("공개 상태와 프로그램 모집 마감을 하나의 조건부 갱신으로 검사한다", async () => {
-    const updateMany = vi.fn(async () => ({ count: 0 }));
-    const transaction = { $queryRaw: vi.fn(async () => [{ id: "program-1" }]), topic: { updateMany } };
-    const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
-    const repository = new PrismaTopicCommandRepository(client);
-    const publishedAt = new Date("2026-03-10T00:00:00Z");
-
-    await expect(repository.publishDraft(
-      "topic-1",
-      { id: "professor-1", role: "PROFESSOR" },
-      publishedAt,
-    )).resolves.toBe(
-      false,
-    );
-    expect(updateMany).toHaveBeenCalledWith({
-      where: {
-        id: "topic-1",
-        status: "DRAFT",
-        requiredSkills: { isEmpty: false },
-        roleExpectations: { not: "" },
-        availabilityRequirement: { not: "" },
-        applicationQuestions: { some: {} },
-        managerId: { not: null },
-        OR: [
-          { managerId: "professor-1" },
-          { assistants: { some: { userId: "professor-1" } } },
-        ],
-      },
-      data: { status: "PUBLISHED", publishedAt },
-    });
-  });
-
   it("주제를 잠가 마감한 뒤 실제 대기 지원서만 거절 대상으로 조회한다", async () => {
     const order: string[] = [];
     const transaction = {

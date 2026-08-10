@@ -9,7 +9,7 @@ export type TopicSchedule = {
 };
 
 export type TopicPublication = {
-  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   publishedAt: Date | null;
 };
 
@@ -71,13 +71,13 @@ export function assertValidTopicSchedule(schedule: TopicSchedule): void {
 
 export function assertValidTopicDetails(details: TopicDetails): void {
   if (details.title.trim().length === 0 || details.title.length > 200) {
-    throw new InvalidTopicDetailsError("주제 제목은 1자 이상 200자 이하여야 합니다.");
+    throw new InvalidTopicDetailsError("프로젝트 제목은 1자 이상 200자 이하여야 합니다.");
   }
 
   // 상한이 없으면 8,000자 초과 설명이 enqueueTranslations에서 throw되어
-  // 주제 저장이 500으로 실패한다. 번역 한도(8,000)에 맞춰 세 계층(도메인·zod·textarea)을 통일한다.
+  // 프로젝트 저장이 500으로 실패한다. 번역 한도(8,000)에 맞춰 세 계층(도메인·zod·textarea)을 통일한다.
   if (details.description.trim().length === 0 || details.description.length > 8_000) {
-    throw new InvalidTopicDetailsError("주제 설명은 1자 이상 8,000자 이하여야 합니다.");
+    throw new InvalidTopicDetailsError("프로젝트 설명은 1자 이상 8,000자 이하여야 합니다.");
   }
 
   if (
@@ -129,16 +129,16 @@ export function assertValidTopicDetails(details: TopicDetails): void {
 export function assertValidTopicPublication(
   publication: TopicPublication,
 ): void {
-  const isDraftConsistent =
-    publication.status === "DRAFT" && publication.publishedAt === null;
+  const isPendingOrRejected =
+    (publication.status === "PENDING_APPROVAL" || publication.status === "REJECTED") && publication.publishedAt === null;
   const isPublishedConsistent =
-    publication.status !== "DRAFT" &&
+    (publication.status === "PUBLISHED" || publication.status === "CLOSED") &&
     publication.publishedAt !== null &&
     Number.isFinite(publication.publishedAt.getTime());
 
-  if (!isDraftConsistent && !isPublishedConsistent) {
+  if (!isPendingOrRejected && !isPublishedConsistent) {
     throw new InvalidTopicDetailsError(
-      "초안은 공개 시각이 없어야 하고 공개·마감 주제는 공개 시각이 필요합니다.",
+      "승인 대기·반려 프로젝트는 공개 시각이 없어야 하고 공개·마감 프로젝트는 공개 시각이 필요합니다.",
     );
   }
 }

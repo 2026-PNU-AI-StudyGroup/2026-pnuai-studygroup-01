@@ -19,17 +19,21 @@ export class PrismaTopicCommandRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
-  createDraft(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null> {
+  createPublished(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program"
         WHERE "id" = ${topic.programId}
-          AND "status" = 'OPEN'::"ProjectProgramStatus"
+          AND "lifecycleStatus" = 'ACTIVE'::"ProgramLifecycleStatus"
           AND "projectRegistrationStartsAt" <= ${registeredAt}
           AND "projectRegistrationEndsAt" > ${registeredAt}
         FOR SHARE
       `);
       if (!programs[0]) return null;
+      const divisions = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "program_track" WHERE "programId" = ${topic.programId} FOR SHARE
+      `);
+      if ((divisions.length > 0 && !topic.divisionId) || (topic.divisionId != null && !divisions.some(({ id }) => id === topic.divisionId))) return null;
       const { applicationQuestions, ...topicData } = topic;
       const created = await transaction.topic.create({
         data: {
@@ -41,8 +45,8 @@ export class PrismaTopicCommandRepository
               position,
             })),
           },
-          status: "DRAFT",
-          publishedAt: null,
+          status: "PUBLISHED",
+          publishedAt: registeredAt,
         },
         select: { id: true },
       });
@@ -62,7 +66,7 @@ export class PrismaTopicCommandRepository
   update(
     id: string,
     actor: CurrentActor,
-    topic: Omit<TopicDraft, "authorId">,
+    topic: Omit<TopicDraft, "authorId" | "divisionId">,
   ) {
     return this.client.$transaction(async (transaction) => {
       const current = await transaction.topic.findFirst({
@@ -84,7 +88,7 @@ export class PrismaTopicCommandRepository
       if (current.status === "CLOSED") return "CLOSED" as const;
       if (current.programId !== topic.programId) return "PROGRAM_UNAVAILABLE" as const;
       const program = await transaction.projectProgram.findFirst({
-        where: { id: current.programId, status: "OPEN" },
+        where: { id: current.programId, lifecycleStatus: "ACTIVE" },
         select: { startsAt: true, endsAt: true, recruitmentEndsAt: true },
       });
       const times = [topic.recruitmentStartsAt, topic.executionStartsAt, topic.executionEndsAt, topic.submissionStartsAt, topic.submissionEndsAt];
@@ -126,20 +130,6 @@ export class PrismaTopicCommandRepository
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  async deleteDraft(id: string, actor: CurrentActor): Promise<boolean> {
-    const result = await this.client.topic.deleteMany({
-      where: {
-        id,
-        status: "DRAFT",
-        applications: { none: {} },
-        approvalRequest: null,
-        team: null,
-        ...topicSupervisorWhere(actor),
-      },
-    });
-    return result.count === 1;
-  }
-
   findState(id: string): Promise<TopicStateRecord | null> {
     return this.client.topic.findUnique({
       where: { id },
@@ -156,37 +146,6 @@ export class PrismaTopicCommandRepository
       ...topic,
       assistantIds: topic.assistants.map(({ userId }) => userId),
     } : null);
-  }
-
-  async publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean> {
-    return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "project_program"."id"
-        FROM "project_program"
-        JOIN "topic" ON "topic"."programId" = "project_program"."id"
-        WHERE "topic"."id" = ${id}
-          AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
-          AND "project_program"."projectRegistrationStartsAt" <= ${publishedAt}
-          AND "project_program"."projectRegistrationEndsAt" > ${publishedAt}
-          AND "project_program"."recruitmentEndsAt" > ${publishedAt}
-        FOR SHARE OF "project_program"
-      `);
-      if (!programs[0]) return false;
-      const result = await transaction.topic.updateMany({
-        where: {
-          id,
-          status: "DRAFT",
-          requiredSkills: { isEmpty: false },
-          roleExpectations: { not: "" },
-          availabilityRequirement: { not: "" },
-          applicationQuestions: { some: {} },
-          managerId: { not: null },
-          ...topicSupervisorWhere(actor),
-        },
-        data: { status: "PUBLISHED", publishedAt },
-      });
-      return result.count === 1;
-    });
   }
 
   async closePublished(id: string, actor: CurrentActor): Promise<boolean> {
@@ -332,7 +291,7 @@ export class PrismaTopicCommandRepository
       WHERE "topic"."id" = ${id}
         AND "topic"."programId" = "project_program"."id"
         AND "topic"."status" <> 'CLOSED'::"TopicStatus"
-        AND "project_program"."status" = 'OPEN'::"ProjectProgramStatus"
+        AND "project_program"."lifecycleStatus" = 'ACTIVE'::"ProgramLifecycleStatus"
         AND ${topicSupervisorSql(actor)}
         AND ${schedule.recruitmentStartsAt} >= "project_program"."startsAt"
         AND ${schedule.recruitmentStartsAt} < "project_program"."recruitmentEndsAt"

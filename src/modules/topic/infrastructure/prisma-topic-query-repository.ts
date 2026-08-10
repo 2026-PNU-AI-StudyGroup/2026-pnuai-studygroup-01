@@ -17,7 +17,8 @@ import { getProgramStartYear } from "@/modules/project-program/domain/project-pr
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
-  program: { select: { name: true, category: true, status: true, advisorEnabled: true, startsAt: true, recruitmentEndsAt: true } },
+  division: { select: { id: true, name: true } },
+  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, startsAt: true, recruitmentEndsAt: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -39,6 +40,8 @@ const managedTopicSelect = {
   title: true,
   description: true,
   programId: true,
+  divisionId: true,
+  division: { select: { name: true } },
   requiredSkills: true,
   preferredSkills: true,
   roleExpectations: true,
@@ -77,7 +80,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, status: true, advisorEnabled: true, recruitmentEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, recruitmentEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -160,10 +163,12 @@ export class PrismaTopicQueryRepository
       },
       { program: { name: { contains: escapedQuery, mode: "insensitive" } } },
     ] } : {};
+    const divisionWhere: Prisma.TopicWhereInput = query.divisionId === "UNASSIGNED" ? { divisionId: null } : query.divisionId ? { divisionId: query.divisionId } : {};
     const baseWhere: Prisma.TopicWhereInput = {
       status: "PUBLISHED",
       programId: query.programId,
-      program: { status: "OPEN" },
+      program: { isPublic: true, lifecycleStatus: "ACTIVE" },
+      ...divisionWhere,
       ...search,
     };
     const where: Prisma.TopicWhereInput = {
@@ -226,7 +231,7 @@ export class PrismaTopicQueryRepository
       where: {
         id,
         status: "PUBLISHED",
-        program: { status: "OPEN" },
+        program: { isPublic: true, lifecycleStatus: "ACTIVE" },
       },
       include: publicTopicInclude,
     });
@@ -235,7 +240,7 @@ export class PrismaTopicQueryRepository
 }
 
 function toTopicSummary(
-  { author, program, _count, team, ...topic }: ManagedTopicRow,
+  { author, program, division, _count, team, ...topic }: ManagedTopicRow,
 ): ManagedTopicSummary {
   return {
     ...topic,
@@ -243,7 +248,8 @@ function toTopicSummary(
     authorRole: author.role,
     programName: program.name,
     programCategory: program.category,
-    programStatus: program.status,
+    divisionName: division?.name ?? null,
+    programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     pendingApplicationCount: _count.applications,
@@ -252,7 +258,7 @@ function toTopicSummary(
 }
 
 function toPublicTopic(
-  { author, manager, program, team, ...topic }: PublicTopicRow,
+  { author, manager, program, division, team, ...topic }: PublicTopicRow,
   ownApplicationStatus: PublicTopicSummary["ownApplicationStatus"] = null,
 ): PublicTopicSummary {
   return {
@@ -263,7 +269,8 @@ function toPublicTopic(
     startYear: getProgramStartYear(program.startsAt),
     programName: program.name,
     programCategory: program.category,
-    programStatus: program.status,
+    divisionName: division?.name ?? null,
+    programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     memberCount: team?._count.members ?? 0,

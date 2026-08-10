@@ -13,6 +13,7 @@ export class ListPublishedTopicsService {
   execute(input: {
     viewerId?: string;
     programId?: string;
+    divisionId?: string | "UNASSIGNED";
     query?: string;
     phase?: string;
     sort?: string;
@@ -25,6 +26,7 @@ export class ListPublishedTopicsService {
     const query: PublicTopicQuery = {
       viewerId: input.viewerId,
       programId: input.programId,
+      divisionId: input.divisionId,
       query: input.query?.trim().slice(0, 100) ?? "",
       phase,
       sort,

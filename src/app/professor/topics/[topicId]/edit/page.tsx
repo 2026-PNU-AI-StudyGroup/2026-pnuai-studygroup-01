@@ -16,7 +16,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("주제 내용 편집");
+  return getLocalizedMetadata("프로젝트 내용 편집");
 }
 
 export default async function EditManagedTopicPage({ params }: { params: Promise<{ topicId: string }> }) {
@@ -38,7 +38,7 @@ export default async function EditManagedTopicPage({ params }: { params: Promise
         currentPath={`/professor/topics/${topic.id}/edit`}
         role={actor.role}
         eyebrow={topic.programName}
-        title="주제 내용 편집"
+        title="프로젝트 내용 편집"
         description="제출된 지원서가 있으면 지원 방식과 문항은 변경할 수 없습니다."
         actions={<Link href={`/professor/topics/${topic.id}`} className="button-secondary"><UiText>{"상세로"}</UiText></Link>}
       >

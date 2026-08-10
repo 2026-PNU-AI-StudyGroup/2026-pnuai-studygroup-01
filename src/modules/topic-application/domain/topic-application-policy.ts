@@ -3,7 +3,7 @@ import type { TopicApplicationConfiguration } from "@/modules/topic-application/
 
 export class TopicApplicationForbiddenError extends Error {
   constructor() {
-    super("학생만 주제에 지원할 수 있습니다.");
+    super("학생만 프로젝트에 지원할 수 있습니다.");
     this.name = "TopicApplicationForbiddenError";
   }
 }
@@ -31,7 +31,7 @@ export class InvalidTopicApplicationAnswersError extends Error {
 
 export class TopicApplicationKindForbiddenError extends Error {
   constructor() {
-    super("이 주제에서 허용하지 않는 지원 방식입니다.");
+    super("이 프로젝트에서 허용하지 않는 지원 방식입니다.");
     this.name = "TopicApplicationKindForbiddenError";
   }
 }

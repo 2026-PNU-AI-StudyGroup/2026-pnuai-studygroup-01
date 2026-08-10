@@ -50,6 +50,7 @@ const skillList = z.string().transform((value, context) => {
 
 export const createTopicInputSchema = z.object({
   programId: z.string().min(1).max(200),
+  divisionId: z.string().uuid().nullable(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(8_000),
   requiredSkills: skillList.refine((skills) => skills.length > 0),
@@ -76,6 +77,7 @@ export function parseTopicFormData(formData: FormData) {
   const questionRequiredValues = formData.getAll("questionRequired");
   return createTopicInputSchema.safeParse({
     ...Object.fromEntries(formData),
+    divisionId: formData.get("divisionId") || null,
     applicationQuestions: questionLabels.map((label, index) => ({
       label,
       maxLength: questionMaxLengths[index],

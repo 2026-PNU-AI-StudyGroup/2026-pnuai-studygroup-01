@@ -49,7 +49,7 @@ export type TopicApplicationSummary = {
   id: string;
   topicId: string;
   topicTitle: string;
-  topicStatus: "DRAFT" | "PUBLISHED" | "CLOSED";
+  topicStatus: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   programName: string;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   status: "PENDING" | "ACCEPTED" | "REJECTED";

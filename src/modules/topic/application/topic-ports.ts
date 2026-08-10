@@ -7,11 +7,12 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 export type TopicDraft = TopicDetails &
   TopicSchedule & {
     programId: string;
+    divisionId?: string | null;
     authorId: string;
   };
 
 export interface TopicCreator {
-  createDraft(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
+  createPublished(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
 }
 
 export interface TopicScheduleUpdater {
@@ -30,9 +31,8 @@ export interface TopicEditor {
   update(
     id: string,
     actor: CurrentActor,
-    topic: Omit<TopicDraft, "authorId">,
+    topic: Omit<TopicDraft, "authorId" | "divisionId">,
   ): Promise<TopicUpdateOutcome>;
-  deleteDraft(id: string, actor: CurrentActor): Promise<boolean>;
 }
 
 type TopicApplicationQuestionSummary = {
@@ -48,10 +48,11 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
   authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";
-  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   publishedAt: Date | null;
   programName: string;
   programCategory: string;
+  divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
   programRecruitmentEndsAt: Date;
@@ -87,13 +88,12 @@ export type TopicStateRecord = {
   authorId: string;
   managerId: string | null;
   assistantIds: string[];
-  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   recruitmentEnabled: boolean;
 };
 
 export interface TopicStateRepository {
   findState(id: string): Promise<TopicStateRecord | null>;
-  publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean>;
   closePublished(id: string, actor: CurrentActor): Promise<boolean>;
   closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean>;
 }
@@ -112,6 +112,7 @@ export type PublicTopicSort = "LATEST" | "DEADLINE";
 export type PublicTopicQuery = {
   viewerId?: string;
   programId?: string;
+  divisionId?: string | "UNASSIGNED";
   query: string;
   phase: PublicTopicPhase;
   sort: PublicTopicSort;

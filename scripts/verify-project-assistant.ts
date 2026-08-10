@@ -58,8 +58,8 @@ async function verify() {
       projectRegistrationStartsAt: startsAt,
       projectRegistrationEndsAt: endsAt,
       recruitmentEndsAt: endsAt,
-      status: "OPEN",
-      openedAt: now,
+      isPublic: true,
+      lifecycleStatus: "ACTIVE",
     },
   });
   await prisma.topic.create({
@@ -76,6 +76,7 @@ async function verify() {
       executionEndsAt: new Date(now.getTime() + 60 * 24 * 60 * 60_000),
       submissionStartsAt: now,
       submissionEndsAt: endsAt,
+      status: "PUBLISHED",
       applicationQuestions: {
         create: { label: "참여 동기", maxLength: 500, position: 0 },
       },
@@ -103,11 +104,6 @@ async function verify() {
   }
 
   const studentAssistant = invitees[0];
-  await new ChangeTopicStatusService(
-    new PrismaTopicCommandRepository(prisma),
-    new PrismaProjectProgramRepository(prisma),
-    () => now,
-  ).publish(studentAssistant, topicId);
   await prisma.team.create({
     data: {
       id: teamId,
