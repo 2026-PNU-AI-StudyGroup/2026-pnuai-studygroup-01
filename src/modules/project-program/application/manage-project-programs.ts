@@ -35,7 +35,7 @@ export type UpdateProjectProgramSettingsOutcome =
   | "IDENTITY_VISIBILITY_LOCKED";
 
 export interface ProjectProgramRepository {
-  create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE">;
+  create(input: ProjectProgramDetails & { votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<string | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
   listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]>;
@@ -81,7 +81,8 @@ export class ProjectProgramService {
       votingPolicy: votingPolicy ? normalizeProgramVotingPolicy(votingPolicy) : null,
       createdById: actor.id,
     });
-    if (outcome !== "CREATED") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
+    if (outcome === "DUPLICATE") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
+    return outcome;
   }
   async changeStatus(actor: CurrentActor, id: string, status: "OPEN" | "CLOSED", now = new Date()) {
     assertProgramAdmin(actor);

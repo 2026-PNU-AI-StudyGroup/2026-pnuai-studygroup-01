@@ -41,7 +41,7 @@ export default async function ProgramSettingsPage({ params }: { params: Promise<
         eyebrow="프로그램 관리"
         title={program.name}
         description="등록과 투표 정책을 정하고, 학생 제안과 공개 상태를 운영합니다."
-        actions={<><Link href={`/admin/programs/${program.id}/tracks`} className="button-secondary"><UiText>{"트랙 관리"}</UiText></Link><Link href={`/admin/programs/${program.id}/rubric`} className="button-secondary"><UiText>{"채점표 관리"}</UiText></Link><Link href="/admin/programs" className="button-secondary"><UiText>{"프로그램 목록"}</UiText></Link></>}
+        actions={<><Link href={`/admin/programs/${program.id}/rubric`} className="button-secondary"><UiText>{"채점표 관리"}</UiText></Link><Link href={`/admin/programs/${program.id}/tracks`} className="button-secondary"><UiText>{"트랙 관리"}</UiText></Link><Link href={`/announcements/new?target=program:${program.id}`} className="button-secondary"><UiText>{"공지 작성"}</UiText></Link><Link href="/admin/programs" className="button-secondary"><UiText>{"프로그램 목록"}</UiText></Link></>}
       >
         <div className="grid gap-4">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">

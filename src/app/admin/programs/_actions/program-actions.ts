@@ -48,8 +48,9 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
   });
   const settings = parseProgramSettings(formData);
   if (!parsed.success || !settings.success) return { status: "error", message: "프로그램 내용과 등록·모집·투표 기간을 확인해 주세요." };
+  let programId: string;
   try {
-    await service().create(await actor(), {
+    programId = await service().create(await actor(), {
       ...parsed.data,
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
@@ -64,7 +65,9 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
     });
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); return { status: "success", message: "프로그램 초안을 등록했습니다." };
+  revalidatePath("/admin/programs");
+  // 생성 직후 관리(설정) 화면으로 보내 심사표·트랙·공지 등 옵션을 이어서 설정하게 한다.
+  redirect(`/admin/programs/${programId}/settings`);
 }
 
 export async function updateProgramSettingsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
