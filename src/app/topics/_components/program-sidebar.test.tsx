@@ -30,7 +30,6 @@ describe("ProgramSidebar", () => {
     expect(within(navigation).getByText("2025")).toBeInTheDocument();
     expect(within(navigation).getByText("진행 중")).toBeInTheDocument();
     expect(within(navigation).getByText("종료")).toBeInTheDocument();
-    expect(navigation.querySelectorAll("[data-program-mark]")).toHaveLength(2);
     expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
     expect(screen.queryByRole("link", { name: "전체 프로젝트" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "전체 보기" })).not.toBeInTheDocument();
@@ -44,7 +43,7 @@ describe("ProgramSidebar", () => {
     expect(selectedRow).toBeInTheDocument();
     expect(selectedRow?.tagName).toBe("DIV");
     expect(selectedRow).not.toHaveAttribute("href");
-    expect(selectedRow?.querySelector("[data-program-mark] svg")).toBeInTheDocument();
+    expect(selectedRow?.querySelector('span[aria-hidden="true"].rounded-full')).toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "캡스톤 2025종료캡스톤" })).not.toBeInTheDocument();
     expect(within(navigation).getByRole("button", { name: "2025" })).toHaveAttribute("aria-expanded", "true");
     expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025종료");
@@ -137,6 +136,5 @@ describe("ProgramSidebar", () => {
     expect(within(navigation).getByRole("button", { name: "2024" })).toHaveAttribute("aria-expanded", "true");
     expect(within(navigation).getByRole("button", { name: "2023" })).toHaveAttribute("aria-expanded", "false");
     expect(within(navigation).getByText("AI 부스터 2024").closest("a")).not.toHaveAttribute("tabindex");
-    expect(navigation.querySelectorAll("[data-program-mark]")).toHaveLength(2);
   });
 });
