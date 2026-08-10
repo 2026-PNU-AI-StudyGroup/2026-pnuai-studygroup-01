@@ -94,7 +94,7 @@ export default async function ShowcaseDetailPage({ params }: { params: Promise<{
         ) : null}
 
         {embedUrl ? (
-          <div className="aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
+          <div className="aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black focus-within:border-[var(--focus)] focus-within:ring-4 focus-within:ring-[var(--focus-halo)]">
             <iframe src={embedUrl} title="프로젝트 소개 영상" className="h-full w-full" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
           </div>
         ) : null}

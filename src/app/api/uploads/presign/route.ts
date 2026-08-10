@@ -12,6 +12,7 @@ const maximumRequestBytes = 16 * 1_024;
 const inputSchema = z.object({
   teamId: z.string().uuid(),
   purpose: z.enum(["REPORT", "ARTIFACT"]),
+  consumer: z.enum(["REPORT", "ARTIFACT", "SHOWCASE_IMAGE"]),
   originalName: z.string(),
   contentType: z.string(),
   size: z.number(),

@@ -83,7 +83,7 @@ async function main() {
   if (attached.status !== "ATTACHED") throw new Error("보고서 파일이 ATTACHED로 전환되지 않았습니다.");
 
   const wrongPurposeFile = await prisma.storedFile.create({ data: {
-    teamId: team.id, ownerId: studentId, purpose: "ARTIFACT", status: "READY",
+    teamId: team.id, ownerId: studentId, purpose: "ARTIFACT", consumer: "ARTIFACT", status: "READY",
     objectKey: `verification/${randomUUID()}`, originalName: "artifact.pdf",
     uploadObjectKey: `staging/verification/${randomUUID()}`,
     contentType: "application/pdf", size: 1, sha256, expiresAt: new Date(),

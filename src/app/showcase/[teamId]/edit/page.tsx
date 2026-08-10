@@ -63,9 +63,15 @@ export default async function ShowcaseEditPage({ params }: { params: Promise<{ t
       <header className="border-b border-[var(--line)] bg-white px-5 py-4 sm:px-8">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Brand href="/topics" />
-          <UiLink href={`/showcase/${teamId}`} className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
-            <UiText>{"공개 페이지 보기"}</UiText>
-          </UiLink>
+          {showcase?.isPublished ? (
+            <UiLink href={`/showcase/${teamId}`} className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
+              <UiText>{"공개 페이지 보기"}</UiText>
+            </UiLink>
+          ) : (
+            <UiLink href={`/teams/${teamId}/artifacts`} className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
+              <UiText>{"결과물로 돌아가기"}</UiText>
+            </UiLink>
+          )}
         </div>
       </header>
       <main className="mx-auto grid max-w-4xl gap-8 px-5 py-8 sm:px-8 sm:py-10">

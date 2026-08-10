@@ -16,6 +16,7 @@ import { SHOWCASE_LIMITS, showcaseInitialState } from "@/app/showcase/_lib/showc
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { FormField } from "@/shared/ui/form-system";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 export type ShowcaseEditorImage = { id: string; isCover: boolean };
 export type ShowcaseEditorData = {
@@ -75,18 +76,18 @@ export function ShowcaseEditor({ data }: { data: ShowcaseEditorData }) {
     <div className="grid gap-8">
       {/* 소개 · 링크 */}
       <form action={saveAction} className="panel grid gap-5 p-5 sm:p-7">
-        <FormField label="프로젝트 소개" required description="프로젝트를 소개하는 글을 작성해 주세요. 마크다운을 사용할 수 있습니다.">
-          <UiTextarea className="form-control min-h-40 bg-white leading-7" name="summary" maxLength={SHOWCASE_LIMITS.summary} defaultValue={data.summary} placeholder="어떤 프로젝트인지, 무엇을 만들었는지 소개해 주세요." required />
+        <FormField id="showcase-summary" label="프로젝트 소개" required description="프로젝트를 소개하는 글을 작성해 주세요.">
+          <UiTextarea id="showcase-summary" className="form-control min-h-40 bg-white leading-7" name="summary" maxLength={SHOWCASE_LIMITS.summary} defaultValue={data.summary} placeholder="어떤 프로젝트인지, 무엇을 만들었는지 소개해 주세요." required />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="GitHub">
-            <UiInput className="form-control bg-white" name="githubUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.githubUrl ?? ""} placeholder="https://github.com/..." />
+          <FormField id="showcase-github" label="GitHub">
+            <UiInput id="showcase-github" className="form-control bg-white" name="githubUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.githubUrl ?? ""} placeholder="https://github.com/..." />
           </FormField>
-          <FormField label="YouTube">
-            <UiInput className="form-control bg-white" name="youtubeUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.youtubeUrl ?? ""} placeholder="https://youtu.be/..." />
+          <FormField id="showcase-youtube" label="YouTube">
+            <UiInput id="showcase-youtube" className="form-control bg-white" name="youtubeUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.youtubeUrl ?? ""} placeholder="https://youtu.be/..." />
           </FormField>
-          <FormField label="데모·사이트">
-            <UiInput className="form-control bg-white" name="demoUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.demoUrl ?? ""} placeholder="https://..." />
+          <FormField id="showcase-demo" label="데모·사이트">
+            <UiInput id="showcase-demo" className="form-control bg-white" name="demoUrl" type="url" maxLength={SHOWCASE_LIMITS.url} defaultValue={data.demoUrl ?? ""} placeholder="https://..." />
           </FormField>
         </div>
         <div className="flex items-center gap-3">
@@ -118,7 +119,7 @@ export function ShowcaseEditor({ data }: { data: ShowcaseEditorData }) {
                     </form>
                   )}
                   <form action={async (formData) => { await removeShowcaseImageAction(image.id, showcaseInitialState, formData); }}>
-                    <button className="button-quiet text-xs text-[var(--danger)]" type="submit"><UiText>{"삭제"}</UiText></button>
+                    <ConfirmSubmitButton className="button-quiet text-xs text-[var(--danger)]" confirmMessage="이 이미지를 삭제합니다. 표지였다면 다음 이미지가 표지가 됩니다."><UiText>{"삭제"}</UiText></ConfirmSubmitButton>
                   </form>
                 </div>
               </li>

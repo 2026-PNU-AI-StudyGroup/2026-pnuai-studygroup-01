@@ -2,8 +2,10 @@ import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
+import { ArtifactManagementForm } from "@/app/teams/[teamId]/_components/artifact-management-form";
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
@@ -58,6 +60,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
   const canRegisterArtifact = workspace.status === "CONFIRMED" &&
     workspace.access.canContribute &&
     (actor.role === "ADMIN" || isStudentRegistrationPeriod);
+  const canEditShowcase = actor.role === "ADMIN" || workspace.access.isPrimaryAdvisor || workspace.access.isTeamMember;
   const registrationPeriodState = workspace.status === "CONFIRMED" &&
     workspace.access.isTeamMember &&
     actor.role !== "ADMIN"
@@ -86,7 +89,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         titleId="artifacts-title"
         description="발표 자료와 소스 코드 등 공개 가능한 결과물을 관리합니다."
         bordered={false}
-        actions={canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
+        actions={<>{canEditShowcase ? <Link href={`/showcase/${workspace.id}/edit`} className="button-secondary"><UiText>{"쇼케이스 관리"}</UiText></Link> : null}{canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : null}</>}
       />
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
@@ -131,6 +134,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
                     ) : (
                       <a className="button-secondary w-full gap-2" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
                     )}
+                    {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
                   </div>
                 </article>
               </li>

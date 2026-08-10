@@ -4,7 +4,7 @@ import type {
   UploadIntent,
   UploadIntentRepository,
 } from "@/modules/file/application/manage-upload";
-import type { FilePurpose } from "@/modules/file/domain/upload-policy";
+import type { FilePurpose, UploadConsumer } from "@/modules/file/domain/upload-policy";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export class PrismaUploadIntentRepository implements UploadIntentRepository {
@@ -14,6 +14,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
     teamId: string;
     actor: CurrentActor;
     purpose: FilePurpose;
+    consumer: UploadConsumer;
     originalName: string;
   }): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
@@ -27,32 +28,56 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         SELECT "team"."id"
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
           AND (
-            ${input.actor.role}::"UserRole" = 'ADMIN' OR
-            (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-              SELECT 1 FROM "team_member"
-              WHERE "team_member"."teamId" = "team"."id"
-                AND "team_member"."studentId" = ${input.actor.id}
-            ))
+            (${input.consumer}::"UploadConsumer" = 'SHOWCASE_IMAGE' AND (
+              ${input.actor.role}::"UserRole" = 'ADMIN' OR
+              "team"."professorId" = ${input.actor.id} OR
+              (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
+                SELECT 1 FROM "team_member"
+                WHERE "team_member"."teamId" = "team"."id"
+                  AND "team_member"."studentId" = ${input.actor.id}
+              ))
+            )) OR (
+              ${input.consumer}::"UploadConsumer" <> 'SHOWCASE_IMAGE' AND
+              "team"."status" <> 'CLOSED' AND (
+                ${input.actor.role}::"UserRole" = 'ADMIN' OR
+                (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
+                  SELECT 1 FROM "team_member"
+                  WHERE "team_member"."teamId" = "team"."id"
+                    AND "team_member"."studentId" = ${input.actor.id}
+                ))
+              )
+            )
           )
         FOR UPDATE
       `);
       if (teams.length !== 1) return false;
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         INSERT INTO "stored_file" (
-          "id", "teamId", "ownerId", "purpose", "status", "objectKey",
+          "id", "teamId", "ownerId", "purpose", "consumer", "status", "objectKey",
           "uploadObjectKey", "originalName", "contentType", "size", "sha256",
           "expiresAt", "cleanupAfter", "createdAt"
         )
         SELECT ${input.id}, "team"."id", ${input.actor.id},
-          ${input.purpose}::"FilePurpose", 'PENDING'::"StoredFileStatus",
+          ${input.purpose}::"FilePurpose", ${input.consumer}::"UploadConsumer", 'PENDING'::"StoredFileStatus",
           ${input.objectKey}, ${input.uploadObjectKey}, ${input.originalName},
           ${input.contentType}, ${input.size}, ${input.sha256}, ${input.expiresAt},
           ${input.cleanupAfter}, ${new Date()}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
+          AND (
+            (${input.consumer}::"UploadConsumer" = 'SHOWCASE_IMAGE' AND (
+              ${input.actor.role}::"UserRole" = 'ADMIN' OR
+              "team"."professorId" = ${input.actor.id} OR
+              (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
+                SELECT 1 FROM "team_member"
+                WHERE "team_member"."teamId" = "team"."id"
+                  AND "team_member"."studentId" = ${input.actor.id}
+              ))
+            )) OR (
+              ${input.consumer}::"UploadConsumer" <> 'SHOWCASE_IMAGE' AND "team"."status" <> 'CLOSED'
+            )
+          )
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
@@ -106,7 +131,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         WHERE "stored_file"."id" = ${id}
           AND "stored_file"."ownerId" = ${ownerId}
           AND "stored_file"."status" = 'PENDING'
-          AND "team"."status" <> 'CLOSED'
+          AND ("stored_file"."consumer" = 'SHOWCASE_IMAGE' OR "team"."status" <> 'CLOSED')
         FOR UPDATE OF "team", "stored_file"
       `);
       const file = files[0];

@@ -13,6 +13,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const idSchema = z.string().uuid();
+const showcaseImageContentTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
 
 async function requireActor() {
   const actor = await getCurrentActor();
@@ -82,27 +83,62 @@ export async function addShowcaseImageAction(
   }
   const file = await prisma.storedFile.findUnique({
     where: { id: uploadId },
-    select: { teamId: true, status: true, contentType: true },
+    select: { teamId: true, ownerId: true, purpose: true, consumer: true, status: true, contentType: true },
   });
-  if (!file || file.teamId !== teamId || !file.contentType.startsWith("image/") ||
-      (file.status !== "READY" && file.status !== "ATTACHED")) {
+  if (
+    !file ||
+    file.teamId !== teamId ||
+    file.ownerId !== actor.id ||
+    file.purpose !== "ARTIFACT" ||
+    file.consumer !== "SHOWCASE_IMAGE" ||
+    file.status !== "READY" ||
+    !showcaseImageContentTypes.includes(file.contentType as typeof showcaseImageContentTypes[number])
+  ) {
     return { status: "error", message: "이미지 파일만 첨부할 수 있습니다." };
   }
-  const showcase = await prisma.projectShowcase.findUnique({ where: { teamId }, select: { id: true } });
-  if (!showcase) {
-    return { status: "error", message: "먼저 소개를 저장한 뒤 이미지를 추가해 주세요." };
+  const result = await prisma.$transaction(async (transaction) => {
+    const teams = await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "team" WHERE "id" = ${teamId} FOR UPDATE
+    `;
+    const canAttach = teams[0] && (
+      actor.role === "ADMIN" ||
+      (actor.role === "PROFESSOR" && Boolean(await transaction.team.findFirst({ where: { id: teamId, professorId: actor.id }, select: { id: true } }))) ||
+      (actor.role === "STUDENT" && Boolean(await transaction.teamMember.findFirst({ where: { teamId, studentId: actor.id }, select: { id: true } })))
+    );
+    if (!canAttach) return "FORBIDDEN" as const;
+    const showcase = await transaction.projectShowcase.findUnique({ where: { teamId }, select: { id: true } });
+    if (!showcase) return "MISSING_SHOWCASE" as const;
+    const count = await transaction.showcaseImage.count({ where: { showcaseId: showcase.id } });
+    if (count >= SHOWCASE_LIMITS.maxImages) return "LIMIT_REACHED" as const;
+    const max = await transaction.showcaseImage.aggregate({ where: { showcaseId: showcase.id }, _max: { position: true } });
+    const attached = await transaction.storedFile.updateMany({
+      where: {
+        id: uploadId,
+        teamId,
+        ownerId: actor.id,
+        purpose: "ARTIFACT",
+        consumer: "SHOWCASE_IMAGE",
+        contentType: { in: [...showcaseImageContentTypes] },
+        status: "READY",
+      },
+      data: { status: "ATTACHED" },
+    });
+    if (attached.count !== 1) return "INVALID_FILE" as const;
+    await transaction.showcaseImage.create({
+      data: { showcaseId: showcase.id, fileId: uploadId, position: (max._max.position ?? -1) + 1, isCover: count === 0 },
+    });
+    return "ATTACHED" as const;
+  });
+  if (result !== "ATTACHED") {
+    const message = result === "LIMIT_REACHED"
+      ? "이미지는 최대 12장까지 추가할 수 있습니다."
+      : result === "MISSING_SHOWCASE"
+        ? "먼저 소개를 저장한 뒤 이미지를 추가해 주세요."
+        : result === "FORBIDDEN"
+          ? "쇼케이스를 편집할 권한이 없습니다."
+          : "이미지를 다시 확인해 주세요.";
+    return { status: "error", message };
   }
-  const count = await prisma.showcaseImage.count({ where: { showcaseId: showcase.id } });
-  if (count >= SHOWCASE_LIMITS.maxImages) {
-    return { status: "error", message: "이미지는 최대 12장까지 추가할 수 있습니다." };
-  }
-
-  await prisma.$transaction([
-    prisma.showcaseImage.create({
-      data: { showcaseId: showcase.id, fileId: uploadId, position: count, isCover: count === 0 },
-    }),
-    prisma.storedFile.update({ where: { id: uploadId }, data: { status: "ATTACHED" } }),
-  ]);
   revalidateShowcase(teamId);
   return { status: "success", message: "이미지를 추가했습니다." };
 }
@@ -116,21 +152,31 @@ export async function removeShowcaseImageAction(
   const actor = await requireActor();
   const image = await prisma.showcaseImage.findUnique({
     where: { id: imageId },
-    select: { isCover: true, showcaseId: true, showcase: { select: { teamId: true } } },
+    select: { fileId: true, isCover: true, showcaseId: true, showcase: { select: { teamId: true } } },
   });
   if (!image || !(await canEdit(image.showcase.teamId, actor))) {
     return { status: "error", message: "이미지를 삭제할 권한이 없습니다." };
   }
-  await prisma.showcaseImage.delete({ where: { id: imageId } });
-  // ponytail: 표지 삭제 시 남은 첫 이미지를 표지로 승격. StoredFile은 그대로 둔다(정리 워커 대상 아님, 고아 허용).
-  if (image.isCover) {
-    const next = await prisma.showcaseImage.findFirst({
-      where: { showcaseId: image.showcaseId },
-      orderBy: { position: "asc" },
-      select: { id: true },
-    });
-    if (next) await prisma.showcaseImage.update({ where: { id: next.id }, data: { isCover: true } });
-  }
+  await prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw`SELECT "id" FROM "team" WHERE "id" = ${image.showcase.teamId} FOR UPDATE`;
+    await transaction.showcaseImage.delete({ where: { id: imageId } });
+    if (image.isCover) {
+      const next = await transaction.showcaseImage.findFirst({
+        where: { showcaseId: image.showcaseId },
+        orderBy: { position: "asc" },
+        select: { id: true },
+      });
+      if (next) await transaction.showcaseImage.update({ where: { id: next.id }, data: { isCover: true } });
+    }
+    const [artifactReferences, reportReferences, imageReferences] = await Promise.all([
+      transaction.artifact.count({ where: { fileId: image.fileId } }),
+      transaction.reportVersion.count({ where: { fileId: image.fileId } }),
+      transaction.showcaseImage.count({ where: { fileId: image.fileId } }),
+    ]);
+    if (artifactReferences === 0 && reportReferences === 0 && imageReferences === 0) {
+      await transaction.storedFile.deleteMany({ where: { id: image.fileId, consumer: "SHOWCASE_IMAGE" } });
+    }
+  });
   revalidateShowcase(image.showcase.teamId);
   return { status: "success", message: "이미지를 삭제했습니다." };
 }

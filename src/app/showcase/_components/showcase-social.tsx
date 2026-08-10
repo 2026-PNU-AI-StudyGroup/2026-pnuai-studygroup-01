@@ -10,6 +10,7 @@ import {
 import { showcaseInitialState } from "@/app/showcase/_lib/showcase-options";
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 export type ShowcaseCommentView = {
   id: string;
@@ -60,7 +61,8 @@ export function ShowcaseComments({
 
       {currentUserId ? (
         <form action={action} className="mt-4 grid gap-2">
-          <UiTextarea className="form-control min-h-20 bg-white leading-6" name="body" maxLength={1000} placeholder="응원이나 의견을 남겨 주세요." required />
+          <label htmlFor="showcase-comment" className="text-sm font-semibold"><UiText>{"댓글 내용"}</UiText></label>
+          <UiTextarea id="showcase-comment" className="form-control min-h-20 bg-white leading-6" name="body" maxLength={1000} placeholder="응원이나 의견을 남겨 주세요." required />
           <div className="flex items-center gap-3">
             <button className="button-primary" type="submit" disabled={pending}>
               <UiText>{pending ? "등록 중" : "댓글 등록"}</UiText>
@@ -86,7 +88,7 @@ export function ShowcaseComments({
                 </p>
                 {currentUserId === comment.authorId || isAdmin ? (
                   <form action={async (formData) => { await deleteShowcaseCommentAction(comment.id, showcaseInitialState, formData); }}>
-                    <button className="button-quiet text-xs text-[var(--danger)]" type="submit"><UiText>{"삭제"}</UiText></button>
+                    <ConfirmSubmitButton className="button-quiet text-xs text-[var(--danger)]" confirmMessage="이 댓글을 삭제합니다. 계속할까요?"><UiText>{"삭제"}</UiText></ConfirmSubmitButton>
                   </form>
                 ) : null}
               </div>

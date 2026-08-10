@@ -36,6 +36,7 @@ export async function uploadShowcaseImage(
     body: JSON.stringify({
       teamId,
       purpose: "ARTIFACT",
+      consumer: "SHOWCASE_IMAGE",
       originalName: file.name,
       contentType: file.type,
       size: file.size,
