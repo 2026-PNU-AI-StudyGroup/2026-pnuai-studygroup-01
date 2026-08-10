@@ -4,7 +4,7 @@ import { useActionState } from "react";
 
 import {
   applyProgramReportRequirementsAction,
-  initialProgramReportActionState,
+  type ProgramReportActionState,
 } from "@/app/admin/programs/_actions/program-report-requirement-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -15,8 +15,10 @@ const REPORT_TYPES = [
   { key: "FINAL", label: "최종 보고서" },
 ] as const;
 
+const initialState: ProgramReportActionState = { status: "idle", message: "" };
+
 export function ProgramReportRequirementForm({ programId, teamCount }: { programId: string; teamCount: number }) {
-  const [state, action, pending] = useActionState(applyProgramReportRequirementsAction, initialProgramReportActionState);
+  const [state, action, pending] = useActionState(applyProgramReportRequirementsAction, initialState);
   return (
     <form action={action} className="grid gap-5">
       <input type="hidden" name="programId" value={programId} />
