@@ -1267,6 +1267,31 @@ async function seed() {
     if (failedIntegrityChecks.length > 0) {
       throw new Error(`데모 데이터 정합성 검증 실패: ${failedIntegrityChecks.map(([name, failures]) => `${name}=${failures}`).join(", ")}`);
     }
+
+    // 데모 득표: 투표가 열린 두 프로그램에 표본 투표를 넣어 팀별 득표수를 바로 확인할 수 있게 한다.
+    // 투표자 = 교수·조교·관리자(과거 프로그램 팀원이 아니라 self-vote 충돌 없음), 자기 제안/담당 주제는 제외.
+    const votingProgramIds = pastPrograms.slice(0, 2).map((program) => program.id);
+    const demoVoters = [...allProfessorIds, ids.admin];
+    await tx.projectVote.deleteMany({ where: { programId: { in: votingProgramIds } } });
+    for (const votingProgramId of votingProgramIds) {
+      const candidates = await tx.topic.findMany({
+        where: { programId: votingProgramId, publishedAt: { not: null }, status: { in: ["PUBLISHED", "CLOSED"] } },
+        orderBy: [{ title: "asc" }, { id: "asc" }],
+        select: { id: true, authorId: true, managerId: true },
+      });
+      if (candidates.length < 2) continue;
+      const demoVotes: Array<{ programId: string; topicId: string; voterId: string; createdAt: Date }> = [];
+      demoVoters.forEach((voterId, index) => {
+        const eligible = candidates.filter((candidate) => candidate.authorId !== voterId && candidate.managerId !== voterId);
+        if (eligible.length < 2) return;
+        // 1등 후보 + 회전 후보 1개 = 뚜렷한 순위와 분산.
+        const picks = new Set<string>([eligible[0].id, eligible[(index % (eligible.length - 1)) + 1].id]);
+        for (const topicId of picks) {
+          demoVotes.push({ programId: votingProgramId, topicId, voterId, createdAt: new Date(votingStartsAt.getTime() + index * 60_000) });
+        }
+      });
+      if (demoVotes.length) await tx.projectVote.createMany({ data: demoVotes, skipDuplicates: true });
+    }
     const studentDemoTeams = await tx.team.findMany({
       where: {
         status: { not: "CLOSED" },
