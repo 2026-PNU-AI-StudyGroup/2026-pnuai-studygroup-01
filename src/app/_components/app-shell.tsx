@@ -142,13 +142,13 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
       <div className="app-shell min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center bg-[var(--sidebar)] px-2 py-6 lg:flex">
-          <Brand href="/topics" variant="sidebar" inverse />
-          <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-2">
+        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-[var(--sidebar)] px-2 py-6 lg:flex">
+          <Brand href="/topics" variant="sidebar" />
+          <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-1">
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-white/14 text-white" : "text-[#cbd6ff] hover:bg-white/8 hover:text-white"}`}>
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
                   <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
                   <span><UiText>{item.label}</UiText></span>
                 </Link>
@@ -159,11 +159,10 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             <NotificationIndicatorContainer
               userId={userId}
               active={currentPath === "/notifications"}
-              inverse
               openNotification={openNotificationAction}
             />
-            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} inverse />
-            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} inverse locale={locale} />
+            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} />
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">
