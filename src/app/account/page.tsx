@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -12,9 +10,9 @@ import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructur
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
-import { CheckIcon } from "@/shared/ui/workspace-icons";
 import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 import { ProfilePhotoEditor } from "@/app/account/_components/profile-photo-editor";
+import { StudentProfileForm } from "@/app/account/_components/student-profile-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 계정");
@@ -30,8 +28,8 @@ export default async function AccountPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
-      <AccountSectionLayout role={actor.role} currentPath="/account">
-        <div className={`grid gap-10 ${actor.role === "STUDENT" ? "xl:grid-cols-2 xl:gap-12" : ""}`}>
+      <AccountSectionLayout>
+        <div className="grid gap-10">
           <section aria-labelledby="account-summary-heading" className="grid gap-6 border-y border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
             <div>
               <h2 id="account-summary-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"기본 정보"}</UiText></h2>
@@ -60,37 +58,13 @@ export default async function AccountPage() {
           </section>
 
           {actor.role === "STUDENT" ? (
-            <section aria-labelledby="project-profile-heading" className="grid gap-6 border-y border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+            <section aria-labelledby="project-profile-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
               <div>
                 <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 지원 정보"}</UiText></h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"관심 분야, 기술, 활동 가능 시간을 미리 입력하면 지원서에 불러올 수 있습니다."}</UiText></p>
               </div>
-              <div>
-                <div className="flex flex-wrap items-start justify-between gap-5">
-                  <div className="min-w-0">
-                    <p className={`inline-flex items-center gap-1.5 text-sm font-semibold ${profile ? "text-[var(--success)]" : "text-[var(--warning)]"}`}>
-                      {profile ? <CheckIcon className="size-4" /> : null}
-                      <UiText>{profile ? "작성 완료" : "작성 필요"}</UiText>
-                    </p>
-                    {profile ? (
-                      <>
-                        <p className="mt-4 text-base font-bold leading-6">{profile.desiredRole}</p>
-                        <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{profile.availability}</UiText></p>
-                        <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">{profile.bio}</p>
-                        <UiUl aria-label="관심 분야와 보유 기술" className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
-                          {[...profile.interests, ...profile.skills].slice(0, 6).map((item) => (
-                            <li key={item} className="text-xs font-semibold text-[var(--muted)]">#{item}</li>
-                          ))}
-                        </UiUl>
-                      </>
-                    ) : (
-                      <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">
-                        <UiText>{"관심 분야, 기술, 활동 가능 시간을 미리 입력하면 지원서에 불러올 수 있습니다."}</UiText></p>
-                    )}
-                  </div>
-                  <Link className={profile ? "button-secondary" : "button-primary"} href="/account/profile">
-                    <UiText>{profile ? "지원 정보 수정" : "지원 정보 작성"}</UiText>
-                  </Link>
-                </div>
+              <div className="min-w-0">
+                <StudentProfileForm profile={profile} />
               </div>
             </section>
           ) : null}

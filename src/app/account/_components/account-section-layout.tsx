@@ -1,45 +1,11 @@
-import Link from "next/link";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
-import { AccountIcon, ProfileIcon } from "@/shared/ui/workspace-icons";
-import type { UserRole } from "@/modules/identity/domain/user-role";
-
-export function AccountSectionLayout({ role, currentPath, children }: { role: UserRole; currentPath: string; children: ReactNode }) {
-  const items = role === "STUDENT"
-    ? [
-        { href: "/account", label: "계정 정보", icon: AccountIcon },
-        { href: "/account/profile", label: "프로젝트 지원 정보", icon: ProfileIcon },
-      ]
-    : [];
+export function AccountSectionLayout({ children }: { children: ReactNode }) {
   return (
     <div className="w-full px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
       <header className="border-b border-[var(--line)]">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <h1 className="pb-3 text-[2rem] font-bold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"내 계정"}</UiText></h1>
-          {items.length ? <UiNav aria-label="계정 메뉴" className="flex min-w-0 gap-7 overflow-x-auto">
-            {items.map((item) => {
-              const active = currentPath === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`snap-color relative flex min-h-12 shrink-0 items-center gap-2 pb-3 text-sm font-semibold ${
-                    active
-                      ? "text-[var(--primary)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--primary)]"
-                      : "text-[var(--muted)] hover:text-[var(--ink)]"
-                  }`}
-                >
-                  <Icon className="size-[18px]" />
-                  <UiText>{item.label}</UiText>
-                </Link>
-              );
-            })}
-          </UiNav> : null}
-        </div>
+        <h1 className="pb-3 text-[2rem] font-bold tracking-[-0.04em] text-[var(--ink)]"><UiText>{"내 계정"}</UiText></h1>
       </header>
       <main className="page-enter min-w-0 pb-24 pt-10 lg:pb-10 lg:pt-12"><UiText>{children}</UiText></main>
     </div>
