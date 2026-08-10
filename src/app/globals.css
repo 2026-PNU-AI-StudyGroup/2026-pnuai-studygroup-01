@@ -8,29 +8,34 @@
   font-display: swap;
 }
 
-/* 밝은 뉴트럴 페이퍼 그라운드 + 파스텔 슬레이트 액센트 1개. 헤어라인·크리스프 radius로 위계. 라이트 전용. */
+/*
+  편성표(Timetable / Registrar's grid) — 대학 학사 편성표를 화면 언어로.
+  뉴트럴 페이퍼 그라운드 + 잉크 텍스트 + 단일 잉크-네이비 악센트(액션·상태에만).
+  얇은 격자·헤어라인으로 위계, 크리스프 near-square radius, 데이터·시간·코드는 모노스페이스+tabular-nums.
+  카드·소프트섀도우 거부. 라이트 전용(학과 사무실 주간光).
+*/
 :root {
   color-scheme: light;
-  --workspace: #f6f7f9;
-  --sidebar: #2347b8;
+  --workspace: #fbfbfa;
+  --sidebar: #fbfbfa;
   --surface: #ffffff;
-  --surface-subtle: #f1f3f6;
-  --ink: #2b2d34;
-  --muted: #6c707a;
-  --line: #eaecef;
-  --line-strong: #dbdee4;
-  --field-border: #d3d7de;
-  --field-border-hover: #9ea3ad;
+  --surface-subtle: #f2f3f5;
+  --ink: #17181c;
+  --muted: #6b7078;
+  --line: #e4e5e8;
+  --line-strong: #d3d5d9;
+  --field-border: #cfd2d7;
+  --field-border-hover: #9aa0a8;
   --field-surface: #ffffff;
-  --primary: #2347b8;
-  --primary-hover: #1c3a97;
-  --primary-subtle: #e6ecf9;
-  --accent: #97711a;
-  --accent-hover: #7a5a12;
-  --accent-ink: #5c4408;
-  --accent-subtle: #f6efda;
+  --primary: #1f3a68;
+  --primary-hover: #172c50;
+  --primary-subtle: #eef1f6;
+  --accent: #8a6a1c;
+  --accent-hover: #6f5514;
+  --accent-ink: #574209;
+  --accent-subtle: #f5efdc;
   --focus: var(--primary);
-  --focus-halo: color-mix(in srgb, var(--focus) 16%, transparent);
+  --focus-halo: color-mix(in srgb, var(--focus) 18%, transparent);
   --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
   --success: #256a45;
   --success-subtle: #e7f1ea;
@@ -39,11 +44,12 @@
   --warning-subtle: #f7efd6;
   --danger: #a52a20;
   --danger-subtle: #f8ebe8;
-  --radius-control: 0.5rem;
-  --radius-panel: 0.75rem;
+  --radius-control: 0.1875rem;
+  --radius-panel: 0.25rem;
   --shadow-card: none;
-  --shadow-admin-panel: 0 1px 2px rgb(28 27 23 / 0.04), 0 1px 0 rgb(28 27 23 / 0.025);
-  --shadow-float: 0 12px 32px rgb(28 27 23 / 0.14);
+  --shadow-admin-panel: 0 1px 0 rgb(23 24 28 / 0.04);
+  --shadow-float: 0 10px 28px rgb(23 24 28 / 0.13);
+  --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;

@@ -21,14 +21,6 @@ export type ProgramSidebarItem = {
   votingEndsAt?: Date | string;
 };
 
-function ProgramMark({ icon }: { icon: ProgramIconKey }) {
-  return (
-    <span aria-hidden="true" data-program-mark className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--primary)]">
-      <ProgramIcon icon={icon} className="size-[1.15rem]" />
-    </span>
-  );
-}
-
 function VotingProgramCarousel({
   programs,
   selectedId,
@@ -135,21 +127,23 @@ function YearProgramGroup({
             {programs.map((program) => {
               const selected = program.id === selectedId;
               const votingOpen = Boolean(program.votingEndsAt);
-              const rowClassName = `relative flex min-h-[4.1rem] items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+              const rowClassName = `relative flex min-h-[3.1rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${
                 selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
               }`;
+              const status = votingOpen
+                ? { dot: "bg-[#2f6bed]", text: "text-[var(--primary)]", label: "투표 중" }
+                : program.status === "active"
+                  ? { dot: "bg-[#16a34a]", text: "text-[var(--success)]", label: "진행 중" }
+                  : { dot: "bg-[var(--muted)]", text: "text-[var(--muted)]", label: "종료" };
               const rowContent = (
                 <>
-                  <ProgramMark icon={program.icon} />
+                  <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${status.dot}`} />
                   <span className="min-w-0">
                     <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
-                    <span className="mt-1 flex items-center gap-1.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold ${
-                        votingOpen ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : program.status === "active" ? "bg-[var(--success-subtle)] text-[var(--success)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
-                      }`}>
-                        <UiText>{votingOpen ? "투표 중" : program.status === "active" ? "진행 중" : "종료"}</UiText>
-                      </span>
-                      <span className="truncate text-[0.64rem] font-semibold text-[var(--muted)]"><UiText>{program.category}</UiText></span>
+                    <span className="mt-0.5 flex items-center gap-1 text-[0.64rem]">
+                      <span className={`font-bold ${status.text}`}><UiText>{status.label}</UiText></span>
+                      <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
+                      <span className="truncate font-semibold text-[var(--muted)]"><UiText>{program.category}</UiText></span>
                     </span>
                   </span>
                 </>
