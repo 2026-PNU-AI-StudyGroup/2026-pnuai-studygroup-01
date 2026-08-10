@@ -86,7 +86,12 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
                 leaderTeams={leaderTeams}
               />
             ) : null}
-            {voteCandidate ? <div className={hasProjectAction ? "mt-2" : undefined}><ProjectVoteButton candidate={voteCandidate} selection={voteSelection} /></div> : null}
+            {voteCandidate ? (
+              <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 ${hasProjectAction ? "mt-2" : ""}`}>
+                <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
+                <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"득표"}</UiText>{" "}<strong className="tabular-nums text-[var(--ink)]">{voteCandidate.voteCount}</strong></span>
+              </div>
+            ) : null}
           </div>
         </div>
       </article>

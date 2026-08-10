@@ -36,7 +36,7 @@ const ballot: ProgramVoteBallot = {
     identityVisibility: "ANONYMOUS",
   },
   phase: "OPEN",
-  candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false }],
+  candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false, voteCount: 0 }],
   selectedTopicIds: [],
 };
 

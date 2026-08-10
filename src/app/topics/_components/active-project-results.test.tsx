@@ -21,7 +21,7 @@ const ballot: ProgramVoteBallot = {
     identityVisibility: "ANONYMOUS",
   },
   phase: "OPEN",
-  candidates: [{ id: "50000000-0000-4000-8000-000000000001", title: "실내 길찾기", description: "설명", isSelfProject: false }],
+  candidates: [{ id: "50000000-0000-4000-8000-000000000001", title: "실내 길찾기", description: "설명", isSelfProject: false, voteCount: 3 }],
   selectedTopicIds: [],
 };
 

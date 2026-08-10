@@ -12,6 +12,7 @@ export type ProjectVoteCandidate = {
   title: string;
   description: string;
   isSelfProject: boolean;
+  voteCount: number;
 };
 
 export type ProgramVoteBallot = {
