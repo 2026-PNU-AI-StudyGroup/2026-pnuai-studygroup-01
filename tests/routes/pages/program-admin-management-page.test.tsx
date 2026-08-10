@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProgramSettingsPage from "@/app/admin/programs/[programId]/settings/page";
+import ProgramVoteResultsPage from "@/app/admin/programs/[programId]/votes/page";
 
 const { getCurrentActor, getSettings, getResults } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
@@ -68,7 +69,7 @@ describe("프로그램 통합 관리 화면", () => {
     getResults.mockResolvedValue({});
   });
 
-  it("운영 설정과 득표현황을 한 관리 화면에서 제공한다", async () => {
+  it("설정 화면에는 운영 설정과 프로그램 관리 탭을 제공한다", async () => {
     render(await ProgramSettingsPage({ params: Promise.resolve({ programId: program.id }) }));
 
     expect(screen.getByText("프로그램 관리")).toBeInTheDocument();
@@ -77,17 +78,30 @@ describe("프로그램 통합 관리 화면", () => {
     expect(screen.getByText("학생 프로젝트 제안")).toBeInTheDocument();
     expect(screen.getByText("프로그램 아이콘")).toBeInTheDocument();
     expect(screen.getByText("공개 및 마감")).toBeInTheDocument();
-    expect(screen.getByText("득표현황")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "설정" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "분과" })).toHaveAttribute("href", `/admin/programs/${program.id}/tracks`);
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("href", `/admin/programs/${program.id}/votes`);
+    expect(screen.getByRole("link", { name: "채점표" })).toHaveAttribute("href", `/admin/programs/${program.id}/rubric`);
+    expect(screen.queryByText("투표 집계")).not.toBeInTheDocument();
+    expect(getResults).not.toHaveBeenCalled();
+  });
+
+  it("투표 현황 전용 화면에서만 결과를 조회한다", async () => {
+    render(await ProgramVoteResultsPage({ params: Promise.resolve({ programId: program.id }) }));
+
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("투표 집계")).toBeInTheDocument();
     expect(getResults).toHaveBeenCalledWith(admin, program.id);
   });
 
-  it("투표 정책이 없으면 득표현황을 표시하지 않는다", async () => {
+  it("투표 정책이 없는 프로그램에도 투표 탭과 정책 설정 진입점을 제공한다", async () => {
     getSettings.mockResolvedValue({ ...program, votingPolicy: null });
 
-    render(await ProgramSettingsPage({ params: Promise.resolve({ programId: program.id }) }));
+    render(await ProgramVoteResultsPage({ params: Promise.resolve({ programId: program.id }) }));
 
-    expect(screen.queryByText("득표현황")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("투표 정책이 없는 프로그램입니다")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "투표 정책 설정" })).toHaveAttribute("href", `/admin/programs/${program.id}/settings#voting-policy`);
     expect(getResults).not.toHaveBeenCalled();
   });
 });

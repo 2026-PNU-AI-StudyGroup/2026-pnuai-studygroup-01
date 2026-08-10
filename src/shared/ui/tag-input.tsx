@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
 
@@ -12,6 +12,7 @@ type TagInputProps = {
   placeholder?: string;
   required?: boolean;
   maxLength?: number;
+  onValueChange?: (values: string[]) => void;
 };
 
 export function TagInput({
@@ -22,6 +23,7 @@ export function TagInput({
   placeholder = "입력 후 Enter",
   required,
   maxLength,
+  onValueChange,
 }: TagInputProps) {
   const { t } = useI18n();
   const generatedId = useId();
@@ -29,6 +31,9 @@ export function TagInput({
   const [tags, setTags] = useState(() => normalizeTags(defaultValue));
   const [draft, setDraft] = useState("");
   const submittedValue = [...tags, draft.trim()].filter(Boolean).join(", ");
+  useEffect(() => {
+    onValueChange?.(normalizeTags([...tags, ...splitTags(draft)]));
+  }, [draft, onValueChange, tags]);
 
   function addTags(candidates: string[]) {
     const next = normalizeTags([...tags, ...candidates]);

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiArticle } from "@/modules/translation/ui/localized-elements";
-import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
@@ -34,10 +34,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
   const { actor, workspace } = await loadTeamWorkspace(teamId, requestedPage);
   const emptyDescription = workspace.status === "CLOSED" ? "프로젝트 종료 전에 나눈 대화가 없습니다." : "질문이나 의견을 작성해 대화를 시작하세요.";
-  const participants = [
-    ...(workspace.advisorEnabled ? [{ id: `professor-${workspace.professorName}`, name: workspace.professorName, role: "지도교수" }] : []),
-    ...workspace.members.map((member) => ({ id: member.id, name: member.name, role: "팀원" })),
-  ];
+  const participantCount = workspace.members.length + workspace.assistants.length + (workspace.advisorEnabled ? 1 : 0);
 
   return (
     <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
@@ -45,11 +42,11 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
         <div className="max-w-2xl">
           <h1 id="discussion-title" className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
         </div>
-        <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participants.length}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
+        <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participantCount}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
       </header>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)] xl:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="flex min-h-[38rem] min-w-0 flex-col lg:min-h-0 xl:border-r xl:border-[var(--line)]">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)]">
+        <div className="flex min-h-[38rem] min-w-0 flex-col lg:min-h-0">
           {workspace.discussionTotalPages > 1 ? (
             <UiNav aria-label="팀 대화 페이지" className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6 lg:px-7">
               <span className="muted text-xs">{workspace.discussionPage} / {workspace.discussionTotalPages} {" "}<UiText>{"페이지"}</UiText></span>
@@ -110,26 +107,6 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
             <p className="shrink-0 border-t border-[var(--line)] px-5 py-5 text-sm text-[var(--muted)] sm:px-6 lg:px-7"><UiText>{"종료된 프로젝트에서는 새 메시지를 보낼 수 없습니다."}</UiText></p>
           )}
         </div>
-
-        <UiAside aria-label="대화 참여자" className="hidden overflow-y-auto px-6 py-8 xl:block">
-          <div className="sticky top-8">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-sm font-bold"><UiText>{"참여자"}</UiText></h2>
-              <span className="muted text-xs">{participants.length}</span>
-            </div>
-            <ul className="mt-5 space-y-4">
-              {participants.map((participant) => (
-                <li key={participant.id} className="flex min-w-0 items-center gap-3">
-                  <PersonIcon />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{participant.name}</p>
-                    <p className="muted mt-0.5 text-xs">{participant.role}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </UiAside>
       </div>
     </section>
   );

@@ -5,7 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 
 const professorNavigationItems = [
-  { href: "/professor/topics", label: "프로젝트 주제", hint: "등록·공개·일정", icon: "topic" },
+  { href: "/professor/topics", label: "프로젝트 관리", hint: "등록·공개·일정", icon: "topic" },
   { href: "/professor/applications", label: "지원 검토", icon: "application" },
   { href: "/project-approvals", label: "학생 제안", hint: "승인·반려", icon: "approval" },
 ] as const;
