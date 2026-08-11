@@ -66,7 +66,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const [archive, sidebarPrograms] = await Promise.all([
-      archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId }),
+      archiveService.execute(requestedPage, 18, { query, programId: requestedArchiveProgramId }),
       programService.listSidebarVisible(now),
     ]);
     const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
