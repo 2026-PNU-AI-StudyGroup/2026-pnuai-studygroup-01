@@ -9,46 +9,45 @@
 }
 
 /*
-  활자 견본 × 평가표·인장 (Type Specimen × Registrar's Record) — 학과 운영을 큰 활자로 세우고, 승인은 결재로 새긴다.
-  크림 종이 그라운드 + 따뜻한 잉크 + 단일 인장-레드 악센트(활성·결재·주요 상태에만).
-  헤어라인 괘선으로 위계, near-square radius, 데이터·문서번호·시각·수치는 모노+tabular-nums.
-  카드·소프트섀도우 거부(셀·괘선). 라이트 전용(관리자 데스크톱 종일). seed 8271622a.
+  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 화이트 서피스 + 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
+  크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준의 깔끔함(반어·잔재주 없이 정석을 높은 완성도로).
+  라이트 전용(관리자 데스크톱 종일). 데이터·수치·시각은 tabular-nums 유지.
 */
 :root {
   color-scheme: light;
-  --workspace: #f1efe7;
-  --sidebar: #f1efe7;
-  --surface: #fbfbf7;
-  --surface-subtle: #ece9dd;
-  --ink: #1b1912;
-  --muted: #726f5e;
-  --line: #e4e1d5;
-  --line-strong: #cbc7b8;
-  --field-border: #c7c3b3;
-  --field-border-hover: #9f9a87;
-  --field-surface: #fbfbf7;
-  --primary: #22201a;
-  --primary-hover: #100f0a;
-  --primary-subtle: #eceadf;
-  --accent: #a41f13;
-  --accent-hover: #8a1a10;
-  --accent-ink: #7a1710;
-  --accent-subtle: #f3e7e1;
-  --focus: var(--accent);
-  --focus-halo: color-mix(in srgb, var(--focus) 20%, transparent);
-  --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
-  --success: #3a6a2f;
-  --success-subtle: #e8efe1;
-  --warning: #8a5e0a;
-  --warning-ink: #684807;
-  --warning-subtle: #f5eed6;
-  --danger: #9c2b1e;
-  --danger-subtle: #f6e9e4;
-  --radius-control: 0.125rem;
-  --radius-panel: 0.1875rem;
-  --shadow-card: none;
-  --shadow-admin-panel: 0 1px 0 rgb(27 25 18 / 0.05);
-  --shadow-float: 0 12px 30px rgb(27 25 18 / 0.15);
+  --workspace: #f6f7f9;
+  --sidebar: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #f1f3f7;
+  --ink: #191c22;
+  --muted: #5b616e;
+  --line: #e7e9ef;
+  --line-strong: #d5d9e2;
+  --field-border: #d0d5dd;
+  --field-border-hover: #98a1b3;
+  --field-surface: #ffffff;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-subtle: #eef0fe;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-ink: #3730a3;
+  --accent-subtle: #eef0fe;
+  --focus: var(--primary);
+  --focus-halo: color-mix(in srgb, var(--focus) 22%, transparent);
+  --danger-halo: color-mix(in srgb, var(--danger) 18%, transparent);
+  --success: #15803d;
+  --success-subtle: #e7f5ec;
+  --warning: #b45309;
+  --warning-ink: #92400e;
+  --warning-subtle: #fdf2e1;
+  --danger: #dc2626;
+  --danger-subtle: #fdecec;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-admin-panel: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-float: 0 12px 32px rgb(16 24 40 / 0.16);
   --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -92,8 +91,8 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--ink);
+  background: var(--primary-subtle);
+  color: var(--accent-ink);
 }
 
 :where(html) {
@@ -107,7 +106,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   border: 3px solid var(--workspace);
-  border-radius: 0;
+  border-radius: 999px;
   background: var(--line-strong);
 }
 

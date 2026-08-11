@@ -33,12 +33,9 @@ export default async function RootLayout({
     <html lang={locale}>
       <body>
         {/*
-          THESIS: 학과 운영을 활자 견본과 학사 평가표처럼 — 데이터를 큰 활자로 세우고, 승인은 결재(누가·언제)로 새긴다. SaaS 카드+파랑 대시보드 거부.
-          OWN-WORLD: 크림 종이 그라운드 + 따뜻한 잉크 + 단일 인장-레드 악센트(#a41f13, 활성·결재·주요 상태에만). 헤어라인 괘선, near-square radius, 데이터·문서번호·시각은 모노+tabular-nums, 거대 활자 위계, 카드 대신 셀·괘선.
-          STORY: 운영자가 "지금 승인·채점할 것"을 큰 활자로 한눈에 잡고 결재 흐름(담당→검토→승인, 누가·언제)이 늘 분명. 학생은 자기 행만 명료.
-          FIRST VIEWPORT: 좌측 얇은 레일(부산대 마크), 본문 상단 거대 활자 지표("7건 승인 대기"), 아래 승인 큐 괘선 목록 + 결재 흐름.
-          FORM: user-pinned challenger — 활자 견본 × 평가표·인장 (variable-font-specimen × registrar-record fusion), operate. seed 8271622a.
-          FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+          방향(사용자 확정): Canon — 잘 만든 SaaS 관리자 대시보드. 정석을 높은 완성도로(반어·잔재주 없이).
+          OWN-WORLD: 라이트 그라운드 + 화이트 서피스 카드 + 정제된 인디고 악센트(#4f46e5) + 소프트 섀도우 + 둥근 모서리. 데이터·수치·시각 tabular-nums.
+          크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준. 라이트 전용(관리자 데스크톱 종일).
         */}
         <I18nProvider locale={locale}><UiText>{children}</UiText></I18nProvider>
       </body>
