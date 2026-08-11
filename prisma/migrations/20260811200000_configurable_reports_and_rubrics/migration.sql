@@ -95,11 +95,12 @@ WHERE t."id" = r."teamId"
 
 -- Existing non-closed teams receive every active program definition.
 INSERT INTO "report" (
-  "id", "teamId", "definitionId", "titleSnapshot", "dueAt", "required", "createdAt", "updatedAt"
+  "id", "teamId", "type", "definitionId", "titleSnapshot", "dueAt", "required", "createdAt", "updatedAt"
 )
 SELECT
   gen_random_uuid()::text,
   t."id",
+  CASE d."position" WHEN 0 THEN 'START' WHEN 1 THEN 'MIDTERM' ELSE 'FINAL' END::"ReportType",
   d."id",
   d."title",
   d."dueAt",
