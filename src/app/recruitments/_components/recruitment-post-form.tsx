@@ -3,7 +3,7 @@
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { createRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
 import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
@@ -47,13 +47,41 @@ export function RecruitmentPostForm({
     initialRecruitmentActionState,
   );
 
+  const [teamId, setTeamId] = useState(
+    () => teams.some((team) => team.id === selectedTeamId) ? selectedTeamId! : (teams[0]?.id ?? "")
+  );
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [roleNeeded, setRoleNeeded] = useState("");
+  const [capacity, setCapacity] = useState(4);
+  const [availability, setAvailability] = useState("");
+
+  const [initialDefaultDeadline] = useState(() => {
+    const now = new Date();
+    return koreanDateTimeLocal(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
+  });
+  const [deadlineAt, setDeadlineAt] = useState(initialDefaultDeadline);
+
   useEffect(() => {
     if (state.status === "success" && successHref) router.replace(successHref);
   }, [router, state.status, successHref]);
 
+  useEffect(() => {
+    if (state.status === "error" && state.fields) {
+      if (state.fields.teamId) setTeamId(state.fields.teamId);
+      if (state.fields.title !== undefined) setTitle(state.fields.title);
+      if (state.fields.content !== undefined) setContent(state.fields.content);
+      if (state.fields.requiredSkills) setRequiredSkills(state.fields.requiredSkills);
+      if (state.fields.roleNeeded !== undefined) setRoleNeeded(state.fields.roleNeeded);
+      if (state.fields.capacity) setCapacity(state.fields.capacity);
+      if (state.fields.availability !== undefined) setAvailability(state.fields.availability);
+      if (state.fields.deadlineAt) setDeadlineAt(state.fields.deadlineAt);
+    }
+  }, [state]);
+
   if (!teams.length) return null;
   const now = new Date();
-  const defaultDeadlineAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const maximumDeadlineAt = addMonths(now, 1);
 
   return (
@@ -68,7 +96,8 @@ export function RecruitmentPostForm({
             id="recruitment-team"
             name="teamId"
             ariaLabel="내 팀"
-            defaultValue={teams.some((team) => team.id === selectedTeamId) ? selectedTeamId : teams[0]?.id}
+            value={teamId}
+            onValueChange={setTeamId}
             options={teams.map((team) => ({
               value: team.id,
               label: team.name,
@@ -77,28 +106,28 @@ export function RecruitmentPostForm({
           />
         </FormField>
         <FormField id="recruitment-title" label="모집 제목">
-          <UiInput id="recruitment-title" name="title" maxLength={200} required className="form-control" placeholder="필요한 역할이 드러나는 제목" />
+          <UiInput id="recruitment-title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required className="form-control" placeholder="필요한 역할이 드러나는 제목" />
         </FormField>
         <FormField id="recruitment-content" label="모집 내용" description="최대 2,000자" className="sm:col-span-2">
-          <UiTextarea id="recruitment-content" name="content" maxLength={2000} rows={7} required className="form-control resize-y" placeholder="프로젝트 진행 상황과 담당할 작업을 구체적으로 작성해 주세요" />
+          <UiTextarea id="recruitment-content" name="content" value={content} onChange={(e) => setContent(e.target.value)} maxLength={2000} rows={7} required className="form-control resize-y" placeholder="프로젝트 진행 상황과 담당할 작업을 구체적으로 작성해 주세요" />
         </FormField>
       </FormSection>
 
       <FormSection title="역할과 조건" description="지원자가 참여 여부를 판단할 수 있도록 구체적으로 작성해 주세요." contentClassName="sm:grid-cols-2">
         <FormField id="recruitment-skills" label="필요한 기술" description="항목을 입력하고 Enter를 누르세요.">
-          <TagInput id="recruitment-skills" name="requiredSkills" ariaLabel="필요한 기술" required placeholder="TypeScript, Python" />
+          <TagInput id="recruitment-skills" name="requiredSkills" ariaLabel="필요한 기술" value={requiredSkills} onValuesChange={setRequiredSkills} required placeholder="TypeScript, Python" />
         </FormField>
         <FormField id="recruitment-role" label="맡을 역할">
-          <UiInput id="recruitment-role" name="roleNeeded" maxLength={500} required className="form-control" placeholder="예: 백엔드 API 설계와 구현" />
+          <UiInput id="recruitment-role" name="roleNeeded" value={roleNeeded} onChange={(e) => setRoleNeeded(e.target.value)} maxLength={500} required className="form-control" placeholder="예: 백엔드 API 설계와 구현" />
         </FormField>
         <FormField id="recruitment-capacity" label="팀 정원" description="현재 인원을 포함한 총원입니다.">
-          <TextInput id="recruitment-capacity" name="capacity" type="number" min="2" max="100" required defaultValue={4} />
+          <TextInput id="recruitment-capacity" name="capacity" type="number" min="2" max="100" required value={capacity} onChange={(e) => setCapacity(Number(e.target.value) || 2)} />
         </FormField>
         <FormField id="recruitment-availability" label="활동 가능 시간">
-          <UiInput id="recruitment-availability" name="availability" maxLength={500} required className="form-control" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
+          <UiInput id="recruitment-availability" name="availability" value={availability} onChange={(e) => setAvailability(e.target.value)} maxLength={500} required className="form-control" placeholder="예: 화·목 18시 이후, 주 1회 대면" />
         </FormField>
         <FormField id="recruitment-deadline" label="모집 마감" description="등록 시점부터 최대 1개월">
-          <DateTimeInput id="recruitment-deadline" name="deadlineAt" required min={koreanDateTimeLocal(now)} max={koreanDateTimeLocal(maximumDeadlineAt)} defaultValue={koreanDateTimeLocal(defaultDeadlineAt)} />
+          <DateTimeInput id="recruitment-deadline" name="deadlineAt" required min={koreanDateTimeLocal(now)} max={koreanDateTimeLocal(maximumDeadlineAt)} value={deadlineAt} onChange={(e) => setDeadlineAt(e.target.value)} onValueChange={setDeadlineAt} />
         </FormField>
       </FormSection>
 
