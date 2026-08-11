@@ -41,12 +41,13 @@ export function RecruitmentPostList({
   return (
     <ol className="grid gap-x-6 gap-y-8 xl:grid-cols-2">
       {data.posts.map((post) => {
+        const isMine = post.authorId === actorId;
         return (
           <li key={post.id}>
-            <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition-colors duration-200 hover:border-[#c8d2e5]">
-              <div className={`border-b border-[var(--line)] ${posterTheme.background} px-5 py-4 sm:px-6`}>
+            <article className={`group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition duration-200 hover:border-[#c8d2e5] ${isMine ? "opacity-55 hover:opacity-100" : ""}`}>
+              <div className={`border-b border-[var(--line)] px-5 py-4 sm:px-6 ${isMine ? "bg-[var(--surface-subtle)]" : posterTheme.background}`}>
                 <div className="flex items-start justify-between gap-4">
-                  <p className={`text-sm font-bold ${posterTheme.accent}`}>{post.teamName}</p>
+                  <p className={`text-sm font-bold ${isMine ? "text-[var(--muted)]" : posterTheme.accent}`}>{post.teamName}</p>
                   <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
                     <CapacityIcon />
                     {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText>
