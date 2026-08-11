@@ -70,9 +70,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
 
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const requestedArchiveDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     const [archive, sidebarPrograms] = await Promise.all([
-      archiveService.execute(requestedPage, 20, { query, programId: requestedArchiveProgramId, divisionId: requestedArchiveDivisionId }),
+      archiveService.execute(requestedPage, 18, { query, programId: requestedArchiveProgramId }),
       programService.listSidebarVisible(now),
     ]);
     const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
@@ -83,23 +82,6 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       redirect(`/topics?${target.toString()}`);
     }
     const selectedProgram = archive.programs.find((program) => program.id === programId);
-    const divisionId = (selectedProgram?.divisions ?? []).some((division) => division.id === requestedArchiveDivisionId)
-      ? requestedArchiveDivisionId
-      : requestedArchiveDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
-    if (requestedArchiveDivisionId && divisionId !== requestedArchiveDivisionId) {
-      const target = new URLSearchParams({ view: "past", ...(programId ? { programId } : {}) });
-      if (query) target.set("q", query);
-      redirect(`/topics?${target.toString()}`);
-    }
-    const hasUnassigned = programId && (selectedProgram?.divisions?.length ?? 0) > 0
-      ? Boolean(await prisma.topic.findFirst({ where: { programId, divisionId: null, team: { is: { status: "CLOSED" } } }, select: { id: true } }))
-      : false;
-    if (divisionId === "UNASSIGNED" && !hasUnassigned) {
-      const target = new URLSearchParams({ view: "past", ...(programId ? { programId } : {}) });
-      if (query) target.set("q", query);
-      if (requestedPage > 1) target.set("page", String(requestedPage));
-      redirect(`/topics?${target.toString()}`);
-    }
     const [ballot, programAnnouncements] = await Promise.all([
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
       listProgramAnnouncements(programId),
@@ -107,9 +89,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
-        <ProjectPortalHero view="past" program={selectedProgram} search={<ProjectSearchForm view="past" programId={programId} query={query} divisionId={divisionId} />} />
+        <ProjectPortalHero view="past" program={selectedProgram} search={<ProjectSearchForm view="past" programId={programId} query={query} />} />
         <ProgramAnnouncementRail announcements={programAnnouncements} />
-        <PastProjectsView {...archive} query={query} programId={programId} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} ballot={ballot ?? undefined} />
+        <PastProjectsView {...archive} query={query} programId={programId} ballot={ballot ?? undefined} />
       </ExplorerLayout>
     );
   } else {

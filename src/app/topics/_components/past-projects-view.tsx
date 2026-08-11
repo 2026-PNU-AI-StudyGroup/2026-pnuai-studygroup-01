@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UiNav, UiSection } from "@/modules/translation/ui/localized-elements";
+import { UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
@@ -12,39 +12,33 @@ import type { ArchivedProject } from "@/modules/team/application/archive-project
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
-function pastHref({ query, programId, divisionId, page }: {
+function pastHref({ query, programId, page }: {
   query?: string;
   programId?: string;
-  divisionId?: string | "UNASSIGNED";
   page?: number;
 }) {
   const target = new URLSearchParams({ view: "past" });
   if (query) target.set("q", query);
   if (programId) target.set("programId", programId);
-  if (divisionId) target.set("divisionId", divisionId);
   if (page && page > 1) target.set("page", String(page));
   return `/topics?${target.toString()}`;
 }
 
-export function PastProjectsView({ projects, total, page, totalPages, query, programId, divisionId, divisions = [], hasUnassigned = false, ballot }: {
+export function PastProjectsView({ projects, total, page, totalPages, query, programId, ballot }: {
   projects: ArchivedProject[];
   total: number;
   page: number;
   totalPages: number;
   query: string;
   programId?: string;
-  divisionId?: string | "UNASSIGNED";
-  divisions?: Array<{ id: string; name: string }>;
-  hasUnassigned?: boolean;
   ballot?: ProgramVoteBallot;
 }) {
-  const hasFilters = Boolean(query || divisionId);
+  const hasFilters = Boolean(query);
   const voteSelection = useProjectVoteSelection(ballot);
   return (
     <div className="min-w-0">
-      {hasFilters || (programId && divisions.length) ? <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
-        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div> : null}
-        {programId && divisions.length ? <UiNav aria-label="지난 프로젝트 분과" className="mt-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{[{ id: "", name: "전체" }, ...divisions, ...(hasUnassigned ? [{ id: "UNASSIGNED", name: "미분과" }] : [])].map((division) => <Link key={division.id || "all"} href={pastHref({ query, programId, divisionId: division.id || undefined })} aria-current={(divisionId ?? "") === division.id ? "page" : undefined} className={`min-h-9 shrink-0 rounded-full border px-3 py-2 text-xs font-semibold ${(divisionId ?? "") === division.id ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-[var(--line)] bg-white text-[var(--muted)]"}`}><UiText>{division.name}</UiText></Link>)}</UiNav> : null}
+      {hasFilters ? <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
+        <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div>
       </UiSection> : null}
 
       <section aria-labelledby="past-list-title" className="pt-5">
@@ -104,7 +98,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
               page={page}
               totalPages={totalPages}
               ariaLabel="지난 프로젝트 페이지"
-              href={(targetPage) => pastHref({ query, programId, divisionId, page: targetPage })}
+              href={(targetPage) => pastHref({ query, programId, page: targetPage })}
             />
           </>
         )}
