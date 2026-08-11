@@ -129,7 +129,7 @@ export class PrismaTeamWorkspaceQueryRepository
             authorId: true,
             content: true,
             createdAt: true,
-            author: { select: { name: true } },
+            author: { select: { name: true, role: true } },
           },
         },
         reports: {
@@ -165,9 +165,10 @@ export class PrismaTeamWorkspaceQueryRepository
           authorId: true,
           content: true,
           createdAt: true,
-          author: { select: { name: true } },
+          author: { select: { name: true, role: true } },
         },
       });
+    const assistantIds = new Set(team.topic.assistants.map(({ userId }) => userId));
     return {
       id: team.id,
       topicId: team.topic.id,
@@ -218,6 +219,13 @@ export class PrismaTeamWorkspaceQueryRepository
       discussionPosts: discussionPosts.reverse().map(({ author, ...post }) => ({
         ...post,
         authorName: author.name,
+        authorRole: assistantIds.has(post.authorId)
+          ? "ASSISTANT" as const
+          : post.authorId === team.professorId || author.role === "PROFESSOR"
+            ? "PROFESSOR" as const
+            : author.role === "ADMIN"
+              ? "ADMIN" as const
+              : "STUDENT" as const,
       })),
       discussionPage: resolvedDiscussionPage,
       discussionTotalPages,

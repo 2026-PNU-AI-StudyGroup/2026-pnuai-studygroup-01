@@ -54,9 +54,12 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
         },
       }],
       tasks: [],
-      discussionPosts: [],
+      discussionPosts: [
+        { id: "post-a", authorId: "assistant-1", content: "조교 메시지", createdAt: new Date("2026-08-08T00:00:00Z"), author: { name: "박조교", role: "STUDENT" } },
+        { id: "post-b", authorId: "professor-1", content: "교수 메시지", createdAt: new Date("2026-08-08T01:00:00Z"), author: { name: "김교수", role: "PROFESSOR" } },
+      ],
       reports: [],
-      _count: { discussionPosts: 0 },
+      _count: { discussionPosts: 2 },
     });
     const repository = new PrismaTeamWorkspaceQueryRepository({
       team: { findFirst },
@@ -117,6 +120,8 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       profile: expect.objectContaining({ kakao: "pnu_id" }),
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
+    expect(workspace?.discussionPosts.find((post) => post.id === "post-a")?.authorRole).toBe("ASSISTANT");
+    expect(workspace?.discussionPosts.find((post) => post.id === "post-b")?.authorRole).toBe("PROFESSOR");
     expect(workspace?.professor).toEqual({
       id: "professor-1",
       name: "김교수",

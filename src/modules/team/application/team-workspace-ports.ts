@@ -81,6 +81,7 @@ export type TeamWorkspace = TeamListItem & {
     id: string;
     authorId: string;
     authorName: string;
+    authorRole: "ADMIN" | "PROFESSOR" | "ASSISTANT" | "STUDENT";
     content: string;
     createdAt: Date;
   }>;
