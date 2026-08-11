@@ -21,7 +21,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("팀 관리");
+  return getLocalizedMetadata("내 팀");
 }
 
 export default async function StudentTeamsPage({
@@ -56,6 +56,7 @@ export default async function StudentTeamsPage({
                       <UiText>{"받은 초대"}</UiText>{" "}{invitations.length}
                     </Link>
                   ) : null}
+                  {teams.length > 0 ? <Link className="button-secondary" href="/recruitments/mine"><UiText>{"모집 공고 관리"}</UiText></Link> : null}
                   {teams.length > 0 ? <Link className="button-primary" href="/teams?modal=create"><UiText>{"새 팀 만들기"}</UiText></Link> : null}
                 </div>
               ) : undefined}

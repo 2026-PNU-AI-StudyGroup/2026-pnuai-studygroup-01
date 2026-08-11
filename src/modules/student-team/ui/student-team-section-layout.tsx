@@ -7,10 +7,9 @@ import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 
 const navigation = [
-  { href: "/recruitments", label: "팀원 모집", icon: "search" },
-  { href: "/teams", label: "팀 관리", icon: "document" },
+  { href: "/recruitments", label: "둘러보기", icon: "search" },
+  { href: "/teams", label: "내 팀", icon: "document" },
   { href: "/recruitments/applications", label: "지원 내역", icon: "send" },
-  { href: "/recruitments/mine", label: "내 모집", icon: "document" },
 ] as const;
 
 type StudentTeamIconName = "search" | "send" | "document" | "plus" | "chevron-left" | "chevron-right";
@@ -39,11 +38,9 @@ export function StudentTeamIcon({ name, className = "size-5" }: { name: StudentT
 }
 
 function isTeamNavigationActive(href: string, currentPath: string) {
-  if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/");
+  // 내 팀(/teams)이 팀 관리 + 내 모집 관리(/recruitments/mine)를 모두 포함
+  if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/") || currentPath.startsWith("/recruitments/mine");
   if (href === "/recruitments") return currentPath === "/recruitments";
-  if (href === "/recruitments/mine") {
-    return currentPath === "/recruitments/mine";
-  }
   return currentPath === href;
 }
 
@@ -63,7 +60,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
             label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
           >
             <UiNav aria-label="팀 메뉴 모바일">
-              <ul className="grid grid-cols-2 gap-x-4">
+              <ul className="grid grid-cols-3 gap-x-4">
                 {navigation.map((item) => {
                   const active = isTeamNavigationActive(item.href, currentPath);
                   return (

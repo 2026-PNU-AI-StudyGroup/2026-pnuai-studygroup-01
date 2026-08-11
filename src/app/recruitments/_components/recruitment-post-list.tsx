@@ -94,33 +94,18 @@ export function RecruitmentPostList({
   actorId: string;
   data: StudentTeamRecruitmentPostList;
 }) {
-  if (data.posts.length === 0) {
-    return <EmptyState title="현재 모집 중인 팀이 없습니다" />;
-  }
-
-  const mine = data.posts.filter((post) => post.authorId === actorId);
+  // 둘러보기는 다른 팀 공고만. 내 팀 공고 관리는 '내 팀 → 모집 공고 관리'에서.
   const others = data.posts.filter((post) => post.authorId !== actorId);
 
-  return (
-    <div className="space-y-9">
-      {others.length > 0 ? (
-        <ol className="grid gap-x-6 gap-y-8 xl:grid-cols-2">
-          {others.map((post) => (
-            <RecruitmentCard key={post.id} post={post} actorId={actorId} />
-          ))}
-        </ol>
-      ) : null}
+  if (others.length === 0) {
+    return <EmptyState title="현재 모집 중인 팀이 없습니다" description="다른 팀이 모집을 올리면 여기에서 확인하고 지원할 수 있습니다." />;
+  }
 
-      {mine.length > 0 ? (
-        <section aria-label="내가 올린 모집" className="border-t border-[var(--line)] pt-7">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"내가 올린 모집"}</UiText></p>
-          <ol className="grid gap-x-6 gap-y-8 xl:grid-cols-2">
-            {mine.map((post) => (
-              <RecruitmentCard key={post.id} post={post} actorId={actorId} />
-            ))}
-          </ol>
-        </section>
-      ) : null}
-    </div>
+  return (
+    <ol className="grid gap-x-6 gap-y-8 xl:grid-cols-2">
+      {others.map((post) => (
+        <RecruitmentCard key={post.id} post={post} actorId={actorId} />
+      ))}
+    </ol>
   );
 }

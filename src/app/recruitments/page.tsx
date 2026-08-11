@@ -38,9 +38,10 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
         <StudentTeamSectionLayout currentPath="/recruitments">
           <div className="space-y-5">
             <StudentTeamPageIntro
-              title="팀원 모집"
+              title="둘러보기"
+              description="다른 팀이 올린 모집 공고를 보고 지원하세요."
               meta={<span><UiText>{"모집 중"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></span>}
-              action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"모집 공고 작성"}</UiText></Link>}
+              action={<Link className="button-secondary" href="/recruitments/mine"><UiText>{"모집 공고 관리"}</UiText></Link>}
             />
             <UiSection aria-label="팀원 모집 목록" className="space-y-6">
               <RecruitmentPostList actorId={actor.id} data={data} />

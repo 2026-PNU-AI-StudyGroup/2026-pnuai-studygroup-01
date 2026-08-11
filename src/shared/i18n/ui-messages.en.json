@@ -1810,5 +1810,10 @@
   "프로필 주소 또는 사용자명입니다.": "Profile URL or username.",
   "희망 역할과 지원 내용을 입력해 주세요.": "Please enter your desired role and application details.",
   "등록된 연락처가 없습니다": "No contact information registered",
-  "학생 계정만 연락처 정보를 관리할 수 있습니다.": "Only student accounts can manage contact information."
+  "학생 계정만 연락처 정보를 관리할 수 있습니다.": "Only student accounts can manage contact information.",
+  "둘러보기": "Browse",
+  "모집 공고 관리": "Manage My Posts",
+  "다른 팀이 올린 모집 공고를 보고 지원하세요.": "Browse recruitment posts from other teams and apply.",
+  "다른 팀이 모집을 올리면 여기에서 확인하고 지원할 수 있습니다.": "When other teams post recruitments, you can view and apply here.",
+  "내 팀에서 팀을 만든 뒤 필요한 역할을 공개 모집할 수 있습니다.": "Create a team under My Teams, then recruit for the roles you need."
 }
