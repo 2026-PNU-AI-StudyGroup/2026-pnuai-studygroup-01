@@ -187,9 +187,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
           select: {
             id: true,
             message: true,
-            skills: true,
             desiredRole: true,
-            availability: true,
             status: true,
             createdAt: true,
             decidedAt: true,

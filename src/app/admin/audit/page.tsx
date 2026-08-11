@@ -85,7 +85,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="min-w-0">
                     <p className="break-words font-bold"><UiText>{entry.targetLabel}</UiText></p>
-                    <p className="muted mt-1 text-sm"><UiText>{"처리자"}</UiText>{" "}{entry.actorName}</p>
+                    <p className="muted mt-1 text-sm"><UiText>{"관리자"}</UiText>{" "}{entry.actorName}</p>
                   </div>
                   <time className="muted text-sm xl:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
                 </li>

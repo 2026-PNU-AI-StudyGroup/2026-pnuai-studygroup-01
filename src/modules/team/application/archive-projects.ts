@@ -89,7 +89,7 @@ export class ListArchivedProjectsService {
     return this.reader.listPrograms();
   }
 
-  async execute(page = 1, pageSize = 20, filters: ArchiveFilters = {}) {
+  async execute(page = 1, pageSize = 18, filters: ArchiveFilters = {}) {
     const normalizedPageSize = Number.isInteger(pageSize) && pageSize > 0
       ? Math.min(pageSize, 50)
       : 20;

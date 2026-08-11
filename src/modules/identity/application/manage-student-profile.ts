@@ -8,7 +8,7 @@ export interface StudentProfileRepository {
 
 export class StudentProfileForbiddenError extends Error {
   constructor() {
-    super("학생 계정만 프로젝트 지원 정보를 관리할 수 있습니다.");
+    super("학생 계정만 연락처 정보를 관리할 수 있습니다.");
     this.name = "StudentProfileForbiddenError";
   }
 }

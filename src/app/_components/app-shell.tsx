@@ -29,7 +29,8 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
-        myTeam: "내 팀",
+        myProjects: "내 프로젝트",
+        teamRecruit: "팀 모집",
         announcements: "공지사항",
         allProjects: "전체 현황",
         mentoredProjects: "지도 현황",
@@ -38,7 +39,8 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       }
     : {
         explore: "Explore",
-        myTeam: "My team",
+        myProjects: "My projects",
+        teamRecruit: "Recruit",
         announcements: "Notices",
         allProjects: "Overview",
         mentoredProjects: "Advising",
@@ -48,7 +50,8 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   if (role === "STUDENT") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/dashboard", label: label.myTeam, icon: "users" },
+      { href: "/dashboard", label: label.myProjects, icon: "home" },
+      { href: "/recruitments", label: label.teamRecruit, icon: "users" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
     ];
   }
@@ -72,8 +75,10 @@ function isNavigationActive(item: NavigationItem, currentPath: string, role: Use
   if (role === "STUDENT" && item.href === "/dashboard") {
     return isSectionActive("/dashboard", currentPath) ||
       isSectionActive("/projects", currentPath) ||
-      isSectionActive("/project-approvals", currentPath) ||
-      isSectionActive("/recruitments", currentPath) ||
+      isSectionActive("/project-approvals", currentPath);
+  }
+  if (role === "STUDENT" && item.href === "/recruitments") {
+    return isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
   if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);

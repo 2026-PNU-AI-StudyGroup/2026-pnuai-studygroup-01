@@ -9,8 +9,8 @@ import {
   deleteCriterionAction,
   moveCriterionAction,
   moveRubricAction,
-  rubricInitialState,
   setDivisionRubricModeAction,
+  type RubricActionState,
   updateRubricAction,
   updateCriterionAction,
 } from "@/app/admin/programs/[programId]/rubric/_actions/rubric-actions";
@@ -19,6 +19,8 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { koreanDateTimeInput } from "@/shared/ui/date-time-input-value";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+
+const rubricInitialState: RubricActionState = { status: "idle", message: "" };
 
 export type CriterionRow = { id: string; label: string; maxPoints: number };
 export type RubricRow = {

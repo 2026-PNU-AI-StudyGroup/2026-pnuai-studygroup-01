@@ -19,8 +19,8 @@ const team: StudentTeamSummary = {
   leaderId: "student-1",
   leaderName: "김학생",
   members: [
-    { studentId: "student-1", name: "김학생", email: "one@pusan.ac.kr", role: "LEADER", joinedAt: new Date("2026-07-20") },
-    { studentId: "student-2", name: "이학생", email: "two@pusan.ac.kr", role: "MEMBER", joinedAt: new Date("2026-07-21") },
+    { studentId: "student-1", name: "김학생", email: "one@pusan.ac.kr", role: "LEADER", joinedAt: new Date("2026-07-20"), profile: { phone: "010-1111-2222", kakao: "kim_id", github: "", instagram: "" } },
+    { studentId: "student-2", name: "이학생", email: "two@pusan.ac.kr", role: "MEMBER", joinedAt: new Date("2026-07-21"), profile: null },
   ],
   invitations: [
     { id: "invite-1", email: "three@pusan.ac.kr", status: "PENDING", createdAt: new Date("2026-07-22") },
@@ -36,8 +36,8 @@ describe("StudentTeamManagementSections", () => {
 
     expect(screen.getByRole("heading", { name: "코드웨이브" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "팀 구성원 목록" })).toBeInTheDocument();
-    expect(screen.getByText("김학생")).toBeInTheDocument();
-    expect(screen.getByText("이학생")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "김학생 연락처" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "이학생 연락처" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "이학생 관리" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "응답 대기 중인 팀 초대" })).toBeInTheDocument();
     expect(screen.getByText("three@pusan.ac.kr")).toBeInTheDocument();

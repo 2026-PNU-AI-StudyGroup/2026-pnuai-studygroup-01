@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { StudentProfileForbiddenError, StudentProfileService, type StudentProfileRepository } from "./manage-student-profile";
 
-const profile = { interests: ["접근성"], skills: ["TypeScript"], desiredRole: "프론트엔드", availability: "평일 저녁", bio: "사용자 검증 경험이 있습니다." };
+const profile = { phone: "010-1234-5678", kakao: "pnu_id", github: "https://github.com/pnu", instagram: "https://instagram.com/pnu" };
 
 function repository(): StudentProfileRepository {
   return { find: vi.fn(async () => profile), save: vi.fn(async () => undefined) };

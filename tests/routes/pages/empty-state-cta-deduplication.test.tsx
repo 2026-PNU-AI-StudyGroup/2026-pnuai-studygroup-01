@@ -82,7 +82,7 @@ describe("빈 목록 CTA", () => {
 
     render(await MyRecruitmentPostsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "모집 공고 작성" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "모집 공고 작성" })).toHaveAttribute("href", "/recruitments/mine?modal=new");
   });
 

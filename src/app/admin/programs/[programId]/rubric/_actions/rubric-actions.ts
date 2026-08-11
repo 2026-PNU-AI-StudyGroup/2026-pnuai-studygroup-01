@@ -10,7 +10,6 @@ import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type RubricActionState = { status: "idle" | "error" | "success"; message: string };
-export const rubricInitialState: RubricActionState = { status: "idle", message: "" };
 
 const uuid = z.string().uuid();
 const rubricInput = z.object({

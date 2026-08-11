@@ -1,5 +1,5 @@
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
-import { normalizeApplicationMessage, normalizeApplicationProfile } from "@/modules/topic-application/domain/topic-application-policy";
+import { normalizeApplicationMessage } from "@/modules/topic-application/domain/topic-application-policy";
 
 type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
@@ -19,7 +19,7 @@ type StudentTeamAuthoredRecruitmentPost = {
 };
 
 type StudentTeamRecruitmentApplication = {
-  id: string; studentName: string; message: string; skills: string[]; desiredRole: string; availability: string;
+  id: string; studentName: string; message: string; desiredRole: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
 };
 
@@ -43,7 +43,7 @@ export interface StudentTeamRecruitmentReader {
 
 export interface StudentTeamRecruitmentWriter {
   createPost(input: { teamId: string; leaderId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number; deadlineAt: Date; createdAt: Date }): Promise<boolean>;
-  apply(input: { postId: string; studentId: string; message: string; skills: string[]; desiredRole: string; availability: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
+  apply(input: { postId: string; studentId: string; message: string; desiredRole: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
   decide(input: { applicationId: string; actorId: string; isAdmin: boolean; decision: "ACCEPT" | "REJECT"; decidedAt: Date }): Promise<"ACCEPTED" | "REJECTED" | "UNAVAILABLE" | "FORBIDDEN">;
   closePost?(input: { postId: string; leaderId: string; closedAt: Date }): Promise<boolean>;
 }
@@ -97,13 +97,13 @@ export class StudentTeamRecruitmentCommandService {
     if (!created) throw new StudentTeamRecruitmentError("팀장만 현재 인원보다 큰 팀 정원을 설정해 모집할 수 있습니다.");
   }
 
-  async apply(actor: CurrentUser, input: { postId: string; message: string; skills: string[]; desiredRole: string; availability: string }) {
+  async apply(actor: CurrentUser, input: { postId: string; message: string; desiredRole: string }) {
     assertStudent(actor);
-    let profile: ReturnType<typeof normalizeApplicationProfile>;
+    let desiredRole: string;
     let message: string;
-    try { profile = normalizeApplicationProfile(input); message = normalizeApplicationMessage(input.message); }
+    try { desiredRole = text(input.desiredRole, 500, "희망 역할"); message = normalizeApplicationMessage(input.message); }
     catch { throw new StudentTeamRecruitmentError("입력값을 확인해 주세요."); }
-    const result = await this.writer.apply({ postId: input.postId, studentId: actor.id, message, ...profile, appliedAt: this.now() });
+    const result = await this.writer.apply({ postId: input.postId, studentId: actor.id, message, desiredRole, appliedAt: this.now() });
     if (result !== "CREATED") throw new StudentTeamRecruitmentError(result === "ALREADY_MEMBER" ? "이미 이 팀의 팀원입니다." : result === "ALREADY_APPLIED" ? "이미 지원한 모집입니다." : "현재 지원할 수 없는 모집입니다.");
   }
 

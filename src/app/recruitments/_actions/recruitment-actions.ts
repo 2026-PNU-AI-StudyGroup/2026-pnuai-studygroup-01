@@ -24,7 +24,7 @@ export async function createRecruitmentPostAction(_state: RecruitmentActionState
 }
 
 export async function applyRecruitmentAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
-  const parsed = z.object({ postId: z.string().uuid(), message: z.string(), skills: list, desiredRole: z.string(), availability: z.string() }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ postId: z.string().uuid(), message: z.string(), desiredRole: z.string() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "입력값을 확인해 주세요." };
   try { await service().apply(await actor(), parsed.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }

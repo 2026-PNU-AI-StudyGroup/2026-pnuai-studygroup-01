@@ -40,7 +40,6 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
-import { MyTeamTabs } from "@/modules/student-team/ui/my-team-tabs";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -168,10 +167,12 @@ export default async function DashboardPage({
       ? teams.filter((team) => team.status === "CLOSED")
       : teams;
   const hasAnyProject = counts.all > 0;
+  if (student && !hasAnyProject) {
+    redirect("/recruitments");
+  }
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      {student ? <MyTeamTabs active="workspace" /> : null}
       <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
         <div className="page-enter space-y-8 pt-5">
           {assistantInvitations.length > 0 ? (

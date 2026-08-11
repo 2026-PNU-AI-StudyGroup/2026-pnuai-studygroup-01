@@ -7,6 +7,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { DiscussionAutoRefresh } from "@/app/teams/[teamId]/_components/discussion-auto-refresh";
 import { DiscussionPostForm } from "@/app/teams/[teamId]/_components/discussion-post-form";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
 const discussionScrollContainerId = "team-discussion-messages";
+const authorRoleLabel = { ADMIN: "관리자", PROFESSOR: "교수", ASSISTANT: "조교", STUDENT: "학생" } as const;
 
 function PersonIcon({ own = false }: { own?: boolean }) {
   return (
@@ -38,6 +40,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
 
   return (
     <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
+      {workspace.status !== "CLOSED" && workspace.discussionPage === 1 ? <DiscussionAutoRefresh /> : null}
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">
           <h1 id="discussion-title" className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>
@@ -89,6 +92,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
                         <div className={`min-w-0 max-w-[46rem] ${own ? "text-right" : ""}`}>
                           <div className={`mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${own ? "justify-end" : ""}`}>
                             <strong className="text-sm">{post.authorName}</strong>
+                            <span className="text-xs font-normal text-[var(--muted)]">{authorRoleLabel[post.authorRole]}</span>
                             <time className="muted text-xs" dateTime={post.createdAt.toISOString()}><UiDate value={post.createdAt} mode="time" /></time>
                           </div>
                           <div className={`rounded-xl border px-4 py-3 text-left [&_button]:min-h-8 [&_button]:px-2.5 ${own ? "border-[color-mix(in_srgb,var(--primary)_24%,var(--line))] bg-[var(--primary-subtle)]" : "border-[var(--line-strong)] bg-[var(--surface-subtle)] shadow-[0_1px_2px_rgba(31,35,48,0.04)]"}`}>

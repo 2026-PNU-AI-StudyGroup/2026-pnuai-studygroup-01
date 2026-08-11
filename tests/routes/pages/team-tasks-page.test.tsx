@@ -148,7 +148,7 @@ describe("TeamTasksPage", () => {
       "지도 데이터 검증",
     ]);
     expect(screen.getAllByText("기한 초과")).toHaveLength(1);
-    expect(screen.getByText(/완료 할 일/).closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText(/완료한 일/).closest("details")).not.toHaveAttribute("open");
   });
 
   it("종료된 프로젝트에서는 생성과 편집 컨트롤을 숨긴다", async () => {

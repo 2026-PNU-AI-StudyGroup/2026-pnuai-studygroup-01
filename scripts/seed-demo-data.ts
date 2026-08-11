@@ -388,11 +388,17 @@ async function seed() {
       { length: ids.students.length },
       (_, index) => studentProfileTemplates[index % studentProfileTemplates.length],
     );
-    for (const [index, [interests, skills, desiredRole, availability, bio]] of studentProfiles.entries()) {
+    for (const index of studentProfiles.keys()) {
+      const contact = {
+        phone: `010-${String(2000 + index).padStart(4, "0")}-${String(index + 1).padStart(4, "0")}`,
+        kakao: `pnu_student_${index + 1}`,
+        github: `https://github.com/pnu-student-${index + 1}`,
+        instagram: `https://instagram.com/pnu_student_${index + 1}`,
+      };
       await tx.studentProfile.upsert({
         where: { userId: ids.students[index] },
-        update: { interests: [...interests], skills: [...skills], desiredRole, availability, bio },
-        create: { userId: ids.students[index], interests: [...interests], skills: [...skills], desiredRole, availability, bio },
+        update: contact,
+        create: { userId: ids.students[index], ...contact },
       });
     }
     if (localViewer) {
@@ -401,11 +407,10 @@ async function seed() {
         update: {},
         create: {
           userId: localViewer.id,
-          interests: ["캡스톤 디자인", "프로덕트 개발", "사용자 경험"],
-          skills: ["TypeScript", "Next.js", "PostgreSQL"],
-          desiredRole: "풀스택 개발과 제품 설계",
-          availability: "평일 저녁, 주말 협의 가능",
-          bio: "실제 사용자의 문제를 관찰하고 팀과 함께 작동하는 제품으로 완성하는 과정에 관심이 있습니다.",
+          phone: "010-1234-5678",
+          kakao: "pnu_viewer",
+          github: "https://github.com/pnu-viewer",
+          instagram: "https://instagram.com/pnu_viewer",
         },
       });
     }
@@ -1101,9 +1106,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[2],
         studentId: ids.students[10],
         message: "졸업과제 아카이브 주제에 관심이 있어 지원합니다. 공개 결과물과 지도 기록의 권한을 나누는 부분을 같이 고민하고, 배포할 때 생길 수 있는 보안 문제도 점검해 보고 싶습니다.",
-        skills: ["Go", "Docker", "보안"],
         desiredRole: "인프라와 보안 점검",
-        availability: "화·금 저녁",
         status: "PENDING",
         createdAt: new Date("2026-07-24T18:30:00+09:00"),
       },
@@ -1112,9 +1115,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[3],
         studentId: ids.students[11],
         message: "사용자 인터뷰와 문서 정리 경험이 있어 지원했습니다. 이동약자 인터뷰 내용을 보기 쉽게 정리하고 다음 현장 조사 항목을 만드는 데 기여하고 싶습니다.",
-        skills: ["Figma", "Notion", "사용자 조사"],
         desiredRole: "프로덕트 기획",
-        availability: "평일 18시 이후",
         status: "REJECTED",
         decidedAt: new Date("2026-07-15T14:00:00+09:00"),
         createdAt: new Date("2026-07-10T19:00:00+09:00"),
@@ -1124,9 +1125,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[1],
         studentId: ids.students[12],
         message: "PostgreSQL과 공간 데이터에 관심이 있어 지원합니다. 건물 연결 관계와 통행 제한을 데이터로 정리하고 경로 탐색 결과를 같이 검증해 보고 싶습니다.",
-        skills: ["PostgreSQL", "PostGIS", "TypeScript"],
         desiredRole: "공간 데이터 모델링과 API 연동",
-        availability: "평일 18시 이후, 토요일 오전",
         status: "PENDING",
         createdAt: new Date("2026-07-24T20:00:00+09:00"),
       },
@@ -1137,9 +1136,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[1],
         studentId: studentTeamViewer.id,
         message: "백엔드 데이터를 화면과 연결하는 작업을 해본 적이 있습니다. 대피 경로 API를 안전 안내 화면에 붙이고 모의 대피 시나리오까지 함께 테스트해 보고 싶습니다.",
-        skills: ["TypeScript", "PostgreSQL", "지도 UI"],
         desiredRole: "경로 탐색 API와 프론트엔드 연동",
-        availability: "평일 저녁, 주말 협의 가능",
         status: "PENDING",
         createdAt: new Date("2026-07-23T20:00:00+09:00"),
       });

@@ -4,6 +4,7 @@ type StudentTeamMemberSummary = {
   email: string;
   role: "LEADER" | "MEMBER";
   joinedAt: Date;
+  profile: { phone: string; kakao: string; github: string; instagram: string } | null;
 };
 
 type StudentTeamInvitationSummary = {

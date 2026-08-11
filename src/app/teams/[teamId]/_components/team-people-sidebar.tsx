@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
+import { MemberContacts } from "@/modules/identity/ui/member-contacts";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
 import { PersonAvatar } from "@/shared/ui/person-avatar";
@@ -82,29 +83,21 @@ export function TeamPeopleSidebar({
               <MemberDetail label="학과" value={activeMember.department} />
               <MemberDetail label="학번" value={activeMember.studentNumber} />
               <MemberDetail label="학년" value={activeMember.grade ? `${activeMember.grade}학년` : null} />
-              <MemberDetail label="휴대폰 번호" value={activeMember.phoneNumber} />
               <MemberDetail label="자주 쓰는 이메일 주소" value={activeMember.contactEmail} breakAll />
-              <MemberDetail label="희망 역할" value={activeMember.profile?.desiredRole} />
-              <MemberDetail label="활동 가능 시간" value={activeMember.profile?.availability} />
             </dl>
 
-            <div className="mt-6 grid gap-6 border-t border-[var(--line)] pt-6">
-              <MemberTags label="관심 분야" values={activeMember.profile?.interests} />
-              <MemberTags label="보유 기술" values={activeMember.profile?.skills} />
-              <div>
-                <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{"자기소개"}</UiText></h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
-                  {activeMember.profile?.bio || <UiText>{"미입력"}</UiText>}
-                </p>
-              </div>
-            </div>
+            <MemberContacts
+              phone={activeMember.profile?.phone || activeMember.phoneNumber || ""}
+              kakao={activeMember.profile?.kakao ?? ""}
+              github={activeMember.profile?.github ?? ""}
+              instagram={activeMember.profile?.instagram ?? ""}
+            />
           </div>
         ) : null}
       </dialog>
     </>
   );
 }
-
 function PeopleContent({
   advisorEnabled,
   professor,
@@ -178,23 +171,6 @@ function MemberDetail({ label, value, breakAll = false }: { label: string; value
       <dd className={`mt-1 font-semibold ${breakAll ? "break-all" : "break-words"}`}>
         {value || <UiText>{"미입력"}</UiText>}
       </dd>
-    </div>
-  );
-}
-
-function MemberTags({ label, values }: { label: string; values: string[] | undefined }) {
-  return (
-    <div>
-      <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{label}</UiText></h3>
-      {values?.length ? (
-        <ul className="mt-2 flex flex-wrap gap-2">
-          {values.map((value) => (
-            <li key={value} className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold">{value}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-2 text-sm font-semibold"><UiText>{"미입력"}</UiText></p>
-      )}
     </div>
   );
 }
