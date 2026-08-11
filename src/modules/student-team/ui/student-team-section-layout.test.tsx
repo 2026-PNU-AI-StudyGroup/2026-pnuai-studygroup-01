@@ -14,7 +14,9 @@ describe("StudentTeamSectionLayout", () => {
     const navigation = screen.getByRole("navigation", { name: "팀 메뉴" });
     expect(navigation).toHaveTextContent("팀원 모집팀 관리지원 내역내 모집");
     expect(within(navigation).getByRole("link", { name: "팀원 모집" })).toHaveAttribute("aria-current", "page");
-    expect(container.querySelector("summary")).toHaveTextContent("팀팀원 모집");
+    const summaries = container.querySelectorAll("summary");
+    expect(summaries[0]).toHaveTextContent("팀 꾸리기"); // 영역 전환 드롭다운
+    expect(summaries[1]).toHaveTextContent("팀팀원 모집"); // 섹션 모바일 요약
   });
 
   it("개별 팀 관리에서도 팀 관리 탭을 유지한다", () => {

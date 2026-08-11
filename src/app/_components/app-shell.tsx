@@ -29,7 +29,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
-        myTeam: "내 팀",
+        myTeam: "팀",
         announcements: "공지사항",
         allProjects: "전체 현황",
         mentoredProjects: "지도 현황",
@@ -38,7 +38,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       }
     : {
         explore: "Explore",
-        myTeam: "My team",
+        myTeam: "Team",
         announcements: "Notices",
         allProjects: "Overview",
         mentoredProjects: "Advising",

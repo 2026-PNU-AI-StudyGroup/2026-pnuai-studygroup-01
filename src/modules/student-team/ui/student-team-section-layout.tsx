@@ -52,14 +52,11 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
   const current = navigation.find((item) => isTeamNavigationActive(item.href, currentPath)) ?? navigation[0];
 
   return (
-    <>
-    <MyTeamTabs active="build" />
     <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
       <UiAside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
-          <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
-            <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
-          </div>
+          <MyTeamTabs active="build" />
+          <div className="mt-5 border-t border-[var(--line)] pt-5">
 
           <ResponsiveSectionNavigation
             eyebrow={<UiText>{"팀"}</UiText>}
@@ -90,7 +87,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
             </UiNav>
           </ResponsiveSectionNavigation>
 
-          <UiNav aria-label="팀 메뉴" className="mt-5 hidden lg:block">
+          <UiNav aria-label="팀 메뉴" className="hidden lg:block">
             <ul className="flex flex-col">
               {navigation.map((item) => {
                 const active = isTeamNavigationActive(item.href, currentPath);
@@ -113,11 +110,11 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
               })}
             </ul>
           </UiNav>
+          </div>
         </div>
       </UiAside>
       <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>
     </div>
-    </>
   );
 }
 

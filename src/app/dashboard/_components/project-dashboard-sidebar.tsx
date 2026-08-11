@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -12,10 +13,12 @@ export function ProjectDashboardSidebar({
   counts,
   selectedView,
   student,
+  topSlot,
 }: {
   counts: ProjectDashboardCounts;
   selectedView: ProjectDashboardView;
   student: boolean;
+  topSlot?: ReactNode;
 }) {
   const items: Array<{
     view: ProjectDashboardView;
@@ -81,6 +84,7 @@ export function ProjectDashboardSidebar({
 
   return (
     <div className="px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
+      {topSlot ? <div className="mb-4">{topSlot}</div> : null}
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{student ? "내 프로젝트" : "프로젝트 운영"}</UiText>}
         label={<UiText>{selectedItem.label}</UiText>}

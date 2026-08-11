@@ -53,7 +53,7 @@ function ProjectDashboardFrame({ role, counts, view, children }: {
   children: ReactNode;
 }) {
   return (
-    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} />}>
+    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} topSlot={role === "STUDENT" ? <MyTeamTabs active="workspace" /> : undefined} />}>
       <ProjectDashboardHero role={role} />
       {children}
     </ExplorerLayout>
@@ -171,7 +171,6 @@ export default async function DashboardPage({
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      {student ? <MyTeamTabs active="workspace" /> : null}
       <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
         <div className="page-enter space-y-8 pt-5">
           {assistantInvitations.length > 0 ? (
