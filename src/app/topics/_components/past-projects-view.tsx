@@ -71,7 +71,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                         {project.advisorEnabled ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{project.professorName}</p> : null}
                         <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{project.topicDescription}</UiText></p>
 
-                        <dl className="mt-5 grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
+                        <dl className="mt-auto grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
                           <div>
                             <dt className="text-[0.7rem] font-semibold text-[var(--muted)]"><UiText>{"프로젝트 팀"}</UiText></dt>
                             <dd className="mt-1 truncate font-bold"><UiText>{project.teamName}</UiText></dd>
