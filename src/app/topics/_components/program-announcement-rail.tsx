@@ -13,7 +13,7 @@ import {
 import {
   ANNOUNCEMENT_CATEGORY_BADGE,
   ANNOUNCEMENT_CATEGORY_LABELS,
-} from "@/app/announcements/_lib/announcement-categories";
+} from "@/modules/announcement/ui/announcement-presentation";
 import type { AnnouncementRecord } from "@/modules/announcement/application/announcement-ports";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";

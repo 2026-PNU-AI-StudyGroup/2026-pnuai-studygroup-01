@@ -17,7 +17,7 @@ import type { AnnouncementCategory, AnnouncementVisibility } from "@/modules/ann
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, Toggle } from "@/shared/ui/form-system";
 
 const CATEGORY_OPTIONS = ANNOUNCEMENT_CATEGORIES.map((value) => ({
   value,
@@ -164,20 +164,14 @@ function VisibilityOption({ value, checked, onChange, label, description }: {
   label: string;
   description: string;
 }) {
-  return (
-    <label className={`flex cursor-pointer gap-3 rounded-[var(--radius-control)] border p-4 transition-colors ${checked ? "border-[var(--primary)] bg-[var(--primary-subtle)]" : "border-[var(--field-border)] bg-[var(--surface)] hover:border-[var(--line-strong)]"}`}>
-      <input
-        type="radio"
-        name="visibility"
-        value={value}
-        checked={checked}
-        onChange={() => onChange(value)}
-        className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
-      />
-      <span className="grid gap-1">
-        <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{label}</UiText></span>
-        <span className="text-xs font-medium leading-5 text-[var(--muted)]"><UiText>{description}</UiText></span>
-      </span>
-    </label>
-  );
+  return <ChoiceCard
+    type="radio"
+    name="visibility"
+    value={value}
+    checked={checked}
+    onChange={() => onChange(value)}
+    label={label}
+    description={description}
+    className={checked ? "border-[var(--primary)] bg-[var(--primary-subtle)]" : "border-[var(--field-border)] bg-[var(--surface)] hover:border-[var(--line-strong)]"}
+  />;
 }
