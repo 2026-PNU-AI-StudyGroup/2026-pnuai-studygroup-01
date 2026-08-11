@@ -9,46 +9,46 @@
 }
 
 /*
-  편성표(Timetable / Registrar's grid) — 대학 학사 편성표를 화면 언어로.
-  뉴트럴 페이퍼 그라운드 + 잉크 텍스트 + 단일 잉크-네이비 악센트(액션·상태에만).
-  얇은 격자·헤어라인으로 위계, 크리스프 near-square radius, 데이터·시간·코드는 모노스페이스+tabular-nums.
-  카드·소프트섀도우 거부. 라이트 전용(학과 사무실 주간光).
+  활자 견본 × 평가표·인장 (Type Specimen × Registrar's Record) — 학과 운영을 큰 활자로 세우고, 승인은 결재로 새긴다.
+  크림 종이 그라운드 + 따뜻한 잉크 + 단일 인장-레드 악센트(활성·결재·주요 상태에만).
+  헤어라인 괘선으로 위계, near-square radius, 데이터·문서번호·시각·수치는 모노+tabular-nums.
+  카드·소프트섀도우 거부(셀·괘선). 라이트 전용(관리자 데스크톱 종일). seed 8271622a.
 */
 :root {
   color-scheme: light;
-  --workspace: #fbfbfa;
-  --sidebar: #fbfbfa;
-  --surface: #ffffff;
-  --surface-subtle: #f2f3f5;
-  --ink: #17181c;
-  --muted: #6b7078;
-  --line: #e4e5e8;
-  --line-strong: #d3d5d9;
-  --field-border: #cfd2d7;
-  --field-border-hover: #9aa0a8;
-  --field-surface: #ffffff;
-  --primary: #1f3a68;
-  --primary-hover: #172c50;
-  --primary-subtle: #eef1f6;
-  --accent: #8a6a1c;
-  --accent-hover: #6f5514;
-  --accent-ink: #574209;
-  --accent-subtle: #f5efdc;
-  --focus: var(--primary);
-  --focus-halo: color-mix(in srgb, var(--focus) 18%, transparent);
+  --workspace: #f1efe7;
+  --sidebar: #f1efe7;
+  --surface: #fbfbf7;
+  --surface-subtle: #ece9dd;
+  --ink: #1b1912;
+  --muted: #726f5e;
+  --line: #e4e1d5;
+  --line-strong: #cbc7b8;
+  --field-border: #c7c3b3;
+  --field-border-hover: #9f9a87;
+  --field-surface: #fbfbf7;
+  --primary: #22201a;
+  --primary-hover: #100f0a;
+  --primary-subtle: #eceadf;
+  --accent: #a41f13;
+  --accent-hover: #8a1a10;
+  --accent-ink: #7a1710;
+  --accent-subtle: #f3e7e1;
+  --focus: var(--accent);
+  --focus-halo: color-mix(in srgb, var(--focus) 20%, transparent);
   --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
-  --success: #256a45;
-  --success-subtle: #e7f1ea;
+  --success: #3a6a2f;
+  --success-subtle: #e8efe1;
   --warning: #8a5e0a;
   --warning-ink: #684807;
-  --warning-subtle: #f7efd6;
-  --danger: #a52a20;
-  --danger-subtle: #f8ebe8;
-  --radius-control: 0.1875rem;
-  --radius-panel: 0.25rem;
+  --warning-subtle: #f5eed6;
+  --danger: #9c2b1e;
+  --danger-subtle: #f6e9e4;
+  --radius-control: 0.125rem;
+  --radius-panel: 0.1875rem;
   --shadow-card: none;
-  --shadow-admin-panel: 0 1px 0 rgb(23 24 28 / 0.04);
-  --shadow-float: 0 10px 28px rgb(23 24 28 / 0.13);
+  --shadow-admin-panel: 0 1px 0 rgb(27 25 18 / 0.05);
+  --shadow-float: 0 12px 30px rgb(27 25 18 / 0.15);
   --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -92,8 +92,31 @@ body {
 }
 
 ::selection {
-  background: var(--primary-subtle);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--ink);
+}
+
+:where(html) {
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid var(--workspace);
+  border-radius: 0;
+  background: var(--line-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--field-border-hover);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @layer components {
