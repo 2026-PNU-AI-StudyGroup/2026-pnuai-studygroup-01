@@ -16,7 +16,15 @@ export class PrismaStudentTeamQueryRepository implements StudentTeamReader {
         leader: { select: { name: true } },
         members: {
           orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
-          include: { student: { select: { name: true, email: true } } },
+          include: {
+            student: {
+              select: {
+                name: true,
+                email: true,
+                studentProfile: { select: { phone: true, kakao: true, github: true, instagram: true } },
+              },
+            },
+          },
         },
         invitations: {
           where: { status: "PENDING" },
@@ -36,9 +44,10 @@ export class PrismaStudentTeamQueryRepository implements StudentTeamReader {
     return teams.map(({ leader, recruitmentPosts, ...team }) => ({
       ...team,
       leaderName: leader.name,
-      members: team.members.map(({ student, ...member }) => ({
+      members: team.members.map(({ student: { studentProfile, ...student }, ...member }) => ({
         ...member,
         ...student,
+        profile: studentProfile,
       })),
       invitations: team.invitations,
       openRecruitmentCount: recruitmentPosts.length,
