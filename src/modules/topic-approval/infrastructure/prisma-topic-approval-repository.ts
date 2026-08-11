@@ -143,7 +143,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     const page = Math.min(Math.max(requestedPage, 1), totalPages);
     const requests = await this.client.topicApprovalRequest.findMany({
       where,
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * safePageSize,
       take: safePageSize,
       include: {
