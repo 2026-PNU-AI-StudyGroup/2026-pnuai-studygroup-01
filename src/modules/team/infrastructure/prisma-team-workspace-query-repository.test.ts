@@ -46,11 +46,10 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
           contactEmail: "sky@example.com",
           profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
           studentProfile: {
-            interests: ["접근성"],
-            skills: ["TypeScript"],
-            desiredRole: "프론트엔드 개발",
-            availability: "평일 저녁",
-            bio: "사용자 문제를 해결하고 싶습니다.",
+            phone: "010-1234-5678",
+            kakao: "pnu_id",
+            github: "https://github.com/pnu",
+            instagram: "https://instagram.com/pnu",
           },
         },
       }],
@@ -115,7 +114,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       department: "정보컴퓨터공학부",
       phoneNumber: "010-1234-5678",
       profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
-      profile: expect.objectContaining({ desiredRole: "프론트엔드 개발" }),
+      profile: expect.objectContaining({ kakao: "pnu_id" }),
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
     expect(workspace?.professor).toEqual({

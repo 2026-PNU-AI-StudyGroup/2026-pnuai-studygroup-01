@@ -5,9 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { RecruitmentPostList } from "@/app/recruitments/_components/recruitment-post-list";
-import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import {
@@ -29,12 +27,9 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
   if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const [data, profile] = await Promise.all([
-    new StudentTeamRecruitmentQueryService(
-      new PrismaStudentTeamRecruitmentQueryRepository(prisma),
-    ).listPosts(actor, requestedPage),
-    new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor),
-  ]);
+  const data = await new StudentTeamRecruitmentQueryService(
+    new PrismaStudentTeamRecruitmentQueryRepository(prisma),
+  ).listPosts(actor, requestedPage);
   const pageHref = (page: number) => page > 1 ? `/recruitments?page=${page}` : "/recruitments";
 
   return (
@@ -48,7 +43,7 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
               action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"모집 공고 작성"}</UiText></Link>}
             />
             <UiSection aria-label="팀원 모집 목록" className="space-y-6">
-              <RecruitmentPostList actorId={actor.id} data={data} profile={profile} />
+              <RecruitmentPostList actorId={actor.id} data={data} />
               <StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />
             </UiSection>
           </div>

@@ -97,11 +97,10 @@ export class PrismaTeamWorkspaceQueryRepository
                 profileImage: { select: { updatedAt: true } },
                 studentProfile: {
                   select: {
-                    interests: true,
-                    skills: true,
-                    desiredRole: true,
-                    availability: true,
-                    bio: true,
+                    phone: true,
+                    kakao: true,
+                    github: true,
+                    instagram: true,
                   },
                 },
               },

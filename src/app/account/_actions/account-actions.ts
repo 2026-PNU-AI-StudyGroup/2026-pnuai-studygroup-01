@@ -13,16 +13,11 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export type StudentProfileActionState = { status: "idle" | "error" | "success"; message: string };
 
 const schema = z.object({
-  interests: z.string().max(1_000).transform(tags),
-  skills: z.string().max(1_000).transform(tags),
-  desiredRole: z.string().max(200),
-  availability: z.string().max(500),
-  bio: z.string().max(1_000),
+  phone: z.string().max(40),
+  kakao: z.string().max(200),
+  github: z.string().max(200),
+  instagram: z.string().max(200),
 });
-
-function tags(value: string) {
-  return value.split(",").map((item) => item.trim()).filter(Boolean);
-}
 
 export async function saveStudentProfileAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
   const actor = await getCurrentOperationalActor();
@@ -36,7 +31,6 @@ export async function saveStudentProfileAction(_state: StudentProfileActionState
     throw error;
   }
   revalidatePath("/account");
-  revalidatePath("/topics");
-  revalidatePath("/recruitments");
-  return { status: "success", message: "프로젝트 지원 정보를 저장했습니다." };
+  revalidatePath("/teams");
+  return { status: "success", message: "연락처를 저장했습니다." };
 }

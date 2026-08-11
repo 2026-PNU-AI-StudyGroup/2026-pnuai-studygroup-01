@@ -354,14 +354,13 @@ model Notification {
 }
 
 model StudentProfile {
-  userId       String   @id
-  interests    String[]
-  skills       String[]
-  desiredRole  String
-  availability String
-  bio          String
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @id
+  phone     String   @default("")
+  kakao     String   @default("")
+  github    String   @default("")
+  instagram String   @default("")
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("student_profile")
 }
@@ -897,9 +896,7 @@ model StudentTeamRecruitmentApplication {
   postId       String
   studentId    String
   message      String
-  skills       String[]                     @default([])
   desiredRole  String
-  availability String
   status       RecruitmentApplicationStatus @default(PENDING)
   decidedAt    DateTime?
   createdAt    DateTime                     @default(now())
