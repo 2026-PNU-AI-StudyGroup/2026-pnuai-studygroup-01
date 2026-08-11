@@ -8,7 +8,6 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type TrackActionState = { status: "idle" | "error" | "success"; message: string };
-export const trackInitialState: TrackActionState = { status: "idle", message: "" };
 
 const idSchema = z.string().uuid();
 

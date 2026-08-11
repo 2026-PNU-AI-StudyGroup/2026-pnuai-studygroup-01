@@ -10,7 +10,6 @@ import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type RubricScoreState = { status: "idle" | "error" | "success"; message: string };
-export const rubricScoreInitialState: RubricScoreState = { status: "idle", message: "" };
 
 const idSchema = z.string().uuid();
 

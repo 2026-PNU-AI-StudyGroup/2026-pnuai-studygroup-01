@@ -8,7 +8,6 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type RubricActionState = { status: "idle" | "error" | "success"; message: string };
-export const rubricInitialState: RubricActionState = { status: "idle", message: "" };
 
 const idSchema = z.string().uuid();
 const maxPointsSchema = z.coerce.number().int().min(1).max(100);

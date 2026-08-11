@@ -6,10 +6,12 @@ import {
   createCriterionAction,
   deleteCriterionAction,
   moveCriterionAction,
-  rubricInitialState,
+  type RubricActionState,
 } from "@/app/admin/programs/[programId]/rubric/_actions/rubric-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+
+const rubricInitialState: RubricActionState = { status: "idle", message: "" };
 
 export type CriterionRow = { id: string; label: string; maxPoints: number };
 

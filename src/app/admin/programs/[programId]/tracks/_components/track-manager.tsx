@@ -6,10 +6,12 @@ import {
   createTrackAction,
   deleteTrackAction,
   moveTrackAction,
-  trackInitialState,
+  type TrackActionState,
 } from "@/app/admin/programs/[programId]/tracks/_actions/track-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+
+const trackInitialState: TrackActionState = { status: "idle", message: "" };
 
 export type TrackRow = { id: string; name: string; topicCount: number };
 
