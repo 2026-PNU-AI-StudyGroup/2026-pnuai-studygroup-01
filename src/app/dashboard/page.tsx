@@ -40,7 +40,6 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
-import { MyTeamTabs } from "@/modules/student-team/ui/my-team-tabs";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -53,7 +52,7 @@ function ProjectDashboardFrame({ role, counts, view, children }: {
   children: ReactNode;
 }) {
   return (
-    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} topSlot={role === "STUDENT" ? <MyTeamTabs active="workspace" /> : undefined} />}>
+    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} />}>
       <ProjectDashboardHero role={role} />
       {children}
     </ExplorerLayout>
@@ -168,6 +167,9 @@ export default async function DashboardPage({
       ? teams.filter((team) => team.status === "CLOSED")
       : teams;
   const hasAnyProject = counts.all > 0;
+  if (student && !hasAnyProject) {
+    redirect("/recruitments");
+  }
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
