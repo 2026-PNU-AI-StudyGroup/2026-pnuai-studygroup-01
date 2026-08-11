@@ -1,7 +1,7 @@
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
-import { assertValidTopicDetails, assertValidTopicSchedule } from "@/modules/topic/domain/topic-policy";
+import { assertValidTopicDetails } from "@/modules/topic/domain/topic-policy";
 import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 
 export type TopicApprovalRoute = "PROFESSOR" | "ADMIN";
@@ -38,12 +38,12 @@ export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
   availabilityRequirement: string;
   applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
   capacity: number;
-  recruitmentStartsAt: Date;
+  programRecruitmentStartsAt: Date;
   programRecruitmentEndsAt: Date;
-  executionStartsAt: Date;
-  executionEndsAt: Date;
-  submissionStartsAt: Date;
-  submissionEndsAt: Date;
+  programExecutionStartsAt: Date;
+  programExecutionEndsAt: Date;
+  programSubmissionStartsAt: Date;
+  programSubmissionEndsAt: Date;
   applicationQuestions: Array<{ id: string; label: string; maxLength: number; required: boolean }>;
   studentTeam: {
     name: string;
@@ -91,7 +91,6 @@ export class TopicApprovalService {
       applicationQuestions: input.applicationQuestions.map((question) => ({ ...question, label: question.label.trim() })),
     };
     assertValidTopicDetails(details);
-    assertValidTopicSchedule(input);
     const program = await this.programs.findOpen(input.programId);
     if (!program) throw new TopicApprovalOperationError("현재 프로젝트를 등록할 수 있는 공개 프로그램이 아닙니다.");
     const requestedAt = this.now();
@@ -106,11 +105,6 @@ export class TopicApprovalService {
     }
     if (input.route === "PROFESSOR" && !input.requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
     if (input.route === "ADMIN" && input.requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
-    const times = [input.recruitmentStartsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
-    if (
-      times.some((time) => time < program.startsAt || time > program.endsAt) ||
-      input.recruitmentStartsAt >= program.recruitmentEndsAt
-    ) throw new TopicApprovalOperationError("프로젝트 일정은 프로그램 운영 기간과 모집 마감 이전에 있어야 합니다.");
     const id = await this.repository.create({
       ...details,
       authorId: actor.id,

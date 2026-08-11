@@ -23,13 +23,12 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         id: true,
         name: true,
         isPublic: true,
-        lifecycleStatus: true,
         votingPolicy: true,
       },
     });
-    if (!program?.votingPolicy || !program.isPublic || program.lifecycleStatus !== "ACTIVE") return null;
+    if (!program?.votingPolicy || !program.isPublic) return null;
     const policy = program.votingPolicy;
-    const [candidates, votes] = await Promise.all([
+    const [candidates, votes, tallies] = await Promise.all([
       this.client.topic.findMany({
         where: { programId, publishedAt: { not: null }, status: { in: VOTABLE_TOPIC_STATUSES } },
         orderBy: [{ title: "asc" }, { id: "asc" }],
@@ -46,7 +45,10 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         },
       }),
       this.client.projectVote.findMany({ where: { programId, voterId }, select: { topicId: true } }),
+      // 팀별 득표수(집계만) — 모든 사용자에게 실시간 공개. 투표자 신원은 findResults(관리자)만.
+      this.client.projectVote.groupBy({ by: ["topicId"], where: { programId }, _count: { topicId: true } }),
     ]);
+    const voteCounts = new Map(tallies.map((tally) => [tally.topicId, tally._count.topicId]));
     return {
       programId: program.id,
       programName: program.name,
@@ -63,7 +65,8 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           candidate.managerId === voterId ||
           candidate.assistants.length > 0 ||
           (candidate.team?.members.length ?? 0) > 0,
-      })).sort((left, right) => policySort(left, right, policy.voteLimitScope)),
+        voteCount: voteCounts.get(candidate.id) ?? 0,
+      })).sort((left, right) => ballotSort(left, right, policy.voteLimitScope)),
       selectedTopicIds: votes.map(({ topicId }) => topicId),
     };
   }
@@ -91,7 +94,6 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           ON "program_voting_policy"."programId" = "project_program"."id"
         WHERE "project_program"."id" = ${input.programId}
           AND "project_program"."isPublic" = true
-          AND "project_program"."lifecycleStatus" = 'ACTIVE'
         FOR UPDATE OF "project_program", "program_voting_policy"
       `);
       const policy = policies[0];
@@ -185,9 +187,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         voteCount: topic._count.votes,
         voters: votersByTopic.get(topic.id) ?? [],
       }))
-      .sort((left, right) => {
-        return policySort(left, right, policy.voteLimitScope);
-      });
+      .sort((left, right) => resultSort(left, right, policy.voteLimitScope));
     const divisionRanking = new Map<string, { count: number; priorVoteCount?: number; rank: number }>();
     const results = sorted.map((result) => {
       const key = policy.voteLimitScope === "DIVISION" ? result.divisionId ?? "UNASSIGNED" : "PROGRAM";
@@ -210,16 +210,28 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
   }
 }
 
-function policySort(
-  left: { title: string; divisionPosition?: number | null; voteCount?: number },
-  right: { title: string; divisionPosition?: number | null; voteCount?: number },
+function ballotSort(
+  left: { title: string; divisionPosition?: number | null },
+  right: { title: string; divisionPosition?: number | null },
   scope: ProgramVotingPolicyDetails["voteLimitScope"],
 ) {
   if (scope === "DIVISION") {
     const divisionComparison = divisionSortPosition(left.divisionPosition) - divisionSortPosition(right.divisionPosition);
     if (divisionComparison) return divisionComparison;
   }
-  return (right.voteCount ?? 0) - (left.voteCount ?? 0) || left.title.localeCompare(right.title, "ko");
+  return left.title.localeCompare(right.title, "ko");
+}
+
+function resultSort(
+  left: { title: string; divisionPosition?: number | null; voteCount: number },
+  right: { title: string; divisionPosition?: number | null; voteCount: number },
+  scope: ProgramVotingPolicyDetails["voteLimitScope"],
+) {
+  if (scope === "DIVISION") {
+    const divisionComparison = divisionSortPosition(left.divisionPosition) - divisionSortPosition(right.divisionPosition);
+    if (divisionComparison) return divisionComparison;
+  }
+  return right.voteCount - left.voteCount || left.title.localeCompare(right.title, "ko");
 }
 
 function divisionSortPosition(position: number | null | undefined) {

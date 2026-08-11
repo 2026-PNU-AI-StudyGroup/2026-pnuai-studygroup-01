@@ -102,8 +102,8 @@ export default async function ProjectGuidanceRequestsPage({
       <section aria-labelledby="guidance-request-history-title">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-black tracking-[0.12em] text-[var(--primary)]"><UiText>{"요청 이력"}</UiText></p>
-            <h2 id="guidance-request-history-title" className="mt-1 text-2xl font-black tracking-[-0.04em]"><UiText>{"회의와 검토 요청"}</UiText></h2>
+            <p className="text-xs font-bold tracking-[0.12em] text-[var(--primary)]"><UiText>{"요청 이력"}</UiText></p>
+            <h2 id="guidance-request-history-title" className="mt-1 text-2xl font-bold tracking-[-0.04em]"><UiText>{"회의와 검토 요청"}</UiText></h2>
           </div>
           <p className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-bold text-[var(--ink)]"><UiText>{"전체"}</UiText>{" "}{requestPage.total}<UiText>{"건"}</UiText></p>
         </div>

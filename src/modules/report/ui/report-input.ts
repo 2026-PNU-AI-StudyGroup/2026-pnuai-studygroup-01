@@ -2,31 +2,9 @@ import { z } from "zod";
 
 export const reportSubmissionSchema = z.object({
   teamId: z.string().uuid(),
-  type: z.enum(["START", "MIDTERM", "FINAL"]),
+  reportId: z.string().uuid(),
   uploadId: z.string().uuid(),
   description: z.string().max(2_000),
-});
-
-const koreanLocalDateTime = z.string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
-  .transform((value, context) => {
-    const date = new Date(`${value}:00+09:00`);
-    if (Number.isNaN(date.getTime())) {
-      context.addIssue({ code: "custom", message: "보고서 기한을 확인해 주세요." });
-      return z.NEVER;
-    }
-    return date;
-  });
-
-export const reportRequirementSchema = z.object({
-  teamId: z.string().uuid(),
-  type: z.enum(["START", "MIDTERM", "FINAL"]),
-  dueAt: koreanLocalDateTime,
-});
-
-export const reportRequirementRemovalSchema = z.object({
-  teamId: z.string().uuid(),
-  type: z.enum(["START", "MIDTERM", "FINAL"]),
 });
 
 export const reportDecisionSchema = z.object({

@@ -5,7 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 
 const professorNavigationItems = [
-  { href: "/professor/topics", label: "프로젝트 관리", hint: "등록·공개·일정", icon: "topic" },
+  { href: "/professor/topics", label: "프로젝트 주제", hint: "등록·공개·일정", icon: "topic" },
   { href: "/professor/applications", label: "지원 검토", icon: "application" },
   { href: "/project-approvals", label: "학생 제안", hint: "승인·반려", icon: "approval" },
 ] as const;
@@ -39,7 +39,7 @@ export function ProfessorSidebar({ currentPath, role }: { currentPath: string; r
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
           <UiText>{role === "STUDENT" ? "조교 업무" : "교수 업무"}</UiText>
         </p>
-        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"프로젝트 관리"}</UiText></h2>
+        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"주제 관리"}</UiText></h2>
       </div>
 
       <UiNav aria-label={role === "STUDENT" ? "조교 업무" : "교수 업무"} className="lg:mt-5">

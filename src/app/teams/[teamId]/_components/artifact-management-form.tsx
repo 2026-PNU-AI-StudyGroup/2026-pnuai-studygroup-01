@@ -9,6 +9,8 @@ import {
 } from "@/app/teams/[teamId]/_actions/team-report-actions";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { CustomSelect } from "@/shared/ui/custom-select";
+import { TextInput } from "@/shared/ui/form-system";
 
 const initialState: ReportActionState = { status: "idle", message: "" };
 
@@ -18,6 +20,8 @@ const artifactTypes = [
   ["POSTER", "포스터"],
   ["OTHER", "기타"],
 ] as const;
+
+const artifactTypeOptions = artifactTypes.map(([value, label]) => ({ value, label }));
 
 export function ArtifactManagementForm({
   teamId,
@@ -53,8 +57,8 @@ export function ArtifactManagementForm({
         <form action={updateAction} className="grid gap-5 px-6 py-6">
           <input type="hidden" name="teamId" value={teamId} />
           <input type="hidden" name="artifactId" value={artifact.id} />
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"결과물 종류"}</UiText><select name="type" defaultValue={artifact.type} className="form-control" disabled={pending}>{artifactTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"결과물 제목"}</UiText><input name="title" defaultValue={artifact.title} required maxLength={200} className="form-control" disabled={pending} /></label>
+          <div className="grid gap-2 text-sm font-semibold"><span><UiText>{"결과물 종류"}</UiText></span><CustomSelect name="type" ariaLabel="결과물 종류" options={artifactTypeOptions} defaultValue={artifact.type} disabled={pending} /></div>
+          <label className="grid gap-2 text-sm font-semibold"><UiText>{"결과물 제목"}</UiText><TextInput name="title" defaultValue={artifact.title} required maxLength={200} disabled={pending} /></label>
           {error ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{error}</UiText></p> : null}
           <div className="flex flex-wrap justify-end gap-2"><button type="button" className="button-secondary" onClick={() => dialogRef.current?.close()} disabled={pending}><UiText>{"취소"}</UiText></button><button type="submit" className="button-primary" disabled={pending}><UiText>{updatePending ? "저장 중" : "저장"}</UiText></button></div>
         </form>

@@ -1,13 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
-export type TopicSchedule = {
-  recruitmentStartsAt: Date;
-  executionStartsAt: Date;
-  executionEndsAt: Date;
-  submissionStartsAt: Date;
-  submissionEndsAt: Date;
-};
-
 export type TopicPublication = {
   status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   publishedAt: Date | null;
@@ -35,37 +27,6 @@ export class InvalidTopicDetailsError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "InvalidTopicDetailsError";
-  }
-}
-
-export class InvalidTopicScheduleError extends Error {
-  constructor(public readonly period: "execution" | "submission") {
-    super(`${period} 기간의 시작 시각은 종료 시각보다 앞서야 합니다.`);
-    this.name = "InvalidTopicScheduleError";
-  }
-}
-
-export function assertValidTopicSchedule(schedule: TopicSchedule): void {
-  const periods = [
-    ["execution", schedule.executionStartsAt, schedule.executionEndsAt],
-    ["submission", schedule.submissionStartsAt, schedule.submissionEndsAt],
-  ] as const;
-
-  for (const [name, startsAt, endsAt] of periods) {
-    const startsAtTime = startsAt.getTime();
-    const endsAtTime = endsAt.getTime();
-
-    if (
-      !Number.isFinite(startsAtTime) ||
-      !Number.isFinite(endsAtTime) ||
-      startsAtTime >= endsAtTime
-    ) {
-      throw new InvalidTopicScheduleError(name);
-    }
-  }
-
-  if (!Number.isFinite(schedule.recruitmentStartsAt.getTime())) {
-    throw new InvalidTopicScheduleError("execution");
   }
 }
 

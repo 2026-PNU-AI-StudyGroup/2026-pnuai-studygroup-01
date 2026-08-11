@@ -9,6 +9,8 @@ import {
   ANNOUNCEMENT_CATEGORY_LABELS,
   isAnnouncementCategory,
 } from "@/app/announcements/_lib/announcement-categories";
+import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
+import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { canCreateAnnouncement } from "@/modules/announcement/domain/announcement-policy";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
@@ -23,9 +25,16 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { PinIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항");
+}
+
+const NEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+// 컴포넌트 렌더 밖(모듈 스코프)에서 시각을 읽어 react-hooks/purity 위반 회피.
+function isRecentAnnouncement(createdAt: Date): boolean {
+  return Date.now() - createdAt.getTime() < NEW_WINDOW_MS;
 }
 
 export default async function AnnouncementsPage({
@@ -39,9 +48,10 @@ export default async function AnnouncementsPage({
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const categoryParam = firstSearchParam(params.category);
   const activeCategory = isAnnouncementCategory(categoryParam) ? categoryParam : undefined;
+  const audience = await resolveAnnouncementAudience(actor);
   const data = await new AnnouncementService(
     new PrismaAnnouncementRepository(prisma),
-  ).list(requestedPage, activeCategory);
+  ).list(audience, requestedPage, activeCategory);
   const pageHref = (page: number) => {
     const query = new URLSearchParams();
     if (page > 1) query.set("page", String(page));
@@ -49,7 +59,6 @@ export default async function AnnouncementsPage({
     const suffix = query.toString();
     return suffix ? `/announcements?${suffix}` : "/announcements";
   };
-
   return (
     <AppShell
       role={actor.role}
@@ -111,12 +120,23 @@ export default async function AnnouncementsPage({
                   <li key={announcement.id}>
                     <Link
                       href={`/announcements/${announcement.id}`}
-                      className="record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6"
+                      className={`record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6 ${announcement.pinned ? "bg-[var(--surface-subtle)]" : ""}`}
                     >
                       <div className="min-w-0">
-                        <span className={`mb-2 inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                          <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-                        </span>
+                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                          {announcement.pinned ? (
+                            <span className="inline-flex items-center text-[0.8125rem] leading-none">
+                              <PinIcon className="size-3.5 text-[var(--primary)]" /><span className="sr-only"><UiText>{"고정"}</UiText></span>
+                            </span>
+                          ) : null}
+                          {isRecentAnnouncement(announcement.createdAt) ? (
+                            <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--danger)]">NEW</span>
+                          ) : null}
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
+                            <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
+                          </span>
+                          <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
+                        </div>
                         <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                           <UiText>{announcement.title}</UiText>
                         </h3>

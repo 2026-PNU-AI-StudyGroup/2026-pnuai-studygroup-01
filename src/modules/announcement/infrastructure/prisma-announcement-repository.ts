@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type {
+  AnnouncementAudience,
   AnnouncementCategory,
   AnnouncementMutationOutcome,
   AnnouncementPage,
@@ -15,14 +16,15 @@ const selectAnnouncement = {
   title: true,
   content: true,
   category: true,
+  visibility: true,
+  pinned: true,
+  teamId: true,
+  programId: true,
   createdAt: true,
   updatedAt: true,
-  author: {
-    select: {
-      name: true,
-      role: true,
-    },
-  },
+  author: { select: { name: true, role: true } },
+  team: { select: { name: true } },
+  program: { select: { name: true } },
 } as const;
 
 type SelectedAnnouncement = {
@@ -31,12 +33,15 @@ type SelectedAnnouncement = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  visibility: "AUTHENTICATED" | "TARGET_MEMBERS";
+  pinned: boolean;
+  teamId: string | null;
+  programId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  author: {
-    name: string;
-    role: "STUDENT" | "PROFESSOR" | "ADMIN";
-  };
+  author: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" };
+  team: { name: string } | null;
+  program: { name: string } | null;
 };
 
 function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
@@ -48,20 +53,44 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     title: value.title,
     content: value.content,
     category: value.category,
+    visibility: value.visibility,
+    pinned: value.pinned,
+    teamId: value.teamId,
+    teamName: value.team?.name ?? null,
+    programId: value.programId,
+    programName: value.program?.name ?? null,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+  };
+}
+
+// 전체 공개 프로그램 공지는 모든 로그인 사용자가 조회할 수 있다.
+// 구성원 전용 프로그램·팀 공지는 소속·작성자만 조회하며 ADMIN은 제한이 없다.
+export function announcementScopeWhere(audience: AnnouncementAudience) {
+  if (audience.role === "ADMIN") return {};
+  return {
+    OR: [
+      { teamId: null, programId: null, visibility: "AUTHENTICATED" as const },
+      { teamId: null, programId: { not: null }, visibility: "AUTHENTICATED" as const },
+      { teamId: null, programId: { in: audience.programIds } },
+      { teamId: { in: audience.teamIds } },
+      { authorId: audience.actorId },
+    ],
   };
 }
 
 export class PrismaAnnouncementRepository implements AnnouncementRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
-    const where = category ? { category } : {};
+  async list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
+    const where = {
+      ...(category ? { category } : {}),
+      ...announcementScopeWhere(audience),
+    };
     const [items, total] = await this.client.$transaction([
       this.client.announcement.findMany({
         where,
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: selectAnnouncement,
@@ -71,7 +100,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, totalPages);
-    if (currentPage !== page) return this.list(currentPage, pageSize, category);
+    if (currentPage !== page) return this.list(audience, currentPage, pageSize, category);
 
     return {
       items: items.map(toRecord),
@@ -79,6 +108,19 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
       total,
       totalPages,
     };
+  }
+
+  async listForProgram(audience: AnnouncementAudience, programId: string): Promise<AnnouncementRecord[]> {
+    const items = await this.client.announcement.findMany({
+      where: {
+        programId,
+        teamId: null,
+        ...announcementScopeWhere(audience),
+      },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: selectAnnouncement,
+    });
+    return items.map(toRecord);
   }
 
   async findById(id: string): Promise<AnnouncementRecord | null> {

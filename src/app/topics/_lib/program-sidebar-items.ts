@@ -2,12 +2,9 @@ import type { ProgramSidebarItem } from "@/app/topics/_components/program-sideba
 import { programLifecycleStatus, type ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
-import type { PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
 
 export type ProgramSidebarQuery = {
   query?: string;
-  phase?: PublicTopicPhase;
-  sort?: PublicTopicSort;
 };
 
 function activeVotingEndsAt(program: ProjectProgramRecord | undefined, now: Date) {
@@ -42,8 +39,6 @@ function programHref(
   if (target === "past") params.set("view", "past");
   params.set("programId", programId);
   if (query.query) params.set("q", query.query);
-  if (target === "active" && query.phase) params.set("phase", query.phase);
-  if (target === "active" && query.sort === "DEADLINE") params.set("sort", query.sort);
   return `/topics?${params.toString()}`;
 }
 

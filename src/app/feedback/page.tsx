@@ -7,6 +7,7 @@ import {
   type FeedbackPostView,
 } from "@/app/feedback/_components/feedback-post-card";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { getServerTranslator } from "@/modules/translation/infrastructure/request-locale";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiLink } from "@/modules/translation/ui/localized-elements";
@@ -25,7 +26,7 @@ export default async function FeedbackPage({
 }: {
   searchParams: Promise<{ page?: SearchParamValue; status?: SearchParamValue }>;
 }) {
-  const [actor, params] = await Promise.all([getCurrentActor(), searchParams]);
+  const [actor, params, t] = await Promise.all([getCurrentActor(), searchParams, getServerTranslator()]);
   const requestedStatus = firstSearchParam(params.status);
   const status = requestedStatus === "resolved" ? "RESOLVED" : requestedStatus === "open" ? "OPEN" : undefined;
   const parsedPage = Number(firstSearchParam(params.page) ?? "1");
@@ -71,7 +72,7 @@ export default async function FeedbackPage({
             <h2 className="text-sm font-semibold text-[var(--muted)]">
               <UiText>{"등록된 피드백"}</UiText>{" "}{total}
             </h2>
-            <nav aria-label="피드백 상태 필터" className="flex items-center gap-2 text-sm font-semibold">
+            <nav aria-label={t("피드백 상태 필터")} className="flex items-center gap-2 text-sm font-semibold">
               {[
                 [undefined, "전체"],
                 ["open", "미해결"],

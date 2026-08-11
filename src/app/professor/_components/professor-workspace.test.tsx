@@ -24,8 +24,8 @@ describe("ProfessorWorkspace", () => {
     expect(eyebrow.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText("주제 작성 양식")).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "교수 업무" });
-    expect(within(navigation).getAllByRole("link", { name: /프로젝트 관리/ })).toHaveLength(2);
-    for (const link of within(navigation).getAllByRole("link", { name: /프로젝트 관리/ })) {
+    expect(within(navigation).getAllByRole("link", { name: /프로젝트 주제/ })).toHaveLength(2);
+    for (const link of within(navigation).getAllByRole("link", { name: /프로젝트 주제/ })) {
       expect(link).toHaveAttribute("aria-current", "page");
     }
     expect(screen.queryByRole("navigation", { name: "프로젝트 운영 흐름" })).not.toBeInTheDocument();

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
+import { MyTeamTabs } from "@/modules/student-team/ui/my-team-tabs";
 
 const navigation = [
   { href: "/recruitments", label: "팀원 모집", icon: "search" },
@@ -42,7 +43,7 @@ function isTeamNavigationActive(href: string, currentPath: string) {
   if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/");
   if (href === "/recruitments") return currentPath === "/recruitments";
   if (href === "/recruitments/mine") {
-    return currentPath === "/recruitments/mine" || currentPath === "/recruitments/new";
+    return currentPath === "/recruitments/mine";
   }
   return currentPath === href;
 }
@@ -51,6 +52,8 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
   const current = navigation.find((item) => isTeamNavigationActive(item.href, currentPath)) ?? navigation[0];
 
   return (
+    <>
+    <MyTeamTabs active="build" />
     <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
       <UiAside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
@@ -114,6 +117,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
       </UiAside>
       <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>
     </div>
+    </>
   );
 }
 

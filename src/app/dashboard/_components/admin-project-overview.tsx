@@ -149,8 +149,8 @@ function ProgressSummary({
                       : "border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
                 }`}
               >
-                <span className="text-xs font-black"><UiText>{item.label}</UiText></span>
-                <strong className="text-base font-black tabular-nums">{item.count(summary)}</strong>
+                <span className="text-xs font-bold"><UiText>{item.label}</UiText></span>
+                <strong className="text-base font-bold tabular-nums">{item.count(summary)}</strong>
               </Link>
             </li>
           );
@@ -332,7 +332,7 @@ function ProgramSection({
       {program.projects.length > 0 ? (
         <>
           <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-4 py-3 sm:px-5">
-            <h4 className="text-sm font-black"><UiText>{selectedFilter.label}</UiText></h4>
+            <h4 className="text-sm font-bold"><UiText>{selectedFilter.label}</UiText></h4>
             <p className="text-xs font-bold text-[var(--muted)]">
               <strong className="text-[var(--ink)]">{filteredProjects.length}</strong><UiText>{"개"}</UiText>
             </p>
@@ -388,7 +388,7 @@ function ProgramNavigation({ groups, selectedProgramId, idPrefix, ariaLabel = "�
       <div className="space-y-4">
         {groups.map((group) => (
           <section key={group.id} aria-labelledby={`admin-project-group-${idPrefix}-${group.id}`} className="border-t border-[var(--line)] pt-3 first:border-t-0 first:pt-0">
-            <h3 id={`admin-project-group-${idPrefix}-${group.id}`} className="flex items-center gap-2 px-2 py-1 text-sm font-black">
+            <h3 id={`admin-project-group-${idPrefix}-${group.id}`} className="flex items-center gap-2 px-2 py-1 text-sm font-bold">
               <span className={`size-2 rounded-full ${group.id === "active" ? "bg-[var(--primary)]" : "bg-[var(--line-strong)]"}`} />
               <UiText>{group.label}</UiText>
             </h3>
@@ -411,7 +411,7 @@ function ProgramNavigation({ groups, selectedProgramId, idPrefix, ariaLabel = "�
                           <ProgramIcon icon={program.icon} className="size-5" />
                         </span>
                         <span className="min-w-0">
-                          <strong className="block break-words text-sm font-black leading-5"><UiText>{program.name}</UiText></strong>
+                          <strong className="block break-words text-sm font-bold leading-5"><UiText>{program.name}</UiText></strong>
                           <span className="mt-1 block text-xs font-semibold leading-5 text-[var(--muted)]">
                             {program.startYear} · <UiText>{program.category}</UiText> · {program.projects.length}<UiText>{"개"}</UiText>
                           </span>
@@ -459,7 +459,7 @@ function AdminProjectSidebar({
       <details className="group xl:hidden">
         <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <span className="min-w-0">
-            <span className="block text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"프로그램 선택"}</UiText></span>
+            <span className="block text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"프로그램 선택"}</UiText></span>
             <strong className="mt-1 block break-words text-sm"><UiText>{selectedProgram?.name ?? "등록된 프로그램 없음"}</UiText></strong>
           </span>
           <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
@@ -470,8 +470,8 @@ function AdminProjectSidebar({
       </details>
       <div className="hidden px-3 py-8 xl:sticky xl:top-0 xl:block xl:h-screen xl:overflow-y-auto">
         <div className="mb-4 px-2">
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
-          <h2 className="mt-1 text-base font-black tracking-[-0.02em]"><UiText>{"프로젝트 현황"}</UiText></h2>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
+          <h2 className="mt-1 text-base font-bold tracking-[-0.02em]"><UiText>{"프로젝트 현황"}</UiText></h2>
         </div>
         <ProgramNavigation groups={groups} selectedProgramId={selectedProgramId} idPrefix="desktop" />
       </div>

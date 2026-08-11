@@ -15,6 +15,7 @@ export type ProjectVoteCandidate = {
   divisionName?: string | null;
   divisionPosition?: number | null;
   isSelfProject: boolean;
+  voteCount: number;
 };
 
 export type ProgramVoteBallot = {

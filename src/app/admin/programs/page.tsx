@@ -71,13 +71,12 @@ export default async function ProgramsAdminPage() {
                   <div className="grid grid-cols-2 gap-4 xl:col-start-1 xl:row-start-2 2xl:contents">
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 기간"}</UiText></dt><dd className="mt-1"><UiDate value={program.startsAt} mode="date" /><br /> – <UiDate value={program.endsAt} mode="date" /></dd></dl>
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"프로젝트 등록"}</UiText></dt><dd className="mt-1"><UiDate value={program.projectRegistrationStartsAt ?? program.startsAt} mode="date" /><br /> – <UiDate value={program.projectRegistrationEndsAt ?? program.endsAt} mode="date" /></dd></dl>
-                    <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"프로젝트 모집 마감"}</UiText></dt><dd className="mt-1"><UiDate value={program.recruitmentEndsAt} mode="dateTime" /></dd></dl>
+                    <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"모집 종료"}</UiText></dt><dd className="mt-1"><UiDate value={program.recruitmentEndsAt} mode="dateTime" /></dd></dl>
                     <dl className="min-w-0 text-sm"><dt className="muted text-xs"><UiText>{"운영 현황"}</UiText></dt><dd className="mt-1"><UiText>{"프로젝트"}</UiText>{" "}{program.topicCount} {" "}<UiText>{"· 팀"}</UiText>{" "}{program.teamCount}</dd></dl>
                   </div>
                   <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-start-4 2xl:row-start-1 2xl:row-span-1">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Link href={`/admin/programs/${program.id}/settings`} className="button-primary"><UiText>{"설정"}</UiText></Link>
-                      {votePhase ? <Link href={`/admin/programs/${program.id}/votes`} className="button-secondary"><UiText>{"투표 현황"}</UiText></Link> : null}
+                    <div className="flex justify-end">
+                      <Link href={`/admin/programs/${program.id}`} className="button-primary"><UiText>{"관리"}</UiText></Link>
                     </div>
                   </div>
                 </li>;

@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
+import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type {
   AcceptTopicApplicationOutcome,
   TopicApplicationDecisionActor,
@@ -155,6 +156,7 @@ export class PrismaTopicApplicationAcceptance {
           },
           select: { id: true },
         });
+        await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
         await transaction.teamMember.create({
           data: {
             teamId: team.id,
@@ -329,6 +331,7 @@ export class PrismaTopicApplicationAcceptance {
       },
       select: { id: true },
     });
+    await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
     await transaction.teamMember.createMany({
       data: applications.map((application) => ({
         teamId: team.id,

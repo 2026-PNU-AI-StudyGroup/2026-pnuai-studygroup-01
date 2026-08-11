@@ -5,12 +5,12 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { TopicApplicationEditor } from "@/app/topics/_components/topic-application-editor";
-import { ProjectVoteButton, ProjectVoteStatusPanel, useProjectVoteSelection, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
+import { ProjectVoteButton, ProjectVoteStatusPill, useProjectVoteSelection, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
 import { ProjectPagination } from "@/app/topics/_components/project-pagination";
 import styles from "@/app/topics/_components/project-gallery.module.css";
 import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
-import type { PublicTopicPage, PublicTopicPhase, PublicTopicSort } from "@/modules/topic/application/topic-ports";
+import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -33,22 +33,22 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
   voteSelection: ProjectVoteSelection;
 }) {
   const href = `/topics/${topic.id}`;
-  const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const recruiting = topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
   const application = topic.ownApplicationStatus;
   const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === topic.id);
   const hasProjectAction = Boolean(application || (canApply && recruiting));
   const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
-  const availability = !topic.recruitmentEnabled
-    ? { label: `모집 종료 · ${memberLabel}`, tone: "neutral" as const }
+  const availabilityTone = !topic.recruitmentEnabled
+    ? "neutral" as const
     : topic.memberCount >= topic.capacity
-    ? { label: `정원 마감 · ${memberLabel}`, tone: "neutral" as const }
-    : topic.recruitmentStartsAt > now
-      ? { label: `모집 예정 · ${memberLabel}`, tone: "neutral" as const }
+    ? "neutral" as const
+    : topic.programRecruitmentStartsAt > now
+      ? "neutral" as const
       : topic.programRecruitmentEndsAt <= now
-        ? { label: `모집 종료 · ${memberLabel}`, tone: "neutral" as const }
+        ? "neutral" as const
         : topic.programRecruitmentEndsAt.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1_000
-          ? { label: `마감 임박 · ${memberLabel}`, tone: "warning" as const }
-          : { label: `모집 중 · ${memberLabel}`, tone: "success" as const };
+          ? "warning" as const
+          : "success" as const;
 
   return (
     <li className="min-w-0">
@@ -62,7 +62,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
             <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
               <Link href={href} className={styles.titleLink}><UiText>{topic.title}</UiText></Link>
             </h3>
-            <StatusBadge tone={availability.tone}><UiText>{availability.label}</UiText></StatusBadge>
+            <StatusBadge tone={availabilityTone}><UiText>{memberLabel}</UiText></StatusBadge>
           </div>
           <p className="mt-2 text-xs font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
           {topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : null}
@@ -87,7 +87,12 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
                 leaderTeams={leaderTeams}
               />
             ) : null}
-            {voteCandidate ? <div className={hasProjectAction ? "mt-2" : undefined}><ProjectVoteButton candidate={voteCandidate} selection={voteSelection} /></div> : null}
+            {voteCandidate ? (
+              <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 ${hasProjectAction ? "mt-2" : ""}`}>
+                <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
+                <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"득표"}</UiText>{" "}<strong className="tabular-nums text-[var(--ink)]">{voteCandidate.voteCount}</strong></span>
+              </div>
+            ) : null}
           </div>
         </div>
       </article>
@@ -97,32 +102,30 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
 
 const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, phase, query, sort, divisionId, now, ballot }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
   programId?: string;
-  phase: PublicTopicPhase;
   query: string;
-  sort: PublicTopicSort;
   divisionId?: string | "UNASSIGNED";
   now: Date;
   ballot?: ProgramVoteBallot;
 }) {
-  const hasFilters = Boolean(query || phase !== "ACTIVE" || sort !== "LATEST" || divisionId);
+  const hasFilters = Boolean(query || divisionId);
   const voteSelection = useProjectVoteSelection(ballot);
   return (
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
-      <div className="mb-4"><ProjectVoteStatusPanel selection={voteSelection} /></div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex min-h-8 items-center gap-3">
+        <ProjectVoteStatusPill selection={voteSelection} />
         <h2 id="project-results-title" className="sr-only"><UiText>{"프로젝트 목록"}</UiText></h2>
-        <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
+        <p className="ml-auto text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
       </div>
       {!topics.items.length ? (
         <EmptyState
           title="조건에 맞는 프로젝트가 없습니다"
-          description="상태나 프로그램을 바꾸거나 검색어를 지워 다시 확인해 주세요."
-          action={hasFilters ? <Link href={activeProjectsHref({ phase: "ACTIVE", programId })} className="button-secondary"><UiText>{"필터 초기화"}</UiText></Link> : undefined}
+          description="프로그램, 분과 또는 검색어를 바꿔 다시 확인해 주세요."
+          action={hasFilters ? <Link href={activeProjectsHref({ programId })} className="button-secondary"><UiText>{"필터 초기화"}</UiText></Link> : undefined}
         />
       ) : (
         <UiUl aria-label="프로젝트 목록" className={cardGridClassName}>
@@ -136,7 +139,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
         page={topics.page}
         totalPages={topics.totalPages}
         ariaLabel="프로젝트 페이지"
-        href={(page) => activeProjectsHref({ phase, programId, query, sort, divisionId, page })}
+        href={(page) => activeProjectsHref({ programId, query, divisionId, page })}
       />
     </section>
   );

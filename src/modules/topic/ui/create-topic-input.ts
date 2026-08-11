@@ -64,20 +64,23 @@ export const createTopicInputSchema = z.object({
     required: z.boolean(),
   })).min(1).max(20),
   capacity: z.coerce.number().int().min(1).max(100),
-  recruitmentStartsAt: koreanLocalDateTime,
-  executionStartsAt: koreanLocalDateTime,
-  executionEndsAt: koreanLocalDateTime,
-  submissionStartsAt: koreanLocalDateTime,
-  submissionEndsAt: koreanLocalDateTime,
-});
+}).strict();
 
 export function parseTopicFormData(formData: FormData) {
   const questionLabels = formData.getAll("questionLabel");
   const questionMaxLengths = formData.getAll("questionMaxLength");
   const questionRequiredValues = formData.getAll("questionRequired");
   return createTopicInputSchema.safeParse({
-    ...Object.fromEntries(formData),
+    programId: formData.get("programId"),
     divisionId: formData.get("divisionId") || null,
+    title: formData.get("title"),
+    description: formData.get("description"),
+    requiredSkills: formData.get("requiredSkills"),
+    preferredSkills: formData.get("preferredSkills"),
+    roleExpectations: formData.get("roleExpectations"),
+    availabilityRequirement: formData.get("availabilityRequirement"),
+    applicationMode: formData.get("applicationMode"),
+    capacity: formData.get("capacity"),
     applicationQuestions: questionLabels.map((label, index) => ({
       label,
       maxLength: questionMaxLengths[index],

@@ -15,12 +15,6 @@ const input = {
   applicationMode: "INDIVIDUAL_ONLY" as const,
   applicationQuestions: [{ label: "  지원 동기  ", maxLength: 500, required: true }],
   capacity: 4,
-  recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
-  recruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
-  executionStartsAt: new Date("2026-08-11T00:00:00Z"),
-  executionEndsAt: new Date("2026-09-10T00:00:00Z"),
-  submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
-  submissionEndsAt: new Date("2026-09-20T00:00:00Z"),
 };
 
 function repository(outcome: Awaited<ReturnType<TopicEditor["update"]>> = "UPDATED"): TopicEditor {

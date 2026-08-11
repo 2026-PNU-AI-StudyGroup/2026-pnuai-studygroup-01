@@ -56,7 +56,7 @@ export async function toggleProjectVoteAction(input: { programId: string; topicI
     throw error;
   }
   revalidatePath("/topics");
-  revalidatePath(`/admin/programs/${parsed.data.programId}/settings`);
+  revalidatePath(`/admin/programs/${parsed.data.programId}`);
   const remainingVotes = ballot.policy.voteLimit - nextSelectedTopicIds.filter((id) => ballot.policy.voteLimitScope === "PROGRAM" || (ballot.candidates.find((item) => item.id === id)?.divisionId ?? "UNASSIGNED") === (candidate.divisionId ?? "UNASSIGNED")).length;
   return {
     status: "success",

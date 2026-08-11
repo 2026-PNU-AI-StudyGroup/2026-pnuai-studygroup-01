@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import {
   createApplicationResultNotifications,
@@ -190,7 +191,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         },
         topic: {
           include: {
-            program: { select: { name: true, category: true, recruitmentEndsAt: true } },
+            program: { select: { name: true, category: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
             applicationQuestions: {
               orderBy: { position: "asc" },
               select: { id: true, label: true, maxLength: true, required: true },
@@ -215,12 +216,12 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       availabilityRequirement: topic.availabilityRequirement,
       applicationMode: topic.applicationMode,
       capacity: topic.capacity,
-      recruitmentStartsAt: topic.recruitmentStartsAt,
+      programRecruitmentStartsAt: topic.program.recruitmentStartsAt,
       programRecruitmentEndsAt: topic.program.recruitmentEndsAt,
-      executionStartsAt: topic.executionStartsAt,
-      executionEndsAt: topic.executionEndsAt,
-      submissionStartsAt: topic.submissionStartsAt,
-      submissionEndsAt: topic.submissionEndsAt,
+      programExecutionStartsAt: topic.program.executionStartsAt,
+      programExecutionEndsAt: topic.program.executionEndsAt,
+      programSubmissionStartsAt: topic.program.submissionStartsAt,
+      programSubmissionEndsAt: topic.program.submissionEndsAt,
       applicationQuestions: topic.applicationQuestions,
       studentTeam: studentTeam ? {
         name: studentTeam.name,
@@ -397,6 +398,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             },
             select: { id: true },
           });
+          await assignProgramDeliverablesToTeam(transaction, executionTeam.id, input.decidedAt);
           await transaction.teamMember.createMany({
             data: applications.map((application) => ({
               teamId: executionTeam.id,

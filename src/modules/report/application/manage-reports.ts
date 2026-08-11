@@ -3,7 +3,6 @@ import type {
   ArtifactWriter,
   ReportDecisionWriter,
   ReportFeedbackWriter,
-  ReportRequirementWriter,
   ReportSubmissionWriter,
   ReportWorkspaceReader,
 } from "@/modules/report/application/report-ports";
@@ -15,8 +14,6 @@ import {
   normalizeDecisionComment,
   normalizeDescription,
   normalizeReportFeedback,
-  type ReportType,
-  validateReportDueAt,
 } from "@/modules/report/domain/report-policy";
 
 export class ReportOperationNotAllowedError extends Error {
@@ -36,43 +33,12 @@ export class ReportQueryService {
   }
 }
 
-export class ReportRequirementService {
-  constructor(private readonly requirementWriter: ReportRequirementWriter) {}
-
-  async setRequirement(actor: CurrentActor, input: {
-    teamId: string;
-    type: ReportType;
-    dueAt: Date;
-  }, now = new Date()) {
-    const result = await this.requirementWriter.setRequirement({
-      ...input,
-      actor,
-      dueAt: validateReportDueAt(input.dueAt, now),
-      configuredAt: now,
-    });
-    if (!result) throw new ReportOperationNotAllowedError();
-    return result;
-  }
-
-  async removeRequirement(actor: CurrentActor, input: {
-    teamId: string;
-    type: ReportType;
-  }, now = new Date()) {
-    const removed = await this.requirementWriter.removeRequirement({
-      ...input,
-      actor,
-      removedAt: now,
-    });
-    if (!removed) throw new ReportOperationNotAllowedError();
-  }
-}
-
 export class ReportSubmissionService {
   constructor(private readonly submissionWriter: ReportSubmissionWriter) {}
 
   async submit(actor: CurrentActor, input: {
     teamId: string;
-    type: ReportType;
+    reportId: string;
     fileId: string;
     description: string;
   }, now = new Date()) {

@@ -63,9 +63,24 @@ export function ProgramForm({ successHref }: { successHref?: string }) {
       </FormField>
     </FormSection>
 
-    <FormSection title="프로젝트 모집 마감" description="이 프로그램의 모든 프로젝트 지원은 같은 시각에 마감됩니다.">
-      <FormField id="program-recruitment-ends-at" label="모집 마감" required>
+    <FormSection title="프로그램 공통 일정" description="이 프로그램의 모든 프로젝트가 같은 모집·수행·제출 일정을 따릅니다." contentClassName="sm:grid-cols-2">
+      <FormField id="program-recruitment-starts-at" label="모집 시작" required>
+        <DateTimeInput id="program-recruitment-starts-at" name="recruitmentStartsAt" required />
+      </FormField>
+      <FormField id="program-recruitment-ends-at" label="모집 종료" required>
         <DateTimeInput id="program-recruitment-ends-at" name="recruitmentEndsAt" required />
+      </FormField>
+      <FormField id="program-execution-starts-at" label="수행 시작" required>
+        <DateTimeInput id="program-execution-starts-at" name="executionStartsAt" required />
+      </FormField>
+      <FormField id="program-execution-ends-at" label="수행 종료" required>
+        <DateTimeInput id="program-execution-ends-at" name="executionEndsAt" required />
+      </FormField>
+      <FormField id="program-submission-starts-at" label="제출 시작" required>
+        <DateTimeInput id="program-submission-starts-at" name="submissionStartsAt" required />
+      </FormField>
+      <FormField id="program-submission-ends-at" label="제출 종료" required>
+        <DateTimeInput id="program-submission-ends-at" name="submissionEndsAt" required />
       </FormField>
     </FormSection>
 

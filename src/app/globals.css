@@ -8,43 +8,47 @@
   font-display: swap;
 }
 
+/*
+  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 화이트 서피스 + 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
+  크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준의 깔끔함(반어·잔재주 없이 정석을 높은 완성도로).
+  라이트 전용(관리자 데스크톱 종일). 데이터·수치·시각은 tabular-nums 유지.
+*/
 :root {
-  /* 라이트 전용 UI. 다크 모드 OS에서 네이티브 컨트롤(select/스크롤바)이
-     어둡게 렌더되지 않도록 명시한다. */
   color-scheme: light;
-  --workspace: #fafbfd;
-  --sidebar: #2347b8;
+  --workspace: #f6f7f9;
+  --sidebar: #ffffff;
   --surface: #ffffff;
-  --surface-subtle: #f7f8fa;
-  --ink: #171921;
-  --muted: #656b76;
-  --line: #e5e7eb;
-  --line-strong: #cfd3da;
-  --field-border: #c9d0dc;
-  --field-border-hover: #8f9bad;
+  --surface-subtle: #f1f3f7;
+  --ink: #191c22;
+  --muted: #5b616e;
+  --line: #e7e9ef;
+  --line-strong: #d5d9e2;
+  --field-border: #d0d5dd;
+  --field-border-hover: #98a1b3;
   --field-surface: #ffffff;
-  --primary: #2f5bea;
-  --primary-hover: #2148c9;
-  --primary-subtle: #e9efff;
-  --accent: #d58a00;
-  --accent-hover: #ad7000;
-  --accent-ink: #6f4900;
-  --accent-subtle: #fff4d6;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-subtle: #eef0fe;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-ink: #3730a3;
+  --accent-subtle: #eef0fe;
   --focus: var(--primary);
-  --focus-halo: color-mix(in srgb, var(--focus) 16%, transparent);
-  --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
-  --success: #18794e;
-  --success-subtle: #eaf7f0;
-  --warning: #9a6700;
-  --warning-ink: #755000;
-  --warning-subtle: #fff7df;
-  --danger: #b42318;
-  --danger-subtle: #fff0ee;
-  --radius-control: 0.875rem;
-  --radius-panel: 1.25rem;
-  --shadow-card: none;
-  --shadow-admin-panel: 0 1px 2px rgb(31 35 48 / 0.03), 0 8px 24px rgb(31 35 48 / 0.045);
-  --shadow-float: 0 18px 48px rgb(31 35 48 / 0.12);
+  --focus-halo: color-mix(in srgb, var(--focus) 22%, transparent);
+  --danger-halo: color-mix(in srgb, var(--danger) 18%, transparent);
+  --success: #15803d;
+  --success-subtle: #e7f5ec;
+  --warning: #b45309;
+  --warning-ink: #92400e;
+  --warning-subtle: #fdf2e1;
+  --danger: #dc2626;
+  --danger-subtle: #fdecec;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-admin-panel: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-float: 0 12px 32px rgb(16 24 40 / 0.16);
+  --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
@@ -101,7 +105,30 @@ summary::-webkit-details-marker {
 
 ::selection {
   background: var(--primary-subtle);
-  color: var(--ink);
+  color: var(--accent-ink);
+}
+
+:where(html) {
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid var(--workspace);
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--field-border-hover);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @layer components {
@@ -629,7 +656,7 @@ summary::-webkit-details-marker {
     place-items: center;
     border: 1.5px solid var(--field-border-hover);
     border-radius: 50%;
-    background: white;
+    background: var(--surface);
   }
 
   .choice-card:has(input[type="checkbox"]) .choice-card__indicator {
@@ -1385,8 +1412,8 @@ summary::-webkit-details-marker {
   }
 
   .button-secondary {
-    border: 1px solid var(--line);
-    background: white;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
     color: var(--ink);
   }
 

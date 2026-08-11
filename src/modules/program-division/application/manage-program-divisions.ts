@@ -9,7 +9,7 @@ export interface ProgramDivisionRepository {
   rename(id: string, name: string, actorId: string): Promise<"UPDATED" | "DUPLICATE" | "NOT_FOUND">;
   move(id: string, direction: "up" | "down", actorId: string): Promise<boolean>;
   impact(id: string): Promise<ProgramDivisionImpact | null>;
-  delete(id: string, actorId: string, confirmed: boolean, confirmedImpact?: ProgramDivisionImpact): Promise<"DELETED" | "CONFIRMATION_REQUIRED" | "NOT_FOUND">;
+  delete(id: string, actorId: string, confirmed: boolean, confirmedImpact?: ProgramDivisionImpact): Promise<"DELETED" | "CONFIRMATION_REQUIRED" | "SCORED_RUBRIC" | "PROGRAM_CLOSED" | "NOT_FOUND">;
 }
 
 export class ProgramDivisionService {

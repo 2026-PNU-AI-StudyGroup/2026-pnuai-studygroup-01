@@ -112,8 +112,11 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
 
   it("감독 권한으로 잠그지 못한 대기 요청에는 응답을 기록하지 않는다", async () => {
     const update = vi.fn();
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ id: "program-1" }])
+      .mockResolvedValueOnce([]);
     const transaction = {
-      $queryRaw: vi.fn(async () => []),
+      $queryRaw: queryRaw,
       projectGuidanceRequest: { update },
     };
     const client = {
@@ -128,6 +131,10 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       respondedAt: new Date("2026-08-03T00:00:00Z"),
     })).resolves.toBe(false);
     expect(update).not.toHaveBeenCalled();
+    const lockSql = queryRaw.mock.calls.map(([query]) =>
+      (query as { strings: readonly string[] }).strings.join("?"));
+    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
+    expect(lockSql[1]).toContain('FOR UPDATE OF "project_guidance_request"');
   });
 
   it("요청자 본인의 대기 요청만 취소한다", async () => {

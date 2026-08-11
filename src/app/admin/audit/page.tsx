@@ -45,6 +45,13 @@ const actionLabel: Record<AuditAction, string> = {
   PROGRAM_DIVISION_UPDATED: "분과 변경",
   PROGRAM_DIVISION_DELETED: "분과 삭제",
   PROGRAM_VOTING_RESET: "프로그램 투표 초기화",
+  PROGRAM_REPORT_DEFINITION_CREATED: "프로그램 보고서 추가",
+  PROGRAM_REPORT_DEFINITION_UPDATED: "프로그램 보고서 변경",
+  PROGRAM_REPORT_DEFINITION_ARCHIVED: "프로그램 보고서 보관",
+  PROGRAM_RUBRIC_CREATED: "프로그램 채점표 추가",
+  PROGRAM_RUBRIC_UPDATED: "프로그램 채점표 변경",
+  PROGRAM_RUBRIC_ARCHIVED: "프로그램 채점표 삭제",
+  PROGRAM_DIVISION_RUBRIC_MODE_CHANGED: "분과 채점표 모드 변경",
 };
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {

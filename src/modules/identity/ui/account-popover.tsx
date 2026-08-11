@@ -32,8 +32,8 @@ export function AccountPopover({
   const { signOut, isPending, message } = useSignOut();
   const showDesktopLabel = inverse && placement === "side";
   const copy = locale === "ko"
-    ? { accountMenu: "계정 메뉴", myAccount: "내 계정", signingOut: "로그아웃 중…", signOut: "로그아웃" }
-    : { accountMenu: "Account menu", myAccount: "My account", signingOut: "Signing out…", signOut: "Sign out" };
+    ? { accountMenu: "계정 메뉴", myAccount: "내 계정", feedback: "피드백 보내기", signingOut: "로그아웃 중…", signOut: "로그아웃" }
+    : { accountMenu: "Account menu", myAccount: "My account", feedback: "Send feedback", signingOut: "Signing out…", signOut: "Sign out" };
 
   useEffect(() => {
     if (!open) return;
@@ -143,6 +143,16 @@ export function AccountPopover({
                 </svg>
               </Link>
             )}
+            <Link
+              href="/feedback"
+              onClick={() => setOpen(false)}
+              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
+            >
+              {copy.feedback}
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
+                <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
             <button
               type="button"
               onClick={signOut}

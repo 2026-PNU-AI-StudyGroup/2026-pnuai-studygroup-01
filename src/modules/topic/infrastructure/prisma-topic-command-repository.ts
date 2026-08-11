@@ -6,16 +6,13 @@ import type {
   TopicCreator,
   TopicDraft,
   TopicEditor,
-  TopicScheduleUpdater,
   TopicStateRecord,
   TopicStateRepository,
 } from "@/modules/topic/application/topic-ports";
-import type { TopicSchedule } from "@/modules/topic/domain/topic-policy";
-import { topicSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export class PrismaTopicCommandRepository
-  implements TopicCreator, TopicStateRepository, TopicScheduleUpdater, TopicEditor
+  implements TopicCreator, TopicStateRepository, TopicEditor
 {
   constructor(private readonly client: PrismaClient) {}
 
@@ -89,14 +86,9 @@ export class PrismaTopicCommandRepository
       if (current.programId !== topic.programId) return "PROGRAM_UNAVAILABLE" as const;
       const program = await transaction.projectProgram.findFirst({
         where: { id: current.programId, lifecycleStatus: "ACTIVE" },
-        select: { startsAt: true, endsAt: true, recruitmentEndsAt: true },
+        select: { id: true },
       });
-      const times = [topic.recruitmentStartsAt, topic.executionStartsAt, topic.executionEndsAt, topic.submissionStartsAt, topic.submissionEndsAt];
-      if (
-        !program ||
-        times.some((time) => time < program.startsAt || time > program.endsAt) ||
-        topic.recruitmentStartsAt >= program.recruitmentEndsAt
-      ) {
+      if (!program) {
         return "PROGRAM_UNAVAILABLE" as const;
       }
       const formChanged = current.applicationMode !== topic.applicationMode ||
@@ -273,34 +265,4 @@ export class PrismaTopicCommandRepository
     });
   }
 
-  async updateSchedule(
-    id: string,
-    actor: CurrentActor,
-    schedule: TopicSchedule,
-  ): Promise<boolean> {
-    const rows = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      UPDATE "topic"
-      SET
-        "recruitmentStartsAt" = ${schedule.recruitmentStartsAt},
-        "executionStartsAt" = ${schedule.executionStartsAt},
-        "executionEndsAt" = ${schedule.executionEndsAt},
-        "submissionStartsAt" = ${schedule.submissionStartsAt},
-        "submissionEndsAt" = ${schedule.submissionEndsAt},
-        "updatedAt" = ${new Date()}
-      FROM "project_program"
-      WHERE "topic"."id" = ${id}
-        AND "topic"."programId" = "project_program"."id"
-        AND "topic"."status" <> 'CLOSED'::"TopicStatus"
-        AND "project_program"."lifecycleStatus" = 'ACTIVE'::"ProgramLifecycleStatus"
-        AND ${topicSupervisorSql(actor)}
-        AND ${schedule.recruitmentStartsAt} >= "project_program"."startsAt"
-        AND ${schedule.recruitmentStartsAt} < "project_program"."recruitmentEndsAt"
-        AND ${schedule.executionStartsAt} >= "project_program"."startsAt"
-        AND ${schedule.executionEndsAt} <= "project_program"."endsAt"
-        AND ${schedule.submissionStartsAt} >= "project_program"."startsAt"
-        AND ${schedule.submissionEndsAt} <= "project_program"."endsAt"
-      RETURNING "topic"."id"
-    `);
-    return rows.length === 1;
-  }
 }

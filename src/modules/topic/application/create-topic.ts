@@ -6,7 +6,6 @@ import type {
 } from "@/modules/topic/application/topic-ports";
 import {
   assertValidTopicDetails,
-  assertValidTopicSchedule,
   canCreateTopic,
 } from "@/modules/topic/domain/topic-policy";
 import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
@@ -54,7 +53,6 @@ export class CreateTopicService {
       })),
     };
     assertValidTopicDetails(details);
-    assertValidTopicSchedule(input);
 
     const program = await this.programRepository.findById(input.programId);
     if (!program || programLifecycleStatus(program) !== "ACTIVE") {
@@ -64,14 +62,6 @@ export class CreateTopicService {
     if (!isProjectRegistrationOpen(program, registeredAt)) {
       throw new ProjectProgramNotOpenError();
     }
-    const topicTimes = [input.recruitmentStartsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
-    if (
-      topicTimes.some((time) => time < program.startsAt || time > program.endsAt) ||
-      input.recruitmentStartsAt >= program.recruitmentEndsAt
-    ) {
-      throw new ProjectProgramNotOpenError();
-    }
-
     const created = await this.topicRepository.createPublished({
       ...details,
       authorId: actor.id,

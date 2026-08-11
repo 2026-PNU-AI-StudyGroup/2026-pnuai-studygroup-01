@@ -38,7 +38,7 @@ const ballot: ProgramVoteBallot = {
     identityVisibility: "ANONYMOUS",
   },
   phase: "OPEN",
-  candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false }],
+  candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false, voteCount: 0 }],
   selectedTopicIds: [],
 };
 
@@ -58,6 +58,9 @@ describe("PastProjectsView", () => {
 
     expect(screen.queryByText("선택한 프로젝트")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+    const voteStatus = screen.getByRole("status", { name: "투표 현황" });
+    const total = screen.getByText("1", { selector: "strong" }).closest("p");
+    expect(voteStatus.parentElement).toBe(total?.parentElement);
   });
 
   it("썸네일 카드에는 프로젝트의 프로그램·분과 소속을 함께 표시한다", () => {

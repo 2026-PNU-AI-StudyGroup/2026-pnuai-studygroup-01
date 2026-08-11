@@ -23,6 +23,7 @@ const overviewInclude = {
             },
           },
           reports: {
+            where: { required: true },
             select: {
               dueAt: true,
               versions: {

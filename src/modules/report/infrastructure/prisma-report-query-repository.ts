@@ -17,11 +17,14 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
       where: { id: teamId, ...teamActorWhere(actor) },
       select: {
         reports: {
-          orderBy: [{ dueAt: "asc" }, { type: "asc" }],
+          where: { OR: [{ required: true }, { versions: { some: {} } }] },
+          orderBy: [{ definition: { position: "asc" } }, { dueAt: "asc" }],
           select: {
             id: true,
-            type: true,
+            titleSnapshot: true,
+            required: true,
             dueAt: true,
+            definition: { select: { position: true } },
             feedback: {
               orderBy: { createdAt: "asc" },
               select: {
@@ -71,7 +74,9 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
     return {
       reports: team.reports.map((report) => ({
         id: report.id,
-        type: report.type,
+        title: report.titleSnapshot,
+        position: report.definition.position,
+        required: report.required,
         dueAt: report.dueAt,
         feedback: report.feedback.map((item) => ({
           id: item.id,

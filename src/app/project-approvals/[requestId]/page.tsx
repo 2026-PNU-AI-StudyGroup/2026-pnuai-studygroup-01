@@ -94,8 +94,8 @@ function ApprovalDetail({ request, canDecide }: { request: TopicApprovalRequestD
 
       <aside className="space-y-6">
         <section aria-labelledby="approval-schedule-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">
-          <h2 id="approval-schedule-title" className="text-lg font-bold"><UiText>{"프로젝트 일정"}</UiText></h2>
-          <dl className="mt-4 grid gap-5"><Period label="프로그램 모집 기간" start={request.recruitmentStartsAt} end={request.programRecruitmentEndsAt} /><Period label="수행 기간" start={request.executionStartsAt} end={request.executionEndsAt} /><Period label="제출 기간" start={request.submissionStartsAt} end={request.submissionEndsAt} /></dl>
+          <h2 id="approval-schedule-title" className="text-lg font-bold"><UiText>{"프로그램 일정"}</UiText></h2>
+          <dl className="mt-4 grid gap-5"><Period label="프로그램 모집 기간" start={request.programRecruitmentStartsAt} end={request.programRecruitmentEndsAt} /><Period label="수행 기간" start={request.programExecutionStartsAt} end={request.programExecutionEndsAt} /><Period label="제출 기간" start={request.programSubmissionStartsAt} end={request.programSubmissionEndsAt} /></dl>
         </section>
         {canDecide ? (
           <section aria-labelledby="approval-decision-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">

@@ -532,7 +532,17 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       },
       recruitmentApplication: { updateMany: rejectRecruitmentApplications },
       notification: { createMany: createNotifications },
-      team: { create: createExecutionTeam },
+      team: {
+        create: createExecutionTeam,
+        findUnique: vi.fn(async () => ({
+          id: "execution-team-1",
+          programId: "program-1",
+          status: "CONFIRMED",
+          topic: { divisionId: null, division: null },
+        })),
+      },
+      programReportDefinition: { findMany: vi.fn(async () => []) },
+      rubricDefinition: { findMany: vi.fn(async () => []) },
       topicApprovalRequest: {
         findUnique: vi.fn(async () => request),
         update: vi.fn(async () => ({ id: "request-1" })),

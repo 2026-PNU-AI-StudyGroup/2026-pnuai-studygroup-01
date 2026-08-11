@@ -23,7 +23,12 @@ describe("buildProgramSidebarItems", () => {
     description: "",
     startsAt: new Date(),
     endsAt: new Date(),
+    recruitmentStartsAt: new Date(),
     recruitmentEndsAt: new Date(),
+    executionStartsAt: new Date(),
+    executionEndsAt: new Date(),
+    submissionStartsAt: new Date(),
+    submissionEndsAt: new Date(),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
   };
@@ -80,17 +85,15 @@ describe("buildProgramSidebarItems", () => {
     }));
   });
 
-  it("프로그램을 바꿀 때 대상 화면과 호환되는 검색·상태·정렬만 보존한다", () => {
+  it("프로그램을 바꿀 때 검색어만 보존한다", () => {
     const items = buildProgramSidebarItems([openProgram], [
       { id: "past-2025", name: "캡스톤 2025", category: "캡스톤", startYear: 2025, icon: "GRADUATION_CAP", ...archivedProgramPeriod },
     ], "active", {
       query: "길 찾기",
-      phase: "CLOSING_SOON",
-      sort: "DEADLINE",
     });
 
     expect(items.find(({ id }) => id === "open-2026")?.href).toBe(
-      "/topics?programId=open-2026&q=%EA%B8%B8+%EC%B0%BE%EA%B8%B0&phase=CLOSING_SOON&sort=DEADLINE",
+      "/topics?programId=open-2026&q=%EA%B8%B8+%EC%B0%BE%EA%B8%B0",
     );
     expect(items.find(({ id }) => id === "past-2025")?.href).toBe(
       "/topics?view=past&programId=past-2025&q=%EA%B8%B8+%EC%B0%BE%EA%B8%B0",

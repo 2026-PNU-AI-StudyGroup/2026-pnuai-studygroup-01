@@ -21,9 +21,9 @@ const ballot = {
   },
   phase: "OPEN" as const,
   candidates: [
-    { id: "topic-1", title: "프로젝트 1", description: "", divisionId: null, divisionName: null, isSelfProject: false },
-    { id: "topic-2", title: "프로젝트 2", description: "", divisionId: null, divisionName: null, isSelfProject: false },
-    { id: "topic-3", title: "프로젝트 3", description: "", divisionId: null, divisionName: null, isSelfProject: false },
+    { id: "topic-1", title: "프로젝트 1", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
+    { id: "topic-2", title: "프로젝트 2", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
+    { id: "topic-3", title: "프로젝트 3", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
   ],
   selectedTopicIds: [],
 };

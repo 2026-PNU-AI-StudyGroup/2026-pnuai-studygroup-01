@@ -1,5 +1,5 @@
 export type FilePurpose = "REPORT" | "ARTIFACT";
-export type UploadConsumer = "REPORT" | "ARTIFACT" | "SHOWCASE_IMAGE";
+export type UploadConsumer = "REPORT" | "ARTIFACT";
 
 const REPORT_TYPES = new Set([
   "application/pdf",
@@ -16,13 +16,6 @@ const ARTIFACT_TYPES = new Set([
   "image/png",
   "image/jpeg",
 ]);
-const SHOWCASE_IMAGE_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-]);
-
 export class InvalidUploadError extends Error {
   constructor(message = "허용되지 않은 파일입니다.") {
     super(message);
@@ -40,16 +33,8 @@ export function validateUpload(input: {
 }) {
   const originalName = input.originalName.trim();
   const consumer = input.consumer ?? input.purpose;
-  const allowedTypes = consumer === "REPORT"
-    ? REPORT_TYPES
-    : consumer === "SHOWCASE_IMAGE"
-      ? SHOWCASE_IMAGE_TYPES
-      : ARTIFACT_TYPES;
-  const maxSize = consumer === "REPORT"
-    ? 25 * 1024 * 1024
-    : consumer === "SHOWCASE_IMAGE"
-      ? 10 * 1024 * 1024
-      : 1024 ** 3;
+  const allowedTypes = consumer === "REPORT" ? REPORT_TYPES : ARTIFACT_TYPES;
+  const maxSize = consumer === "REPORT" ? 25 * 1024 * 1024 : 1024 ** 3;
   const expectedPurpose: FilePurpose = consumer === "REPORT" ? "REPORT" : "ARTIFACT";
   if (
     originalName.length < 1 ||

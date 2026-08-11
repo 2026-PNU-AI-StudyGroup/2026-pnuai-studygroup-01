@@ -65,14 +65,6 @@ export default async function ProjectAssistantManagementPage({
             >
               <UiText>{"프로젝트 상세"}</UiText>
             </Link>
-            {topic.status !== "CLOSED" ? (
-              <Link
-                href={`/professor/topics/${topic.id}/schedule`}
-                className="button-secondary"
-              >
-                <UiText>{"일정 편집"}</UiText>
-              </Link>
-            ) : null}
           </>
         )}
       >

@@ -68,13 +68,16 @@ enum FilePurpose {
 enum UploadConsumer {
   REPORT
   ARTIFACT
-  SHOWCASE_IMAGE
 }
 
-enum ReportType {
-  START
-  MIDTERM
-  FINAL
+enum ProgramDivisionRubricMode {
+  INHERIT_COMMON
+  CUSTOM
+}
+
+enum RubricAudience {
+  STAFF_ONLY
+  TEAM_MEMBERS
 }
 
 enum ApprovalDecisionType {
@@ -166,6 +169,13 @@ enum AuditAction {
   PROGRAM_DIVISION_UPDATED
   PROGRAM_DIVISION_DELETED
   PROGRAM_VOTING_RESET
+  PROGRAM_REPORT_DEFINITION_CREATED
+  PROGRAM_REPORT_DEFINITION_UPDATED
+  PROGRAM_REPORT_DEFINITION_ARCHIVED
+  PROGRAM_RUBRIC_CREATED
+  PROGRAM_RUBRIC_UPDATED
+  PROGRAM_RUBRIC_ARCHIVED
+  PROGRAM_DIVISION_RUBRIC_MODE_CHANGED
 }
 
 enum NotificationType {
@@ -271,7 +281,7 @@ model User {
   studentTeamRecruitmentApplications StudentTeamRecruitmentApplication[] @relation("StudentTeamRecruitmentApplicant")
   announcements                      Announcement[]
   profileImage                       UserProfileImage?
-  profileImageUploads                ProfileImageUpload[]              @relation("ProfileImageUploadOwner")
+  profileImageUploads                ProfileImageUpload[]                @relation("ProfileImageUploadOwner")
   projectVotes                       ProjectVote[]
 
   @@map("user")
@@ -283,19 +293,33 @@ enum AnnouncementCategory {
   GRADUATION_PROJECT
 }
 
+enum AnnouncementVisibility {
+  AUTHENTICATED
+  TARGET_MEMBERS
+}
+
 model Announcement {
-  id        String               @id @default(uuid())
-  authorId  String
-  title     String
-  content   String
-  category  AnnouncementCategory @default(GENERAL)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  author    User                 @relation(fields: [authorId], references: [id])
+  id         String                 @id @default(uuid())
+  authorId   String
+  title      String
+  content    String
+  category   AnnouncementCategory   @default(GENERAL)
+  visibility AnnouncementVisibility @default(AUTHENTICATED)
+  pinned     Boolean                @default(false)
+  teamId     String?
+  programId  String?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  author     User                   @relation(fields: [authorId], references: [id])
+  team       Team?                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  program    ProjectProgram?        @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([authorId])
   @@index([category, createdAt])
+  @@index([pinned, createdAt])
+  @@index([teamId, createdAt])
+  @@index([programId, createdAt])
   @@map("announcement")
 }
 
@@ -447,7 +471,7 @@ model ProfessorAllowlist {
 }
 
 model ProjectProgram {
-  id                            String               @id @default(uuid())
+  id                            String                    @id @default(uuid())
   createdById                   String?
   name                          String
   category                      String
@@ -456,20 +480,29 @@ model ProjectProgram {
   endsAt                        DateTime
   projectRegistrationStartsAt   DateTime
   projectRegistrationEndsAt     DateTime
+  recruitmentStartsAt           DateTime
   recruitmentEndsAt             DateTime
-  advisorEnabled                Boolean              @default(true)
-  studentProjectCreationEnabled Boolean              @default(false)
-  icon                          ProgramIcon          @default(FOLDER)
-  isPublic                      Boolean              @default(false)
-  lifecycleStatus               ProgramLifecycleStatus @default(ACTIVE)
-  createdAt                     DateTime             @default(now())
-  updatedAt                     DateTime             @updatedAt
-  createdBy                     User?                @relation(fields: [createdById], references: [id])
+  executionStartsAt             DateTime
+  executionEndsAt               DateTime
+  submissionStartsAt            DateTime
+  submissionEndsAt              DateTime
+  advisorEnabled                Boolean                   @default(true)
+  studentProjectCreationEnabled Boolean                   @default(false)
+  icon                          ProgramIcon               @default(FOLDER)
+  isPublic                      Boolean                   @default(false)
+  lifecycleStatus               ProgramLifecycleStatus    @default(ACTIVE)
+  firstPublishedAt              DateTime?
+  closedAt                      DateTime?
+  createdAt                     DateTime                  @default(now())
+  updatedAt                     DateTime                  @updatedAt
+  createdBy                     User?                     @relation(fields: [createdById], references: [id])
   topics                        Topic[]
   votingPolicy                  ProgramVotingPolicy?
   votes                         ProjectVote[]
   divisions                     ProgramDivision[]
-  rubricCriteria                RubricCriterion[]
+  reportDefinitions             ProgramReportDefinition[]
+  rubricDefinitions             RubricDefinition[]
+  announcements                 Announcement[]
 
   @@unique([name, startsAt])
   @@index([lifecycleStatus, startsAt, endsAt])
@@ -478,14 +511,16 @@ model ProjectProgram {
 }
 
 model ProgramDivision {
-  id        String         @id @default(uuid())
-  programId String
-  name      String
-  position  Int            @default(0)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  program   ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  topics    Topic[]
+  id                String                    @id @default(uuid())
+  programId         String
+  name              String
+  position          Int                       @default(0)
+  rubricMode        ProgramDivisionRubricMode @default(INHERIT_COMMON)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  program           ProjectProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  topics            Topic[]
+  rubricDefinitions RubricDefinition[]
 
   @@unique([programId, name])
   @@unique([id, programId])
@@ -494,42 +529,88 @@ model ProgramDivision {
   @@map("program_track")
 }
 
-model RubricCriterion {
-  id        String              @id @default(uuid())
-  programId String
-  label     String
-  maxPoints Int                 @default(10)
-  position  Int                 @default(0)
-  createdAt DateTime            @default(now())
-  program   ProjectProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
-  scores    ReportRubricScore[]
+model ProgramReportDefinition {
+  id         String         @id @default(uuid())
+  programId  String
+  title      String
+  dueAt      DateTime
+  position   Int            @default(0)
+  archivedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  program    ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  reports    Report[]
 
-  @@index([programId, position])
+  @@unique([id, programId])
+  @@index([programId, archivedAt, position])
+  @@map("program_report_definition")
+}
+
+model RubricDefinition {
+  id           String                 @id @default(uuid())
+  programId    String
+  divisionId   String?
+  title        String
+  gradingDueAt DateTime
+  position     Int                    @default(0)
+  audience     RubricAudience         @default(STAFF_ONLY)
+  archivedAt   DateTime?
+  legacy       Boolean                @default(false)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  program      ProjectProgram         @relation(fields: [programId], references: [id], onDelete: Cascade)
+  division     ProgramDivision?       @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
+  criteria     RubricCriterion[]
+  evaluations  TeamRubricEvaluation[]
+
+  @@unique([id, programId])
+  @@index([programId, divisionId, archivedAt, position])
+  @@map("rubric_definition")
+}
+
+model RubricCriterion {
+  id        String           @id @default(uuid())
+  rubricId  String
+  label     String
+  maxPoints Int              @default(10)
+  position  Int              @default(0)
+  createdAt DateTime         @default(now())
+  rubric    RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  scores    RubricScore[]
+
+  @@index([rubricId, position])
   @@map("rubric_criterion")
 }
 
-model ReportRubricScore {
-  id           String          @id @default(uuid())
-  reportId     String
+model TeamRubricEvaluation {
+  id                  String           @id @default(uuid())
+  teamId              String
+  rubricId            String
+  legacyMemberVisible Boolean?
+  createdAt           DateTime         @default(now())
+  team                Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  rubric              RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  scores              RubricScore[]
+
+  @@unique([teamId, rubricId])
+  @@index([teamId])
+  @@index([rubricId])
+  @@map("team_rubric_evaluation")
+}
+
+model RubricScore {
+  id           String               @id @default(uuid())
+  evaluationId String
   criterionId  String
   points       Int
   scoredByName String
-  updatedAt    DateTime        @updatedAt
-  report       Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  updatedAt    DateTime             @updatedAt
+  evaluation   TeamRubricEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterion    RubricCriterion      @relation(fields: [criterionId], references: [id], onDelete: Restrict)
 
-  @@unique([reportId, criterionId])
-  @@index([reportId])
-  @@map("report_rubric_score")
-}
-
-model ReportRubricRelease {
-  reportId       String   @id
-  releasedAt     DateTime @default(now())
-  releasedByName String
-  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
-
-  @@map("report_rubric_release")
+  @@unique([evaluationId, criterionId])
+  @@index([evaluationId])
+  @@map("rubric_score")
 }
 
 enum ProgramIcon {
@@ -560,7 +641,7 @@ enum VoteLimitScope {
 model Topic {
   id                      String                       @id @default(uuid())
   programId               String
-  divisionId              String?                       @map("trackId")
+  divisionId              String?                      @map("trackId")
   authorId                String
   managerId               String?
   title                   String
@@ -573,11 +654,6 @@ model Topic {
   applicationMode         TopicApplicationMode         @default(INDIVIDUAL_ONLY)
   recruitmentEnabled      Boolean                      @default(true)
   capacity                Int
-  recruitmentStartsAt     DateTime
-  executionStartsAt       DateTime
-  executionEndsAt         DateTime
-  submissionStartsAt      DateTime
-  submissionEndsAt        DateTime
   status                  TopicStatus
   publishedAt             DateTime?
   createdAt               DateTime                     @default(now())
@@ -609,7 +685,7 @@ model ProgramVotingPolicy {
   startsAt           DateTime
   endsAt             DateTime
   voteLimit          Int
-  voteLimitScope     VoteLimitScope         @default(PROGRAM)
+  voteLimitScope     VoteLimitScope           @default(PROGRAM)
   selfVotingAllowed  Boolean                  @default(false)
   identityVisibility VotingIdentityVisibility @default(ANONYMOUS)
   createdAt          DateTime                 @default(now())
@@ -774,27 +850,29 @@ model TopicApplicationAnswer {
 }
 
 model Team {
-  id               String                   @id @default(uuid())
-  programId        String
-  topicId          String                   @unique
-  professorId      String
-  name             String
-  sourceUrl        String?
-  thumbnailPath    String?
-  posterPath       String?
-  status           TeamStatus               @default(FORMING)
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
-  topic            Topic                    @relation(fields: [topicId, programId, professorId], references: [id, programId, managerId])
-  members          TeamMember[]
-  tasks            Task[]
-  progressUpdates  ProgressUpdate[]
-  discussionPosts  DiscussionPost[]
-  storedFiles      StoredFile[]
-  reports          Report[]
-  artifacts        Artifact[]
-  recruitmentPosts RecruitmentPost[]
-  guidanceRequests ProjectGuidanceRequest[]
+  id                String                   @id @default(uuid())
+  programId         String
+  topicId           String                   @unique
+  professorId       String
+  name              String
+  sourceUrl         String?
+  thumbnailPath     String?
+  posterPath        String?
+  status            TeamStatus               @default(FORMING)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  topic             Topic                    @relation(fields: [topicId, programId, professorId], references: [id, programId, managerId])
+  members           TeamMember[]
+  tasks             Task[]
+  progressUpdates   ProgressUpdate[]
+  discussionPosts   DiscussionPost[]
+  storedFiles       StoredFile[]
+  reports           Report[]
+  rubricEvaluations TeamRubricEvaluation[]
+  artifacts         Artifact[]
+  recruitmentPosts  RecruitmentPost[]
+  guidanceRequests  ProjectGuidanceRequest[]
+  announcements     Announcement[]
 
   @@unique([topicId, programId, professorId])
   @@unique([id, programId, topicId])
@@ -830,20 +908,20 @@ model ProjectGuidanceRequest {
 }
 
 model StudentTeam {
-  id                String                       @id @default(uuid())
-  name              String
-  description       String                       @default("")
-  leaderId          String
+  id                 String                       @id @default(uuid())
+  name               String
+  description        String                       @default("")
+  leaderId           String
   compositionVersion Int                          @default(1)
-  deletedAt         DateTime?
-  createdAt         DateTime                     @default(now())
-  updatedAt         DateTime                     @updatedAt
-  leader            User                         @relation("StudentTeamLeader", fields: [leaderId], references: [id])
-  members           StudentTeamMember[]
-  invitations       StudentTeamInvitation[]
-  recruitmentPosts  StudentTeamRecruitmentPost[]
-  applicationGroups TopicApplicationGroup[]
-  proposalRequests  TopicApprovalRequest[]
+  deletedAt          DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  leader             User                         @relation("StudentTeamLeader", fields: [leaderId], references: [id])
+  members            StudentTeamMember[]
+  invitations        StudentTeamInvitation[]
+  recruitmentPosts   StudentTeamRecruitmentPost[]
+  applicationGroups  TopicApplicationGroup[]
+  proposalRequests   TopicApprovalRequest[]
 
   @@index([leaderId, deletedAt])
   @@index([deletedAt, updatedAt])
@@ -1116,20 +1194,22 @@ model ObjectDeletionJob {
 }
 
 model Report {
-  id           String           @id @default(uuid())
-  teamId       String
-  type         ReportType
-  dueAt        DateTime
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  team          Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id            String                  @id @default(uuid())
+  teamId        String
+  definitionId  String
+  titleSnapshot String
+  dueAt         DateTime
+  required      Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  team          Team                    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  definition    ProgramReportDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
   versions      ReportVersion[]
   feedback      ReportFeedback[]
-  rubricScores  ReportRubricScore[]
-  rubricRelease ReportRubricRelease?
 
-  @@unique([teamId, type])
-  @@index([teamId, dueAt])
+  @@unique([teamId, definitionId])
+  @@index([teamId, required, dueAt])
+  @@index([definitionId])
   @@map("report")
 }
 
@@ -1196,22 +1276,22 @@ model Artifact {
 }
 
 model FeedbackPost {
-  id             String               @id @default(uuid())
+  id             String                 @id @default(uuid())
   authorName     String
   targetScreen   FeedbackTargetScreen
   area           String
   type           FeedbackType
-  priority       FeedbackPriority     @default(NORMAL)
+  priority       FeedbackPriority       @default(NORMAL)
   title          String
   body           String
-  status         FeedbackStatus       @default(OPEN)
+  status         FeedbackStatus         @default(OPEN)
   resolvedAt     DateTime?
   resolvedById   String?
   resolvedByName String?
-  createdAt      DateTime             @default(now())
+  createdAt      DateTime               @default(now())
   comments       FeedbackComment[]
   statusChanges  FeedbackStatusChange[]
-  resolvedBy     User?                @relation("FeedbackPostResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedBy     User?                  @relation("FeedbackPostResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([status, priority, createdAt])
   @@map("feedback_post")
@@ -1233,74 +1313,15 @@ model FeedbackStatusChange {
 }
 
 model FeedbackComment {
-  id            String       @id @default(uuid())
-  postId        String
-  authorId      String?
-  authorName    String
-  body          String
-  createdAt     DateTime     @default(now())
-  post          FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author        User?        @relation("FeedbackCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  id         String       @id @default(uuid())
+  postId     String
+  authorId   String?
+  authorName String
+  body       String
+  createdAt  DateTime     @default(now())
+  post       FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author     User?        @relation("FeedbackCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([postId, createdAt])
   @@map("feedback_comment")
-}
-
-model ProjectShowcase {
-  id          String          @id @default(uuid())
-  teamId      String          @unique
-  summary     String
-  githubUrl   String?
-  youtubeUrl  String?
-  demoUrl     String?
-  isPublished Boolean         @default(false)
-  publishedAt DateTime?
-  awardName   String?
-  awardColor  String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  images      ShowcaseImage[]
-  likes       ShowcaseLike[]
-  comments    ShowcaseComment[]
-
-  @@index([isPublished, publishedAt])
-  @@map("project_showcase")
-}
-
-model ShowcaseLike {
-  id         String          @id @default(uuid())
-  showcaseId String
-  userId     String
-  createdAt  DateTime        @default(now())
-  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
-
-  @@unique([showcaseId, userId])
-  @@index([showcaseId])
-  @@map("showcase_like")
-}
-
-model ShowcaseComment {
-  id         String          @id @default(uuid())
-  showcaseId String
-  authorId   String
-  authorName String
-  body       String
-  createdAt  DateTime        @default(now())
-  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
-
-  @@index([showcaseId, createdAt])
-  @@map("showcase_comment")
-}
-
-model ShowcaseImage {
-  id         String          @id @default(uuid())
-  showcaseId String
-  fileId     String          @unique
-  position   Int             @default(0)
-  isCover    Boolean         @default(false)
-  createdAt  DateTime        @default(now())
-  showcase   ProjectShowcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
-
-  @@index([showcaseId, position])
-  @@map("showcase_image")
 }

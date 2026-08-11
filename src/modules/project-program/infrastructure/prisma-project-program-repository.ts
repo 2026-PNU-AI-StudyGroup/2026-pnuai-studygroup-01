@@ -13,11 +13,11 @@ import { enqueueTranslations } from "@/modules/translation/application/translati
 export class PrismaProjectProgramRepository implements ProjectProgramRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async create(input: ProjectProgramDetails & { divisionNames?: string[]; votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE"> {
+  async create(input: ProjectProgramDetails & { divisionNames?: string[]; votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<string | "DUPLICATE"> {
     try {
       return await this.client.$transaction(async (transaction) => {
         const { votingPolicy, divisionNames = [], ...program } = input;
-        await transaction.projectProgram.create({
+        const created = await transaction.projectProgram.create({
           data: {
             ...program,
             isPublic: false,
@@ -25,9 +25,10 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             votingPolicy: votingPolicy ? { create: votingPolicy } : undefined,
             divisions: divisionNames.length ? { create: divisionNames.map((name, position) => ({ name, position })) } : undefined,
           },
+          select: { id: true },
         });
         await enqueueTranslations(transaction, [input.name, input.category, input.description]);
-        return "CREATED" as const;
+        return created.id;
       });
     } catch (error) {
       if (
@@ -43,6 +44,8 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   listPublic(): Promise<ProjectProgramRecord[]> { return this.list({ isPublic: true }); }
   listOpen(): Promise<ProjectProgramRecord[]> { return this.listPublic(); }
   listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]> {
+    // Visibility is an explicit setting and does not expire with the operating period.
+    void now;
     return this.list({
       OR: [
         { isPublic: true },
@@ -82,26 +85,26 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       const voteCount = currentPolicy
         ? await transaction.projectVote.count({ where: { programId: id } })
         : 0;
-      const scheduleConflict = await transaction.topic.findFirst({
-        where: {
-          programId: id,
-          OR: [
-            { recruitmentStartsAt: { lt: input.startsAt } },
-            { executionStartsAt: { lt: input.startsAt } },
-            { executionEndsAt: { lt: input.startsAt } },
-            { submissionStartsAt: { lt: input.startsAt } },
-            { submissionEndsAt: { lt: input.startsAt } },
-            { recruitmentStartsAt: { gt: input.endsAt } },
-            { executionStartsAt: { gt: input.endsAt } },
-            { executionEndsAt: { gt: input.endsAt } },
-            { submissionStartsAt: { gt: input.endsAt } },
-            { submissionEndsAt: { gt: input.endsAt } },
-            { recruitmentStartsAt: { gte: input.recruitmentEndsAt } },
-          ],
-        },
-        select: { id: true },
-      });
-      if (scheduleConflict) return "TOPIC_SCHEDULE_CONFLICT";
+      const [reportDeadlineConflict, guidanceScheduleConflict] = await Promise.all([
+        transaction.report.findFirst({
+          where: {
+            team: { programId: id },
+            OR: [
+              { dueAt: { lt: input.executionStartsAt } },
+              { dueAt: { gt: input.submissionEndsAt } },
+            ],
+          },
+          select: { id: true },
+        }),
+        transaction.projectGuidanceRequest.findFirst({
+          where: {
+            team: { programId: id },
+            scheduledAt: { gt: input.executionEndsAt },
+          },
+          select: { id: true },
+        }),
+      ]);
+      if (reportDeadlineConflict || guidanceScheduleConflict) return "DEPENDENT_SCHEDULE_CONFLICT";
 
       const divisionCount = await transaction.programDivision.count({ where: { programId: id } });
       if (input.votingPolicy?.voteLimitScope === "DIVISION" && divisionCount === 0) return "DIVISIONS_REQUIRED";
@@ -173,15 +176,34 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           advisorEnabled: input.advisorEnabled,
           projectRegistrationStartsAt: input.projectRegistrationStartsAt,
           projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+          recruitmentStartsAt: input.recruitmentStartsAt,
           recruitmentEndsAt: input.recruitmentEndsAt,
+          executionStartsAt: input.executionStartsAt,
+          executionEndsAt: input.executionEndsAt,
+          submissionStartsAt: input.submissionStartsAt,
+          submissionEndsAt: input.submissionEndsAt,
         },
       });
       return "UPDATED";
     });
   }
 
-  setPublic(id: string, isPublic: boolean): Promise<boolean> {
-    return this.client.projectProgram.updateMany({ where: { id }, data: { isPublic } }).then(({ count }) => count === 1);
+  setPublic(id: string, isPublic: boolean, changedAt: Date): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ id: string; firstPublishedAt: Date | null }>>(Prisma.sql`
+        SELECT "id", "firstPublishedAt" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
+      `);
+      const program = rows[0];
+      if (!program) return false;
+      await transaction.projectProgram.update({
+        where: { id },
+        data: {
+          isPublic,
+          firstPublishedAt: isPublic && program.firstPublishedAt === null ? changedAt : undefined,
+        },
+      });
+      return true;
+    });
   }
 
   close(id: string, changedById: string, changedAt: Date): Promise<boolean> {
@@ -192,7 +214,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       if (!rows[0]) return false;
       const result = await transaction.projectProgram.updateMany({
         where: { id, lifecycleStatus: "ACTIVE" },
-        data: { lifecycleStatus: "CLOSED" },
+        data: { lifecycleStatus: "CLOSED", closedAt: changedAt },
       });
       if (result.count !== 1) return false;
       {
@@ -236,7 +258,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   }
 
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean> {
-    return status === "OPEN" ? this.setPublic(id, true) : this.close(id, changedById, changedAt);
+    return status === "OPEN" ? this.setPublic(id, true, changedAt) : this.close(id, changedById, changedAt);
   }
 
   async changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean> {
@@ -258,7 +280,12 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     endsAt: Date;
     projectRegistrationStartsAt: Date;
     projectRegistrationEndsAt: Date;
+    recruitmentStartsAt: Date;
     recruitmentEndsAt: Date;
+    executionStartsAt: Date;
+    executionEndsAt: Date;
+    submissionStartsAt: Date;
+    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
   } | null> {
@@ -270,7 +297,12 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         endsAt: true,
         projectRegistrationStartsAt: true,
         projectRegistrationEndsAt: true,
+        recruitmentStartsAt: true,
         recruitmentEndsAt: true,
+        executionStartsAt: true,
+        executionEndsAt: true,
+        submissionStartsAt: true,
+        submissionEndsAt: true,
         advisorEnabled: true,
         studentProjectCreationEnabled: true,
       },

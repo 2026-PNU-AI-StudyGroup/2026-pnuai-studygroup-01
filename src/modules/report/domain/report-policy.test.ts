@@ -5,7 +5,6 @@ import {
   normalizeArtifact,
   normalizeDecisionComment,
   normalizeReportFeedback,
-  validateReportDueAt,
 } from "@/modules/report/domain/report-policy";
 
 describe("보고서 정책", () => {
@@ -20,13 +19,6 @@ describe("보고서 정책", () => {
       .toEqual({ title: "소스", externalUrl: "https://github.com/pnu/project" });
     expect(() => normalizeArtifact({ title: "소스", externalUrl: "http://example.com" }))
       .toThrow(InvalidReportInputError);
-  });
-
-  it("보고서 기한은 설정 시점보다 이후여야 한다", () => {
-    const now = new Date("2026-07-17T00:00:00Z");
-    expect(validateReportDueAt(new Date("2026-07-18T00:00:00Z"), now))
-      .toEqual(new Date("2026-07-18T00:00:00Z"));
-    expect(() => validateReportDueAt(now, now)).toThrow(InvalidReportInputError);
   });
 
   it("피드백은 1~2000자여야 한다", () => {

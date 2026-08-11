@@ -29,27 +29,26 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
-        projects: "내 프로젝트",
-        teamWorkspace: "팀",
+        myTeam: "내 팀",
         announcements: "공지사항",
-        allProjects: "전체 프로젝트",
-        mentoredProjects: "프로젝트 운영",
-        manage: "관리",
+        allProjects: "전체 현황",
+        mentoredProjects: "지도 현황",
+        manageTopics: "주제 관리",
+        manageOps: "운영 관리",
       }
     : {
         explore: "Explore",
-        projects: "Projects",
-        teamWorkspace: "Teams",
+        myTeam: "My team",
         announcements: "Notices",
-        allProjects: "All projects",
-        mentoredProjects: "Mentoring",
-        manage: "Manage",
+        allProjects: "Overview",
+        mentoredProjects: "Advising",
+        manageTopics: "Topic management",
+        manageOps: "Operations",
       };
   if (role === "STUDENT") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/dashboard", label: label.projects, icon: "home" },
-      { href: "/recruitments", label: label.teamWorkspace, icon: "users" },
+      { href: "/dashboard", label: label.myTeam, icon: "users" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
     ];
   }
@@ -58,27 +57,23 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.allProjects, icon: "home" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
-      { href: "/admin/programs", label: label.manage, icon: "settings" },
+      { href: "/admin/programs", label: label.manageOps, icon: "settings" },
     ];
   }
   return [
     { href: "/topics", label: label.explore, icon: "search" },
     { href: "/dashboard", label: label.mentoredProjects, icon: "home" },
     { href: "/announcements", label: label.announcements, icon: "notice" },
-    { href: "/professor/topics", label: label.manage, icon: "settings" },
+    { href: "/professor/topics", label: label.manageTopics, icon: "settings" },
   ];
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
-  if (
-    role === "STUDENT" &&
-    item.href === "/dashboard" &&
-    (isSectionActive("/projects", currentPath) || isSectionActive("/project-approvals", currentPath))
-  ) {
-    return true;
-  }
-  if (role === "STUDENT" && item.href === "/recruitments") {
-    return isSectionActive("/recruitments", currentPath) ||
+  if (role === "STUDENT" && item.href === "/dashboard") {
+    return isSectionActive("/dashboard", currentPath) ||
+      isSectionActive("/projects", currentPath) ||
+      isSectionActive("/project-approvals", currentPath) ||
+      isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
   if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);
@@ -142,13 +137,13 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
       <div className="app-shell min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center bg-[var(--sidebar)] px-2 py-6 lg:flex">
-          <Brand href="/topics" variant="sidebar" inverse />
-          <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-2">
+        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-[var(--sidebar)] px-2 py-6 lg:flex">
+          <Brand href="/topics" variant="sidebar" />
+          <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-1">
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-white/14 text-white" : "text-[#cbd6ff] hover:bg-white/8 hover:text-white"}`}>
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
                   <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
                   <span><UiText>{item.label}</UiText></span>
                 </Link>
@@ -159,11 +154,10 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             <NotificationIndicatorContainer
               userId={userId}
               active={currentPath === "/notifications"}
-              inverse
               openNotification={openNotificationAction}
             />
-            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} inverse />
-            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} inverse locale={locale} />
+            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} />
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">

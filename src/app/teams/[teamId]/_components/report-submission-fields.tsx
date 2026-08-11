@@ -1,21 +1,20 @@
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { FileInput } from "@/shared/ui/form-system";
-import { koreanDateTime, reportTypeLabel } from "@/app/teams/[teamId]/_lib/report-form-shared";
-import type { ReportType } from "@/modules/report/domain/report-policy";
+import { koreanDateTime } from "@/app/teams/[teamId]/_lib/report-form-shared";
 import { CustomSelect } from "@/shared/ui/custom-select";
 
 export function ReportSubmissionFields({
   requirements,
 }: {
-  requirements: Array<{ type: ReportType; dueAt: Date }>;
+  requirements: Array<{ id: string; title: string; dueAt: Date }>;
 }) {
   return (
     <>
       <label className="grid gap-2 text-sm font-semibold">
-        <UiText>{"보고서 종류"}</UiText><CustomSelect name="type" ariaLabel="보고서 종류" defaultValue={requirements[0]?.type} options={requirements.map((requirement) => ({
-          value: requirement.type,
-          label: reportTypeLabel[requirement.type],
+        <UiText>{"보고서"}</UiText><CustomSelect name="reportId" ariaLabel="보고서" defaultValue={requirements[0]?.id} options={requirements.map((requirement) => ({
+          value: requirement.id,
+          label: requirement.title,
           description: `${koreanDateTime.format(requirement.dueAt)}까지`,
         }))} />
       </label>

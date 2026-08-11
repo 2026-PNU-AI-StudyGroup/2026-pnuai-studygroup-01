@@ -16,6 +16,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       SELECT "team"."id"
       FROM "team"
       JOIN "topic" ON "topic"."id" = "team"."topicId"
+      JOIN "project_program" ON "project_program"."id" = "topic"."programId"
       WHERE "team"."id" = ${input.teamId}
         AND "team"."status" = 'CONFIRMED'
         AND (
@@ -25,7 +26,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
               SELECT 1 FROM "team_member"
               WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
             )
-            AND ${input.at} BETWEEN "topic"."submissionStartsAt" AND "topic"."submissionEndsAt"
+            AND ${input.at} BETWEEN "project_program"."submissionStartsAt" AND "project_program"."submissionEndsAt"
           )
         )
       FOR UPDATE OF "team"
@@ -125,11 +126,8 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       await transaction.artifact.delete({ where: { id: input.artifactId } });
 
       if (artifact.fileId) {
-        const [reportReferenceCount, showcaseReferenceCount] = await Promise.all([
-          transaction.reportVersion.count({ where: { fileId: artifact.fileId } }),
-          transaction.showcaseImage.count({ where: { fileId: artifact.fileId } }),
-        ]);
-        if (reportReferenceCount === 0 && showcaseReferenceCount === 0) {
+        const reportReferenceCount = await transaction.reportVersion.count({ where: { fileId: artifact.fileId } });
+        if (reportReferenceCount === 0) {
           await transaction.storedFile.deleteMany({
             where: {
               id: artifact.fileId,

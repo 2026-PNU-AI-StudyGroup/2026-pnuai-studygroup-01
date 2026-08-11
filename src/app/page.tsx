@@ -40,8 +40,8 @@ export default async function Home({
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
       <div className="min-h-screen lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 hidden h-screen min-h-[42rem] flex-col items-center bg-[var(--sidebar)] px-2 py-6 lg:flex">
-          <Brand href="/" variant="sidebar" inverse />
+        <aside className="sticky top-0 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-[var(--sidebar)] px-2 py-6 lg:flex">
+          <Brand href="/" variant="sidebar" />
         </aside>
 
         <div className="min-w-0">
@@ -61,9 +61,6 @@ export default async function Home({
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />
               ) : null}
               <div className="mt-6 grid gap-2 border-t border-[var(--line)] pt-5">
-                <Link href="/showcase" className="button-secondary w-full justify-center">
-                  <UiText>{"프로젝트 쇼케이스"}</UiText>
-                </Link>
                 <Link href="/feedback" className="button-primary w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
                 </Link>

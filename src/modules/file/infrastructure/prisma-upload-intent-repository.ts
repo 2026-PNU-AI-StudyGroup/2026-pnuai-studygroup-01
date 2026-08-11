@@ -28,26 +28,14 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         SELECT "team"."id"
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
+          AND "team"."status" <> 'CLOSED'
           AND (
-            (${input.consumer}::"UploadConsumer" = 'SHOWCASE_IMAGE' AND (
-              ${input.actor.role}::"UserRole" = 'ADMIN' OR
-              "team"."professorId" = ${input.actor.id} OR
-              (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-                SELECT 1 FROM "team_member"
-                WHERE "team_member"."teamId" = "team"."id"
-                  AND "team_member"."studentId" = ${input.actor.id}
-              ))
-            )) OR (
-              ${input.consumer}::"UploadConsumer" <> 'SHOWCASE_IMAGE' AND
-              "team"."status" <> 'CLOSED' AND (
-                ${input.actor.role}::"UserRole" = 'ADMIN' OR
-                (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-                  SELECT 1 FROM "team_member"
-                  WHERE "team_member"."teamId" = "team"."id"
-                    AND "team_member"."studentId" = ${input.actor.id}
-                ))
-              )
-            )
+            ${input.actor.role}::"UserRole" = 'ADMIN' OR
+            (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
+              SELECT 1 FROM "team_member"
+              WHERE "team_member"."teamId" = "team"."id"
+                AND "team_member"."studentId" = ${input.actor.id}
+            ))
           )
         FOR UPDATE
       `);
@@ -65,19 +53,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
           ${input.cleanupAfter}, ${new Date()}
         FROM "team"
         WHERE "team"."id" = ${input.teamId}
-          AND (
-            (${input.consumer}::"UploadConsumer" = 'SHOWCASE_IMAGE' AND (
-              ${input.actor.role}::"UserRole" = 'ADMIN' OR
-              "team"."professorId" = ${input.actor.id} OR
-              (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-                SELECT 1 FROM "team_member"
-                WHERE "team_member"."teamId" = "team"."id"
-                  AND "team_member"."studentId" = ${input.actor.id}
-              ))
-            )) OR (
-              ${input.consumer}::"UploadConsumer" <> 'SHOWCASE_IMAGE' AND "team"."status" <> 'CLOSED'
-            )
-          )
+          AND "team"."status" <> 'CLOSED'
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
@@ -131,7 +107,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         WHERE "stored_file"."id" = ${id}
           AND "stored_file"."ownerId" = ${ownerId}
           AND "stored_file"."status" = 'PENDING'
-          AND ("stored_file"."consumer" = 'SHOWCASE_IMAGE' OR "team"."status" <> 'CLOSED')
+          AND "team"."status" <> 'CLOSED'
         FOR UPDATE OF "team", "stored_file"
       `);
       const file = files[0];

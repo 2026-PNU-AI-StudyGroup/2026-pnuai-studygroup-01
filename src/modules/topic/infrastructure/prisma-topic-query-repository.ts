@@ -6,7 +6,6 @@ import type {
   ManagedTopicSummary,
   PublicTopicLister,
   PublicTopicPage,
-  PublicTopicPhase,
   PublicTopicQuery,
   PublicTopicSummary,
   TopicLister,
@@ -18,7 +17,7 @@ const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, startsAt: true, recruitmentEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
   team: { select: { _count: { select: { members: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -59,11 +58,6 @@ const managedTopicSelect = {
     },
   },
   capacity: true,
-  recruitmentStartsAt: true,
-  executionStartsAt: true,
-  executionEndsAt: true,
-  submissionStartsAt: true,
-  submissionEndsAt: true,
   status: true,
   publishedAt: true,
   _count: {
@@ -80,7 +74,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, recruitmentEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -171,31 +165,13 @@ export class PrismaTopicQueryRepository
       ...divisionWhere,
       ...search,
     };
-    const where: Prisma.TopicWhereInput = {
-      AND: [baseWhere, phaseWhere(query.phase, query.now)],
-    };
-    const [total, activeCount, recruitingCount, closingSoonCount] =
-      await Promise.all([
-        this.client.topic.count({ where }),
-        this.client.topic.count({ where: baseWhere }),
-        this.client.topic.count({
-          where: {
-            AND: [baseWhere, phaseWhere("RECRUITING", query.now)],
-          },
-        }),
-        this.client.topic.count({
-          where: {
-            AND: [baseWhere, phaseWhere("CLOSING_SOON", query.now)],
-          },
-        }),
-      ]);
+    const where = baseWhere;
+    const total = await this.client.topic.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
     const page = Math.min(query.page, totalPages);
     const topics = await this.client.topic.findMany({
       where,
-      orderBy: query.sort === "DEADLINE"
-        ? [{ program: { recruitmentEndsAt: "asc" } }, { id: "asc" }]
-        : [{ publishedAt: "desc" }, { id: "desc" }],
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * query.pageSize,
       take: query.pageSize,
       include: publicTopicInclude,
@@ -218,11 +194,6 @@ export class PrismaTopicQueryRepository
       page,
       totalPages,
       total,
-      counts: {
-        ACTIVE: activeCount,
-        RECRUITING: recruitingCount,
-        CLOSING_SOON: closingSoonCount,
-      },
     };
   }
 
@@ -251,7 +222,12 @@ function toTopicSummary(
     divisionName: division?.name ?? null,
     programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
+    programRecruitmentStartsAt: program.recruitmentStartsAt,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
+    programExecutionStartsAt: program.executionStartsAt,
+    programExecutionEndsAt: program.executionEndsAt,
+    programSubmissionStartsAt: program.submissionStartsAt,
+    programSubmissionEndsAt: program.submissionEndsAt,
     pendingApplicationCount: _count.applications,
     openRecruitmentPostCount: team?._count.recruitmentPosts ?? 0,
   };
@@ -272,30 +248,13 @@ function toPublicTopic(
     divisionName: division?.name ?? null,
     programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
+    programRecruitmentStartsAt: program.recruitmentStartsAt,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
+    programExecutionStartsAt: program.executionStartsAt,
+    programExecutionEndsAt: program.executionEndsAt,
+    programSubmissionStartsAt: program.submissionStartsAt,
+    programSubmissionEndsAt: program.submissionEndsAt,
     memberCount: team?._count.members ?? 0,
     ownApplicationStatus,
   };
-}
-
-function phaseWhere(
-  phase: PublicTopicPhase,
-  now: Date,
-): Prisma.TopicWhereInput {
-  if (phase === "RECRUITING") {
-    return {
-      recruitmentEnabled: true,
-      recruitmentStartsAt: { lte: now },
-      program: { recruitmentEndsAt: { gt: now } },
-    };
-  }
-  if (phase === "CLOSING_SOON") {
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1_000);
-    return {
-      recruitmentEnabled: true,
-      recruitmentStartsAt: { lte: now },
-      program: { recruitmentEndsAt: { gt: now, lte: sevenDaysLater } },
-    };
-  }
-  return {};
 }

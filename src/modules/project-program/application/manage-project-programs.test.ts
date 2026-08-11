@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError, ProjectProgramService, type ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
-import { getProgramStartYear, InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
+import { getProgramStartYear, InvalidProjectProgramError, normalizeProjectProgram } from "@/modules/project-program/domain/project-program-policy";
 
 const programInput = {
   name: "캡스톤",
@@ -8,7 +8,12 @@ const programInput = {
   description: "설명",
   startsAt: new Date("2026-03-01T00:00:00Z"),
   endsAt: new Date("2026-12-01T00:00:00Z"),
+  recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
   recruitmentEndsAt: new Date("2026-11-01T00:00:00Z"),
+  executionStartsAt: new Date("2026-03-15T00:00:00Z"),
+  executionEndsAt: new Date("2026-11-15T00:00:00Z"),
+  submissionStartsAt: new Date("2026-10-15T00:00:00Z"),
+  submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
   icon: "FOLDER" as const,
@@ -32,8 +37,8 @@ function repository(overrides: Partial<ProjectProgramRepository> = {}): ProjectP
 
 describe("프로젝트 프로그램 관리", () => {
   it("관리자가 운영·등록 기간을 가진 동적 프로그램을 개설한다", async () => {
-    const value = repository({ create: vi.fn(async () => "CREATED" as const) });
-    await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+    const programId = await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
       ...programInput,
       name: " PNU 창의융합 해커톤 ",
       category: " 교내 대회 ",
@@ -47,15 +52,32 @@ describe("프로젝트 프로그램 관리", () => {
       projectRegistrationStartsAt: new Date("2026-04-01"),
       createdById: "admin",
     }));
+    expect(programId).toBe("program-1");
   });
 
   it("등록기간을 생략한 기존 호출은 운영기간으로 보완한다", async () => {
-    const value = repository({ create: vi.fn(async () => "CREATED" as const) });
+    const value = repository({ create: vi.fn(async () => "program-1") });
     await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, programInput);
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
     }));
+  });
+
+  it("모집·수행·제출 기간은 운영 기간 안에 있고 각각 시작이 종료보다 앞서야 한다", () => {
+    expect(() => normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      executionEndsAt: programInput.executionStartsAt,
+    })).toThrow("수행 시작 시각은 종료 시각보다 앞서야 합니다.");
+
+    expect(() => normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      submissionEndsAt: new Date("2027-01-01T00:00:00Z"),
+    })).toThrow("제출 기간은 프로그램 운영 기간 안에 있어야 합니다.");
   });
 
   it("운영이 종료됐어도 진행 중인 투표 프로그램은 사이드바 목록에 포함한다", async () => {
@@ -72,7 +94,7 @@ describe("프로젝트 프로그램 관리", () => {
   });
 
   it("분과가 없으면 분과별 투표 프로그램 생성을 거부한다", async () => {
-    const value = repository({ create: vi.fn(async () => "CREATED" as const) });
+    const value = repository({ create: vi.fn(async () => "program-1") });
     await expect(new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
       ...programInput,
       divisionNames: [],
@@ -121,7 +143,12 @@ describe("프로젝트 프로그램 관리", () => {
     const result = new ProjectProgramService(value).updateSettings({ id: "admin", role: "ADMIN" }, "program-1", {
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
+      recruitmentStartsAt: programInput.recruitmentStartsAt,
       recruitmentEndsAt: programInput.recruitmentEndsAt,
+      executionStartsAt: programInput.executionStartsAt,
+      executionEndsAt: programInput.executionEndsAt,
+      submissionStartsAt: programInput.submissionStartsAt,
+      submissionEndsAt: programInput.submissionEndsAt,
       votingPolicy: {
         startsAt: new Date("2026-08-01T00:00:00Z"),
         endsAt: new Date("2026-08-31T00:00:00Z"),

@@ -1,4 +1,3 @@
-export type ReportType = "START" | "MIDTERM" | "FINAL";
 export type ApprovalDecision = "APPROVED" | "REVISION_REQUESTED";
 export type ArtifactType = "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER";
 
@@ -13,13 +12,6 @@ export function normalizeDescription(value: string) {
   const normalized = value.trim();
   if (normalized.length > 2_000) throw new InvalidReportInputError();
   return normalized;
-}
-
-export function validateReportDueAt(dueAt: Date, now: Date) {
-  if (Number.isNaN(dueAt.getTime()) || dueAt <= now) {
-    throw new InvalidReportInputError();
-  }
-  return dueAt;
 }
 
 export function normalizeDecisionComment(decision: ApprovalDecision, value: string) {

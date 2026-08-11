@@ -47,7 +47,7 @@ function client(identityVisibility: "ANONYMOUS" | "NAMED", topics: ResultTopic[]
 }
 
 describe("PrismaProjectVotingRepository 결과 조회", () => {
-  it("비공개 또는 종료된 프로그램의 투표 용지를 제공하지 않는다", async () => {
+  it("비공개 프로그램의 투표 용지를 제공하지 않는다", async () => {
     const value = client("ANONYMOUS");
     value.projectProgram.findUnique = vi.fn().mockResolvedValue({
       id: "program-1",
@@ -66,6 +66,46 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
 
     await expect(new PrismaProjectVotingRepository(value).findBallot("program-1", "voter-1", new Date("2026-08-10T00:00:00Z"))).resolves.toBeNull();
     expect(value.topic.findMany).not.toHaveBeenCalled();
+  });
+
+  it("운영 종료 프로그램도 공개 상태이고 투표 기간이면 실시간 득표와 함께 투표 용지를 제공한다", async () => {
+    const value = client("ANONYMOUS");
+    value.projectProgram.findUnique = vi.fn().mockResolvedValue({
+      id: "program-1",
+      name: "지난 캡스톤",
+      isPublic: true,
+      lifecycleStatus: "CLOSED",
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS",
+      },
+    });
+    value.topic.findMany = vi.fn().mockResolvedValue([{
+      id: "topic-1",
+      title: "프로젝트",
+      description: "설명",
+      divisionId: null,
+      division: null,
+      authorId: "professor-1",
+      managerId: "professor-1",
+      assistants: [],
+      team: { members: [] },
+    }]);
+    value.projectVote.findMany = vi.fn().mockResolvedValue([]);
+    value.projectVote.groupBy = vi.fn().mockResolvedValue([{ topicId: "topic-1", _count: { topicId: 4 } }]);
+
+    const ballot = await new PrismaProjectVotingRepository(value).findBallot(
+      "program-1",
+      "voter-1",
+      new Date("2026-08-10T00:00:00Z"),
+    );
+
+    expect(ballot?.phase).toBe("OPEN");
+    expect(ballot?.candidates[0].voteCount).toBe(4);
   });
 
   it("익명 집계에서는 투표자 개인정보 관계를 조회하지 않는다", async () => {

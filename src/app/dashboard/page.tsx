@@ -40,6 +40,7 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
+import { MyTeamTabs } from "@/modules/student-team/ui/my-team-tabs";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -170,6 +171,7 @@ export default async function DashboardPage({
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
+      {student ? <MyTeamTabs active="workspace" /> : null}
       <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
         <div className="page-enter space-y-8 pt-5">
           {assistantInvitations.length > 0 ? (
@@ -215,7 +217,7 @@ export default async function DashboardPage({
             <section aria-labelledby="approval-empty-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 sm:px-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 id="approval-empty-title" className="text-lg font-black tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
+                  <h2 id="approval-empty-title" className="text-lg font-bold tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
                   <h3 className="mt-3 text-sm font-bold text-[var(--ink)]"><UiText>{"검토할 승인 요청이 없습니다"}</UiText></h3>
                 </div>
                 <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>

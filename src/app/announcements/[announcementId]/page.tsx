@@ -4,10 +4,12 @@ import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { DeleteAnnouncementForm } from "@/app/announcements/_components/delete-announcement-form";
+import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
 import {
   ANNOUNCEMENT_CATEGORY_BADGE,
   ANNOUNCEMENT_CATEGORY_LABELS,
 } from "@/app/announcements/_lib/announcement-categories";
+import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import {
   AnnouncementNotFoundError,
   AnnouncementService,
@@ -45,6 +47,8 @@ export default async function AnnouncementDetailPage({
     if (error instanceof AnnouncementNotFoundError) notFound();
     throw error;
   }
+  const audience = await resolveAnnouncementAudience(actor);
+  if (!service.canView(audience, announcement)) notFound();
   const canManage = service.canManage(actor, announcement);
   const wasUpdated = announcement.updatedAt.getTime() !== announcement.createdAt.getTime();
 
@@ -68,9 +72,12 @@ export default async function AnnouncementDetailPage({
           </div>
           <article className="panel overflow-hidden">
             <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
+                  <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
+                </span>
+                <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
+              </div>
               <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
                 <UiText>{announcement.title}</UiText>
               </h1>

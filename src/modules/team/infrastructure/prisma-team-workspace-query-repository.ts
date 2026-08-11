@@ -25,6 +25,7 @@ const teamListInclude = {
     },
   },
   reports: {
+    where: { required: true },
     select: {
       versions: {
         take: 1,
@@ -53,12 +54,7 @@ export class PrismaTeamWorkspaceQueryRepository
         topic: { select: {
           id: true,
           title: true,
-          recruitmentStartsAt: true,
-          executionStartsAt: true,
-          executionEndsAt: true,
-          submissionStartsAt: true,
-          submissionEndsAt: true,
-          program: { select: { advisorEnabled: true, recruitmentEndsAt: true } },
+          program: { select: { advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -134,6 +130,7 @@ export class PrismaTeamWorkspaceQueryRepository
           },
         },
         reports: {
+          where: { required: true },
           select: {
             versions: {
               orderBy: { version: "desc" },
@@ -189,12 +186,12 @@ export class PrismaTeamWorkspaceQueryRepository
           team.members.some(({ student }) => student.id === actor.id),
       },
       schedule: {
-        recruitmentStartsAt: team.topic.recruitmentStartsAt,
+        recruitmentStartsAt: team.topic.program.recruitmentStartsAt,
         programRecruitmentEndsAt: team.topic.program.recruitmentEndsAt,
-        executionStartsAt: team.topic.executionStartsAt,
-        executionEndsAt: team.topic.executionEndsAt,
-        submissionStartsAt: team.topic.submissionStartsAt,
-        submissionEndsAt: team.topic.submissionEndsAt,
+        executionStartsAt: team.topic.program.executionStartsAt,
+        executionEndsAt: team.topic.program.executionEndsAt,
+        submissionStartsAt: team.topic.program.submissionStartsAt,
+        submissionEndsAt: team.topic.program.submissionEndsAt,
       },
       canClose: team.status === "CONFIRMED" && team.reports.length > 0 && team.reports.every(
         (report) => report.versions[0]?.decision?.decision === "APPROVED",

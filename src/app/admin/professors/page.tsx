@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { ProfessorAccessForm } from "@/app/admin/professors/_components/professor-access-form";
 import { RevokeProfessorAccessForm } from "@/app/admin/professors/_components/revoke-professor-access-form";
 import {
   AdminSection,
@@ -24,17 +25,71 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("교수 권한 관리");
 }
 
-export default async function ProfessorsPage() {
+function TabLinks({ tab }: { tab: "list" | "history" }) {
+  return (
+    <>
+      <Link className={tab === "list" ? "button-primary" : "button-secondary"} href="/admin/professors"><UiText>{"권한 목록"}</UiText></Link>
+      <Link className={tab === "history" ? "button-primary" : "button-secondary"} href="/admin/professors?tab=history"><UiText>{"변경 이력"}</UiText></Link>
+    </>
+  );
+}
+
+export default async function ProfessorsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "ADMIN") redirect("/topics");
-  const service = new ProfessorAccessService(
-    new PrismaProfessorAccessRepository(prisma),
-  );
+  const tab = (await searchParams).tab === "history" ? "history" : "list";
+  const service = new ProfessorAccessService(new PrismaProfessorAccessRepository(prisma));
+
+  if (tab === "history") {
+    const entries = await service.listAudit(actor);
+    return (
+      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
+        <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="권한을 부여하거나 회수한 기록과 처리자를 시간순으로 확인합니다." actions={<TabLinks tab="history" />}>
+          <AdminSection
+            id="professor-audit-title"
+            title="최근 권한 변경 기록"
+            meta={<><UiText>{"최근"}</UiText>{" "}{entries.length}<UiText>{"건"}</UiText></>}
+          >
+            {entries.length === 0 ? (
+              <AdminSectionEmpty>
+                <EmptyState variant="embedded" title="아직 권한 변경 기록이 없습니다" description="권한을 바꾸면 기록이 자동으로 남습니다." />
+              </AdminSectionEmpty>
+            ) : (
+              <ol className={adminRecordListClassName}>
+                {entries.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className={`${adminRecordRowClassName} grid gap-5 text-sm xl:grid-cols-[minmax(18rem,1fr)_minmax(9rem,11rem)_minmax(12rem,auto)] xl:items-center`}
+                  >
+                    <div className="min-w-0">
+                      <strong className="break-words font-semibold">{entry.targetEmail}</strong>
+                      <p className="muted mt-1 text-xs"><UiText>{entry.action === "PROFESSOR_ACCESS_GRANTED" ? "교수 권한 부여" : "교수 권한 회수"}</UiText></p>
+                    </div>
+                    <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 sm:items-end xl:contents">
+                      <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 xl:block">
+                        <dt className="muted text-xs"><UiText>{"처리자"}</UiText></dt>
+                        <dd className="xl:mt-1">{entry.actorName}</dd>
+                      </dl>
+                      <time className="muted text-xs sm:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </AdminSection>
+        </AdminWorkspace>
+      </AppShell>
+    );
+  }
+
   const entries = await service.list(actor);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
-      <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="교수 권한을 부여할 부산대학교 이메일을 등록하고, 더 이상 필요하지 않은 권한을 회수합니다." actions={<>{entries.length ? <Link className="button-primary" href="/admin/professors/new"><UiText>{"교수 이메일 등록"}</UiText></Link> : null}<Link className="button-secondary" href="/admin/professors/history"><UiText>{"변경 이력"}</UiText></Link></>}>
+      <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="교수 권한을 부여할 부산대학교 이메일을 등록하고, 더 이상 필요하지 않은 권한을 회수합니다." actions={<TabLinks tab="list" />}>
+        <AdminSection id="professor-register-title" title="교수 이메일 등록">
+          <ProfessorAccessForm />
+        </AdminSection>
         <AdminSection
           id="professor-list-title"
           title="교수 권한 목록"
@@ -42,7 +97,7 @@ export default async function ProfessorsPage() {
         >
           {entries.length === 0 ? (
             <AdminSectionEmpty>
-              <EmptyState variant="embedded" title="등록된 교수 이메일이 없습니다" description="교수 계정이 로그인하기 전에 이메일을 등록하세요." action={<Link className="button-secondary" href="/admin/professors/new"><UiText>{"첫 교수 이메일 등록"}</UiText></Link>} />
+              <EmptyState variant="embedded" title="등록된 교수 이메일이 없습니다" description="교수 계정이 로그인하기 전에 이메일을 등록하세요." />
             </AdminSectionEmpty>
           ) : (
             <ol className={adminRecordListClassName}>

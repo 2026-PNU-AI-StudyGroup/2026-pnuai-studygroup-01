@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TeamReportsPage from "@/app/teams/[teamId]/reports/page";
@@ -11,17 +11,21 @@ vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
   loadTeamReportWorkspace,
 }));
 
+vi.mock("@/shared/infrastructure/database/prisma", () => ({
+  prisma: {
+    team: { findUnique: vi.fn().mockResolvedValue({ programId: "program-1" }) },
+    rubricCriterion: { findMany: vi.fn().mockResolvedValue([]) },
+    reportRubricScore: { findMany: vi.fn().mockResolvedValue([]) },
+    reportRubricRelease: { findMany: vi.fn().mockResolvedValue([]) },
+  },
+}));
+
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
 }));
 
 vi.mock("@/app/teams/[teamId]/_components/report-decision-form", () => ({
   ReportDecisionForm: () => <button type="button">보고서 검토</button>,
-}));
-
-vi.mock("@/app/teams/[teamId]/_components/report-requirement-forms", () => ({
-  RemoveReportRequirementForm: () => <button type="button">일정 삭제</button>,
-  ReportRequirementForm: () => <button type="button">보고서 일정 설정</button>,
 }));
 
 vi.mock("@/app/teams/[teamId]/_components/report-score-feedback-forms", () => ({
@@ -92,7 +96,9 @@ describe("TeamReportsPage feedback states", () => {
         reports: [
           {
             id: "report-approved",
-            type: "START",
+            title: "착수 보고서",
+            position: 0,
+            required: true,
             dueAt: new Date("2026-08-31T14:59:59Z"),
             versions: [{
               id: "version-approved",
@@ -113,7 +119,9 @@ describe("TeamReportsPage feedback states", () => {
           },
           {
             id: "report-revision",
-            type: "MIDTERM",
+            title: "중간 보고서",
+            position: 1,
+            required: true,
             dueAt: new Date("2026-10-15T14:59:59Z"),
             versions: [{
               id: "version-1",
@@ -134,7 +142,9 @@ describe("TeamReportsPage feedback states", () => {
           },
           {
             id: "report-unsubmitted",
-            type: "FINAL",
+            title: "결과 보고서",
+            position: 2,
+            required: true,
             dueAt: new Date("2026-12-15T14:59:59Z"),
             versions: [],
             feedback: [],
@@ -153,9 +163,7 @@ describe("TeamReportsPage feedback states", () => {
     expect(screen.getByRole("button", { name: "수정본 제출" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "피드백 남기기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "일정 삭제" })).not.toBeInTheDocument();
-    const focus = screen.getByRole("complementary", { name: "중간 보고서 수정 요청을 확인해 주세요" });
-    expect(within(focus).getByText("수정 요청 도착")).toBeInTheDocument();
-    expect(within(focus).queryByText(/착수 보고서|결과 보고서/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "중간 보고서" })).toBeInTheDocument();
   });
 
   it("보고서 이력이 있으면 제출 불가 안내를 빈 상태가 아닌 compact status로 보여준다", async () => {
@@ -165,7 +173,9 @@ describe("TeamReportsPage feedback states", () => {
       reportWorkspace: {
         reports: [{
           id: "report-1",
-          type: "START",
+          title: "착수 보고서",
+          position: 0,
+          required: true,
           dueAt: new Date("2020-01-01T00:00:00Z"),
           versions: [],
           feedback: [],
@@ -188,7 +198,9 @@ describe("TeamReportsPage feedback states", () => {
       reportWorkspace: {
         reports: [{
           id: "report-1",
-          type: "MIDTERM",
+          title: "중간 보고서",
+          position: 0,
+          required: true,
           dueAt: new Date("2020-01-01T00:00:00Z"),
           versions: [{
             id: "version-1",
@@ -245,7 +257,7 @@ describe("TeamReportsPage feedback states", () => {
     expect(screen.queryByText("종료된 프로젝트입니다")).not.toBeInTheDocument();
   });
 
-  it("보고서 요구사항 관리 권한이 있을 때만 일정 관리 기능을 보여준다", async () => {
+  it("교수는 팀 화면에서 검토와 피드백만 관리하고 보고서 일정은 변경하지 않는다", async () => {
     loadTeamReportWorkspace.mockResolvedValue({
       actor: { ...actor, id: "professor-1", role: "PROFESSOR" },
       workspace: {
@@ -261,7 +273,9 @@ describe("TeamReportsPage feedback states", () => {
       reportWorkspace: {
         reports: [{
           id: "report-1",
-          type: "FINAL",
+          title: "결과 보고서",
+          position: 0,
+          required: true,
           dueAt: new Date("2026-12-15T14:59:59Z"),
           versions: [],
           feedback: [],
@@ -272,9 +286,9 @@ describe("TeamReportsPage feedback states", () => {
 
     render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.getByRole("button", { name: "보고서 일정 설정" })).toBeInTheDocument();
-    expect(screen.getByText("보고서 일정 관리")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "일정 삭제" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보고서 일정 설정" })).not.toBeInTheDocument();
+    expect(screen.queryByText("보고서 일정 관리")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "일정 삭제" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "피드백 남기기" })).toBeInTheDocument();
   });
 });

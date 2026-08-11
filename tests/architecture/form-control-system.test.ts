@@ -18,8 +18,9 @@ function sourceFiles(directory: string): string[] {
 describe("form control system architecture", () => {
   it("브라우저 기본 focus outline 대신 PMS border와 halo를 사용한다", () => {
     expect(globals).not.toMatch(/^\s*:focus-visible\s*\{/m);
-    expect(globals).toContain(':where(a, button, input, select, textarea, [role="button"], [role="link"]):focus');
+    expect(globals).toContain(':where(a, button, input, select, textarea, summary, iframe, [tabindex], [role="button"], [role="link"]):focus');
     expect(globals).toContain("outline: none");
+    expect(globals).toContain(':where(summary, iframe, [tabindex]:not([tabindex="-1"])):focus-visible');
     expect(globals).toMatch(/\.form-control:focus-visible,[\s\S]*?border-color: var\(--focus\);[\s\S]*?0 0 0 3px var\(--focus-halo\)/);
   });
 

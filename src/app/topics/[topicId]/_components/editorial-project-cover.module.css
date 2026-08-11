@@ -1,36 +1,36 @@
 .cover {
   position: relative;
-  min-height: 18rem;
+  min-height: 12rem;
   overflow: hidden;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, #fff) 0%, #f6f7f9 100%);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-subtle);
 }
 
 .label {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  max-width: calc(100% - 3rem);
+  top: 1.25rem;
+  left: 1.25rem;
+  max-width: calc(100% - 2.5rem);
   overflow: hidden;
-  border-left: 3px solid color-mix(in srgb, var(--primary) 72%, #fff);
-  border-radius: 0.6rem;
-  background: rgb(255 255 255 / 0.72);
-  padding: 0.55rem 0.78rem 0.55rem 0.65rem;
-  color: #273047;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.4rem 0.7rem;
+  color: var(--ink);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-  backdrop-filter: blur(10px);
 }
 
 .brandMark {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 2.5rem;
-  height: 2.25rem;
-  background: var(--primary);
-  opacity: 0.82;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 2.25rem;
+  height: 2rem;
+  background: var(--muted);
+  opacity: 0.2;
   mask-image: url('/brand/pusan-national-university.png');
   mask-position: left center;
   mask-repeat: no-repeat;
@@ -38,5 +38,5 @@
 }
 
 @media (min-width: 1024px) {
-  .cover { min-height: 22rem; }
+  .cover { min-height: 14rem; }
 }

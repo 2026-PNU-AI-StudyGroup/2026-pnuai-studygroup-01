@@ -8,9 +8,6 @@ const input = {
   requiredSkills: ["TypeScript"], preferredSkills: [], roleExpectations: "개발", availabilityRequirement: "주 1회",
   applicationMode: "TEAM_ONLY" as const, applicationQuestions: [{ label: "동기", maxLength: 500, required: true }], capacity: 4,
   studentTeamId: "8f9c8d60-1e5c-4c6a-90e7-3a8c0e1f9c51",
-  recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
-  executionStartsAt: new Date("2026-08-11T00:00:00Z"), executionEndsAt: new Date("2026-09-10T00:00:00Z"),
-  submissionStartsAt: new Date("2026-09-01T00:00:00Z"), submissionEndsAt: new Date("2026-09-20T00:00:00Z"),
 };
 
 function dependencies() {
@@ -19,7 +16,7 @@ function dependencies() {
     listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), findVisible: vi.fn(async () => null), decide: vi.fn(async () => "APPROVED" as const),
   };
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
-    findOpen: vi.fn(async () => ({ id: "program-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
+    findOpen: vi.fn(async () => ({ id: "program-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"), recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"), executionStartsAt: new Date("2026-02-01T00:00:00Z"), executionEndsAt: new Date("2026-11-30T00:00:00Z"), submissionStartsAt: new Date("2026-11-01T00:00:00Z"), submissionEndsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true })),
   };
   return { repository, programs };
 }
@@ -43,7 +40,12 @@ describe("학생 프로젝트 승인", () => {
       id: "program-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
+      recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
       recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+      executionStartsAt: new Date("2026-02-01T00:00:00Z"),
+      executionEndsAt: new Date("2026-11-30T00:00:00Z"),
+      submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
+      submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
     });
@@ -59,7 +61,12 @@ describe("학생 프로젝트 승인", () => {
       id: "program-1",
       startsAt: new Date("2026-01-01T00:00:00Z"),
       endsAt: new Date("2026-12-31T00:00:00Z"),
+      recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
       recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+      executionStartsAt: new Date("2026-02-01T00:00:00Z"),
+      executionEndsAt: new Date("2026-11-30T00:00:00Z"),
+      submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
+      submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: false,
       studentProjectCreationEnabled: true,
     });

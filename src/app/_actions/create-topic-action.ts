@@ -24,7 +24,7 @@ export async function createTopicAction(
 
   const parsed = parseTopicFormData(formData);
   if (!parsed.success) {
-    return { status: "error", message: "프로젝트 내용과 기간을 확인해 주세요." };
+    return { status: "error", message: "프로젝트 내용을 확인해 주세요." };
   }
 
   if (actor.role === "STUDENT") {

@@ -3,17 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ArtifactRegistrationForm } from "./artifact-registration-form";
 import { ReportDecisionForm } from "./report-decision-form";
-import { RemoveReportRequirementForm, ReportRequirementForm } from "./report-requirement-forms";
 import { ReportFeedbackForm } from "./report-score-feedback-forms";
 import { ReportSubmissionForm } from "./report-submission-form";
 
-const { addFeedback, decideReport, refresh, registerArtifact, removeRequirement, setRequirement, submitReport } = vi.hoisted(() => ({
+const { addFeedback, decideReport, refresh, registerArtifact, submitReport } = vi.hoisted(() => ({
   addFeedback: vi.fn(),
   decideReport: vi.fn(),
   refresh: vi.fn(),
   registerArtifact: vi.fn(),
-  removeRequirement: vi.fn(),
-  setRequirement: vi.fn(),
   submitReport: vi.fn(),
 }));
 
@@ -25,8 +22,6 @@ vi.mock("@/app/teams/[teamId]/_actions/team-report-actions", () => ({
   addReportFeedbackAction: addFeedback,
   decideReportAction: decideReport,
   registerArtifactAction: registerArtifact,
-  removeReportRequirementAction: removeRequirement,
-  setReportRequirementAction: setRequirement,
   submitReportVersionAction: submitReport,
 }));
 
@@ -86,8 +81,6 @@ describe("보고서 요구사항 화면", () => {
     addFeedback.mockReset();
     refresh.mockClear();
     registerArtifact.mockReset();
-    removeRequirement.mockReset();
-    setRequirement.mockReset();
     submitReport.mockReset();
     SuccessfulUploadRequest.instances = [];
     HTMLDialogElement.prototype.showModal = function showModal() {
@@ -142,91 +135,24 @@ describe("보고서 요구사항 화면", () => {
     expect(screen.getByRole("textbox", { name: "피드백" })).toBeInTheDocument();
   });
 
-  it("같은 화면에서 요구사항을 연속 저장해도 모달 종료와 성공 피드백을 반복한다", async () => {
-    setRequirement.mockImplementation(async () => ({
-      status: "success",
-      message: "보고서 요구사항과 기한을 저장했습니다.",
-    }));
-    render(
-      <ReportRequirementForm
-        teamId="70000000-0000-4000-8000-000000000001"
-        executionStartsAt={new Date("2026-08-01T00:00:00+09:00")}
-        submissionEndsAt={new Date("2026-12-15T23:59:00+09:00")}
-      />,
-    );
-
-    const openButton = screen.getByRole("button", { name: "보고서 일정 설정" });
-    fireEvent.click(openButton);
-    const dialog = screen.getByRole("dialog");
-    fireEvent.submit(dialog.querySelector("form")!);
-    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
-
-    fireEvent.click(openButton);
-    fireEvent.submit(dialog.querySelector("form")!);
-    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
-
-    expect(setRequirement).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole("status")).toHaveTextContent("보고서 요구사항과 기한을 저장했습니다.");
-  });
-
-  it("교수와 관리자가 프로젝트 일정 안에서 제출 보고서와 기한을 설정한다", () => {
-    render(
-      <ReportRequirementForm
-        teamId="70000000-0000-4000-8000-000000000001"
-        executionStartsAt={new Date("2026-08-01T00:00:00+09:00")}
-        submissionEndsAt={new Date("2026-12-15T23:59:00+09:00")}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "보고서 일정 설정" }));
-    const dialog = screen.getByRole("dialog");
-    expect(dialog.querySelector('input[name="type"]')).toHaveValue("START");
-    expect(screen.getByRole("combobox", { name: "제출 보고서" })).toHaveTextContent("착수 보고서");
-    expect(dialog.querySelector('input[name="dueAt"]')).toHaveAttribute("min", "2026-08-01T00:00");
-    expect(dialog.querySelector('input[name="dueAt"]')).toHaveAttribute("max", "2026-12-15T23:59");
-  });
-
-  it("일정 삭제 중 상태 충돌이 생기면 수동 안내 대신 최신 데이터를 즉시 요청한다", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    removeRequirement.mockResolvedValue({
-      status: "conflict",
-      message: "제출 이력이나 권한이 변경되어 최신 상태를 다시 불러옵니다.",
-    });
-    render(<RemoveReportRequirementForm teamId="70000000-0000-4000-8000-000000000001" type="FINAL" disabled={false} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "결과 보고서 일정 삭제" }));
-    fireEvent.click(screen.getByRole("button", { name: "확인" }));
-
-    expect(await screen.findByRole("status")).toHaveTextContent("최신 상태를 다시 불러옵니다");
-    await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
-  });
-
-  it("제출 이력이 있는 일정은 비활성 버튼 대신 고정 상태로 설명한다", () => {
-    render(<RemoveReportRequirementForm teamId="70000000-0000-4000-8000-000000000001" type="FINAL" disabled />);
-
-    expect(screen.getByText("제출 이력이 있어 일정이 고정되었습니다.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /제출 이력|일정 삭제/ })).not.toBeInTheDocument();
-  });
-
   it("학생 제출 선택지에는 설정된 보고서와 기한만 표시한다", () => {
     render(
       <ReportSubmissionForm
         teamId="70000000-0000-4000-8000-000000000001"
         requirements={[
-          { type: "MIDTERM", dueAt: new Date("2026-10-15T23:59:00+09:00") },
-          { type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") },
+          { id: "20000000-0000-4000-8000-000000000001", title: "설계 보고서", dueAt: new Date("2026-10-15T23:59:00+09:00") },
+          { id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") },
         ]}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
     const dialog = screen.getByRole("dialog");
-    const reportType = screen.getByRole("combobox", { name: "보고서 종류" });
-    expect(dialog.querySelector('input[name="type"]')).toHaveValue("MIDTERM");
+    const reportType = screen.getByRole("combobox", { name: "보고서" });
+    expect(dialog.querySelector('input[name="reportId"]')).toHaveValue("20000000-0000-4000-8000-000000000001");
     fireEvent.click(reportType);
-    expect(screen.queryByRole("option", { name: /착수 보고서/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /중간 보고서/ })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /결과 보고서/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /설계 보고서/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /최종 보고서/ })).toBeInTheDocument();
   });
 
   it("보고서를 연속 제출해도 매번 모달 종료와 성공 피드백을 처리한다", async () => {
@@ -244,7 +170,7 @@ describe("보고서 요구사항 화면", () => {
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ uploadId: "upload-2", uploadUrl: "https://upload.test/2" }), { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 200 })));
-    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
+    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
     const openButton = screen.getByRole("button", { name: "보고서 제출" });
 
     fireEvent.click(openButton);
@@ -278,7 +204,7 @@ describe("보고서 요구사항 화면", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ uploadId: "upload-1", uploadUrl: "https://upload.test/1" }), { status: 200 }),
     ));
-    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
+    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
     const dialog = screen.getByRole("dialog", { name: "새 버전 제출" });
@@ -309,7 +235,7 @@ describe("보고서 요구사항 화면", () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ message: "이전 업로드 오류" }), { status: 400 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ uploadId: "upload-2", uploadUrl: "https://upload.test/2" }), { status: 200 })));
-    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
+    render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
     const dialog = screen.getByRole("dialog", { name: "새 버전 제출" });
@@ -339,7 +265,7 @@ describe("보고서 요구사항 화면", () => {
       return pendingResponseUntilAbort(presignSignal);
     });
     vi.stubGlobal("fetch", fetchMock);
-    const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
+    const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
     fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 제출" }).querySelector("form")!);
@@ -406,7 +332,7 @@ describe("보고서 요구사항 화면", () => {
         return pendingResponseUntilAbort(completeSignal);
       });
     vi.stubGlobal("fetch", fetchMock);
-    const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ type: "FINAL", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
+    const { unmount } = render(<ReportSubmissionForm teamId="70000000-0000-4000-8000-000000000001" requirements={[{ id: "20000000-0000-4000-8000-000000000002", title: "최종 보고서", dueAt: new Date("2026-12-15T23:59:00+09:00") }]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "보고서 제출" }));
     fireEvent.submit(screen.getByRole("dialog", { name: "새 버전 제출" }).querySelector("form")!);

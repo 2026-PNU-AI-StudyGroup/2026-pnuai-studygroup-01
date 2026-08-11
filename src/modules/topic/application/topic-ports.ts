@@ -1,11 +1,10 @@
 import type {
   TopicDetails,
-  TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicDraft = TopicDetails &
-  TopicSchedule & {
+  {
     programId: string;
     divisionId?: string | null;
     authorId: string;
@@ -13,10 +12,6 @@ export type TopicDraft = TopicDetails &
 
 export interface TopicCreator {
   createPublished(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
-}
-
-export interface TopicScheduleUpdater {
-  updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
 }
 
 export type TopicUpdateOutcome =
@@ -55,7 +50,12 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
+  programRecruitmentStartsAt: Date;
   programRecruitmentEndsAt: Date;
+  programExecutionStartsAt: Date;
+  programExecutionEndsAt: Date;
+  programSubmissionStartsAt: Date;
+  programSubmissionEndsAt: Date;
 };
 
 export type ManagedTopicSummary = TopicSummary & {
@@ -106,16 +106,11 @@ export type PublicTopicSummary = TopicSummary & {
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;
 };
 
-export type PublicTopicPhase = "ACTIVE" | "RECRUITING" | "CLOSING_SOON";
-export type PublicTopicSort = "LATEST" | "DEADLINE";
-
 export type PublicTopicQuery = {
   viewerId?: string;
   programId?: string;
   divisionId?: string | "UNASSIGNED";
   query: string;
-  phase: PublicTopicPhase;
-  sort: PublicTopicSort;
   page: number;
   pageSize: number;
   now: Date;
@@ -126,7 +121,6 @@ export type PublicTopicPage = {
   page: number;
   totalPages: number;
   total: number;
-  counts: Record<PublicTopicPhase, number>;
 };
 
 export interface PublicTopicLister {

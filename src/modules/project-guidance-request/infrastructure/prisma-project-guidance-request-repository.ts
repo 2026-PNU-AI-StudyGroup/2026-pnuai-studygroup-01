@@ -125,7 +125,7 @@ export class PrismaProjectGuidanceRequestRepository
             ${input.kind}::"ProjectGuidanceRequestKind" = 'REVIEW'
             OR (
               ${input.preferredAt}::TIMESTAMP > ${input.requestedAt}
-              AND ${input.preferredAt}::TIMESTAMP <= "topic"."executionEndsAt"
+              AND ${input.preferredAt}::TIMESTAMP <= "project_program"."executionEndsAt"
             )
           )
         FOR UPDATE OF "team"
@@ -194,6 +194,17 @@ export class PrismaProjectGuidanceRequestRepository
     respondedAt: Date;
   }): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program"
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        JOIN "team" ON "team"."topicId" = "topic"."id"
+        JOIN "project_guidance_request" ON "project_guidance_request"."teamId" = "team"."id"
+        WHERE "project_guidance_request"."id" = ${input.requestId}
+        FOR UPDATE OF "project_program"
+      `);
+      if (programs.length !== 1) return false;
+
       const requests = await transaction.$queryRaw<Array<{
         id: string;
         teamId: string;
@@ -210,6 +221,7 @@ export class PrismaProjectGuidanceRequestRepository
         FROM "project_guidance_request"
         JOIN "team" ON "team"."id" = "project_guidance_request"."teamId"
         JOIN "topic" ON "topic"."id" = "team"."topicId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         WHERE "project_guidance_request"."id" = ${input.requestId}
           AND "project_guidance_request"."status" = 'PENDING'
           AND "team"."status" = 'CONFIRMED'
@@ -219,7 +231,7 @@ export class PrismaProjectGuidanceRequestRepository
             OR (
               "project_guidance_request"."kind" = 'MEETING'
               AND ${input.scheduledAt}::TIMESTAMP > ${input.respondedAt}
-              AND ${input.scheduledAt}::TIMESTAMP <= "topic"."executionEndsAt"
+              AND ${input.scheduledAt}::TIMESTAMP <= "project_program"."executionEndsAt"
             )
           )
         FOR UPDATE OF "project_guidance_request"

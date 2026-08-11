@@ -20,13 +20,12 @@ import {
   uploadTeamFile,
 } from "@/app/teams/[teamId]/_lib/report-form-shared";
 import { ReportSubmissionFields } from "@/app/teams/[teamId]/_components/report-submission-fields";
-import type { ReportType } from "@/modules/report/domain/report-policy";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
 type ReportSubmissionFormProps = {
   teamId: string;
-  requirements: Array<{ type: ReportType; dueAt: Date }>;
+  requirements: Array<{ id: string; title: string; dueAt: Date }>;
   triggerLabel?: string;
   triggerClassName?: string;
 };

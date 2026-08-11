@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { toggleProjectVoteAction } from "@/app/_actions/project-vote-actions";
 import type { ProgramVoteBallot, ProjectVoteCandidate } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiSection } from "@/modules/translation/ui/localized-elements";
 
 export type ProjectVoteSelection = {
   ballot?: ProgramVoteBallot;
@@ -15,17 +14,6 @@ export type ProjectVoteSelection = {
   pendingTopicId: string | null;
   toggle: (topicId: string) => void;
 };
-
-export function voteBucketSummary(ballot: ProgramVoteBallot, selectedTopicIds: ReadonlySet<string>) {
-  const buckets = new Map<string, { name: string; selected: number }>();
-  for (const candidate of ballot.candidates) {
-    const key = ballot.policy.voteLimitScope === "DIVISION" ? candidate.divisionId ?? "UNASSIGNED" : "PROGRAM";
-    const current = buckets.get(key) ?? { name: ballot.policy.voteLimitScope === "DIVISION" ? candidate.divisionName ?? "미분과" : "프로그램 전체", selected: 0 };
-    if (selectedTopicIds.has(candidate.id)) current.selected += 1;
-    buckets.set(key, current);
-  }
-  return [...buckets.values()];
-}
 
 export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVoteSelection {
   const ballotKey = ballot ? `${ballot.programId}:${ballot.selectedTopicIds.join(":")}` : "";
@@ -94,14 +82,27 @@ export function ProjectVoteButton({ candidate, selection }: {
   );
 }
 
-export function ProjectVoteStatusPanel({ selection }: { selection: ProjectVoteSelection }) {
+export function ProjectVoteStatusPill({ selection }: { selection: ProjectVoteSelection }) {
   const ballot = selection.ballot;
   if (!ballot) return null;
-  const buckets = voteBucketSummary(ballot, selection.selectedTopicIds);
-  const phaseLabel = ballot.phase === "OPEN" ? "투표 진행 중" : ballot.phase === "UPCOMING" ? "투표 시작 전" : "투표 종료";
-  return <UiSection aria-label="투표 현황" className="border border-[var(--line)] bg-[var(--surface-subtle)] p-4 text-sm">
-    <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold"><UiText>{ballot.policy.voteLimitScope === "DIVISION" ? "분과별 투표" : "프로그램 전체 투표"}</UiText></p><span className="text-xs font-semibold text-[var(--muted)]"><UiText>{phaseLabel}</UiText></span></div>
-    <p className="mt-1 text-[var(--muted)]"><UiText>{ballot.policy.voteLimitScope === "DIVISION" ? `각 분과에서 ${ballot.policy.voteLimit}표까지 선택할 수 있습니다.` : `프로그램 전체에서 ${ballot.policy.voteLimit}표까지 선택할 수 있습니다.`}</UiText></p>
-    {buckets.length ? <div className="mt-3 flex gap-2 overflow-x-auto">{buckets.map((bucket) => <span key={bucket.name} className="shrink-0 rounded-full border border-[var(--line)] bg-white px-3 py-1 text-xs font-semibold">{bucket.name} {bucket.selected}/{ballot.policy.voteLimit}</span>)}</div> : null}
-  </UiSection>;
+  const label = ballot.phase === "UPCOMING"
+    ? "투표 시작 전"
+    : ballot.phase === "CLOSED"
+      ? "투표 종료"
+      : ballot.policy.voteLimitScope === "DIVISION"
+        ? `투표 가능: 분과별 최대 ${ballot.policy.voteLimit}표`
+        : `투표 가능 ${selection.selectedTopicIds.size}/${ballot.policy.voteLimit}`;
+  const tone = ballot.phase === "OPEN"
+    ? "bg-[var(--success-subtle)] text-[var(--success)] ring-[color-mix(in_srgb,var(--success)_26%,transparent)]"
+    : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-[var(--line-strong)]";
+
+  return (
+    <span
+      role="status"
+      aria-label="투표 현황"
+      className={`inline-flex min-h-8 items-center rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset ${tone}`}
+    >
+      <UiText>{label}</UiText>
+    </span>
+  );
 }

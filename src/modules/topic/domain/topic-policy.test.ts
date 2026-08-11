@@ -3,11 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   assertValidTopicDetails,
   assertValidTopicPublication,
-  assertValidTopicSchedule,
   canCreateTopic,
   canManageTopic,
-  InvalidTopicScheduleError,
-  type TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
 
 describe("주제 내용 정책", () => {
@@ -56,45 +53,6 @@ describe("주제 내용 정책", () => {
 
   it("추가 모집이 없는 기존 팀 프로젝트를 위해 1인 팀 지원 정원을 허용한다", () => {
     expect(() => assertValidTopicDetails({ ...valid, applicationMode: "TEAM_ONLY", capacity: 1 })).not.toThrow();
-  });
-});
-
-function validSchedule(): TopicSchedule {
-  return {
-    recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
-    executionStartsAt: new Date("2026-03-05T00:00:00Z"),
-    executionEndsAt: new Date("2026-06-10T00:00:00Z"),
-    submissionStartsAt: new Date("2026-06-01T00:00:00Z"),
-    submissionEndsAt: new Date("2026-06-20T00:00:00Z"),
-  };
-}
-
-describe("주제 기간 정책", () => {
-  it("각 기간이 유효하면 기간끼리 겹쳐도 허용한다", () => {
-    expect(() => assertValidTopicSchedule(validSchedule())).not.toThrow();
-  });
-
-  it.each(["execution", "submission"] as const)(
-    "%s 시작 시각이 종료 시각과 같거나 늦으면 거절한다",
-    (period) => {
-      const schedule = validSchedule();
-      const startsAtKey = `${period}StartsAt` as keyof TopicSchedule;
-      const endsAtKey = `${period}EndsAt` as keyof TopicSchedule;
-      schedule[startsAtKey] = schedule[endsAtKey];
-
-      expect(() => assertValidTopicSchedule(schedule)).toThrow(
-        InvalidTopicScheduleError,
-      );
-    },
-  );
-
-  it("해석할 수 없는 날짜를 거절한다", () => {
-    const schedule = validSchedule();
-    schedule.executionStartsAt = new Date("invalid");
-
-    expect(() => assertValidTopicSchedule(schedule)).toThrow(
-      InvalidTopicScheduleError,
-    );
   });
 });
 

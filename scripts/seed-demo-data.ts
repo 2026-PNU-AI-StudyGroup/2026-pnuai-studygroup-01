@@ -7,8 +7,19 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import PDFDocument from "pdfkit";
 
-import { Prisma, PrismaClient, ProgramLifecycleStatus, UserRole } from "../src/generated/prisma/client";
+import {
+  AnnouncementCategory,
+  AnnouncementVisibility,
+  Prisma,
+  PrismaClient,
+  ProgramLifecycleStatus,
+  UserRole,
+} from "../src/generated/prisma/client";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
+import {
+  buildDemoProgramAnnouncements,
+  LEGACY_PROGRAM_ANNOUNCEMENT_IDS,
+} from "./demo-program-announcements";
 import { opusArchivedProjects } from "./opus-project-catalog";
 
 const connectionString = process.env.DATABASE_URL;
@@ -75,7 +86,7 @@ const opusAdvisorIndex = new Map(
 );
 const archivedProjectCount = opusArchivedProjects.length;
 const externalArtifactCount = opusArchivedProjects.reduce(
-  (count, project) => count + 1
+  (count, project) => count
     + Number(Boolean(project.githubUrl))
     + Number(Boolean(project.youtubeUrl))
     + Number(Boolean(project.productionUrl)),
@@ -129,6 +140,7 @@ const ids = {
   reportVersions: Array.from({ length: archivedProjectCount }, (_, index) => `f1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   approvalDecisions: Array.from({ length: archivedProjectCount }, (_, index) => `f2000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeReports: Array.from({ length: 3 }, (_, index) => `f3000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  reportDefinitions: Array.from({ length: archivedProjectCount + 3 }, (_, index) => `f6000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeReportVersions: Array.from({ length: 4 }, (_, index) => `f4000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeApprovalDecisions: Array.from({ length: 3 }, (_, index) => `f5000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeStoredFiles: Array.from({ length: 5 }, (_, index) => `e1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -289,6 +301,7 @@ async function seed() {
         authorId: ids.admin,
         title: "2026학년도 2학기 졸업과제 운영 일정 안내",
         content: "졸업과제 주제 확정부터 최종 발표까지의 주요 일정을 안내합니다.\n\n- 팀·주제 확정: 8월 14일\n- 수행계획서 제출: 8월 31일\n- 중간보고서 제출: 10월 16일\n- 최종보고서 제출: 12월 11일\n- 작품 전시 및 최종 발표: 12월 18일",
+        pinned: true,
         createdAt: new Date("2026-08-05T09:00:00+09:00"),
       },
       {
@@ -397,10 +410,25 @@ async function seed() {
       });
     }
 
+    function defaultProgramSchedule(startsAt: Date, endsAt: Date) {
+      const duration = endsAt.getTime() - startsAt.getTime();
+      return {
+        recruitmentStartsAt: startsAt,
+        recruitmentEndsAt: new Date(startsAt.getTime() + duration * 0.25),
+        executionStartsAt: new Date(startsAt.getTime() + duration * 0.1),
+        executionEndsAt: new Date(endsAt.getTime() - duration * 0.1),
+        submissionStartsAt: new Date(endsAt.getTime() - duration * 0.2),
+        submissionEndsAt: endsAt,
+      };
+    }
     async function program(input: {
       id: string; name: string; category: string; description: string;
       startsAt: Date; endsAt: Date; lifecycleStatus: ProgramLifecycleStatus;
+      advisorEnabled?: boolean;
+      schedule?: ReturnType<typeof defaultProgramSchedule>;
     }) {
+      const firstPublishedAt = input.startsAt;
+      const closedAt = input.lifecycleStatus === "CLOSED" ? input.endsAt : null;
       const sameName = await tx.projectProgram.findUnique({
         where: { name_startsAt: { name: input.name, startsAt: input.startsAt } },
         select: { id: true },
@@ -408,28 +436,76 @@ async function seed() {
       if (sameName && sameName.id !== input.id) {
         throw new Error(`사용자 프로그램과 이름이 겹쳐 데모 시드를 중단합니다: ${input.name}`);
       }
+      const { schedule: suppliedSchedule, advisorEnabled = true, ...programInput } = input;
+      const schedule = suppliedSchedule ?? defaultProgramSchedule(input.startsAt, input.endsAt);
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, lifecycleStatus: input.lifecycleStatus, isPublic: true },
-        create: { ...input, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, isPublic: true },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, lifecycleStatus: input.lifecycleStatus, isPublic: true, firstPublishedAt, closedAt },
+        create: { ...programInput, ...schedule, advisorEnabled, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, closedAt },
       });
     }
+    const activeProgramSchedules = [
+      {
+        recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-03-23T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+      },
+      {
+        recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-10-31T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
+      },
+      {
+        recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+      },
+    ] as const;
     const activePrograms = [
-      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), lifecycleStatus: "ACTIVE" }),
-      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-05-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), lifecycleStatus: "ACTIVE" }),
-      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-04-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), lifecycleStatus: "ACTIVE" }),
+      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), lifecycleStatus: "ACTIVE", schedule: activeProgramSchedules[0] }),
+      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-02-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), lifecycleStatus: "ACTIVE", advisorEnabled: false, schedule: activeProgramSchedules[1] }),
+      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-01-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), lifecycleStatus: "ACTIVE", advisorEnabled: false, schedule: activeProgramSchedules[2] }),
     ];
     const pastPrograms = [
       await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
-      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
       // OPUS 공개 목록에 없는 연도·회차는 과거 프로젝트 탐색을 풍부하게 하기 위한 데모 항목이다.
       await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
-      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
       await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
       await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
       await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
-      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
     ];
+
+    const allPrograms = [...activePrograms, ...pastPrograms];
+    const programAnnouncementRows = allPrograms.flatMap((targetProgram, programIndex) => {
+      const category = targetProgram.category === opusProgramCategories.capstone
+        ? AnnouncementCategory.GRADUATION_PROJECT
+        : targetProgram.category === opusProgramCategories.hackathon
+          ? AnnouncementCategory.HACKATHON
+          : AnnouncementCategory.GENERAL;
+      return buildDemoProgramAnnouncements(targetProgram, programIndex).map((announcement, announcementIndex) => ({
+          ...announcement,
+          authorId: announcementIndex % 2 === 0 ? ids.admin : ids.professors[programIndex % ids.professors.length],
+          programId: targetProgram.id,
+          teamId: null,
+          category,
+          visibility: announcement.visibility === "TARGET_MEMBERS"
+            ? AnnouncementVisibility.TARGET_MEMBERS
+            : AnnouncementVisibility.AUTHENTICATED,
+          updatedAt: announcement.createdAt,
+        }));
+    });
+    await tx.announcement.deleteMany({
+      where: {
+        OR: [
+          { id: { startsWith: "a2000000-0000-4000-8000-" } },
+          { id: { in: LEGACY_PROGRAM_ANNOUNCEMENT_IDS } },
+        ],
+      },
+    });
+    await tx.announcement.createMany({ data: programAnnouncementRows });
 
     // 운영 종료 뒤에도 공개 프로젝트를 대상으로 별도 투표를 진행할 수 있다.
     // 시드를 실행한 시점에는 2025 캡스톤과 제6회 해커톤의 투표가 열려 있어, 사이드바와 투표 화면을 바로 검증할 수 있다.
@@ -462,37 +538,6 @@ async function seed() {
     }
     for (const [index, data] of activeTopics.entries()) {
       const [title, description, requiredSkills, preferredSkills, roleExpectations, availabilityRequirement, capacity, programIndex, professorIndex] = data;
-      const schedules = [
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
-        },
-      ] as const;
-      const schedule = index === 0
-        ? {
-          recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-03-23T00:00:00+09:00"),
-          executionEndsAt: new Date("2026-08-20T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"),
-          submissionEndsAt: new Date("2026-08-20T23:59:59+09:00"),
-        }
-        : schedules[programIndex];
       const publishedAt = index === 0
         ? new Date("2026-02-23T09:00:00+09:00")
         : new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`);
@@ -506,14 +551,12 @@ async function seed() {
         update: {
           programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
-          ...schedule,
           status: "PUBLISHED", publishedAt,
         },
         create: {
           id: ids.topics[index], programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           applicationQuestions: { create: applicationQuestions },
-          ...schedule,
           status: "PUBLISHED", publishedAt,
         },
       });
@@ -549,17 +592,13 @@ async function seed() {
         update: {
           programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt,
-          executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
-          submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
+          capacity,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
         create: {
           id: ids.topics[topicIndex], programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt,
-          executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
-          submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
+          capacity,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
       });
@@ -756,11 +795,17 @@ async function seed() {
       readyAt: file.readyAt,
       createdAt: file.readyAt,
     })) });
-    await tx.report.createMany({ data: [
-      { id: ids.activeReports[0], teamId: ids.teams[0], type: "START", dueAt: new Date("2026-04-10T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-      { id: ids.activeReports[1], teamId: ids.teams[0], type: "MIDTERM", dueAt: new Date("2026-06-12T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-      { id: ids.activeReports[2], teamId: ids.teams[0], type: "FINAL", dueAt: new Date("2026-08-14T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-    ] });
+    const activeReportDefinitions = [
+      { id: ids.reportDefinitions[0], programId: activePrograms[0].id, title: "착수 보고서", dueAt: new Date("2026-04-10T23:59:59+09:00"), position: 0 },
+      { id: ids.reportDefinitions[1], programId: activePrograms[0].id, title: "중간 보고서", dueAt: new Date("2026-06-12T23:59:59+09:00"), position: 1 },
+      { id: ids.reportDefinitions[2], programId: activePrograms[0].id, title: "결과 보고서", dueAt: new Date("2026-08-14T23:59:59+09:00"), position: 2 },
+    ];
+    await tx.programReportDefinition.createMany({ data: activeReportDefinitions });
+    await tx.report.createMany({ data: activeReportDefinitions.map((definition, index) => ({
+      id: ids.activeReports[index], teamId: ids.teams[0], definitionId: definition.id,
+      titleSnapshot: definition.title, dueAt: definition.dueAt, required: true,
+      createdAt: new Date("2026-03-25T10:00:00+09:00"),
+    })) });
     await tx.reportVersion.createMany({ data: [
       {
         id: ids.activeReportVersions[0],
@@ -832,7 +877,7 @@ async function seed() {
         registeredById: ids.students[0],
         type: "POSTER",
         title: "최종 발표 포스터",
-        fileId: ids.activeStoredFiles[4],
+        externalUrl: "/mock/opus/100-poster.webp",
         createdAt: new Date("2026-08-05T19:00:00+09:00"),
       },
       {
@@ -850,7 +895,7 @@ async function seed() {
         registeredById: ids.students[0],
         type: "PRESENTATION_VIDEO",
         title: "최종 시연 영상",
-        externalUrl: "https://example.com/mock/modu-ui-path/demo",
+        externalUrl: "https://www.youtube.com/watch?v=Uou5iwWqTDA",
         createdAt: new Date("2026-08-05T19:20:00+09:00"),
       },
     ] });
@@ -868,7 +913,9 @@ async function seed() {
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: reportPdf.byteLength,
         sha256: createHash("sha256").update(reportPdf).digest("hex"), expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
-      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", dueAt: pastPrograms[programIndex].endsAt, createdAt: submittedAt } });
+      const definitionId = ids.reportDefinitions[reportIndex + 3];
+      await tx.programReportDefinition.create({ data: { id: definitionId, programId: pastPrograms[programIndex].id, title: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, position: reportIndex } });
+      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], definitionId, titleSnapshot: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, required: true, createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
         id: ids.reportVersions[reportIndex], reportId: ids.reports[reportIndex], version: 1, fileId: ids.storedFiles[reportIndex],
         submitterId: ids.students[submitterIndex], description: "최종 검토 의견을 반영한 결과 보고서", submittedAt,
@@ -1205,7 +1252,6 @@ async function seed() {
       } });
       const project = opusArchivedProjects[index];
       const externalArtifacts = [
-        { type: "OTHER" as const, title: "OPUS 원본 페이지", externalUrl: `https://opus.pusan.ac.kr/contest/${project.sourceContestId}/teams/view/${project.sourceTeamId}` },
         ...(project.githubUrl ? [{ type: "SOURCE_CODE" as const, title: "GitHub 저장소", externalUrl: project.githubUrl }] : []),
         ...(project.youtubeUrl ? [{ type: "PRESENTATION_VIDEO" as const, title: "발표 영상", externalUrl: project.youtubeUrl }] : []),
         ...(project.productionUrl ? [{ type: "OTHER" as const, title: "프로젝트 서비스", externalUrl: project.productionUrl }] : []),
@@ -1234,13 +1280,13 @@ async function seed() {
       closedTeamWithoutAudit: number;
     }>>(Prisma.sql`
       SELECT
-        (SELECT count(*)::int FROM "topic" AS topic
-          JOIN "project_program" AS program ON program."id" = topic."programId"
-          WHERE topic."recruitmentStartsAt" < program."startsAt"
-            OR topic."executionStartsAt" < program."startsAt"
-            OR topic."executionEndsAt" > program."endsAt"
-            OR topic."submissionStartsAt" < program."startsAt"
-            OR topic."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
+        (SELECT count(*)::int FROM "project_program" AS program
+          WHERE program."recruitmentStartsAt" < program."startsAt"
+            OR program."recruitmentEndsAt" > program."endsAt"
+            OR program."executionStartsAt" < program."startsAt"
+            OR program."executionEndsAt" > program."endsAt"
+            OR program."submissionStartsAt" < program."startsAt"
+            OR program."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
         (SELECT count(*)::int FROM (
           SELECT "programId", "studentId" FROM "team_member" GROUP BY 1, 2 HAVING count(*) > 1
         ) AS duplicate) AS "duplicateMembership",
@@ -1255,7 +1301,7 @@ async function seed() {
             SELECT 1 FROM "report" AS report
             JOIN "report_version" AS version ON version."reportId" = report."id"
             JOIN "approval_decision" AS decision ON decision."reportVersionId" = version."id"
-            WHERE report."teamId" = team."id" AND report."type" = 'FINAL'::"ReportType"
+            WHERE report."teamId" = team."id" AND report."titleSnapshot" = '결과 보고서'
               AND decision."decision" = 'APPROVED'::"ApprovalDecisionType"
           )) AS "closedTeamWithoutApproval",
         (SELECT count(*)::int FROM "team" AS team
@@ -1268,6 +1314,31 @@ async function seed() {
     if (failedIntegrityChecks.length > 0) {
       throw new Error(`데모 데이터 정합성 검증 실패: ${failedIntegrityChecks.map(([name, failures]) => `${name}=${failures}`).join(", ")}`);
     }
+
+    // 데모 득표: 투표가 열린 두 프로그램에 표본 투표를 넣어 팀별 득표수를 바로 확인할 수 있게 한다.
+    // 투표자 = 교수·조교·관리자(과거 프로그램 팀원이 아니라 self-vote 충돌 없음), 자기 제안/담당 주제는 제외.
+    const votingProgramIds = pastPrograms.slice(0, 2).map((program) => program.id);
+    const demoVoters = [...allProfessorIds, ids.admin];
+    await tx.projectVote.deleteMany({ where: { programId: { in: votingProgramIds } } });
+    for (const votingProgramId of votingProgramIds) {
+      const candidates = await tx.topic.findMany({
+        where: { programId: votingProgramId, publishedAt: { not: null }, status: { in: ["PUBLISHED", "CLOSED"] } },
+        orderBy: [{ title: "asc" }, { id: "asc" }],
+        select: { id: true, authorId: true, managerId: true },
+      });
+      if (candidates.length < 2) continue;
+      const demoVotes: Array<{ programId: string; topicId: string; voterId: string; createdAt: Date }> = [];
+      demoVoters.forEach((voterId, index) => {
+        const eligible = candidates.filter((candidate) => candidate.authorId !== voterId && candidate.managerId !== voterId);
+        if (eligible.length < 2) return;
+        // 1등 후보 + 회전 후보 1개 = 뚜렷한 순위와 분산.
+        const picks = new Set<string>([eligible[0].id, eligible[(index % (eligible.length - 1)) + 1].id]);
+        for (const topicId of picks) {
+          demoVotes.push({ programId: votingProgramId, topicId, voterId, createdAt: new Date(votingStartsAt.getTime() + index * 60_000) });
+        }
+      });
+      if (demoVotes.length) await tx.projectVote.createMany({ data: demoVotes, skipDuplicates: true });
+    }
     const studentDemoTeams = await tx.team.findMany({
       where: {
         status: { not: "CLOSED" },
@@ -1279,7 +1350,7 @@ async function seed() {
         tasks: { select: { status: true } },
         reports: {
           select: {
-            type: true,
+            titleSnapshot: true,
             versions: {
               orderBy: { version: "desc" },
               select: { version: true, decision: { select: { decision: true } } },
@@ -1299,13 +1370,13 @@ async function seed() {
       || !["TODO", "IN_PROGRESS", "DONE"].every((status) => taskStatuses.has(status as "TODO" | "IN_PROGRESS" | "DONE"))) {
       throw new Error("학생 데모 프로젝트의 팀명 또는 할 일 상태 구성이 불완전합니다.");
     }
-    const reportsByType = new Map(studentDemoTeam.reports.map((report) => [report.type, report]));
-    if (!["START", "MIDTERM", "FINAL"].every((type) => reportsByType.get(type as "START" | "MIDTERM" | "FINAL")?.versions.length)) {
+    const reportsByTitle = new Map(studentDemoTeam.reports.map((report) => [report.titleSnapshot, report]));
+    if (!["착수 보고서", "중간 보고서", "결과 보고서"].every((title) => reportsByTitle.get(title)?.versions.length)) {
       throw new Error("학생 데모 프로젝트의 착수·중간·최종 보고서 제출본이 모두 필요합니다.");
     }
-    if (reportsByType.get("START")?.versions[0]?.decision?.decision !== "APPROVED"
-      || reportsByType.get("MIDTERM")?.versions[0]?.decision?.decision !== "APPROVED"
-      || reportsByType.get("FINAL")?.versions[0]?.decision !== null) {
+    if (reportsByTitle.get("착수 보고서")?.versions[0]?.decision?.decision !== "APPROVED"
+      || reportsByTitle.get("중간 보고서")?.versions[0]?.decision?.decision !== "APPROVED"
+      || reportsByTitle.get("결과 보고서")?.versions[0]?.decision !== null) {
       throw new Error("학생 데모 프로젝트의 보고서 승인 흐름이 예상 상태와 다릅니다.");
     }
     if (studentDemoTeam.artifacts.length < 3) {
@@ -1322,7 +1393,7 @@ async function seed() {
       activeReports: ids.activeReports.length,
       activeReportVersions: ids.activeReportVersions.length,
       activeArtifacts: ids.activeArtifacts.length,
-      announcements: ids.announcements.length,
+      announcements: ids.announcements.length + programAnnouncementRows.length,
       studentDemoProject: {
         teamName: studentDemoTeam.name,
         tasks: studentDemoTeam.tasks.length,

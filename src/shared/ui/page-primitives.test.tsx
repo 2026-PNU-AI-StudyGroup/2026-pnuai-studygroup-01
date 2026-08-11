@@ -20,7 +20,7 @@ describe("EmptyState", () => {
     expect(state).toHaveAttribute("data-empty-state", "embedded");
     expect(state).not.toHaveClass("rounded-[var(--radius-panel)]");
     expect(state).not.toHaveClass("border");
-    expect(state).not.toHaveClass("bg-white");
+    expect(state).not.toHaveClass("bg-[var(--surface)]");
   });
 
   it("페이지 빈 상태는 독립된 표면을 유지한다", () => {
@@ -29,7 +29,7 @@ describe("EmptyState", () => {
     const state = screen.getByText("항목이 없습니다").closest("[data-empty-state]");
     expect(state).toHaveAttribute("data-empty-state", "page");
     expect(state).toHaveClass("border");
-    expect(state).toHaveClass("bg-white");
+    expect(state).toHaveClass("bg-[var(--surface)]");
   });
 
   it("설명이 없으면 빈 문단과 설명용 여백을 만들지 않는다", () => {

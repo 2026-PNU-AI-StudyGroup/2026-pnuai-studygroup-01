@@ -2,7 +2,6 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { TopicDraft, TopicEditor } from "@/modules/topic/application/topic-ports";
 import {
   assertValidTopicDetails,
-  assertValidTopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
 
 export class TopicUpdateError extends Error {}
@@ -31,7 +30,6 @@ export class UpdateTopicService {
   async execute(actor: CurrentActor, topicId: string, input: Omit<TopicDraft, "authorId">): Promise<void> {
     const normalized = normalizeTopic(input);
     assertValidTopicDetails(normalized);
-    assertValidTopicSchedule(normalized);
     const outcome = await this.repository.update(topicId, actor, normalized);
     if (outcome === "UPDATED") return;
     if (outcome === "NOT_FOUND") throw new TopicUpdateError("수정할 수 있는 프로젝트를 찾지 못했습니다.");

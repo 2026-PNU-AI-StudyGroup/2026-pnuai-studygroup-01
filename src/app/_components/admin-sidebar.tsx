@@ -37,7 +37,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
     <div className="px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
       <div className="hidden px-2 lg:block">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"관리자"}</UiText></p>
-        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"관리 메뉴"}</UiText></h2>
+        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"운영 관리"}</UiText></h2>
       </div>
 
       <UiNav aria-label="관리자 업무" className="lg:mt-5">

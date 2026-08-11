@@ -5,7 +5,6 @@ import { randomUUID } from "node:crypto";
 import { ProjectProgramService } from "../src/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "../src/modules/project-program/infrastructure/prisma-project-program-repository";
 import { CreateTopicService } from "../src/modules/topic/application/create-topic";
-import { UpdateTopicScheduleService } from "../src/modules/topic/application/update-topic-schedule";
 import { PrismaTopicCommandRepository } from "../src/modules/topic/infrastructure/prisma-topic-command-repository";
 import { PrismaTopicQueryRepository } from "../src/modules/topic/infrastructure/prisma-topic-query-repository";
 import { PrismaTopicApplicationQueryRepository } from "../src/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
@@ -45,6 +44,14 @@ async function main() {
   ] });
   const now = new Date();
   const day = 24 * 60 * 60_000;
+  const commonSchedule = {
+    recruitmentStartsAt: new Date(now.getTime() - day),
+    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
+    executionStartsAt: new Date(now.getTime() - day),
+    executionEndsAt: new Date(now.getTime() + 90 * day),
+    submissionStartsAt: new Date(now.getTime() - day),
+    submissionEndsAt: new Date(now.getTime() + 90 * day),
+  };
   const programs = new PrismaProjectProgramRepository(prisma);
   const programService = new ProjectProgramService(programs);
   const programName = `자유 프로그램 ${randomUUID()}`;
@@ -56,7 +63,7 @@ async function main() {
     endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day),
     projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
-    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
+    ...commonSchedule,
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
     icon: "FOLDER",
@@ -78,38 +85,40 @@ async function main() {
     applicationMode: "INDIVIDUAL_ONLY",
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 3,
-    recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    executionStartsAt: new Date(now.getTime() + 20 * day),
-    executionEndsAt: new Date(now.getTime() + 70 * day),
-    submissionStartsAt: new Date(now.getTime() + 60 * day),
-    submissionEndsAt: new Date(now.getTime() + 80 * day),
   });
-  const filtered = await topicQueries.listPublished({ programId: program.id, query: "", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  const filtered = await topicQueries.listPublished({ programId: program.id, query: "", page: 1, pageSize: 10, now });
   if (filtered.total !== 1 || filtered.items[0]?.programName !== program.name) throw new Error("프로그램별 주제 필터가 일치하지 않습니다.");
   const changedSchedule = {
     recruitmentStartsAt: new Date(now.getTime() - 30 * 60_000),
+    recruitmentEndsAt: new Date(now.getTime() + 89 * day),
     executionStartsAt: new Date(now.getTime() + 10 * day),
     executionEndsAt: new Date(now.getTime() + 75 * day),
     submissionStartsAt: new Date(now.getTime() + 65 * day),
     submissionEndsAt: new Date(now.getTime() + 85 * day),
   };
-  await new UpdateTopicScheduleService(topicCommands).execute(
-    { id: professorId, role: "PROFESSOR" },
-    topic.id,
-    changedSchedule,
-  );
-  const scheduledTopic = await prisma.topic.findUniqueOrThrow({ where: { id: topic.id } });
-  if (scheduledTopic.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
-    throw new Error("주제 작성자가 변경한 일정이 저장되지 않았습니다.");
+  await programService.updateSettings({ id: adminId, role: "ADMIN" }, program.id, {
+    name: program.name,
+    category: program.category,
+    description: program.description,
+    startsAt: program.startsAt,
+    endsAt: program.endsAt,
+    projectRegistrationStartsAt: program.projectRegistrationStartsAt,
+    projectRegistrationEndsAt: program.projectRegistrationEndsAt,
+    ...changedSchedule,
+    votingPolicy: null,
+  });
+  const scheduledProgram = await prisma.projectProgram.findUniqueOrThrow({ where: { id: program.id } });
+  if (scheduledProgram.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
+    throw new Error("프로그램 공통 일정 변경이 저장되지 않았습니다.");
   }
 
   const accepted = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: leaderId, message: "팀장", status: "ACCEPTED", decidedAt: now } });
   const pending = await prisma.topicApplication.create({ data: { topicId: topic.id, studentId: applicantId, message: "지원", status: "PENDING" } });
-  const searched = await topicQueries.listPublished({ viewerId: applicantId, programId: program.id, query: "typescript", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  const searched = await topicQueries.listPublished({ viewerId: applicantId, programId: program.id, query: "typescript", page: 1, pageSize: 10, now });
   if (searched.total !== 1 || searched.items[0]?.ownApplicationStatus !== "PENDING") {
     throw new Error("기술 검색 또는 현재 학생의 지원 상태 조회가 일치하지 않습니다.");
   }
-  const escapedSearch = await topicQueries.listPublished({ programId: program.id, query: "%", phase: "ACTIVE", sort: "LATEST", page: 1, pageSize: 10, now });
+  const escapedSearch = await topicQueries.listPublished({ programId: program.id, query: "%", page: 1, pageSize: 10, now });
   if (escapedSearch.total !== 0) throw new Error("검색 와일드카드가 일반 문자로 처리되지 않았습니다.");
   const team = await prisma.team.create({ data: { programId: program.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
   await prisma.teamMember.create({ data: { teamId: team.id, programId: program.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
@@ -122,11 +131,6 @@ async function main() {
     title: "프로그램 종료 승인 요청 검증",
     description: "프로그램 종료 시 대기 승인 요청도 함께 종료되는지 검증",
     capacity: 2,
-    recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    executionStartsAt: new Date(now.getTime() + 20 * day),
-    executionEndsAt: new Date(now.getTime() + 70 * day),
-    submissionStartsAt: new Date(now.getTime() + 60 * day),
-    submissionEndsAt: new Date(now.getTime() + 80 * day),
     status: "PENDING_APPROVAL",
     approvalRequest: {
       create: {
@@ -159,7 +163,7 @@ async function main() {
     name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
-    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
+    ...commonSchedule,
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
     icon: "FOLDER",
@@ -172,9 +176,6 @@ async function main() {
       programId: raceProgram.id, title: "마감 경합 주제", description: "원자적 생성 검증", requiredSkills: ["TypeScript"], preferredSkills: [],
       roleExpectations: "구현", availabilityRequirement: "주 1회", capacity: 2,
       applicationMode: "INDIVIDUAL_ONLY", applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
-      recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-      executionStartsAt: new Date(now.getTime() + 20 * day), executionEndsAt: new Date(now.getTime() + 70 * day),
-      submissionStartsAt: new Date(now.getTime() + 60 * day), submissionEndsAt: new Date(now.getTime() + 80 * day),
     }),
     programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "CLOSED", new Date(now.getTime() + 3_000)),
   ]);
@@ -187,7 +188,7 @@ async function main() {
     name: approvalRaceName, category: "경합 검증", description: "학생 제안 생성 및 승인과 프로그램 마감 경합",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
-    recruitmentEndsAt: new Date(now.getTime() + 90 * day),
+    ...commonSchedule,
     advisorEnabled: true,
     studentProjectCreationEnabled: true,
     icon: "FOLDER",
@@ -207,11 +208,6 @@ async function main() {
     applicationMode: "INDIVIDUAL_ONLY" as const,
     applicationQuestions: [{ label: "참여 동기", maxLength: 500, required: true }],
     capacity: 2,
-    recruitmentStartsAt: new Date(now.getTime() - 60 * 60_000),
-    executionStartsAt: new Date(now.getTime() + 20 * day),
-    executionEndsAt: new Date(now.getTime() + 70 * day),
-    submissionStartsAt: new Date(now.getTime() + 60 * day),
-    submissionEndsAt: new Date(now.getTime() + 80 * day),
     route: "ADMIN" as const,
     requestedProfessorId: null,
   };
@@ -259,7 +255,7 @@ async function main() {
     );
   }
 
-  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, topicScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, topicApprovalRequest: rejectedApprovalRequest.status, closeCreateRacePublishedTopics: publishedRaceTopics, approvalCloseRace: { approval: approvalCloseRace[0].value, createdTopic: approvalCloseRace[1].value !== null, publishedTopics: approvalRacePublishedTopics, pendingRequests: approvalRacePendingRequests } }));
+  console.log(JSON.stringify({ program: "CLOSED", topic: closedTopic.status, programScheduleUpdated: true, technologySearch: searched.total, escapedWildcardSearch: escapedSearch.total, ownApplicationStatus: searched.items[0]?.ownApplicationStatus, topicApplication: rejectedTopicApplication.status, topicApplicationHistory: topicHistory.total, recruitmentPost: closedPost.status, recruitmentApplication: rejectedRecruitmentApplication.status, topicApprovalRequest: rejectedApprovalRequest.status, closeCreateRacePublishedTopics: publishedRaceTopics, approvalCloseRace: { approval: approvalCloseRace[0].value, createdTopic: approvalCloseRace[1].value !== null, publishedTopics: approvalRacePublishedTopics, pendingRequests: approvalRacePendingRequests } }));
 }
 
 main()

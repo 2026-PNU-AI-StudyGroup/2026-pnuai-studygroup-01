@@ -27,7 +27,7 @@ describe("ProgramForm", () => {
     expect(document.querySelector('input[name="endsAt"]')).toBeRequired();
     expect(screen.getByRole("button", { name: "운영 시작" })).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByRole("button", { name: "운영 종료" })).toHaveAttribute("aria-haspopup", "dialog");
-    expect(screen.getByRole("button", { name: "초안 등록" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "프로그램 등록" })).toBeEnabled();
   });
 
   it("고정 아이콘 목록에서 폴더 아이콘을 기본값으로 선택한다", () => {

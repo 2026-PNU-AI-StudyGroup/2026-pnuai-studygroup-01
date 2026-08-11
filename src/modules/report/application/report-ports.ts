@@ -2,13 +2,14 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   ApprovalDecision,
   ArtifactType,
-  ReportType,
 } from "@/modules/report/domain/report-policy";
 
 export type ReportWorkspace = {
   reports: Array<{
     id: string;
-    type: ReportType;
+    title: string;
+    position: number;
+    required: boolean;
     dueAt: Date;
     versions: Array<{
       id: string;
@@ -47,27 +48,11 @@ export interface ReportWorkspaceReader {
   findWorkspace(teamId: string, actor: CurrentActor): Promise<ReportWorkspace | null>;
 }
 
-export interface ReportRequirementWriter {
-  setRequirement(input: {
-    teamId: string;
-    actor: CurrentActor;
-    type: ReportType;
-    dueAt: Date;
-    configuredAt: Date;
-  }): Promise<{ id: string } | null>;
-  removeRequirement(input: {
-    teamId: string;
-    actor: CurrentActor;
-    type: ReportType;
-    removedAt: Date;
-  }): Promise<boolean>;
-}
-
 export interface ReportSubmissionWriter {
   submit(input: {
     teamId: string;
+    reportId: string;
     actor: CurrentActor;
-    type: ReportType;
     fileId: string;
     description: string;
     submittedAt: Date;

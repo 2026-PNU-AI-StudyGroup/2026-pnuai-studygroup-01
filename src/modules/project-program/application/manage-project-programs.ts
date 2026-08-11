@@ -1,7 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import {
-  assertProjectRegistrationPeriod,
-  assertProgramRecruitmentDeadline,
   assertProgramAdmin,
   isProjectRegistrationOpen,
   normalizeProgramVotingPolicy,
@@ -14,6 +12,7 @@ import type { ProgramIconKey } from "@/modules/project-program/domain/program-ic
 export type ProjectProgramRecord = Omit<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">> & {
   id: string; startYear: number;
   isPublic?: boolean; lifecycleStatus?: "ACTIVE" | "CLOSED"; topicCount: number; teamCount: number;
+  firstPublishedAt?: Date | null; closedAt?: Date | null;
   /** Compatibility projection for callers not yet migrated to the visibility/lifecycle fields. */
   status?: "DRAFT" | "OPEN" | "CLOSED";
   divisions?: Array<{ id: string; name: string; position: number }>;
@@ -25,7 +24,12 @@ export type ProjectProgramCreateInput = Omit<ProjectProgramDetails, "projectRegi
   votingPolicy?: ProgramVotingPolicyDetails | null;
 };
 
-export type ProjectProgramSettings = Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt" | "recruitmentEndsAt"> & Partial<Pick<ProjectProgramDetails, "name" | "category" | "description" | "startsAt" | "endsAt" | "advisorEnabled">> & {
+export type ProjectProgramSettings = Pick<ProjectProgramDetails,
+  "projectRegistrationStartsAt" | "projectRegistrationEndsAt" |
+  "recruitmentStartsAt" | "recruitmentEndsAt" |
+  "executionStartsAt" | "executionEndsAt" |
+  "submissionStartsAt" | "submissionEndsAt"
+> & Partial<Pick<ProjectProgramDetails, "name" | "category" | "description" | "startsAt" | "endsAt" | "advisorEnabled">> & {
   votingPolicy: ProgramVotingPolicyDetails | null;
   confirmVoteReset?: ProgramVoteResetImpact;
 };
@@ -44,19 +48,19 @@ export type UpdateProjectProgramSettingsOutcome =
   | "SELF_VOTE_CONFLICT"
   | "VOTE_PERIOD_CONFLICT"
   | "IDENTITY_VISIBILITY_LOCKED"
-  | "TOPIC_SCHEDULE_CONFLICT"
+  | "DEPENDENT_SCHEDULE_CONFLICT"
   | { status: "VOTE_RESET_CONFIRMATION_REQUIRED"; impact: ProgramVoteResetImpact }
   | "DIVISIONS_REQUIRED";
 
 export interface ProjectProgramRepository {
-  create(input: ProjectProgramDetails & { divisionNames?: string[]; votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<"CREATED" | "DUPLICATE">;
+  create(input: ProjectProgramDetails & { divisionNames?: string[]; votingPolicy: ProgramVotingPolicyDetails | null; createdById: string }): Promise<string | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
   listPublic?(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
   listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]>;
   findById(id: string): Promise<ProjectProgramRecord | null>;
   updateSettings(id: string, input: ProjectProgramSettings, actorId: string): Promise<UpdateProjectProgramSettingsOutcome>;
-  setPublic?(id: string, isPublic: boolean): Promise<boolean>;
+  setPublic?(id: string, isPublic: boolean, changedAt: Date): Promise<boolean>;
   close?(id: string, changedById: string, changedAt: Date): Promise<boolean>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
   changeStudentProjectCreation(id: string, enabled: boolean): Promise<boolean>;
@@ -67,7 +71,12 @@ export interface ProjectProgramRepository {
     endsAt: Date;
     projectRegistrationStartsAt?: Date;
     projectRegistrationEndsAt?: Date;
+    recruitmentStartsAt: Date;
     recruitmentEndsAt: Date;
+    executionStartsAt: Date;
+    executionEndsAt: Date;
+    submissionStartsAt: Date;
+    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
   } | null>;
@@ -77,7 +86,12 @@ export interface ProjectProgramRepository {
     endsAt: Date;
     projectRegistrationStartsAt?: Date;
     projectRegistrationEndsAt?: Date;
+    recruitmentStartsAt: Date;
     recruitmentEndsAt: Date;
+    executionStartsAt: Date;
+    executionEndsAt: Date;
+    submissionStartsAt: Date;
+    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
   } | null>;
@@ -121,13 +135,14 @@ export class ProjectProgramService {
       divisionNames: normalizedDivisionNames,
       createdById: actor.id,
     });
-    if (outcome !== "CREATED") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
+    if (outcome === "DUPLICATE") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
+    return outcome;
   }
-  async setPublic(actor: CurrentActor, id: string, isPublic: boolean) {
+  async setPublic(actor: CurrentActor, id: string, isPublic: boolean, now = new Date()) {
     assertProgramAdmin(actor);
     const changed = this.repository.setPublic
-      ? await this.repository.setPublic(id, isPublic)
-      : isPublic ? await this.repository.changeStatus(id, "OPEN", actor.id, new Date()) : false;
+      ? await this.repository.setPublic(id, isPublic, now)
+      : isPublic ? await this.repository.changeStatus(id, "OPEN", actor.id, now) : false;
     if (!changed) throw new ProjectProgramOperationError("공개 설정을 변경할 프로그램이 없습니다.");
   }
   async close(actor: CurrentActor, id: string, now = new Date()) {
@@ -139,7 +154,7 @@ export class ProjectProgramService {
   }
   /** @deprecated Use setPublic or close so intent cannot be conflated. */
   async changeStatus(actor: CurrentActor, id: string, status: "OPEN" | "CLOSED", now = new Date()) {
-    if (status === "OPEN") return this.setPublic(actor, id, true);
+    if (status === "OPEN") return this.setPublic(actor, id, true, now);
     return this.close(actor, id, now);
   }
   async changeStudentProjectCreation(actor: CurrentActor, id: string, enabled: boolean) {
@@ -173,7 +188,12 @@ export class ProjectProgramService {
       advisorEnabled: input.advisorEnabled ?? program.advisorEnabled,
       projectRegistrationStartsAt: input.projectRegistrationStartsAt,
       projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+      recruitmentStartsAt: input.recruitmentStartsAt,
       recruitmentEndsAt: input.recruitmentEndsAt,
+      executionStartsAt: input.executionStartsAt,
+      executionEndsAt: input.executionEndsAt,
+      submissionStartsAt: input.submissionStartsAt,
+      submissionEndsAt: input.submissionEndsAt,
       votingPolicy: input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
       confirmVoteReset: input.confirmVoteReset,
     };
@@ -185,7 +205,12 @@ export class ProjectProgramService {
       endsAt: settings.endsAt!,
       projectRegistrationStartsAt: settings.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.projectRegistrationEndsAt,
+      recruitmentStartsAt: settings.recruitmentStartsAt,
       recruitmentEndsAt: settings.recruitmentEndsAt,
+      executionStartsAt: settings.executionStartsAt,
+      executionEndsAt: settings.executionEndsAt,
+      submissionStartsAt: settings.submissionStartsAt,
+      submissionEndsAt: settings.submissionEndsAt,
       advisorEnabled: settings.advisorEnabled!,
       studentProjectCreationEnabled: program.studentProjectCreationEnabled,
       icon: program.icon,
@@ -201,7 +226,7 @@ export class ProjectProgramService {
       VOTE_PERIOD_CONFLICT: "기존 투표 시각을 제외하는 기간으로 변경할 수 없습니다.",
       IDENTITY_VISIBILITY_LOCKED: "첫 표가 저장된 뒤에는 익명·기명 방식을 변경할 수 없습니다.",
       DIVISIONS_REQUIRED: "분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.",
-      TOPIC_SCHEDULE_CONFLICT: "기존 프로젝트 일정이 새 프로그램 운영 기간 또는 모집 마감을 벗어납니다.",
+      DEPENDENT_SCHEDULE_CONFLICT: "기존 보고서 기한 또는 확정 지도 일정이 새 프로그램 일정 범위를 벗어납니다.",
     };
     throw new ProjectProgramOperationError(messages[outcome]);
   }

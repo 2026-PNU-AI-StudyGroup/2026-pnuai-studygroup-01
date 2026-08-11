@@ -2,14 +2,14 @@ import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
 import { ArtifactManagementForm } from "@/app/teams/[teamId]/_components/artifact-management-form";
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { ArtifactPoster } from "@/shared/ui/artifact-poster";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
@@ -17,38 +17,43 @@ export async function generateMetadata(): Promise<Metadata> {
 const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
 type ArtifactType = keyof typeof artifactTypeLabel;
 
-const artifactTypePresentation = {
-  PRESENTATION_VIDEO: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--warning-subtle)] text-[var(--warning-ink)]",
-  },
-  SOURCE_CODE: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--primary-subtle)] text-[var(--primary)]",
-  },
-  POSTER: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--success-subtle)] text-[var(--success)]",
-  },
-  OTHER: {
-    tone: "neutral",
-    iconClassName: "bg-[var(--surface-subtle)] text-[var(--muted)]",
-  },
-} as const;
+// YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
+function toYoutubeEmbedUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
 
-function ArtifactTypeIcon({ type }: { type: ArtifactType }) {
-  const icon = type === "PRESENTATION_VIDEO"
-    ? <><rect x="4" y="5" width="16" height="14" rx="2" /><path d="m10 9 5 3-5 3Z" /></>
-    : type === "SOURCE_CODE"
-      ? <><path d="m9 7-5 5 5 5M15 7l5 5-5 5M14 4l-4 16" /></>
-      : type === "POSTER"
-        ? <><rect x="5" y="3" width="14" height="18" rx="1.5" /><path d="M8 8h8M8 12h8M8 16h5" /></>
-        : <><path d="M4 7h6l2 2h8v10H4z" /></>;
-  return (
-    <span aria-hidden="true" className={`grid size-11 shrink-0 place-items-center rounded-xl ${artifactTypePresentation[type].iconClassName}`}>
-      <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]">{icon}</svg>
-    </span>
-  );
+function ArtifactMedia({ type, title, fileId, externalUrl }: {
+  type: ArtifactType;
+  title: string;
+  fileId: string | null | undefined;
+  externalUrl: string | null | undefined;
+}) {
+  const embedUrl = type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(externalUrl) : null;
+  if (embedUrl) {
+    return (
+      <div className="aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
+        <iframe className="size-full" src={embedUrl} title={title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+      </div>
+    );
+  }
+  if (type === "POSTER" && (fileId || externalUrl)) {
+    return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
+  }
+  if (externalUrl) {
+    return (
+      <a className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline [overflow-wrap:anywhere]" href={externalUrl} target="_blank" rel="noreferrer">
+        <ExternalLinkIcon className="size-4 shrink-0" /><span className="min-w-0 break-all">{externalUrl}</span><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span>
+      </a>
+    );
+  }
+  if (fileId) {
+    return (
+      <a className="button-secondary gap-2" href={`/api/files/${fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
+    );
+  }
+  return null;
 }
 
 export default async function TeamArtifactsPage({ params }: { params: Promise<{ teamId: string }> }) {
@@ -60,7 +65,6 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
   const canRegisterArtifact = workspace.status === "CONFIRMED" &&
     workspace.access.canContribute &&
     (actor.role === "ADMIN" || isStudentRegistrationPeriod);
-  const canEditShowcase = actor.role === "ADMIN" || workspace.access.isPrimaryAdvisor || workspace.access.isTeamMember;
   const registrationPeriodState = workspace.status === "CONFIRMED" &&
     workspace.access.isTeamMember &&
     actor.role !== "ADMIN"
@@ -89,12 +93,12 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         titleId="artifacts-title"
         description="발표 자료와 소스 코드 등 공개 가능한 결과물을 관리합니다."
         bordered={false}
-        actions={<>{canEditShowcase ? <Link href={`/showcase/${workspace.id}/edit`} className="button-secondary"><UiText>{"쇼케이스 관리"}</UiText></Link> : null}{canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : null}</>}
+        actions={canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
       />
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6"
         >
           <div>
             <p id="artifact-registration-restriction-title" className="text-sm font-extrabold text-[var(--ink)]"><UiText>{registrationPeriodState === "BEFORE" ? "결과물 등록 기간 전" : "결과물 등록 기간 종료"}</UiText></p>
@@ -111,32 +115,22 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         </aside>
       ) : null}
       {reportWorkspace.artifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="max-w-3xl space-y-9">
           {reportWorkspace.artifacts.map((artifact) => {
             const titleId = `artifact-title-${artifact.id}`;
-            const presentation = artifactTypePresentation[artifact.type];
             return (
-              <li key={artifact.id} className="min-w-0">
-                <article
-                  aria-labelledby={titleId}
-                  data-artifact-type={artifact.type.toLowerCase()}
-                  className="flex h-full min-h-56 flex-col rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:p-6"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <ArtifactTypeIcon type={artifact.type} />
-                    <StatusBadge tone={presentation.tone}><UiText>{artifactTypeLabel[artifact.type]}</UiText></StatusBadge>
+              <li key={artifact.id} className="min-w-0" data-artifact-type={artifact.type.toLowerCase()}>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <div className="min-w-0">
+                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{artifactTypeLabel[artifact.type]}</UiText></span>
+                    <h2 id={titleId} className="text-base font-bold leading-6 tracking-[-0.02em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
                   </div>
-                  <h2 id={titleId} className="mt-5 text-lg font-black leading-7 tracking-[-0.025em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
-                  <time className="muted mt-2 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
-                  <div className="mt-auto pt-6">
-                    {artifact.fileId ? (
-                      <a className="button-secondary w-full gap-2" href={`/api/files/${artifact.fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
-                    ) : (
-                      <a className="button-secondary w-full gap-2" href={artifact.externalUrl} target="_blank" rel="noreferrer"><ExternalLinkIcon className="size-4" /><UiText>{"링크 열기"}</UiText><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span></a>
-                    )}
-                    {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
-                  </div>
-                </article>
+                  <time className="muted shrink-0 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
+                </div>
+                <div className="mt-3">
+                  <ArtifactMedia type={artifact.type} title={artifact.title} fileId={artifact.fileId} externalUrl={artifact.externalUrl} />
+                  {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
+                </div>
               </li>
             );
           })}

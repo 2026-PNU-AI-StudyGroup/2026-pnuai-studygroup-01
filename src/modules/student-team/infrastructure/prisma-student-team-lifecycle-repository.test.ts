@@ -34,9 +34,11 @@ describe("지속형 팀 수명주기 저장소", () => {
   it("팀원 제거 전에 부모 팀을 잠가 프로젝트 승인의 팀원 확정과 직렬화한다", async () => {
     const queryRaw = vi.fn().mockResolvedValue([{ id: "team-1" }]);
     const deleteMany = vi.fn(async () => ({ count: 1 }));
+    const updateTeam = vi.fn(async () => ({ id: "team-1" }));
     const transaction = {
       $queryRaw: queryRaw,
       studentTeamMember: { deleteMany },
+      studentTeam: { update: updateTeam },
     };
     const client = {
       $transaction: vi.fn(async (operation: (tx: typeof transaction) => unknown) => operation(transaction)),
@@ -51,6 +53,10 @@ describe("지속형 팀 수명주기 저장소", () => {
     expect(deleteMany).toHaveBeenCalledWith({
       where: { teamId: "team-1", studentId: "student-2" },
     });
+    expect(updateTeam).toHaveBeenCalledWith({
+      where: { id: "team-1" },
+      data: { compositionVersion: { increment: 1 } },
+    });
     const sql = (queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
     expect(sql).toContain('FROM "student_team"');
     expect(sql).toContain("FOR UPDATE");
@@ -58,12 +64,14 @@ describe("지속형 팀 수명주기 저장소", () => {
 
   it("팀 삭제 시 대기 중인 제안 승인 요청을 종료한다", async () => {
     const updateApprovals = vi.fn(async () => ({ count: 1 }));
+    const updateTopics = vi.fn(async () => ({ count: 1 }));
     const transaction = {
       studentTeam: { updateMany: vi.fn(async () => ({ count: 1 })) },
       studentTeamInvitation: { updateMany: vi.fn(async () => ({ count: 0 })) },
       studentTeamRecruitmentPost: { updateMany: vi.fn(async () => ({ count: 0 })) },
       studentTeamRecruitmentApplication: { updateMany: vi.fn(async () => ({ count: 0 })) },
       topicApprovalRequest: { updateMany: updateApprovals },
+      topic: { updateMany: updateTopics },
     };
     const client = {
       $transaction: vi.fn(async (operation: (tx: typeof transaction) => unknown) => operation(transaction)),
@@ -83,6 +91,13 @@ describe("지속형 팀 수명주기 저장소", () => {
         reviewComment: "팀 삭제로 승인 요청이 자동 종료되었습니다.",
         decidedAt: deletedAt,
       },
+    });
+    expect(updateTopics).toHaveBeenCalledWith({
+      where: {
+        approvalRequest: { studentTeamId: "team-1", status: "REJECTED" },
+        status: "PENDING_APPROVAL",
+      },
+      data: { status: "REJECTED" },
     });
   });
 

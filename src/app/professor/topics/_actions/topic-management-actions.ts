@@ -11,13 +11,6 @@ import {
   TopicNotFoundError,
 } from "@/modules/topic/application/change-topic-status";
 import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
-import {
-  TopicScheduleUpdateForbiddenError,
-  TopicScheduleUpdateUnavailableError,
-  UpdateTopicScheduleService,
-} from "@/modules/topic/application/update-topic-schedule";
-import { InvalidTopicScheduleError } from "@/modules/topic/domain/topic-policy";
-import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { parseTopicFormData } from "@/modules/topic/ui/create-topic-input";
 import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-error";
 import { TopicUpdateError, UpdateTopicService } from "@/modules/topic/application/update-topic";
@@ -30,16 +23,6 @@ type TopicManagementActionState = {
 };
 
 export type TopicStatusActionState = TopicManagementActionState;
-export type TopicScheduleActionState = TopicManagementActionState;
-
-const topicScheduleInputSchema = z.object({
-  topicId: z.string().uuid(),
-  recruitmentStartsAt: koreanLocalDateTime,
-  executionStartsAt: koreanLocalDateTime,
-  executionEndsAt: koreanLocalDateTime,
-  submissionStartsAt: koreanLocalDateTime,
-  submissionEndsAt: koreanLocalDateTime,
-});
 
 export async function changeTopicStatusAction(
   _previousState: TopicStatusActionState,
@@ -100,7 +83,7 @@ export async function updateTopicAction(
   const topicId = z.string().uuid().safeParse(formData.get("topicId"));
   const parsed = parseTopicFormData(formData);
   if (!topicId.success || !parsed.success) {
-    return { status: "error", message: "프로젝트 내용과 기간을 확인해 주세요." };
+    return { status: "error", message: "프로젝트 내용을 확인해 주세요." };
   }
   try {
     await new UpdateTopicService(new PrismaTopicCommandRepository(prisma)).execute(actor, topicId.data, parsed.data);
@@ -115,35 +98,4 @@ export async function updateTopicAction(
   revalidatePath(`/professor/topics/${topicId.data}/edit`);
   revalidatePath("/topics");
   return { status: "success", message: "프로젝트 내용을 변경했습니다." };
-}
-
-export async function updateTopicScheduleAction(
-  _previousState: TopicScheduleActionState,
-  formData: FormData,
-): Promise<TopicScheduleActionState> {
-  const actor = await getCurrentActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = topicScheduleInputSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "모집 시작·수행·제출 기간을 확인해 주세요." };
-  const { topicId, ...schedule } = parsed.data;
-  try {
-    await new UpdateTopicScheduleService(
-      new PrismaTopicCommandRepository(prisma),
-    ).execute(actor, topicId, schedule);
-  } catch (error) {
-    if (
-      error instanceof TopicScheduleUpdateForbiddenError ||
-      error instanceof TopicScheduleUpdateUnavailableError ||
-      error instanceof InvalidTopicScheduleError
-    ) {
-      return { status: "error", message: error.message };
-    }
-    throw error;
-  }
-  revalidatePath("/professor/topics");
-  revalidatePath(`/professor/topics/${topicId}`);
-  revalidatePath(`/professor/topics/${topicId}/schedule`);
-  revalidatePath("/topics");
-  revalidatePath("/dashboard");
-  return { status: "success", message: "프로젝트 일정을 변경했습니다." };
 }

@@ -21,11 +21,22 @@ export type ProjectProgramDetails = {
   endsAt: Date;
   projectRegistrationStartsAt: Date;
   projectRegistrationEndsAt: Date;
+  recruitmentStartsAt: Date;
   recruitmentEndsAt: Date;
+  executionStartsAt: Date;
+  executionEndsAt: Date;
+  submissionStartsAt: Date;
+  submissionEndsAt: Date;
   advisorEnabled: boolean;
   studentProjectCreationEnabled: boolean;
   icon: ProgramIconKey;
 };
+
+export type ProgramSchedule = Pick<ProjectProgramDetails,
+  "recruitmentStartsAt" | "recruitmentEndsAt" |
+  "executionStartsAt" | "executionEndsAt" |
+  "submissionStartsAt" | "submissionEndsAt"
+>;
 
 export class InvalidProjectProgramError extends Error {}
 
@@ -45,7 +56,10 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
   if (!value.description || value.description.length > 5000) throw new InvalidProjectProgramError("설명은 1자 이상 5000자 이하여야 합니다.");
   if (!Number.isFinite(value.startsAt.getTime()) || !Number.isFinite(value.endsAt.getTime()) || value.startsAt >= value.endsAt) throw new InvalidProjectProgramError("프로그램 시작 시각은 종료 시각보다 앞서야 합니다.");
   assertProjectRegistrationPeriod(value.projectRegistrationStartsAt, value.projectRegistrationEndsAt);
-  assertProgramRecruitmentDeadline(value.recruitmentEndsAt, value.startsAt, value.endsAt);
+  if (value.projectRegistrationStartsAt < value.startsAt || value.projectRegistrationEndsAt > value.endsAt) {
+    throw new InvalidProjectProgramError("프로젝트 등록 기간은 프로그램 운영 기간 안에 있어야 합니다.");
+  }
+  assertValidProgramSchedule(value);
   if (!isProgramIconKey(value.icon)) throw new InvalidProjectProgramError("프로그램 아이콘을 다시 선택해 주세요.");
   return value;
 }
@@ -68,21 +82,30 @@ export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {
   assertValidPeriod(startsAt, endsAt, "프로젝트 등록 시작 시각은 종료 시각보다 앞서야 합니다.");
 }
 
-export function assertProgramRecruitmentDeadline(recruitmentEndsAt: Date, startsAt: Date, endsAt: Date) {
-  if (
-    !Number.isFinite(recruitmentEndsAt.getTime()) ||
-    recruitmentEndsAt < startsAt ||
-    recruitmentEndsAt > endsAt
-  ) {
-    throw new InvalidProjectProgramError("프로젝트 모집 마감은 프로그램 운영 기간 안에 있어야 합니다.");
+export function assertValidProgramSchedule(schedule: Pick<ProjectProgramDetails,
+  "startsAt" | "endsAt" |
+  "recruitmentStartsAt" | "recruitmentEndsAt" |
+  "executionStartsAt" | "executionEndsAt" |
+  "submissionStartsAt" | "submissionEndsAt"
+>) {
+  const periods = [
+    ["프로젝트 모집", schedule.recruitmentStartsAt, schedule.recruitmentEndsAt],
+    ["수행", schedule.executionStartsAt, schedule.executionEndsAt],
+    ["제출", schedule.submissionStartsAt, schedule.submissionEndsAt],
+  ] as const;
+  for (const [name, startsAt, endsAt] of periods) {
+    assertValidPeriod(startsAt, endsAt, `${name} 시작 시각은 종료 시각보다 앞서야 합니다.`);
+    if (startsAt < schedule.startsAt || endsAt > schedule.endsAt) {
+      throw new InvalidProjectProgramError(`${name} 기간은 프로그램 운영 기간 안에 있어야 합니다.`);
+    }
   }
 }
 
 export function isProgramRecruitmentOpen(
-  program: Pick<ProjectProgramDetails, "recruitmentEndsAt">,
+  program: Pick<ProjectProgramDetails, "recruitmentStartsAt" | "recruitmentEndsAt">,
   now: Date,
 ) {
-  return now < program.recruitmentEndsAt;
+  return program.recruitmentStartsAt <= now && now < program.recruitmentEndsAt;
 }
 
 export function isProjectRegistrationOpen(

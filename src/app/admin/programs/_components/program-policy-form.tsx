@@ -18,7 +18,12 @@ type ProgramPolicyFormProps = {
   advisorEnabled: boolean;
   registrationStartsAt: Date;
   registrationEndsAt: Date;
+  recruitmentStartsAt: Date;
   recruitmentEndsAt: Date;
+  executionStartsAt: Date;
+  executionEndsAt: Date;
+  submissionStartsAt: Date;
+  submissionEndsAt: Date;
   votingPolicy: ProgramVotingPolicyDetails | null;
   divisionCount?: number;
 };
@@ -37,7 +42,7 @@ function koreanDateTimeLocal(value: Date): string {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function ProgramPolicyForm({ programId, name, category, description, startsAt, endsAt, advisorEnabled, registrationStartsAt, registrationEndsAt, recruitmentEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
+export function ProgramPolicyForm({ programId, name, category, description, startsAt, endsAt, advisorEnabled, registrationStartsAt, registrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
   const [state, action, pending] = useActionState(updateProgramSettingsAction, initialProgramActionState);
 
@@ -66,7 +71,7 @@ export function ProgramPolicyForm({ programId, name, category, description, star
           <ChoiceCard name="advisorEnabled" value="false" defaultChecked={!advisorEnabled} required label="지도교수 없음" description="학생 제안은 관리자가 검토합니다." />
         </fieldset>
       </FormSection>
-      <FormSection title="프로젝트 등록 기간" description="운영기간과 독립적으로 새 프로젝트 등록과 최초 공개를 제한합니다." contentClassName="sm:grid-cols-2">
+      <FormSection title="프로젝트 등록 기간" description="운영 기간 안에서 새 프로젝트 등록과 최초 공개를 제한합니다." contentClassName="sm:grid-cols-2">
         <FormField id="settings-registration-starts-at" label="등록 시작" required>
           <DateTimeInput id="settings-registration-starts-at" name="projectRegistrationStartsAt" defaultValue={koreanDateTimeLocal(registrationStartsAt)} required />
         </FormField>
@@ -75,9 +80,24 @@ export function ProgramPolicyForm({ programId, name, category, description, star
         </FormField>
       </FormSection>
 
-      <FormSection title="프로젝트 모집 마감" description="개별 프로젝트가 아닌 프로그램 전체에 적용되는 학생 지원 마감입니다.">
-        <FormField id="settings-recruitment-ends-at" label="모집 마감" required>
+      <FormSection title="프로그램 공통 일정" description="이 프로그램의 모든 프로젝트에 모집·수행·제출 기간을 동일하게 적용합니다." contentClassName="sm:grid-cols-2">
+        <FormField id="settings-recruitment-starts-at" label="모집 시작" required>
+          <DateTimeInput id="settings-recruitment-starts-at" name="recruitmentStartsAt" defaultValue={koreanDateTimeLocal(recruitmentStartsAt)} required />
+        </FormField>
+        <FormField id="settings-recruitment-ends-at" label="모집 종료" required>
           <DateTimeInput id="settings-recruitment-ends-at" name="recruitmentEndsAt" defaultValue={koreanDateTimeLocal(recruitmentEndsAt)} required />
+        </FormField>
+        <FormField id="settings-execution-starts-at" label="수행 시작" required>
+          <DateTimeInput id="settings-execution-starts-at" name="executionStartsAt" defaultValue={koreanDateTimeLocal(executionStartsAt)} required />
+        </FormField>
+        <FormField id="settings-execution-ends-at" label="수행 종료" required>
+          <DateTimeInput id="settings-execution-ends-at" name="executionEndsAt" defaultValue={koreanDateTimeLocal(executionEndsAt)} required />
+        </FormField>
+        <FormField id="settings-submission-starts-at" label="제출 시작" required>
+          <DateTimeInput id="settings-submission-starts-at" name="submissionStartsAt" defaultValue={koreanDateTimeLocal(submissionStartsAt)} required />
+        </FormField>
+        <FormField id="settings-submission-ends-at" label="제출 종료" required>
+          <DateTimeInput id="settings-submission-ends-at" name="submissionEndsAt" defaultValue={koreanDateTimeLocal(submissionEndsAt)} required />
         </FormField>
       </FormSection>
 

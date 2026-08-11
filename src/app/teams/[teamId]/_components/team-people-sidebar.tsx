@@ -64,7 +64,7 @@ export function TeamPeopleSidebar({
               <div className="flex min-w-0 items-center gap-4">
                 <PersonAvatar userId={activeMember.id} updatedAt={activeMember.profileImage?.updatedAt} className="size-12" />
                 <div className="min-w-0">
-                  <h2 id="team-member-detail-title" className="text-xl font-black tracking-[-0.035em]">{activeMember.name}</h2>
+                  <h2 id="team-member-detail-title" className="text-xl font-bold tracking-[-0.035em]">{activeMember.name}</h2>
                   <p className="mt-1 break-all text-sm text-[var(--muted)]">{activeMember.email}</p>
                 </div>
               </div>

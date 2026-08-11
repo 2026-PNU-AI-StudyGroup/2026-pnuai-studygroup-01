@@ -163,6 +163,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       include: expect.objectContaining({
         reports: {
+          where: { required: true },
           select: {
             versions: {
               take: 1,
