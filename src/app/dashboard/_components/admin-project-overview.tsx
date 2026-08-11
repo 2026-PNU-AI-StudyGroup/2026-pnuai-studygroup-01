@@ -201,6 +201,14 @@ export function sortAdminProjects(
   });
 }
 
+function ManageArrowIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
+      <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
   const titleId = `admin-project-${project.id}-title`;
   const actionId = `admin-project-${project.id}-action`;
@@ -251,12 +259,19 @@ function ProjectRow({ project }: { project: AdminProjectOverviewItem }) {
       ) : (
         <p className="text-sm font-bold text-[var(--muted)] xl:col-span-3 2xl:col-span-1"><UiText>{"보고서 일정이 없습니다"}</UiText></p>
       )}
+      <span
+        aria-hidden="true"
+        className="button-secondary pointer-events-none justify-self-end gap-1.5 text-sm xl:col-span-3 2xl:col-span-1"
+      >
+        <UiText>{"관리"}</UiText>
+        <ManageArrowIcon />
+      </span>
       <Link
         href={`/teams/${project.id}`}
         aria-labelledby={`${titleId} ${actionId}`}
         className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--primary)]"
       >
-        <span id={actionId} className="sr-only"><UiText>{"프로젝트 열기"}</UiText></span>
+        <span id={actionId} className="sr-only"><UiText>{"관리"}</UiText></span>
       </Link>
     </li>
   );
