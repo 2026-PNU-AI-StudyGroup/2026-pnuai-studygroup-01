@@ -261,7 +261,7 @@ export function ProgramSidebar({ items, selectedId }: {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {programList("desktop")}
           </div>
-          {voteBox ? <div className="mt-4 shrink-0 border-t border-[var(--line)] pt-4">{voteBox}</div> : null}
+          {voteBox ? <div className="mt-4 shrink-0">{voteBox}</div> : null}
         </UiNav>
       </div>
     </div>
