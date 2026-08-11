@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { RecruitmentApplyForm } from "@/app/recruitments/_components/recruitment-apply-form";
 import type { StudentProfile } from "@/modules/identity/domain/student-profile";
@@ -71,7 +72,10 @@ function RecruitmentCard({ post, actorId, profile }: {
               ) : post.ownApplication ? (
                 <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
               ) : post.authorId === actorId ? (
-                <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 모집"}</UiText></span>
+                <Link href={`/recruitments/${post.id}/applications`} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[var(--primary)]">
+                  <UiText>{"지원자 보기"}</UiText>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </Link>
               ) : post.isMember ? (
                 <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 팀"}</UiText></span>
               ) : (
