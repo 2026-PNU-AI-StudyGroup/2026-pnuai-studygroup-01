@@ -30,19 +30,42 @@ export function ProjectPortalHero({ view, program, action }: {
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
   const description = program?.description ?? (view === "past" ? "완료된 프로젝트와 결과물을 확인하세요." : "현재 참여할 수 있는 프로젝트를 확인하세요.");
+
+  if (program && program.startsAt && program.endsAt) {
+    const { startsAt, endsAt } = program;
+    return (
+      <ExplorerHero
+        title={<UiText>{title}</UiText>}
+        details={
+          <details className="group -my-1">
+            <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
+              <UiText>{"프로그램 정보"}</UiText>
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </summary>
+            <div className="mt-2.5 grid gap-3.5">
+              <p className="max-w-3xl text-sm leading-6 text-[var(--muted)]">
+                {program.category ? <><span className="font-semibold text-[var(--ink)]"><UiText>{program.category}</UiText></span><span aria-hidden="true"> · </span></> : null}
+                <UiText>{description}</UiText>
+              </p>
+              <ProgramPeriods
+                startsAt={startsAt}
+                endsAt={endsAt}
+                projectRegistrationStartsAt={program.projectRegistrationStartsAt}
+                projectRegistrationEndsAt={program.projectRegistrationEndsAt}
+                recruitmentEndsAt={program.recruitmentEndsAt}
+                votingPolicy={program.votingPolicy}
+              />
+            </div>
+          </details>
+        }
+        action={action}
+      />
+    );
+  }
+
   return (
     <ExplorerHero
       title={<UiText>{title}</UiText>}
-      details={program?.startsAt && program.endsAt ? (
-        <ProgramPeriods
-          startsAt={program.startsAt}
-          endsAt={program.endsAt}
-          projectRegistrationStartsAt={program.projectRegistrationStartsAt}
-          projectRegistrationEndsAt={program.projectRegistrationEndsAt}
-          recruitmentEndsAt={program.recruitmentEndsAt}
-          votingPolicy={program.votingPolicy}
-        />
-      ) : undefined}
       description={<UiText>{description}</UiText>}
       context={program?.category ? <UiText>{program.category}</UiText> : undefined}
       action={action}
@@ -59,24 +82,18 @@ function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, project
   votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
 }) {
   return (
-    <details className="group -my-1">
-      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
-        <UiText>{"기간 정보"}</UiText>
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      </summary>
-      <dl className="mt-2 grid gap-1.5 text-xs sm:text-sm">
-        <ProgramPeriod label="운영 기간" startsAt={startsAt} endsAt={endsAt} />
-        <ProgramPeriod
-          label="프로젝트 등록 기간"
-          startsAt={projectRegistrationStartsAt ?? startsAt}
-          endsAt={projectRegistrationEndsAt ?? endsAt}
-        />
-        {recruitmentEndsAt ? <ProgramDeadline label="프로젝트 모집 마감" endsAt={recruitmentEndsAt} /> : null}
-        {votingPolicy ? (
-          <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
-        ) : null}
-      </dl>
-    </details>
+    <dl className="grid gap-1.5 text-xs sm:text-sm">
+      <ProgramPeriod label="운영 기간" startsAt={startsAt} endsAt={endsAt} />
+      <ProgramPeriod
+        label="프로젝트 등록 기간"
+        startsAt={projectRegistrationStartsAt ?? startsAt}
+        endsAt={projectRegistrationEndsAt ?? endsAt}
+      />
+      {recruitmentEndsAt ? <ProgramDeadline label="프로젝트 모집 마감" endsAt={recruitmentEndsAt} /> : null}
+      {votingPolicy ? (
+        <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
+      ) : null}
+    </dl>
   );
 }
 
