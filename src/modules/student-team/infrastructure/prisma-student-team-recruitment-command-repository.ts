@@ -53,9 +53,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
     postId: string;
     studentId: string;
     message: string;
-    skills: string[];
     desiredRole: string;
-    availability: string;
     appliedAt: Date;
   }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER"> {
     return this.client.$transaction(async (transaction) => {
@@ -119,9 +117,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
       });
       await enqueueTranslations(transaction, [
         input.message,
-        ...input.skills,
         input.desiredRole,
-        input.availability,
       ]);
       return "CREATED";
     });

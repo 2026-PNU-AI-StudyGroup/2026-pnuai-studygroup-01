@@ -5,13 +5,11 @@ import type { ReactNode } from "react";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
-import { MyTeamTabs } from "@/modules/student-team/ui/my-team-tabs";
 
 const navigation = [
-  { href: "/recruitments", label: "팀원 모집", icon: "search" },
-  { href: "/teams", label: "팀 관리", icon: "document" },
+  { href: "/recruitments", label: "둘러보기", icon: "search" },
+  { href: "/teams", label: "내 팀", icon: "document" },
   { href: "/recruitments/applications", label: "지원 내역", icon: "send" },
-  { href: "/recruitments/mine", label: "내 모집", icon: "document" },
 ] as const;
 
 type StudentTeamIconName = "search" | "send" | "document" | "plus" | "chevron-left" | "chevron-right";
@@ -40,11 +38,9 @@ export function StudentTeamIcon({ name, className = "size-5" }: { name: StudentT
 }
 
 function isTeamNavigationActive(href: string, currentPath: string) {
-  if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/");
+  // 내 팀(/teams)이 팀 관리 + 내 모집 관리(/recruitments/mine)를 모두 포함
+  if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/") || currentPath.startsWith("/recruitments/mine");
   if (href === "/recruitments") return currentPath === "/recruitments";
-  if (href === "/recruitments/mine") {
-    return currentPath === "/recruitments/mine";
-  }
   return currentPath === href;
 }
 
@@ -52,21 +48,19 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
   const current = navigation.find((item) => isTeamNavigationActive(item.href, currentPath)) ?? navigation[0];
 
   return (
-    <>
-    <MyTeamTabs active="build" />
     <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
       <UiAside aria-label="팀 영역 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
           <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
-            <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀"}</UiText></p>
+            <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀 모집"}</UiText></p>
           </div>
 
           <ResponsiveSectionNavigation
-            eyebrow={<UiText>{"팀"}</UiText>}
+            eyebrow={<UiText>{"팀 모집"}</UiText>}
             label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
           >
             <UiNav aria-label="팀 메뉴 모바일">
-              <ul className="grid grid-cols-2 gap-x-4">
+              <ul className="grid grid-cols-3 gap-x-4">
                 {navigation.map((item) => {
                   const active = isTeamNavigationActive(item.href, currentPath);
                   return (
@@ -117,7 +111,6 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
       </UiAside>
       <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>
     </div>
-    </>
   );
 }
 

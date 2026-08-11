@@ -60,8 +60,8 @@ export default async function AccountPage() {
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
               <div>
-                <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 지원 정보"}</UiText></h2>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"관심 분야, 기술, 활동 가능 시간을 미리 입력하면 지원서에 불러올 수 있습니다."}</UiText></p>
+                <h2 id="project-profile-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"연락처"}</UiText></h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"운영진과 같은 팀 팀원에게만 공개되며, 사이트 안에서 서로 연락할 때 사용됩니다."}</UiText></p>
               </div>
               <div className="min-w-0">
                 <StudentProfileForm profile={profile} />

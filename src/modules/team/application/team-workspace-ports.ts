@@ -71,17 +71,17 @@ export type TeamWorkspace = TeamListItem & {
     contactEmail: string | null;
     profileImage: { updatedAt: Date } | null;
     profile: {
-      interests: string[];
-      skills: string[];
-      desiredRole: string;
-      availability: string;
-      bio: string;
+      phone: string;
+      kakao: string;
+      github: string;
+      instagram: string;
     } | null;
   }>;
   discussionPosts: Array<{
     id: string;
     authorId: string;
     authorName: string;
+    authorRole: "ADMIN" | "PROFESSOR" | "ASSISTANT" | "STUDENT";
     content: string;
     createdAt: Date;
   }>;

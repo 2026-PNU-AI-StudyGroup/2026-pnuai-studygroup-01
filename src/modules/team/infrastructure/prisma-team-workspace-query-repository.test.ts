@@ -46,18 +46,20 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
           contactEmail: "sky@example.com",
           profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
           studentProfile: {
-            interests: ["접근성"],
-            skills: ["TypeScript"],
-            desiredRole: "프론트엔드 개발",
-            availability: "평일 저녁",
-            bio: "사용자 문제를 해결하고 싶습니다.",
+            phone: "010-1234-5678",
+            kakao: "pnu_id",
+            github: "https://github.com/pnu",
+            instagram: "https://instagram.com/pnu",
           },
         },
       }],
       tasks: [],
-      discussionPosts: [],
+      discussionPosts: [
+        { id: "post-a", authorId: "assistant-1", content: "조교 메시지", createdAt: new Date("2026-08-08T00:00:00Z"), author: { name: "박조교", role: "STUDENT" } },
+        { id: "post-b", authorId: "professor-1", content: "교수 메시지", createdAt: new Date("2026-08-08T01:00:00Z"), author: { name: "김교수", role: "PROFESSOR" } },
+      ],
       reports: [],
-      _count: { discussionPosts: 0 },
+      _count: { discussionPosts: 2 },
     });
     const repository = new PrismaTeamWorkspaceQueryRepository({
       team: { findFirst },
@@ -115,9 +117,11 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       department: "정보컴퓨터공학부",
       phoneNumber: "010-1234-5678",
       profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
-      profile: expect.objectContaining({ desiredRole: "프론트엔드 개발" }),
+      profile: expect.objectContaining({ kakao: "pnu_id" }),
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
+    expect(workspace?.discussionPosts.find((post) => post.id === "post-a")?.authorRole).toBe("ASSISTANT");
+    expect(workspace?.discussionPosts.find((post) => post.id === "post-b")?.authorRole).toBe("PROFESSOR");
     expect(workspace?.professor).toEqual({
       id: "professor-1",
       name: "김교수",

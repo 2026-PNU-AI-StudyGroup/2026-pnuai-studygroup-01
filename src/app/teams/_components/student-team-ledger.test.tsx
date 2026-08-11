@@ -14,8 +14,8 @@ const team: StudentTeamSummary = {
   leaderId: "student-1",
   leaderName: "김학생",
   members: [
-    { studentId: "student-1", name: "김학생", email: "one@pusan.ac.kr", role: "LEADER", joinedAt: new Date("2026-07-20") },
-    { studentId: "student-2", name: "이학생", email: "two@pusan.ac.kr", role: "MEMBER", joinedAt: new Date("2026-07-21") },
+    { studentId: "student-1", name: "김학생", email: "one@pusan.ac.kr", role: "LEADER", joinedAt: new Date("2026-07-20"), profile: null },
+    { studentId: "student-2", name: "이학생", email: "two@pusan.ac.kr", role: "MEMBER", joinedAt: new Date("2026-07-21"), profile: null },
   ],
   invitations: [],
   openRecruitmentCount: 1,

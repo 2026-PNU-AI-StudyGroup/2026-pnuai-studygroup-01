@@ -15,7 +15,6 @@ describe("RecruitmentPostList", () => {
     const { container } = render(
       <RecruitmentPostList
         actorId="student-1"
-        profile={null}
         data={{
           page: 1,
           totalPages: 1,

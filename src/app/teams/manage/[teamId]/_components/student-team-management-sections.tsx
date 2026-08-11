@@ -7,6 +7,7 @@ import {
   InviteStudentTeamMemberForm,
   TeamMemberActions,
 } from "@/app/teams/_components/student-team-controls";
+import { MemberContactDialogButton } from "@/app/teams/_components/member-contact-dialog-button";
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -55,7 +56,7 @@ export function StudentTeamManagementSections({
               <li key={member.studentId} className="record-row grid gap-4 px-2 py-5 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:items-center">
                 <div className="min-w-0">
                   <p className="mb-1 text-xs font-semibold text-[var(--muted)] sm:hidden"><UiText>{"구성원"}</UiText></p>
-                  <strong>{member.name}</strong>
+                  <MemberContactDialogButton name={member.name} email={member.email} contacts={member.profile} />
                   <p className="mt-1 truncate text-sm text-[var(--muted)]">{member.email}</p>
                 </div>
                 <div>

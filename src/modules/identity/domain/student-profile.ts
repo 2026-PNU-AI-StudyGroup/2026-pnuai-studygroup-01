@@ -1,32 +1,24 @@
 export type StudentProfile = {
-  interests: string[];
-  skills: string[];
-  desiredRole: string;
-  availability: string;
-  bio: string;
+  phone: string;
+  kakao: string;
+  github: string;
+  instagram: string;
 };
 
 export class InvalidStudentProfileError extends Error {
   constructor() {
-    super("관심 분야, 보유 기술, 희망 역할, 활동 가능 시간과 자기소개를 확인해 주세요.");
+    super("연락처 정보를 확인해 주세요.");
     this.name = "InvalidStudentProfileError";
   }
 }
 
 export function normalizeStudentProfile(input: StudentProfile): StudentProfile {
-  const interests = normalizeTags(input.interests);
-  const skills = normalizeTags(input.skills);
-  const desiredRole = input.desiredRole.trim();
-  const availability = input.availability.trim();
-  const bio = input.bio.trim();
-  if (!interests.length || !skills.length || !desiredRole || !availability || !bio || desiredRole.length > 200 || availability.length > 500 || bio.length > 1_000) {
+  const phone = input.phone.trim();
+  const kakao = input.kakao.trim();
+  const github = input.github.trim();
+  const instagram = input.instagram.trim();
+  if (phone.length > 40 || kakao.length > 200 || github.length > 200 || instagram.length > 200) {
     throw new InvalidStudentProfileError();
   }
-  return { interests, skills, desiredRole, availability, bio };
-}
-
-function normalizeTags(values: string[]) {
-  const normalized = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-  if (normalized.length > 20 || normalized.some((value) => value.length > 50)) throw new InvalidStudentProfileError();
-  return normalized;
+  return { phone, kakao, github, instagram };
 }

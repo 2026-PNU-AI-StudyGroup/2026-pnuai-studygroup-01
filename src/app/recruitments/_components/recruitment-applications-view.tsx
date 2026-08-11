@@ -69,10 +69,8 @@ export function RecruitmentApplicationsView({
                       <p className="mt-2 text-xs text-[var(--muted)]"><UiDate value={application.createdAt} mode="date" /> {" "}<UiText>{"지원"}</UiText></p>
                     </div>
                     <div className="min-w-0">
-                      <dl className="grid gap-5 text-sm sm:grid-cols-3">
-                        <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"보유 기술"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{application.skills.join(", ")}</UiText></dd></div>
+                      <dl className="grid gap-5 text-sm">
                         <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"희망 역할"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{application.desiredRole}</UiText></dd></div>
-                        <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"활동 가능 시간"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{application.availability}</UiText></dd></div>
                       </dl>
                       <div className="mt-5 border-t border-[var(--line)] pt-4">
                         <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"지원 내용"}</UiText></p>
