@@ -13,6 +13,9 @@ import { ChoiceCard, DateTimeInput, FormField, FormSection, Textarea, Toggle } f
 export function ProgramForm({ successHref }: { successHref?: string }) {
   const router = useRouter();
   const [votingEnabled, setVotingEnabled] = useState(false);
+  const [category, setCategory] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [state, action, pending] = useActionState(createProgramAction, initialProgramActionState);
   useEffect(() => {
     if (state.status === "success" && successHref) router.replace(successHref);
@@ -21,13 +24,13 @@ export function ProgramForm({ successHref }: { successHref?: string }) {
   return <form action={action} aria-busy={pending} className="grid gap-4">
     <FormSection title="프로그램 정보" description="프로그램명, 분류 및 설명을 입력합니다." contentClassName="sm:grid-cols-2">
       <FormField id="program-category" label="분류">
-        <UiInput id="program-category" name="category" maxLength={100} required className="form-control" placeholder="예: 캡스톤, 해커톤, 교육 프로그램" />
+        <UiInput id="program-category" name="category" value={category} onChange={(e) => setCategory(e.target.value)} maxLength={100} required className="form-control" placeholder="예: 캡스톤, 해커톤, 교육 프로그램" />
       </FormField>
       <FormField id="program-name" label="프로그램명" className="sm:col-span-2">
-        <UiInput id="program-name" name="name" maxLength={200} required className="form-control" placeholder="예: 창의융합 해커톤" />
+        <UiInput id="program-name" name="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required className="form-control" placeholder="예: 창의융합 해커톤" />
       </FormField>
       <FormField id="program-description" label="설명" className="sm:col-span-2">
-        <Textarea id="program-description" name="description" maxLength={5000} required rows={4} />
+        <Textarea id="program-description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} required rows={4} />
       </FormField>
       <div className="sm:col-span-2"><ProgramIconPicker /></div>
     </FormSection>
