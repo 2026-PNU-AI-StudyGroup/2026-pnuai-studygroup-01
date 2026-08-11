@@ -39,7 +39,7 @@ export function ProfessorSidebar({ currentPath, role }: { currentPath: string; r
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
           <UiText>{role === "STUDENT" ? "조교 업무" : "교수 업무"}</UiText>
         </p>
-        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"프로젝트 관리"}</UiText></h2>
+        <h2 className="mt-1 text-sm font-bold tracking-[-0.02em]"><UiText>{"주제 관리"}</UiText></h2>
       </div>
 
       <UiNav aria-label={role === "STUDENT" ? "조교 업무" : "교수 업무"} className="lg:mt-5">

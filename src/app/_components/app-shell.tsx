@@ -31,17 +31,19 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         explore: "프로젝트 찾기",
         myTeam: "내 팀",
         announcements: "공지사항",
-        allProjects: "전체 프로젝트",
-        mentoredProjects: "프로젝트 운영",
-        manage: "관리",
+        allProjects: "전체 현황",
+        mentoredProjects: "지도 현황",
+        manageTopics: "주제 관리",
+        manageOps: "운영 관리",
       }
     : {
         explore: "Explore",
         myTeam: "My team",
         announcements: "Notices",
-        allProjects: "All projects",
-        mentoredProjects: "Mentoring",
-        manage: "Manage",
+        allProjects: "Overview",
+        mentoredProjects: "Advising",
+        manageTopics: "Topic management",
+        manageOps: "Operations",
       };
   if (role === "STUDENT") {
     return [
@@ -55,14 +57,14 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.allProjects, icon: "home" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
-      { href: "/admin/programs", label: label.manage, icon: "settings" },
+      { href: "/admin/programs", label: label.manageOps, icon: "settings" },
     ];
   }
   return [
     { href: "/topics", label: label.explore, icon: "search" },
     { href: "/dashboard", label: label.mentoredProjects, icon: "home" },
     { href: "/announcements", label: label.announcements, icon: "notice" },
-    { href: "/professor/topics", label: label.manage, icon: "settings" },
+    { href: "/professor/topics", label: label.manageTopics, icon: "settings" },
   ];
 }
 
