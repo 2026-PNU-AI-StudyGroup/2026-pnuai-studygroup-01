@@ -74,7 +74,7 @@ describe("관리 화면의 중복·가짜 컨트롤", () => {
     render(await ProgramsAdminPage());
 
     const manage = screen.getByRole("link", { name: "관리" });
-    expect(manage).toHaveAttribute("href", "/admin/programs/program-1/settings");
+    expect(manage).toHaveAttribute("href", "/admin/programs/program-1");
     expect(manage.parentElement?.parentElement).toHaveClass("2xl:col-start-4");
     expect(screen.queryByRole("link", { name: "등록·투표 설정" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "득표현황" })).not.toBeInTheDocument();

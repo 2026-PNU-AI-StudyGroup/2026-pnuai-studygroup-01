@@ -29,27 +29,26 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
-        projects: "내 프로젝트",
-        teamWorkspace: "팀",
+        myTeam: "내 팀",
         announcements: "공지사항",
-        allProjects: "전체 프로젝트",
-        mentoredProjects: "프로젝트 운영",
-        manage: "관리",
+        allProjects: "전체 현황",
+        mentoredProjects: "지도 현황",
+        manageTopics: "주제 관리",
+        manageOps: "운영 관리",
       }
     : {
         explore: "Explore",
-        projects: "Projects",
-        teamWorkspace: "Teams",
+        myTeam: "My team",
         announcements: "Notices",
-        allProjects: "All projects",
-        mentoredProjects: "Mentoring",
-        manage: "Manage",
+        allProjects: "Overview",
+        mentoredProjects: "Advising",
+        manageTopics: "Topic management",
+        manageOps: "Operations",
       };
   if (role === "STUDENT") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/dashboard", label: label.projects, icon: "home" },
-      { href: "/recruitments", label: label.teamWorkspace, icon: "users" },
+      { href: "/dashboard", label: label.myTeam, icon: "users" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
     ];
   }
@@ -58,27 +57,23 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       { href: "/topics", label: label.explore, icon: "search" },
       { href: "/dashboard", label: label.allProjects, icon: "home" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
-      { href: "/admin/programs", label: label.manage, icon: "settings" },
+      { href: "/admin/programs", label: label.manageOps, icon: "settings" },
     ];
   }
   return [
     { href: "/topics", label: label.explore, icon: "search" },
     { href: "/dashboard", label: label.mentoredProjects, icon: "home" },
     { href: "/announcements", label: label.announcements, icon: "notice" },
-    { href: "/professor/topics", label: label.manage, icon: "settings" },
+    { href: "/professor/topics", label: label.manageTopics, icon: "settings" },
   ];
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
-  if (
-    role === "STUDENT" &&
-    item.href === "/dashboard" &&
-    (isSectionActive("/projects", currentPath) || isSectionActive("/project-approvals", currentPath))
-  ) {
-    return true;
-  }
-  if (role === "STUDENT" && item.href === "/recruitments") {
-    return isSectionActive("/recruitments", currentPath) ||
+  if (role === "STUDENT" && item.href === "/dashboard") {
+    return isSectionActive("/dashboard", currentPath) ||
+      isSectionActive("/projects", currentPath) ||
+      isSectionActive("/project-approvals", currentPath) ||
+      isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
   if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);

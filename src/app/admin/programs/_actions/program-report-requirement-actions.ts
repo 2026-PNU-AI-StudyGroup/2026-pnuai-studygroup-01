@@ -57,7 +57,7 @@ export async function applyProgramReportRequirementsAction(
       }
     }
   }
-  revalidatePath(`/admin/programs/${programId.data}/reports`);
+  revalidatePath(`/admin/programs/${programId.data}`);
   for (const team of teams) revalidatePath(`/teams/${team.id}`, "layout");
   return { status: "success", message: `팀 ${teams.length}개 대상 · 요구 ${applied}건 저장 · 건너뜀 ${skipped}건(기간 밖·제출 이력 등).` };
 }

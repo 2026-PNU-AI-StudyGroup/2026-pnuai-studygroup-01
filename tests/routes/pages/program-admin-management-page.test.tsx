@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import ProgramSettingsPage from "@/app/admin/programs/[programId]/settings/page";
+import ProgramDetailPage from "@/app/admin/programs/[programId]/page";
 
 const { getCurrentActor, getSettings, getResults } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
@@ -32,6 +32,9 @@ vi.mock("@/app/admin/programs/_components/program-status-form", () => ({ Program
 vi.mock("@/app/admin/programs/_components/student-project-creation-form", () => ({ StudentProjectCreationForm: () => <section>학생 프로젝트 제안</section> }));
 vi.mock("@/app/admin/programs/_components/program-icon-picker", () => ({ ProgramIconForm: () => <section>프로그램 아이콘</section> }));
 vi.mock("@/app/admin/programs/_components/program-vote-results", () => ({ ProgramVoteResults: () => <div>투표 집계</div> }));
+vi.mock("@/app/admin/programs/_components/program-report-requirement-form", () => ({ ProgramReportRequirementForm: () => <div>제출물 폼</div> }));
+vi.mock("@/app/admin/programs/[programId]/rubric/_components/rubric-manager", () => ({ RubricManager: () => <div>채점표 관리</div> }));
+vi.mock("@/app/admin/programs/[programId]/tracks/_components/track-manager", () => ({ TrackManager: () => <div>트랙 관리</div> }));
 
 const admin = { id: "admin-1", name: "관리자", role: "ADMIN" as const };
 const program = {
@@ -68,24 +71,30 @@ describe("프로그램 통합 관리 화면", () => {
     getResults.mockResolvedValue({});
   });
 
-  it("운영 설정과 득표현황을 한 관리 화면에서 제공한다", async () => {
-    render(await ProgramSettingsPage({ params: Promise.resolve({ programId: program.id }) }));
+  it("설정 탭에서 운영 설정을 제공하고 득표현황은 투표 탭으로 분리한다", async () => {
+    render(await ProgramDetailPage({ params: Promise.resolve({ programId: program.id }), searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText("프로그램 관리")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "캡스톤" })).toBeInTheDocument();
     expect(screen.getByText("등록·투표 정책")).toBeInTheDocument();
     expect(screen.getByText("학생 프로젝트 제안")).toBeInTheDocument();
     expect(screen.getByText("프로그램 아이콘")).toBeInTheDocument();
     expect(screen.getByText("공개 및 마감")).toBeInTheDocument();
+    expect(screen.queryByText("투표 집계")).not.toBeInTheDocument();
+    expect(getResults).not.toHaveBeenCalled();
+  });
+
+  it("투표 탭에서 득표현황을 보여준다", async () => {
+    render(await ProgramDetailPage({ params: Promise.resolve({ programId: program.id }), searchParams: Promise.resolve({ tab: "votes" }) }));
+
     expect(screen.getByText("득표현황")).toBeInTheDocument();
     expect(screen.getByText("투표 집계")).toBeInTheDocument();
     expect(getResults).toHaveBeenCalledWith(admin, program.id);
   });
 
-  it("투표 정책이 없으면 득표현황을 표시하지 않는다", async () => {
+  it("투표 정책이 없으면 득표현황 대신 안내를 보여준다", async () => {
     getSettings.mockResolvedValue({ ...program, votingPolicy: null });
 
-    render(await ProgramSettingsPage({ params: Promise.resolve({ programId: program.id }) }));
+    render(await ProgramDetailPage({ params: Promise.resolve({ programId: program.id }), searchParams: Promise.resolve({ tab: "votes" }) }));
 
     expect(screen.queryByText("득표현황")).not.toBeInTheDocument();
     expect(getResults).not.toHaveBeenCalled();

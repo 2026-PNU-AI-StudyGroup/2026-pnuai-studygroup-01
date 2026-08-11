@@ -36,7 +36,7 @@ export async function createCriterionAction(
   await prisma.rubricCriterion.create({
     data: { programId, label, maxPoints: parsedPoints.data, position: count },
   });
-  revalidatePath(`/admin/programs/${programId}/rubric`);
+  revalidatePath(`/admin/programs/${programId}`);
   return { status: "success", message: "채점 항목을 추가했습니다." };
 }
 
@@ -50,7 +50,7 @@ export async function deleteCriterionAction(
   const criterion = await prisma.rubricCriterion.findUnique({ where: { id: criterionId }, select: { programId: true } });
   if (!criterion) return { status: "error", message: "채점 항목을 찾을 수 없습니다." };
   await prisma.rubricCriterion.delete({ where: { id: criterionId } });
-  revalidatePath(`/admin/programs/${criterion.programId}/rubric`);
+  revalidatePath(`/admin/programs/${criterion.programId}`);
   return { status: "success", message: "채점 항목을 삭제했습니다." };
 }
 
@@ -78,6 +78,6 @@ export async function moveCriterionAction(
       prisma.rubricCriterion.update({ where: { id: neighbor.id }, data: { position: criterion.position } }),
     ]);
   }
-  revalidatePath(`/admin/programs/${criterion.programId}/rubric`);
+  revalidatePath(`/admin/programs/${criterion.programId}`);
   return { status: "success", message: "" };
 }

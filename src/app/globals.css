@@ -9,46 +9,45 @@
 }
 
 /*
-  편성표(Timetable / Registrar's grid) — 대학 학사 편성표를 화면 언어로.
-  뉴트럴 페이퍼 그라운드 + 잉크 텍스트 + 단일 잉크-네이비 악센트(액션·상태에만).
-  얇은 격자·헤어라인으로 위계, 크리스프 near-square radius, 데이터·시간·코드는 모노스페이스+tabular-nums.
-  카드·소프트섀도우 거부. 라이트 전용(학과 사무실 주간光).
+  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 화이트 서피스 + 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
+  크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준의 깔끔함(반어·잔재주 없이 정석을 높은 완성도로).
+  라이트 전용(관리자 데스크톱 종일). 데이터·수치·시각은 tabular-nums 유지.
 */
 :root {
   color-scheme: light;
-  --workspace: #fbfbfa;
-  --sidebar: #fbfbfa;
+  --workspace: #f6f7f9;
+  --sidebar: #ffffff;
   --surface: #ffffff;
-  --surface-subtle: #f2f3f5;
-  --ink: #17181c;
-  --muted: #6b7078;
-  --line: #e4e5e8;
-  --line-strong: #d3d5d9;
-  --field-border: #cfd2d7;
-  --field-border-hover: #9aa0a8;
+  --surface-subtle: #f1f3f7;
+  --ink: #191c22;
+  --muted: #5b616e;
+  --line: #e7e9ef;
+  --line-strong: #d5d9e2;
+  --field-border: #d0d5dd;
+  --field-border-hover: #98a1b3;
   --field-surface: #ffffff;
-  --primary: #1f3a68;
-  --primary-hover: #172c50;
-  --primary-subtle: #eef1f6;
-  --accent: #8a6a1c;
-  --accent-hover: #6f5514;
-  --accent-ink: #574209;
-  --accent-subtle: #f5efdc;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-subtle: #eef0fe;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-ink: #3730a3;
+  --accent-subtle: #eef0fe;
   --focus: var(--primary);
-  --focus-halo: color-mix(in srgb, var(--focus) 18%, transparent);
-  --danger-halo: color-mix(in srgb, var(--danger) 16%, transparent);
-  --success: #256a45;
-  --success-subtle: #e7f1ea;
-  --warning: #8a5e0a;
-  --warning-ink: #684807;
-  --warning-subtle: #f7efd6;
-  --danger: #a52a20;
-  --danger-subtle: #f8ebe8;
-  --radius-control: 0.1875rem;
-  --radius-panel: 0.25rem;
-  --shadow-card: none;
-  --shadow-admin-panel: 0 1px 0 rgb(23 24 28 / 0.04);
-  --shadow-float: 0 10px 28px rgb(23 24 28 / 0.13);
+  --focus-halo: color-mix(in srgb, var(--focus) 22%, transparent);
+  --danger-halo: color-mix(in srgb, var(--danger) 18%, transparent);
+  --success: #15803d;
+  --success-subtle: #e7f5ec;
+  --warning: #b45309;
+  --warning-ink: #92400e;
+  --warning-subtle: #fdf2e1;
+  --danger: #dc2626;
+  --danger-subtle: #fdecec;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-admin-panel: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-float: 0 12px 32px rgb(16 24 40 / 0.16);
   --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -93,7 +92,30 @@ body {
 
 ::selection {
   background: var(--primary-subtle);
-  color: var(--ink);
+  color: var(--accent-ink);
+}
+
+:where(html) {
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid var(--workspace);
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--field-border-hover);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @layer components {

@@ -41,7 +41,7 @@ describe("ProjectPortalHero", () => {
     expect(screen.getByRole("link", { name: "프로젝트 만들기" })).toHaveAttribute("href", "/projects/new?programId=program-1");
   });
 
-  it("선택한 프로그램 제목 아래에 운영·등록·투표 기간을 모두 표시한다", () => {
+  it("선택한 프로그램에서 설명·기간을 접기 안에 담고 제목은 항상 보여준다", () => {
     render(
       <ProjectPortalHero
         view="active"
@@ -49,6 +49,7 @@ describe("ProjectPortalHero", () => {
           id: "program-1",
           name: "AI 부스터",
           category: "교육",
+          description: "AI 부스터 프로그램 소개",
           startsAt: "2026-09-01T00:00:00+09:00",
           endsAt: "2026-12-31T23:59:00+09:00",
           projectRegistrationStartsAt: "2026-08-01T09:00:00+09:00",
@@ -61,9 +62,16 @@ describe("ProjectPortalHero", () => {
       />,
     );
 
+    // 제목은 항상 노출, 설명·기간은 접기(details) 안
+    expect(screen.getByRole("heading", { name: "AI 부스터" })).toBeInTheDocument();
+    const disclosure = screen.getByText("프로그램 정보").closest("details");
+    expect(disclosure).not.toBeNull();
+
     const schedule = screen.getByText("운영 기간").closest("dl");
     expect(schedule).not.toBeNull();
-    expect(screen.getByText("교육 · 현재 참여할 수 있는 프로젝트를 확인하세요.").nextElementSibling).toContainElement(schedule);
+    expect(disclosure).toContainElement(schedule);
+    expect(disclosure).toHaveTextContent("교육");
+    expect(disclosure).toHaveTextContent("AI 부스터 프로그램 소개");
     expect(schedule).toHaveTextContent("운영 기간");
     expect(schedule).toHaveTextContent("프로젝트 등록 기간");
     expect(schedule).toHaveTextContent("투표 기간");

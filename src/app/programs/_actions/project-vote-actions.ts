@@ -54,7 +54,7 @@ export async function toggleProjectVoteAction(input: { programId: string; topicI
     throw error;
   }
   revalidatePath("/topics");
-  revalidatePath(`/admin/programs/${parsed.data.programId}/settings`);
+  revalidatePath(`/admin/programs/${parsed.data.programId}`);
   return {
     status: "success",
     message: selected ? "선택한 투표를 취소했습니다." : "투표를 저장했습니다.",
