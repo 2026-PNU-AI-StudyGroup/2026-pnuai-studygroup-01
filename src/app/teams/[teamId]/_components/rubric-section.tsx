@@ -3,13 +3,15 @@
 import { useActionState, useId } from "react";
 
 import {
-  rubricScoreInitialState,
   saveRubricScoresAction,
   toggleRubricReleaseAction,
+  type RubricScoreState,
 } from "@/app/teams/[teamId]/_actions/rubric-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+
+const rubricScoreInitialState: RubricScoreState = { status: "idle", message: "" };
 
 type RubricCriterionScore = { id: string; label: string; maxPoints: number; points: number | null };
 
