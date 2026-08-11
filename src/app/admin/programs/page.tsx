@@ -67,7 +67,7 @@ export default async function ProgramsAdminPage() {
                   </div>
                   <div className="border-t border-[var(--line)] pt-4 text-right xl:col-start-2 xl:row-start-1 xl:row-span-2 xl:border-t-0 xl:pt-0 2xl:col-start-4 2xl:row-start-1 2xl:row-span-1">
                     <div className="flex justify-end">
-                      <Link href={`/admin/programs/${program.id}/settings`} className="button-primary"><UiText>{"관리"}</UiText></Link>
+                      <Link href={`/admin/programs/${program.id}`} className="button-primary"><UiText>{"관리"}</UiText></Link>
                     </div>
                   </div>
                 </li>

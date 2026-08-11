@@ -35,7 +35,7 @@ export async function createTrackAction(
   } catch {
     return { status: "error", message: "이미 있는 트랙 이름입니다." };
   }
-  revalidatePath(`/admin/programs/${programId}/tracks`);
+  revalidatePath(`/admin/programs/${programId}`);
   return { status: "success", message: "트랙을 추가했습니다." };
 }
 
@@ -49,7 +49,7 @@ export async function deleteTrackAction(
   const track = await prisma.programTrack.findUnique({ where: { id: trackId }, select: { programId: true } });
   if (!track) return { status: "error", message: "트랙을 찾을 수 없습니다." };
   await prisma.programTrack.delete({ where: { id: trackId } });
-  revalidatePath(`/admin/programs/${track.programId}/tracks`);
+  revalidatePath(`/admin/programs/${track.programId}`);
   return { status: "success", message: "트랙을 삭제했습니다." };
 }
 
@@ -77,6 +77,6 @@ export async function moveTrackAction(
       prisma.programTrack.update({ where: { id: neighbor.id }, data: { position: track.position } }),
     ]);
   }
-  revalidatePath(`/admin/programs/${track.programId}/tracks`);
+  revalidatePath(`/admin/programs/${track.programId}`);
   return { status: "success", message: "" };
 }
