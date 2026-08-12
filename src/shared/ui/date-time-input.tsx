@@ -26,6 +26,7 @@ type DateTimeInputProps = Omit<
   defaultValue?: string;
   value?: string;
   onChange?: ChangeEventHandler<HTMLInputElement>;
+  onValueChange?: (value: string) => void;
 };
 
 type CalendarDate = {
@@ -49,6 +50,7 @@ export function DateTimeInput({
   min,
   name,
   onChange,
+  onValueChange,
   onInvalid,
   required,
   type = "datetime-local",
@@ -78,6 +80,14 @@ export function DateTimeInput({
   const showInvalid = invalid && Boolean(required && !disabled && !hasValue);
 
   useEffect(() => {
+    if (controlledValue !== undefined) {
+      const time = getTime(controlledValue) ?? DEFAULT_TIME;
+      draftTimeRef.current = time;
+      setTimeInputValue(time);
+    }
+  }, [controlledValue]);
+
+  useEffect(() => {
     if (!open) return;
 
     function dismiss(event: PointerEvent) {
@@ -97,7 +107,7 @@ export function DateTimeInput({
       const focusDate = selectedDate && isDateAllowed(selectedDate, min, max)
         ? selectedDate
         : firstAllowedDate(visibleDays, min, max);
-      if (focusDate) dayRefs.current.get(dateKey(focusDate))?.focus();
+      if (focusDate) dayRefs.current.get(dateKey(focusDate))?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [max, min, open, selectedDate, visibleDays]);
@@ -126,6 +136,7 @@ export function DateTimeInput({
       setTimeInputValue(nextDraftTime);
     }
     setInvalid(false);
+    onValueChange?.(nextValue);
 
     const proxy = proxyRef.current;
     if (!proxy) return;
@@ -163,7 +174,7 @@ export function DateTimeInput({
   function focusDate(date: CalendarDate) {
     if (!isDateAllowed(date, min, max)) return;
     setVisibleMonth(monthStart(date));
-    window.requestAnimationFrame(() => dayRefs.current.get(dateKey(date))?.focus());
+    window.requestAnimationFrame(() => dayRefs.current.get(dateKey(date))?.focus({ preventScroll: true }));
   }
 
   function handleDayKeyDown(event: KeyboardEvent<HTMLButtonElement>, date: CalendarDate) {

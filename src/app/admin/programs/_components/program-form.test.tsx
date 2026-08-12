@@ -13,14 +13,14 @@ import { ProgramForm } from "@/app/admin/programs/_components/program-form";
 
 describe("ProgramForm", () => {
   it("관리자가 프로그램 생성 시 지도교수 운영 여부를 명시적으로 지정한다", () => {
-    render(<ProgramForm />);
+    render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} />);
 
     expect(screen.getByRole("radio", { name: /지도교수 있음/ })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: /지도교수 없음/ })).not.toBeChecked();
   });
 
   it("별도 학기 설정 없이 운영 시작과 종료를 입력한다", () => {
-    render(<ProgramForm />);
+    render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} />);
 
     expect(screen.queryByRole("combobox", { name: "학기" })).not.toBeInTheDocument();
     expect(document.querySelector('input[name="startsAt"]')).toBeRequired();
@@ -31,14 +31,14 @@ describe("ProgramForm", () => {
   });
 
   it("고정 아이콘 목록에서 폴더 아이콘을 기본값으로 선택한다", () => {
-    render(<ProgramForm />);
+    render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} />);
 
     expect(screen.getByRole("radio", { name: "일반" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "봉사" })).not.toBeChecked();
   });
 
   it("분과를 추가하기 전에는 분과별 투표를 선택할 수 없다", () => {
-    render(<ProgramForm />);
+    render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} />);
     fireEvent.click(screen.getByRole("checkbox", { name: /프로젝트 투표 사용/ }));
     const divisionScope = screen.getByRole("radio", { name: /분과별/ });
     expect(divisionScope).toBeDisabled();

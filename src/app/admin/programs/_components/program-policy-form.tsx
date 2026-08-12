@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { updateProgramSettingsAction } from "@/app/admin/programs/_actions/program-actions";
+import { CategorySelect } from "@/app/admin/programs/_components/category-select";
 import { initialProgramActionState } from "@/app/admin/programs/_lib/program-form-state";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -12,6 +13,7 @@ type ProgramPolicyFormProps = {
   programId: string;
   name: string;
   category: string;
+  categoryOptions: string[];
   description: string;
   startsAt: Date;
   endsAt: Date;
@@ -42,7 +44,7 @@ function koreanDateTimeLocal(value: Date): string {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function ProgramPolicyForm({ programId, name, category, description, startsAt, endsAt, advisorEnabled, registrationStartsAt, registrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
+export function ProgramPolicyForm({ programId, name, category, categoryOptions, description, startsAt, endsAt, advisorEnabled, registrationStartsAt, registrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
   const [state, action, pending] = useActionState(updateProgramSettingsAction, initialProgramActionState);
 
@@ -50,8 +52,8 @@ export function ProgramPolicyForm({ programId, name, category, description, star
     <form action={action} aria-busy={pending} className="grid gap-4">
       <input type="hidden" name="programId" value={programId} />
       <FormSection title="프로그램 정보" description="등록 뒤에도 기본 정보와 운영 기간을 바로잡을 수 있습니다." contentClassName="sm:grid-cols-2">
-        <FormField id="settings-program-category" label="프로그램 분류">
-          <TextInput id="settings-program-category" name="category" maxLength={100} defaultValue={category} required />
+        <FormField id="settings-program-category" label="프로그램 분류" description="목록에서 고르거나 '새 분류 추가'로 직접 넣을 수 있습니다.">
+          <CategorySelect options={categoryOptions} defaultValue={category} />
         </FormField>
         <FormField id="settings-program-name" label="프로그램명" className="sm:col-span-2">
           <TextInput id="settings-program-name" name="name" maxLength={200} defaultValue={name} required />

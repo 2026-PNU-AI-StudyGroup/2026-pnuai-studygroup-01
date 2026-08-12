@@ -61,6 +61,15 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   })) ?? [{ localId: 1, label: "", maxLength: 500, required: true }];
   const nextQuestionId = useRef(initialQuestions.length + 1);
   const [questions, setQuestions] = useState(initialQuestions);
+  const updateQuestion = (localId: number, changes: Partial<TopicFormQuestion>) => {
+    setQuestions((current) =>
+      current.map((q) => (q.localId === localId ? { ...q, ...changes } : q))
+    );
+  };
+  const [title, setTitle] = useState(initialTopic?.title ?? "");
+  const [description, setDescription] = useState(initialTopic?.description ?? "");
+  const [roleExpectations, setRoleExpectations] = useState(initialTopic?.roleExpectations ?? "");
+  const [availabilityRequirement, setAvailabilityRequirement] = useState(initialTopic?.availabilityRequirement ?? "");
   const [selectedProgramId, setSelectedProgramId] = useState(initialTopic?.programId ?? defaultProgramId ?? "");
   const [selectedDivisionId, setSelectedDivisionId] = useState(initialTopic?.divisionId ?? "");
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
@@ -129,10 +138,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <CustomSelect id="topic-division" name="divisionId" ariaLabel="분과" required invalidMessage="분과를 선택하세요" value={selectedDivisionId} onValueChange={setSelectedDivisionId} placeholder="분과를 선택하세요" options={selectedProgram.divisions.map((division) => ({ value: division.id, label: division.name }))} />
         </FormField> : null}
         <FormField id="topic-title" label="프로젝트명">
-          <TextInput id="topic-title" name="title" defaultValue={initialTopic?.title} maxLength={200} required />
+          <TextInput id="topic-title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
         </FormField>
         <FormField id="topic-description" label="설명">
-          <Textarea id="topic-description" name="description" defaultValue={initialTopic?.description} maxLength={10000} required rows={6} />
+          <Textarea id="topic-description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} required rows={6} />
         </FormField>
         {studentApproval && !initialTopic ? (
           <fieldset className="grid gap-3 sm:grid-cols-2">
@@ -151,10 +160,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <TagInput id="topic-preferred-skills" name="preferredSkills" ariaLabel="우대 기술" defaultValue={initialTopic?.preferredSkills} maxLength={1000} placeholder="Docker, Figma" />
         </FormField>
         <FormField id="topic-role-expectations" label="예상 역할">
-          <UiTextarea id="topic-role-expectations" name="roleExpectations" defaultValue={initialTopic?.roleExpectations} maxLength={500} required rows={3} className="form-control" placeholder="예: 프론트엔드 구현과 사용자 테스트" />
+          <UiTextarea id="topic-role-expectations" name="roleExpectations" value={roleExpectations} onChange={(e) => setRoleExpectations(e.target.value)} maxLength={500} required rows={3} className="form-control" placeholder="예: 프론트엔드 구현과 사용자 테스트" />
         </FormField>
         <FormField id="topic-availability" label="활동 가능 시간 조건">
-          <UiTextarea id="topic-availability" name="availabilityRequirement" defaultValue={initialTopic?.availabilityRequirement} maxLength={500} required rows={3} className="form-control" placeholder="예: 매주 수요일 18시 정기 회의 참여" />
+          <UiTextarea id="topic-availability" name="availabilityRequirement" value={availabilityRequirement} onChange={(e) => setAvailabilityRequirement(e.target.value)} maxLength={500} required rows={3} className="form-control" placeholder="예: 매주 수요일 18시 정기 회의 참여" />
         </FormField>
       </FormSection>
       <FormSection id="topic-application" number="03" title="지원 방식과 지원서">
@@ -171,12 +180,58 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <button type="button" className="button-secondary" onClick={() => setQuestions((current) => [...current, { localId: nextQuestionId.current++, label: "", maxLength: 500, required: true }])} disabled={questions.length >= 20}><UiText>{"문항 추가"}</UiText></button>
         </div>
         <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-          {questions.map((question, index) => <li key={question.localId} className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_auto] sm:items-end">
-            <label className="grid gap-2 text-sm font-medium"><UiText>{"문항"}</UiText>{" "}{index + 1}<UiInput name="questionLabel" defaultValue={question.label} maxLength={200} required className="form-control" placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?" /></label>
-            <label className="grid gap-2 text-sm font-medium"><UiText>{"글자 수 제한"}</UiText><TextInput name="questionMaxLength" type="number" min="1" max="5000" defaultValue={question.maxLength} required /></label>
-            <label className="grid gap-2 text-sm font-medium"><UiText>{"응답 조건"}</UiText><CustomSelect name="questionRequired" ariaLabel={`문항 ${index + 1} 응답 조건`} density="compact" defaultValue={String(question.required)} options={[{ value: "true", label: "필수" }, { value: "false", label: "선택" }]} /></label>
-            <IconButton type="button" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={questions.length === 1} onClick={() => setQuestions((current) => current.filter(({ localId }) => localId !== question.localId))} aria-label={`문항 ${index + 1} 삭제`} title={`문항 ${index + 1} 삭제`}><TrashIcon className="size-5" /></IconButton>
-          </li>)}
+          {questions.map((question, index) => (
+            <li key={question.localId} className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_auto] sm:items-end">
+              <label className="grid gap-2 text-sm font-medium">
+                <UiText>{"문항"}</UiText>{" "}{index + 1}
+                <UiInput
+                  name="questionLabel"
+                  value={question.label}
+                  onChange={(e) => updateQuestion(question.localId, { label: e.target.value })}
+                  maxLength={200}
+                  required
+                  className="form-control"
+                  placeholder="예: 이 프로젝트에서 해결하고 싶은 문제는 무엇인가요?"
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium">
+                <UiText>{"글자 수 제한"}</UiText>
+                <TextInput
+                  name="questionMaxLength"
+                  type="number"
+                  min="1"
+                  max="5000"
+                  value={question.maxLength}
+                  onChange={(e) => updateQuestion(question.localId, { maxLength: Number(e.target.value) || 500 })}
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium">
+                <UiText>{"응답 조건"}</UiText>
+                <CustomSelect
+                  name="questionRequired"
+                  ariaLabel={`문항 ${index + 1} 응답 조건`}
+                  density="compact"
+                  value={String(question.required)}
+                  onValueChange={(val) => updateQuestion(question.localId, { required: val === "true" })}
+                  options={[
+                    { value: "true", label: "필수" },
+                    { value: "false", label: "선택" },
+                  ]}
+                />
+              </label>
+              <IconButton
+                type="button"
+                className="text-[var(--danger)] hover:text-[var(--danger)]"
+                disabled={questions.length === 1}
+                onClick={() => setQuestions((current) => current.filter(({ localId }) => localId !== question.localId))}
+                aria-label={`문항 ${index + 1} 삭제`}
+                title={`문항 ${index + 1} 삭제`}
+              >
+                <TrashIcon className="size-5" />
+              </IconButton>
+            </li>
+          ))}
         </ol>
         <p className="muted text-sm"><UiText>{"문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다."}</UiText></p>
       </FormSection>

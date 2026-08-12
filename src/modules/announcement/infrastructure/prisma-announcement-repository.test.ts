@@ -55,6 +55,7 @@ describe("공지 대상 스코프 where", () => {
       where: {
         programId: "program-2",
         teamId: null,
+        category: { not: "GRADUATION_PROJECT" },
         ...announcementScopeWhere(student),
       },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],

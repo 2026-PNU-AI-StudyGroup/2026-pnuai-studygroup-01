@@ -81,7 +81,7 @@ export function TeamModal({
     const keepFocusInside = (event: FocusEvent) => {
       const target = event.target;
       if (!(target instanceof Node) || !dialog || dialog.contains(target)) return;
-      if (target instanceof Element && target.closest("[role='listbox']")) return;
+      if (target instanceof Element && (target.closest("[role='listbox']") || target.closest(".date-time-input__calendar"))) return;
       closeButtonRef.current?.focus();
     };
     window.addEventListener("keydown", closeOnEscape);
@@ -118,7 +118,7 @@ export function TeamModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 p-4 sm:p-6">
+    <div className="fixed inset-0 z-[65] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 p-4 sm:p-6">
       <UiButton type="button" tabIndex={-1} aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={requestClose} />
       <section
         ref={dialogRef}
