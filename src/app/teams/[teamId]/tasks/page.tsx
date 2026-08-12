@@ -61,10 +61,12 @@ function TaskCard({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone={taskStatus[task.status][1]}><UiText>{taskStatus[task.status][0]}</UiText></StatusBadge>
-              <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-[0.375rem] px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+              <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-[0.375rem] px-2.5 py-1 text-xs font-semibold ${
                 deadlineState === "OVERDUE"
-                  ? "bg-[var(--danger-subtle)] text-[var(--danger)] ring-[color-mix(in_srgb,var(--danger)_26%,transparent)]"
-                  : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-[var(--line-strong)]"
+                  ? "bg-[var(--danger-subtle)] text-[var(--danger)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--danger)_26%,transparent)]"
+                  : deadlineState === "COMPLETE"
+                    ? "bg-[var(--surface-subtle)] text-[var(--muted)]"
+                    : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]"
               }`}>
                 <UiText>{task.status === "DONE" ? "완료일" : "완료 예정"}</UiText>
                 <time dateTime={displayedDate.toISOString()}><UiDate value={displayedDate} mode="date" /></time>
