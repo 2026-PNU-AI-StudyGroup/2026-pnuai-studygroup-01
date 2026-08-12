@@ -17,6 +17,7 @@ function task(
     title: id,
     status,
     dueAt: new Date(dueAt),
+    completedAt: status === "DONE" ? new Date(dueAt) : null,
     assignees: [],
   };
 }
@@ -49,11 +50,15 @@ describe("task page presentation", () => {
     ]);
   });
 
-  it("완료 항목은 활성 목록과 분리하고 최근 완료 예정일 순서로 둔다", () => {
+  it("완료 항목은 활성 목록과 분리하고 최근 완료일 순서로 둔다", () => {
+    const oldDone = task("old-done", "DONE", "2026-07-20T00:00:00.000Z");
+    oldDone.completedAt = new Date("2026-07-01T00:00:00.000Z");
+    const recentDone = task("recent-done", "DONE", "2026-07-01T00:00:00.000Z");
+    recentDone.completedAt = new Date("2026-07-20T00:00:00.000Z");
     const result = presentTasks([
-      task("old-done", "DONE", "2026-07-01T00:00:00.000Z"),
+      oldDone,
       task("active", "TODO", "2026-09-01T00:00:00.000Z"),
-      task("recent-done", "DONE", "2026-07-20T00:00:00.000Z"),
+      recentDone,
     ], now);
 
     expect(result.active.map(({ id }) => id)).toEqual(["active"]);

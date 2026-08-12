@@ -96,6 +96,18 @@ export class TeamTaskService {
     if (!result) throw new TaskNotFoundError();
     return result;
   }
+
+  async completeTask(actor: CurrentActor, taskId: string): Promise<{ teamId: string }> {
+    const result = await this.taskWriter.completeTask(taskId, actor);
+    if (!result) throw new TaskNotFoundError();
+    return result;
+  }
+
+  async reopenTask(actor: CurrentActor, taskId: string): Promise<{ teamId: string }> {
+    const result = await this.taskWriter.reopenTask(taskId, actor);
+    if (!result) throw new TaskNotFoundError();
+    return result;
+  }
 }
 
 export class TeamDiscussionService {

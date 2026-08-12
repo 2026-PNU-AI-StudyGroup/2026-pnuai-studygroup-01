@@ -5,6 +5,7 @@ export type TaskPageItem = {
   title: string;
   dueAt: Date;
   status: TaskStatus;
+  completedAt: Date | null;
   assignees: Array<{ id: string; name: string }>;
 };
 
@@ -43,7 +44,8 @@ export function presentTasks(tasks: TaskPageItem[], now: Date) {
     });
   const completed = tasks
     .filter((task) => task.status === "DONE")
-    .sort((left, right) => compareStable(right, left));
+    .sort((left, right) => (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0)
+      || compareStable(right, left));
 
   return { active, completed, focus: active[0] ?? null };
 }

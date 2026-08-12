@@ -34,6 +34,11 @@ export const taskDeleteInputSchema = z.object({
   taskId: z.string().uuid(),
 });
 
+export const taskCompleteInputSchema = z.object({
+  teamId: z.string().uuid(),
+  taskId: z.string().uuid(),
+});
+
 export const discussionPostInputSchema = z.object({
   teamId: z.string().uuid(),
   content: z.string().trim().min(1).max(2_000),

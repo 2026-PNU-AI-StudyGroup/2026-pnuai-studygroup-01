@@ -28,6 +28,7 @@ import { PrismaTeamDiscussionRepository } from "@/modules/team/infrastructure/pr
 import { PrismaTeamTaskRepository } from "@/modules/team/infrastructure/prisma-team-task-repository";
 import {
   discussionPostInputSchema,
+  taskCompleteInputSchema,
   taskDeleteInputSchema,
   taskInputSchema,
   taskUpdateInputSchema,
@@ -155,6 +156,50 @@ export async function updateTaskAction(
   }
   revalidatePath("/dashboard");
   return { status: "success", message: "할 일을 수정했습니다." };
+}
+
+export async function completeTaskAction(
+  _state: TeamActionState,
+  formData: FormData,
+): Promise<TeamActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = taskCompleteInputSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { status: "error", message: "완료할 할 일을 다시 확인해 주세요." };
+  }
+  try {
+    const result = await taskService().completeTask(actor, parsed.data.taskId);
+    revalidatePath(`/teams/${result.teamId}`, "layout");
+  } catch (error) {
+    const message = expectedMessage(error);
+    if (message) return { status: "error", message };
+    throw error;
+  }
+  revalidatePath("/dashboard");
+  return { status: "success", message: "할 일을 완료했습니다." };
+}
+
+export async function reopenTaskAction(
+  _state: TeamActionState,
+  formData: FormData,
+): Promise<TeamActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = taskCompleteInputSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { status: "error", message: "되돌릴 할 일을 다시 확인해 주세요." };
+  }
+  try {
+    const result = await taskService().reopenTask(actor, parsed.data.taskId);
+    revalidatePath(`/teams/${result.teamId}`, "layout");
+  } catch (error) {
+    const message = expectedMessage(error);
+    if (message) return { status: "error", message };
+    throw error;
+  }
+  revalidatePath("/dashboard");
+  return { status: "success", message: "할 일을 다시 할 일로 돌렸습니다." };
 }
 
 export async function deleteTaskAction(

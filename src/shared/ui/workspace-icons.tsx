@@ -73,6 +73,15 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+export function UndoIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M9 7 5 11l4 4" />
+      <path d="M5.5 11H14a5 5 0 0 1 5 5v1" />
+    </svg>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>

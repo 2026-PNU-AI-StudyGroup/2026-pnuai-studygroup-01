@@ -9,6 +9,7 @@ import { ProjectList } from "@/app/dashboard/_components/project-list";
 const team = {
   id: "team-1",
   name: "모두의 길",
+  programName: "2026 캡스톤디자인",
   topicTitle: "실내 길찾기",
   status: "CONFIRMED" as const,
   memberCount: 4,
@@ -17,10 +18,10 @@ const team = {
   reportCount: 3,
   submittedReportCount: 1,
   tasks: [
-    { id: "task-1", title: "현장 조사", status: "DONE" as const, dueAt: new Date("2026-07-10T00:00:00Z"), assignees: [{ id: "student-1", name: "정하늘" }] },
-    { id: "task-2", title: "경로 데이터 검증", status: "DONE" as const, dueAt: new Date("2026-07-18T00:00:00Z"), assignees: [{ id: "student-2", name: "윤서준" }] },
-    { id: "task-3", title: "프로토타입 테스트", status: "IN_PROGRESS" as const, dueAt: new Date("2026-08-02T00:00:00Z"), assignees: [{ id: "student-3", name: "한지우" }] },
-    { id: "task-4", title: "최종 발표", status: "TODO" as const, dueAt: new Date("2026-08-20T00:00:00Z"), assignees: [] },
+    { id: "task-1", title: "현장 조사", status: "DONE" as const, completedAt: new Date("2026-07-11T00:00:00Z"), dueAt: new Date("2026-07-10T00:00:00Z"), assignees: [{ id: "student-1", name: "정하늘" }] },
+    { id: "task-2", title: "경로 데이터 검증", status: "DONE" as const, completedAt: new Date("2026-07-19T00:00:00Z"), dueAt: new Date("2026-07-18T00:00:00Z"), assignees: [{ id: "student-2", name: "윤서준" }] },
+    { id: "task-3", title: "프로토타입 테스트", status: "IN_PROGRESS" as const, completedAt: null, dueAt: new Date("2026-08-02T00:00:00Z"), assignees: [{ id: "student-3", name: "한지우" }] },
+    { id: "task-4", title: "최종 발표", status: "TODO" as const, completedAt: null, dueAt: new Date("2026-08-20T00:00:00Z"), assignees: [] },
   ],
 };
 
@@ -63,6 +64,7 @@ describe("내 프로젝트 통합 화면", () => {
 
     expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
+    expect(screen.getByText("2026 캡스톤디자인")).toBeInTheDocument();
     expect(screen.getByText("진행 중")).toHaveClass("bg-[var(--primary-subtle)]");
     expect(screen.getByText("보고서 제출률")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");

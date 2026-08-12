@@ -60,6 +60,7 @@ export class PrismaTeamTaskRepository implements TaskWriter {
     actor: CurrentActor;
   }): Promise<{ teamId: string } | null> {
     const uniqueAssigneeIds = [...new Set(input.assigneeIds)];
+    const now = new Date();
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{
         teamId: string;
@@ -68,7 +69,12 @@ export class PrismaTeamTaskRepository implements TaskWriter {
         SET "title" = ${input.title},
           "dueAt" = ${input.dueAt},
           "status" = ${input.status}::"TaskStatus",
-          "updatedAt" = ${new Date()}
+          "completedAt" = CASE
+            WHEN ${input.status}::"TaskStatus" = 'DONE'::"TaskStatus"
+              THEN COALESCE("task"."completedAt", ${now})
+            ELSE NULL
+          END,
+          "updatedAt" = ${now}
         FROM "team"
         WHERE "task"."id" = ${input.id}
           AND "team"."id" = "task"."teamId"
@@ -93,6 +99,42 @@ export class PrismaTeamTaskRepository implements TaskWriter {
       }
       return task;
     });
+  }
+
+  async completeTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null> {
+    const now = new Date();
+    const rows = await this.client.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
+      UPDATE "task"
+      SET "status" = 'DONE'::"TaskStatus",
+        "completedAt" = ${now},
+        "updatedAt" = ${now}
+      FROM "team"
+      WHERE "task"."id" = ${id}
+        AND "task"."status" <> 'DONE'::"TaskStatus"
+        AND "team"."id" = "task"."teamId"
+        AND "team"."status" <> 'CLOSED'
+        AND ${teamRecordActorSql(actor)}
+      RETURNING "task"."teamId"
+    `);
+    return rows[0] ?? null;
+  }
+
+  async reopenTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null> {
+    const now = new Date();
+    const rows = await this.client.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
+      UPDATE "task"
+      SET "status" = 'TODO'::"TaskStatus",
+        "completedAt" = NULL,
+        "updatedAt" = ${now}
+      FROM "team"
+      WHERE "task"."id" = ${id}
+        AND "task"."status" = 'DONE'::"TaskStatus"
+        AND "team"."id" = "task"."teamId"
+        AND "team"."status" <> 'CLOSED'
+        AND ${teamRecordActorSql(actor)}
+      RETURNING "task"."teamId"
+    `);
+    return rows[0] ?? null;
   }
 
   async deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null> {

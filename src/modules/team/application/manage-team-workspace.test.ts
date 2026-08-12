@@ -24,6 +24,8 @@ function dependencies() {
   };
   const tasks: TaskWriter = {
     createTask: vi.fn(async () => ({ id: "task-1" })),
+    completeTask: vi.fn(),
+    reopenTask: vi.fn(),
     updateTask: vi.fn(),
     deleteTask: vi.fn(),
   };
@@ -107,6 +109,36 @@ describe("팀 워크스페이스 기록", () => {
       status: "IN_PROGRESS",
       assigneeIds: ["student-2"],
     });
+  });
+
+  it("권한이 확인된 진행 중 할 일을 즉시 완료한다", async () => {
+    const deps = dependencies();
+    vi.mocked(deps.tasks.completeTask).mockResolvedValue({ teamId: "team-1" });
+    const service = new TeamTaskService(deps.tasks);
+
+    await expect(service.completeTask(
+      { id: "student-1", role: "STUDENT" },
+      "task-1",
+    )).resolves.toEqual({ teamId: "team-1" });
+    expect(deps.tasks.completeTask).toHaveBeenCalledWith(
+      "task-1",
+      { id: "student-1", role: "STUDENT" },
+    );
+  });
+
+  it("완료한 할 일을 같은 전환 경로로 할 일로 되돌린다", async () => {
+    const deps = dependencies();
+    vi.mocked(deps.tasks.reopenTask).mockResolvedValue({ teamId: "team-1" });
+    const service = new TeamTaskService(deps.tasks);
+
+    await expect(service.reopenTask(
+      { id: "student-1", role: "STUDENT" },
+      "task-1",
+    )).resolves.toEqual({ teamId: "team-1" });
+    expect(deps.tasks.reopenTask).toHaveBeenCalledWith(
+      "task-1",
+      { id: "student-1", role: "STUDENT" },
+    );
   });
 
   it("권한이 확인된 할 일만 삭제한다", async () => {

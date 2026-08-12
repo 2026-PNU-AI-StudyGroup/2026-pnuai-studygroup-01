@@ -5,6 +5,7 @@ export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
 export type TeamListItem = {
   id: string;
   name: string;
+  programName: string;
   topicTitle: string;
   status: "FORMING" | "CONFIRMED" | "CLOSED";
   memberCount: number;
@@ -17,6 +18,7 @@ export type TeamListItem = {
     title: string;
     dueAt: Date;
     status: TaskStatus;
+    completedAt: Date | null;
     assignees: Array<{ id: string; name: string }>;
   }>;
 };
@@ -124,6 +126,8 @@ export interface TaskWriter {
     assigneeIds: string[];
     actor: CurrentActor;
   }): Promise<{ teamId: string } | null>;
+  completeTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null>;
+  reopenTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null>;
   deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null>;
 }
 

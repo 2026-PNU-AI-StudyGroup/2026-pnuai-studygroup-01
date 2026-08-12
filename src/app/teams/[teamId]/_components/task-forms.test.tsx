@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TaskCreateDialog, TaskEditDialog } from "@/app/teams/[teamId]/_components/task-forms";
+import { TaskCompletionForm, TaskCreateDialog, TaskEditDialog } from "@/app/teams/[teamId]/_components/task-forms";
 
-const { createTask, deleteTask, updateTask } = vi.hoisted(() => ({
+const { completeTask, createTask, deleteTask, reopenTask, updateTask } = vi.hoisted(() => ({
+  completeTask: vi.fn(),
   createTask: vi.fn(),
   deleteTask: vi.fn(),
+  reopenTask: vi.fn(),
   updateTask: vi.fn(),
 }));
 
@@ -14,8 +16,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/teams/[teamId]/_actions/team-workspace-actions", () => ({
+  completeTaskAction: completeTask,
   createTaskAction: createTask,
   deleteTaskAction: deleteTask,
+  reopenTaskAction: reopenTask,
   updateTaskAction: updateTask,
 }));
 
@@ -26,8 +30,10 @@ const members = [
 
 describe("할 일 대화상자", () => {
   beforeEach(() => {
+    completeTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 완료했습니다." });
     createTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 추가했습니다." });
     deleteTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 삭제했습니다." });
+    reopenTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 다시 할 일로 돌렸습니다." });
     updateTask.mockReset().mockResolvedValue({ status: "success", message: "할 일을 수정했습니다." });
     HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
     HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); };
@@ -70,6 +76,29 @@ describe("할 일 대화상자", () => {
     expect(submitted.get("dueAt")).toBe("2026-08-15");
     expect(submitted.get("status")).toBe("IN_PROGRESS");
     expect(submitted.getAll("assigneeIds")).toEqual(["student-1", "student-2"]);
+  });
+
+  it("진행 중 카드의 체크 버튼으로 할 일을 즉시 완료한다", async () => {
+    render(<TaskCompletionForm teamId="team-1" taskId="task-1" title="사용자 인터뷰" status="IN_PROGRESS" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "사용자 인터뷰 완료 처리" }));
+
+    await waitFor(() => expect(completeTask).toHaveBeenCalledTimes(1));
+    const submitted = completeTask.mock.calls[0][1] as FormData;
+    expect(submitted.get("teamId")).toBe("team-1");
+    expect(submitted.get("taskId")).toBe("task-1");
+  });
+
+  it("완료 카드에서도 같은 체크 버튼으로 할 일로 되돌린다", async () => {
+    render(<TaskCompletionForm teamId="team-1" taskId="task-1" title="사용자 인터뷰" status="DONE" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "사용자 인터뷰 할 일로 되돌리기" }));
+
+    await waitFor(() => expect(reopenTask).toHaveBeenCalledTimes(1));
+    const submitted = reopenTask.mock.calls[0][1] as FormData;
+    expect(submitted.get("teamId")).toBe("team-1");
+    expect(submitted.get("taskId")).toBe("task-1");
+    expect(completeTask).not.toHaveBeenCalled();
   });
 });
 

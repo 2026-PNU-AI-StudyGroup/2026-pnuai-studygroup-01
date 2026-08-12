@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import {
+  TaskCompletionForm,
   TaskCreateDialog,
   TaskEditDialog,
 } from "@/app/teams/[teamId]/_components/task-forms";
@@ -15,6 +16,7 @@ import type { TeamWorkspace } from "@/modules/team/application/team-workspace-po
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { CheckIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 할 일");
@@ -41,11 +43,12 @@ function TaskCard({
 }) {
   const deadlineState = taskDeadlineState(task, now);
   const titleId = `task-title-${task.id}`;
+  const displayedDate = task.completedAt ?? task.dueAt;
 
   return (
     <article
       aria-labelledby={titleId}
-      className={`overflow-hidden rounded-[var(--radius-panel)] border bg-[var(--surface)] shadow-[0_10px_30px_rgba(31,35,48,0.055)] ${
+      className={`h-full overflow-hidden rounded-[var(--radius-panel)] border bg-[var(--surface)] shadow-[0_10px_30px_rgba(31,35,48,0.055)] ${
         deadlineState === "OVERDUE"
           ? "border-[color-mix(in_srgb,var(--danger)_35%,var(--line))]"
           : deadlineState === "COMPLETE"
@@ -58,6 +61,14 @@ function TaskCard({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone={taskStatus[task.status][1]}><UiText>{taskStatus[task.status][0]}</UiText></StatusBadge>
+              <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-[0.375rem] px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+                deadlineState === "OVERDUE"
+                  ? "bg-[var(--danger-subtle)] text-[var(--danger)] ring-[color-mix(in_srgb,var(--danger)_26%,transparent)]"
+                  : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-[var(--line-strong)]"
+              }`}>
+                <UiText>{task.status === "DONE" ? "완료일" : "완료 예정"}</UiText>
+                <time dateTime={displayedDate.toISOString()}><UiDate value={displayedDate} mode="date" /></time>
+              </span>
               {deadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
             </div>
             <h3 id={titleId} className="mt-3 break-words text-lg font-bold leading-7 tracking-[-0.025em] text-[var(--ink)]">
@@ -65,26 +76,19 @@ function TaskCard({
             </h3>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <div className={`rounded-xl px-3 py-2 text-sm font-bold ${
-              deadlineState === "OVERDUE"
-                ? "bg-[var(--danger-subtle)] text-[var(--danger)]"
-                : deadlineState === "COMPLETE"
-                  ? "bg-[var(--success-subtle)] text-[var(--success)]"
-                  : "bg-[var(--primary-subtle)] text-[var(--primary-hover)]"
-            }`}>
-              <span className="mr-2 text-xs"><UiText>{"완료 예정"}</UiText></span>
-              <time dateTime={task.dueAt.toISOString()}><UiDate value={task.dueAt} mode="date" /></time>
-            </div>
             {canEdit ? (
-              <TaskEditDialog
-                teamId={teamId}
-                taskId={task.id}
-                title={task.title}
-                dueAt={task.dueAt}
-                status={task.status}
-                assigneeIds={task.assignees.map(({ id }) => id)}
-                members={members}
-              />
+              <>
+                <TaskCompletionForm teamId={teamId} taskId={task.id} title={task.title} status={task.status} />
+                <TaskEditDialog
+                  teamId={teamId}
+                  taskId={task.id}
+                  title={task.title}
+                  dueAt={task.dueAt}
+                  status={task.status}
+                  assigneeIds={task.assignees.map(({ id }) => id)}
+                  members={members}
+                />
+              </>
             ) : null}
           </div>
         </header>
@@ -137,9 +141,9 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
                 <h2 id="active-tasks-title" className="text-xl font-bold tracking-[-0.035em]"><UiText>{"남은 할 일"}</UiText></h2>
                 <span className="text-sm font-bold text-[var(--muted)]">{active.length}<UiText>{"건"}</UiText></span>
               </div>
-              <ol className="mt-4 grid gap-4">
+              <ol className="mt-4 grid gap-4 lg:grid-cols-2">
                 {active.map((task) => (
-                  <li key={task.id}>
+                  <li key={task.id} className="min-w-0">
                     <TaskCard
                       task={task}
                       teamId={workspace.id}
@@ -152,8 +156,19 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
               </ol>
             </section>
           ) : (
-            <div className="rounded-[var(--radius-panel)] border border-[color-mix(in_srgb,var(--success)_24%,var(--line))] bg-[var(--success-subtle)] px-5 py-6 sm:px-6">
-              <h2 className="text-lg font-bold text-[var(--ink)]"><UiText>{"모든 할 일 완료"}</UiText></h2>
+            <div className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 shadow-[0_8px_24px_rgba(31,35,48,0.045)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--success-subtle)] text-[var(--success)]">
+                  <CheckIcon className="size-6" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"모든 할 일 완료"}</UiText></h2>
+                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"등록된 할 일을 모두 마쳤습니다."}</UiText></p>
+                </div>
+              </div>
+              <span className="w-fit shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1.5 text-sm font-bold text-[var(--muted)]">
+                {completed.length}/{workspace.taskCount} <UiText>{"완료"}</UiText>
+              </span>
             </div>
           )}
 
@@ -163,9 +178,9 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
                 <span><UiText>{"완료한 일"}</UiText>{" "}{completed.length}<UiText>{"건"}</UiText></span>
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180 [stroke-linecap:round] [stroke-linejoin:round]"><path d="m6 8 4 4 4-4" /></svg>
               </summary>
-              <ol className="mt-4 grid gap-4">
+              <ol className="mt-4 grid gap-4 lg:grid-cols-2">
                 {completed.map((task) => (
-                  <li key={task.id}>
+                  <li key={task.id} className="min-w-0">
                     <TaskCard
                       task={task}
                       teamId={workspace.id}

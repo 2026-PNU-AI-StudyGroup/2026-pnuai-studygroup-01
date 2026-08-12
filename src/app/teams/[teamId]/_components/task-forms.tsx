@@ -3,8 +3,10 @@
 import { useActionState, useId, useRef } from "react";
 
 import {
+  completeTaskAction,
   createTaskAction,
   deleteTaskAction,
+  reopenTaskAction,
   updateTaskAction,
 } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import {
@@ -22,7 +24,7 @@ import { DateTimeInput } from "@/shared/ui/form-system";
 import { IconButton } from "@/shared/ui/icon-button";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
-import { EditIcon } from "@/shared/ui/workspace-icons";
+import { CheckIcon, EditIcon, UndoIcon } from "@/shared/ui/workspace-icons";
 
 type AssignableMember = { id: string; name: string };
 
@@ -145,6 +147,41 @@ export function TaskEditDialog({
       </dialog>
       <SuccessToast message={toastMessage} />
     </>
+  );
+}
+
+export function TaskCompletionForm({
+  teamId,
+  taskId,
+  title,
+  status,
+}: {
+  teamId: string;
+  taskId: string;
+  title: string;
+  status: TaskStatus;
+}) {
+  const completed = status === "DONE";
+  const [state, action, pending] = useActionState(
+    completed ? reopenTaskAction : completeTaskAction,
+    initialTeamActionState,
+  );
+  const actionLabel = completed ? "할 일로 되돌리기" : "완료 처리";
+
+  return (
+    <form action={action}>
+      <input type="hidden" name="teamId" value={teamId} />
+      <input type="hidden" name="taskId" value={taskId} />
+      <IconButton
+        type="submit"
+        disabled={pending}
+        aria-label={`${title} ${actionLabel}`}
+        title={actionLabel}
+      >
+        {completed ? <UndoIcon className="size-5" /> : <CheckIcon className="size-5" />}
+      </IconButton>
+      {state.status === "error" ? <span className="sr-only" role="alert"><UiText>{state.message}</UiText></span> : null}
+    </form>
   );
 }
 

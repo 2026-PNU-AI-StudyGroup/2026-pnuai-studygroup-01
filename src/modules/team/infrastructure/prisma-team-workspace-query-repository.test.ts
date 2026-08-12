@@ -18,7 +18,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
         executionEndsAt: new Date("2026-10-01T00:00:00Z"),
         submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
         submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
-        program: { advisorEnabled: true },
+        program: { name: "2026 캡스톤디자인", advisorEnabled: true },
         manager: {
           id: "professor-1",
           name: "김교수",
@@ -120,6 +120,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       profile: expect.objectContaining({ kakao: "pnu_id" }),
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
+    expect(workspace?.programName).toBe("2026 캡스톤디자인");
     expect(workspace?.discussionPosts.find((post) => post.id === "post-a")?.authorRole).toBe("ASSISTANT");
     expect(workspace?.discussionPosts.find((post) => post.id === "post-b")?.authorRole).toBe("PROFESSOR");
     expect(workspace?.professor).toEqual({
@@ -148,7 +149,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
         id: "team-1",
         name: "모두의 길",
         status: "CONFIRMED",
-        topic: { title: "실내 길찾기" },
+        topic: { title: "실내 길찾기", program: { name: "2026 캡스톤디자인" } },
         members: [{ id: "member-1" }],
         tasks: [],
         reports: [
@@ -178,6 +179,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       }),
     }));
     expect(teams[0]).toEqual(expect.objectContaining({
+      programName: "2026 캡스톤디자인",
       reportCount: 3,
       submittedReportCount: 2,
     }));

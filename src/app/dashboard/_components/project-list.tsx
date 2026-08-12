@@ -51,6 +51,7 @@ function ProjectCard({
       </div>
 
       <div className={styles.projectIdentity}>
+        <p className={styles.program}><UiText>{team.programName}</UiText></p>
         <h3 id={titleId}><UiText>{team.name}</UiText></h3>
         <p className={styles.topic}><UiText>{team.topicTitle}</UiText></p>
       </div>

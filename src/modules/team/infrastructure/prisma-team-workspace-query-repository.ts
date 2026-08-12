@@ -9,7 +9,7 @@ import type {
 import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 
 const teamListInclude = {
-  topic: { select: { title: true } },
+  topic: { select: { title: true, program: { select: { name: true } } } },
   members: { select: { id: true } },
   tasks: {
     orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
@@ -18,6 +18,7 @@ const teamListInclude = {
       title: true,
       dueAt: true,
       status: true,
+      completedAt: true,
       assignees: {
         orderBy: { assignedAt: "asc" },
         select: { user: { select: { id: true, name: true } } },
@@ -54,7 +55,7 @@ export class PrismaTeamWorkspaceQueryRepository
         topic: { select: {
           id: true,
           title: true,
-          program: { select: { advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+          program: { select: { name: true, advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -110,6 +111,7 @@ export class PrismaTeamWorkspaceQueryRepository
             title: true,
             dueAt: true,
             status: true,
+            completedAt: true,
             assignees: {
               orderBy: { assignedAt: "asc" },
               select: { user: { select: { id: true, name: true } } },
@@ -170,6 +172,7 @@ export class PrismaTeamWorkspaceQueryRepository
       id: team.id,
       topicId: team.topic.id,
       name: team.name,
+      programName: team.topic.program.name,
       topicTitle: team.topic.title,
       status: team.status,
       professorName: team.topic.manager!.name,
@@ -297,6 +300,7 @@ function toTeamListItem(team: TeamListRow): TeamListItem {
   return {
       id: team.id,
       name: team.name,
+      programName: team.topic.program.name,
       topicTitle: team.topic.title,
       status: team.status,
       memberCount: team.members.length,

@@ -1067,6 +1067,7 @@ model Task {
   title       String
   dueAt       DateTime
   status      TaskStatus     @default(TODO)
+  completedAt DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
