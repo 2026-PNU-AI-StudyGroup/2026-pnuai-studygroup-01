@@ -295,6 +295,7 @@ async function seed() {
     await tx.approvalDecision.deleteMany({ where: { id: { in: [...ids.approvalDecisions, ...ids.activeApprovalDecisions] } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: [...ids.reportVersions, ...ids.activeReportVersions] } } });
     await tx.report.deleteMany({ where: { id: { in: [...ids.reports, ...ids.activeReports] } } });
+    await tx.programReportDefinition.deleteMany({ where: { id: { in: ids.reportDefinitions } } });
     await tx.storedFile.deleteMany({ where: { id: { in: [...ids.storedFiles, ...ids.activeStoredFiles] } } });
     await tx.recruitmentApplication.deleteMany({ where: { postId: { in: ids.recruitments } } });
     await tx.recruitmentPost.deleteMany({ where: { id: { in: ids.recruitments } } });

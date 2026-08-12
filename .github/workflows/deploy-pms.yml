@@ -93,7 +93,3 @@ jobs:
           done
           docker logs --tail 200 pnu-pms-app-1
           exit 1
-
-      - name: Remove untagged Docker layers
-        if: always()
-        run: docker image prune --force
