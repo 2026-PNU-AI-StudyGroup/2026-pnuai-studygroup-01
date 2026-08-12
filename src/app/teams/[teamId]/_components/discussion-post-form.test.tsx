@@ -140,4 +140,33 @@ describe("DiscussionPostForm", () => {
     expect(await screen.findByText("메시지를 보냈습니다.")).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
+
+  it("Enter로 메시지를 보낸다", async () => {
+    createDiscussionPostAction.mockResolvedValue({ status: "success", message: "메시지를 보냈습니다." });
+    render(<DiscussionPostForm teamId="team-1" authorName="정하늘" />);
+
+    const textbox = screen.getByRole("textbox", { name: "메시지" });
+    fireEvent.change(textbox, { target: { value: "Enter로 보냅니다." } });
+    fireEvent.keyDown(textbox, { key: "Enter", code: "Enter" });
+
+    await waitFor(() => expect(createDiscussionPostAction).toHaveBeenCalled());
+  });
+
+  it("Shift+Enter와 한글 조합 중 Enter는 줄바꿈으로 남긴다", () => {
+    render(<DiscussionPostForm teamId="team-1" authorName="정하늘" />);
+
+    const textbox = screen.getByRole("textbox", { name: "메시지" });
+    fireEvent.change(textbox, { target: { value: "회의 일정" } });
+
+    fireEvent.keyDown(textbox, { key: "Enter", code: "Enter", shiftKey: true });
+    fireEvent.keyDown(textbox, { key: "Enter", code: "Enter", isComposing: true });
+    expect(createDiscussionPostAction).not.toHaveBeenCalled();
+  });
+
+  it("전송 버튼은 접근 가능한 이름을 가진 아이콘 버튼으로 표시한다", () => {
+    render(<DiscussionPostForm teamId="team-1" authorName="정하늘" />);
+
+    expect(screen.getByRole("button", { name: "메시지 보내기" })).toBeInTheDocument();
+    expect(screen.queryByText("보내기")).not.toBeInTheDocument();
+  });
 });

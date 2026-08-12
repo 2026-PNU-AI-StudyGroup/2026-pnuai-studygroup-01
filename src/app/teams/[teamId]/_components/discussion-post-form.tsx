@@ -3,7 +3,7 @@
 import { UiButton, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { type KeyboardEvent, useActionState, useEffect, useRef } from "react";
 
 import { createDiscussionPostAction } from "@/app/teams/[teamId]/_actions/team-workspace-actions";
 import { initialTeamActionState } from "@/app/teams/[teamId]/_lib/team-form-state";
@@ -40,6 +40,12 @@ export function DiscussionPostForm({
     return () => window.clearTimeout(timer);
   }, [autoScrollToLatest, latestPostId, scrollContainerId]);
 
+  function submitOnEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing || pending) return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <form action={action} className="shrink-0 border-t border-[var(--line)] bg-white px-5 py-5 lg:px-7">
       <input type="hidden" name="teamId" value={teamId} />
@@ -60,10 +66,10 @@ export function DiscussionPostForm({
               maxLength={2000}
               rows={2}
               placeholder={`${authorName}님의 메시지 입력`}
-              className="min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+              onKeyDown={submitOnEnter}
+              className="discussion-composer__input min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
             />
-            <UiButton disabled={pending} className="button-primary min-h-11 shrink-0 px-4" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
-              <span className="hidden sm:inline"><UiText>{pending ? "전송 중" : "보내기"}</UiText></span>
+            <UiButton type="submit" disabled={pending} className="button-primary min-h-11 shrink-0 px-3" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
               <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m4 5 16 7-16 7 3-7-3-7Z" />
                 <path d="M7 12h13" />

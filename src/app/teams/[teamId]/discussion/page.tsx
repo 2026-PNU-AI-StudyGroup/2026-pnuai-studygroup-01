@@ -49,7 +49,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
       </header>
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)]">
-        <div className="flex min-h-[38rem] min-w-0 flex-col lg:min-h-0">
+        <div className="flex h-full min-h-[38rem] min-w-0 flex-col lg:min-h-0">
           {workspace.discussionTotalPages > 1 ? (
             <UiNav aria-label="팀 대화 페이지" className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6 lg:px-7">
               <span className="muted text-xs">{workspace.discussionPage} / {workspace.discussionTotalPages} {" "}<UiText>{"페이지"}</UiText></span>

@@ -201,6 +201,12 @@ summary::-webkit-details-marker {
     box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px rgb(31 35 48 / 0.035);
   }
 
+  .discussion-composer__input:focus-visible {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .form-control::placeholder,
   .field::placeholder {
     color: #667085;
