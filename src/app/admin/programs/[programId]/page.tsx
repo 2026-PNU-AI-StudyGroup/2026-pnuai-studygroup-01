@@ -12,6 +12,7 @@ import { TrackManager, type TrackRow } from "@/app/admin/programs/[programId]/tr
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { listProgramCategories } from "@/app/admin/programs/_lib/program-categories";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
@@ -50,6 +51,7 @@ export default async function ProgramDetailPage({ params, searchParams }: { para
 
   let content: React.ReactNode = null;
   if (tab === "settings") {
+    const categoryOptions = await listProgramCategories();
     content = (
       <div className="grid gap-4">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
@@ -58,6 +60,7 @@ export default async function ProgramDetailPage({ params, searchParams }: { para
               programId={program.id}
               name={program.name}
               category={program.category}
+              categoryOptions={categoryOptions}
               description={program.description}
               startsAt={program.startsAt}
               endsAt={program.endsAt}

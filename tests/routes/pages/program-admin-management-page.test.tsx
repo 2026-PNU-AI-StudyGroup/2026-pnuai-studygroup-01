@@ -20,7 +20,7 @@ vi.mock("@/modules/project-voting/application/manage-project-voting", () => ({
 }));
 vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({ PrismaProjectProgramRepository: class {} }));
 vi.mock("@/modules/project-voting/infrastructure/prisma-project-voting-repository", () => ({ PrismaProjectVotingRepository: class {} }));
-vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
+vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: { projectProgram: { findMany: vi.fn().mockResolvedValue([]) } } }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
 vi.mock("@/app/_components/admin-workspace", () => ({
   AdminWorkspace: ({ eyebrow, title, description, actions, children }: { eyebrow?: string; title: string; description: string; actions: ReactNode; children: ReactNode }) => (

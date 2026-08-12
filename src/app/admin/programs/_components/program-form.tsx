@@ -7,14 +7,14 @@ import { useActionState, useCallback, useEffect, useState } from "react";
 
 import { createProgramAction } from "@/app/admin/programs/_actions/program-actions";
 import { initialProgramActionState } from "@/app/admin/programs/_lib/program-form-state";
+import { CategorySelect } from "@/app/admin/programs/_components/category-select";
 import { ProgramIconPicker } from "@/app/admin/programs/_components/program-icon-picker";
 import { ChoiceCard, DateTimeInput, FormField, FormSection, Textarea, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
-export function ProgramForm({ successHref }: { successHref?: string }) {
+export function ProgramForm({ successHref, categoryOptions }: { successHref?: string; categoryOptions: string[] }) {
   const router = useRouter();
   const [votingEnabled, setVotingEnabled] = useState(false);
-  const [category, setCategory] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [hasDivisions, setHasDivisions] = useState(false);
@@ -30,8 +30,8 @@ export function ProgramForm({ successHref }: { successHref?: string }) {
   }, [router, state.status, successHref]);
   return <form action={action} aria-busy={pending} className="grid gap-4">
     <FormSection title="프로그램 정보" description="프로그램명, 분류 및 설명을 입력합니다." contentClassName="sm:grid-cols-2">
-      <FormField id="program-category" label="프로그램 분류" description="다른 프로그램과 구분하는 분류이며, 내부 분과가 아닙니다.">
-        <UiInput id="program-category" name="category" value={category} onChange={(e) => setCategory(e.target.value)} maxLength={100} required className="form-control" placeholder="예: 캡스톤, 해커톤, 교육 프로그램" />
+      <FormField id="program-category" label="프로그램 분류" description="목록에서 고르거나 '새 분류 추가'로 직접 넣을 수 있습니다.">
+        <CategorySelect options={categoryOptions} />
       </FormField>
       <FormField id="program-name" label="프로그램명" className="sm:col-span-2">
         <UiInput id="program-name" name="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required className="form-control" placeholder="예: 창의융합 해커톤" />

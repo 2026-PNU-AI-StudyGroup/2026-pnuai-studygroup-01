@@ -20,7 +20,7 @@ const voteLimitScopeSchema = z.enum(["PROGRAM", "DIVISION"]);
 
 const programSettingsSchema = z.object({
   name: z.string(),
-  category: z.string(),
+  category: z.string().trim().min(1),
   description: z.string(),
   startsAt: koreanLocalDateTime,
   endsAt: koreanLocalDateTime,
