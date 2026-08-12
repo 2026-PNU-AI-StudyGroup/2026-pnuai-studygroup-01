@@ -57,6 +57,7 @@ export interface AnnouncementRepository {
   list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage>;
   listForProgram(audience: AnnouncementAudience, programId: string): Promise<AnnouncementRecord[]>;
   listForTeam(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]>;
+  listForTeamOverview(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]>;
   findById(id: string): Promise<AnnouncementRecord | null>;
   create(
     authorId: string,

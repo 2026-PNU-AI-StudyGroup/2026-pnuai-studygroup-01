@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 
 const sections = [
   { label: "개요", suffix: "", icon: "overview" },
-  { label: "공지", suffix: "/announcements", icon: "announcement" },
   { label: "할 일", suffix: "/tasks", icon: "task" },
   { label: "팀 대화", suffix: "/discussion", icon: "discussion" },
   { label: "회의·검토", suffix: "/requests", icon: "request" },
@@ -22,7 +21,6 @@ type WorkspaceIcon = typeof sections[number]["icon"];
 function NavigationIcon({ name }: { name: WorkspaceIcon }) {
   const paths = {
     overview: <><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z" /></>,
-    announcement: <><path d="M6 4h12v16H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
     task: <><path d="M5 4v16M5 6h11l-2 3 2 3H5" /></>,
     discussion: <><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></>,
     request: <><path d="M5 5h14v15H5zM8 3v4M16 3v4M5 9h14" /><path d="m9 14 2 2 4-4" /></>,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
-import { ProjectAnnouncementList } from "@/app/teams/[teamId]/_components/project-announcement-list";
+import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announcement-rail";
 import {
   taskDeadlineState,
   presentTasks,
@@ -63,7 +63,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
   const { actor, workspace } = await loadTeamWorkspace(teamId);
   const announcements = await new AnnouncementService(
     new PrismaAnnouncementRepository(prisma),
-  ).listForTeam(await resolveAnnouncementAudience(actor), teamId);
+  ).listForTeamOverview(await resolveAnnouncementAudience(actor), teamId);
   const now = new Date();
   const { focus: nextTask } = presentTasks(workspace.tasks, now);
   const focusDeadlineState = nextTask ? taskDeadlineState(nextTask, now) : null;
@@ -85,74 +85,61 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
         actions={workspace.access.canSupervise ? <Link href={`/professor/topics/${workspace.topicId}/assistants`} className="button-secondary"><UiText>{"조교 관리"}</UiText></Link> : undefined}
       />
 
-      {announcements.length > 0 ? (
-        <section aria-labelledby="recent-project-announcements-title" className="space-y-3">
-          <div className="flex items-center justify-between gap-4">
-            <h2 id="recent-project-announcements-title" className="text-base font-bold tracking-[-0.02em]">
-              <UiText>{"최근 공지"}</UiText>
-            </h2>
-            <Link href={`/teams/${teamId}/announcements`} className="text-sm font-bold text-[var(--primary)]">
-              <UiText>{"전체 보기"}</UiText>
-            </Link>
-          </div>
-          <ProjectAnnouncementList announcements={announcements} preview />
-        </section>
-      ) : null}
-
       <section
         aria-labelledby="next-action-title"
-        className={`relative overflow-hidden rounded-[var(--radius-panel)] border p-5 sm:p-7 ${
-          focusDeadlineState === "OVERDUE"
-            ? "border-[color-mix(in_srgb,var(--danger)_38%,var(--line))] bg-[var(--danger-subtle)]"
-            : nextTask
-              ? "border-[color-mix(in_srgb,var(--primary)_30%,var(--line))] bg-[var(--primary-subtle)]"
-              : "border-[color-mix(in_srgb,var(--success)_28%,var(--line))] bg-[var(--success-subtle)]"
-        }`}
+        className="panel overflow-hidden"
       >
-        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-bold tracking-[0.12em] text-[var(--primary-hover)]"><UiText>{"다가오는 할 일"}</UiText></p>
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="next-action-title" className="text-base font-bold tracking-[-0.02em]"><UiText>{"다가오는 할 일"}</UiText></h2>
             {nextTask ? (
               <>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <StatusBadge tone={taskStatusView[nextTask.status].tone}><UiText>{taskStatusView[nextTask.status].label}</UiText></StatusBadge>
-                  {focusDeadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
-                </div>
-                <h2 id="next-action-title" className="mt-3 text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--ink)] sm:text-2xl">
-                  <UiText>{nextTask.title}</UiText>
-                </h2>
-                <dl className="mt-5 grid max-w-2xl gap-4 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{"완료 예정"}</UiText></dt>
-                    <dd className={`mt-1 font-bold ${focusDeadlineState === "OVERDUE" ? "text-[var(--danger)]" : "text-[var(--ink)]"}`}>
-                      <time dateTime={nextTask.dueAt.toISOString()}><UiDate value={nextTask.dueAt} mode="date" /></time>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{"담당자"}</UiText></dt>
-                    <dd className="mt-1 break-words font-bold text-[var(--ink)]">
-                      <UiText>{nextTask.assignees.map(({ name }) => name).join(", ") || "미지정"}</UiText>
-                    </dd>
-                  </div>
-                </dl>
+                <StatusBadge tone={taskStatusView[nextTask.status].tone}><UiText>{taskStatusView[nextTask.status].label}</UiText></StatusBadge>
+                {focusDeadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
               </>
             ) : (
-              <>
-                <StatusBadge tone={workspace.taskCount > 0 ? "success" : "neutral"}>
-                  <UiText>{workspace.status === "CLOSED" ? "프로젝트 종료" : "완료"}</UiText>
-                </StatusBadge>
-                <h2 id="next-action-title" className="mt-3 text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--ink)] sm:text-2xl">
-                  <UiText>{workspace.taskCount > 0 ? "모든 할 일 완료" : "등록된 할 일이 없습니다"}</UiText>
-                </h2>
-                {workspace.taskCount === 0 ? <p className="mt-2 text-sm font-medium leading-6 text-[var(--ink)]"><UiText>{"첫 할 일과 완료 예정일, 담당자를 정해 주세요."}</UiText></p> : null}
-              </>
+              <StatusBadge tone={workspace.taskCount > 0 ? "success" : "neutral"}>
+                <UiText>{workspace.status === "CLOSED" ? "프로젝트 종료" : "완료"}</UiText>
+              </StatusBadge>
             )}
           </div>
-          <Link href={`/teams/${teamId}/tasks`} className="button-primary relative shrink-0 self-start xl:self-auto">
-            <UiText>{"할 일"}</UiText>{" "}<UiText>{"확인"}</UiText>
+          <Link href={`/teams/${teamId}/tasks`} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
+            <UiText>{"할 일"}</UiText>{" "}<UiText>{"전체 보기"}</UiText>
           </Link>
+        </header>
+        <div className="px-5 py-5 sm:px-6 sm:py-6">
+          {nextTask ? (
+            <>
+              <h3 className="text-xl font-bold leading-tight tracking-[-0.03em] text-[var(--ink)]">
+                <UiText>{nextTask.title}</UiText>
+              </h3>
+              <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                <div className="flex items-baseline gap-2">
+                  <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{"완료 예정"}</UiText></dt>
+                  <dd className={`font-bold ${focusDeadlineState === "OVERDUE" ? "text-[var(--danger)]" : "text-[var(--ink)]"}`}>
+                    <time dateTime={nextTask.dueAt.toISOString()}><UiDate value={nextTask.dueAt} mode="date" /></time>
+                  </dd>
+                </div>
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <dt className="shrink-0 text-xs font-bold text-[var(--muted)]"><UiText>{"담당자"}</UiText></dt>
+                  <dd className="break-words font-bold text-[var(--ink)]">
+                    <UiText>{nextTask.assignees.map(({ name }) => name).join(", ") || "미지정"}</UiText>
+                  </dd>
+                </div>
+              </dl>
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
+                <UiText>{workspace.taskCount > 0 ? "모든 할 일 완료" : "등록된 할 일이 없습니다"}</UiText>
+              </h3>
+              {workspace.taskCount === 0 ? <p className="muted mt-2 text-sm leading-6"><UiText>{"첫 할 일과 완료 예정일, 담당자를 정해 주세요."}</UiText></p> : null}
+            </>
+          )}
         </div>
       </section>
+
+      <ProgramAnnouncementRail announcements={announcements} />
 
       <section aria-labelledby="schedule-title" className="panel overflow-hidden">
         <div className="flex items-baseline justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6">

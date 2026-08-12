@@ -37,6 +37,17 @@ describe("프로젝트 공지 목록", () => {
     expect(screen.queryByText("프로젝트 공지 4")).not.toBeInTheDocument();
     expect(screen.getAllByText("고정")).toHaveLength(3);
     expect(screen.getAllByText("고정")[0]).toHaveClass("sr-only");
+    expect(screen.getAllByText("프로젝트 공지")).toHaveLength(3);
+  });
+
+  it("전체 공지와 프로젝트 공지의 범위를 구분한다", () => {
+    render(<ProjectAnnouncementList announcements={[
+      announcement,
+      { ...announcement, id: "announcement-global", title: "전체 일정 안내", teamId: null, teamName: null, visibility: "AUTHENTICATED" },
+    ]} />);
+
+    expect(screen.getByText("프로젝트 공지")).toBeInTheDocument();
+    expect(screen.getByText("전체 공지")).toBeInTheDocument();
   });
 
   it("공지 없음 상태를 명확히 안내한다", () => {

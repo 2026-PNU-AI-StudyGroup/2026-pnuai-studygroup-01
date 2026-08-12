@@ -136,6 +136,25 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     return items.map(toRecord);
   }
 
+  async listForTeamOverview(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]> {
+    const items = await this.client.announcement.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { teamId, programId: null },
+              { teamId: null, programId: null },
+            ],
+          },
+          announcementScopeWhere(audience),
+        ],
+      },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: selectAnnouncement,
+    });
+    return items.map(toRecord);
+  }
+
   async findById(id: string): Promise<AnnouncementRecord | null> {
     const announcement = await this.client.announcement.findUnique({
       where: { id },

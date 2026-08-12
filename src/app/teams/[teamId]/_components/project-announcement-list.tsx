@@ -42,6 +42,9 @@ export function ProjectAnnouncementList({
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
                     <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
                   </span>
+                  <span className="inline-flex items-center rounded-full bg-[var(--primary-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--primary)]">
+                    <UiText>{announcement.teamId ? "프로젝트 공지" : "전체 공지"}</UiText>
+                  </span>
                 </div>
                 <h3 className="mt-2 truncate text-base font-bold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                   <UiText>{announcement.title}</UiText>
