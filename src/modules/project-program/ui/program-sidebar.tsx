@@ -84,18 +84,6 @@ function VotingProgramCarousel({
   );
 }
 
-function programsByYearDesc(programs: ProgramSidebarItem[]) {
-  const byYear = new Map<number, ProgramSidebarItem[]>();
-  for (const program of programs) {
-    const group = byYear.get(program.startYear) ?? [];
-    group.push(program);
-    byYear.set(program.startYear, group);
-  }
-  return [...byYear.keys()]
-    .sort((a, b) => b - a)
-    .map((year) => ({ year, programs: byYear.get(year)! }));
-}
-
 function CategoryProgramGroup({
   category,
   programs,
@@ -118,7 +106,7 @@ function CategoryProgramGroup({
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-xs font-bold text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
       >
         <span className="min-w-0 truncate text-left"><UiText>{category}</UiText></span>
         <svg
@@ -135,47 +123,40 @@ function CategoryProgramGroup({
         className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className={`space-y-2 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
-            {programsByYearDesc(programs).map(({ year, programs: yearPrograms }) => (
-              <div key={year}>
-                <p className="px-2.5 pb-1 pt-1 text-[0.62rem] font-bold tracking-[0.04em] text-[var(--muted)]">{year}</p>
-                <ul className="space-y-1">
-                  {yearPrograms.map((program) => {
-                    const selected = program.id === selectedId;
-                    const votingOpen = Boolean(program.votingEndsAt);
-                    const rowClassName = `relative flex min-h-[3.1rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${
-                      selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
-                    }`;
-                    const status = votingOpen
-                      ? { dot: "bg-[#2f6bed]", text: "text-[var(--primary)]", label: "투표 중" }
-                      : program.status === "active"
-                        ? { dot: "bg-[#16a34a]", text: "text-[var(--success)]", label: "진행 중" }
-                        : { dot: "bg-[var(--muted)]", text: "text-[var(--muted)]", label: "종료" };
-                    const rowContent = (
-                      <>
-                        <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${status.dot}`} />
-                        <span className="min-w-0">
-                          <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
-                          <span className="mt-0.5 flex items-center gap-1 text-[0.64rem]">
-                            <span className={`font-bold ${status.text}`}><UiText>{status.label}</UiText></span>
-                          </span>
-                        </span>
-                      </>
-                    );
-                    return (
-                      <li key={`${program.status}-${program.id}`}>
-                        {selected ? (
-                          <div aria-current="page" className={rowClassName}>{rowContent}</div>
-                        ) : (
-                          <Link href={program.href} tabIndex={open ? undefined : -1} className={rowClassName}>{rowContent}</Link>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <ul className={`ml-4 space-y-1 border-l border-[var(--line)] pl-2 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
+            {[...programs].sort((a, b) => b.startYear - a.startYear).map((program) => {
+              const selected = program.id === selectedId;
+              const votingOpen = Boolean(program.votingEndsAt);
+              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${
+                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-[calc(0.5rem+1px)] before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
+              }`;
+              const status = votingOpen
+                ? { dot: "bg-[#2f6bed]", text: "text-[var(--primary)]", label: "투표 중" }
+                : program.status === "active"
+                  ? { dot: "bg-[#16a34a]", text: "text-[var(--success)]", label: "진행 중" }
+                  : { dot: "bg-[var(--muted)]", text: "text-[var(--muted)]", label: "종료" };
+              const rowContent = (
+                <>
+                  <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${status.dot}`} />
+                  <span className="min-w-0">
+                    <strong className="block truncate text-[0.78rem] font-semibold"><UiText>{program.name}</UiText></strong>
+                    <span className="mt-0.5 flex items-center gap-1 text-[0.64rem]">
+                      <span className={`font-bold ${status.text}`}><UiText>{status.label}</UiText></span>
+                    </span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={`${program.status}-${program.id}`}>
+                  {selected ? (
+                    <div aria-current="page" className={rowClassName}>{rowContent}</div>
+                  ) : (
+                    <Link href={program.href} tabIndex={open ? undefined : -1} className={rowClassName}>{rowContent}</Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </div>

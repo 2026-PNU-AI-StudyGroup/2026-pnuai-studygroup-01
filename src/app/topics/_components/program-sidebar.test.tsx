@@ -37,11 +37,10 @@ describe("ProgramSidebar", () => {
     // 대분류가 최상위 그룹 헤더로 노출된다.
     expect(within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" })).toBeInTheDocument();
     expect(within(navigation).getByRole("button", { name: "캡스톤" })).toBeInTheDocument();
-    // 첫 대분류(최근 연도 보유)가 열려 있고 그 안에 연도 소제목이 보인다.
+    // 첫 대분류(최근 연도 보유)가 열려 있고 그 안에 프로그램이 최신순으로 보인다.
     const openGroup = within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" });
     expect(openGroup).toHaveAttribute("aria-expanded", "true");
-    expect(within(navigation).getByText("2026")).toBeInTheDocument();
-    expect(within(navigation).getAllByText("2025").length).toBeGreaterThan(0);
+    expect(within(navigation).getByText("창의융합 해커톤 2026")).toBeInTheDocument();
     expect(within(navigation).getByText("진행 중")).toBeInTheDocument();
     expect(within(navigation).getAllByText("종료").length).toBeGreaterThan(0);
     expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
