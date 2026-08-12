@@ -80,14 +80,6 @@ export function DateTimeInput({
   const showInvalid = invalid && Boolean(required && !disabled && !hasValue);
 
   useEffect(() => {
-    if (controlledValue !== undefined) {
-      const time = getTime(controlledValue) ?? DEFAULT_TIME;
-      draftTimeRef.current = time;
-      setTimeInputValue(time);
-    }
-  }, [controlledValue]);
-
-  useEffect(() => {
     if (!open) return;
 
     function dismiss(event: PointerEvent) {

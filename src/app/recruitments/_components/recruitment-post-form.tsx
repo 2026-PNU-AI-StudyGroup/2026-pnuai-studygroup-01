@@ -67,19 +67,6 @@ export function RecruitmentPostForm({
     if (state.status === "success" && successHref) router.replace(successHref);
   }, [router, state.status, successHref]);
 
-  useEffect(() => {
-    if (state.status === "error" && state.fields) {
-      if (state.fields.teamId) setTeamId(state.fields.teamId);
-      if (state.fields.title !== undefined) setTitle(state.fields.title);
-      if (state.fields.content !== undefined) setContent(state.fields.content);
-      if (state.fields.requiredSkills) setRequiredSkills(state.fields.requiredSkills);
-      if (state.fields.roleNeeded !== undefined) setRoleNeeded(state.fields.roleNeeded);
-      if (state.fields.capacity) setCapacity(state.fields.capacity);
-      if (state.fields.availability !== undefined) setAvailability(state.fields.availability);
-      if (state.fields.deadlineAt) setDeadlineAt(state.fields.deadlineAt);
-    }
-  }, [state]);
-
   if (!teams.length) return null;
   const now = new Date();
   const maximumDeadlineAt = addMonths(now, 1);
