@@ -82,14 +82,17 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
     archive.programs = hideGraduationProgramsForStudent(archive.programs, actor.role);
     const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
-    const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
+    // 종료된 프로그램은 사이드바(공개 프로그램)엔 있지만 아카이브 목록(닫힌 팀 보유 프로그램)엔
+    // 없을 수 있다. 선택 후보를 둘의 합집합으로 넓혀야 클릭 시 다른 프로그램으로 튕기지 않는다.
+    const programId = resolveProgramSelection(requestedArchiveProgramId, [...archive.programs, ...sidebarPrograms]);
     if (programId && programId !== requestedArchiveProgramId) {
       const target = new URLSearchParams({ view: "past", programId });
       if (query) target.set("q", query);
       if (requestedPage > 1) target.set("page", String(requestedPage));
       redirect(`/topics?${target.toString()}`);
     }
-    const selectedProgram = archive.programs.find((program) => program.id === programId);
+    const selectedProgram = archive.programs.find((program) => program.id === programId)
+      ?? sidebarPrograms.find((program) => program.id === programId);
     const [ballot, programAnnouncements] = await Promise.all([
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
       listProgramAnnouncements(programId),
