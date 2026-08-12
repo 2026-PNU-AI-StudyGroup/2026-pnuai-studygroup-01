@@ -84,7 +84,8 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
 
   async list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
     const where = {
-      ...(category ? { category } : {}),
+      // 졸업과제는 다른 사이트로 이관 — 학생 목록에서는 숨김(특정 카테고리 필터 시엔 그 값 우선).
+      ...(category ? { category } : audience.role === "STUDENT" ? { category: { not: "GRADUATION_PROJECT" as const } } : {}),
       ...announcementScopeWhere(audience),
     };
     const [items, total] = await this.client.$transaction([
@@ -115,6 +116,8 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
       where: {
         programId,
         teamId: null,
+        // 졸업과제는 다른 사이트로 이관 — 학생에게는 프로그램 공지에서도 숨김.
+        ...(audience.role === "STUDENT" ? { category: { not: "GRADUATION_PROJECT" as const } } : {}),
         ...announcementScopeWhere(audience),
       },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],

@@ -12,6 +12,7 @@ import { AppShell } from "@/app/_components/app-shell";
 
 import { AccountSectionLayout } from "@/app/account/_components/account-section-layout";
 import { ProfilePhotoEditor } from "@/app/account/_components/profile-photo-editor";
+import { StudentAccountForm } from "@/app/account/_components/student-account-form";
 import { StudentProfileForm } from "@/app/account/_components/student-profile-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,6 +25,9 @@ export default async function AccountPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const profile = actor.role === "STUDENT" ? await new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor) : null;
+  const account = actor.role === "STUDENT"
+    ? await prisma.user.findUnique({ where: { id: actor.id }, select: { department: true, studentNumber: true, grade: true, contactEmail: true } })
+    : null;
   const profileImage = await new PrismaProfileImageRepository(prisma).findForOwner(actor.id);
 
   return (
@@ -56,6 +60,18 @@ export default async function AccountPage() {
               </div>
             </div>
           </section>
+
+          {actor.role === "STUDENT" ? (
+            <section aria-labelledby="academic-info-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+              <div>
+                <h2 id="academic-info-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"학사 정보"}</UiText></h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"학과·학번·학년과 자주 쓰는 이메일입니다. 팀 구성원 정보에 표시됩니다."}</UiText></p>
+              </div>
+              <div className="min-w-0">
+                <StudentAccountForm info={{ department: account?.department ?? "", studentNumber: account?.studentNumber ?? "", grade: account?.grade ?? null, contactEmail: account?.contactEmail ?? "" }} />
+              </div>
+            </section>
+          ) : null}
 
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
