@@ -17,10 +17,14 @@ describe("StudentProjectRegistrationLink", () => {
   it("학생 등록이 열린 프로그램에서는 선택 프로그램을 유지한 등록 버튼을 보여준다", () => {
     render(<StudentProjectRegistrationLink role="STUDENT" program={program} now={now} />);
 
-    expect(screen.getByRole("link", { name: "프로젝트 등록" })).toHaveAttribute(
+    const link = screen.getByRole("link", { name: "프로젝트 등록" });
+    expect(link).toHaveAttribute(
       "href",
       "/projects/new?programId=program%2F2026",
     );
+    expect(link).toHaveClass("min-h-9", "px-3", "text-xs");
+    expect(link).not.toHaveClass("button-primary");
+    expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("학생 등록이 중지된 프로그램에서는 등록 버튼을 숨긴다", () => {
