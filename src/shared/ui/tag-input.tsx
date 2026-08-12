@@ -9,6 +9,8 @@ type TagInputProps = {
   name: string;
   ariaLabel: string;
   defaultValue?: string[];
+  value?: string[];
+  onValuesChange?: (tags: string[]) => void;
   placeholder?: string;
   required?: boolean;
   maxLength?: number;
@@ -20,6 +22,8 @@ export function TagInput({
   name,
   ariaLabel,
   defaultValue = [],
+  value: controlledValue,
+  onValuesChange,
   placeholder = "입력 후 Enter",
   required,
   maxLength,
@@ -28,16 +32,23 @@ export function TagInput({
   const { t } = useI18n();
   const generatedId = useId();
   const inputId = id ?? generatedId;
-  const [tags, setTags] = useState(() => normalizeTags(defaultValue));
+  const [uncontrolledTags, setUncontrolledTags] = useState(() => normalizeTags(defaultValue));
   const [draft, setDraft] = useState("");
+  const controlled = controlledValue !== undefined;
+  const tags = controlled ? normalizeTags(controlledValue) : uncontrolledTags;
   const submittedValue = [...tags, draft.trim()].filter(Boolean).join(", ");
   useEffect(() => {
     onValueChange?.(normalizeTags([...tags, ...splitTags(draft)]));
   }, [draft, onValueChange, tags]);
 
+  function updateTags(nextTags: string[]) {
+    if (!controlled) setUncontrolledTags(nextTags);
+    onValuesChange?.(nextTags);
+  }
+
   function addTags(candidates: string[]) {
     const next = normalizeTags([...tags, ...candidates]);
-    setTags(next);
+    updateTags(next);
     setDraft("");
   }
 
@@ -56,7 +67,7 @@ export function TagInput({
             aria-label={t(`${tag} 삭제`)}
             onClick={(event) => {
               event.stopPropagation();
-              setTags((current) => current.filter((candidate) => candidate !== tag));
+              updateTags(tags.filter((candidate) => candidate !== tag));
             }}
           >
             <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4.5 4.5 7 7m0-7-7 7" /></svg>
@@ -83,7 +94,7 @@ export function TagInput({
             event.preventDefault();
             commitDraft();
           } else if (event.key === "Backspace" && !draft && tags.length) {
-            setTags((current) => current.slice(0, -1));
+            updateTags(tags.slice(0, -1));
           }
         }}
         onPaste={(event) => {

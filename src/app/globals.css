@@ -303,7 +303,7 @@ summary::-webkit-details-marker {
 
   .custom-select__menu {
     position: fixed;
-    z-index: 50;
+    z-index: 70;
     max-height: min(22rem, 50vh);
     overflow-y: auto;
     border: 1px solid #dfe3eb;
@@ -977,7 +977,7 @@ summary::-webkit-details-marker {
 
   .date-time-input__calendar {
     position: fixed;
-    z-index: 50;
+    z-index: 70;
     overflow-y: auto;
     border: 1px solid #dfe3eb;
     border-radius: 1rem;
