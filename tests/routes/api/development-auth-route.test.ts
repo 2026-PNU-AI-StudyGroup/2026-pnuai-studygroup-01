@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { deleteMany, findFirst, login } = vi.hoisted(() => ({
-  deleteMany: vi.fn(),
+const { findFirst, login } = vi.hoisted(() => ({
   findFirst: vi.fn(),
   login: vi.fn(),
 }));
@@ -10,7 +9,7 @@ vi.mock("@/modules/identity/infrastructure/auth", () => ({
   auth: { $context: Promise.resolve({ test: { login } }) },
 }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({
-  prisma: { user: { findFirst }, session: { deleteMany } },
+  prisma: { user: { findFirst } },
 }));
 
 import { POST } from "@/app/api/development-auth/sign-in/route";
@@ -32,7 +31,6 @@ describe("개발용 역할 로그인", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     findFirst.mockResolvedValue({ id: "20000000-0000-4000-8000-000000000001" });
-    deleteMany.mockResolvedValue({ count: 1 });
     login.mockResolvedValue({
       cookies: [{ name: "better-auth.session_token", value: "signed-token", domain: "localhost", path: "/", httpOnly: true, secure: false, sameSite: "Lax" }],
     });
@@ -49,7 +47,6 @@ describe("개발용 역할 로그인", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("http://localhost:3000/topics");
     expect(response.headers.get("set-cookie")).toContain("better-auth.session_token=signed-token");
-    expect(deleteMany).toHaveBeenCalledWith({ where: { userId: "20000000-0000-4000-8000-000000000001" } });
     expect(login).toHaveBeenCalledWith({ userId: "20000000-0000-4000-8000-000000000001" });
   });
 

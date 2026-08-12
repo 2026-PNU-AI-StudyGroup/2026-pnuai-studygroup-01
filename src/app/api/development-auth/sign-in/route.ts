@@ -47,7 +47,6 @@ export async function POST(request: Request) {
   if (!context.test) {
     return new Response(null, { status: 404 });
   }
-  await prisma.session.deleteMany({ where: { userId: user.id } });
   const login = await context.test.login({ userId: user.id });
   const response = NextResponse.redirect(new URL("/topics", externalOrigin), 303);
   for (const cookie of login.cookies) {
