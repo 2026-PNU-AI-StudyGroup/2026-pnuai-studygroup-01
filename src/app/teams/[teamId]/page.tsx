@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
+import { ProjectAnnouncementList } from "@/app/teams/[teamId]/_components/project-announcement-list";
 import {
   taskDeadlineState,
   presentTasks,
@@ -9,9 +10,13 @@ import {
   type SchedulePhaseState,
 } from "@/app/teams/[teamId]/_lib/task-page-presentation";
 import { loadTeamWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
+import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
+import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
+import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 개요");
@@ -55,7 +60,10 @@ function buildScheduleTimeline(
 
 export default async function TeamOverviewPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
-  const { workspace } = await loadTeamWorkspace(teamId);
+  const { actor, workspace } = await loadTeamWorkspace(teamId);
+  const announcements = await new AnnouncementService(
+    new PrismaAnnouncementRepository(prisma),
+  ).listForTeam(await resolveAnnouncementAudience(actor), teamId);
   const now = new Date();
   const { focus: nextTask } = presentTasks(workspace.tasks, now);
   const focusDeadlineState = nextTask ? taskDeadlineState(nextTask, now) : null;
@@ -76,6 +84,20 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
         bordered={false}
         actions={workspace.access.canSupervise ? <Link href={`/professor/topics/${workspace.topicId}/assistants`} className="button-secondary"><UiText>{"조교 관리"}</UiText></Link> : undefined}
       />
+
+      {announcements.length > 0 ? (
+        <section aria-labelledby="recent-project-announcements-title" className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="recent-project-announcements-title" className="text-base font-bold tracking-[-0.02em]">
+              <UiText>{"최근 공지"}</UiText>
+            </h2>
+            <Link href={`/teams/${teamId}/announcements`} className="text-sm font-bold text-[var(--primary)]">
+              <UiText>{"전체 보기"}</UiText>
+            </Link>
+          </div>
+          <ProjectAnnouncementList announcements={announcements} preview />
+        </section>
+      ) : null}
 
       <section
         aria-labelledby="next-action-title"

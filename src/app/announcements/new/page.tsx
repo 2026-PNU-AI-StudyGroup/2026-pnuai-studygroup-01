@@ -27,6 +27,8 @@ export default async function NewAnnouncementPage({ searchParams }: { searchPara
     targets.programs.some((program) => `program:${program.id}` === requestedTarget) ||
     targets.teams.some((team) => `team:${team.id}` === requestedTarget)
   ) ? requestedTarget : "";
+  const initialTeam = targets.teams.find((team) => `team:${team.id}` === initialTarget);
+  const listHref = initialTeam ? `/teams/${initialTeam.id}/announcements` : "/announcements";
 
   return (
     <AppShell
@@ -41,7 +43,7 @@ export default async function NewAnnouncementPage({ searchParams }: { searchPara
             compact
             title="새 공지 작성"
             description="모든 구성원이 확인해야 할 운영 안내를 작성합니다."
-            actions={<Link className="button-secondary" href="/announcements"><UiText>{"목록으로"}</UiText></Link>}
+            actions={<Link className="button-secondary" href={listHref}><UiText>{"목록으로"}</UiText></Link>}
           />
           <AnnouncementForm targets={targets} initialTarget={initialTarget} />
         </div>

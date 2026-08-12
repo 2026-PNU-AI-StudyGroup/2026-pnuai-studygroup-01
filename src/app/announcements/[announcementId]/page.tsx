@@ -51,6 +51,9 @@ export default async function AnnouncementDetailPage({
   if (!service.canView(audience, announcement)) notFound();
   const canManage = service.canManage(actor, announcement);
   const wasUpdated = announcement.updatedAt.getTime() !== announcement.createdAt.getTime();
+  const listHref = announcement.teamId
+    ? `/teams/${announcement.teamId}/announcements`
+    : "/announcements";
 
   return (
     <AppShell
@@ -62,7 +65,7 @@ export default async function AnnouncementDetailPage({
       <main className="content-shell page-enter pb-28 lg:pb-16">
         <div className="mx-auto max-w-4xl">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Link className="button-quiet" href="/announcements"><UiText>{"공지 목록"}</UiText></Link>
+            <Link className="button-quiet" href={listHref}><UiText>{"공지 목록"}</UiText></Link>
             {canManage ? (
               <div className="flex items-start gap-2">
                 <IconLink href={`/announcements/${announcement.id}/edit`} aria-label="공지 수정" title="공지 수정"><EditIcon className="size-5" /></IconLink>

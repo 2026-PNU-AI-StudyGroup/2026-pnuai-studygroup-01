@@ -41,6 +41,7 @@ function repository(
   return {
     list: vi.fn(),
     listForProgram: vi.fn(),
+    listForTeam: vi.fn(),
     findById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),

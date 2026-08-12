@@ -13,6 +13,8 @@ describe("TeamWorkspaceNavigation", () => {
     render(<TeamWorkspaceNavigation teamId="team-1" advisorEnabled />);
 
     expect(screen.getByRole("link", { name: "개요" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "공지" })).toHaveAttribute("href", "/teams/team-1/announcements");
+    expect(screen.getByRole("link", { name: "공지 모바일 메뉴" })).toHaveAttribute("href", "/teams/team-1/announcements");
     expect(screen.getByRole("link", { name: "할 일" })).toHaveAttribute("href", "/teams/team-1/tasks");
     expect(screen.getByRole("link", { name: "팀 대화" })).toHaveAttribute("href", "/teams/team-1/discussion");
     expect(screen.getByRole("link", { name: "회의·검토" })).toHaveAttribute("href", "/teams/team-1/requests");

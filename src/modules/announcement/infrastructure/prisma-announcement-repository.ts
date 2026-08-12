@@ -123,6 +123,19 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     return items.map(toRecord);
   }
 
+  async listForTeam(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]> {
+    const items = await this.client.announcement.findMany({
+      where: {
+        teamId,
+        programId: null,
+        ...announcementScopeWhere(audience),
+      },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: selectAnnouncement,
+    });
+    return items.map(toRecord);
+  }
+
   async findById(id: string): Promise<AnnouncementRecord | null> {
     const announcement = await this.client.announcement.findUnique({
       where: { id },

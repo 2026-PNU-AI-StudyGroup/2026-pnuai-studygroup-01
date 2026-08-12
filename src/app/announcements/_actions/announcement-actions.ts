@@ -84,9 +84,11 @@ export async function createAnnouncementAction(
   const audience = await resolveAnnouncementAudience(current);
 
   let announcementId: string;
+  let createdTeamId: string | null = null;
   try {
     const created = await service().create(current, audience, { ...parsed.data, ...target });
     announcementId = created.id;
+    createdTeamId = created.teamId;
   } catch (error) {
     if (error instanceof AnnouncementError) {
       return { status: "error", message: error.message };
@@ -96,6 +98,7 @@ export async function createAnnouncementAction(
 
   revalidatePath("/announcements");
   revalidatePath("/topics");
+  if (createdTeamId) revalidatePath(`/teams/${createdTeamId}`, "layout");
   redirect(`/announcements/${announcementId}`);
 }
 
@@ -132,6 +135,7 @@ export async function updateAnnouncementAction(
   revalidatePath("/announcements");
   revalidatePath(`/announcements/${parsedId.data}`);
   revalidatePath("/topics");
+  revalidatePath("/teams/[teamId]", "layout");
   redirect(`/announcements/${parsedId.data}`);
 }
 
@@ -158,5 +162,6 @@ export async function deleteAnnouncementAction(
 
   revalidatePath("/announcements");
   revalidatePath("/topics");
+  revalidatePath("/teams/[teamId]", "layout");
   redirect("/announcements");
 }

@@ -74,6 +74,10 @@ export class AnnouncementService {
     return this.repository.listForProgram(audience, programId);
   }
 
+  listForTeam(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]> {
+    return this.repository.listForTeam(audience, teamId);
+  }
+
   async get(id: string): Promise<AnnouncementRecord> {
     const announcement = await this.repository.findById(id);
     if (!announcement) throw new AnnouncementNotFoundError();

@@ -63,4 +63,23 @@ describe("공지 대상 스코프 where", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({ id: "notice-1", visibility: "AUTHENTICATED", programId: "program-2" });
   });
+
+  it("프로젝트 조회는 대상 teamId와 권한을 적용하고 고정 공지를 먼저 정렬한다", async () => {
+    const findMany = vi.fn(async () => []);
+    const repository = new PrismaAnnouncementRepository({
+      announcement: { findMany },
+    } as unknown as PrismaClient);
+
+    await repository.listForTeam(student, "team-1");
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        teamId: "team-1",
+        programId: null,
+        ...announcementScopeWhere(student),
+      },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: expect.any(Object),
+    });
+  });
 });
