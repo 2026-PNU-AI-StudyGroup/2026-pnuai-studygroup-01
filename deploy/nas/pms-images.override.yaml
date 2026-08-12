@@ -1,0 +1,6 @@
+services:
+  migrate:
+    image: pnu-pms-migrate:${PMS_IMAGE_TAG:?PMS_IMAGE_TAG is required}
+
+  app:
+    image: pnu-pms-app:${PMS_IMAGE_TAG:?PMS_IMAGE_TAG is required}

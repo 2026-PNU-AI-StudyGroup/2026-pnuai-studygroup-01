@@ -1,0 +1,99 @@
+name: Deploy PMS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pms-nas-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: pms-nas
+    timeout-minutes: 45
+    env:
+      COMPOSE_PROJECT_NAME: pnu-pms
+      PMS_DEPLOY_DIR: /volume1/docker/pnu-pms
+      PMS_IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build deployment images
+        run: |
+          set -euo pipefail
+          docker build --target runner --tag "pnu-pms-app:${PMS_IMAGE_TAG}" .
+          docker build --target migrator --tag "pnu-pms-migrate:${PMS_IMAGE_TAG}" .
+          docker build --target demo-seeder --tag "pnu-pms-seed:${PMS_IMAGE_TAG}" .
+
+      - name: Apply database migrations
+        run: |
+          set -euo pipefail
+          docker compose --ansi never \
+            --env-file "${PMS_DEPLOY_DIR}/.env.production" \
+            --project-name "${COMPOSE_PROJECT_NAME}" \
+            --file "${PMS_DEPLOY_DIR}/compose.yaml" \
+            --file deploy/nas/pms-images.override.yaml \
+            run --rm --no-deps migrate
+
+      - name: Preserve the feedback board while seeding demo data
+        run: |
+          set -euo pipefail
+          feedback_snapshot() {
+            docker exec pnu-pms-postgres-1 sh -lc '
+              pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                --data-only --inserts --column-inserts \
+                --table=feedback_post \
+                --table=feedback_comment \
+                --table=feedback_status_change
+            ' | sha256sum | awk '{print $1}'
+          }
+
+          feedback_before="$(feedback_snapshot)"
+          docker run --rm \
+            --network pnu-pms_default \
+            --env-file "${PMS_DEPLOY_DIR}/.env.production" \
+            --env ALLOW_LOCAL_DEMO_SEED=true \
+            "pnu-pms-seed:${PMS_IMAGE_TAG}"
+          feedback_after="$(feedback_snapshot)"
+
+          if [[ "${feedback_before}" != "${feedback_after}" ]]; then
+            echo "The demo seed changed feedback-board data; its database transaction was rolled back." >&2
+            exit 1
+          fi
+
+      - name: Replace the application only
+        run: |
+          set -euo pipefail
+          docker compose --ansi never \
+            --env-file "${PMS_DEPLOY_DIR}/.env.production" \
+            --project-name "${COMPOSE_PROJECT_NAME}" \
+            --file "${PMS_DEPLOY_DIR}/compose.yaml" \
+            --file deploy/nas/pms-images.override.yaml \
+            up -d --no-deps --force-recreate app
+
+      - name: Wait for readiness
+        run: |
+          set -euo pipefail
+          for _ in {1..30}; do
+            health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' pnu-pms-app-1)"
+            if [[ "${health}" == "healthy" ]]; then
+              exit 0
+            fi
+            if [[ "${health}" == "unhealthy" || "${health}" == "exited" ]]; then
+              docker logs --tail 200 pnu-pms-app-1
+              exit 1
+            fi
+            sleep 5
+          done
+          docker logs --tail 200 pnu-pms-app-1
+          exit 1
+
+      - name: Remove untagged Docker layers
+        if: always()
+        run: docker image prune --force

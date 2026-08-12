@@ -1,0 +1,27 @@
+name: pms-actions-runner
+
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pms-actions-runner
+    restart: unless-stopped
+    user: "1026"
+    working_dir: /home/runner
+    command: ["/usr/local/bin/start-runner.sh"]
+    environment:
+      HOME: /home/runner
+      RUNNER_URL: https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-01
+      RUNNER_NAME: ds224-pms-deploy
+      RUNNER_LABELS: pms-nas
+    group_add:
+      - "0"
+      - "101"
+    mem_limit: 512m
+    volumes:
+      - /volume1/docker/pms-actions-runner/data:/home/runner
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/docker/pnu-pms:/volume1/docker/pnu-pms:ro
+      - /volume1/docker/pms-actions-runner/setup:/runner-setup
+      - ./start-runner.sh:/usr/local/bin/start-runner.sh:ro
