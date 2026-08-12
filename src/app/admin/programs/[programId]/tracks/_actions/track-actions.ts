@@ -9,7 +9,6 @@ import { PrismaProgramDivisionRepository } from "@/modules/program-division/infr
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type TrackActionState = { status: "idle" | "error" | "success" | "confirm"; message: string; projectCount?: number; voteCount?: number; switchesVotingScope?: boolean };
-export const trackInitialState: TrackActionState = { status: "idle", message: "" };
 const service = () => new ProgramDivisionService(new PrismaProgramDivisionRepository(prisma));
 async function actor() { const value = await getCurrentActor(); if (!value) redirect("/sign-in"); return value; }
 function refresh(programId: string) { revalidatePath(`/admin/programs/${programId}`); revalidatePath("/topics"); revalidatePath("/projects/new"); revalidatePath("/professor/topics/new"); }

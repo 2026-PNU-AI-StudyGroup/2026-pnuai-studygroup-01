@@ -6,13 +6,15 @@ import {
   archiveProgramReportDefinitionAction,
   createProgramReportDefinitionAction,
   moveProgramReportDefinitionAction,
-  programReportInitialState,
+  type ProgramReportActionState,
   updateProgramReportDefinitionAction,
 } from "@/app/admin/programs/_actions/program-report-requirement-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { koreanDateTimeInput } from "@/shared/ui/date-time-input-value";
 import { DateTimeInput } from "@/shared/ui/form-system";
+
+const programReportInitialState: ProgramReportActionState = { status: "idle", message: "" };
 
 export type ProgramReportDefinitionRow = { id: string; title: string; dueAt: Date; versionCount: number };
 

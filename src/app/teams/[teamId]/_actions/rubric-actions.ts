@@ -9,7 +9,6 @@ import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/op
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type RubricScoreState = { status: "idle" | "error" | "success"; message: string };
-export const rubricScoreInitialState: RubricScoreState = { status: "idle", message: "" };
 
 export async function saveRubricScoresAction(
   evaluationId: string,

@@ -11,7 +11,6 @@ import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type ProgramReportActionState = { status: "idle" | "error" | "success"; message: string };
-export const programReportInitialState: ProgramReportActionState = { status: "idle", message: "" };
 
 const idSchema = z.string().uuid();
 const service = () => new ProgramReportDefinitionService(new PrismaProgramReportDefinitionRepository(prisma));

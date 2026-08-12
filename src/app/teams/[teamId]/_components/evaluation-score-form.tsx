@@ -2,9 +2,11 @@
 
 import { useActionState } from "react";
 
-import { rubricScoreInitialState, saveRubricScoresAction } from "@/app/teams/[teamId]/_actions/rubric-actions";
+import { saveRubricScoresAction, type RubricScoreState } from "@/app/teams/[teamId]/_actions/rubric-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+
+const rubricScoreInitialState: RubricScoreState = { status: "idle", message: "" };
 
 export function EvaluationScoreForm({
   evaluationId,

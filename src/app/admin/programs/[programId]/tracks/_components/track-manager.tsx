@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { createTrackAction, deleteTrackAction, moveTrackAction, renameTrackAction, trackInitialState } from "@/app/admin/programs/[programId]/tracks/_actions/track-actions";
+import { createTrackAction, deleteTrackAction, moveTrackAction, renameTrackAction, type TrackActionState } from "@/app/admin/programs/[programId]/tracks/_actions/track-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+
+const trackInitialState: TrackActionState = { status: "idle", message: "" };
 
 export type TrackRow = { id: string; name: string; projectCount: number };
 export function TrackManager({ programId, tracks }: { programId: string; tracks: TrackRow[] }) {
