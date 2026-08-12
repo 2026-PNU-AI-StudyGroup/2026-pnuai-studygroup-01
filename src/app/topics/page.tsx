@@ -13,6 +13,7 @@ import { ProjectSearchForm } from "@/app/topics/_components/project-search-form"
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
+import { hideGraduationProgramsForStudent } from "@/app/topics/_lib/hidden-graduation-programs";
 import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selection";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
@@ -70,10 +71,13 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
 
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const [archive, sidebarPrograms] = await Promise.all([
+    const [archive, sidebarProgramsRaw] = await Promise.all([
       archiveService.execute(requestedPage, 18, { query, programId: requestedArchiveProgramId }),
       programService.listSidebarVisible(now),
     ]);
+    // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
+    archive.programs = hideGraduationProgramsForStudent(archive.programs, actor.role);
+    const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
     const programId = resolveProgramSelection(requestedArchiveProgramId, archive.programs);
     if (programId && programId !== requestedArchiveProgramId) {
       const target = new URLSearchParams({ view: "past", programId });
@@ -95,10 +99,13 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       </ExplorerLayout>
     );
   } else {
-    const [programs, sidebarPrograms] = await Promise.all([
+    const [programsRaw, sidebarProgramsRaw] = await Promise.all([
       programService.listOpen(),
       programService.listSidebarVisible(now),
     ]);
+    // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
+    const programs = hideGraduationProgramsForStudent(programsRaw, actor.role);
+    const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const programId = resolveProgramSelection(requestedProgramId, programs);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
@@ -110,7 +117,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? requestedDivisionId
       : requestedDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
     if (requestedDivisionId && divisionId !== requestedDivisionId) redirect(activeProjectsHref({ programId, query, page: requestedPage }));
-    const [topics, archivedPrograms, leaderTeams, ballot, programAnnouncements] = await Promise.all([
+    const [topics, archivedProgramsRaw, leaderTeams, ballot, programAnnouncements] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, page: requestedPage, now }),
       archiveService.listPrograms(),
       actor.role === "STUDENT"
@@ -125,6 +132,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     if (divisionId === "UNASSIGNED" && !hasUnassigned) {
       redirect(activeProjectsHref({ programId, query, page: requestedPage }));
     }
+    const archivedPrograms = hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role);
     const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
