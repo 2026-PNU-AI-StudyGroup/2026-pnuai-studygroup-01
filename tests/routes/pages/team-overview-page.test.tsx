@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TeamOverviewPage from "@/app/teams/[teamId]/page";
 
-const { loadTeamWorkspace } = vi.hoisted(() => ({
+const { loadTeamWorkspace, listForTeamOverview, resolveAnnouncementAudience } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
+  listForTeamOverview: vi.fn(),
+  resolveAnnouncementAudience: vi.fn(),
 }));
 
 vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
@@ -13,6 +15,24 @@ vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
 
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
+}));
+
+vi.mock("@/shared/infrastructure/database/prisma", () => ({
+  prisma: {},
+}));
+
+vi.mock("@/modules/announcement/infrastructure/announcement-audience", () => ({
+  resolveAnnouncementAudience,
+}));
+
+vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", () => ({
+  PrismaAnnouncementRepository: class PrismaAnnouncementRepository {},
+}));
+
+vi.mock("@/modules/announcement/application/manage-announcements", () => ({
+  AnnouncementService: class AnnouncementService {
+    listForTeamOverview = listForTeamOverview;
+  },
 }));
 
 const workspace = {
@@ -73,6 +93,8 @@ describe("TeamOverviewPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
+    resolveAnnouncementAudience.mockResolvedValue({ role: "STUDENT", actorId: "student-1", teamIds: ["team-1"], programIds: [] });
+    listForTeamOverview.mockResolvedValue([]);
   });
 
   afterEach(() => vi.useRealTimers());
@@ -188,6 +210,6 @@ describe("TeamOverviewPage", () => {
     expect(screen.getByRole("heading", { name: "지연된 데이터 정리" })).toBeInTheDocument();
     expect(screen.getByText("기한 초과")).toBeInTheDocument();
     expect(screen.getByText("윤서준")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "할 일 확인" })).toHaveAttribute("href", "/teams/team-1/tasks");
+    expect(screen.getByRole("link", { name: "할 일 전체 보기" })).toHaveAttribute("href", "/teams/team-1/tasks");
   });
 });

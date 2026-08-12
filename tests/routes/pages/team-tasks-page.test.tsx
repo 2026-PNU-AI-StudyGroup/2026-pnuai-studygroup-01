@@ -16,6 +16,7 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
 }));
 
 vi.mock("@/app/teams/[teamId]/_components/task-forms", () => ({
+  TaskCompletionForm: () => <button data-testid="task-completion-form">완료</button>,
   TaskCreateDialog: () => <button data-testid="new-task-dialog">새 할 일</button>,
   TaskEditDialog: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
     <button data-testid="task-edit-dialog">수정 {status}:{assigneeIds.join(",")}</button>

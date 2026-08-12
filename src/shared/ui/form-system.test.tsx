@@ -76,4 +76,22 @@ describe("form-system controls", () => {
 
     expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-08T15:45");
   });
+
+  it("controlled 일시 값이 바뀌면 다음 달력 열기와 서버 값에 반영한다", () => {
+    const { container, rerender } = render(
+      <form>
+        <DateTimeInput aria-label="회의 일시" name="meetingAt" value="2026-08-07T13:20" />
+      </form>,
+    );
+
+    rerender(
+      <form>
+        <DateTimeInput aria-label="회의 일시" name="meetingAt" value="2026-08-09T17:40" />
+      </form>,
+    );
+
+    expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-09T17:40");
+    fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
+    expect(screen.getByLabelText("시간")).toHaveValue("17:40");
+  });
 });

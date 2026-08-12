@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
-import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announcement-rail";
+import { ProgramAnnouncementRail } from "@/modules/announcement/ui/program-announcement-rail";
 import {
   taskDeadlineState,
   presentTasks,

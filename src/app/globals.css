@@ -606,6 +606,52 @@ summary::-webkit-details-marker {
     padding: 0.875rem 1rem;
   }
 
+  .topic-form {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+  }
+
+  .topic-form .form-section {
+    gap: 1.125rem;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    padding: 1.25rem;
+    box-shadow: none;
+  }
+
+  .topic-form .form-section__header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.875rem;
+  }
+
+  .topic-form .form-section__content {
+    gap: 1rem;
+  }
+
+  .topic-form .choice-card {
+    min-height: 2.875rem;
+    align-items: center;
+    border-radius: var(--radius-control);
+    padding: 0.75rem 0.875rem;
+  }
+
+  .topic-form__actions {
+    padding: 0.25rem 1.25rem 1.25rem;
+  }
+
+  .topic-form--wizard {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .topic-form--wizard .form-section {
+    border-bottom: 0;
+  }
+
   .choice-card {
     position: relative;
     display: flex;
@@ -803,6 +849,14 @@ summary::-webkit-details-marker {
   @media (min-width: 640px) {
     .form-section {
       padding: 1.75rem;
+    }
+
+    .topic-form .form-section {
+      padding: 1.5rem;
+    }
+
+    .topic-form__actions {
+      padding: 0.25rem 1.5rem 1.5rem;
     }
   }
 

@@ -11,16 +11,6 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export type RecruitmentActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fields?: {
-    teamId?: string;
-    title?: string;
-    content?: string;
-    requiredSkills?: string[];
-    roleNeeded?: string;
-    availability?: string;
-    capacity?: number;
-    deadlineAt?: string;
-  };
 };
 const list = z.string().transform((value) => value.split(",").map((item) => item.trim()).filter(Boolean));
 const service = () => new StudentTeamRecruitmentCommandService(
@@ -30,22 +20,10 @@ async function actor() { const value = await getCurrentOperationalActor(); if (!
 
 export async function createRecruitmentPostAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
   const rawData = Object.fromEntries(formData);
-  const teamId = typeof rawData.teamId === "string" ? rawData.teamId : undefined;
-  const title = typeof rawData.title === "string" ? rawData.title : undefined;
-  const content = typeof rawData.content === "string" ? rawData.content : undefined;
-  const roleNeeded = typeof rawData.roleNeeded === "string" ? rawData.roleNeeded : undefined;
-  const availability = typeof rawData.availability === "string" ? rawData.availability : undefined;
-  const capacity = Number(rawData.capacity) || undefined;
-  const deadlineAt = typeof rawData.deadlineAt === "string" ? rawData.deadlineAt : undefined;
-  const requiredSkillsRaw = typeof rawData.requiredSkills === "string" ? rawData.requiredSkills : undefined;
-  const requiredSkills = requiredSkillsRaw ? requiredSkillsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
-
-  const fields = { teamId, title, content, requiredSkills, roleNeeded, availability, capacity, deadlineAt };
-
   const parsed = z.object({ teamId: z.string().uuid(), title: z.string(), content: z.string(), requiredSkills: list, roleNeeded: z.string(), availability: z.string(), capacity: z.coerce.number().int(), deadlineAt: koreanLocalDateTime }).safeParse(rawData);
-  if (!parsed.success) return { status: "error", message: "모집 정보를 확인해 주세요.", fields };
+  if (!parsed.success) return { status: "error", message: "모집 정보를 확인해 주세요." };
   try { await service().createPost(await actor(), parsed.data); }
-  catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message, fields }; throw error; }
+  catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/recruitments"); revalidatePath("/recruitments/mine"); return { status: "success", message: "모집 글을 등록했습니다." };
 }
 

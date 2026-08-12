@@ -9,6 +9,7 @@ import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announ
 import { ProjectPortalHero } from "@/app/topics/_components/project-portal-chrome";
 import { ProjectSearchForm } from "@/app/topics/_components/project-search-form";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
+import { ProjectProposalModal } from "@/app/topics/_components/project-proposal-modal";
 import { StudentProjectRegistrationLink } from "@/app/topics/_components/student-project-registration-link";
 import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
@@ -23,6 +24,8 @@ import { PrismaProjectProgramRepository } from "@/modules/project-program/infras
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
+import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
@@ -42,6 +45,7 @@ type TopicsSearchParams = {
   page?: SearchParamValue;
   q?: SearchParamValue;
   divisionId?: SearchParamValue;
+  modal?: SearchParamValue;
 };
 
 type ProjectView = "active" | "past";
@@ -55,9 +59,11 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const now = new Date();
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
+  const proposalRequested = actor.role === "STUDENT" && firstSearchParam(params.modal) === "project-proposal";
   const topicRepository = new PrismaTopicQueryRepository(prisma);
   const topicService = new ListPublishedTopicsService(topicRepository);
-  const programService = new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
+  const programRepository = new PrismaProjectProgramRepository(prisma);
+  const programService = new ProjectProgramService(programRepository);
   const archiveService = new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma));
   const votingService = new ProjectVotingService(new PrismaProjectVotingRepository(prisma));
   const announcementService = new AnnouncementService(new PrismaAnnouncementRepository(prisma));
@@ -115,7 +121,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? requestedDivisionId
       : requestedDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
     if (requestedDivisionId && divisionId !== requestedDivisionId) redirect(activeProjectsHref({ programId, query, page: requestedPage }));
-    const [topics, archivedProgramsRaw, leaderTeams, ballot, programAnnouncements] = await Promise.all([
+    const [topics, archivedProgramsRaw, leaderTeams, ballot, programAnnouncements, proposalPrograms, proposalProfessors] = await Promise.all([
       topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, page: requestedPage, now }),
       archiveService.listPrograms(),
       actor.role === "STUDENT"
@@ -123,6 +129,10 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
         : Promise.resolve([]),
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
       listProgramAnnouncements(programId),
+      proposalRequested ? programService.listStudentCreatableOpen() : Promise.resolve([]),
+      proposalRequested
+        ? new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), programRepository).listProfessors()
+        : Promise.resolve([]),
     ]);
     const hasUnassigned = programId && selectedProgram?.divisions?.length
       ? Boolean(await prisma.topic.findFirst({ where: { programId, divisionId: null, status: "PUBLISHED" }, select: { id: true } }))
@@ -132,6 +142,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     }
     const archivedPrograms = hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role);
     const sidebarItems = buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
+    const closeProposalHref = activeProjectsHref({ programId, divisionId, query, page: requestedPage });
+    const openProposalHref = `${closeProposalHref}${closeProposalHref.includes("?") ? "&" : "?"}modal=project-proposal`;
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} />}>
         <ProjectPortalHero
@@ -140,7 +152,16 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} />}
         />
         <ProgramAnnouncementRail announcements={programAnnouncements} />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} />} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} href={openProposalHref} />} />
+        {proposalRequested && proposalPrograms.length ? (
+          <ProjectProposalModal
+            programs={proposalPrograms}
+            defaultProgramId={proposalPrograms.some(({ id }) => id === programId) ? programId : undefined}
+            professors={proposalProfessors}
+            studentTeams={leaderTeams}
+            closeHref={closeProposalHref}
+          />
+        ) : null}
       </ExplorerLayout>
     );
   }

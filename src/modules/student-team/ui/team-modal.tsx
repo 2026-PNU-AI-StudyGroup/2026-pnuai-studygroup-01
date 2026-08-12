@@ -36,7 +36,7 @@ export function TeamModal({
   description?: string;
   children: ReactNode;
   closeHref?: string;
-  size?: "default" | "wide";
+  size?: "default" | "wide" | "wizard";
 }) {
   const router = useRouter();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -118,7 +118,7 @@ export function TeamModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[65] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 p-4 sm:p-6">
+    <div className={`fixed inset-0 z-[65] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 ${size === "wizard" ? "p-0 sm:p-6" : "p-4 sm:p-6"}`}>
       <UiButton type="button" tabIndex={-1} aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={requestClose} />
       <section
         ref={dialogRef}
@@ -127,7 +127,7 @@ export function TeamModal({
         aria-labelledby="team-modal-title"
         tabIndex={-1}
         onKeyDown={trapFocus}
-        className={`relative my-auto w-full rounded-[var(--radius-panel)] bg-white p-6 shadow-[0_24px_70px_rgba(31,35,48,.18)] sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}
+        className={`relative my-auto w-full overflow-y-auto bg-white shadow-[0_24px_70px_rgba(31,35,48,.18)] ${size === "wizard" ? "min-h-dvh max-w-5xl rounded-none p-4 sm:min-h-0 sm:max-h-[calc(100dvh-3rem)] sm:rounded-[var(--radius-panel)] sm:p-8" : `rounded-[var(--radius-panel)] p-6 sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}`}
       >
         <div className="flex items-start justify-between gap-6">
           <div>

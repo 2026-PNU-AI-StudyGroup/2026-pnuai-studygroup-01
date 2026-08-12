@@ -8,6 +8,51 @@ vi.mock("next/navigation", () => ({
 import { TopicForm } from "@/modules/topic/ui/topic-form";
 
 describe("TopicForm", () => {
+  it("단계형 모달에서는 지원 여부에 따라 2단계와 4단계로 분기한다", () => {
+    render(
+      <TopicForm
+        action={vi.fn(async () => ({ status: "idle" as const, message: "" }))}
+        defaultProgramId="program-1"
+        programs={[{
+          id: "program-1",
+          startYear: 2026,
+          icon: "FOLDER",
+          name: "창의융합 해커톤",
+          category: "대회",
+          description: "설명",
+          startsAt: new Date("2026-07-01T00:00:00Z"),
+          endsAt: new Date("2026-12-31T00:00:00Z"),
+          recruitmentStartsAt: new Date("2026-07-01T00:00:00Z"),
+          recruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
+          executionStartsAt: new Date("2026-08-01T00:00:00Z"),
+          executionEndsAt: new Date("2026-11-30T00:00:00Z"),
+          submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
+          submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
+          advisorEnabled: false,
+          studentProjectCreationEnabled: true,
+          isPublic: true,
+          lifecycleStatus: "ACTIVE",
+          topicCount: 0,
+          teamCount: 0,
+        }]}
+        studentApproval={{ professors: [], studentTeams: [] }}
+        wizard={{ closeHref: "/topics?programId=program-1" }}
+      />,
+    );
+
+    expect(screen.getByRole("navigation", { name: "프로젝트 제안 단계" })).toHaveTextContent("1 / 2");
+    fireEvent.click(screen.getByRole("radio", { name: "지원 받기" }));
+    expect(screen.getByRole("navigation", { name: "프로젝트 제안 단계" })).toHaveTextContent("1 / 4");
+
+    fireEvent.change(screen.getByRole("textbox", { name: "프로젝트명" }), { target: { value: "학생 프로젝트" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "설명" }), { target: { value: "프로젝트 설명" } });
+    fireEvent.click(screen.getByRole("button", { name: "다음" }));
+
+    expect(screen.getByRole("navigation", { name: "프로젝트 제안 단계" })).toHaveTextContent("2 / 4");
+    expect(screen.getByRole("heading", { name: "지원 조건" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "기본 정보" }).closest("section")).toHaveClass("hidden");
+  });
+
   it("지도교수가 없는 프로그램은 관리자 승인 경로만 제출한다", () => {
     const { container } = render(
       <TopicForm
@@ -39,26 +84,23 @@ describe("TopicForm", () => {
       />,
     );
 
-    expect(screen.getByText("지도교수가 없는 프로그램이므로 관리자에게 검토를 요청합니다.")).toBeInTheDocument();
+    expect(screen.getByText("이 프로그램의 승인 요청은 관리자가 검토합니다.")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /지원 안 받기/ })).toBeChecked();
     expect(screen.getByRole("radio", { name: /지원 받기/ })).not.toBeChecked();
     expect(screen.queryByRole("radio", { name: /교수에게 요청/ })).not.toBeInTheDocument();
     expect(container.querySelector('input[name="approvalRoute"]')).toHaveValue("ADMIN");
-    expect(screen.getByRole("navigation", { name: "프로젝트 작성 섹션" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /기본 정보/ })).toHaveAttribute("href", "#topic-basic");
-    expect(screen.getByRole("link", { name: /참여 팀과 승인/ })).toHaveAttribute("href", "#topic-approval");
+    expect(screen.queryByRole("navigation", { name: "프로젝트 작성 섹션" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "지원 조건" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "지원 방식과 지원서" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "모집 설정" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "지원서" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "모집" })).not.toBeInTheDocument();
     expect(container.querySelector("#topic-schedule")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: /지원 받기/ }));
 
     expect(screen.getByRole("heading", { name: "지원 조건" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "지원 방식과 지원서" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "모집 설정" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /모집 설정/ })).toHaveAttribute("href", "#topic-schedule");
-    expect(screen.getByRole("button", { name: "승인 요청 보내기" }).parentElement).toHaveClass("sticky");
+    expect(screen.getByRole("heading", { name: "지원서" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "모집" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "승인 요청 보내기" }).parentElement).not.toHaveClass("sticky");
   });
 
   it("지원서 문항을 작성하고 문항을 추가할 때 기존 입력 문항 내용이 보존된다", () => {
