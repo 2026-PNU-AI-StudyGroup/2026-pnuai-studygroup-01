@@ -54,6 +54,24 @@ export const auth = betterAuth({
     // Secure 쿠키를 끈다. 실제 운영(목 인증 off)은 https 기준 Secure 쿠키를 유지한다.
     useSecureCookies: !developmentMockAuthEnabled,
   },
+  // 목 인증 개발 배포는 http 터널(localhost)로 접근하는데, better-auth는 요청 origin을
+  // baseURL과 대조해 로그아웃 등 정식 엔드포인트를 막는다. 목 인증일 때만 localhost origin을
+  // 신뢰 목록에 더한다. 실제 운영(목 인증 off)은 기본값(baseURL)만 신뢰한다.
+  trustedOrigins: developmentMockAuthEnabled
+    ? (request?: Request) => {
+        const origins = [authEnvironment.BETTER_AUTH_URL];
+        const origin = request?.headers.get("origin");
+        if (origin) {
+          try {
+            const hostname = new URL(origin).hostname;
+            if (["localhost", "127.0.0.1", "::1"].includes(hostname)) origins.push(origin);
+          } catch {
+            // 잘못된 origin 헤더는 무시
+          }
+        }
+        return origins;
+      }
+    : undefined,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
