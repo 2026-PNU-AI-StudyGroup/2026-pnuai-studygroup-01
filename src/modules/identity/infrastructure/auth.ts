@@ -48,6 +48,12 @@ export const auth = betterAuth({
   appName: "PNU 프로젝트 관리 시스템",
   baseURL: authEnvironment.BETTER_AUTH_URL,
   secret: authEnvironment.BETTER_AUTH_SECRET,
+  advanced: {
+    // 목 인증 개발 배포는 http 터널로도 접근하는데, https baseURL이면 better-auth가
+    // 세션 쿠키에 `__Secure-` 접두사를 붙여 브라우저가 http에서 거부한다. 목 인증일 때만
+    // Secure 쿠키를 끈다. 실제 운영(목 인증 off)은 https 기준 Secure 쿠키를 유지한다.
+    useSecureCookies: !developmentMockAuthEnabled,
+  },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
