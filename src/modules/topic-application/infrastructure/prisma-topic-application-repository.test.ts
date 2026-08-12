@@ -136,7 +136,7 @@ describe("Prisma 지원 결정 저장소", () => {
       .mockResolvedValueOnce({ count: 1 })
       .mockResolvedValueOnce({ count: 1 });
     const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{ lifecycleStatus: "ACTIVE" }])
       .mockResolvedValueOnce([{ status: "PUBLISHED" }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "student-1", role: "STUDENT", isActive: true }]);
@@ -169,7 +169,17 @@ describe("Prisma 지원 결정 저장소", () => {
         findUnique: vi.fn(async () => null),
         create: vi.fn(async () => ({ id: "member-1" })),
       },
-      team: { upsert: vi.fn(async () => ({ id: "team-1" })) },
+      team: {
+        upsert: vi.fn(async () => ({ id: "team-1" })),
+        findUnique: vi.fn(async () => ({
+          id: "team-1",
+          programId: "program-1",
+          status: "FORMING",
+          topic: { divisionId: null, division: null },
+        })),
+      },
+      programReportDefinition: { findMany: vi.fn(async () => []) },
+      rubricDefinition: { findMany: vi.fn(async () => []) },
       recruitmentApplication: { updateMany: vi.fn(async () => ({ count: 1 })) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
@@ -203,7 +213,7 @@ describe("Prisma 지원 결정 저장소", () => {
 
   it("담당자가 없는 공개 주제는 실행 팀으로 전환하지 않는다", async () => {
     const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{ status: "OPEN" }])
+      .mockResolvedValueOnce([{ lifecycleStatus: "ACTIVE" }])
       .mockResolvedValueOnce([{ status: "PUBLISHED" }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "student-1", role: "STUDENT", isActive: true }]);

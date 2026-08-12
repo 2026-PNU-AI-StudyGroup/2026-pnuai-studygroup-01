@@ -13,7 +13,7 @@ import { StatusBadge } from "@/shared/ui/page-primitives";
 
 type FeedbackCommentView = {
   id: string;
-  developerName: string;
+  authorName: string;
   body: string;
   createdAt: Date;
 };
@@ -58,7 +58,7 @@ function Chip({ children }: { children: string }) {
   );
 }
 
-export function FeedbackPostCard({ post }: { post: FeedbackPostView }) {
+export function FeedbackPostCard({ post, canModerate = false }: { post: FeedbackPostView; canModerate?: boolean }) {
   const resolved = post.status === "RESOLVED";
   return (
     <article className="panel grid gap-4 p-5 sm:p-6">
@@ -116,12 +116,12 @@ export function FeedbackPostCard({ post }: { post: FeedbackPostView }) {
 
       {post.comments.length ? (
         <div className="grid gap-3 border-t border-[var(--line)] pt-4">
-          <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"개발자 코멘트"}</UiText>{" "}{post.comments.length}</p>
+          <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"운영 답변"}</UiText>{" "}{post.comments.length}</p>
           <ul className="grid gap-3">
             {post.comments.map((comment) => (
               <li key={comment.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-3 py-2">
                 <p className="text-xs text-[var(--muted)]">
-                  <span className="font-semibold text-[var(--ink)]">{comment.developerName}</span>
+                  <span className="font-semibold text-[var(--ink)]">{comment.authorName}</span>
                   {" · "}
                   <UiDate value={comment.createdAt} mode="dateTime" />
                 </p>
@@ -132,7 +132,7 @@ export function FeedbackPostCard({ post }: { post: FeedbackPostView }) {
         </div>
       ) : null}
 
-      <DeveloperControls postId={post.id} resolved={resolved} />
+      {canModerate ? <DeveloperControls postId={post.id} resolved={resolved} /> : null}
     </article>
   );
 }

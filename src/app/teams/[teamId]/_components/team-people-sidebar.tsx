@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
+import { MemberContacts } from "@/modules/identity/ui/member-contacts";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
-import { MemberContacts } from "@/shared/ui/member-contacts";
 import { PersonAvatar } from "@/shared/ui/person-avatar";
 
 type TeamMember = TeamWorkspace["members"][number];
@@ -98,7 +98,6 @@ export function TeamPeopleSidebar({
     </>
   );
 }
-
 function PeopleContent({
   advisorEnabled,
   professor,
@@ -175,4 +174,3 @@ function MemberDetail({ label, value, breakAll = false }: { label: string; value
     </div>
   );
 }
-

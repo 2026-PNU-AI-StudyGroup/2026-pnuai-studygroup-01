@@ -77,7 +77,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
     requireProfessorWorkspaceActor.mockResolvedValue(assistant);
   });
 
-  it("배정된 주제만 조회하고 교수 전용 생성 행동을 숨긴다", async () => {
+  it("배정된 프로젝트만 조회하고 교수 전용 생성 행동을 숨긴다", async () => {
     listTopics.mockResolvedValue({
       page: 1,
       totalPages: 1,
@@ -119,7 +119,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
     expect(listTopics).toHaveBeenCalledWith(assistant, 1);
     expect(listOpenPrograms).not.toHaveBeenCalled();
-    const topicListHeading = screen.getByRole("heading", { name: "담당 주제" });
+    const topicListHeading = screen.getByRole("heading", { name: "담당 프로젝트" });
     expect(topicListHeading).toBeInTheDocument();
     expect(topicListHeading.closest("header")?.parentElement).toHaveClass(
       "overflow-hidden",
@@ -130,11 +130,11 @@ describe("학생 조교 교수 작업공간 페이지", () => {
       "record-row",
       "focus-within:bg-[var(--primary-subtle)]",
     );
-    expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "새 프로젝트 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "학생 제안 검토" })).not.toBeInTheDocument();
   });
 
-  it("배정된 주제의 지원서만 조교 문맥으로 조회한다", async () => {
+  it("배정된 프로젝트의 지원서만 조교 문맥으로 조회한다", async () => {
     listApplications.mockResolvedValue({
       page: 1,
       totalPages: 1,
@@ -163,7 +163,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
     );
   });
 
-  it("교수의 주제 목록이 비어 있으면 빈 상태에만 생성 진입점을 둔다", async () => {
+  it("교수의 프로젝트 목록이 비어 있으면 빈 상태에만 생성 진입점을 둔다", async () => {
     requireProfessorWorkspaceActor.mockResolvedValue(professor);
     listOpenPrograms.mockResolvedValue([{
       id: "program-1",
@@ -174,16 +174,16 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
     render(await ProfessorTopicsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByRole("link", { name: "새 주제 등록" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "새 프로젝트 등록" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "학생 제안 검토" })).toBeInTheDocument();
   });
 
-  it("공개 프로그램이 없으면 새 주제 화면의 주제 목록 링크를 빈 상태에만 둔다", async () => {
+  it("공개 프로그램이 없으면 새 프로젝트 화면의 프로젝트 목록 링크를 빈 상태에만 둔다", async () => {
     getCurrentActor.mockResolvedValue(professor);
     listOpenPrograms.mockResolvedValue([]);
 
     render(await NewTopicPage());
 
-    expect(screen.getAllByRole("link", { name: "주제 목록" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "프로젝트 목록" })).toHaveLength(1);
   });
 });

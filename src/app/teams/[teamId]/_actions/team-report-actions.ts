@@ -6,27 +6,23 @@ import { redirect } from "next/navigation";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   ArtifactRegistrationService,
+  ArtifactManagementService,
   InvalidReportInputError,
   ReportDecisionService,
   ReportFeedbackService,
   ReportOperationNotAllowedError,
-  ReportRequirementService,
-  ReportScoreService,
   ReportSubmissionService,
 } from "@/modules/report/application/manage-reports";
 import { PrismaArtifactRepository } from "@/modules/report/infrastructure/prisma-artifact-repository";
 import { PrismaReportDecisionRepository } from "@/modules/report/infrastructure/prisma-report-decision-repository";
 import { PrismaReportFeedbackRepository } from "@/modules/report/infrastructure/prisma-report-feedback-repository";
-import { PrismaReportRequirementRepository } from "@/modules/report/infrastructure/prisma-report-requirement-repository";
-import { PrismaReportScoreRepository } from "@/modules/report/infrastructure/prisma-report-score-repository";
 import { PrismaReportSubmissionRepository } from "@/modules/report/infrastructure/prisma-report-submission-repository";
 import {
   artifactRegistrationSchema,
+  artifactRemovalSchema,
+  artifactUpdateSchema,
   reportDecisionSchema,
   reportFeedbackSchema,
-  reportRequirementRemovalSchema,
-  reportRequirementSchema,
-  reportScoreSchema,
   reportSubmissionSchema,
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -50,7 +46,7 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
       new PrismaReportSubmissionRepository(prisma),
     ).submit(actor, {
       teamId: parsed.data.teamId,
-      type: parsed.data.type,
+      reportId: parsed.data.reportId,
       fileId: parsed.data.uploadId,
       description: parsed.data.description,
     });
@@ -59,51 +55,6 @@ export async function submitReportVersionAction(formData: FormData): Promise<Rep
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
-    throw error;
-  }
-}
-
-export async function setReportRequirementAction(
-  _state: ReportActionState,
-  formData: FormData,
-): Promise<ReportActionState> {
-  const actor = await getCurrentOperationalActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = reportRequirementSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "보고서 종류와 기한을 확인해 주세요." };
-  try {
-    await new ReportRequirementService(
-      new PrismaReportRequirementRepository(prisma),
-    ).setRequirement(actor, parsed.data);
-    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-    return { status: "success", message: "보고서 요구사항과 기한을 저장했습니다." };
-  } catch (error) {
-    const expected = message(error);
-    if (expected) return { status: "error", message: expected };
-    throw error;
-  }
-}
-
-export async function removeReportRequirementAction(
-  _state: ReportActionState,
-  formData: FormData,
-): Promise<ReportActionState> {
-  const actor = await getCurrentOperationalActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = reportRequirementRemovalSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "해제할 보고서 요구사항을 확인해 주세요." };
-  try {
-    await new ReportRequirementService(
-      new PrismaReportRequirementRepository(prisma),
-    ).removeRequirement(actor, parsed.data);
-    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-    return { status: "success", message: "보고서 요구사항을 해제했습니다." };
-  } catch (error) {
-    const expected = message(error);
-    if (expected) {
-      revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-      return { status: "conflict", message: "제출 이력이나 권한이 변경되어 최신 상태를 다시 불러옵니다." };
-    }
     throw error;
   }
 }
@@ -122,29 +73,6 @@ export async function decideReportAction(
     ).decide(actor, parsed.data);
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "검토 결정을 저장했습니다." };
-  } catch (error) {
-    const expected = message(error);
-    if (expected) return { status: "error", message: expected };
-    throw error;
-  }
-}
-
-export async function scoreReportAction(
-  _state: ReportActionState,
-  formData: FormData,
-): Promise<ReportActionState> {
-  const actor = await getCurrentOperationalActor();
-  if (!actor) redirect("/sign-in");
-  const parsed = reportScoreSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "점수(0~100)와 총평을 확인해 주세요." };
-  try {
-    await new ReportScoreService(new PrismaReportScoreRepository(prisma)).score(actor, {
-      reportId: parsed.data.reportId,
-      score: parsed.data.score,
-      comment: parsed.data.comment,
-    });
-    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
-    return { status: "success", message: "점수를 저장했습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
@@ -194,6 +122,44 @@ export async function registerArtifactAction(formData: FormData): Promise<Report
     });
     revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
     return { status: "success", message: "결과물을 등록했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function updateArtifactAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = artifactUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "결과물 정보를 확인해 주세요." };
+  try {
+    await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).updateArtifact(actor, parsed.data);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
+    return { status: "success", message: "결과물 정보를 수정했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function removeArtifactAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = artifactRemovalSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "삭제할 결과물을 확인해 주세요." };
+  try {
+    await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).removeArtifact(actor, parsed.data);
+    revalidatePath(`/teams/${parsed.data.teamId}`, "layout");
+    return { status: "success", message: "결과물을 삭제했습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

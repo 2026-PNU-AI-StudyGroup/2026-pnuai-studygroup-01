@@ -4,7 +4,6 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { createReportActivityNotifications } from "@/modules/notification/infrastructure/notification-events";
 import type { ReportSubmissionWriter } from "@/modules/report/application/report-ports";
-import type { ReportType } from "@/modules/report/domain/report-policy";
 
 export class PrismaReportSubmissionRepository
   implements ReportSubmissionWriter
@@ -13,13 +12,23 @@ export class PrismaReportSubmissionRepository
 
   submit(input: {
     teamId: string;
+    reportId: string;
     actor: CurrentActor;
-    type: ReportType;
     fileId: string;
     description: string;
     submittedAt: Date;
   }): Promise<{ reportId: string; version: number } | null> {
     return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program"
+        JOIN "team" ON "team"."programId" = "project_program"."id"
+        JOIN "report" ON "report"."teamId" = "team"."id"
+        WHERE "team"."id" = ${input.teamId}
+          AND "report"."id" = ${input.reportId}
+        FOR UPDATE OF "project_program"
+      `);
+      if (programs.length !== 1) return null;
       const authorized = await transaction.$queryRaw<Array<{
         id: string;
         professorId: string;
@@ -29,8 +38,13 @@ export class PrismaReportSubmissionRepository
         SELECT "team"."id", "team"."professorId", "team"."topicId", "team"."name"
         FROM "team"
         JOIN "topic" ON "topic"."id" = "team"."topicId"
+        JOIN "project_program" ON "project_program"."id" = "team"."programId"
         WHERE "team"."id" = ${input.teamId}
           AND "team"."status" = 'CONFIRMED'
+          AND "project_program"."lifecycleStatus" = 'ACTIVE'
+          AND ${input.submittedAt} >= "project_program"."submissionStartsAt"
+          AND ${input.submittedAt} <= "project_program"."submissionEndsAt"
+          AND ${input.submittedAt} <= "project_program"."endsAt"
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
             OR EXISTS (
@@ -42,11 +56,14 @@ export class PrismaReportSubmissionRepository
       `);
       if (authorized.length !== 1) return null;
       const requirements = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "id" FROM "report"
-        WHERE "teamId" = ${input.teamId}
-          AND "type" = ${input.type}::"ReportType"
-          AND ${input.submittedAt} <= "dueAt"
-        FOR UPDATE
+        SELECT "report"."id" FROM "report"
+        JOIN "program_report_definition" ON "program_report_definition"."id" = "report"."definitionId"
+        WHERE "report"."id" = ${input.reportId}
+          AND "report"."teamId" = ${input.teamId}
+          AND "report"."required" = true
+          AND "program_report_definition"."archivedAt" IS NULL
+          AND ${input.submittedAt} <= "report"."dueAt"
+        FOR UPDATE OF "report"
       `);
       const report = requirements[0];
       if (!report) return null;
@@ -86,13 +103,17 @@ export class PrismaReportSubmissionRepository
         authorized[0].professorId,
         ...assistants.map(({ userId }) => userId),
       ])];
+      const reportSnapshot = await transaction.report.findUniqueOrThrow({
+        where: { id: report.id },
+        select: { titleSnapshot: true },
+      });
       await createReportActivityNotifications(
         transaction,
         supervisorIds.map((recipientId) => ({
           dedupeKey: `report-submitted:${reportVersionId}:${recipientId}`,
           recipientId,
           title: `${authorized[0].name} 보고서가 제출되었습니다`,
-          body: `${reportTypeLabel(input.type)} 버전 ${version}이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
+          body: `${reportSnapshot.titleSnapshot} 버전 ${version}이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
           href: `/teams/${input.teamId}/reports`,
           createdAt: input.submittedAt,
         })),
@@ -100,8 +121,4 @@ export class PrismaReportSubmissionRepository
       return { reportId: report.id, version };
     });
   }
-}
-
-function reportTypeLabel(type: ReportType) {
-  return type === "START" ? "착수 보고서" : type === "MIDTERM" ? "중간 보고서" : "결과 보고서";
 }

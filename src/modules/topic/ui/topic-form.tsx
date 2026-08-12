@@ -8,7 +8,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { ChoiceCard, DateTimeInput, FormField, FormSection, TextInput, Textarea } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, TextInput, Textarea } from "@/shared/ui/form-system";
 import { IconButton } from "@/shared/ui/icon-button";
 import { TagInput } from "@/shared/ui/tag-input";
 import { TrashIcon } from "@/shared/ui/workspace-icons";
@@ -50,28 +50,6 @@ type TopicFormQuestion = {
   required: boolean;
 };
 
-const periodFields = [
-  ["모집 시작", "recruitmentStartsAt"],
-  ["수행 시작", "executionStartsAt"],
-  ["수행 종료", "executionEndsAt"],
-  ["제출 시작", "submissionStartsAt"],
-  ["제출 종료", "submissionEndsAt"],
-] as const;
-
-function koreanDateTimeLocal(value: Date): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(value);
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
-}
-
 export function TopicForm({ action: createTopic, programs, defaultProgramId, successHref, studentApproval, initialTopic }: TopicFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createTopic, initialState);
@@ -84,6 +62,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   const nextQuestionId = useRef(initialQuestions.length + 1);
   const [questions, setQuestions] = useState(initialQuestions);
   const [selectedProgramId, setSelectedProgramId] = useState(initialTopic?.programId ?? defaultProgramId ?? "");
+  const [selectedDivisionId, setSelectedDivisionId] = useState(initialTopic?.divisionId ?? "");
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const advisorEnabled = selectedProgram?.advisorEnabled;
@@ -91,7 +70,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
     ["topic-basic", "기본 정보"],
     ["topic-requirements", "지원 조건"],
     ["topic-application", "지원 방식과 문항"],
-    ["topic-schedule", "정원과 기간"],
+    ["topic-schedule", "모집 설정"],
     ...(studentApproval ? [["topic-approval", "참여 팀과 승인"]] : []),
   ] as const;
   useEffect(() => {
@@ -101,8 +80,8 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   return (
     <form action={action} aria-busy={pending} className="mx-auto grid max-w-6xl gap-5 xl:grid-cols-[13rem_minmax(0,1fr)] xl:items-start">
       {initialTopic ? <input type="hidden" name="topicId" value={initialTopic.id} /> : null}
-      <UiNav aria-label="주제 작성 섹션" className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 xl:sticky xl:top-6 xl:overflow-visible">
-        <p className="px-2 pb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"작성 순서"}</UiText></p>
+      <UiNav aria-label="프로젝트 작성 섹션" className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 xl:sticky xl:top-6 xl:overflow-visible">
+        <p className="px-2 pb-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"작성 순서"}</UiText></p>
         <ol className="flex min-w-max gap-1 xl:grid xl:min-w-0">
           {formSections.map(([id, label], index) => (
             <li key={id}>
@@ -120,6 +99,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       {initialTopic ? <FormField label="프로그램">
           <input type="hidden" name="programId" value={initialTopic.programId} />
           <span className="form-static-value">{initialTopic.programName}</span>
+          <span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{initialTopic.divisionName ? `분과 · ${initialTopic.divisionName}` : "미분과"}</UiText></span>
         </FormField> : <FormField id="topic-program" label="프로그램">
           <CustomSelect
             id="topic-program"
@@ -131,6 +111,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
             placeholder="프로그램을 선택하세요"
             onValueChange={(value) => {
               setSelectedProgramId(value);
+              setSelectedDivisionId("");
               if (!programs.find(({ id }) => id === value)?.advisorEnabled) setApprovalRoute("ADMIN");
             }}
             options={programs.map((program) => ({
@@ -140,7 +121,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
             }))}
           />
         </FormField>}
-        <FormField id="topic-title" label="주제명">
+        {!initialTopic && selectedProgram?.divisions?.length ? <FormField id="topic-division" label="분과" description="프로젝트 하나는 하나의 분과에 속합니다.">
+          <CustomSelect id="topic-division" name="divisionId" ariaLabel="분과" required invalidMessage="분과를 선택하세요" value={selectedDivisionId} onValueChange={setSelectedDivisionId} placeholder="분과를 선택하세요" options={selectedProgram.divisions.map((division) => ({ value: division.id, label: division.name }))} />
+        </FormField> : null}
+        <FormField id="topic-title" label="프로젝트명">
           <TextInput id="topic-title" name="title" defaultValue={initialTopic?.title} maxLength={200} required />
         </FormField>
         <FormField id="topic-description" label="설명">
@@ -184,20 +168,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         </ol>
         <p className="muted text-sm"><UiText>{"문항은 최대 20개, 문항별 답변은 최대 5,000자로 설정할 수 있습니다."}</UiText></p>
       </FormSection>
-      <FormSection id="topic-schedule" number="04" title="정원과 운영 기간"><label className="grid gap-2 text-sm font-medium sm:max-w-xs">
+      <FormSection id="topic-schedule" number="04" title="모집 설정" description="일정은 프로그램 공통 일정으로 적용됩니다."><label className="grid gap-2 text-sm font-medium sm:max-w-xs">
         <UiText>{"모집 인원"}</UiText><TextInput name="capacity" type="number" min="1" max="100" defaultValue={initialTopic?.capacity ?? 4} required />
       </label>
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-3 font-semibold"><UiText>{"기간 설정"}</UiText></legend>
-        {periodFields.map(([label, name]) => (
-          <label key={name} className="grid gap-2 text-sm font-medium">
-            <UiText>{label}</UiText>
-            <DateTimeInput name={name} defaultValue={initialTopic ? koreanDateTimeLocal(initialTopic[name]) : undefined} required />
-          </label>
-        ))}
-      </fieldset>
-      <p className="muted text-sm"><UiText>{selectedProgram ? `모집 마감은 프로그램 전체에 적용되는 ${programDate.format(selectedProgram.recruitmentEndsAt)}입니다.` : "프로그램을 선택하면 프로그램 모집 마감이 표시됩니다."}</UiText></p>
-      <p className="muted text-sm"><UiText>{"모집·수행·제출 기간은 서로 겹칠 수 있습니다."}</UiText></p>
+      <p className="muted text-sm"><UiText>{selectedProgram ? `이 프로그램의 모집은 ${programDate.format(selectedProgram.recruitmentStartsAt)}부터 ${programDate.format(selectedProgram.recruitmentEndsAt)}까지입니다.` : "프로그램을 선택하면 공통 모집 일정이 표시됩니다."}</UiText></p>
       </FormSection>
       {studentApproval ? <FormSection id="topic-approval" number="05" title="참여 팀과 승인" description="기존 팀 참여 여부와 프로젝트 공개 전 승인 경로를 정합니다.">
         <p className="text-sm leading-6 text-[var(--muted)]"><UiText>{"기존 팀을 선택하면 현재 팀원 전원이 승인과 동시에 참여하며 추가 모집은 받지 않습니다."}</UiText></p>

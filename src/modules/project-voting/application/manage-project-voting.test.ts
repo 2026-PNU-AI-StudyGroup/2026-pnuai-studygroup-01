@@ -5,7 +5,7 @@ import {
   ProjectVotingService,
   type ProjectVotingRepository,
 } from "@/modules/project-voting/application/manage-project-voting";
-import { ProjectVotingPolicyError } from "@/modules/project-voting/domain/project-voting-policy";
+import { normalizeVoteSelection, ProjectVotingPolicyError } from "@/modules/project-voting/domain/project-voting-policy";
 
 const now = new Date("2026-08-07T03:00:00.000Z");
 const ballot = {
@@ -15,11 +15,16 @@ const ballot = {
     startsAt: new Date("2026-08-01T00:00:00.000Z"),
     endsAt: new Date("2026-08-30T00:00:00.000Z"),
     voteLimit: 2,
+    voteLimitScope: "PROGRAM" as const,
     selfVotingAllowed: false,
     identityVisibility: "ANONYMOUS" as const,
   },
   phase: "OPEN" as const,
-  candidates: [],
+  candidates: [
+    { id: "topic-1", title: "프로젝트 1", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
+    { id: "topic-2", title: "프로젝트 2", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
+    { id: "topic-3", title: "프로젝트 3", description: "", divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0 },
+  ],
   selectedTopicIds: [],
 };
 
@@ -51,6 +56,21 @@ describe("프로그램 프로젝트 투표", () => {
       ["topic-1", "topic-2", "topic-3"],
     )).rejects.toBeInstanceOf(ProjectVotingPolicyError);
     expect(value.replaceVotes).not.toHaveBeenCalled();
+  });
+
+  it("분과별 투표는 분과마다 같은 한도를 적용하고 미분과를 별도 묶음으로 본다", () => {
+    const policy = { ...ballot.policy, voteLimit: 1, voteLimitScope: "DIVISION" as const };
+    const candidates = [
+      { id: "startup-1", divisionId: "startup" },
+      { id: "fusion-1", divisionId: "fusion" },
+      { id: "unassigned-1", divisionId: null },
+    ];
+    expect(normalizeVoteSelection(["startup-1", "fusion-1", "unassigned-1"], policy, candidates))
+      .toEqual(["startup-1", "fusion-1", "unassigned-1"]);
+    expect(() => normalizeVoteSelection(["startup-1", "startup-2"], policy, [
+      ...candidates,
+      { id: "startup-2", divisionId: "startup" },
+    ])).toThrow(ProjectVotingPolicyError);
   });
 
   it("저장소의 자기 프로젝트 차단 결과를 사용자 오류로 전달한다", async () => {

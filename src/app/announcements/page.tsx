@@ -25,6 +25,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { PinIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항");
@@ -125,7 +126,7 @@ export default async function AnnouncementsPage({
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
                           {announcement.pinned ? (
                             <span className="inline-flex items-center text-[0.8125rem] leading-none">
-                              <span aria-hidden="true">📌</span><span className="sr-only"><UiText>{"고정"}</UiText></span>
+                              <PinIcon className="size-3.5 text-[var(--primary)]" /><span className="sr-only"><UiText>{"고정"}</UiText></span>
                             </span>
                           ) : null}
                           {isRecentAnnouncement(announcement.createdAt) ? (
@@ -134,7 +135,7 @@ export default async function AnnouncementsPage({
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
                             <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
                           </span>
-                          <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} />
+                          <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
                         </div>
                         <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
                           <UiText>{announcement.title}</UiText>

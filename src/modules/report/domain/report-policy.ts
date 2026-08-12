@@ -1,4 +1,3 @@
-export type ReportType = "START" | "MIDTERM" | "FINAL";
 export type ApprovalDecision = "APPROVED" | "REVISION_REQUESTED";
 export type ArtifactType = "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER";
 
@@ -15,13 +14,6 @@ export function normalizeDescription(value: string) {
   return normalized;
 }
 
-export function validateReportDueAt(dueAt: Date, now: Date) {
-  if (Number.isNaN(dueAt.getTime()) || dueAt <= now) {
-    throw new InvalidReportInputError();
-  }
-  return dueAt;
-}
-
 export function normalizeDecisionComment(decision: ApprovalDecision, value: string) {
   const normalized = value.trim();
   if (
@@ -31,15 +23,6 @@ export function normalizeDecisionComment(decision: ApprovalDecision, value: stri
     throw new InvalidReportInputError();
   }
   return normalized;
-}
-
-export function normalizeReportScore(score: number, comment: string) {
-  if (!Number.isInteger(score) || score < 0 || score > 100) {
-    throw new InvalidReportInputError();
-  }
-  const normalized = comment.trim();
-  if (normalized.length > 2_000) throw new InvalidReportInputError();
-  return { score, comment: normalized };
 }
 
 export function normalizeReportFeedback(body: string) {

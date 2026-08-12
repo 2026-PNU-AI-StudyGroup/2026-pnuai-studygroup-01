@@ -12,25 +12,13 @@ vi.mock("next/navigation", () => ({
 describe("ActiveProjectFilters", () => {
   beforeEach(() => push.mockClear());
 
-  it("정렬을 고르면 적용 버튼 없이 현재 필터를 보존한 첫 페이지 URL로 즉시 이동한다", () => {
-    render(
-      <ActiveProjectFilters
-        phase="RECRUITING"
-        counts={{ ACTIVE: 12, RECRUITING: 5, CLOSING_SOON: 2 }}
-        programId="program-1"
-        query="길찾기"
-        sort="LATEST"
-      />,
-    );
+  it("분과를 고르면 검색어만 보존하고 첫 페이지로 이동한다", () => {
+    render(<ActiveProjectFilters programId="program-1" query="길찾기" divisions={[{ id: "division-1", name: "AI" }]} />);
 
-    expect(screen.queryByRole("button", { name: "적용" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("combobox", { name: "프로젝트 정렬" }));
-    fireEvent.click(screen.getByRole("option", { name: "마감 임박순" }));
+    expect(screen.queryByRole("combobox", { name: "프로젝트 정렬" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "프로젝트 상태" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
 
-    expect(push).toHaveBeenCalledWith(
-      "/topics?phase=RECRUITING&programId=program-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&sort=DEADLINE",
-      { scroll: false },
-    );
-    expect(push.mock.calls[0]?.[0]).not.toContain("page=");
+    expect(push).toHaveBeenCalledWith("/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0", { scroll: false });
   });
 });

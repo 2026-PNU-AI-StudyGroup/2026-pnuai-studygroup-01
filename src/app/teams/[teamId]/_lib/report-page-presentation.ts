@@ -21,12 +21,6 @@ export type StudentReportFocus = {
   report: ReportItem;
 };
 
-const reportTypeOrder = {
-  START: 0,
-  MIDTERM: 1,
-  FINAL: 2,
-} as const;
-
 export function reportPresentationState(report: ReportItem): ReportPresentationState {
   const latestVersion = report.versions[0];
   if (!latestVersion) return "UNSUBMITTED";
@@ -35,7 +29,7 @@ export function reportPresentationState(report: ReportItem): ReportPresentationS
 }
 
 export function isReportSubmissionOpen(report: ReportItem, now: Date): boolean {
-  return report.dueAt.getTime() >= now.getTime();
+  return report.required && report.dueAt.getTime() >= now.getTime();
 }
 
 function focusPriority(report: ReportItem, now: Date): number {
@@ -61,15 +55,15 @@ function focusKind(report: ReportItem, now: Date): StudentReportFocusKind {
 }
 
 export function selectStudentReportFocus(reports: ReportItem[], now: Date): StudentReportFocus | null {
-  const report = [...reports].sort((left, right) => {
+  const report = reports.filter((item) => item.required).sort((left, right) => {
     const priorityDifference = focusPriority(left, now) - focusPriority(right, now);
     if (priorityDifference !== 0) return priorityDifference;
 
     const dueAtDifference = left.dueAt.getTime() - right.dueAt.getTime();
     if (dueAtDifference !== 0) return dueAtDifference;
 
-    const typeDifference = reportTypeOrder[left.type] - reportTypeOrder[right.type];
-    if (typeDifference !== 0) return typeDifference;
+    const positionDifference = left.position - right.position;
+    if (positionDifference !== 0) return positionDifference;
     return left.id.localeCompare(right.id);
   })[0];
 

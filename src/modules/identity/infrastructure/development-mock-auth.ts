@@ -9,7 +9,7 @@ export const DEVELOPMENT_MOCK_ACCOUNTS = {
   PROFESSOR: {
     id: "10000000-0000-4000-8000-000000000001",
     label: "교수 화면 열기",
-    description: "주제 관리와 학생 지원 검토 화면을 확인합니다.",
+    description: "프로젝트 관리와 학생 지원 검토 화면을 확인합니다.",
   },
   ADMIN: {
     id: "00000000-0000-4000-8000-000000000001",

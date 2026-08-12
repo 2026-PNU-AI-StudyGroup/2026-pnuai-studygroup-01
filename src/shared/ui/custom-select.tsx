@@ -21,6 +21,7 @@ type CustomSelectProps = {
   value?: string;
   defaultValue?: string;
   placeholder?: string;
+  invalidMessage?: string;
   required?: boolean;
   disabled?: boolean;
   searchable?: boolean;
@@ -38,6 +39,7 @@ export function CustomSelect({
   value: controlledValue,
   defaultValue = "",
   placeholder = "선택하세요",
+  invalidMessage,
   required,
   disabled,
   searchable,
@@ -162,6 +164,7 @@ export function CustomSelect({
           window.setTimeout(() => triggerRef.current?.focus(), 0);
         }}
       />
+      {showInvalid && invalidMessage ? <p role="alert" className="mt-1 text-xs font-semibold text-[var(--danger)]"><UiText>{invalidMessage}</UiText></p> : null}
       {open && portalHost ? createPortal(
         <div
           ref={menuRef}

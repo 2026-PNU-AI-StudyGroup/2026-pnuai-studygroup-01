@@ -160,7 +160,7 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ team
           {completed.length > 0 ? (
             <details className="group">
               <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 font-bold text-[var(--ink)] shadow-[0_8px_24px_rgba(31,35,48,0.045)] [&::-webkit-details-marker]:hidden">
-                <span><UiText>{"완료 한 일"}</UiText>{" "}{completed.length}<UiText>{"건"}</UiText></span>
+                <span><UiText>{"완료한 일"}</UiText>{" "}{completed.length}<UiText>{"건"}</UiText></span>
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180 [stroke-linecap:round] [stroke-linejoin:round]"><path d="m6 8 4 4 4-4" /></svg>
               </summary>
               <ol className="mt-4 grid gap-4">

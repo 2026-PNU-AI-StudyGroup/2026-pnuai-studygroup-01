@@ -82,7 +82,7 @@ describe("TeamOverviewPage", () => {
 
     render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
 
-    expect(screen.getByRole("heading", { name: "프로젝트 일정" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "프로그램 일정" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "팀원 1명" })).not.toBeInTheDocument();
     expect(screen.queryByText("student@pusan.ac.kr")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "프로젝트 작업" })).not.toBeInTheDocument();

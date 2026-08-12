@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -27,7 +27,7 @@ describe("ProgramForm", () => {
     expect(document.querySelector('input[name="endsAt"]')).toBeRequired();
     expect(screen.getByRole("button", { name: "운영 시작" })).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByRole("button", { name: "운영 종료" })).toHaveAttribute("aria-haspopup", "dialog");
-    expect(screen.getByRole("button", { name: "초안 등록" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "프로그램 등록" })).toBeEnabled();
   });
 
   it("고정 아이콘 목록에서 폴더 아이콘을 기본값으로 선택한다", () => {
@@ -35,5 +35,14 @@ describe("ProgramForm", () => {
 
     expect(screen.getByRole("radio", { name: "일반" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "봉사" })).not.toBeChecked();
+  });
+
+  it("분과를 추가하기 전에는 분과별 투표를 선택할 수 없다", () => {
+    render(<ProgramForm />);
+    fireEvent.click(screen.getByRole("checkbox", { name: /프로젝트 투표 사용/ }));
+    const divisionScope = screen.getByRole("radio", { name: /분과별/ });
+    expect(divisionScope).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: "분과" }), { target: { value: "창업" } });
+    expect(divisionScope).toBeEnabled();
   });
 });

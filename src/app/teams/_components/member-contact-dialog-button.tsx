@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";
-import { MemberContacts, type MemberContactInfo } from "@/shared/ui/member-contacts";
+import { MemberContacts, type MemberContactInfo } from "@/modules/identity/ui/member-contacts";
 
 export function MemberContactDialogButton({ name, email, contacts }: { name: string; email: string; contacts: MemberContactInfo | null }) {
   const dialogRef = useRef<HTMLDialogElement>(null);

@@ -54,7 +54,7 @@ export function ArtifactRegistrationFields({ method }: { method: ArtifactMethod 
         <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
           <UiText>{"결과물 파일"}</UiText>
           <span className="muted text-xs font-normal"><UiText>{"문서·압축·영상·이미지 · 최대 1GB"}</UiText></span>
-          <FileInput aria-label="결과물 파일" name="file" required accept=".pdf,.doc,.docx,.zip,.mp4,.webm,.png,.jpg,.jpeg" />
+          <FileInput aria-label="결과물 파일" name="file" required accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.mp4,.webm,.png,.jpg,.jpeg" />
         </label>
       )}
     </>

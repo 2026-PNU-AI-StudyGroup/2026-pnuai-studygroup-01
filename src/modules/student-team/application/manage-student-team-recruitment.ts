@@ -20,7 +20,7 @@ type StudentTeamAuthoredRecruitmentPost = {
 
 type StudentTeamRecruitmentApplication = {
   id: string; studentName: string; message: string; desiredRole: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED"; createdAt: Date; decidedAt: Date | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
 };
 
 export type StudentTeamRecruitmentPostApplications = {
@@ -30,7 +30,7 @@ export type StudentTeamRecruitmentPostApplications = {
 
 type StudentTeamRecruitmentHistory = {
   id: string; postTitle: string; teamName: string; topicTitle: string; recruiterName: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED"; createdAt: Date; decidedAt: Date | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
 };
 
 export interface StudentTeamRecruitmentReader {
@@ -45,6 +45,7 @@ export interface StudentTeamRecruitmentWriter {
   createPost(input: { teamId: string; leaderId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number; deadlineAt: Date; createdAt: Date }): Promise<boolean>;
   apply(input: { postId: string; studentId: string; message: string; desiredRole: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
   decide(input: { applicationId: string; actorId: string; isAdmin: boolean; decision: "ACCEPT" | "REJECT"; decidedAt: Date }): Promise<"ACCEPTED" | "REJECTED" | "UNAVAILABLE" | "FORBIDDEN">;
+  closePost?(input: { postId: string; leaderId: string; closedAt: Date }): Promise<boolean>;
 }
 
 export class StudentTeamRecruitmentError extends Error {}
@@ -109,6 +110,13 @@ export class StudentTeamRecruitmentCommandService {
   async decide(actor: CurrentUser, applicationId: string, decision: "ACCEPT" | "REJECT") {
     const result = await this.writer.decide({ applicationId, actorId: actor.id, isAdmin: actor.role === "ADMIN", decision, decidedAt: this.now() });
     if (result !== "ACCEPTED" && result !== "REJECTED") throw new StudentTeamRecruitmentError(result === "FORBIDDEN" ? "팀장만 팀원 지원을 처리할 수 있습니다." : "팀 인원 또는 지원 상태가 변경되었습니다.");
+  }
+
+  async closePost(actor: CurrentUser, postId: string) {
+    assertStudent(actor);
+    if (!this.writer.closePost || !(await this.writer.closePost({ postId, leaderId: actor.id, closedAt: this.now() }))) {
+      throw new StudentTeamRecruitmentError("팀장만 모집 중인 공고를 종료할 수 있습니다.");
+    }
   }
 }
 

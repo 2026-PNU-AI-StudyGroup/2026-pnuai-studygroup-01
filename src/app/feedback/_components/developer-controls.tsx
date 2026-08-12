@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 import {
   addFeedbackCommentAction,
@@ -20,7 +20,6 @@ function Notice({ state }: { state: { status: string; message: string } }) {
 }
 
 export function DeveloperControls({ postId, resolved }: { postId: string; resolved: boolean }) {
-  const [developerName, setDeveloperName] = useState("");
 
   const toggleAction = toggleFeedbackResolvedAction.bind(null, postId, !resolved);
   const [toggleState, toggleFormAction, toggling] = useActionState(toggleAction, feedbackInitialState);
@@ -36,23 +35,10 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
   return (
     <details className="group mt-1 border-t border-dashed border-[var(--line)] pt-3">
       <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-[var(--radius-control)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
-        <UiText>{"개발자"}</UiText>
+        <UiText>{"운영 처리"}</UiText>
       </summary>
       <div className="mt-2 grid gap-3 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 sm:p-4">
-        <label className="grid max-w-52 gap-1.5">
-          <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"개발자 이름"}</UiText></span>
-          <UiInput
-            className="form-control h-9 bg-white py-1 text-sm"
-            type="text"
-            maxLength={FEEDBACK_LIMITS.name}
-            placeholder="개발자 이름"
-            value={developerName}
-            onChange={(event) => setDeveloperName(event.target.value)}
-          />
-        </label>
-
         <form action={toggleFormAction} className="grid gap-2">
-          <input type="hidden" name="developerName" value={developerName} />
           <UiInput
             className="form-control h-9 bg-white py-1 text-sm"
             type="text"
@@ -69,17 +55,16 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
         </form>
 
         <form action={commentFormAction} className="grid gap-2">
-          <input type="hidden" name="developerName" value={developerName} />
           <UiTextarea
             ref={commentRef}
             className="form-control min-h-16 bg-white text-sm leading-6"
             name="body"
             maxLength={FEEDBACK_LIMITS.comment}
-            placeholder="개발자 코멘트를 남겨 주세요."
+            placeholder="처리 답변을 남겨 주세요."
           />
           <div className="flex items-center gap-3">
             <button className="button-secondary" type="submit" disabled={commenting}>
-              <UiText>{"코멘트 추가"}</UiText>
+              <UiText>{"답변 추가"}</UiText>
             </button>
             <Notice state={commentState} />
           </div>

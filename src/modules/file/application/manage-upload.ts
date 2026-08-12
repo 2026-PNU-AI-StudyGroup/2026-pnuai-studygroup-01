@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import {
   type FilePurpose,
+  type UploadConsumer,
   validateUpload,
 } from "@/modules/file/domain/upload-policy";
 
@@ -29,6 +30,7 @@ export interface UploadIntentRepository {
     teamId: string;
     actor: CurrentActor;
     purpose: FilePurpose;
+    consumer: UploadConsumer;
     originalName: string;
   }): Promise<boolean>;
   findPendingForOwner(id: string, ownerId: string): Promise<UploadIntent | null>;
@@ -69,6 +71,7 @@ export class UploadService {
     input: {
       teamId: string;
       purpose: FilePurpose;
+      consumer?: UploadConsumer;
       originalName: string;
       contentType: string;
       size: number;
@@ -96,6 +99,7 @@ export class UploadService {
       teamId: input.teamId,
       actor,
       purpose: input.purpose,
+      consumer: validated.consumer,
       originalName: validated.originalName,
     });
     if (!created) throw new UploadNotFoundError();

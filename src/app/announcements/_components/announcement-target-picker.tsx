@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { useI18n } from "@/shared/i18n/i18n-provider";
 
 type Program = { id: string; name: string };
 type Team = { id: string; name: string; programId: string };
@@ -26,11 +27,13 @@ function Dot({ checked }: { checked: boolean }) {
 }
 
 // 파일 시스템 트리형 공지 대상 선택. 프로그램=폴더(펼치면 하위 팀), 팀=리프. 전체/프로그램/팀 중 하나만 선택.
-export function AnnouncementTargetPicker({ programs, teams, initialValue = "" }: {
+export function AnnouncementTargetPicker({ programs, teams, value, onValueChange }: {
   programs: Program[];
   teams: Team[];
-  initialValue?: string;
+  value: string;
+  onValueChange: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const teamsByProgram = useMemo(() => {
     const map = new Map<string, Team[]>();
     for (const team of teams) {
@@ -40,11 +43,10 @@ export function AnnouncementTargetPicker({ programs, teams, initialValue = "" }:
     }
     return map;
   }, [teams]);
-  const [selected, setSelected] = useState(initialValue);
   const [expanded, setExpanded] = useState<Set<string>>(() => {
-    if (initialValue.startsWith("program:")) return new Set([initialValue.slice(8)]);
-    if (initialValue.startsWith("team:")) {
-      const team = teams.find((candidate) => candidate.id === initialValue.slice(5));
+    if (value.startsWith("program:")) return new Set([value.slice(8)]);
+    if (value.startsWith("team:")) {
+      const team = teams.find((candidate) => candidate.id === value.slice(5));
       if (team) return new Set([team.programId]);
     }
     return new Set();
@@ -59,10 +61,10 @@ export function AnnouncementTargetPicker({ programs, teams, initialValue = "" }:
 
   return (
     <div>
-      <input type="hidden" name="target" value={selected} />
-      <div role="radiogroup" aria-label="공지 대상" className="max-h-80 overflow-auto rounded-[var(--radius-control)] border border-[var(--field-border)] bg-[var(--surface)] p-1.5">
-        <button type="button" role="radio" aria-checked={selected === ""} onClick={() => setSelected("")} className={leafClass(selected === "")}>
-          <Dot checked={selected === ""} />
+      <input type="hidden" name="target" value={value} />
+      <div role="radiogroup" aria-label={t("공지 대상")} className="max-h-80 overflow-auto rounded-[var(--radius-control)] border border-[var(--field-border)] bg-[var(--surface)] p-1.5">
+        <button type="button" role="radio" aria-checked={value === ""} onClick={() => onValueChange("")} className={leafClass(value === "")}>
+          <Dot checked={value === ""} />
           <span><UiText>{"전체 공개"}</UiText></span>
         </button>
         {programs.map((program) => {
@@ -84,15 +86,15 @@ export function AnnouncementTargetPicker({ programs, teams, initialValue = "" }:
               </button>
               {open ? (
                 <div className="ml-[1.05rem] border-l border-[var(--line)] pl-2">
-                  <button type="button" role="radio" aria-checked={selected === programValue} onClick={() => setSelected(programValue)} className={leafClass(selected === programValue)}>
-                    <Dot checked={selected === programValue} />
+                  <button type="button" role="radio" aria-checked={value === programValue} onClick={() => onValueChange(programValue)} className={leafClass(value === programValue)}>
+                    <Dot checked={value === programValue} />
                     <span className="italic"><UiText>{"이 프로그램 전체"}</UiText></span>
                   </button>
                   {programTeams.map((team) => {
                     const teamValue = `team:${team.id}`;
                     return (
-                      <button key={team.id} type="button" role="radio" aria-checked={selected === teamValue} onClick={() => setSelected(teamValue)} className={leafClass(selected === teamValue)}>
-                        <Dot checked={selected === teamValue} />
+                      <button key={team.id} type="button" role="radio" aria-checked={value === teamValue} onClick={() => onValueChange(teamValue)} className={leafClass(value === teamValue)}>
+                        <Dot checked={value === teamValue} />
                         <span className="min-w-0 flex-1 truncate">{team.name}</span>
                       </button>
                     );

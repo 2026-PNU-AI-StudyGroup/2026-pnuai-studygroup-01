@@ -9,13 +9,11 @@ import {
   ReportDecisionService,
   ReportOperationNotAllowedError,
   ReportQueryService,
-  ReportRequirementService,
   ReportSubmissionService,
 } from "../src/modules/report/application/manage-reports";
 import { PrismaArtifactRepository } from "../src/modules/report/infrastructure/prisma-artifact-repository";
 import { PrismaReportDecisionRepository } from "../src/modules/report/infrastructure/prisma-report-decision-repository";
 import { PrismaReportQueryRepository } from "../src/modules/report/infrastructure/prisma-report-query-repository";
-import { PrismaReportRequirementRepository } from "../src/modules/report/infrastructure/prisma-report-requirement-repository";
 import { PrismaReportSubmissionRepository } from "../src/modules/report/infrastructure/prisma-report-submission-repository";
 import {
   CloseTeamService,
@@ -86,14 +84,11 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `보고서 검증 프로그램 ${professorId}`, category: "검증", description: "보고서 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentEndsAt: new Date("2027-01-01"), status: "OPEN", openedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
     programId: program.id, authorId: professorId, managerId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
-    recruitmentStartsAt: new Date("2026-01-01"),
-    executionStartsAt: new Date("2026-01-01"), executionEndsAt: new Date("2026-12-31"),
-    submissionStartsAt: new Date("2026-01-01"), submissionEndsAt: new Date("2026-12-31"),
     status: "PUBLISHED", publishedAt: new Date("2026-01-01"),
   } });
   const application = await prisma.topicApplication.create({ data: {
@@ -112,9 +107,6 @@ async function main() {
   const reportQuery = new ReportQueryService(
     new PrismaReportQueryRepository(prisma),
   );
-  const reportRequirements = new ReportRequirementService(
-    new PrismaReportRequirementRepository(prisma),
-  );
   const reportSubmissions = new ReportSubmissionService(
     new PrismaReportSubmissionRepository(prisma),
   );
@@ -126,16 +118,15 @@ async function main() {
   );
   const student = { id: studentId, role: "STUDENT" as const };
   const professor = { id: professorId, role: "PROFESSOR" as const };
-  for (const type of ["START", "MIDTERM", "FINAL"] as const) {
-    await reportRequirements.setRequirement(
-      professor,
-      { teamId: team.id, type, dueAt: new Date("2026-12-31T14:59:00Z") },
-      new Date("2026-07-13T00:00:00Z"),
-    );
-  }
+  const definitions = await Promise.all(["착수 보고서", "중간 보고서", "결과 보고서"].map((title, position) => prisma.programReportDefinition.create({ data: {
+    programId: program.id, title, position, dueAt: new Date("2026-12-31T14:59:00Z"),
+  } })));
+  const [startReport, midtermReport, finalReport] = await Promise.all(definitions.map((definition) => prisma.report.create({ data: {
+    teamId: team.id, definitionId: definition.id, titleSnapshot: definition.title, dueAt: definition.dueAt,
+  } })));
   const reportV1File = await upload(team.id, "REPORT", "start-v1.pdf", "start report version one");
   const v1 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "START", fileId: reportV1File, description: "착수 보고서 1차",
+    teamId: team.id, reportId: startReport.id, fileId: reportV1File, description: "착수 보고서 1차",
   }, new Date("2026-07-14T00:00:00Z"));
   const v1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: v1.reportId, version: 1 }, select: { id: true },
@@ -146,7 +137,7 @@ async function main() {
 
   const reportV2File = await upload(team.id, "REPORT", "start-v2.pdf", "start report version two");
   const v2 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "START", fileId: reportV2File, description: "승인 후 변경 버전",
+    teamId: team.id, reportId: startReport.id, fileId: reportV2File, description: "승인 후 변경 버전",
   }, new Date("2026-07-15T00:00:00Z"));
   if (v2.version !== 2) throw new Error("보고서 버전 번호가 증가하지 않았습니다.");
   const v2Row = await prisma.reportVersion.findFirstOrThrow({
@@ -168,14 +159,14 @@ async function main() {
 
   const midtermV1File = await upload(team.id, "REPORT", "midterm-v1.pdf", "midterm report version one");
   const midtermV1 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "MIDTERM", fileId: midtermV1File, description: "중간 보고서 1차",
+    teamId: team.id, reportId: midtermReport.id, fileId: midtermV1File, description: "중간 보고서 1차",
   }, new Date("2026-07-15T01:00:00Z"));
   const midtermV1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: midtermV1.reportId, version: 1 }, select: { id: true },
   });
   const midtermV2File = await upload(team.id, "REPORT", "midterm-v2.pdf", "midterm report version two");
   const midtermV2 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "MIDTERM", fileId: midtermV2File, description: "중간 보고서 2차",
+    teamId: team.id, reportId: midtermReport.id, fileId: midtermV2File, description: "중간 보고서 2차",
   }, new Date("2026-07-15T02:00:00Z"));
   const midtermV2Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: midtermV2.reportId, version: 2 }, select: { id: true },
@@ -192,7 +183,7 @@ async function main() {
 
   const finalFile = await upload(team.id, "REPORT", "final-v1.pdf", "final report version one");
   const finalV1 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "FINAL", fileId: finalFile, description: "최종 보고서 1차",
+    teamId: team.id, reportId: finalReport.id, fileId: finalFile, description: "최종 보고서 1차",
   }, new Date("2026-07-15T03:00:00Z"));
   const finalV1Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: finalV1.reportId, version: 1 }, select: { id: true },
@@ -214,7 +205,7 @@ async function main() {
 
   const startV3File = await upload(team.id, "REPORT", "start-v3.pdf", "start report final revision");
   const startV3 = await reportSubmissions.submit(student, {
-    teamId: team.id, type: "START", fileId: startV3File, description: "수정 요청 반영본",
+    teamId: team.id, reportId: startReport.id, fileId: startV3File, description: "수정 요청 반영본",
   }, new Date("2026-07-15T04:00:00Z"));
   const startV3Row = await prisma.reportVersion.findFirstOrThrow({
     where: { reportId: startV3.reportId, version: 3 }, select: { id: true },
@@ -268,7 +259,7 @@ async function main() {
   if (!attachedFileStatusMutationDenied) throw new Error("ATTACHED 파일이 READY 상태로 되돌아갔습니다.");
 
   const workspace = await reportQuery.get(student, team.id);
-  const start = workspace.reports.find(({ type }) => type === "START");
+  const start = workspace.reports.find(({ id }) => id === startReport.id);
   if (
     start?.versions.length !== 3 ||
     start.versions[0]?.decision?.decision !== "APPROVED" ||
@@ -283,7 +274,7 @@ async function main() {
   let submissionPeriodDenied = false;
   try {
     await reportSubmissions.submit(student, {
-      teamId: team.id, type: "FINAL", fileId: lateFile, description: "기간 외 제출",
+      teamId: team.id, reportId: finalReport.id, fileId: lateFile, description: "기간 외 제출",
     }, new Date("2027-01-01T00:00:00Z"));
   } catch (error) {
     submissionPeriodDenied = error instanceof ReportOperationNotAllowedError;
@@ -324,7 +315,7 @@ async function main() {
   let closedTeamSubmissionDenied = false;
   try {
     await reportSubmissions.submit(student, {
-      teamId: team.id, type: "FINAL", fileId: lateFile, description: "종료 후 제출",
+      teamId: team.id, reportId: finalReport.id, fileId: lateFile, description: "종료 후 제출",
     }, new Date("2026-07-17T00:00:00Z"));
   } catch (error) {
     closedTeamSubmissionDenied = error instanceof ReportOperationNotAllowedError;

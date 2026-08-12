@@ -8,14 +8,14 @@ import {
 
 export class TopicAlreadyAppliedError extends Error {
   constructor() {
-    super("이미 지원한 주제입니다.");
+    super("이미 지원한 프로젝트입니다.");
     this.name = "TopicAlreadyAppliedError";
   }
 }
 
 export class TopicUnavailableForApplicationError extends Error {
   constructor() {
-    super("현재 지원할 수 없는 주제입니다.");
+    super("현재 지원할 수 없는 프로젝트입니다.");
     this.name = "TopicUnavailableForApplicationError";
   }
 }

@@ -3,11 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   assertValidTopicDetails,
   assertValidTopicPublication,
-  assertValidTopicSchedule,
   canCreateTopic,
   canManageTopic,
-  InvalidTopicScheduleError,
-  type TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
 
 describe("주제 내용 정책", () => {
@@ -59,48 +56,10 @@ describe("주제 내용 정책", () => {
   });
 });
 
-function validSchedule(): TopicSchedule {
-  return {
-    recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
-    executionStartsAt: new Date("2026-03-05T00:00:00Z"),
-    executionEndsAt: new Date("2026-06-10T00:00:00Z"),
-    submissionStartsAt: new Date("2026-06-01T00:00:00Z"),
-    submissionEndsAt: new Date("2026-06-20T00:00:00Z"),
-  };
-}
-
-describe("주제 기간 정책", () => {
-  it("각 기간이 유효하면 기간끼리 겹쳐도 허용한다", () => {
-    expect(() => assertValidTopicSchedule(validSchedule())).not.toThrow();
-  });
-
-  it.each(["execution", "submission"] as const)(
-    "%s 시작 시각이 종료 시각과 같거나 늦으면 거절한다",
-    (period) => {
-      const schedule = validSchedule();
-      const startsAtKey = `${period}StartsAt` as keyof TopicSchedule;
-      const endsAtKey = `${period}EndsAt` as keyof TopicSchedule;
-      schedule[startsAtKey] = schedule[endsAtKey];
-
-      expect(() => assertValidTopicSchedule(schedule)).toThrow(
-        InvalidTopicScheduleError,
-      );
-    },
-  );
-
-  it("해석할 수 없는 날짜를 거절한다", () => {
-    const schedule = validSchedule();
-    schedule.executionStartsAt = new Date("invalid");
-
-    expect(() => assertValidTopicSchedule(schedule)).toThrow(
-      InvalidTopicScheduleError,
-    );
-  });
-});
-
 describe("주제 공개 상태 정책", () => {
   it.each([
-    { status: "DRAFT", publishedAt: null },
+    { status: "PENDING_APPROVAL", publishedAt: null },
+    { status: "REJECTED", publishedAt: null },
     { status: "PUBLISHED", publishedAt: new Date("2026-03-01T00:00:00Z") },
     { status: "CLOSED", publishedAt: new Date("2026-03-01T00:00:00Z") },
   ] as const)("$status 상태와 공개 시각의 일관성을 허용한다", (publication) => {
@@ -108,11 +67,11 @@ describe("주제 공개 상태 정책", () => {
   });
 
   it.each([
-    { status: "DRAFT", publishedAt: new Date("2026-03-01T00:00:00Z") },
+    { status: "PENDING_APPROVAL", publishedAt: new Date("2026-03-01T00:00:00Z") },
     { status: "PUBLISHED", publishedAt: null },
     { status: "CLOSED", publishedAt: null },
     { status: "PUBLISHED", publishedAt: new Date("invalid") },
-    { status: "DRAFT", publishedAt: new Date("invalid") },
+    { status: "REJECTED", publishedAt: new Date("invalid") },
   ] as const)("$status 상태와 모순된 공개 시각을 거절한다", (publication) => {
     expect(() => assertValidTopicPublication(publication)).toThrow();
   });

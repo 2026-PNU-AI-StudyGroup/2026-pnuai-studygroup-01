@@ -19,6 +19,8 @@ const archivedProjectSelect = {
     advisorRole: true,
     requiredSkills: true,
     preferredSkills: true,
+    divisionId: true,
+    division: { select: { name: true } },
     program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true } },
     manager: { select: { name: true } },
   } },
@@ -75,6 +77,7 @@ export class PrismaTeamArchiveQueryRepository
         projectRegistrationStartsAt: true,
         projectRegistrationEndsAt: true,
         votingPolicy: { select: { startsAt: true, endsAt: true } },
+        divisions: { orderBy: { position: "asc" }, select: { id: true, name: true } },
       },
     });
     return programs.map((program) => ({
@@ -144,6 +147,8 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     programId: team.topic.program.id,
     programName: team.topic.program.name,
     programCategory: team.topic.program.category,
+    divisionId: team.topic.divisionId,
+    divisionName: team.topic.division?.name ?? null,
     topicTitle: team.topic.title,
     topicDescription: team.topic.description,
     requiredSkills: team.topic.requiredSkills,
@@ -178,6 +183,11 @@ function closedProjectWhere(
     conditions.push({
       topic: { program: { category: filters.programCategory } },
     });
+  }
+  if (filters.divisionId === "UNASSIGNED") {
+    conditions.push({ topic: { divisionId: null } });
+  } else if (filters.divisionId) {
+    conditions.push({ topic: { divisionId: filters.divisionId } });
   }
   if (filters.query) {
     const query = filters.query;

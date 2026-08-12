@@ -67,23 +67,23 @@ describe("빈 목록 CTA", () => {
     getCurrentActor.mockResolvedValue(student);
   });
 
-  it("보낸 지원이 없으면 빈 상태의 모집 목록 링크만 보여준다", async () => {
+  it("보낸 지원이 없으면 빈 상태의 팀원 모집 링크만 보여준다", async () => {
     listApplicationHistory.mockResolvedValue({ applications: [], total: 0, page: 1, totalPages: 1 });
 
     render(await RecruitmentApplicationsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("link", { name: "모집 목록" })).toHaveAttribute("href", "/recruitments");
-    expect(screen.queryByRole("link", { name: "모집 글 탐색" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "팀원 모집" })).toHaveAttribute("href", "/recruitments");
   });
 
-  it("내 모집이 없으면 빈 상태의 새 모집 링크만 보여준다", async () => {
+  it("내 모집이 없으면 빈 상태의 모집 공고 작성 링크만 보여준다", async () => {
     listAuthoredPosts.mockResolvedValue({ posts: [], total: 0, page: 1, totalPages: 1 });
     listLeaderTeams.mockResolvedValue([]);
 
     render(await MyRecruitmentPostsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByRole("link", { name: "새 모집" })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "새 모집" })).toHaveAttribute("href", "/recruitments/mine?modal=new");
+    expect(screen.getAllByRole("link", { name: "모집 공고 작성" })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "모집 공고 작성" })).toHaveAttribute("href", "/recruitments/mine?modal=new");
   });
 
   it("프로젝트 승인 요청이 없으면 빈 상태의 제안 링크만 보여준다", async () => {

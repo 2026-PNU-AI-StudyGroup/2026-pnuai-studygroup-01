@@ -204,7 +204,7 @@ export default async function DashboardPage({
                   <li key={topic.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <div>
                       <strong><UiText>{topic.title}</UiText></strong>
-                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "DRAFT" ? "초안" : topic.status === "PUBLISHED" ? "공개" : "마감"}</UiText></p>
+                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "PENDING_APPROVAL" ? "승인 대기" : topic.status === "PUBLISHED" ? "공개" : topic.status === "REJECTED" ? "반려됨" : "마감"}</UiText></p>
                     </div>
                     <Link href={`/professor/topics/${topic.id}`} className="button-secondary"><UiText>{"프로젝트 관리"}</UiText></Link>
                   </li>
@@ -227,7 +227,7 @@ export default async function DashboardPage({
           ) : null}
 
           {view === "all" && !hasAnyProject ? (
-            <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "참여할 프로젝트를 확인하고 지원서를 제출하세요." : "주제를 등록하거나 학생 지원을 승인하면 팀이 연결됩니다."} />
+            <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "참여할 프로젝트를 확인하고 지원서를 제출하세요." : "프로젝트를 등록하거나 학생 지원을 승인하면 팀이 연결됩니다."} />
           ) : null}
 
           {view === "all" && activeCount > 0 ? (

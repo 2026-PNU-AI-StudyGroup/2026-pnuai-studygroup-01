@@ -16,6 +16,7 @@ const selectAnnouncement = {
   title: true,
   content: true,
   category: true,
+  visibility: true,
   pinned: true,
   teamId: true,
   programId: true,
@@ -32,6 +33,7 @@ type SelectedAnnouncement = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  visibility: "AUTHENTICATED" | "TARGET_MEMBERS";
   pinned: boolean;
   teamId: string | null;
   programId: string | null;
@@ -51,6 +53,7 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     title: value.title,
     content: value.content,
     category: value.category,
+    visibility: value.visibility,
     pinned: value.pinned,
     teamId: value.teamId,
     teamName: value.team?.name ?? null,
@@ -61,13 +64,15 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
   };
 }
 
-// 대상이 지정된 공지는 소속·작성자만 조회. ADMIN은 제한 없음.
+// 전체 공개 프로그램 공지는 모든 로그인 사용자가 조회할 수 있다.
+// 구성원 전용 프로그램·팀 공지는 소속·작성자만 조회하며 ADMIN은 제한이 없다.
 export function announcementScopeWhere(audience: AnnouncementAudience) {
   if (audience.role === "ADMIN") return {};
   return {
     OR: [
-      { teamId: null, programId: null },
-      { programId: { in: audience.programIds } },
+      { teamId: null, programId: null, visibility: "AUTHENTICATED" as const },
+      { teamId: null, programId: { not: null }, visibility: "AUTHENTICATED" as const },
+      { teamId: null, programId: { in: audience.programIds } },
       { teamId: { in: audience.teamIds } },
       { authorId: audience.actorId },
     ],
@@ -103,6 +108,19 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
       total,
       totalPages,
     };
+  }
+
+  async listForProgram(audience: AnnouncementAudience, programId: string): Promise<AnnouncementRecord[]> {
+    const items = await this.client.announcement.findMany({
+      where: {
+        programId,
+        teamId: null,
+        ...announcementScopeWhere(audience),
+      },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      select: selectAnnouncement,
+    });
+    return items.map(toRecord);
   }
 
   async findById(id: string): Promise<AnnouncementRecord | null> {

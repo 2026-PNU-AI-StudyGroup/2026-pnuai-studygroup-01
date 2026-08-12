@@ -22,7 +22,7 @@ export function ReceivedApplicationDetail({
             <time className="muted text-sm" dateTime={application.createdAt.toISOString()}>
               <UiDate value={application.createdAt} mode="dateTime" /> <UiText>{"지원"}</UiText></time>
           </div>
-          <p className="muted mt-6 text-sm font-medium"><UiText>{"지원 주제"}</UiText></p>
+          <p className="muted mt-6 text-sm font-medium"><UiText>{"지원 프로젝트"}</UiText></p>
           <h2
             id="application-topic-title"
             className="mt-2 text-2xl font-semibold tracking-[-0.035em]"

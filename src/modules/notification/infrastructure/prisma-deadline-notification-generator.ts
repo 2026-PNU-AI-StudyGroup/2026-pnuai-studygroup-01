@@ -22,8 +22,8 @@ export class PrismaDeadlineNotificationGenerator
         where: {
           status: { not: "CLOSED" },
           OR: [
-            { topic: { executionEndsAt: { gte: now, lte: endsAt } } },
-            { topic: { submissionEndsAt: { gte: now, lte: endsAt } } },
+            { topic: { program: { executionEndsAt: { gte: now, lte: endsAt } } } },
+            { topic: { program: { submissionEndsAt: { gte: now, lte: endsAt } } } },
           ],
         },
         select: {
@@ -33,8 +33,7 @@ export class PrismaDeadlineNotificationGenerator
           members: { select: { studentId: true } },
           topic: {
             select: {
-              executionEndsAt: true,
-              submissionEndsAt: true,
+              program: { select: { executionEndsAt: true, submissionEndsAt: true } },
               assistants: { select: { userId: true } },
             },
           },
@@ -65,12 +64,13 @@ export class PrismaDeadlineNotificationGenerator
       }),
       this.client.report.findMany({
         where: {
+          required: true,
           dueAt: { gte: now, lte: endsAt },
           team: { status: "CONFIRMED" },
         },
         select: {
           id: true,
-          type: true,
+          titleSnapshot: true,
           dueAt: true,
           versions: {
             orderBy: { version: "desc" },
@@ -100,8 +100,8 @@ export class PrismaDeadlineNotificationGenerator
         ...team.members.map(({ studentId }) => studentId),
       ]);
       const deadlines = [
-        ["수행 종료", team.topic.executionEndsAt, "execution"],
-        ["결과물 제출", team.topic.submissionEndsAt, "submission"],
+        ["수행 종료", team.topic.program.executionEndsAt, "execution"],
+        ["결과물 제출", team.topic.program.submissionEndsAt, "submission"],
       ] as const;
       for (const [label, dueAt, kind] of deadlines) {
         if (dueAt < now || dueAt > endsAt) continue;
@@ -148,11 +148,7 @@ export class PrismaDeadlineNotificationGenerator
         ...report.team.topic.assistants.map(({ userId }) => userId),
         ...report.team.members.map(({ studentId }) => studentId),
       ]);
-      const label = report.type === "START"
-        ? "착수 보고서"
-        : report.type === "MIDTERM"
-          ? "중간 보고서"
-          : "결과 보고서";
+      const label = report.titleSnapshot;
       for (const recipientId of recipients) {
         rows.push({
           recipientId,

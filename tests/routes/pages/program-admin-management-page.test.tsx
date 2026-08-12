@@ -52,6 +52,9 @@ const program = {
   advisorEnabled: true,
   studentProjectCreationEnabled: true,
   icon: "FOLDER" as const,
+  isPublic: true,
+  lifecycleStatus: "ACTIVE" as const,
+  divisions: [],
   votingPolicy: {
     startsAt: new Date("2026-05-01T00:00:00.000Z"),
     endsAt: new Date("2026-05-31T00:00:00.000Z"),
@@ -79,6 +82,10 @@ describe("프로그램 통합 관리 화면", () => {
     expect(screen.getByText("학생 프로젝트 제안")).toBeInTheDocument();
     expect(screen.getByText("프로그램 아이콘")).toBeInTheDocument();
     expect(screen.getByText("공개 및 마감")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "설정" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "분과" })).toHaveAttribute("href", `/admin/programs/${program.id}?tab=tracks`);
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("href", `/admin/programs/${program.id}?tab=votes`);
+    expect(screen.getByRole("link", { name: "채점표" })).toHaveAttribute("href", `/admin/programs/${program.id}?tab=rubric`);
     expect(screen.queryByText("투표 집계")).not.toBeInTheDocument();
     expect(getResults).not.toHaveBeenCalled();
   });
@@ -87,16 +94,19 @@ describe("프로그램 통합 관리 화면", () => {
     render(await ProgramDetailPage({ params: Promise.resolve({ programId: program.id }), searchParams: Promise.resolve({ tab: "votes" }) }));
 
     expect(screen.getByText("득표현황")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("투표 집계")).toBeInTheDocument();
     expect(getResults).toHaveBeenCalledWith(admin, program.id);
   });
 
-  it("투표 정책이 없으면 득표현황 대신 안내를 보여준다", async () => {
+  it("투표 정책이 없으면 투표 탭에서 설정 진입점을 제공한다", async () => {
     getSettings.mockResolvedValue({ ...program, votingPolicy: null });
 
     render(await ProgramDetailPage({ params: Promise.resolve({ programId: program.id }), searchParams: Promise.resolve({ tab: "votes" }) }));
 
-    expect(screen.queryByText("득표현황")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "투표" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("투표 정책이 없는 프로그램입니다")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "투표 정책 설정" })).toHaveAttribute("href", `/admin/programs/${program.id}#voting-policy`);
     expect(getResults).not.toHaveBeenCalled();
   });
 });

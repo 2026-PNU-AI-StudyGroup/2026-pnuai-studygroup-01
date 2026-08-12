@@ -40,3 +40,14 @@ export async function decideRecruitmentAction(_state: RecruitmentActionState, fo
   revalidatePath("/recruitments/mine");
   return { status: "success", message: parsed.data.decision === "ACCEPT" ? "팀원 지원을 수락했습니다." : "팀원 지원을 거절했습니다." };
 }
+
+export async function closeRecruitmentPostAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
+  const postId = z.string().uuid().safeParse(formData.get("postId"));
+  if (!postId.success) return { status: "error", message: "종료할 모집 공고를 다시 확인해 주세요." };
+  try { await service().closePost(await actor(), postId.data); }
+  catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
+  revalidatePath("/recruitments");
+  revalidatePath("/recruitments/mine");
+  revalidatePath(`/recruitments/${postId.data}/applications`);
+  return { status: "success", message: "모집 공고를 종료했습니다. 대기 중인 지원은 이력으로 보존됩니다." };
+}

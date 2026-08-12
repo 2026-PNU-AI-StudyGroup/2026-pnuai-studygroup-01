@@ -108,11 +108,15 @@ describe("TeamArtifactsPage", () => {
 
     const posterItem = screen.getByRole("heading", { name: "모두의 길 프로젝트 소개 포스터" }).closest("li");
     expect(posterItem).toHaveAttribute("data-artifact-type", "poster");
-    expect(within(posterItem!).getByText("포스터")).toBeInTheDocument();
+    const inlinePosterLabels = within(posterItem!).getAllByText("포스터", { selector: "span" })
+      .filter((label) => !label.closest("dialog"));
+    expect(inlinePosterLabels).toHaveLength(1);
 
     const sourceItem = screen.getByRole("heading", { name: "접근성 길찾기 프로토타입 소스 코드" }).closest("li");
     expect(sourceItem).toHaveAttribute("data-artifact-type", "source_code");
-    expect(within(sourceItem!).getByText("소스 코드")).toBeInTheDocument();
+    const inlineSourceLabels = within(sourceItem!).getAllByText("소스 코드", { selector: "span" })
+      .filter((label) => !label.closest("dialog"));
+    expect(inlineSourceLabels).toHaveLength(1);
     const sourceLink = within(sourceItem!).getByRole("link");
     expect(sourceLink).toHaveAttribute("href", "https://example.com/source");
     expect(sourceLink).toHaveAttribute("target", "_blank");

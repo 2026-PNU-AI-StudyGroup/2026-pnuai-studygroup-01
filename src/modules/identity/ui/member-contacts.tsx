@@ -12,7 +12,7 @@ const contactIcons = {
 const contactLabels = { phone: "전화번호", kakao: "카카오톡", github: "GitHub", instagram: "Instagram" } as const;
 
 export function MemberContacts({ phone, kakao, github, instagram }: MemberContactInfo) {
-  const entries = ([["phone", phone], ["kakao", kakao], ["github", github], ["instagram", instagram]] as const).filter(([, value]) => value);
+  const entries = ([['phone', phone], ['kakao', kakao], ['github', github], ['instagram', instagram]] as const).filter(([, value]) => value);
   return (
     <div className="mt-6 border-t border-[var(--line)] pt-6">
       <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{"연락처"}</UiText></h3>

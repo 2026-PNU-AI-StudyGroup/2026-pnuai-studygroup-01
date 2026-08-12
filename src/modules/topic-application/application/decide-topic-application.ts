@@ -11,7 +11,7 @@ export class TopicApplicationNotFoundError extends Error {
 
 export class TopicApplicationDecisionForbiddenError extends Error {
   constructor() {
-    super("주제 작성자 또는 관리자만 지원서를 처리할 수 있습니다.");
+    super("프로젝트 작성자 또는 관리자만 지원서를 처리할 수 있습니다.");
     this.name = "TopicApplicationDecisionForbiddenError";
   }
 }
@@ -59,7 +59,7 @@ export class DecideTopicApplicationService {
 
     if (outcome === "CAPACITY_REACHED") {
       throw new TopicApplicationDecisionConflictError(
-        "주제의 모집 정원이 이미 찼습니다.",
+        "프로젝트의 모집 정원이 이미 찼습니다.",
       );
     }
     if (outcome === "STUDENT_ALREADY_ASSIGNED") {

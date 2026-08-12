@@ -191,9 +191,12 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           updatedAt: input.respondedAt,
         },
       });
-      // 초대 수락으로 정원이 찬 모집 공고를 닫고 대기 지원을 거절한다.
-      // (모집 지원 수락 decide()와 동일한 정리 — 없으면 유령 "모집 중" 공고와
-      //  영구 대기 지원자가 남는다.)
+      await transaction.studentTeam.update({
+        where: { id: invitation.teamId },
+        data: { compositionVersion: { increment: 1 }, updatedAt: input.respondedAt },
+      });
+      // 초대 수락으로 정원이 찬 모집 공고를 닫는다. 대기 지원은 모집 종료로
+      // 조회해 실제 거절과 자동 종료를 구분한다.
       const memberCount = await transaction.studentTeamMember.count({
         where: { teamId: invitation.teamId },
       });
@@ -206,10 +209,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         await transaction.studentTeamRecruitmentPost.updateMany({
           where: { id: { in: filledPostIds } },
           data: { status: "CLOSED" },
-        });
-        await transaction.studentTeamRecruitmentApplication.updateMany({
-          where: { postId: { in: filledPostIds }, status: "PENDING" },
-          data: { status: "REJECTED", decidedAt: input.respondedAt },
         });
       }
       return "ACCEPTED";
@@ -252,7 +251,7 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
       });
       await transaction.studentTeam.update({
         where: { id: input.teamId },
-        data: { leaderId: input.nextLeaderId },
+        data: { leaderId: input.nextLeaderId, compositionVersion: { increment: 1 } },
       });
       return true;
     });
@@ -280,6 +279,12 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           studentId: input.studentId,
         },
       });
+      if (result.count === 1) {
+        await transaction.studentTeam.update({
+          where: { id: input.teamId },
+          data: { compositionVersion: { increment: 1 } },
+        });
+      }
       return result.count === 1;
     });
   }
@@ -321,6 +326,13 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           reviewComment: "팀 삭제로 승인 요청이 자동 종료되었습니다.",
           decidedAt: input.deletedAt,
         },
+      });
+      await transaction.topic.updateMany({
+        where: {
+          approvalRequest: { studentTeamId: input.teamId, status: "REJECTED" },
+          status: "PENDING_APPROVAL",
+        },
+        data: { status: "REJECTED" },
       });
       return true;
     });
