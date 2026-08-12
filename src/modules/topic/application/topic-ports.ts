@@ -1,21 +1,17 @@
 import type {
   TopicDetails,
-  TopicSchedule,
 } from "@/modules/topic/domain/topic-policy";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicDraft = TopicDetails &
-  TopicSchedule & {
+  {
     programId: string;
+    divisionId?: string | null;
     authorId: string;
   };
 
 export interface TopicCreator {
-  createDraft(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
-}
-
-export interface TopicScheduleUpdater {
-  updateSchedule(id: string, actor: CurrentActor, schedule: TopicSchedule): Promise<boolean>;
+  createPublished(topic: TopicDraft, registeredAt: Date): Promise<{ id: string } | null>;
 }
 
 export type TopicUpdateOutcome =
@@ -30,9 +26,8 @@ export interface TopicEditor {
   update(
     id: string,
     actor: CurrentActor,
-    topic: Omit<TopicDraft, "authorId">,
+    topic: Omit<TopicDraft, "authorId" | "divisionId">,
   ): Promise<TopicUpdateOutcome>;
-  deleteDraft(id: string, actor: CurrentActor): Promise<boolean>;
 }
 
 type TopicApplicationQuestionSummary = {
@@ -48,13 +43,19 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
   authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";
-  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   publishedAt: Date | null;
   programName: string;
   programCategory: string;
+  divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
+  programRecruitmentStartsAt: Date;
   programRecruitmentEndsAt: Date;
+  programExecutionStartsAt: Date;
+  programExecutionEndsAt: Date;
+  programSubmissionStartsAt: Date;
+  programSubmissionEndsAt: Date;
 };
 
 export type ManagedTopicSummary = TopicSummary & {
@@ -87,13 +88,12 @@ export type TopicStateRecord = {
   authorId: string;
   managerId: string | null;
   assistantIds: string[];
-  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
   recruitmentEnabled: boolean;
 };
 
 export interface TopicStateRepository {
   findState(id: string): Promise<TopicStateRecord | null>;
-  publishDraft(id: string, actor: CurrentActor, publishedAt: Date): Promise<boolean>;
   closePublished(id: string, actor: CurrentActor): Promise<boolean>;
   closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean>;
 }
@@ -106,15 +106,11 @@ export type PublicTopicSummary = TopicSummary & {
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;
 };
 
-export type PublicTopicPhase = "ACTIVE" | "RECRUITING" | "CLOSING_SOON";
-export type PublicTopicSort = "LATEST" | "DEADLINE";
-
 export type PublicTopicQuery = {
   viewerId?: string;
   programId?: string;
+  divisionId?: string | "UNASSIGNED";
   query: string;
-  phase: PublicTopicPhase;
-  sort: PublicTopicSort;
   page: number;
   pageSize: number;
   now: Date;
@@ -125,7 +121,6 @@ export type PublicTopicPage = {
   page: number;
   totalPages: number;
   total: number;
-  counts: Record<PublicTopicPhase, number>;
 };
 
 export interface PublicTopicLister {

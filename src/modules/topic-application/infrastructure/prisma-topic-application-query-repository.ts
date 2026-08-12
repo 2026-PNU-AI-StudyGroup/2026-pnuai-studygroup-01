@@ -28,7 +28,7 @@ const studentSummarySelect = {
     select: {
       title: true,
       status: true,
-      program: { select: { name: true, status: true } },
+      program: { select: { name: true, isPublic: true, lifecycleStatus: true } },
     },
   },
   student: { select: { name: true, email: true } },
@@ -114,7 +114,7 @@ function toStudentSummary(application: StudentSummaryRow): TopicApplicationSumma
     topicTitle: topic.title,
     topicStatus: topic.status,
     programName: topic.program.name,
-    programStatus: topic.program.status,
+    programStatus: topic.program.lifecycleStatus === "CLOSED" ? "CLOSED" : topic.program.isPublic ? "OPEN" : "DRAFT",
     applicationKind: group?.kind ?? "INDIVIDUAL",
     teamMembers: group
       ? group.applications.map(({ studentId, participantRole, student: member }) => ({ studentId, name: member.name, email: member.email, role: participantRole }))

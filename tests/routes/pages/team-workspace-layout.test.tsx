@@ -92,11 +92,10 @@ const workspace = {
     phoneNumber: "010-1234-5678",
     contactEmail: "sky@example.com",
     profile: {
-      interests: ["접근성"],
-      skills: ["TypeScript"],
-      desiredRole: "프론트엔드 개발",
-      availability: "평일 저녁",
-      bio: "사용자 문제를 해결하고 싶습니다.",
+      phone: "010-9999-8888",
+      kakao: "haneul_id",
+      github: "https://github.com/haneul",
+      instagram: "https://instagram.com/haneul",
     },
   }],
   discussionPosts: [],
@@ -166,7 +165,7 @@ describe("TeamWorkspaceLayout", () => {
 
     expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveAttribute("open");
     expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("정보컴퓨터공학부");
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("프론트엔드 개발");
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("사용자 문제를 해결하고 싶습니다.");
+    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("haneul_id");
+    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("010-9999-8888");
   });
 });

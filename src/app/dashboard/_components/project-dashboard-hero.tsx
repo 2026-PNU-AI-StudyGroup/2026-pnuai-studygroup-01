@@ -13,7 +13,7 @@ function DashboardActions({ role }: { role: ProjectDashboardRole }) {
         <Link href="/professor/applications" className="button-secondary">
           <UiText>{"지원 검토"}</UiText></Link>
         <Link href="/professor/topics" className="button-primary">
-          <UiText>{"주제 관리"}</UiText></Link>
+          <UiText>{"프로젝트 관리"}</UiText></Link>
       </div>
     );
   }

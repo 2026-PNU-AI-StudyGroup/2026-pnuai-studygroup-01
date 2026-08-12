@@ -55,7 +55,7 @@ describe("내 프로젝트 통합 화면", () => {
 
     expect(screen.getByRole("heading", { name: "프로젝트 운영" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "지원 검토" })).toHaveAttribute("href", "/professor/applications");
-    expect(screen.getByRole("link", { name: "주제 관리" })).toHaveAttribute("href", "/professor/topics");
+    expect(screen.getByRole("link", { name: "프로젝트 관리" })).toHaveAttribute("href", "/professor/topics");
   });
 
   it("진행 프로젝트 카드는 핵심 현황과 카드 전체 진입점을 제공한다", () => {

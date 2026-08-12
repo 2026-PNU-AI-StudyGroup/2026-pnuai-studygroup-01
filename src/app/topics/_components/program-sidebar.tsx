@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 
-import { UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiNav, UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
@@ -37,7 +37,7 @@ function VotingProgramCarousel({
   const currentProgram = programs[currentIndex];
 
   return (
-    <section id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--primary-hover)] bg-[var(--primary)] p-3.5 text-white">
+    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--primary-hover)] bg-[var(--primary)] p-3.5 text-white">
       <span aria-hidden="true" className="absolute -right-7 -top-8 size-24 rounded-full border border-white/15" />
       <span aria-hidden="true" className="absolute -right-2 -top-2 size-12 rounded-full bg-white/10" />
       <div className="relative">
@@ -80,7 +80,7 @@ function VotingProgramCarousel({
           </button>
         </div>
       ) : null}
-    </section>
+    </UiSection>
   );
 }
 
@@ -227,19 +227,16 @@ export function ProgramSidebar({ items, selectedId }: {
     });
   }
 
-  function navigationContent(surface: "mobile" | "desktop") {
-    return (
-      <div className="space-y-4">
-        {votingPrograms.length ? (
-          <VotingProgramCarousel programs={votingPrograms} selectedId={selectedId} activeIndex={activeVotingIndex} onMove={moveVotingProgram} />
-        ) : null}
-        {years.length ? <div className="space-y-2">{yearGroups(surface)}</div> : null}
-      </div>
-    );
+  function programList(surface: "mobile" | "desktop") {
+    return years.length ? <div className="space-y-2">{yearGroups(surface)}</div> : null;
   }
 
+  const voteBox = votingPrograms.length ? (
+    <VotingProgramCarousel programs={votingPrograms} selectedId={selectedId} activeIndex={activeVotingIndex} onMove={moveVotingProgram} />
+  ) : null;
+
   return (
-    <div className="px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
+    <div className="flex flex-col px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:px-3 lg:py-8">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{"프로그램"}</UiText>}
         label={<UiText>{selectedProgram?.name ?? "프로그램 없음"}</UiText>}
@@ -249,16 +246,22 @@ export function ProgramSidebar({ items, selectedId }: {
           <strong className="text-xs font-bold text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
         </div>
         <UiNav aria-label="프로그램 선택 모바일">
-          {navigationContent("mobile")}
+          <div className="space-y-4">
+            {programList("mobile")}
+            {voteBox}
+          </div>
         </UiNav>
       </ResponsiveSectionNavigation>
 
-      <div className="hidden lg:block">
-        <div className="mb-4 px-2">
+      <div className="hidden min-h-0 flex-1 flex-col lg:flex">
+        <div className="mb-4 shrink-0 px-2">
           <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{"프로그램"}</UiText></h2>
         </div>
-        <UiNav aria-label="프로그램 선택">
-          {navigationContent("desktop")}
+        <UiNav aria-label="프로그램 선택" className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {programList("desktop")}
+          </div>
+          {voteBox ? <div className="mt-4 shrink-0">{voteBox}</div> : null}
         </UiNav>
       </div>
     </div>

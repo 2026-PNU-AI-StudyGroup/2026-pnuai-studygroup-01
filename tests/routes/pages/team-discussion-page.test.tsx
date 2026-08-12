@@ -51,6 +51,7 @@ const workspace = {
   advisorEnabled: true,
   professorName: "김도윤",
   members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
+  assistants: [{ id: "assistant-1", name: "이서연", email: "assistant@pusan.ac.kr" }],
   discussionPosts: [
     {
       id: "post-1",
@@ -77,7 +78,7 @@ describe("TeamDiscussionPage", () => {
     loadTeamWorkspace.mockResolvedValue({ actor, workspace });
   });
 
-  it("대화 계약을 유지하면서 메시지와 참여자를 하나의 흰색 패널로 묶는다", async () => {
+  it("대화 계약을 유지하면서 메시지와 작성기를 하나의 흰색 패널로 묶는다", async () => {
     const { container } = render(await TeamDiscussionPage({
       params: Promise.resolve({ teamId: "team-1" }),
       searchParams: Promise.resolve({ page: "2" }),
@@ -87,17 +88,19 @@ describe("TeamDiscussionPage", () => {
 
     const page = screen.getByRole("region", { name: "팀 대화" });
     expect(page).toHaveClass("mx-auto", "w-full", "max-w-6xl");
-    expect(screen.getByRole("heading", { name: "팀 대화" }).closest("header")).not.toHaveClass("border-b");
+    const pageHeader = screen.getByRole("heading", { name: "팀 대화" }).closest("header");
+    expect(pageHeader).not.toHaveClass("border-b");
 
-    const participantPanel = screen.getByRole("complementary", { name: "대화 참여자" });
-    const discussionPanel = participantPanel.parentElement;
+    expect(pageHeader?.querySelector("p")).toHaveTextContent("3명 참여 · 메시지 30개");
+
+    const messageLog = screen.getByRole("log", { name: "팀 대화" });
+    const discussionPanel = messageLog.closest("div.overflow-hidden");
     expect(discussionPanel).toHaveClass(
       "overflow-hidden",
       "rounded-[var(--radius-panel)]",
       "border",
       "bg-white",
     );
-    const messageLog = screen.getByRole("log", { name: "팀 대화" });
     expect(messageLog).toHaveAttribute("tabindex", "0");
     expect(discussionPanel).toContainElement(messageLog);
     expect(discussionPanel).toContainElement(container.querySelector("[data-discussion-scroll-container]"));

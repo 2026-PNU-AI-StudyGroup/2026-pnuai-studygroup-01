@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
+import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type {
   AcceptTopicApplicationOutcome,
   TopicApplicationDecisionActor,
@@ -60,18 +61,18 @@ export class PrismaTopicApplicationAcceptance {
         }
 
         const lockedPrograms = await transaction.$queryRaw<Array<{
-          status: "DRAFT" | "OPEN" | "CLOSED";
+          lifecycleStatus: "ACTIVE" | "CLOSED";
         }>>(Prisma.sql`
-          SELECT "project_program"."status"
+          SELECT "project_program"."lifecycleStatus"
           FROM "project_program"
           JOIN "topic" ON "topic"."programId" = "project_program"."id"
           WHERE "topic"."id" = ${target.topicId}
           FOR UPDATE OF "project_program"
         `);
-        const lockedTopics = await transaction.$queryRaw<Array<{ status: "DRAFT" | "PUBLISHED" | "CLOSED" }>>(Prisma.sql`
+        const lockedTopics = await transaction.$queryRaw<Array<{ status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED" }>>(Prisma.sql`
           SELECT "status" FROM "topic" WHERE "id" = ${target.topicId} FOR UPDATE
         `);
-        if (lockedPrograms[0]?.status !== "OPEN" || lockedTopics[0]?.status !== "PUBLISHED") {
+        if (lockedPrograms[0]?.lifecycleStatus !== "ACTIVE" || lockedTopics[0]?.status !== "PUBLISHED") {
           return "CONFLICT";
         }
 
@@ -155,6 +156,7 @@ export class PrismaTopicApplicationAcceptance {
           },
           select: { id: true },
         });
+        await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
         await transaction.teamMember.create({
           data: {
             teamId: team.id,
@@ -257,8 +259,8 @@ export class PrismaTopicApplicationAcceptance {
       orderBy: { participantRole: "asc" },
       select: { id: true, studentId: true, status: true },
     });
-    const programRows = await transaction.$queryRaw<Array<{ status: "DRAFT" | "OPEN" | "CLOSED" }>>(Prisma.sql`
-      SELECT "project_program"."status"
+    const programRows = await transaction.$queryRaw<Array<{ lifecycleStatus: "ACTIVE" | "CLOSED" }>>(Prisma.sql`
+      SELECT "project_program"."lifecycleStatus"
       FROM "project_program"
       JOIN "topic" ON "topic"."programId" = "project_program"."id"
       WHERE "topic"."id" = ${group.topicId}
@@ -271,7 +273,7 @@ export class PrismaTopicApplicationAcceptance {
       managerId: string | null;
       programId: string;
       capacity: number;
-      status: "DRAFT" | "PUBLISHED" | "CLOSED";
+      status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
     }>>(Prisma.sql`
       SELECT "topic"."id", "topic"."title", "topic"."authorId", "topic"."managerId", "topic"."programId", "topic"."capacity",
              "topic"."status"
@@ -283,7 +285,7 @@ export class PrismaTopicApplicationAcceptance {
     if (
       !topic ||
       topic.status !== "PUBLISHED" ||
-      programRows[0]?.status !== "OPEN" ||
+      programRows[0]?.lifecycleStatus !== "ACTIVE" ||
       applications.length === 0 ||
       applications.some(({ status }) => status !== "PENDING")
     ) {
@@ -329,6 +331,7 @@ export class PrismaTopicApplicationAcceptance {
       },
       select: { id: true },
     });
+    await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
     await transaction.teamMember.createMany({
       data: applications.map((application) => ({
         teamId: team.id,

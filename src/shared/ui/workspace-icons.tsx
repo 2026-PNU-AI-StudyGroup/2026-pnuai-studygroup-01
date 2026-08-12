@@ -30,6 +30,15 @@ export function BellIcon(props: IconProps) {
   );
 }
 
+export function PinIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M9 4h6l-.75 5L17 12v1H7v-1l2.75-3L9 4Z" />
+      <path d="M12 13v7" />
+    </svg>
+  );
+}
+
 export function ProfileIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>
@@ -60,6 +69,14 @@ export function CheckIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>
       <path d="m5 12.5 4.25 4.25L19 7" />
+    </svg>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="m6 6 12 12M18 6 6 18" />
     </svg>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, type KeyboardEvent, type RefObject } from "react";
 
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiText } from "@/shared/i18n/i18n-provider";
 import { UiButton } from "@/shared/i18n/localized-elements";
 
 const focusableSelector = [
@@ -19,6 +19,7 @@ export function ConfirmationDialog({
   title = "확인",
   description,
   confirmLabel = "확인",
+  confirmClassName = "button-danger",
   cancelLabel = "취소",
   onConfirm,
   onCancel,
@@ -28,6 +29,7 @@ export function ConfirmationDialog({
   title?: string;
   description: string;
   confirmLabel?: string;
+  confirmClassName?: string;
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -94,7 +96,7 @@ export function ConfirmationDialog({
           <UiButton ref={cancelButtonRef} type="button" className="button-secondary" onClick={onCancel}>
             <UiText>{cancelLabel}</UiText>
           </UiButton>
-          <UiButton type="button" className="button-danger" onClick={onConfirm}>
+          <UiButton type="button" className={confirmClassName} onClick={onConfirm}>
             <UiText>{confirmLabel}</UiText>
           </UiButton>
         </div>

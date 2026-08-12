@@ -71,6 +71,7 @@ export default async function EditAnnouncementPage({
             initialCategory={announcement.category}
             initialPinned={announcement.pinned}
             initialTarget={initialTarget}
+            initialVisibility={announcement.visibility}
           />
         </div>
       </main>

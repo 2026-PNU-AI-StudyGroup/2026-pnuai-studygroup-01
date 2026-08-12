@@ -77,18 +77,31 @@ function ApprovalDetail({ request, canDecide }: { request: TopicApprovalRequestD
             {request.applicationQuestions.map((question, index) => <li key={question.id} className="grid gap-2 py-4 sm:grid-cols-[2rem_minmax(0,1fr)_auto]"><strong className="text-[var(--primary)]">{index + 1}</strong><span className="font-semibold"><UiText>{question.label}</UiText></span><span className="text-xs text-[var(--muted)]"><UiText>{question.required ? "필수" : "선택"}</UiText> · {question.maxLength}<UiText>{"자"}</UiText></span></li>)}
           </ol>
         </section>
+
+        {request.studentTeam ? (
+          <section aria-labelledby="approval-team-title">
+            <h2 id="approval-team-title" className="text-xl font-bold"><UiText>{"승인 대상 기존 팀"}</UiText></h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"승인 시 이 구성원 전원이 실행 팀으로 확정됩니다. 구성 변경이 있으면 새 제안이 필요합니다."}</UiText></p>
+            <div className="mt-4 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+              <div className="border-b border-[var(--line)] px-5 py-4 font-bold"><UiText>{request.studentTeam.name}</UiText></div>
+              <ul className="divide-y divide-[var(--line)]">
+                {request.studentTeam.members.map((member) => <li key={member.id} className="flex items-center justify-between gap-4 px-5 py-3 text-sm"><span className="font-semibold">{member.name} <span className="font-normal text-[var(--muted)]">{member.email}</span></span><StatusBadge tone={member.role === "LEADER" ? "info" : "neutral"}><UiText>{member.role === "LEADER" ? "팀장" : "팀원"}</UiText></StatusBadge></li>)}
+              </ul>
+            </div>
+          </section>
+        ) : null}
       </div>
 
       <aside className="space-y-6">
         <section aria-labelledby="approval-schedule-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">
-          <h2 id="approval-schedule-title" className="text-lg font-bold"><UiText>{"프로젝트 일정"}</UiText></h2>
-          <dl className="mt-4 grid gap-5"><Period label="프로그램 모집 기간" start={request.recruitmentStartsAt} end={request.programRecruitmentEndsAt} /><Period label="수행 기간" start={request.executionStartsAt} end={request.executionEndsAt} /><Period label="제출 기간" start={request.submissionStartsAt} end={request.submissionEndsAt} /></dl>
+          <h2 id="approval-schedule-title" className="text-lg font-bold"><UiText>{"프로그램 일정"}</UiText></h2>
+          <dl className="mt-4 grid gap-5"><Period label="프로그램 모집 기간" start={request.programRecruitmentStartsAt} end={request.programRecruitmentEndsAt} /><Period label="수행 기간" start={request.programExecutionStartsAt} end={request.programExecutionEndsAt} /><Period label="제출 기간" start={request.programSubmissionStartsAt} end={request.programSubmissionEndsAt} /></dl>
         </section>
         {canDecide ? (
           <section aria-labelledby="approval-decision-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">
             <h2 id="approval-decision-title" className="text-lg font-bold"><UiText>{"승인 결정"}</UiText></h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"제안 내용과 일정을 모두 확인한 뒤 처리해 주세요."}</UiText></p>
-            <div className="mt-4"><TopicApprovalDecisionForm requestId={request.id} /></div>
+            <div className="mt-4"><TopicApprovalDecisionForm requestId={request.id} studentTeamVersion={request.studentTeam ? request.studentTeamVersion : undefined} /></div>
           </section>
         ) : request.status !== "PENDING" ? (
           <section aria-labelledby="approval-result-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">

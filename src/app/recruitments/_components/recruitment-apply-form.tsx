@@ -6,7 +6,6 @@ import { useActionState, useId, useRef } from "react";
 
 import { applyRecruitmentAction } from "@/app/recruitments/_actions/recruitment-actions";
 import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
-import type { StudentProfile } from "@/modules/identity/domain/student-profile";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
@@ -14,12 +13,10 @@ export function RecruitmentApplyForm({
   postId,
   postTitle,
   teamName,
-  profile,
 }: {
   postId: string;
   postTitle: string;
   teamName: string;
-  profile: StudentProfile | null;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -48,7 +45,7 @@ export function RecruitmentApplyForm({
           <div>
             <p className="text-sm font-bold text-[var(--primary)]">{teamName}</p>
             <h3 id={titleId} className="mt-1 text-2xl font-bold tracking-[-0.035em]"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
-            <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"희망 역할과 활동 가능 시간을 입력해 주세요."}</UiText></p>
+            <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"희망 역할과 지원 내용을 입력해 주세요."}</UiText></p>
           </div>
           <UiButton type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
@@ -58,9 +55,7 @@ export function RecruitmentApplyForm({
         </div>
         <form action={action} className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7">
           <input type="hidden" name="postId" value={postId} />
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"보유 기술"}</UiText><UiInput name="skills" required defaultValue={profile?.skills.join(", ")} className="form-control" placeholder="예: TypeScript, Python" /></label>
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required defaultValue={profile?.desiredRole} className="form-control" placeholder="팀에서 맡고 싶은 역할" /></label>
-          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"활동 가능 시간"}</UiText><UiInput name="availability" required defaultValue={profile?.availability} className="form-control" placeholder="회의와 작업이 가능한 시간" /></label>
+          <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"희망 역할"}</UiText><UiInput name="desiredRole" required className="form-control" placeholder="팀에서 맡고 싶은 역할" /></label>
           <label className="grid gap-2 text-sm font-semibold sm:col-span-2"><UiText>{"지원 내용"}</UiText><UiTextarea aria-label="지원 내용" name="message" maxLength={2000} rows={6} required className="form-control resize-y" placeholder="관련 경험과 지원 동기를 구체적으로 작성해 주세요" /><span className="muted text-xs font-normal"><UiText>{"최대 2,000자"}</UiText></span></label>
           {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"><UiText>{state.message}</UiText></p> : null}
           <div className="sticky bottom-0 -mx-5 -mb-6 flex flex-col-reverse gap-2 border-t border-[var(--line)] bg-white px-5 py-4 sm:col-span-2 sm:-mx-7 sm:flex-row sm:justify-end sm:px-7">

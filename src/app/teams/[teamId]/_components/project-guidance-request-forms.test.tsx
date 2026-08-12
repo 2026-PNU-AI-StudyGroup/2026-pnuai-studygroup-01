@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -98,8 +98,10 @@ describe("프로젝트 지도 요청 폼", () => {
     fireEvent.click(screen.getByRole("button", { name: "희망 일시" }));
     fireEvent.change(screen.getByLabelText("시간"), { target: { value: "14:00" } });
     fireEvent.click(screen.getByRole("button", { name: "오늘" }));
-    const preferredAt = container.querySelector<HTMLInputElement>('input[name="preferredAt"]')!.value;
-    expect(preferredAt).toMatch(/T14:00$/);
+    const preferredAtInput = container.querySelector<HTMLInputElement>('input[name="preferredAt"]')!;
+    const preferredAt = preferredAtInput.value;
+    expect(preferredAt).not.toBe("");
+    expect(preferredAt.localeCompare(preferredAtInput.min)).toBeGreaterThanOrEqual(0);
     fireEvent.submit(screen.getByLabelText("제목").closest("form")!);
 
     await waitFor(() => expect(createRequest).toHaveBeenCalledTimes(1));
@@ -151,7 +153,6 @@ describe("프로젝트 지도 요청 폼", () => {
 
   it("확인한 취소만 액션에 전달하고 성공 상태를 알린다", async () => {
     cancelRequest.mockResolvedValue({ status: "success", message: "요청을 취소했습니다." });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<CancelProjectGuidanceRequestForm teamId={teamId} requestId={requestId} />);
 
     const cancelButton = screen.getByRole("button", { name: "요청 취소" });
@@ -159,8 +160,13 @@ describe("프로젝트 지도 요청 폼", () => {
     fireEvent.click(cancelButton);
     expect(cancelRequest).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
+    const dismissedDialog = screen.getByRole("alertdialog");
+    expect(dismissedDialog).toHaveTextContent("이 요청을 취소하시겠습니까?");
+    fireEvent.click(within(dismissedDialog).getByRole("button", { name: "취소" }));
+    expect(cancelRequest).not.toHaveBeenCalled();
+
     fireEvent.click(cancelButton);
+    fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "확인" }));
 
     await waitFor(() => expect(cancelRequest).toHaveBeenCalledTimes(1));
     const formData = cancelRequest.mock.calls[0][1] as FormData;

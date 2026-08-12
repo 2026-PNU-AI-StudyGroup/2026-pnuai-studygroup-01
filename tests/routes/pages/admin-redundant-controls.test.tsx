@@ -49,6 +49,8 @@ const program = {
   advisorEnabled: true,
   studentProjectCreationEnabled: true,
   icon: "FOLDER" as const,
+  isPublic: true,
+  lifecycleStatus: "CLOSED" as const,
   votingPolicy: null,
 };
 
@@ -68,7 +70,7 @@ describe("관리 화면의 중복·가짜 컨트롤", () => {
     expect(screen.getAllByRole("link", { name: "새 프로그램" })).toHaveLength(1);
   });
 
-  it("프로그램 목록은 최우측 관리 버튼 하나로 모든 조작을 진입시킨다", async () => {
+  it("프로그램 목록은 상태를 보여주고 관리 버튼 하나로 모든 조작을 진입시킨다", async () => {
     listPrograms.mockResolvedValue([program]);
 
     render(await ProgramsAdminPage());
@@ -76,9 +78,33 @@ describe("관리 화면의 중복·가짜 컨트롤", () => {
     const manage = screen.getByRole("link", { name: "관리" });
     expect(manage).toHaveAttribute("href", "/admin/programs/program-1");
     expect(manage.parentElement?.parentElement).toHaveClass("2xl:col-start-4");
-    expect(screen.queryByRole("link", { name: "등록·투표 설정" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "득표현황" })).not.toBeInTheDocument();
+    expect(screen.getByText("공개")).toBeInTheDocument();
+    expect(screen.getByText("운영 마감")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "설정" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "투표 현황" })).not.toBeInTheDocument();
     expect(screen.queryByText("지도교수 있음")).not.toBeInTheDocument();
+  });
+
+  it("투표 정책이 있는 프로그램도 단계 배지와 단일 관리 진입점을 제공한다", async () => {
+    listPrograms.mockResolvedValue([{
+      ...program,
+      status: "OPEN",
+      lifecycleStatus: "ACTIVE",
+      votingPolicy: {
+        startsAt: new Date("2000-01-01T00:00:00.000Z"),
+        endsAt: new Date("2100-01-01T00:00:00.000Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS",
+      },
+    }]);
+
+    render(await ProgramsAdminPage());
+
+    expect(screen.getByText("투표 진행 중")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "관리" })).toHaveAttribute("href", "/admin/programs/program-1");
+    expect(screen.queryByRole("link", { name: "투표 현황" })).not.toBeInTheDocument();
   });
 
   it("현재 관리자는 비활성화 버튼 대신 내 계정 상태를 보여준다", async () => {

@@ -18,10 +18,10 @@ import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-para
 import { ProjectPagination } from "@/shared/ui/project-pagination";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("주제 관리");
+  return getLocalizedMetadata("프로젝트 관리");
 }
 
-const statusPresentation = { DRAFT: ["초안", "neutral"], PUBLISHED: ["공개", "info"], CLOSED: ["마감", "neutral"] } as const;
+const statusPresentation = { PENDING_APPROVAL: ["승인 대기", "warning"], PUBLISHED: ["공개", "info"], REJECTED: ["반려됨", "danger"], CLOSED: ["마감", "neutral"] } as const;
 
 export default async function ProfessorTopicsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await requireProfessorWorkspaceActor();
@@ -38,15 +38,15 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics">
-      <ProfessorWorkspace currentPath="/professor/topics" role={actor.role} title="프로젝트 주제" description={canCreateTopics ? "학생이 수행할 프로젝트의 목표, 지원 조건, 일정을 관리합니다." : "조교로 배정된 프로젝트의 공개 내용과 운영 상태를 확인합니다."} actions={canCreateTopics ? <>{topics.total && programs.length ? <Link href="/professor/topics/new" className="button-primary"><UiText>{"새 주제 등록"}</UiText></Link> : null}<Link href="/project-approvals" className="button-secondary"><UiText>{"학생 제안 검토"}</UiText></Link></> : undefined}>
-        {canCreateTopics && programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[var(--warning-subtle)] p-4 text-sm text-[var(--warning-ink)]"><UiText>{"프로젝트 등록 기간인 공개 프로그램이 생기면 새 주제를 만들 수 있습니다."}</UiText></p> : null}
+      <ProfessorWorkspace currentPath="/professor/topics" role={actor.role} title="프로젝트 관리" description={canCreateTopics ? "학생이 수행할 프로젝트의 목표, 지원 조건, 일정을 관리합니다." : "조교로 배정된 프로젝트의 공개 내용과 운영 상태를 확인합니다."} actions={canCreateTopics ? <>{topics.total && programs.length ? <Link href="/professor/topics/new" className="button-primary"><UiText>{"새 프로젝트 등록"}</UiText></Link> : null}<Link href="/project-approvals" className="button-secondary"><UiText>{"학생 제안 검토"}</UiText></Link></> : undefined}>
+        {canCreateTopics && programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[var(--warning-subtle)] p-4 text-sm text-[var(--warning-ink)]"><UiText>{"프로젝트 등록 기간인 공개 프로그램이 생기면 새 프로젝트를 만들 수 있습니다."}</UiText></p> : null}
         <section aria-labelledby="topic-list-title">
           <div className="overflow-hidden lg:rounded-[var(--radius-panel)] lg:border lg:border-[var(--line)] lg:bg-white lg:shadow-[var(--shadow-admin-panel)]">
             <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4 lg:bg-[var(--surface-subtle)] lg:px-6 lg:py-5">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"주제 관리"}</UiText></p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"프로젝트 관리"}</UiText></p>
                 <h2 id="topic-list-title" className="mt-1 text-lg font-bold">
-                  <UiText>{actor.role === "ADMIN" ? "전체 주제" : actor.role === "STUDENT" ? "담당 주제" : "내 주제"}</UiText>
+                  <UiText>{actor.role === "ADMIN" ? "전체 프로젝트" : actor.role === "STUDENT" ? "담당 프로젝트" : "내 프로젝트"}</UiText>
                 </h2>
               </div>
               <span className="text-sm font-bold text-[var(--muted)]"><strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></span>
@@ -54,9 +54,9 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
             {topics.items.length === 0 ? (
               <div className="pt-6 lg:p-6">
                 <EmptyState
-                  title={actor.role === "ADMIN" ? "등록된 주제가 없습니다" : actor.role === "STUDENT" ? "배정된 조교 프로젝트가 없습니다" : "등록한 주제가 없습니다"}
-                  description={actor.role === "STUDENT" ? "프로젝트 관리자의 조교 초대를 수락하면 담당 주제가 표시됩니다." : programs.length ? "프로젝트 주제를 등록해 학생에게 공개하세요." : "프로젝트 등록 기간인 공개 프로그램이 생기면 새 주제를 등록할 수 있습니다."}
-                  action={canCreateTopics && programs.length ? <Link className="button-primary" href="/professor/topics/new"><UiText>{"새 주제 등록"}</UiText></Link> : undefined}
+                  title={actor.role === "ADMIN" ? "등록된 프로젝트가 없습니다" : actor.role === "STUDENT" ? "배정된 조교 프로젝트가 없습니다" : "등록한 프로젝트가 없습니다"}
+                  description={actor.role === "STUDENT" ? "프로젝트 관리자의 조교 초대를 수락하면 담당 프로젝트가 표시됩니다." : programs.length ? "프로젝트를 등록해 학생에게 공개하세요." : "프로젝트 등록 기간인 공개 프로그램이 생기면 새 프로젝트를 등록할 수 있습니다."}
+                  action={canCreateTopics && programs.length ? <Link className="button-primary" href="/professor/topics/new"><UiText>{"새 프로젝트 등록"}</UiText></Link> : undefined}
                 />
               </div>
             ) : (
@@ -89,7 +89,6 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
                       <TopicStatusButton
                         topicId={topic.id}
                         status={topic.status}
-                        programStatus={topic.programStatus}
                         pendingApplicationCount={topic.pendingApplicationCount}
                         openRecruitmentPostCount={topic.openRecruitmentPostCount}
                         recruitmentEnabled={topic.recruitmentEnabled}
@@ -101,7 +100,7 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
               </ul>
             )}
           </div>
-          <ProjectPagination page={topics.page} totalPages={topics.totalPages} ariaLabel="주제 관리 페이지" href={(page) => page > 1 ? `/professor/topics?page=${page}` : "/professor/topics"} />
+          <ProjectPagination page={topics.page} totalPages={topics.totalPages} ariaLabel="프로젝트 관리 페이지" href={(page) => page > 1 ? `/professor/topics?page=${page}` : "/professor/topics"} />
         </section>
       </ProfessorWorkspace>
     </AppShell>

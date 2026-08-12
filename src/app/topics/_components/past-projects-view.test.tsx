@@ -13,6 +13,8 @@ const project: ArchivedProject = {
   programId: "program-1",
   programName: "CSE 캡스톤디자인 2025",
   programCategory: "CSE 캡스톤 디자인",
+  divisionId: "division-1",
+  divisionName: "융합",
   topicTitle: "실내 길찾기",
   topicDescription: "프로젝트 설명",
   requiredSkills: ["TypeScript"],
@@ -56,9 +58,12 @@ describe("PastProjectsView", () => {
 
     expect(screen.queryByText("선택한 프로젝트")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+    const voteStatus = screen.getByRole("status", { name: "투표 현황" });
+    const total = screen.getByText("1", { selector: "strong" }).closest("p");
+    expect(voteStatus.parentElement).toBe(total?.parentElement);
   });
 
-  it("썸네일 카드에는 프로그램 정보 대신 제목 아래 교수 이름만 표시한다", () => {
+  it("썸네일 카드에는 프로젝트의 프로그램·분과 소속을 함께 표시한다", () => {
     render(
       <PastProjectsView
         projects={[project]}
@@ -72,8 +77,7 @@ describe("PastProjectsView", () => {
     const detailLink = screen.getByRole("link", { name: "실내 길찾기" });
     const article = detailLink.closest("article");
     expect(article?.querySelector("[data-project-cover]")).toBeInTheDocument();
-    expect(article).not.toHaveTextContent("CSE 캡스톤 디자인");
-    expect(article).not.toHaveTextContent("CSE 캡스톤디자인 2025");
+    expect(article).toHaveTextContent("CSE 캡스톤디자인 2025 · 융합");
     expect(screen.getByText("김도윤")).toBeInTheDocument();
     expect(article).not.toHaveTextContent("김도윤 교수");
     expect(detailLink).toHaveAttribute(
@@ -82,7 +86,7 @@ describe("PastProjectsView", () => {
     );
   });
 
-  it("기존 구분선과 팀, 참여 구조를 유지하고 기술 태그와 연도는 제거한다", () => {
+  it("기존 구분선과 팀, 참여 구조를 유지하고 기술 태그는 제거한다", () => {
     render(
       <PastProjectsView
         projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터" }] }]}
@@ -107,7 +111,6 @@ describe("PastProjectsView", () => {
     expect(description).toHaveClass("line-clamp-2");
     expect(screen.queryByRole("list", { name: "프로젝트 기술" })).not.toBeInTheDocument();
     expect(article).not.toHaveTextContent("TypeScript");
-    expect(article).not.toHaveTextContent("2025");
     if (!details) throw new Error("카드 상세 정보를 찾을 수 없습니다.");
     expect(title.compareDocumentPosition(professor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(professor.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

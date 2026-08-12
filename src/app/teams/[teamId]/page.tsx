@@ -134,7 +134,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
 
       <section aria-labelledby="schedule-title" className="panel overflow-hidden">
         <div className="flex items-baseline justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6">
-          <h2 id="schedule-title" className="text-base font-bold tracking-[-0.02em]"><UiText>{"프로젝트 일정"}</UiText></h2>
+          <h2 id="schedule-title" className="text-base font-bold tracking-[-0.02em]"><UiText>{"프로그램 일정"}</UiText></h2>
         </div>
         <div className="px-4 py-6 sm:px-6">
           <div className="relative ml-16 h-6 border-b border-[var(--line)]">

@@ -25,6 +25,7 @@ const teamListInclude = {
     },
   },
   reports: {
+    where: { required: true },
     select: {
       versions: {
         take: 1,
@@ -53,12 +54,7 @@ export class PrismaTeamWorkspaceQueryRepository
         topic: { select: {
           id: true,
           title: true,
-          recruitmentStartsAt: true,
-          executionStartsAt: true,
-          executionEndsAt: true,
-          submissionStartsAt: true,
-          submissionEndsAt: true,
-          program: { select: { advisorEnabled: true, recruitmentEndsAt: true } },
+          program: { select: { advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -97,11 +93,10 @@ export class PrismaTeamWorkspaceQueryRepository
                 profileImage: { select: { updatedAt: true } },
                 studentProfile: {
                   select: {
-                    interests: true,
-                    skills: true,
-                    desiredRole: true,
-                    availability: true,
-                    bio: true,
+                    phone: true,
+                    kakao: true,
+                    github: true,
+                    instagram: true,
                   },
                 },
               },
@@ -130,10 +125,11 @@ export class PrismaTeamWorkspaceQueryRepository
             authorId: true,
             content: true,
             createdAt: true,
-            author: { select: { name: true } },
+            author: { select: { name: true, role: true } },
           },
         },
         reports: {
+          where: { required: true },
           select: {
             versions: {
               orderBy: { version: "desc" },
@@ -166,9 +162,10 @@ export class PrismaTeamWorkspaceQueryRepository
           authorId: true,
           content: true,
           createdAt: true,
-          author: { select: { name: true } },
+          author: { select: { name: true, role: true } },
         },
       });
+    const assistantIds = new Set(team.topic.assistants.map(({ userId }) => userId));
     return {
       id: team.id,
       topicId: team.topic.id,
@@ -189,12 +186,12 @@ export class PrismaTeamWorkspaceQueryRepository
           team.members.some(({ student }) => student.id === actor.id),
       },
       schedule: {
-        recruitmentStartsAt: team.topic.recruitmentStartsAt,
+        recruitmentStartsAt: team.topic.program.recruitmentStartsAt,
         programRecruitmentEndsAt: team.topic.program.recruitmentEndsAt,
-        executionStartsAt: team.topic.executionStartsAt,
-        executionEndsAt: team.topic.executionEndsAt,
-        submissionStartsAt: team.topic.submissionStartsAt,
-        submissionEndsAt: team.topic.submissionEndsAt,
+        executionStartsAt: team.topic.program.executionStartsAt,
+        executionEndsAt: team.topic.program.executionEndsAt,
+        submissionStartsAt: team.topic.program.submissionStartsAt,
+        submissionEndsAt: team.topic.program.submissionEndsAt,
       },
       canClose: team.status === "CONFIRMED" && team.reports.length > 0 && team.reports.every(
         (report) => report.versions[0]?.decision?.decision === "APPROVED",
@@ -219,6 +216,13 @@ export class PrismaTeamWorkspaceQueryRepository
       discussionPosts: discussionPosts.reverse().map(({ author, ...post }) => ({
         ...post,
         authorName: author.name,
+        authorRole: assistantIds.has(post.authorId)
+          ? "ASSISTANT" as const
+          : post.authorId === team.professorId || author.role === "PROFESSOR"
+            ? "PROFESSOR" as const
+            : author.role === "ADMIN"
+              ? "ADMIN" as const
+              : "STUDENT" as const,
       })),
       discussionPage: resolvedDiscussionPage,
       discussionTotalPages,

@@ -6,7 +6,7 @@ import type {
 
 export class TopicListingForbiddenError extends Error {
   constructor() {
-    super("교수 또는 관리자만 등록한 주제를 조회할 수 있습니다.");
+    super("교수 또는 관리자만 등록한 프로젝트를 조회할 수 있습니다.");
     this.name = "TopicListingForbiddenError";
   }
 }

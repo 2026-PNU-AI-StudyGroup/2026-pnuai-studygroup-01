@@ -29,7 +29,7 @@ export async function GET(
       objectKey: true,
       originalName: true,
       purpose: true,
-      reportVersion: { select: { version: true, report: { select: { type: true } } } },
+      reportVersion: { select: { version: true, report: { select: { titleSnapshot: true } } } },
     },
   });
   if (files.length === 0) {
@@ -65,14 +65,18 @@ export async function GET(
 type SubmissionFile = {
   originalName: string;
   purpose: "REPORT" | "ARTIFACT";
-  reportVersion: { version: number; report: { type: string } } | null;
+  reportVersion: { version: number; report: { titleSnapshot: string } } | null;
 };
 
 function entryName(file: SubmissionFile): string {
   if (file.reportVersion) {
-    return `reports/${file.reportVersion.report.type}_v${file.reportVersion.version}_${file.originalName}`;
+    return `reports/${safePathSegment(file.reportVersion.report.titleSnapshot)}_v${file.reportVersion.version}_${file.originalName}`;
   }
   return `artifacts/${file.originalName}`;
+}
+
+function safePathSegment(value: string) {
+  return value.normalize("NFC").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim() || "report";
 }
 
 function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {

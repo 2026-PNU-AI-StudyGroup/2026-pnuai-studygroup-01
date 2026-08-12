@@ -56,17 +56,8 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       : Promise.resolve([]),
   ]);
   const now = new Date();
-  const recruiting = topic.recruitmentEnabled && topic.recruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const recruiting = topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
   const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
-  const recruitmentStatusLabel = !topic.recruitmentEnabled
-    ? `모집 종료 · ${memberLabel}`
-    : topic.memberCount >= topic.capacity
-      ? `정원 마감 · ${memberLabel}`
-    : topic.recruitmentStartsAt > now
-      ? `모집 예정 · ${memberLabel}`
-      : recruiting
-        ? `모집 중 · ${memberLabel}`
-        : `모집 종료 · ${memberLabel}`;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
     <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} />}>
@@ -85,7 +76,8 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <div>
           <div className="flex flex-wrap items-center gap-3">
             {topic.advisorEnabled ? <p className="text-sm font-semibold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
-            <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{recruitmentStatusLabel}</UiText></StatusBadge>
+            <p className="text-sm font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
+            <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{memberLabel}</UiText></StatusBadge>
           </div>
           <h1 className="mt-3 max-w-4xl text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{topic.title}</UiText></h1>
         </div>
@@ -102,8 +94,9 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       railLabelledBy="topic-schedule"
       rail={
         <>
-          <h2 id="topic-schedule" className="text-xl font-bold"><UiText>{"프로젝트 일정"}</UiText></h2>
-          <dl className="mt-5"><Period label="프로그램 모집 기간" startsAt={topic.recruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.executionStartsAt} endsAt={topic.executionEndsAt} /><Period label="제출 기간" startsAt={topic.submissionStartsAt} endsAt={topic.submissionEndsAt} /></dl>
+          <h2 id="topic-schedule" className="text-xl font-bold"><UiText>{"프로그램 일정"}</UiText></h2>
+          <p className="mt-2 text-sm font-semibold text-[var(--muted)]"><UiText>{`소속 프로그램 · 분과: ${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
+          <dl className="mt-5"><Period label="프로그램 모집 기간" startsAt={topic.programRecruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.programExecutionStartsAt} endsAt={topic.programExecutionEndsAt} /><Period label="제출 기간" startsAt={topic.programSubmissionStartsAt} endsAt={topic.programSubmissionEndsAt} /></dl>
         </>
       }
     >

@@ -56,7 +56,7 @@ export async function applyTopicAction(
   );
   try {
     const result = await service.execute(actor, { ...parsed.data, answers });
-    return { status: "success", outcome: result.outcome, message: "주제 지원이 접수되었습니다." };
+    return { status: "success", outcome: result.outcome, message: "프로젝트 지원이 접수되었습니다." };
   } catch (error) {
     if (
       error instanceof TopicAlreadyAppliedError ||

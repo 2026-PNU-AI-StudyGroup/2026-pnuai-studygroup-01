@@ -2,18 +2,15 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   ApprovalDecision,
   ArtifactType,
-  ReportType,
 } from "@/modules/report/domain/report-policy";
 
 export type ReportWorkspace = {
   reports: Array<{
     id: string;
-    type: ReportType;
+    title: string;
+    position: number;
+    required: boolean;
     dueAt: Date;
-    score?: number;
-    scoreComment?: string;
-    scoredByName?: string;
-    scoredAt?: Date;
     versions: Array<{
       id: string;
       version: number;
@@ -51,27 +48,11 @@ export interface ReportWorkspaceReader {
   findWorkspace(teamId: string, actor: CurrentActor): Promise<ReportWorkspace | null>;
 }
 
-export interface ReportRequirementWriter {
-  setRequirement(input: {
-    teamId: string;
-    actor: CurrentActor;
-    type: ReportType;
-    dueAt: Date;
-    configuredAt: Date;
-  }): Promise<{ id: string } | null>;
-  removeRequirement(input: {
-    teamId: string;
-    actor: CurrentActor;
-    type: ReportType;
-    removedAt: Date;
-  }): Promise<boolean>;
-}
-
 export interface ReportSubmissionWriter {
   submit(input: {
     teamId: string;
+    reportId: string;
     actor: CurrentActor;
-    type: ReportType;
     fileId: string;
     description: string;
     submittedAt: Date;
@@ -85,16 +66,6 @@ export interface ReportDecisionWriter {
     decision: ApprovalDecision;
     comment: string;
     decidedAt: Date;
-  }): Promise<boolean>;
-}
-
-export interface ReportScoreWriter {
-  score(input: {
-    reportId: string;
-    actor: CurrentActor;
-    score: number;
-    comment: string;
-    scoredAt: Date;
   }): Promise<boolean>;
 }
 
@@ -117,4 +88,18 @@ export interface ArtifactWriter {
     externalUrl?: string;
     createdAt: Date;
   }): Promise<{ id: string } | null>;
+  updateArtifact(input: {
+    artifactId: string;
+    teamId: string;
+    actor: CurrentActor;
+    type: ArtifactType;
+    title: string;
+    updatedAt: Date;
+  }): Promise<boolean>;
+  removeArtifact(input: {
+    artifactId: string;
+    teamId: string;
+    actor: CurrentActor;
+    removedAt: Date;
+  }): Promise<boolean>;
 }

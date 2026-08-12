@@ -6,7 +6,6 @@ import { createReportActivityNotifications } from "@/modules/notification/infras
 import type { ReportDecisionWriter } from "@/modules/report/application/report-ports";
 import type {
   ApprovalDecision,
-  ReportType,
 } from "@/modules/report/domain/report-policy";
 import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
@@ -66,7 +65,7 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
       });
       const reportVersion = await transaction.reportVersion.findUnique({
         where: { id: input.reportVersionId },
-        select: { version: true, report: { select: { type: true } } },
+        select: { version: true, report: { select: { titleSnapshot: true } } },
       });
       const members = await transaction.teamMember.findMany({
         where: { teamId: teams[0].id },
@@ -80,8 +79,8 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
             dedupeKey: `report-decision:${input.reportVersionId}:${input.decision}:${studentId}`,
             recipientId: studentId,
             title: approved
-              ? `${reportTypeLabel(reportVersion.report.type)}가 승인되었습니다`
-              : `${reportTypeLabel(reportVersion.report.type)}에 수정 요청이 있습니다`,
+              ? `${reportVersion.report.titleSnapshot}가 승인되었습니다`
+              : `${reportVersion.report.titleSnapshot}에 수정 요청이 있습니다`,
             body: approved
               ? `${teams[0].name}의 버전 ${reportVersion.version} 보고서가 승인되었습니다.`
               : input.comment,
@@ -103,8 +102,4 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
       return true;
     });
   }
-}
-
-function reportTypeLabel(type: ReportType) {
-  return type === "START" ? "착수 보고서" : type === "MIDTERM" ? "중간 보고서" : "결과 보고서";
 }

@@ -49,14 +49,14 @@ export function ReceivedApplicationList({
         <form action="/professor/applications" method="get" role="search" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           {status ? <input type="hidden" name="status" value={status} /> : null}
           <label className="grid gap-2 text-sm font-bold">
-            <UiText>{"주제 또는 지원자 검색"}</UiText>
+            <UiText>{"프로젝트 또는 지원자 검색"}</UiText>
             <UiInput
               type="search"
               name="q"
               defaultValue={query}
               maxLength={100}
               className="form-control"
-              placeholder="주제명, 지원자 이름 또는 이메일"
+              placeholder="프로젝트명, 지원자 이름 또는 이메일"
             />
           </label>
           <button type="submit" className="button-primary max-sm:w-full"><UiText>{"검색"}</UiText></button>

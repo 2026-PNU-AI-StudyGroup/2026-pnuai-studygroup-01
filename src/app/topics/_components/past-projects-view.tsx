@@ -6,8 +6,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
 import { ProjectPagination } from "@/app/topics/_components/project-pagination";
-import { ProjectSearchForm } from "@/app/topics/_components/project-search-form";
-import { ProjectVoteButton, useProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
+import { ProjectVoteButton, ProjectVoteStatusPill, useProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
 import styles from "@/app/topics/_components/project-gallery.module.css";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
@@ -38,15 +37,15 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
   const voteSelection = useProjectVoteSelection(ballot);
   return (
     <div className="min-w-0">
-      <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
-        {hasFilters ? <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div> : null}
-        <ProjectSearchForm view="past" programId={programId} query={query} />
-      </UiSection>
+      {hasFilters ? <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
+        <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div>
+      </UiSection> : null}
 
       <section aria-labelledby="past-list-title" className="pt-5">
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex min-h-8 items-center gap-3">
+          <ProjectVoteStatusPill selection={voteSelection} />
           <h2 id="past-list-title" className="sr-only"><UiText>{"지난 프로젝트 목록"}</UiText></h2>
-          <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText></p>
+          <p className="ml-auto text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText></p>
         </div>
         {projects.length === 0 ? (
           <EmptyState
@@ -68,6 +67,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
                         <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
                           <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
                         </h3>
+                        <p className="mt-2 text-xs font-semibold text-[var(--primary)]"><UiText>{`${project.programName} · ${project.divisionName ?? "미분과"}`}</UiText></p>
                         {project.advisorEnabled ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{project.professorName}</p> : null}
                         <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{project.topicDescription}</UiText></p>
 

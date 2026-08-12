@@ -2,6 +2,7 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
 export type AnnouncementCategory = "GENERAL" | "HACKATHON" | "GRADUATION_PROJECT";
+export type AnnouncementVisibility = "AUTHENTICATED" | "TARGET_MEMBERS";
 
 export type AnnouncementRecord = {
   id: string;
@@ -11,6 +12,7 @@ export type AnnouncementRecord = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  visibility: AnnouncementVisibility;
   pinned: boolean;
   teamId: string | null;
   teamName: string | null;
@@ -31,6 +33,7 @@ export type AnnouncementWriteInput = {
   title: string;
   content: string;
   category: AnnouncementCategory;
+  visibility: AnnouncementVisibility;
   pinned: boolean;
   teamId: string | null;
   programId: string | null;
@@ -52,6 +55,7 @@ export type AnnouncementMutationOutcome =
 
 export interface AnnouncementRepository {
   list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage>;
+  listForProgram(audience: AnnouncementAudience, programId: string): Promise<AnnouncementRecord[]>;
   findById(id: string): Promise<AnnouncementRecord | null>;
   create(
     authorId: string,

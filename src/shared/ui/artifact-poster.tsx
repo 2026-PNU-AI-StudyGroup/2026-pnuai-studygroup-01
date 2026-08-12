@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiText } from "@/shared/i18n/i18n-provider";
 
 // 포스터를 본문에 이미지로 바로 노출한다. 이미지가 아니거나(파일 없음/ PDF 등) 로드 실패 시 다운로드 링크로 폴백.
 export function ArtifactPoster({ src, title }: { src: string; title: string }) {

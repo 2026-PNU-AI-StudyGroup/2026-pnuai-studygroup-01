@@ -43,12 +43,12 @@ const request = {
   availabilityRequirement: "주 1회 대면 회의",
   applicationMode: "INDIVIDUAL_OR_TEAM" as const,
   capacity: 4,
-  recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
+  programRecruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
   programRecruitmentEndsAt: new Date("2026-08-10T00:00:00Z"),
-  executionStartsAt: new Date("2026-08-11T00:00:00Z"),
-  executionEndsAt: new Date("2026-09-10T00:00:00Z"),
-  submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
-  submissionEndsAt: new Date("2026-09-20T00:00:00Z"),
+  programExecutionStartsAt: new Date("2026-08-11T00:00:00Z"),
+  programExecutionEndsAt: new Date("2026-09-10T00:00:00Z"),
+  programSubmissionStartsAt: new Date("2026-09-01T00:00:00Z"),
+  programSubmissionEndsAt: new Date("2026-09-20T00:00:00Z"),
   applicationQuestions: [{ id: "question-1", label: "지원 동기", maxLength: 500, required: true }],
 };
 
@@ -67,7 +67,7 @@ describe("프로젝트 승인 요청 상세", () => {
     expect(screen.getByText("휠체어 사용자를 위한 실내 길찾기를 만듭니다.")).toBeInTheDocument();
     expect(screen.getByText("TypeScript")).toBeInTheDocument();
     expect(screen.getByText("지원 동기")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "프로젝트 일정" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "프로그램 일정" })).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "승인 결정 폼" })).toBeInTheDocument();
   });
 

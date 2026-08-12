@@ -1,26 +1,25 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
+import { programLifecycleStatus, type ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
 import type {
   TopicCreator,
   TopicDraft,
 } from "@/modules/topic/application/topic-ports";
 import {
   assertValidTopicDetails,
-  assertValidTopicSchedule,
   canCreateTopic,
 } from "@/modules/topic/domain/topic-policy";
 import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 
 export class TopicCreationForbiddenError extends Error {
   constructor() {
-    super("교수 또는 관리자만 주제를 생성할 수 있습니다.");
+    super("교수 또는 관리자만 프로젝트를 생성할 수 있습니다.");
     this.name = "TopicCreationForbiddenError";
   }
 }
 
 export class ProjectProgramNotOpenError extends Error {
   constructor() {
-    super("현재 주제를 등록할 수 있는 공개 프로그램이 아닙니다.");
+    super("현재 프로젝트를 등록할 수 있는 공개 프로그램이 아닙니다.");
     this.name = "ProjectProgramNotOpenError";
   }
 }
@@ -28,7 +27,7 @@ export class ProjectProgramNotOpenError extends Error {
 export class CreateTopicService {
   constructor(
     private readonly topicRepository: TopicCreator,
-    private readonly programRepository: Pick<ProjectProgramRepository, "findOpen">,
+    private readonly programRepository: Pick<ProjectProgramRepository, "findById">,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -54,25 +53,16 @@ export class CreateTopicService {
       })),
     };
     assertValidTopicDetails(details);
-    assertValidTopicSchedule(input);
 
-    const program = await this.programRepository.findOpen(input.programId);
-    if (!program) {
+    const program = await this.programRepository.findById(input.programId);
+    if (!program || programLifecycleStatus(program) !== "ACTIVE") {
       throw new ProjectProgramNotOpenError();
     }
     const registeredAt = this.now();
     if (!isProjectRegistrationOpen(program, registeredAt)) {
       throw new ProjectProgramNotOpenError();
     }
-    const topicTimes = [input.recruitmentStartsAt, input.executionStartsAt, input.executionEndsAt, input.submissionStartsAt, input.submissionEndsAt];
-    if (
-      topicTimes.some((time) => time < program.startsAt || time > program.endsAt) ||
-      input.recruitmentStartsAt >= program.recruitmentEndsAt
-    ) {
-      throw new ProjectProgramNotOpenError();
-    }
-
-    const created = await this.topicRepository.createDraft({
+    const created = await this.topicRepository.createPublished({
       ...details,
       authorId: actor.id,
     }, registeredAt);

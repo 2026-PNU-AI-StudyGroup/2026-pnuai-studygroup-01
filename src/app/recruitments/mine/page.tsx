@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
+import { CloseRecruitmentPostForm } from "@/app/recruitments/_components/close-recruitment-post-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
@@ -46,6 +47,10 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
       <main className="pb-28 lg:min-h-screen lg:pb-0">
         <StudentTeamSectionLayout currentPath="/recruitments/mine">
           <div className="space-y-5">
+            <Link href="/teams" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M16 10H5M9 6l-4 4 4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <UiText>{"내 팀"}</UiText>
+            </Link>
             <StudentTeamPageIntro
               title="내 모집"
               meta={<span><UiText>{"등록한 모집"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
@@ -79,9 +84,12 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
                         <span className="mr-2 text-xs font-semibold text-[var(--muted)] lg:hidden"><UiText>{"지원"}</UiText></span>{post.applicationCount}<UiText>{"명"}</UiText></p>
                       <p className="mt-0.5 text-xs text-[var(--muted)]"><UiText>{"검토 대기"}</UiText>{" "}{post.pendingApplicationCount}<UiText>{"명"}</UiText></p>
                     </div>
-                    <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}>
-                      <UiText>{post.pendingApplicationCount ? `${post.pendingApplicationCount}명 검토` : "지원자 보기"}</UiText>
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}>
+                        <UiText>{post.pendingApplicationCount ? `${post.pendingApplicationCount}명 검토` : "지원자 보기"}</UiText>
+                      </Link>
+                      {post.status === "OPEN" ? <CloseRecruitmentPostForm postId={post.id} /> : null}
+                    </div>
                   </li>
                 ))}
                 </ol>
@@ -106,7 +114,7 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
                 <EmptyState
                   variant="embedded"
                   title="팀장으로 관리 중인 팀이 없습니다"
-                  description="팀 관리에서 내 팀을 만든 뒤 필요한 역할을 공개 모집할 수 있습니다."
+                  description="내 팀에서 팀을 만든 뒤 필요한 역할을 공개 모집할 수 있습니다."
                   action={<Link className="button-primary" href="/teams?modal=create"><UiText>{"팀 만들기"}</UiText></Link>}
                 />
               )}

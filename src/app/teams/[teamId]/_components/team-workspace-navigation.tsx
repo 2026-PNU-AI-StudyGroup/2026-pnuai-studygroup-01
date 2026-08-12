@@ -12,6 +12,7 @@ const sections = [
   { label: "팀 대화", suffix: "/discussion", icon: "discussion" },
   { label: "회의·검토", suffix: "/requests", icon: "request" },
   { label: "보고서", suffix: "/reports", icon: "report" },
+  { label: "평가", suffix: "/evaluations", icon: "evaluation" },
   { label: "결과물", suffix: "/artifacts", icon: "artifact" },
 ] as const;
 
@@ -24,6 +25,7 @@ function NavigationIcon({ name }: { name: WorkspaceIcon }) {
     discussion: <><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></>,
     request: <><path d="M5 5h14v15H5zM8 3v4M16 3v4M5 9h14" /><path d="m9 14 2 2 4-4" /></>,
     report: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></>,
+    evaluation: <><path d="M5 4h14v16H5zM8 8h8M8 12h5" /><path d="m9 16 2 2 4-5" /></>,
     artifact: <><path d="M4 7h6l2 2h8v10H4z" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]">{paths[name]}</svg>;

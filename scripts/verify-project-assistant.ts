@@ -57,9 +57,14 @@ async function verify() {
       endsAt,
       projectRegistrationStartsAt: startsAt,
       projectRegistrationEndsAt: endsAt,
+      recruitmentStartsAt: startsAt,
       recruitmentEndsAt: endsAt,
-      status: "OPEN",
-      openedAt: now,
+      executionStartsAt: now,
+      executionEndsAt: new Date(now.getTime() + 60 * 24 * 60 * 60_000),
+      submissionStartsAt: now,
+      submissionEndsAt: endsAt,
+      isPublic: true,
+      lifecycleStatus: "ACTIVE",
     },
   });
   await prisma.topic.create({
@@ -71,11 +76,7 @@ async function verify() {
       title: `조교 권한 검증 ${suffix}`,
       description: "프로젝트 조교 권한 검증",
       capacity: 3,
-      recruitmentStartsAt: startsAt,
-      executionStartsAt: now,
-      executionEndsAt: new Date(now.getTime() + 60 * 24 * 60 * 60_000),
-      submissionStartsAt: now,
-      submissionEndsAt: endsAt,
+      status: "PUBLISHED",
       applicationQuestions: {
         create: { label: "참여 동기", maxLength: 500, position: 0 },
       },
@@ -103,11 +104,6 @@ async function verify() {
   }
 
   const studentAssistant = invitees[0];
-  await new ChangeTopicStatusService(
-    new PrismaTopicCommandRepository(prisma),
-    new PrismaProjectProgramRepository(prisma),
-    () => now,
-  ).publish(studentAssistant, topicId);
   await prisma.team.create({
     data: {
       id: teamId,

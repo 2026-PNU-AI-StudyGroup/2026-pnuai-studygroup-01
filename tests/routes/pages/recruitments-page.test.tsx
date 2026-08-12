@@ -42,7 +42,8 @@ describe("RecruitmentsPage", () => {
 
     render(await RecruitmentsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByRole("heading", { name: "팀원 모집" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "둘러보기" })).toHaveLength(1);
+    expect(screen.getByText("다른 팀이 올린 모집 공고를 보고 지원하세요.")).toBeInTheDocument();
     expect(screen.getByText("모집 중 3건")).toBeInTheDocument();
     expect(screen.queryByText("필요한 역할과 기술, 활동 가능 시간을 비교할 수 있습니다.")).not.toBeInTheDocument();
   });

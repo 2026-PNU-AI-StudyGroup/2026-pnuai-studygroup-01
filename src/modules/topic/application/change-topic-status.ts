@@ -1,19 +1,17 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { ProjectProgramRepository } from "@/modules/project-program/application/manage-project-programs";
-import { isProgramRecruitmentOpen, isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 import type { TopicStateRepository } from "@/modules/topic/application/topic-ports";
 import { canManageTopic } from "@/modules/topic/domain/topic-policy";
 
 export class TopicNotFoundError extends Error {
   constructor() {
-    super("주제를 찾을 수 없습니다.");
+    super("프로젝트를 찾을 수 없습니다.");
     this.name = "TopicNotFoundError";
   }
 }
 
 export class TopicManagementForbiddenError extends Error {
   constructor() {
-    super("주제 작성자 또는 관리자만 상태를 변경할 수 있습니다.");
+    super("프로젝트 작성자 또는 관리자만 상태를 변경할 수 있습니다.");
     this.name = "TopicManagementForbiddenError";
   }
 }
@@ -26,48 +24,15 @@ export class InvalidTopicStatusTransitionError extends Error {
 }
 
 export class ChangeTopicStatusService {
-  private readonly programs: Pick<ProjectProgramRepository, "findOpen"> | undefined;
-  private readonly now: () => Date;
-
-  constructor(
-    private readonly repository: TopicStateRepository,
-    programsOrNow?: Pick<ProjectProgramRepository, "findOpen"> | (() => Date),
-    now: () => Date = () => new Date(),
-  ) {
-    if (typeof programsOrNow === "function") {
-      this.now = programsOrNow;
-    } else {
-      this.programs = programsOrNow;
-      this.now = now;
-    }
-  }
-
-  async publish(actor: CurrentActor, topicId: string): Promise<void> {
-    const topic = await this.requireManageableTopic(actor, topicId);
-    if (topic.status !== "DRAFT") {
-      throw new InvalidTopicStatusTransitionError();
-    }
-
-    const publishedAt = this.now();
-    if (this.programs && topic.programId) {
-      const program = await this.programs.findOpen(topic.programId);
-      if (!program || !isProjectRegistrationOpen(program, publishedAt)) {
-        throw new InvalidTopicStatusTransitionError("현재 프로젝트 등록 기간이 아니어서 공개할 수 없습니다.");
-      }
-      if (!isProgramRecruitmentOpen(program, publishedAt)) {
-        throw new InvalidTopicStatusTransitionError("프로그램 모집 마감이 지나 주제를 공개할 수 없습니다.");
-      }
-    }
-
-    if (!(await this.repository.publishDraft(topic.id, actor, publishedAt))) {
-      throw new InvalidTopicStatusTransitionError();
-    }
-  }
+  constructor(private readonly repository: TopicStateRepository, private readonly now: () => Date = () => new Date()) {}
 
   async close(actor: CurrentActor, topicId: string): Promise<void> {
     const topic = await this.requireManageableTopic(actor, topicId);
-    if (topic.status !== "PUBLISHED") {
-      throw new InvalidTopicStatusTransitionError();
+    if (
+      topic.status !== "PUBLISHED" ||
+      !(actor.role === "ADMIN" || (actor.role === "PROFESSOR" && actor.id === topic.managerId))
+    ) {
+      throw new InvalidTopicStatusTransitionError("담당 교수 또는 관리자만 공개된 프로젝트를 마감할 수 있습니다.");
     }
 
     if (!(await this.repository.closePublished(topic.id, actor))) {

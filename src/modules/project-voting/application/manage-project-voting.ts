@@ -11,6 +11,9 @@ export type ProjectVoteCandidate = {
   id: string;
   title: string;
   description: string;
+  divisionId?: string | null;
+  divisionName?: string | null;
+  divisionPosition?: number | null;
   isSelfProject: boolean;
   voteCount: number;
 };
@@ -28,6 +31,9 @@ export type ProgramVoteResult = {
   topicId: string;
   title: string;
   description: string;
+  divisionId: string | null;
+  divisionName: string | null;
+  divisionPosition?: number | null;
   voteCount: number;
   rank: number;
   voters: Array<{ id: string; name: string; email: string }>;
@@ -72,7 +78,7 @@ export class ProjectVotingService {
   async saveVotes(actor: CurrentUser, programId: string, topicIds: readonly string[]) {
     const ballot = await this.repository.findBallot(programId, actor.id, this.now());
     if (!ballot) throw new ProjectVotingOperationError("투표 설정이 없는 프로그램입니다.");
-    const selectedTopicIds = normalizeVoteSelection(topicIds, ballot.policy.voteLimit);
+    const selectedTopicIds = normalizeVoteSelection(topicIds, ballot.policy, ballot.candidates);
     const outcome = await this.repository.replaceVotes({
       programId,
       voterId: actor.id,

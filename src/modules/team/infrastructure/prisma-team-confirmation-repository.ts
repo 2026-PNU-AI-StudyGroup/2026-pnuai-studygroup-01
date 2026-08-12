@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
+import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type { TeamConfirmationWriter } from "@/modules/team/application/confirm-team";
 import { teamSupervisorSql } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
@@ -12,6 +13,14 @@ export class PrismaTeamConfirmationRepository
   confirm(teamId: string, actor: CurrentActor): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const decidedAt = new Date();
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program"
+        JOIN "team" ON "team"."programId" = "project_program"."id"
+        WHERE "team"."id" = ${teamId}
+        FOR UPDATE OF "project_program"
+      `);
+      if (programs.length !== 1) return false;
       const rows = await transaction.$queryRaw<Array<{
         id: string;
         topicId: string;
@@ -24,6 +33,7 @@ export class PrismaTeamConfirmationRepository
       `);
       const team = rows[0];
       if (!team) return false;
+      await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
 
       const applications = await transaction.topicApplication.findMany({
         where: { topicId: team.topicId, status: "PENDING" },

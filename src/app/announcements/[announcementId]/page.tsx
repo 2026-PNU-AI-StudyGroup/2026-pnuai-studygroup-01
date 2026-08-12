@@ -76,7 +76,7 @@ export default async function AnnouncementDetailPage({
                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
                   <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
                 </span>
-                <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} />
+                <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
               </div>
               <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
                 <UiText>{announcement.title}</UiText>

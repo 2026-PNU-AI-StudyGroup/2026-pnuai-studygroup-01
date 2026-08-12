@@ -6,9 +6,9 @@ import { useI18n } from "@/shared/i18n/i18n-provider";
 import { UiButton } from "@/shared/i18n/localized-elements";
 import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 
-type Props = Omit<ComponentProps<"button">, "type" | "onClick"> & { confirmMessage: string };
+type Props = Omit<ComponentProps<"button">, "type" | "onClick"> & { confirmMessage: string; confirmClassName?: string };
 
-export function ConfirmSubmitButton({ confirmMessage, ...buttonProps }: Props) {
+export function ConfirmSubmitButton({ confirmMessage, confirmClassName, ...buttonProps }: Props) {
   const { t } = useI18n();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -35,6 +35,7 @@ export function ConfirmSubmitButton({ confirmMessage, ...buttonProps }: Props) {
       <ConfirmationDialog
         open={open}
         description={t(confirmMessage)}
+        confirmClassName={confirmClassName}
         onConfirm={submitConfirmed}
         onCancel={() => setOpen(false)}
         returnFocusRef={buttonRef}

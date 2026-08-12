@@ -7,8 +7,19 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import PDFDocument from "pdfkit";
 
-import { Prisma, PrismaClient, UserRole } from "../src/generated/prisma/client";
+import {
+  AnnouncementCategory,
+  AnnouncementVisibility,
+  Prisma,
+  PrismaClient,
+  ProgramLifecycleStatus,
+  UserRole,
+} from "../src/generated/prisma/client";
 import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
+import {
+  buildDemoProgramAnnouncements,
+  LEGACY_PROGRAM_ANNOUNCEMENT_IDS,
+} from "./demo-program-announcements";
 import { opusArchivedProjects } from "./opus-project-catalog";
 
 const connectionString = process.env.DATABASE_URL;
@@ -129,6 +140,7 @@ const ids = {
   reportVersions: Array.from({ length: archivedProjectCount }, (_, index) => `f1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   approvalDecisions: Array.from({ length: archivedProjectCount }, (_, index) => `f2000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeReports: Array.from({ length: 3 }, (_, index) => `f3000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  reportDefinitions: Array.from({ length: archivedProjectCount + 3 }, (_, index) => `f6000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeReportVersions: Array.from({ length: 4 }, (_, index) => `f4000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeApprovalDecisions: Array.from({ length: 3 }, (_, index) => `f5000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeStoredFiles: Array.from({ length: 5 }, (_, index) => `e1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -376,11 +388,17 @@ async function seed() {
       { length: ids.students.length },
       (_, index) => studentProfileTemplates[index % studentProfileTemplates.length],
     );
-    for (const [index, [interests, skills, desiredRole, availability, bio]] of studentProfiles.entries()) {
+    for (const index of studentProfiles.keys()) {
+      const contact = {
+        phone: `010-${String(2000 + index).padStart(4, "0")}-${String(index + 1).padStart(4, "0")}`,
+        kakao: `pnu_student_${index + 1}`,
+        github: `https://github.com/pnu-student-${index + 1}`,
+        instagram: `https://instagram.com/pnu_student_${index + 1}`,
+      };
       await tx.studentProfile.upsert({
         where: { userId: ids.students[index] },
-        update: { interests: [...interests], skills: [...skills], desiredRole, availability, bio },
-        create: { userId: ids.students[index], interests: [...interests], skills: [...skills], desiredRole, availability, bio },
+        update: contact,
+        create: { userId: ids.students[index], ...contact },
       });
     }
     if (localViewer) {
@@ -389,19 +407,33 @@ async function seed() {
         update: {},
         create: {
           userId: localViewer.id,
-          interests: ["캡스톤 디자인", "프로덕트 개발", "사용자 경험"],
-          skills: ["TypeScript", "Next.js", "PostgreSQL"],
-          desiredRole: "풀스택 개발과 제품 설계",
-          availability: "평일 저녁, 주말 협의 가능",
-          bio: "실제 사용자의 문제를 관찰하고 팀과 함께 작동하는 제품으로 완성하는 과정에 관심이 있습니다.",
+          phone: "010-1234-5678",
+          kakao: "pnu_viewer",
+          github: "https://github.com/pnu-viewer",
+          instagram: "https://instagram.com/pnu_viewer",
         },
       });
     }
 
+    function defaultProgramSchedule(startsAt: Date, endsAt: Date) {
+      const duration = endsAt.getTime() - startsAt.getTime();
+      return {
+        recruitmentStartsAt: startsAt,
+        recruitmentEndsAt: new Date(startsAt.getTime() + duration * 0.25),
+        executionStartsAt: new Date(startsAt.getTime() + duration * 0.1),
+        executionEndsAt: new Date(endsAt.getTime() - duration * 0.1),
+        submissionStartsAt: new Date(endsAt.getTime() - duration * 0.2),
+        submissionEndsAt: endsAt,
+      };
+    }
     async function program(input: {
       id: string; name: string; category: string; description: string;
-      startsAt: Date; endsAt: Date; status: "OPEN" | "CLOSED";
+      startsAt: Date; endsAt: Date; lifecycleStatus: ProgramLifecycleStatus;
+      advisorEnabled?: boolean;
+      schedule?: ReturnType<typeof defaultProgramSchedule>;
     }) {
+      const firstPublishedAt = input.startsAt;
+      const closedAt = input.lifecycleStatus === "CLOSED" ? input.endsAt : null;
       const sameName = await tx.projectProgram.findUnique({
         where: { name_startsAt: { name: input.name, startsAt: input.startsAt } },
         select: { id: true },
@@ -409,28 +441,76 @@ async function seed() {
       if (sameName && sameName.id !== input.id) {
         throw new Error(`사용자 프로그램과 이름이 겹쳐 데모 시드를 중단합니다: ${input.name}`);
       }
+      const { schedule: suppliedSchedule, advisorEnabled = true, ...programInput } = input;
+      const schedule = suppliedSchedule ?? defaultProgramSchedule(input.startsAt, input.endsAt);
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, status: input.status, openedAt: input.startsAt },
-        create: { ...input, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, recruitmentEndsAt: input.endsAt, openedAt: input.startsAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, lifecycleStatus: input.lifecycleStatus, isPublic: true, firstPublishedAt, closedAt },
+        create: { ...programInput, ...schedule, advisorEnabled, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, closedAt },
       });
     }
+    const activeProgramSchedules = [
+      {
+        recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-03-23T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
+      },
+      {
+        recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-10-31T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
+      },
+      {
+        recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+        executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
+        submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
+      },
+    ] as const;
     const activePrograms = [
-      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-05-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), status: "OPEN" }),
-      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-04-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), status: "OPEN" }),
+      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), lifecycleStatus: "ACTIVE", schedule: activeProgramSchedules[0] }),
+      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-02-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), lifecycleStatus: "ACTIVE", advisorEnabled: false, schedule: activeProgramSchedules[1] }),
+      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-01-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), lifecycleStatus: "ACTIVE", advisorEnabled: false, schedule: activeProgramSchedules[2] }),
     ];
     const pastPrograms = [
-      await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
       // OPUS 공개 목록에 없는 연도·회차는 과거 프로젝트 탐색을 풍부하게 하기 위한 데모 항목이다.
-      await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), status: "CLOSED" }),
-      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), status: "CLOSED" }),
+      await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
+      await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00"), lifecycleStatus: "CLOSED" }),
+      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), lifecycleStatus: "CLOSED", advisorEnabled: false }),
     ];
+
+    const allPrograms = [...activePrograms, ...pastPrograms];
+    const programAnnouncementRows = allPrograms.flatMap((targetProgram, programIndex) => {
+      const category = targetProgram.category === opusProgramCategories.capstone
+        ? AnnouncementCategory.GRADUATION_PROJECT
+        : targetProgram.category === opusProgramCategories.hackathon
+          ? AnnouncementCategory.HACKATHON
+          : AnnouncementCategory.GENERAL;
+      return buildDemoProgramAnnouncements(targetProgram, programIndex).map((announcement, announcementIndex) => ({
+          ...announcement,
+          authorId: announcementIndex % 2 === 0 ? ids.admin : ids.professors[programIndex % ids.professors.length],
+          programId: targetProgram.id,
+          teamId: null,
+          category,
+          visibility: announcement.visibility === "TARGET_MEMBERS"
+            ? AnnouncementVisibility.TARGET_MEMBERS
+            : AnnouncementVisibility.AUTHENTICATED,
+          updatedAt: announcement.createdAt,
+        }));
+    });
+    await tx.announcement.deleteMany({
+      where: {
+        OR: [
+          { id: { startsWith: "a2000000-0000-4000-8000-" } },
+          { id: { in: LEGACY_PROGRAM_ANNOUNCEMENT_IDS } },
+        ],
+      },
+    });
+    await tx.announcement.createMany({ data: programAnnouncementRows });
 
     // 운영 종료 뒤에도 공개 프로젝트를 대상으로 별도 투표를 진행할 수 있다.
     // 시드를 실행한 시점에는 2025 캡스톤과 제6회 해커톤의 투표가 열려 있어, 사이드바와 투표 화면을 바로 검증할 수 있다.
@@ -463,37 +543,6 @@ async function seed() {
     }
     for (const [index, data] of activeTopics.entries()) {
       const [title, description, requiredSkills, preferredSkills, roleExpectations, availabilityRequirement, capacity, programIndex, professorIndex] = data;
-      const schedules = [
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-        },
-        {
-          recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-08-01T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
-        },
-      ] as const;
-      const schedule = index === 0
-        ? {
-          recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"),
-          executionStartsAt: new Date("2026-03-23T00:00:00+09:00"),
-          executionEndsAt: new Date("2026-08-20T23:59:59+09:00"),
-          submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"),
-          submissionEndsAt: new Date("2026-08-20T23:59:59+09:00"),
-        }
-        : schedules[programIndex];
       const publishedAt = index === 0
         ? new Date("2026-02-23T09:00:00+09:00")
         : new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`);
@@ -507,14 +556,12 @@ async function seed() {
         update: {
           programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
-          ...schedule,
           status: "PUBLISHED", publishedAt,
         },
         create: {
           id: ids.topics[index], programId: activePrograms[programIndex].id, authorId: ids.professors[professorIndex], managerId: ids.professors[professorIndex],
           title, description, requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations, availabilityRequirement, capacity, applicationMode,
           applicationQuestions: { create: applicationQuestions },
-          ...schedule,
           status: "PUBLISHED", publishedAt,
         },
       });
@@ -550,17 +597,13 @@ async function seed() {
         update: {
           programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt,
-          executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
-          submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
+          capacity,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
         create: {
           id: ids.topics[topicIndex], programId: targetProgram.id, authorId: professorId, managerId: professorId, advisorRole, title, description,
           requiredSkills: [...requiredSkills], preferredSkills: [...preferredSkills], roleExpectations: "팀 역할 분담 완료", availabilityRequirement: "프로젝트 종료",
-          capacity, recruitmentStartsAt: targetProgram.startsAt,
-          executionStartsAt: new Date(targetProgram.startsAt.getTime() + 30 * 86_400_000), executionEndsAt: new Date(targetProgram.endsAt.getTime() - 30 * 86_400_000),
-          submissionStartsAt: new Date(targetProgram.endsAt.getTime() - 60 * 86_400_000), submissionEndsAt: targetProgram.endsAt,
+          capacity,
           status: "CLOSED", publishedAt: targetProgram.startsAt,
         },
       });
@@ -744,6 +787,7 @@ async function seed() {
       teamId: ids.teams[0],
       ownerId: ids.students[0],
       purpose: file.purpose,
+      consumer: file.purpose,
       status: "READY",
       objectKey: file.objectKey,
       uploadObjectKey: `staging/${file.objectKey}`,
@@ -756,11 +800,17 @@ async function seed() {
       readyAt: file.readyAt,
       createdAt: file.readyAt,
     })) });
-    await tx.report.createMany({ data: [
-      { id: ids.activeReports[0], teamId: ids.teams[0], type: "START", dueAt: new Date("2026-04-10T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-      { id: ids.activeReports[1], teamId: ids.teams[0], type: "MIDTERM", dueAt: new Date("2026-06-12T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-      { id: ids.activeReports[2], teamId: ids.teams[0], type: "FINAL", dueAt: new Date("2026-08-14T23:59:59+09:00"), createdAt: new Date("2026-03-25T10:00:00+09:00") },
-    ] });
+    const activeReportDefinitions = [
+      { id: ids.reportDefinitions[0], programId: activePrograms[0].id, title: "착수 보고서", dueAt: new Date("2026-04-10T23:59:59+09:00"), position: 0 },
+      { id: ids.reportDefinitions[1], programId: activePrograms[0].id, title: "중간 보고서", dueAt: new Date("2026-06-12T23:59:59+09:00"), position: 1 },
+      { id: ids.reportDefinitions[2], programId: activePrograms[0].id, title: "결과 보고서", dueAt: new Date("2026-08-14T23:59:59+09:00"), position: 2 },
+    ];
+    await tx.programReportDefinition.createMany({ data: activeReportDefinitions });
+    await tx.report.createMany({ data: activeReportDefinitions.map((definition, index) => ({
+      id: ids.activeReports[index], teamId: ids.teams[0], definitionId: definition.id,
+      titleSnapshot: definition.title, dueAt: definition.dueAt, required: true,
+      createdAt: new Date("2026-03-25T10:00:00+09:00"),
+    })) });
     await tx.reportVersion.createMany({ data: [
       {
         id: ids.activeReportVersions[0],
@@ -864,11 +914,13 @@ async function seed() {
       const objectKey = `demo/teams/${ids.teams[teamIndex]}/final-report.pdf`;
       const reportPdf = demoReportPdfs[reportIndex];
       await tx.storedFile.create({ data: {
-        id: ids.storedFiles[reportIndex], teamId: ids.teams[teamIndex], ownerId: ids.students[submitterIndex], purpose: "REPORT", status: "READY",
+        id: ids.storedFiles[reportIndex], teamId: ids.teams[teamIndex], ownerId: ids.students[submitterIndex], purpose: "REPORT", consumer: "REPORT", status: "READY",
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: reportPdf.byteLength,
         sha256: createHash("sha256").update(reportPdf).digest("hex"), expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
-      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], type: "FINAL", dueAt: pastPrograms[programIndex].endsAt, createdAt: submittedAt } });
+      const definitionId = ids.reportDefinitions[reportIndex + 3];
+      await tx.programReportDefinition.create({ data: { id: definitionId, programId: pastPrograms[programIndex].id, title: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, position: reportIndex } });
+      await tx.report.create({ data: { id: ids.reports[reportIndex], teamId: ids.teams[teamIndex], definitionId, titleSnapshot: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, required: true, createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
         id: ids.reportVersions[reportIndex], reportId: ids.reports[reportIndex], version: 1, fileId: ids.storedFiles[reportIndex],
         submitterId: ids.students[submitterIndex], description: "최종 검토 의견을 반영한 결과 보고서", submittedAt,
@@ -1054,9 +1106,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[2],
         studentId: ids.students[10],
         message: "졸업과제 아카이브 주제에 관심이 있어 지원합니다. 공개 결과물과 지도 기록의 권한을 나누는 부분을 같이 고민하고, 배포할 때 생길 수 있는 보안 문제도 점검해 보고 싶습니다.",
-        skills: ["Go", "Docker", "보안"],
         desiredRole: "인프라와 보안 점검",
-        availability: "화·금 저녁",
         status: "PENDING",
         createdAt: new Date("2026-07-24T18:30:00+09:00"),
       },
@@ -1065,9 +1115,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[3],
         studentId: ids.students[11],
         message: "사용자 인터뷰와 문서 정리 경험이 있어 지원했습니다. 이동약자 인터뷰 내용을 보기 쉽게 정리하고 다음 현장 조사 항목을 만드는 데 기여하고 싶습니다.",
-        skills: ["Figma", "Notion", "사용자 조사"],
         desiredRole: "프로덕트 기획",
-        availability: "평일 18시 이후",
         status: "REJECTED",
         decidedAt: new Date("2026-07-15T14:00:00+09:00"),
         createdAt: new Date("2026-07-10T19:00:00+09:00"),
@@ -1077,9 +1125,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[1],
         studentId: ids.students[12],
         message: "PostgreSQL과 공간 데이터에 관심이 있어 지원합니다. 건물 연결 관계와 통행 제한을 데이터로 정리하고 경로 탐색 결과를 같이 검증해 보고 싶습니다.",
-        skills: ["PostgreSQL", "PostGIS", "TypeScript"],
         desiredRole: "공간 데이터 모델링과 API 연동",
-        availability: "평일 18시 이후, 토요일 오전",
         status: "PENDING",
         createdAt: new Date("2026-07-24T20:00:00+09:00"),
       },
@@ -1090,9 +1136,7 @@ async function seed() {
         postId: ids.studentTeamRecruitments[1],
         studentId: studentTeamViewer.id,
         message: "백엔드 데이터를 화면과 연결하는 작업을 해본 적이 있습니다. 대피 경로 API를 안전 안내 화면에 붙이고 모의 대피 시나리오까지 함께 테스트해 보고 싶습니다.",
-        skills: ["TypeScript", "PostgreSQL", "지도 UI"],
         desiredRole: "경로 탐색 API와 프론트엔드 연동",
-        availability: "평일 저녁, 주말 협의 가능",
         status: "PENDING",
         createdAt: new Date("2026-07-23T20:00:00+09:00"),
       });
@@ -1194,7 +1238,7 @@ async function seed() {
       const artifactPdf = demoArtifactPdfs[index];
       const artifactSeed = demoProjectDocuments[index];
       await tx.storedFile.create({ data: {
-        id: fileId, teamId: ids.teams[teamIndex], ownerId, purpose: "ARTIFACT", status: "READY",
+        id: fileId, teamId: ids.teams[teamIndex], ownerId, purpose: "ARTIFACT", consumer: "ARTIFACT", status: "READY",
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-공개결과.pdf`, contentType: "application/pdf",
         size: artifactPdf.byteLength, sha256: createHash("sha256").update(artifactPdf).digest("hex"), expiresAt: publishedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"),
         readyAt: publishedAt, createdAt: publishedAt,
@@ -1233,13 +1277,13 @@ async function seed() {
       closedTeamWithoutAudit: number;
     }>>(Prisma.sql`
       SELECT
-        (SELECT count(*)::int FROM "topic" AS topic
-          JOIN "project_program" AS program ON program."id" = topic."programId"
-          WHERE topic."recruitmentStartsAt" < program."startsAt"
-            OR topic."executionStartsAt" < program."startsAt"
-            OR topic."executionEndsAt" > program."endsAt"
-            OR topic."submissionStartsAt" < program."startsAt"
-            OR topic."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
+        (SELECT count(*)::int FROM "project_program" AS program
+          WHERE program."recruitmentStartsAt" < program."startsAt"
+            OR program."recruitmentEndsAt" > program."endsAt"
+            OR program."executionStartsAt" < program."startsAt"
+            OR program."executionEndsAt" > program."endsAt"
+            OR program."submissionStartsAt" < program."startsAt"
+            OR program."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
         (SELECT count(*)::int FROM (
           SELECT "programId", "studentId" FROM "team_member" GROUP BY 1, 2 HAVING count(*) > 1
         ) AS duplicate) AS "duplicateMembership",
@@ -1254,7 +1298,7 @@ async function seed() {
             SELECT 1 FROM "report" AS report
             JOIN "report_version" AS version ON version."reportId" = report."id"
             JOIN "approval_decision" AS decision ON decision."reportVersionId" = version."id"
-            WHERE report."teamId" = team."id" AND report."type" = 'FINAL'::"ReportType"
+            WHERE report."teamId" = team."id" AND report."titleSnapshot" = '결과 보고서'
               AND decision."decision" = 'APPROVED'::"ApprovalDecisionType"
           )) AS "closedTeamWithoutApproval",
         (SELECT count(*)::int FROM "team" AS team
@@ -1303,7 +1347,7 @@ async function seed() {
         tasks: { select: { status: true } },
         reports: {
           select: {
-            type: true,
+            titleSnapshot: true,
             versions: {
               orderBy: { version: "desc" },
               select: { version: true, decision: { select: { decision: true } } },
@@ -1323,13 +1367,13 @@ async function seed() {
       || !["TODO", "IN_PROGRESS", "DONE"].every((status) => taskStatuses.has(status as "TODO" | "IN_PROGRESS" | "DONE"))) {
       throw new Error("학생 데모 프로젝트의 팀명 또는 할 일 상태 구성이 불완전합니다.");
     }
-    const reportsByType = new Map(studentDemoTeam.reports.map((report) => [report.type, report]));
-    if (!["START", "MIDTERM", "FINAL"].every((type) => reportsByType.get(type as "START" | "MIDTERM" | "FINAL")?.versions.length)) {
+    const reportsByTitle = new Map(studentDemoTeam.reports.map((report) => [report.titleSnapshot, report]));
+    if (!["착수 보고서", "중간 보고서", "결과 보고서"].every((title) => reportsByTitle.get(title)?.versions.length)) {
       throw new Error("학생 데모 프로젝트의 착수·중간·최종 보고서 제출본이 모두 필요합니다.");
     }
-    if (reportsByType.get("START")?.versions[0]?.decision?.decision !== "APPROVED"
-      || reportsByType.get("MIDTERM")?.versions[0]?.decision?.decision !== "APPROVED"
-      || reportsByType.get("FINAL")?.versions[0]?.decision !== null) {
+    if (reportsByTitle.get("착수 보고서")?.versions[0]?.decision?.decision !== "APPROVED"
+      || reportsByTitle.get("중간 보고서")?.versions[0]?.decision?.decision !== "APPROVED"
+      || reportsByTitle.get("결과 보고서")?.versions[0]?.decision !== null) {
       throw new Error("학생 데모 프로젝트의 보고서 승인 흐름이 예상 상태와 다릅니다.");
     }
     if (studentDemoTeam.artifacts.length < 3) {
@@ -1346,7 +1390,7 @@ async function seed() {
       activeReports: ids.activeReports.length,
       activeReportVersions: ids.activeReportVersions.length,
       activeArtifacts: ids.activeArtifacts.length,
-      announcements: ids.announcements.length,
+      announcements: ids.announcements.length + programAnnouncementRows.length,
       studentDemoProject: {
         teamName: studentDemoTeam.name,
         tasks: studentDemoTeam.tasks.length,

@@ -4,6 +4,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
+import { ArtifactManagementForm } from "@/app/teams/[teamId]/_components/artifact-management-form";
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
@@ -128,6 +129,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
                 </div>
                 <div className="mt-3">
                   <ArtifactMedia type={artifact.type} title={artifact.title} fileId={artifact.fileId} externalUrl={artifact.externalUrl} />
+                  {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
                 </div>
               </li>
             );

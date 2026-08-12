@@ -31,7 +31,7 @@ export function RecruitmentDecisionForm({
           <UiText>{pending ? "처리 중" : "거절"}</UiText>
         </ConfirmSubmitButton>
       ) : (
-        <button className="button-primary" disabled={pending}><UiText>{pending ? "처리 중" : "수락"}</UiText></button>
+        <ConfirmSubmitButton className="button-primary" confirmClassName="button-primary" confirmMessage="이 지원자를 팀에 수락합니다. 정원이 차면 모집은 자동 종료됩니다." disabled={pending}><UiText>{pending ? "처리 중" : "수락"}</UiText></ConfirmSubmitButton>
       )}
       {state.message ? (
         <p aria-live="polite" className={`mt-1 text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>

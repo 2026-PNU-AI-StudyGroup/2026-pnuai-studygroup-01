@@ -3,7 +3,7 @@ import type { ManagedTopicReader, ManagedTopicSummary } from "@/modules/topic/ap
 
 export class ManagedTopicNotFoundError extends Error {
   constructor() {
-    super("관리할 수 있는 주제를 찾을 수 없습니다.");
+    super("관리할 수 있는 프로젝트를 찾을 수 없습니다.");
     this.name = "ManagedTopicNotFoundError";
   }
 }

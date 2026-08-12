@@ -15,7 +15,7 @@ import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("새 주제 등록");
+  return getLocalizedMetadata("새 프로젝트 등록");
 }
 
 export default async function NewTopicPage() {
@@ -26,8 +26,8 @@ export default async function NewTopicPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
-      <ProfessorWorkspace currentPath="/professor/topics/new" role={actor.role} title="새 프로젝트 주제" actions={programs.length ? <Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link> : undefined}>
-        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 프로젝트를 등록할 수 있는 프로그램이 없습니다" description="공개 프로그램의 프로젝트 등록 기간이 시작되면 새 주제를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"주제 목록"}</UiText></Link>} />}
+      <ProfessorWorkspace currentPath="/professor/topics/new" role={actor.role} title="새 프로젝트 등록" actions={programs.length ? <Link className="button-secondary" href="/professor/topics"><UiText>{"프로젝트 목록"}</UiText></Link> : undefined}>
+        {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 프로젝트를 등록할 수 있는 프로그램이 없습니다" description="공개 프로그램의 프로젝트 등록 기간이 시작되면 새 프로젝트를 만들 수 있습니다." action={<Link className="button-secondary" href="/professor/topics"><UiText>{"프로젝트 목록"}</UiText></Link>} />}
       </ProfessorWorkspace>
     </AppShell>
   );
