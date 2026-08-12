@@ -13,6 +13,8 @@
 .env.local
 .env.*.local
 .env.txt
+.env.production
+!.env.production.example
 /client_secret_*.json
 
 # logs
