@@ -34,3 +34,37 @@ export async function saveStudentProfileAction(_state: StudentProfileActionState
   revalidatePath("/teams");
   return { status: "success", message: "연락처를 저장했습니다." };
 }
+
+// 온보딩에서 받은 학사 정보(학과·학번·학년·자주 쓰는 이메일)를 마이페이지에서도 수정할 수 있게 한다.
+const academicSchema = z.object({
+  department: z.string().max(200),
+  studentNumber: z.string().max(30),
+  grade: z.coerce.number().int(),
+  contactEmail: z.string().max(300),
+});
+
+export async function saveStudentAccountAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  if (actor.role !== "STUDENT") return { status: "error", message: "학생 계정만 학사 정보를 수정할 수 있습니다." };
+  const parsed = academicSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "학사 정보를 확인해 주세요." };
+  const department = parsed.data.department.trim().replace(/\s+/g, " ");
+  const studentNumber = parsed.data.studentNumber.replace(/[\s-]/g, "");
+  const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
+  const grade = parsed.data.grade;
+  if (
+    department.length < 2 || department.length > 100 ||
+    !/^\d{6,12}$/.test(studentNumber) ||
+    grade < 1 || grade > 6 ||
+    contactEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)
+  ) {
+    return { status: "error", message: "학사 정보를 확인해 주세요." };
+  }
+  const duplicate = await prisma.user.findFirst({ where: { studentNumber, NOT: { id: actor.id } }, select: { id: true } });
+  if (duplicate) return { status: "error", message: "이미 사용 중인 학번입니다." };
+  await prisma.user.update({ where: { id: actor.id }, data: { department, studentNumber, grade, contactEmail } });
+  revalidatePath("/account");
+  revalidatePath("/teams");
+  return { status: "success", message: "학사 정보를 저장했습니다." };
+}
