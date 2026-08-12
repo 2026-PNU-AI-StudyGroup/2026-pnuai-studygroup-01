@@ -64,13 +64,17 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   const [selectedProgramId, setSelectedProgramId] = useState(initialTopic?.programId ?? defaultProgramId ?? "");
   const [selectedDivisionId, setSelectedDivisionId] = useState(initialTopic?.divisionId ?? "");
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
+  const defaultRecruitmentEnabled = initialTopic?.recruitmentEnabled ?? !studentApproval;
+  const [recruitmentEnabled, setRecruitmentEnabled] = useState(defaultRecruitmentEnabled);
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const advisorEnabled = selectedProgram?.advisorEnabled;
   const formSections = [
     ["topic-basic", "기본 정보"],
-    ["topic-requirements", "지원 조건"],
-    ["topic-application", "지원 방식과 문항"],
-    ["topic-schedule", "모집 설정"],
+    ...(recruitmentEnabled ? [
+      ["topic-requirements", "지원 조건"],
+      ["topic-application", "지원 방식과 문항"],
+      ["topic-schedule", "모집 설정"],
+    ] : []),
     ...(studentApproval ? [["topic-approval", "참여 팀과 승인"]] : []),
   ] as const;
   useEffect(() => {
@@ -130,7 +134,15 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         <FormField id="topic-description" label="설명">
           <Textarea id="topic-description" name="description" defaultValue={initialTopic?.description} maxLength={10000} required rows={6} />
         </FormField>
+        {studentApproval && !initialTopic ? (
+          <fieldset className="grid gap-3 sm:grid-cols-2">
+            <legend className="mb-2 text-sm font-semibold"><UiText>{"학생 지원"}</UiText></legend>
+            <ChoiceCard name="recruitmentEnabled" value="false" checked={!recruitmentEnabled} onChange={() => setRecruitmentEnabled(false)} label="지원 안 받기" description="프로젝트를 공개하되 학생 지원은 받지 않습니다." />
+            <ChoiceCard name="recruitmentEnabled" value="true" checked={recruitmentEnabled} onChange={() => setRecruitmentEnabled(true)} label="지원 받기" description="프로그램 모집 기간에 학생 지원을 받습니다." />
+          </fieldset>
+        ) : <input type="hidden" name="recruitmentEnabled" value={String(defaultRecruitmentEnabled)} />}
       </FormSection>
+      {recruitmentEnabled ? <>
       <FormSection id="topic-requirements" number="02" title="지원 조건" description="선발 판단에 실제로 필요한 기술과 참여 조건을 적습니다." contentClassName="sm:grid-cols-2">
         <FormField id="topic-required-skills" label="필수 기술" description="항목을 입력하고 Enter를 누르세요.">
           <TagInput id="topic-required-skills" name="requiredSkills" ariaLabel="필수 기술" defaultValue={initialTopic?.requiredSkills} maxLength={1000} required placeholder="TypeScript, Python" />
@@ -173,7 +185,8 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       </label>
       <p className="muted text-sm"><UiText>{selectedProgram ? `이 프로그램의 모집은 ${programDate.format(selectedProgram.recruitmentStartsAt)}부터 ${programDate.format(selectedProgram.recruitmentEndsAt)}까지입니다.` : "프로그램을 선택하면 공통 모집 일정이 표시됩니다."}</UiText></p>
       </FormSection>
-      {studentApproval ? <FormSection id="topic-approval" number="05" title="참여 팀과 승인" description="기존 팀 참여 여부와 프로젝트 공개 전 승인 경로를 정합니다.">
+      </> : null}
+      {studentApproval ? <FormSection id="topic-approval" number={recruitmentEnabled ? "05" : "02"} title="참여 팀과 승인" description="기존 팀 참여 여부와 프로젝트 공개 전 승인 경로를 정합니다.">
         <p className="text-sm leading-6 text-[var(--muted)]"><UiText>{"기존 팀을 선택하면 현재 팀원 전원이 승인과 동시에 참여하며 추가 모집은 받지 않습니다."}</UiText></p>
         <FormField id="topic-student-team" label="기존 팀" description="선택하면 현재 팀원 전원이 참여하고 추가 모집은 받지 않습니다." optional>
           <CustomSelect id="topic-student-team" name="studentTeamId" ariaLabel="기존 팀 (선택)" placeholder="선택하지 않고 새 팀원 모집" options={[{ value: "", label: "선택하지 않고 새 팀원 모집" }, ...studentApproval.studentTeams.map((team) => ({ value: team.id, label: team.name, description: `${team.memberCount}명 · 추가 모집 없음` }))]} />

@@ -113,7 +113,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           ...topic,
           managerId: null,
           applicationMode: studentTeam ? "TEAM_ONLY" : topic.applicationMode,
-          recruitmentEnabled: !studentTeam,
+          recruitmentEnabled: studentTeam ? false : topic.recruitmentEnabled ?? true,
           capacity: studentTeam ? studentTeam.members.length : topic.capacity,
           status: "PENDING_APPROVAL",
           publishedAt: null,
@@ -287,8 +287,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         if (
           programs[0]?.lifecycleStatus !== "ACTIVE" ||
           programs[0].projectRegistrationStartsAt > input.decidedAt ||
-          programs[0].projectRegistrationEndsAt <= input.decidedAt ||
-          programs[0].recruitmentEndsAt <= input.decidedAt
+          programs[0].projectRegistrationEndsAt <= input.decidedAt
         ) return "UNAVAILABLE";
 
         const topics = await transaction.$queryRaw<Array<LockedApprovalTopic>>(Prisma.sql`
@@ -302,18 +301,19 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           !topic ||
           topic.status !== "PENDING_APPROVAL"
         ) return "UNAVAILABLE";
+        if (topic.recruitmentEnabled && programs[0].recruitmentEndsAt <= input.decidedAt) return "UNAVAILABLE";
 
-        const studentTeam = topic.recruitmentEnabled
-          ? null
-          : await lockStudentTeam(transaction, initialRequest.studentTeamId);
-        if (!topic.recruitmentEnabled && !studentTeam) return "UNAVAILABLE";
+        const studentTeam = initialRequest.studentTeamId
+          ? await lockStudentTeam(transaction, initialRequest.studentTeamId)
+          : null;
+        if (initialRequest.studentTeamId && !studentTeam) return "UNAVAILABLE";
 
         const request = await lockApprovalRequest(transaction, input.requestId);
         if (!isSamePendingApprovalRequest(initialRequest, request)) return "UNAVAILABLE";
         if (!canDecideApprovalRequest(request, input)) return "FORBIDDEN";
 
         if (
-          !topic.recruitmentEnabled && (
+          initialRequest.studentTeamId && (
             !studentTeam ||
             request.studentTeamVersion == null ||
             input.studentTeamVersion !== request.studentTeamVersion ||
@@ -322,7 +322,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           )
         ) return "TEAM_CHANGED";
 
-        if (topic.recruitmentEnabled) {
+        if (!initialRequest.studentTeamId) {
           await transaction.topic.update({
             where: { id: topic.id },
             data: {

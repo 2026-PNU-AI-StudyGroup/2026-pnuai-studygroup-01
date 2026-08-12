@@ -40,12 +40,24 @@ describe("TopicForm", () => {
     );
 
     expect(screen.getByText("지도교수가 없는 프로그램이므로 관리자에게 검토를 요청합니다.")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /지원 안 받기/ })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /지원 받기/ })).not.toBeChecked();
     expect(screen.queryByRole("radio", { name: /교수에게 요청/ })).not.toBeInTheDocument();
     expect(container.querySelector('input[name="approvalRoute"]')).toHaveValue("ADMIN");
     expect(screen.getByRole("navigation", { name: "프로젝트 작성 섹션" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /기본 정보/ })).toHaveAttribute("href", "#topic-basic");
     expect(screen.getByRole("link", { name: /참여 팀과 승인/ })).toHaveAttribute("href", "#topic-approval");
-    expect(container.querySelector("#topic-schedule")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "지원 조건" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "지원 방식과 지원서" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "모집 설정" })).not.toBeInTheDocument();
+    expect(container.querySelector("#topic-schedule")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /지원 받기/ }));
+
+    expect(screen.getByRole("heading", { name: "지원 조건" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "지원 방식과 지원서" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "모집 설정" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /모집 설정/ })).toHaveAttribute("href", "#topic-schedule");
     expect(screen.getByRole("button", { name: "승인 요청 보내기" }).parentElement).toHaveClass("sticky");
   });
 

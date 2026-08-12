@@ -12,6 +12,7 @@ export type TopicDetails = {
   preferredSkills: string[];
   roleExpectations: string;
   availabilityRequirement: string;
+  recruitmentEnabled?: boolean;
   applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
   applicationQuestions: TopicApplicationQuestionDraft[];
   capacity: number;
@@ -31,6 +32,8 @@ export class InvalidTopicDetailsError extends Error {
 }
 
 export function assertValidTopicDetails(details: TopicDetails): void {
+  const recruitmentEnabled = details.recruitmentEnabled !== false;
+
   if (details.title.trim().length === 0 || details.title.length > 200) {
     throw new InvalidTopicDetailsError("프로젝트 제목은 1자 이상 200자 이하여야 합니다.");
   }
@@ -42,7 +45,7 @@ export function assertValidTopicDetails(details: TopicDetails): void {
   }
 
   if (
-    details.requiredSkills.length === 0 ||
+    (recruitmentEnabled && details.requiredSkills.length === 0) ||
     details.requiredSkills.length > 20 ||
     details.preferredSkills.length > 20 ||
     [...details.requiredSkills, ...details.preferredSkills].some(
@@ -52,12 +55,12 @@ export function assertValidTopicDetails(details: TopicDetails): void {
     throw new InvalidTopicDetailsError("필수 기술은 1개 이상이며 각 기술은 50자 이하여야 합니다.");
   }
 
-  if (details.roleExpectations.trim().length === 0 || details.roleExpectations.length > 500) {
+  if ((recruitmentEnabled && details.roleExpectations.trim().length === 0) || details.roleExpectations.length > 500) {
     throw new InvalidTopicDetailsError("예상 역할은 1자 이상 500자 이하여야 합니다.");
   }
 
   if (
-    details.availabilityRequirement.trim().length === 0 ||
+    (recruitmentEnabled && details.availabilityRequirement.trim().length === 0) ||
     details.availabilityRequirement.length > 500
   ) {
     throw new InvalidTopicDetailsError("활동 가능 시간 조건은 1자 이상 500자 이하여야 합니다.");
@@ -68,7 +71,7 @@ export function assertValidTopicDetails(details: TopicDetails): void {
   }
 
   if (
-    details.applicationQuestions.length === 0 ||
+    (recruitmentEnabled && details.applicationQuestions.length === 0) ||
     details.applicationQuestions.length > 20 ||
     details.applicationQuestions.some((question) =>
       question.label.trim().length === 0 ||

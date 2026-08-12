@@ -54,6 +54,17 @@ describe("주제 내용 정책", () => {
   it("추가 모집이 없는 기존 팀 프로젝트를 위해 1인 팀 지원 정원을 허용한다", () => {
     expect(() => assertValidTopicDetails({ ...valid, applicationMode: "TEAM_ONLY", capacity: 1 })).not.toThrow();
   });
+
+  it("학생 지원을 받지 않는 프로젝트는 지원 조건과 지원서 없이 등록할 수 있다", () => {
+    expect(() => assertValidTopicDetails({
+      ...valid,
+      recruitmentEnabled: false,
+      requiredSkills: [],
+      roleExpectations: "",
+      availabilityRequirement: "",
+      applicationQuestions: [],
+    })).not.toThrow();
+  });
 });
 
 describe("주제 공개 상태 정책", () => {

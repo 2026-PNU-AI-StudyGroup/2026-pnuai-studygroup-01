@@ -17,6 +17,7 @@ function normalizeTopic(input: Omit<TopicDraft, "authorId">): Omit<TopicDraft, "
     preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
     roleExpectations: input.roleExpectations.trim(),
     availabilityRequirement: input.availabilityRequirement.trim(),
+    recruitmentEnabled: input.recruitmentEnabled ?? true,
     applicationQuestions: input.applicationQuestions.map((question) => ({
       ...question,
       label: question.label.trim(),

@@ -35,6 +35,7 @@ export class PrismaTopicCommandRepository
       const created = await transaction.topic.create({
         data: {
           ...topicData,
+          recruitmentEnabled: topic.recruitmentEnabled ?? true,
           managerId: topic.authorId,
           applicationQuestions: {
             create: applicationQuestions.map((question, position) => ({

@@ -72,9 +72,11 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
+  if (role === "STUDENT" && item.href === "/topics") {
+    return isSectionActive("/topics", currentPath) || currentPath === "/projects/new";
+  }
   if (role === "STUDENT" && item.href === "/dashboard") {
     return isSectionActive("/dashboard", currentPath) ||
-      isSectionActive("/projects", currentPath) ||
       isSectionActive("/project-approvals", currentPath);
   }
   if (role === "STUDENT" && item.href === "/recruitments") {

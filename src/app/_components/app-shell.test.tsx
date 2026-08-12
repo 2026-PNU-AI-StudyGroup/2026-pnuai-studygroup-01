@@ -112,11 +112,11 @@ describe("AppShell", () => {
     expect(links[0]).toHaveAttribute("aria-current", "page");
   });
 
-  it("프로젝트 작업 화면에서는 내 프로젝트 메뉴를 현재 위치로 표시한다", async () => {
+  it("학생 프로젝트 등록은 프로젝트 찾기 흐름으로 표시하고 승인 요청은 내 프로젝트로 표시한다", async () => {
     const firstRender = render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/projects/new", preferredLocale: "ko", children: <p>본문</p> }));
 
-    expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).toHaveAttribute("aria-current", "page");
-    expect(screen.getAllByRole("link", { name: "프로젝트 찾기" })[0]).not.toHaveAttribute("aria-current");
+    expect(screen.getAllByRole("link", { name: "프로젝트 찾기" })[0]).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).not.toHaveAttribute("aria-current");
 
     firstRender.unmount();
     render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/project-approvals", preferredLocale: "ko", children: <p>본문</p> }));
