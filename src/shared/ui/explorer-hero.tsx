@@ -25,10 +25,10 @@ export function ExplorerHero({
               {context}{context && description ? " · " : null}{description}
             </p>
           ) : null}
-          {details ? <div className="mt-3">{details}</div> : null}
         </div>
         {action ? <div className="flex shrink-0">{action}</div> : null}
       </div>
+      {details ? <div className="mt-3">{details}</div> : null}
     </section>
   );
 }

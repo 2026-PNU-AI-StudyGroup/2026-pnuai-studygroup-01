@@ -130,10 +130,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           view="active"
           program={selectedProgram}
           search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} />}
-          action={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} />}
         />
         <ProgramAnnouncementRail announcements={programAnnouncements} />
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} />} />
       </ExplorerLayout>
     );
   }

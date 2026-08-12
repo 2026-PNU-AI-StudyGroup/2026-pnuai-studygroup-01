@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
@@ -102,7 +103,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection }: {
 
 const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, registrationAction }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -111,15 +112,17 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   divisionId?: string | "UNASSIGNED";
   now: Date;
   ballot?: ProgramVoteBallot;
+  registrationAction?: ReactNode;
 }) {
   const hasFilters = Boolean(query || divisionId);
   const voteSelection = useProjectVoteSelection(ballot);
   return (
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
-      <div className="mb-4 flex min-h-8 items-center gap-3">
+      <div className="mb-4 flex min-h-9 flex-wrap items-center gap-3">
+        {registrationAction}
         <ProjectVoteStatusPill selection={voteSelection} />
         <h2 id="project-results-title" className="sr-only"><UiText>{"프로젝트 목록"}</UiText></h2>
-        <p className="ml-auto text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
+        <p className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
       </div>
       {!topics.items.length ? (
         <EmptyState

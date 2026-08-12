@@ -52,6 +52,27 @@ function topics(memberCount = 1): PublicTopicPage {
 }
 
 describe("ActiveProjectResults", () => {
+  it("프로젝트 등록 동작을 총 개수 행의 왼쪽에 표시한다", () => {
+    render(
+      <ActiveProjectResults
+        topics={topics()}
+        canApply
+        leaderTeams={[]}
+        query=""
+        now={now}
+        registrationAction={<a href="/projects/new">프로젝트 등록</a>}
+      />,
+    );
+
+    const registration = screen.getByRole("link", { name: "프로젝트 등록" });
+    const header = registration.parentElement;
+    const count = header?.querySelector("p");
+
+    expect(count).toHaveTextContent("총 1개");
+    expect(header?.firstElementChild).toBe(registration);
+    expect(header?.lastElementChild).toBe(count);
+  });
+
   it("프로그램 공통 모집 기간 안에서만 지원을 표시한다", () => {
     render(<ActiveProjectResults topics={topics()} canApply leaderTeams={[]} query="" now={now} />);
 

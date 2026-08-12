@@ -20,4 +20,22 @@ describe("ExplorerHero", () => {
     rerender(<ExplorerHero title="프로젝트" context="캡스톤" description="모집 중" />);
     expect(screen.getByText(/캡스톤/)).toHaveTextContent("캡스톤 · 모집 중");
   });
+
+  it("확장 정보는 검색 같은 동작 영역과 별도 행에 둔다", () => {
+    const { container } = render(
+      <ExplorerHero
+        title="프로젝트"
+        action={<button type="button">검색</button>}
+        details={<details><summary>프로그램 정보</summary><p>운영 기간</p></details>}
+      />,
+    );
+
+    const section = container.querySelector("section");
+    const primaryRow = section?.firstElementChild;
+    const disclosure = screen.getByText("프로그램 정보").closest("details");
+
+    expect(primaryRow).toContainElement(screen.getByRole("button", { name: "검색" }));
+    expect(primaryRow).not.toContainElement(disclosure);
+    expect(primaryRow?.nextElementSibling).toContainElement(disclosure);
+  });
 });
