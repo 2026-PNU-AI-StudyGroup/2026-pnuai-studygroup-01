@@ -443,10 +443,11 @@ async function seed() {
       }
       const { schedule: suppliedSchedule, advisorEnabled = true, ...programInput } = input;
       const schedule = suppliedSchedule ?? defaultProgramSchedule(input.startsAt, input.endsAt);
+      const studentProjectCreationEnabled = input.category === opusProgramCategories.hackathon;
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, lifecycleStatus: input.lifecycleStatus, isPublic: true, firstPublishedAt, closedAt },
-        create: { ...programInput, ...schedule, advisorEnabled, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, closedAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, studentProjectCreationEnabled, lifecycleStatus: input.lifecycleStatus, isPublic: true, firstPublishedAt, closedAt },
+        create: { ...programInput, ...schedule, advisorEnabled, studentProjectCreationEnabled, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, closedAt },
       });
     }
     const activeProgramSchedules = [

@@ -1,7 +1,5 @@
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -11,6 +9,7 @@ import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announ
 import { ProjectPortalHero } from "@/app/topics/_components/project-portal-chrome";
 import { ProjectSearchForm } from "@/app/topics/_components/project-search-form";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
+import { StudentProjectRegistrationLink } from "@/app/topics/_components/student-project-registration-link";
 import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
 import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selection";
@@ -20,7 +19,6 @@ import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastruct
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
-import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
@@ -132,11 +130,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           view="active"
           program={selectedProgram}
           search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} />}
-          action={selectedProgram ? <>
-            {actor.role === "STUDENT" && selectedProgram.studentProjectCreationEnabled && isProjectRegistrationOpen(selectedProgram, now)
-              ? <Link className="button-primary" href={`/projects/new?programId=${encodeURIComponent(selectedProgram.id)}`}><UiText>{"프로젝트 제안"}</UiText></Link>
-              : null}
-          </> : undefined}
+          action={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} />}
         />
         <ProgramAnnouncementRail announcements={programAnnouncements} />
         <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT"} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} />
