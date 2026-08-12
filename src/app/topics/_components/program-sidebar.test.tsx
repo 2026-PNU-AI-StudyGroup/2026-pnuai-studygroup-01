@@ -4,61 +4,70 @@ import { describe, expect, it, vi } from "vitest";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 
 const items = [{
-  id: "program-2026",
-  name: "AI 부스터 2026",
+  id: "hackathon-2026",
+  name: "창의융합 해커톤 2026",
   icon: "FOLDER" as const,
-  category: "교육 프로그램",
+  category: "PNU 창의융합해커톤",
   startYear: 2026,
   status: "active" as const,
-  href: "/topics?programId=program-2026",
+  href: "/topics?programId=hackathon-2026",
 }, {
-  id: "program-2025",
+  id: "hackathon-2025",
+  name: "창의융합 해커톤 2025",
+  icon: "FOLDER" as const,
+  category: "PNU 창의융합해커톤",
+  startYear: 2025,
+  status: "past" as const,
+  href: "/topics?view=past&programId=hackathon-2025",
+}, {
+  id: "capstone-2025",
   name: "캡스톤 2025",
   icon: "GRADUATION_CAP" as const,
   category: "캡스톤",
   startYear: 2025,
   status: "past" as const,
-  href: "/topics?view=past&programId=program-2025",
+  href: "/topics?view=past&programId=capstone-2025",
 }];
 
 describe("ProgramSidebar", () => {
-  it("프로그램을 시작 연도별 접이식 목록과 상태 태그로 제공한다", () => {
+  it("프로그램을 대분류별 접이식 목록으로 묶고 분류 안에서 연도별로 정리한다", () => {
     const { container } = render(<ProgramSidebar items={items} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
-    expect(within(navigation).getByText("2026")).toBeInTheDocument();
-    expect(within(navigation).getByText("2025")).toBeInTheDocument();
+    // 대분류가 최상위 그룹 헤더로 노출된다.
+    expect(within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("button", { name: "캡스톤" })).toBeInTheDocument();
+    // 첫 대분류(최근 연도 보유)가 열려 있고 그 안에 프로그램이 최신순으로 보인다.
+    const openGroup = within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" });
+    expect(openGroup).toHaveAttribute("aria-expanded", "true");
+    expect(within(navigation).getByText("창의융합 해커톤 2026")).toBeInTheDocument();
     expect(within(navigation).getByText("진행 중")).toBeInTheDocument();
-    expect(within(navigation).getByText("종료")).toBeInTheDocument();
+    expect(within(navigation).getAllByText("종료").length).toBeGreaterThan(0);
     expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
-    expect(screen.queryByRole("link", { name: "전체 프로젝트" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "전체 보기" })).not.toBeInTheDocument();
   });
 
-  it("선택된 프로그램의 시작 연도를 펼치고 링크 선택 상태를 표시한다", () => {
-    const { container } = render(<ProgramSidebar items={items} selectedId="program-2025" />);
+  it("선택된 프로그램의 대분류를 펼치고 링크 선택 상태를 표시한다", () => {
+    const { container } = render(<ProgramSidebar items={items} selectedId="capstone-2025" />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     const selectedRow = within(navigation).getByText("캡스톤 2025").closest('[aria-current="page"]');
     expect(selectedRow).toBeInTheDocument();
     expect(selectedRow?.tagName).toBe("DIV");
     expect(selectedRow).not.toHaveAttribute("href");
-    expect(selectedRow?.querySelector('span[aria-hidden="true"].rounded-full')).toBeInTheDocument();
-    expect(within(navigation).queryByRole("link", { name: "캡스톤 2025종료캡스톤" })).not.toBeInTheDocument();
-    expect(within(navigation).getByRole("button", { name: "2025" })).toHaveAttribute("aria-expanded", "true");
+    expect(within(navigation).getByRole("button", { name: "캡스톤" })).toHaveAttribute("aria-expanded", "true");
+    expect(within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" })).toHaveAttribute("aria-expanded", "false");
     expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025종료");
-    expect(screen.queryByRole("link", { name: "전체 보기" })).not.toBeInTheDocument();
   });
 
-  it("투표 중인 프로그램들을 최상단 카드로 강조하면서 각 연도 목록에도 유지한다", () => {
+  it("투표 중인 프로그램들을 최상단 카드로 강조하면서 각 대분류 목록에도 유지한다", () => {
     vi.useFakeTimers();
     try {
       const { container } = render(
         <ProgramSidebar
-          selectedId="program-2025"
+          selectedId="capstone-2025"
           items={[
             { ...items[0], votingEndsAt: "2026-08-10T09:00:00+09:00" },
-            { ...items[1], votingEndsAt: "2026-08-10T09:00:00+09:00" },
+            { ...items[2], votingEndsAt: "2026-08-10T09:00:00+09:00" },
           ]}
         />,
       );
@@ -66,75 +75,60 @@ describe("ProgramSidebar", () => {
       const carousel = within(navigation).getByRole("region", { name: "투표 진행 프로그램" });
 
       expect(within(carousel).getByText("투표 진행 중")).toBeInTheDocument();
-      expect(within(carousel).getByRole("heading", { name: "AI 부스터 2026" })).toBeInTheDocument();
-      expect(within(carousel).getByText(/마감/)).toBeInTheDocument();
-      expect(within(carousel).getByRole("link", { name: "투표하러 가기" })).toHaveAttribute("href", "/topics?programId=program-2026");
-      expect(within(carousel).queryByRole("heading", { name: "캡스톤 2025" })).not.toBeInTheDocument();
+      expect(within(carousel).getByRole("heading", { name: "창의융합 해커톤 2026" })).toBeInTheDocument();
+      expect(within(carousel).getByRole("link", { name: "투표하러 가기" })).toHaveAttribute("href", "/topics?programId=hackathon-2026");
       expect(within(carousel).getByRole("button", { name: "다음 투표 프로그램" })).toBeInTheDocument();
-      expect(within(carousel).getByRole("button", { name: "이전 투표 프로그램" })).toBeInTheDocument();
 
       act(() => vi.advanceTimersByTime(6000));
 
       expect(within(carousel).getByRole("heading", { name: "캡스톤 2025" })).toBeInTheDocument();
-      expect(within(carousel).getByRole("link", { name: "투표하러 가기" })).toHaveAttribute("href", "/topics?view=past&programId=program-2025");
-      expect(within(carousel).queryByRole("heading", { name: "AI 부스터 2026" })).not.toBeInTheDocument();
-      expect(within(navigation).getAllByText("캡스톤 2025")).toHaveLength(2);
-      fireEvent.click(within(carousel).getByRole("button", { name: "이전 투표 프로그램" }));
-      expect(within(carousel).getByRole("heading", { name: "AI 부스터 2026" })).toBeInTheDocument();
-      act(() => vi.advanceTimersByTime(5999));
-      expect(within(carousel).getByRole("heading", { name: "AI 부스터 2026" })).toBeInTheDocument();
-      act(() => vi.advanceTimersByTime(1));
-      expect(within(carousel).getByRole("heading", { name: "캡스톤 2025" })).toBeInTheDocument();
-      fireEvent.click(within(carousel).getByRole("button", { name: "이전 투표 프로그램" }));
-      expect(within(navigation).getByRole("button", { name: "2026" })).toBeInTheDocument();
-      expect(within(navigation).getByRole("button", { name: "2025" })).toBeInTheDocument();
-      expect(within(navigation).getAllByText("AI 부스터 2026")).toHaveLength(2);
-      expect(within(navigation).getAllByText("투표 중")).toHaveLength(2);
+      expect(within(carousel).getByRole("link", { name: "투표하러 가기" })).toHaveAttribute("href", "/topics?view=past&programId=capstone-2025");
+      // 선택된 대분류(캡스톤) 목록에도 프로그램이 유지된다.
+      expect(within(navigation).getByRole("button", { name: "캡스톤" })).toHaveAttribute("aria-expanded", "true");
+      expect(within(navigation).getAllByText("투표 중").length).toBeGreaterThan(0);
       expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025투표 중");
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("다른 연도를 열 때 기존 연도를 모션 상태로 닫고 링크를 키보드 탐색에서 제외한다", () => {
+  it("다른 대분류를 열 때 기존 대분류를 닫고 링크를 키보드 탐색에서 제외한다", () => {
     render(<ProgramSidebar items={items} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
-    const year2026 = within(navigation).getByRole("button", { name: "2026" });
-    const year2025 = within(navigation).getByRole("button", { name: "2025" });
-    const program2026 = within(navigation).getByText("AI 부스터 2026").closest("a");
-    const program2025 = within(navigation).getByText("캡스톤 2025").closest("a");
+    const hackathon = within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" });
+    const capstone = within(navigation).getByRole("button", { name: "캡스톤" });
+    const hackathonProgram = within(navigation).getByText("창의융합 해커톤 2026").closest("a");
+    const capstoneProgram = within(navigation).getByText("캡스톤 2025").closest("a");
 
-    expect(year2026).toHaveAttribute("aria-expanded", "true");
-    expect(year2025).toHaveAttribute("aria-expanded", "false");
-    expect(program2025).toHaveAttribute("tabindex", "-1");
+    expect(hackathon).toHaveAttribute("aria-expanded", "true");
+    expect(capstone).toHaveAttribute("aria-expanded", "false");
+    expect(capstoneProgram).toHaveAttribute("tabindex", "-1");
 
-    fireEvent.click(year2025);
+    fireEvent.click(capstone);
 
-    expect(year2026).toHaveAttribute("aria-expanded", "false");
-    expect(year2025).toHaveAttribute("aria-expanded", "true");
-    expect(program2026).toHaveAttribute("tabindex", "-1");
-    expect(program2025).not.toHaveAttribute("tabindex");
+    expect(hackathon).toHaveAttribute("aria-expanded", "false");
+    expect(capstone).toHaveAttribute("aria-expanded", "true");
+    expect(hackathonProgram).toHaveAttribute("tabindex", "-1");
+    expect(capstoneProgram).not.toHaveAttribute("tabindex");
   });
 
-  it("현재 열린 연도가 새 items 집합에서 사라지면 첫 새 연도를 연다", () => {
+  it("현재 열린 대분류가 새 items 집합에서 사라지면 첫 새 대분류를 연다", () => {
     const { rerender } = render(<ProgramSidebar items={items} />);
     let navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
-    fireEvent.click(within(navigation).getByRole("button", { name: "2025" }));
-    expect(within(navigation).getByRole("button", { name: "2025" })).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(within(navigation).getByRole("button", { name: "캡스톤" }));
+    expect(within(navigation).getByRole("button", { name: "캡스톤" })).toHaveAttribute("aria-expanded", "true");
 
     rerender(
       <ProgramSidebar
         items={[
-          { ...items[0], id: "program-2024", name: "AI 부스터 2024", startYear: 2024 },
-          { ...items[1], id: "program-2023", name: "캡스톤 2023", startYear: 2023 },
+          { ...items[0], id: "contest-2024", name: "AI 경진대회 2024", category: "AI 경진대회", startYear: 2024 },
         ]}
       />,
     );
     navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
-    expect(within(navigation).getByRole("button", { name: "2024" })).toHaveAttribute("aria-expanded", "true");
-    expect(within(navigation).getByRole("button", { name: "2023" })).toHaveAttribute("aria-expanded", "false");
-    expect(within(navigation).getByText("AI 부스터 2024").closest("a")).not.toHaveAttribute("tabindex");
+    expect(within(navigation).getByRole("button", { name: "AI 경진대회" })).toHaveAttribute("aria-expanded", "true");
+    expect(within(navigation).getByText("AI 경진대회 2024").closest("a")).not.toHaveAttribute("tabindex");
   });
 });

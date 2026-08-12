@@ -84,14 +84,14 @@ function VotingProgramCarousel({
   );
 }
 
-function YearProgramGroup({
-  year,
+function CategoryProgramGroup({
+  category,
   programs,
   selectedId,
   open,
   onToggle,
 }: {
-  year: number;
+  category: string;
   programs: ProgramSidebarItem[];
   selectedId?: string;
   open: boolean;
@@ -106,13 +106,13 @@ function YearProgramGroup({
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between rounded-lg px-2 text-xs font-bold text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
       >
-        <span>{year}</span>
+        <span className="min-w-0 truncate text-left"><UiText>{category}</UiText></span>
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"
-          className={`size-4 fill-none stroke-[var(--muted)] stroke-[1.7] transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+          className={`size-4 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.7] transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
         >
           <path d="m6 8 4 4 4-4" />
         </svg>
@@ -123,12 +123,12 @@ function YearProgramGroup({
         className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <ul className={`space-y-1 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
-            {programs.map((program) => {
+          <ul className={`ml-4 space-y-1 border-l border-[var(--line)] pl-2 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
+            {[...programs].sort((a, b) => b.startYear - a.startYear).map((program) => {
               const selected = program.id === selectedId;
               const votingOpen = Boolean(program.votingEndsAt);
-              const rowClassName = `relative flex min-h-[3.1rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${
-                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
+              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${
+                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-[calc(0.5rem+1px)] before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
               }`;
               const status = votingOpen
                 ? { dot: "bg-[#2f6bed]", text: "text-[var(--primary)]", label: "투표 중" }
@@ -137,13 +137,11 @@ function YearProgramGroup({
                   : { dot: "bg-[var(--muted)]", text: "text-[var(--muted)]", label: "종료" };
               const rowContent = (
                 <>
-                  <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${status.dot}`} />
+                  <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${status.dot}`} />
                   <span className="min-w-0">
-                    <strong className="block truncate text-[0.8rem] font-bold"><UiText>{program.name}</UiText></strong>
+                    <strong className="block truncate text-[0.78rem] font-semibold"><UiText>{program.name}</UiText></strong>
                     <span className="mt-0.5 flex items-center gap-1 text-[0.64rem]">
                       <span className={`font-bold ${status.text}`}><UiText>{status.label}</UiText></span>
-                      <span aria-hidden="true" className="text-[var(--line-strong)]">·</span>
-                      <span className="truncate font-semibold text-[var(--muted)]"><UiText>{program.category}</UiText></span>
                     </span>
                   </span>
                 </>
@@ -172,29 +170,33 @@ export function ProgramSidebar({ items, selectedId }: {
   const votingPrograms = items.filter((item) => item.votingEndsAt);
   const votingProgramCount = votingPrograms.length;
   const groups = items.reduce((result, item) => {
-    const key = item.startYear;
+    const key = item.category;
     const group = result.get(key) ?? [];
     group.push(item);
     result.set(key, group);
     return result;
-  }, new Map<number, ProgramSidebarItem[]>());
-  const years = [...groups.keys()].sort((a, b) => b - a);
-  const yearsKey = years.join(":");
-  const selectedYear = items.find((item) => item.id === selectedId)?.startYear;
+  }, new Map<string, ProgramSidebarItem[]>());
+  // 대분류(카테고리)를 최상위 그룹으로, 최근 연도가 있는 분류를 위로. 동률은 가나다순.
+  const categories = [...groups.keys()].sort((a, b) => {
+    const maxYear = (category: string) => Math.max(...groups.get(category)!.map((item) => item.startYear));
+    return maxYear(b) - maxYear(a) || a.localeCompare(b, "ko");
+  });
+  const categoriesKey = categories.join(":");
+  const selectedCategory = items.find((item) => item.id === selectedId)?.category;
   const selectedProgram = items.find((item) => item.id === selectedId);
-  const [openYear, setOpenYear] = useState<number | undefined>(selectedYear ?? years[0]);
+  const [openCategory, setOpenCategory] = useState<string | undefined>(selectedCategory ?? categories[0]);
   const [activeVotingIndex, setActiveVotingIndex] = useState(0);
   const [votingTimerRevision, setVotingTimerRevision] = useState(0);
-  const [previousSelectedYear, setPreviousSelectedYear] = useState(selectedYear);
-  const [previousYearsKey, setPreviousYearsKey] = useState(yearsKey);
+  const [previousSelectedCategory, setPreviousSelectedCategory] = useState(selectedCategory);
+  const [previousCategoriesKey, setPreviousCategoriesKey] = useState(categoriesKey);
 
-  if (selectedYear !== previousSelectedYear || yearsKey !== previousYearsKey) {
-    setPreviousSelectedYear(selectedYear);
-    setPreviousYearsKey(yearsKey);
-    if (selectedYear !== undefined) {
-      setOpenYear(selectedYear);
-    } else if ((openYear !== undefined && !years.includes(openYear)) || (!previousYearsKey && years.length)) {
-      setOpenYear(years[0]);
+  if (selectedCategory !== previousSelectedCategory || categoriesKey !== previousCategoriesKey) {
+    setPreviousSelectedCategory(selectedCategory);
+    setPreviousCategoriesKey(categoriesKey);
+    if (selectedCategory !== undefined) {
+      setOpenCategory(selectedCategory);
+    } else if ((openCategory !== undefined && !categories.includes(openCategory)) || (!previousCategoriesKey && categories.length)) {
+      setOpenCategory(categories[0]);
     }
   }
 
@@ -211,24 +213,24 @@ export function ProgramSidebar({ items, selectedId }: {
     setVotingTimerRevision((current) => current + 1);
   }
 
-  function yearGroups(surface: "mobile" | "desktop") {
-    return years.map((year) => {
-      const programs = groups.get(year) ?? [];
+  function categoryGroups(surface: "mobile" | "desktop") {
+    return categories.map((category) => {
+      const programs = groups.get(category) ?? [];
       return (
-        <YearProgramGroup
-          key={`${surface}-${year}`}
-          year={year}
+        <CategoryProgramGroup
+          key={`${surface}-${category}`}
+          category={category}
           programs={programs}
           selectedId={selectedId}
-          open={openYear === year}
-          onToggle={() => setOpenYear((current) => current === year ? undefined : year)}
+          open={openCategory === category}
+          onToggle={() => setOpenCategory((current) => current === category ? undefined : category)}
         />
       );
     });
   }
 
   function programList(surface: "mobile" | "desktop") {
-    return years.length ? <div className="space-y-2">{yearGroups(surface)}</div> : null;
+    return categories.length ? <div className="space-y-2">{categoryGroups(surface)}</div> : null;
   }
 
   const voteBox = votingPrograms.length ? (
