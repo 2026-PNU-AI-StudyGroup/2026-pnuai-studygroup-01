@@ -1181,18 +1181,18 @@ async function seed() {
     });
 
     await tx.task.createMany({ data: [
-      { id: ids.tasks[0], teamId: ids.teams[0], createdById: ids.students[0], title: "경사로·엘리베이터 직접 확인하기", dueAt: new Date("2026-04-30T18:00:00+09:00"), status: "DONE" },
-      { id: ids.tasks[1], teamId: ids.teams[0], createdById: ids.students[0], title: "휠체어 사용자와 길찾기 테스트하기", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE" },
+      { id: ids.tasks[0], teamId: ids.teams[0], createdById: ids.students[0], title: "경사로·엘리베이터 직접 확인하기", dueAt: new Date("2026-04-30T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-04-29T16:30:00+09:00") },
+      { id: ids.tasks[1], teamId: ids.teams[0], createdById: ids.students[0], title: "휠체어 사용자와 길찾기 테스트하기", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-07-24T19:10:00+09:00") },
       { id: ids.tasks[2], teamId: ids.teams[0], createdById: ids.students[1], title: "교수님 피드백 보고서·포스터에 반영하기", dueAt: new Date("2026-08-12T18:00:00+09:00"), status: "IN_PROGRESS" },
-      { id: ids.tasks[3], teamId: ids.teams[1], createdById: ids.students[2], title: "졸업생·지도교수 요구사항 인터뷰 5건", dueAt: new Date("2026-07-22T18:00:00+09:00"), status: "DONE" },
+      { id: ids.tasks[3], teamId: ids.teams[1], createdById: ids.students[2], title: "졸업생·지도교수 요구사항 인터뷰 5건", dueAt: new Date("2026-07-22T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-07-22T17:40:00+09:00") },
       { id: ids.tasks[4], teamId: ids.teams[1], createdById: ids.students[2], title: "졸업과제 아카이브 정보 구조 검증", dueAt: new Date("2026-08-12T18:00:00+09:00"), status: "IN_PROGRESS" },
       { id: ids.tasks[5], teamId: ids.teams[1], createdById: ids.students[2], title: "OPUS 공개 결과물 이관 프로토타입", dueAt: new Date("2026-08-26T18:00:00+09:00"), status: "TODO" },
       { id: ids.tasks[6], teamId: ids.teams[1], createdById: ids.students[2], title: "보고서 승인·결과물 공개 시나리오 테스트", dueAt: new Date("2026-09-09T18:00:00+09:00"), status: "TODO" },
-      { id: ids.tasks[7], teamId: ids.teams[ids.teams.length - 1], createdById: ids.students[5], title: "전시장 익명 관람객 계수 데이터 점검", dueAt: new Date("2026-08-01T18:00:00+09:00"), status: "DONE" },
+      { id: ids.tasks[7], teamId: ids.teams[ids.teams.length - 1], createdById: ids.students[5], title: "전시장 익명 관람객 계수 데이터 점검", dueAt: new Date("2026-08-01T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-08-01T15:20:00+09:00") },
       { id: ids.tasks[8], teamId: ids.teams[ids.teams.length - 1], createdById: ids.students[5], title: "부스별 혼잡도 예측 대시보드 프로토타입", dueAt: new Date("2026-08-28T18:00:00+09:00"), status: "IN_PROGRESS" },
       { id: ids.tasks[9], teamId: ids.teams[ids.teams.length - 1], createdById: ids.students[5], title: "졸업작품 전시 모의 운영 검증", dueAt: new Date("2026-09-24T18:00:00+09:00"), status: "TODO" },
-      { id: ids.tasks[10], teamId: ids.teams[0], createdById: ids.students[1], title: "건물·출입구 데이터 PostGIS에 정리하기", dueAt: new Date("2026-05-20T18:00:00+09:00"), status: "DONE" },
-      { id: ids.tasks[11], teamId: ids.teams[0], createdById: ids.students[3], title: "층간 이동 경로 먼저 연결해 보기", dueAt: new Date("2026-06-30T18:00:00+09:00"), status: "DONE" },
+      { id: ids.tasks[10], teamId: ids.teams[0], createdById: ids.students[1], title: "건물·출입구 데이터 PostGIS에 정리하기", dueAt: new Date("2026-05-20T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-05-19T20:00:00+09:00") },
+      { id: ids.tasks[11], teamId: ids.teams[0], createdById: ids.students[3], title: "층간 이동 경로 먼저 연결해 보기", dueAt: new Date("2026-06-30T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-06-29T18:30:00+09:00") },
       { id: ids.tasks[12], teamId: ids.teams[0], createdById: ids.students[4], title: "최종 발표 시연하고 인수인계 정리하기", dueAt: new Date("2026-08-18T18:00:00+09:00"), status: "TODO" },
     ] });
     await tx.taskAssignee.createMany({ data: [
