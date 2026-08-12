@@ -44,6 +44,8 @@ describe("프로그램 공지 카드 레일", () => {
 
     fireEvent.click(firstCard);
     const dialog = screen.getByRole("dialog", { name: "발표 일정 안내" });
+    expect(dialog).toHaveClass("max-w-3xl", "sm:max-h-[min(42rem,calc(100dvh-4rem))]");
+    expect(dialog.querySelector("header")).toHaveClass("sticky", "top-0");
     expect(dialog).toHaveTextContent("발표 순서와 시간을 확인해 주세요.");
     expect(dialog).toHaveTextContent("김교수");
     fireEvent.click(screen.getByRole("button", { name: "공지 닫기" }));

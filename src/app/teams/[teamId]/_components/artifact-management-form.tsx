@@ -49,7 +49,7 @@ export function ArtifactManagementForm({
       <button type="button" className="button-quiet mt-3 w-full" onClick={() => dialogRef.current?.showModal()} disabled={pending}>
         <UiText>{"정보 수정·삭제"}</UiText>
       </button>
-      <dialog ref={dialogRef} aria-labelledby={titleId} className="w-[min(100%-2rem,34rem)] rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-0 shadow-[0_24px_70px_rgba(31,35,48,.18)]">
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="w-[min(100%-2rem,34rem)] rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-0 shadow-[0_24px_70px_rgba(31,35,48,.18)]">
         <div className="border-b border-[var(--line)] px-6 py-5">
           <h2 id={titleId} className="text-lg font-bold"><UiText>{"결과물 정보 관리"}</UiText></h2>
           <p className="muted mt-1 text-sm leading-6"><UiText>{artifact.fileId ? "파일은 교체할 수 없습니다. 바꾸려면 삭제 후 새 파일을 등록하세요." : "등록 방식과 링크는 유지한 채 제목과 종류만 수정할 수 있습니다."}</UiText></p>
