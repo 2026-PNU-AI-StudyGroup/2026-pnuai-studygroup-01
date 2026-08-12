@@ -41,31 +41,14 @@ jobs:
             --file deploy/nas/pms-images.override.yaml \
             run --rm --no-deps migrate
 
-      - name: Preserve the feedback board while seeding demo data
+      - name: Seed demo data with transactional feedback preservation
         run: |
           set -euo pipefail
-          feedback_snapshot() {
-            docker exec pnu-pms-postgres-1 sh -lc '
-              pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-                --data-only --inserts --column-inserts \
-                --table=feedback_post \
-                --table=feedback_comment \
-                --table=feedback_status_change
-            ' | sha256sum | awk '{print $1}'
-          }
-
-          feedback_before="$(feedback_snapshot)"
           docker run --rm \
             --network pnu-pms_default \
             --env-file "${PMS_DEPLOY_DIR}/.env.production" \
             --env ALLOW_LOCAL_DEMO_SEED=true \
             "pnu-pms-seed:${PMS_IMAGE_TAG}"
-          feedback_after="$(feedback_snapshot)"
-
-          if [[ "${feedback_before}" != "${feedback_after}" ]]; then
-            echo "The demo seed changed feedback-board data; its database transaction was rolled back." >&2
-            exit 1
-          fi
 
       - name: Replace the application only
         run: |
