@@ -113,7 +113,7 @@ describe("AppShell", () => {
   });
 
   it("학생 프로젝트 등록은 프로젝트 찾기 흐름으로 표시하고 승인 요청은 내 프로젝트로 표시한다", async () => {
-    const firstRender = render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/projects/new", preferredLocale: "ko", children: <p>본문</p> }));
+    const firstRender = render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/topics", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "프로젝트 찾기" })[0]).toHaveAttribute("aria-current", "page");
     expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).not.toHaveAttribute("aria-current");
@@ -174,6 +174,8 @@ describe("AppShell", () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/admin/programs", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "운영 관리" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).toHaveAttribute("href", "/topics?mode=manage&tab=settings");
+    expect(screen.getAllByRole("link", { name: "전체 현황" })[0]).toHaveAttribute("href", "/topics?mode=manage&tab=overview");
     expect(screen.getAllByRole("link", { name: "공지사항" })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: "운영 학기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("navigation")).toHaveLength(2);

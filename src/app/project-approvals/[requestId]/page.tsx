@@ -14,6 +14,7 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
+import { ChevronIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 승인 요청 상세");
@@ -23,6 +24,8 @@ const statusView = {
   PENDING: ["검토 대기", "info"],
   APPROVED: ["승인", "success"],
   REJECTED: ["반려", "danger"],
+  WITHDRAWN: ["철회", "neutral"],
+  CANCELED: ["취소", "neutral"],
 } as const;
 
 const applicationModeLabel = {
@@ -123,7 +126,7 @@ export default async function ProjectApprovalDetailPage({ params }: { params: Pr
   const request = await new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), programs).get(actor, requestId);
   if (!request) notFound();
   const canDecide = request.status === "PENDING" && (actor.role === "PROFESSOR" || actor.role === "ADMIN");
-  const backLink = <Link href="/project-approvals" className="button-secondary"><UiText>{"목록으로"}</UiText></Link>;
+  const backLink = <Link href="/project-approvals" className="button-secondary gap-2"><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>;
   const detail = <ApprovalDetail request={request} canDecide={canDecide} />;
 
   if (actor.role === "ADMIN") {

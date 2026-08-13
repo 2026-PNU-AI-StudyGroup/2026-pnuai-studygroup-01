@@ -5,7 +5,7 @@ import { AdminSection, adminRecordListClassName, adminRecordRowClassName } from 
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
-const status = { PENDING: ["검토 대기", "info"], APPROVED: ["승인", "success"], REJECTED: ["반려", "danger"] } as const;
+const status = { PENDING: ["검토 대기", "info"], APPROVED: ["승인", "success"], REJECTED: ["반려", "danger"], WITHDRAWN: ["철회", "neutral"], CANCELED: ["취소", "neutral"] } as const;
 const approvalLedgerColumns = "xl:grid-cols-[minmax(16rem,1.45fr)_7.5rem_8.5rem_11rem_6rem]";
 const adminApprovalLedgerColumns = "2xl:grid-cols-[minmax(13rem,1.4fr)_6.5rem_7rem_8.5rem_6rem]";
 

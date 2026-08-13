@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseAdminProjectPage,
   parseAdminProjectProgressFilter,
-} from "@/app/dashboard/_lib/admin-project-overview-query";
+} from "@/modules/team/ui/admin-project-overview-query";
 
 describe("관리자 프로젝트 현황 URL", () => {
   it("지원하는 진행 구간만 허용하고 나머지는 전체로 정규화한다", () => {

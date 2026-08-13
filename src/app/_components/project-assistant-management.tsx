@@ -5,6 +5,7 @@ import {
 } from "@/app/_components/project-assistant-controls";
 import type { ProjectAssistantManagement } from "@/modules/project-assistant/application/project-assistant-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 const roleLabel = {
   STUDENT: "학생",
@@ -39,7 +40,7 @@ export function ProjectAssistantManagementPanel({
                 </li>
               ))}
             </ul>
-          ) : <p className="muted mt-3 text-sm"><UiText>{"등록된 조교가 없습니다."}</UiText></p>}
+          ) : <EmptyState variant="compact" title="등록된 조교가 없습니다" description="초대한 조교가 수락하면 이 목록에 표시됩니다." />}
         </div>
         <div>
           <h3 className="text-sm font-bold"><UiText>{"응답 대기"}</UiText>{" "}{management.pendingInvitations.length}<UiText>{"명"}</UiText></h3>
@@ -55,7 +56,7 @@ export function ProjectAssistantManagementPanel({
                 </li>
               ))}
             </ul>
-          ) : <p className="muted mt-3 text-sm"><UiText>{"응답을 기다리는 초대가 없습니다."}</UiText></p>}
+          ) : <EmptyState variant="compact" title="응답을 기다리는 초대가 없습니다" />}
         </div>
       </div>
     </section>

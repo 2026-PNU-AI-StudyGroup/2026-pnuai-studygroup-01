@@ -21,6 +21,7 @@ import { Brand } from "@/shared/ui/brand";
 
 type NavigationItem = {
   href: string;
+  activePath?: string;
   label: string;
   icon: "home" | "search" | "users" | "notice" | "settings";
 };
@@ -58,9 +59,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   if (role === "ADMIN") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/dashboard", label: label.allProjects, icon: "home" },
+      { href: "/topics?mode=manage&tab=overview", activePath: "/dashboard", label: label.allProjects, icon: "home" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
-      { href: "/admin/programs", label: label.manageOps, icon: "settings" },
+      { href: "/topics?mode=manage&tab=settings", activePath: "/admin/programs", label: label.manageOps, icon: "settings" },
     ];
   }
   return [
@@ -72,8 +73,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
+  const activePath = item.activePath ?? item.href;
   if (role === "STUDENT" && item.href === "/topics") {
-    return isSectionActive("/topics", currentPath) || currentPath === "/projects/new";
+    return isSectionActive("/topics", currentPath);
   }
   if (role === "STUDENT" && item.href === "/dashboard") {
     return isSectionActive("/dashboard", currentPath) ||
@@ -83,7 +85,7 @@ function isNavigationActive(item: NavigationItem, currentPath: string, role: Use
     return isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
-  if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);
+  if (activePath !== "/admin/programs" && activePath !== "/professor/topics") return isSectionActive(activePath, currentPath);
   if (currentPath.startsWith("/project-approvals")) return true;
   return role === "ADMIN"
     ? currentPath.startsWith("/admin/") || currentPath.startsWith("/professor/")

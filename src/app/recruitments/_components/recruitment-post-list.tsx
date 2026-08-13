@@ -9,6 +9,7 @@ const historyStatus = {
   PENDING: { label: "검토 중", tone: "info" },
   ACCEPTED: { label: "수락", tone: "success" },
   REJECTED: { label: "거절", tone: "danger" },
+  WITHDRAWN: { label: "철회", tone: "neutral" },
 } as const;
 
 const posterTheme = {

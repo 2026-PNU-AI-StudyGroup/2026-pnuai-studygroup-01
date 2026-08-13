@@ -15,6 +15,7 @@ const statusPresentation = {
   ACCEPTED: { label: "수락", tone: "success" },
   REJECTED: { label: "거절", tone: "danger" },
   CLOSED: { label: "모집 종료", tone: "neutral" },
+  WITHDRAWN: { label: "철회", tone: "neutral" },
 } as const;
 
 export function RecruitmentApplicationsView({
@@ -55,7 +56,7 @@ export function RecruitmentApplicationsView({
           </div>
           {post.applications.length === 0 ? (
             <div className="px-7 lg:px-9">
-              <EmptyState variant="embedded" title="아직 지원자가 없습니다" />
+              <EmptyState variant="section" title="아직 지원자가 없습니다" description="새 지원자가 생기면 이 목록에 표시됩니다." />
             </div>
           ) : (
             <ol>

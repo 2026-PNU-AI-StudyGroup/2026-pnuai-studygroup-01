@@ -8,6 +8,7 @@ import {
   createStudentTeamAction,
   deleteStudentTeamAction,
   inviteStudentTeamMemberAction,
+  leaveStudentTeamAction,
   removeStudentTeamMemberAction,
   respondStudentTeamInvitationAction,
   transferStudentTeamLeadershipAction,
@@ -23,12 +24,12 @@ function ActionMessage({ state }: { state: { status: "idle" | "success" | "error
   return <p role={state.status === "error" ? "alert" : "status"} className={`text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p>;
 }
 
-export function CreateStudentTeamForm({ successHref }: { successHref?: string }) {
+export function CreateStudentTeamForm() {
   const router = useRouter();
   const [state, action, pending] = useActionState(createStudentTeamAction, initialStudentTeamActionState);
   useEffect(() => {
-    if (state.status === "success" && successHref) router.replace(successHref);
-  }, [router, state.status, successHref]);
+    if (state.status === "success" && state.teamId) router.replace(`/teams/manage/${state.teamId}`);
+  }, [router, state.status, state.teamId]);
   return (
     <form action={action} className="grid gap-4" aria-busy={pending}>
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 이름"}</UiText><UiInput className="form-control" name="name" required maxLength={80} placeholder="예: 코드웨이브" /></label>
@@ -87,6 +88,17 @@ export function DeleteStudentTeamForm({ teamId, teamName }: { teamId: string; te
     <form action={action} className="grid gap-2">
       <input type="hidden" name="teamId" value={teamId} />
       <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀을 삭제하시겠습니까? 완료된 프로젝트 기록은 삭제되지 않습니다.`}><UiText>{"팀 삭제"}</UiText></ConfirmSubmitButton>
+      <ActionMessage state={state} />
+    </form>
+  );
+}
+
+export function LeaveStudentTeamForm({ teamId, teamName }: { teamId: string; teamName: string }) {
+  const [state, action, pending] = useActionState(leaveStudentTeamAction, initialStudentTeamActionState);
+  return (
+    <form action={action} className="grid gap-2">
+      <input type="hidden" name="teamId" value={teamId} />
+      <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀에서 탈퇴하시겠습니까? 대기 중인 프로젝트 제안은 취소됩니다.`}><UiText>{"팀 탈퇴"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );

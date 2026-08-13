@@ -62,7 +62,7 @@ function applicationPage(item = listItem) {
     page: 1,
     totalPages: 1,
     total: 1,
-    counts: { PENDING: item.status === "PENDING" ? 1 : 0, ACCEPTED: item.status === "ACCEPTED" ? 1 : 0, REJECTED: item.status === "REJECTED" ? 1 : 0 },
+    counts: { PENDING: item.status === "PENDING" ? 1 : 0, ACCEPTED: item.status === "ACCEPTED" ? 1 : 0, REJECTED: item.status === "REJECTED" ? 1 : 0, WITHDRAWN: item.status === "WITHDRAWN" ? 1 : 0 },
   };
 }
 

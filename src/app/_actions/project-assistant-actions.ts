@@ -31,7 +31,7 @@ function refresh(topicId?: string) {
   revalidatePath("/professor/applications");
   // 조교 관리 패널은 팀 워크스페이스에도 렌더된다. 폼이 teamId를 싣지 않으므로
   // 동적 팀 경로 전체를 무효화해 stale UI를 막는다.
-  revalidatePath("/teams/[teamId]", "page");
+  revalidatePath("/projects", "layout");
   if (topicId) {
     revalidatePath(`/professor/topics/${topicId}`);
   }

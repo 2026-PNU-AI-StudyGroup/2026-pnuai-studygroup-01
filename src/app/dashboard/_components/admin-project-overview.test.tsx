@@ -2,10 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
-  AdminProjectOverview,
+  AdminProjectOverviewContent,
   sortAdminProjects,
   summarizeProjectProgress,
-} from "@/app/dashboard/_components/admin-project-overview";
+} from "@/modules/team/ui/admin-project-overview";
 import type { AdminProjectOverviewProgram } from "@/modules/team/application/list-admin-project-overview";
 
 const programs: AdminProjectOverviewProgram[] = [
@@ -16,10 +16,12 @@ const programs: AdminProjectOverviewProgram[] = [
     category: "캡스톤",
     startYear: 2026,
     status: "OPEN",
+    isStudentPublic: true,
+    isFacultyPublic: true,
     advisorEnabled: true,
     projects: [
       { id: "team-1", name: "시작 전 팀", topicTitle: "주제 A", professorName: "김교수", advisorEnabled: true, status: "FORMING", memberCount: 3, reportCount: 2, submittedReportCount: 0, overdueReportCount: 1 },
-      { id: "team-2", name: "진행 팀", topicTitle: "주제 B", professorName: "이교수", advisorEnabled: true, status: "CONFIRMED", memberCount: 4, reportCount: 3, submittedReportCount: 1, overdueReportCount: 0 },
+      { id: "team-2", name: "진행 팀", topicTitle: "주제 B", professorName: "이교수", advisorEnabled: true, status: "IN_PROGRESS", memberCount: 4, reportCount: 3, submittedReportCount: 1, overdueReportCount: 0 },
     ],
   },
   {
@@ -29,6 +31,8 @@ const programs: AdminProjectOverviewProgram[] = [
     category: "경진대회",
     startYear: 2026,
     status: "DRAFT",
+    isStudentPublic: false,
+    isFacultyPublic: false,
     advisorEnabled: false,
     projects: [],
   },
@@ -39,9 +43,11 @@ const programs: AdminProjectOverviewProgram[] = [
     category: "캡스톤",
     startYear: 2025,
     status: "CLOSED",
+    isStudentPublic: true,
+    isFacultyPublic: true,
     advisorEnabled: true,
     projects: [
-      { id: "team-3", name: "완료 팀", topicTitle: "주제 C", professorName: "박교수", advisorEnabled: true, status: "CLOSED", memberCount: 5, reportCount: 2, submittedReportCount: 2, overdueReportCount: 0 },
+      { id: "team-3", name: "완료 팀", topicTitle: "주제 C", professorName: "박교수", advisorEnabled: true, status: "COMPLETED", memberCount: 5, reportCount: 2, submittedReportCount: 2, overdueReportCount: 0 },
     ],
   },
 ];
@@ -62,17 +68,8 @@ describe("관리자 프로젝트 현황", () => {
     });
   });
 
-  it("프로그램별로 프로젝트와 진행률 통계를 보여준다", () => {
-    const { container } = render(<AdminProjectOverview programs={programs} />);
-
-    expect(screen.getByRole("complementary", { name: "프로젝트 현황 선택" })).toBeInTheDocument();
-    const programNavigation = screen.getByRole("navigation", { name: "프로그램 선택" });
-    expect(within(programNavigation).getByRole("heading", { name: "진행 중" })).toBeInTheDocument();
-    expect(within(programNavigation).getByRole("heading", { name: "종료" })).toBeInTheDocument();
-    expect(within(programNavigation).getByRole("link", { name: /AI 경진대회/ })).toHaveAttribute(
-      "href",
-      "/dashboard?programId=program-2",
-    );
+  it("선택된 프로그램의 프로젝트와 진행률 통계를 보여준다", () => {
+    render(<AdminProjectOverviewContent programs={programs} />);
     expect(screen.getByRole("heading", { name: "2026 캡스톤" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "시작 전 팀" }).parentElement).toHaveTextContent("구성 중");
     expect(screen.getByRole("heading", { name: "진행 팀" }).parentElement).toHaveTextContent("진행 중");
@@ -82,21 +79,18 @@ describe("관리자 프로젝트 현황", () => {
     expect(within(progressRow!).getAllByText("33%")).toHaveLength(1);
     expect(within(progressRow!).getAllByText("진행 팀 보고서 제출률")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "시작 전 팀" }).parentElement).toHaveTextContent("제출 기한 초과");
-    expect(screen.getByRole("link", { name: "시작 전 팀 관리" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "시작 전 팀 관리" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByText("전체 보기")).not.toBeInTheDocument();
-    const programLink = Array.from(container.querySelectorAll('nav[aria-label="프로그램 선택"] a'))
-      .find((link) => link.getAttribute("href")?.includes("programId=program-1"));
-    expect(programLink).toHaveAttribute("aria-current", "page");
     const progressNavigation = screen.getByRole("navigation", { name: "프로젝트 진행 구간" });
     expect(within(progressNavigation).getByRole("link", { name: "전체 2개" })).toHaveAttribute("aria-current", "page");
     expect(within(progressNavigation).getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute(
       "href",
-      "/dashboard?programId=program-1&progress=overdue",
+      "/topics?programId=program-1&mode=manage&tab=overview&progress=overdue",
     );
   });
 
   it("프로젝트가 없는 프로그램에는 보고서 진행 통계를 만들지 않는다", () => {
-    render(<AdminProjectOverview programs={[programs[1]]} />);
+    render(<AdminProjectOverviewContent programs={[programs[1]]} />);
 
     const section = screen.getByRole("heading", { name: "AI 경진대회" }).closest("section");
     expect(section).not.toBeNull();
@@ -107,7 +101,7 @@ describe("관리자 프로젝트 현황", () => {
   });
 
   it("종료 그룹에서 선택한 프로그램의 프로젝트만 보여준다", () => {
-    render(<AdminProjectOverview programs={programs} selectedProgramId="program-3" />);
+    render(<AdminProjectOverviewContent programs={programs} selectedProgramId="program-3" />);
 
     expect(screen.getByRole("heading", { name: "지난 캡스톤" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "완료 팀" }).parentElement).toHaveTextContent("완료");
@@ -120,11 +114,11 @@ describe("관리자 프로젝트 현황", () => {
       ...programs[1],
       status: "OPEN",
       projects: [
-        { id: "team-4", name: "운영 팀", topicTitle: "주제 D", professorName: "숨김 관리자", advisorEnabled: false, status: "CONFIRMED", memberCount: 3, reportCount: 1, submittedReportCount: 0, overdueReportCount: 0 },
+        { id: "team-4", name: "운영 팀", topicTitle: "주제 D", professorName: "숨김 관리자", advisorEnabled: false, status: "IN_PROGRESS", memberCount: 3, reportCount: 1, submittedReportCount: 0, overdueReportCount: 0 },
       ],
     };
 
-    render(<AdminProjectOverview programs={[advisorlessProgram]} />);
+    render(<AdminProjectOverviewContent programs={[advisorlessProgram]} />);
 
     expect(screen.queryByText("지도교수")).not.toBeInTheDocument();
     expect(screen.queryByText("숨김 관리자")).not.toBeInTheDocument();
@@ -138,7 +132,7 @@ describe("관리자 프로젝트 현황", () => {
       topicTitle: "주제 E",
       professorName: "김교수",
       advisorEnabled: true,
-      status: "CONFIRMED" as const,
+      status: "IN_PROGRESS" as const,
       memberCount: 3,
       reportCount: 0,
       submittedReportCount: 0,
@@ -157,7 +151,7 @@ describe("관리자 프로젝트 현황", () => {
       averageProgress: null,
     });
 
-    render(<AdminProjectOverview programs={[{
+    render(<AdminProjectOverviewContent programs={[{
       ...programs[0],
       projects: [projectWithoutReportSchedule],
     }]} />);
@@ -169,24 +163,21 @@ describe("관리자 프로젝트 현황", () => {
     expect(within(row!).queryByText("0 / 0 보고서 제출")).not.toBeInTheDocument();
   });
 
-  it("사이드바에서 선택한 프로그램의 프로젝트와 통계만 보여준다", () => {
+  it("선택한 프로그램의 프로젝트와 통계만 보여준다", () => {
     const programsWithTwoActive = [
       programs[0],
       {
         ...programs[1],
         projects: [
-          { id: "team-4", name: "다른 프로그램 팀", topicTitle: "주제 D", professorName: "최교수", advisorEnabled: false, status: "CONFIRMED" as const, memberCount: 3, reportCount: 2, submittedReportCount: 1, overdueReportCount: 0 },
+          { id: "team-4", name: "다른 프로그램 팀", topicTitle: "주제 D", professorName: "최교수", advisorEnabled: false, status: "IN_PROGRESS" as const, memberCount: 3, reportCount: 2, submittedReportCount: 1, overdueReportCount: 0 },
         ],
       },
       programs[2],
     ];
-    const { container } = render(
-      <AdminProjectOverview programs={programsWithTwoActive} selectedProgramId="program-1" />,
+    render(
+      <AdminProjectOverviewContent programs={programsWithTwoActive} selectedProgramId="program-1" />,
     );
 
-    const selectedProgramLink = Array.from(container.querySelectorAll('nav[aria-label="프로그램 선택"] a'))
-      .find((link) => link.getAttribute("href")?.includes("programId=program-1"));
-    expect(selectedProgramLink).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "시작 전 팀" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "다른 프로그램 팀" })).not.toBeInTheDocument();
     expect(screen.getByText((_, element) => (
@@ -196,21 +187,18 @@ describe("관리자 프로젝트 현황", () => {
   });
 
   it("알 수 없는 프로그램은 첫 진행 중 프로그램으로 정규화한다", () => {
-    const { container } = render(
-      <AdminProjectOverview programs={programs} selectedProgramId="unknown" />,
+    render(
+      <AdminProjectOverviewContent programs={programs} selectedProgramId="unknown" />,
     );
-    const selectedProgramLink = Array.from(container.querySelectorAll('nav[aria-label="프로그램 선택"] a'))
-      .find((link) => link.getAttribute("aria-current") === "page");
-
-    expect(selectedProgramLink).toHaveAttribute("href", "/dashboard?programId=program-1");
+    expect(screen.getByRole("heading", { name: "2026 캡스톤" })).toBeInTheDocument();
   });
 
   it("일정이 있는 프로젝트를 진행률 순으로 정렬하고 일정 없는 프로젝트는 뒤로 보낸다", () => {
     const items = [
-      { id: "unscheduled", name: "일정 없음", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 0, submittedReportCount: 0, overdueReportCount: 0 },
-      { id: "middle", name: "중반", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 2, overdueReportCount: 0 },
-      { id: "overdue", name: "기한 초과 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 1 },
-      { id: "not-started", name: "일반 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "CONFIRMED" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 0 },
+      { id: "unscheduled", name: "일정 없음", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "IN_PROGRESS" as const, memberCount: 3, reportCount: 0, submittedReportCount: 0, overdueReportCount: 0 },
+      { id: "middle", name: "중반", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "IN_PROGRESS" as const, memberCount: 3, reportCount: 4, submittedReportCount: 2, overdueReportCount: 0 },
+      { id: "overdue", name: "기한 초과 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "IN_PROGRESS" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 1 },
+      { id: "not-started", name: "일반 착수 전", topicTitle: "주제", professorName: "교수", advisorEnabled: true, status: "IN_PROGRESS" as const, memberCount: 3, reportCount: 4, submittedReportCount: 0, overdueReportCount: 0 },
     ];
 
     expect(sortAdminProjects(items).map(({ id }) => id)).toEqual([
@@ -222,13 +210,13 @@ describe("관리자 프로젝트 현황", () => {
   });
 
   it("선택한 진행 구간만 보여주고 필터 변경 시 페이지를 초기화한다", () => {
-    render(<AdminProjectOverview programs={programs} selectedProgress="overdue" requestedPage={4} />);
+    render(<AdminProjectOverviewContent programs={programs} selectedProgress="overdue" requestedPage={4} />);
 
     const progressNavigation = screen.getByRole("navigation", { name: "프로젝트 진행 구간" });
     expect(within(progressNavigation).getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute("aria-current", "page");
     expect(within(progressNavigation).getByRole("link", { name: "전체 2개" })).toHaveAttribute(
       "href",
-      "/dashboard?programId=program-1",
+      "/topics?programId=program-1&mode=manage&tab=overview",
     );
     expect(screen.getByRole("heading", { name: "시작 전 팀" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "진행 팀" })).not.toBeInTheDocument();
@@ -241,20 +229,20 @@ describe("관리자 프로젝트 현황", () => {
       topicTitle: "주제",
       professorName: "김교수",
       advisorEnabled: true,
-      status: "CONFIRMED" as const,
+      status: "IN_PROGRESS" as const,
       memberCount: 4,
       reportCount: 4,
       submittedReportCount: index % 4,
       overdueReportCount: 0,
     }));
-    render(<AdminProjectOverview programs={[{ ...programs[0], projects: manyProjects }]} requestedPage={99} />);
+    render(<AdminProjectOverviewContent programs={[{ ...programs[0], projects: manyProjects }]} requestedPage={99} />);
 
     const pagination = screen.getByRole("navigation", { name: "관리자 프로젝트 현황 페이지" });
     expect(pagination).toHaveTextContent("3 / 3 페이지");
     expect(screen.getAllByRole("link", { name: /관리$/ })).toHaveLength(1);
     expect(within(pagination).getByRole("link", { name: "이전 페이지" })).toHaveAttribute(
       "href",
-      "/dashboard?programId=program-1&page=2",
+      "/topics?programId=program-1&mode=manage&tab=overview&page=2",
     );
   });
 });

@@ -17,6 +17,7 @@ import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 승인 요청");
@@ -37,13 +38,15 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
   const student = actor.role === "STUDENT";
   const canCreateStudentProject = student && studentCreatablePrograms.length > 0;
   const emptyTitle = student ? "보낸 승인 요청이 없습니다" : "검토할 승인 요청이 없습니다";
-  const emptyDescription = student ? "프로젝트를 직접 제안하고 교수 또는 관리자에게 승인을 요청할 수 있습니다." : undefined;
+  const emptyDescription = student
+    ? "프로젝트를 직접 제안하고 교수 또는 관리자에게 승인을 요청할 수 있습니다."
+    : "새 승인 요청이 도착하면 이 목록에 표시됩니다.";
   const content = requests.length === 0
     ? (
       <EmptyState
         title={emptyTitle}
         description={emptyDescription}
-        action={canCreateStudentProject ? <Link className="button-primary" href="/projects/new"><UiText>{"프로젝트 제안"}</UiText></Link> : undefined}
+        action={canCreateStudentProject ? <Link className="button-primary gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"프로젝트 제안"}</UiText></Link> : undefined}
       />
     )
     : <ProjectApprovalLedger requests={requests} student={student} />;
@@ -63,7 +66,7 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
           {requests.length === 0 ? (
             <AdminSection id="approval-ledger-title" title="승인 대기" meta={<><strong>{requestPage.total}</strong><UiText>{"건"}</UiText></>}>
               <AdminSectionEmpty>
-                <EmptyState variant="embedded" title={emptyTitle} description={emptyDescription} />
+                <EmptyState variant="section" title={emptyTitle} description={emptyDescription} />
               </AdminSectionEmpty>
             </AdminSection>
           ) : <ProjectApprovalLedger requests={requests} student={false} adminSurface />}
@@ -91,7 +94,7 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
           eyebrow={student ? "내 프로젝트 제안" : "프로젝트 검토"}
           title="프로젝트 승인 요청"
           description={student ? "교수 또는 관리자에게 보낸 요청과 처리 결과를 확인합니다." : "학생이 제안한 프로젝트를 검토하고 공개 여부를 결정합니다."}
-          actions={requests.length > 0 && canCreateStudentProject ? <Link className="button-primary" href="/projects/new"><UiText>{"새 프로젝트 제안"}</UiText></Link> : undefined}
+          actions={requests.length > 0 && canCreateStudentProject ? <Link className="button-primary gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"새 프로젝트 제안"}</UiText></Link> : undefined}
         />
         {content}
         {pagination}

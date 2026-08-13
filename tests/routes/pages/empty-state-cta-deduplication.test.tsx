@@ -92,7 +92,7 @@ describe("빈 목록 CTA", () => {
 
     render(await ProjectApprovalsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("link", { name: "프로젝트 제안" })).toHaveAttribute("href", "/projects/new");
+    expect(screen.getByRole("link", { name: "프로젝트 제안" })).toHaveAttribute("href", "/topics?modal=project-proposal");
     expect(screen.queryByRole("link", { name: "새 프로젝트 만들기" })).not.toBeInTheDocument();
   });
 });

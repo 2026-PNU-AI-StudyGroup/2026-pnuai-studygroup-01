@@ -11,6 +11,7 @@ import type {
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { SearchIcon, UndoIcon } from "@/shared/ui/workspace-icons";
 
 function applicationsHref({ page = 1, status, query }: {
   page?: number;
@@ -59,7 +60,7 @@ export function ReceivedApplicationList({
               placeholder="프로젝트명, 지원자 이름 또는 이메일"
             />
           </label>
-          <button type="submit" className="button-primary max-sm:w-full"><UiText>{"검색"}</UiText></button>
+          <button type="submit" className="button-primary gap-2 max-sm:w-full"><SearchIcon className="size-4 shrink-0" /><UiText>{"검색"}</UiText></button>
         </form>
 
         <UiNav aria-label="지원 상태 필터" className="mt-5 overflow-x-auto border-t border-[var(--line)] pt-4">
@@ -96,7 +97,7 @@ export function ReceivedApplicationList({
         <EmptyState
           title="조건에 맞는 지원서가 없습니다"
           description="검색어나 지원 상태를 바꿔 다시 확인해 주세요."
-          action={<Link href="/professor/applications" className="button-secondary"><UiText>{"필터 초기화"}</UiText></Link>}
+          action={<Link href="/professor/applications" className="button-secondary gap-2"><UndoIcon className="size-4 shrink-0" /><UiText>{"필터 초기화"}</UiText></Link>}
         />
       ) : <UiUl aria-label="지원서 결과" className="divide-y divide-[var(--line)]">
         {page.items.map((application) => (

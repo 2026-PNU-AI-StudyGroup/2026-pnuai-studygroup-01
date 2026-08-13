@@ -59,7 +59,6 @@ vi.mock("@/app/dashboard/_components/project-dashboard-hero", () => ({
 vi.mock("@/app/dashboard/_components/project-dashboard-sidebar", () => ({ ProjectDashboardSidebar: () => null }));
 vi.mock("@/app/dashboard/_components/project-application-list", () => ({ ProjectApplicationList: () => null }));
 vi.mock("@/app/dashboard/_components/project-list", () => ({ ProjectList: () => null }));
-vi.mock("@/app/dashboard/_components/admin-project-overview", () => ({ AdminProjectOverview: () => null }));
 vi.mock("@/app/_components/project-approval-ledger", () => ({ ProjectApprovalLedger: () => null }));
 vi.mock("@/app/_components/project-assistant-controls", () => ({ ProjectAssistantInvitationDecisionForm: () => null }));
 
