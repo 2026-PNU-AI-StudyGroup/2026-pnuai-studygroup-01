@@ -92,7 +92,7 @@ flowchart TB
     Application --> Domain
 ```
 
-의존 방향은 바깥 계층에서 안쪽 계층으로만 향합니다. `domain`은 Next.js, React, Prisma를 알지 못하며, 라우트 파일은 인증과 구현체 조립 후 애플리케이션 유스케이스에 업무 처리를 위임합니다. 폴더 배치와 자동 검증 규칙은 [프로덕션 폴더 구조](docs/architecture/folder-structure.md)에 정리되어 있습니다.
+의존 방향은 바깥 계층에서 안쪽 계층으로만 향합니다. `domain`은 Next.js, React, Prisma를 알지 못하며, 라우트 파일은 인증과 구현체 조립 후 애플리케이션 유스케이스에 업무 처리를 위임합니다. 폴더 배치와 자동 검증 규칙은 [프로덕션 폴더 구조](docs/architecture/folder-structure.md)에, 현재 업무 규칙과 확인이 필요한 충돌은 [정책 인덱스](docs/policies/README.md)에 정리되어 있습니다.
 
 ## 주요 업무 흐름
 
