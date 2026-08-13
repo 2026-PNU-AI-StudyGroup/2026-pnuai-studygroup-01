@@ -31,6 +31,7 @@ function parseDefinition(formData: FormData) {
 function refresh(programId: string) {
   revalidatePath(`/admin/programs/${programId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/topics");
 }
 
 export async function createProgramReportDefinitionAction(programId: string, _state: ProgramReportActionState, formData: FormData): Promise<ProgramReportActionState> {

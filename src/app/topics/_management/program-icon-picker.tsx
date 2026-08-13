@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 
-import { changeProgramIconAction } from "@/app/admin/programs/_actions/program-actions";
-import { initialProgramActionState } from "@/app/admin/programs/_lib/program-form-state";
+import { changeProgramIconAction } from "@/app/topics/_management/program-actions";
+import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import { PROGRAM_ICON_KEYS, PROGRAM_ICON_LABEL, type ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ChoiceCard, FormSection } from "@/shared/ui/form-system";

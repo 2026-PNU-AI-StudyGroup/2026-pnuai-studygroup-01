@@ -1,10 +1,9 @@
-// 졸업과제는 다른 사이트로 이관 — 학생 탐색 화면에서 졸업과제/캡스톤 성격 프로그램을 숨긴다.
-// 프로그램 분류(category)는 자유 텍스트라 문자열 매칭으로 판별한다.
-// 되돌리려면 이 필터 호출부를 제거하면 된다.
-const GRADUATION_PROGRAM_PATTERN = /졸업|캡스톤|capstone/i;
+// 내부 사정으로 현재 데모 데이터의 졸업과제 분류만 학생 탐색에서 숨긴다.
+// 자유 텍스트를 추측하지 않아 이름에 "캡스톤"이 들어간 다른 분류를 오탐하지 않는다.
+export const HIDDEN_GRADUATION_PROGRAM_CATEGORY = "CSE 캡스톤 디자인";
 
 export function isHiddenGraduationProgram(category: string): boolean {
-  return GRADUATION_PROGRAM_PATTERN.test(category);
+  return category === HIDDEN_GRADUATION_PROGRAM_CATEGORY;
 }
 
 // 학생에게만 졸업과제 프로그램을 제거한다. 교수·관리자에게는 그대로 노출.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UiButton, UiOl } from "@/modules/translation/ui/localized-elements";
+import { UiOl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState, useId, useRef, useState } from "react";
 
@@ -10,6 +10,8 @@ import { applyTopicAction, type ApplyTopicActionState } from "@/app/topics/_acti
 import type { PublicTopicSummary } from "@/modules/topic/application/topic-ports";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { ChoiceCard } from "@/shared/ui/form-system";
+import { EmptyState } from "@/shared/ui/page-primitives";
+import { SplitDialog } from "@/shared/ui/split-dialog";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
@@ -31,31 +33,25 @@ function applicationModeLabel(mode: PublicTopicSummary["applicationMode"]) {
   return "개인 또는 팀 지원";
 }
 
-function CloseIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 fill-none stroke-current stroke-[1.75]">
-      <path d="m5 5 10 10M15 5 5 15" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, applicationQuestions, capacity, leaderTeams }: {
+export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, applicationQuestions, capacity, memberCount = 0, teamMaxSize = 6, leaderTeams }: {
   topicId: string;
   topicTitle: string;
   applicationMode: PublicTopicSummary["applicationMode"];
   applicationQuestions: PublicTopicSummary["applicationQuestions"];
   capacity: number;
+  memberCount?: number;
+  teamMaxSize?: number;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  const descriptionId = useId();
   const [kind, setKind] = useState<ApplicationKind>(() => initialApplicationKind(applicationMode));
   const [step, setStep] = useState<ApplicationStep>(() => initialApplicationStep(applicationMode));
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [state, action, pending] = useActionState(applyTopicAction, initialState);
   const toastMessage = useDialogSuccessToast(state, dialogRef);
-  const eligibleTeams = leaderTeams.filter((team) => team.memberCount <= capacity);
+  const allowedTeamSize = Math.min(Math.max(capacity - memberCount, 0), teamMaxSize);
+  const eligibleTeams = leaderTeams.filter((team) => team.memberCount <= allowedTeamSize);
   const canChooseKind = applicationMode === "INDIVIDUAL_OR_TEAM";
 
   function closeDialog() {
@@ -78,30 +74,24 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
         <UiText>{state.status === "success" ? "지원 접수됨" : "이 프로젝트에 지원"}</UiText>
       </button>
 
-      <dialog
-        ref={dialogRef}
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        onCancel={(event) => { if (pending) event.preventDefault(); }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]"
-      >
-        <div className="grid lg:grid-cols-[18rem_minmax(0,1fr)]">
-          <header className="border-b border-[var(--line)] bg-[var(--primary-subtle)] px-6 py-7 lg:border-b-0 lg:border-r lg:px-8 lg:py-9">
-            <p className="text-xs font-bold text-[var(--primary)]">{applicationModeLabel(applicationMode)}</p>
-            <h2 id={titleId} className="mt-3 text-3xl font-bold leading-[1.08] tracking-[-0.045em]"><UiText>{step === "KIND" ? "지원 방식 선택" : "지원서 작성"}</UiText></h2>
-            <p id={descriptionId} className="mt-5 font-semibold leading-6 [overflow-wrap:anywhere]"><UiText>{topicTitle}</UiText></p>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              <UiText>{step === "KIND"
-                ? "개인 또는 팀 중 지원 가능한 방식을 먼저 선택해 주세요."
-                : "필수 항목을 확인하고 한 번에 제출합니다. 팀 지원은 팀장만 현재 팀 구성으로 접수할 수 있습니다."}</UiText>
-            </p>
-            {canChooseKind ? (
+      <SplitDialog
+        dialogRef={dialogRef}
+        eyebrow={applicationModeLabel(applicationMode)}
+        title={step === "KIND" ? "지원 방식 선택" : "지원서 작성"}
+        context={topicTitle}
+        description={step === "KIND"
+          ? "개인 또는 팀 중 지원 가능한 방식을 먼저 선택해 주세요."
+          : "필수 항목을 확인하고 한 번에 제출합니다. 팀 지원은 팀장만 현재 팀 구성으로 접수할 수 있습니다."}
+        steps={canChooseKind ? (
               <UiOl aria-label="지원 단계" className="mt-8 grid gap-3 text-xs font-bold">
                 <li className={step === "KIND" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>1. <UiText>{"지원 방식"}</UiText></li>
                 <li className={step === "FORM" ? "text-[var(--primary)]" : "text-[var(--muted)]"}>2. <UiText>{"지원서 작성"}</UiText></li>
               </UiOl>
-            ) : null}
-          </header>
+            ) : undefined}
+        closeLabel="지원서 닫기"
+        pending={pending}
+        onRequestClose={closeDialog}
+      >
 
           {step === "KIND" ? (
             <section className="grid content-start gap-7 px-6 py-7 sm:px-8 lg:px-10 lg:py-9" aria-labelledby={`${titleId}-kind`}>
@@ -159,21 +149,14 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
                   <span className="text-xs font-normal leading-5 text-[var(--muted)]"><UiText>{"팀장인 팀만 표시됩니다. 선택한 팀의 현재 구성원 전원이 함께 지원합니다."}</UiText></span>
                   </>
                 ) : (
-                  <div className="grid gap-4 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div>
-                      <p className="font-semibold">
-                        <UiText>{leaderTeams.length ? "정원 안에 들어오는 팀이 없습니다" : "지원할 수 있는 내 팀이 없습니다"}</UiText>
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                        <UiText>{leaderTeams.length
-                          ? `프로젝트 정원 ${capacity}명 이하로 팀 구성을 조정해 주세요.`
-                          : "새 팀을 만들면 본인이 팀장이 되고, 팀원을 초대한 뒤 지원할 수 있습니다."}</UiText>
-                      </p>
-                    </div>
-                    <Link className="button-secondary" href={leaderTeams.length ? "/teams" : "/teams?modal=create"}>
-                      <UiText>{leaderTeams.length ? "팀 관리" : "팀 만들기"}</UiText>
-                    </Link>
-                  </div>
+                  <EmptyState
+                    variant="compact"
+                    title={leaderTeams.length ? "정원 안에 들어오는 팀이 없습니다" : "지원할 수 있는 내 팀이 없습니다"}
+                    description={leaderTeams.length
+                      ? `프로젝트의 남은 정원과 프로그램 팀 지원 한도를 고려해 ${allowedTeamSize}명 이하로 팀 구성을 조정해 주세요.`
+                      : "새 팀을 만들면 본인이 팀장이 되고, 팀원을 초대한 뒤 지원할 수 있습니다."}
+                    action={<Link className="button-secondary" href={leaderTeams.length ? "/teams" : "/teams?modal=create"}><UiText>{leaderTeams.length ? "팀 관리" : "팀 만들기"}</UiText></Link>}
+                  />
                 )}
               </fieldset>
             ) : null}
@@ -194,11 +177,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
             </div>
           </form>
           )}
-        </div>
-        <UiButton type="button" onClick={closeDialog} disabled={pending} aria-label="지원서 닫기" className="button-quiet absolute right-4 top-4 min-w-11 px-0">
-          <CloseIcon />
-        </UiButton>
-      </dialog>
+      </SplitDialog>
 
       <SuccessToast message={toastMessage} />
     </>

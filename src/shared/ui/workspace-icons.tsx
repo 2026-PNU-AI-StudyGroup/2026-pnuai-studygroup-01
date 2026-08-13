@@ -73,6 +73,30 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+export function AddIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function ArrowUpIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="m6 10 6-6 6 6M12 4v16" />
+    </svg>
+  );
+}
+
+export function ArrowDownIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="m6 14 6 6 6-6M12 20V4" />
+    </svg>
+  );
+}
+
 export function UndoIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>
@@ -107,6 +131,32 @@ export function TrashIcon(props: IconProps) {
   );
 }
 
+export function ArchiveIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M4.5 6.5h15v13h-15zM3.5 4h17v4h-17zM9 12h6" />
+    </svg>
+  );
+}
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M19 8a7.5 7.5 0 0 0-12.75-2L4 8" />
+      <path d="M4 4v4h4M5 16a7.5 7.5 0 0 0 12.75 2L20 16" />
+      <path d="M20 20v-4h-4" />
+    </svg>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14" />
+    </svg>
+  );
+}
+
 export function SearchIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>
@@ -116,11 +166,40 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
+export function SettingsIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 export function DocumentIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>
       <path d="M6.25 3.75h8.5l3 3v13.5H6.25z" />
       <path d="M14.75 3.75v3h3M9 11h6M9 15h4" />
+    </svg>
+  );
+}
+
+export function BarChartIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M5 19V11M12 19V5M19 19v-6" />
+      <path d="M3.5 19.5h17" />
+    </svg>
+  );
+}
+
+export function BallotBoxIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M8 4.25h8v6H8z" />
+      <path d="m10 7 1.35 1.35L14 5.75" />
+      <path d="M6 10.25h12l1.25 3v6.5H4.75v-6.5l1.25-3Z" />
+      <path d="M8.5 14h7" />
     </svg>
   );
 }

@@ -16,6 +16,11 @@ import { getCreateTopicErrorMessage } from "@/modules/topic/ui/create-topic-erro
 import { TopicUpdateError, UpdateTopicService } from "@/modules/topic/application/update-topic";
 import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import {
+  AdminProjectLifecycleError,
+  ManageAdminProjectLifecycleService,
+} from "@/modules/topic/application/manage-admin-project-lifecycle";
+import { PrismaAdminProjectLifecycleWriter } from "@/modules/topic/infrastructure/prisma-admin-project-lifecycle-writer";
 
 type TopicManagementActionState = {
   status: "idle" | "error" | "success";
@@ -23,6 +28,40 @@ type TopicManagementActionState = {
 };
 
 export type TopicStatusActionState = TopicManagementActionState;
+export type AdminProjectLifecycleActionState = TopicManagementActionState;
+
+export async function adminProjectLifecycleAction(
+  _previousState: AdminProjectLifecycleActionState,
+  formData: FormData,
+): Promise<AdminProjectLifecycleActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = z.object({
+    topicId: z.string().uuid(),
+    intent: z.literal("REQUEST_REVIEW"),
+    reason: z.string(),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "변경 내용을 다시 확인해 주세요." };
+  try {
+    await new ManageAdminProjectLifecycleService(
+      new PrismaAdminProjectLifecycleWriter(prisma),
+    ).execute(actor, {
+      projectId: parsed.data.topicId,
+      intent: parsed.data.intent,
+      reason: parsed.data.reason,
+    });
+  } catch (error) {
+    if (error instanceof AdminProjectLifecycleError) {
+      return { status: "error", message: error.message };
+    }
+    throw error;
+  }
+  revalidatePath("/professor/topics");
+  revalidatePath(`/professor/topics/${parsed.data.topicId}`);
+  revalidatePath("/topics");
+  revalidatePath("/dashboard");
+  return { status: "success", message: "프로젝트 상태를 변경했습니다." };
+}
 
 export async function changeTopicStatusAction(
   _previousState: TopicStatusActionState,
@@ -36,7 +75,7 @@ export async function changeTopicStatusAction(
   const parsed = z
     .object({
       topicId: z.string().uuid(),
-      intent: z.enum(["close", "closeRecruitment"]),
+      intent: z.literal("closeRecruitment"),
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -46,11 +85,7 @@ export async function changeTopicStatusAction(
   const service = new ChangeTopicStatusService(new PrismaTopicCommandRepository(prisma));
 
   try {
-    if (parsed.data.intent === "close") {
-      await service.close(actor, parsed.data.topicId);
-    } else {
-      await service.closeRecruitment(actor, parsed.data.topicId);
-    }
+    await service.closeRecruitment(actor, parsed.data.topicId);
   } catch (error) {
     if (
       error instanceof TopicNotFoundError ||
@@ -68,9 +103,7 @@ export async function changeTopicStatusAction(
   revalidatePath(`/topics/${parsed.data.topicId}`);
   return {
     status: "success",
-    message: parsed.data.intent === "closeRecruitment"
-        ? "프로젝트 모집을 마감했습니다."
-        : "프로젝트가 마감되었습니다.",
+    message: "프로젝트 모집을 마감했습니다.",
   };
 }
 

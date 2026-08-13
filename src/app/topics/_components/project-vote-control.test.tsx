@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
+  ProjectVoteCountBadge,
   ProjectVoteStatusPill,
   type ProjectVoteSelection,
 } from "@/app/topics/_components/project-vote-control";
@@ -17,7 +18,6 @@ function selection(voteLimitScope: "PROGRAM" | "DIVISION", selectedTopicIds: str
       voteLimit: 3,
       voteLimitScope,
       selfVotingAllowed: false,
-      identityVisibility: "ANONYMOUS",
     },
     phase: "OPEN",
     candidates: [],
@@ -33,6 +33,13 @@ function selection(voteLimitScope: "PROGRAM" | "DIVISION", selectedTopicIds: str
 }
 
 describe("프로그램 투표 상태 알약", () => {
+  it("득표 배지는 투표함 아이콘과 표 단위를 표시한다", () => {
+    render(<ProjectVoteCountBadge voteCount={2} />);
+
+    expect(screen.getByLabelText("득표 2표")).toHaveTextContent("2표");
+    expect(screen.getByLabelText("득표 2표").querySelector("svg")).toBeInTheDocument();
+  });
+
   it("프로그램 단위 투표는 현재 선택 수와 한도를 표시한다", () => {
     render(<ProjectVoteStatusPill selection={selection("PROGRAM", ["topic-1"])} />);
 

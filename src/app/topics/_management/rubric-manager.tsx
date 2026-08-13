@@ -13,12 +13,14 @@ import {
   type RubricActionState,
   updateRubricAction,
   updateCriterionAction,
-} from "@/app/admin/programs/[programId]/rubric/_actions/rubric-actions";
+} from "@/app/topics/_management/rubric-actions";
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { koreanDateTimeInput } from "@/shared/ui/date-time-input-value";
-import { StatusBadge } from "@/shared/ui/page-primitives";
+import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { IconButton } from "@/shared/ui/icon-button";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, TrashIcon } from "@/shared/ui/workspace-icons";
 
 const rubricInitialState: RubricActionState = { status: "idle", message: "" };
 
@@ -50,7 +52,7 @@ function NewRubricForm({ programId, divisionId }: { programId: string; divisionI
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"채점표 제목"}</UiText><UiInput name="title" maxLength={100} required className="form-control bg-white" placeholder="예: 공식 평가" /></label>
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"채점 마감"}</UiText><UiInput name="gradingDueAt" type="datetime-local" required className="form-control bg-white" /></label>
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"점수 공개"}</UiText><CustomSelect name="audience" ariaLabel="점수 공개 대상" defaultValue="STAFF_ONLY" options={audienceOptions} /></label>
-      <button className="button-primary" disabled={pending}><UiText>{pending ? "추가 중" : "채점표 추가"}</UiText></button>
+      <button className="button-primary gap-2" disabled={pending}><AddIcon className="size-4 shrink-0" /><UiText>{pending ? "추가 중" : "채점표 추가"}</UiText></button>
       <div className="md:col-span-4"><ActionMessage state={state} /></div>
     </form>
   );
@@ -65,7 +67,7 @@ function CriterionManager({ programId, rubric }: { programId: string; rubric: Ru
       <div className="flex flex-wrap items-end gap-2">
         <label className="grid gap-1 text-xs font-semibold"><UiText>{"항목 이름"}</UiText><UiInput name="label" form={`criterion-${rubric.id}`} maxLength={60} required disabled={!editable} className="form-control bg-white" /></label>
         <label className="grid gap-1 text-xs font-semibold"><UiText>{"배점"}</UiText><UiInput name="maxPoints" form={`criterion-${rubric.id}`} type="number" min={1} max={100} defaultValue={10} required disabled={!editable} className="form-control w-24 bg-white" /></label>
-        <form id={`criterion-${rubric.id}`} action={action}><button className="button-secondary" disabled={pending || !editable}><UiText>{pending ? "추가 중" : "항목 추가"}</UiText></button></form>
+        <form id={`criterion-${rubric.id}`} action={action}><button className="button-secondary gap-2" disabled={pending || !editable}><AddIcon className="size-4 shrink-0" /><UiText>{pending ? "추가 중" : "항목 추가"}</UiText></button></form>
         <span className="ml-auto text-sm font-bold"><UiText>{"총점"}</UiText>{` ${total}점`}</span>
       </div>
       <ActionMessage state={state} />
@@ -80,14 +82,14 @@ function CriterionManager({ programId, rubric }: { programId: string; rubric: Ru
                 <button className="button-quiet text-xs" disabled={!editable}><UiText>{"저장"}</UiText></button>
               </form>
               <div className="flex gap-1">
-                <form action={async () => { await moveCriterionAction(criterion.id, rubric.id, programId, "up", rubricInitialState); }}><button className="button-quiet text-xs" disabled={!editable || index === 0}><UiText>{"위로"}</UiText></button></form>
-                <form action={async () => { await moveCriterionAction(criterion.id, rubric.id, programId, "down", rubricInitialState); }}><button className="button-quiet text-xs" disabled={!editable || index === rubric.criteria.length - 1}><UiText>{"아래로"}</UiText></button></form>
-                <form action={async () => { await deleteCriterionAction(criterion.id, rubric.id, programId, rubricInitialState); }}><button className="button-quiet text-xs text-[var(--danger)]" disabled={!editable}><UiText>{"삭제"}</UiText></button></form>
+                <form action={async () => { await moveCriterionAction(criterion.id, rubric.id, programId, "up", rubricInitialState); }}><IconButton type="submit" disabled={!editable || index === 0} aria-label={`${criterion.label} 위로 이동`} title="위로 이동"><ArrowUpIcon className="size-5" /></IconButton></form>
+                <form action={async () => { await moveCriterionAction(criterion.id, rubric.id, programId, "down", rubricInitialState); }}><IconButton type="submit" disabled={!editable || index === rubric.criteria.length - 1} aria-label={`${criterion.label} 아래로 이동`} title="아래로 이동"><ArrowDownIcon className="size-5" /></IconButton></form>
+                <form action={async () => { await deleteCriterionAction(criterion.id, rubric.id, programId, rubricInitialState); }}><IconButton type="submit" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={!editable} aria-label={`${criterion.label} 삭제`} title="항목 삭제"><TrashIcon className="size-5" /></IconButton></form>
               </div>
             </li>
           ))}
         </ul>
-      ) : <p className="text-sm text-[var(--muted)]"><UiText>{"채점 항목을 추가해 주세요."}</UiText></p>}
+      ) : <EmptyState variant="compact" title="아직 채점 항목이 없습니다" description="평가에 사용할 항목과 배점을 추가해 주세요." />}
     </div>
   );
 }
@@ -106,9 +108,9 @@ function RubricCard({ programId, rubric, index, count }: { programId: string; ru
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2"><StatusBadge tone={rubric.audience === "TEAM_MEMBERS" ? "success" : "neutral"}><UiText>{rubric.audience === "TEAM_MEMBERS" ? "팀원 공개" : "관계자 전용"}</UiText></StatusBadge>{rubric.scoreCount ? <StatusBadge tone="info"><UiText>{"구조 잠김"}</UiText></StatusBadge> : null}</div>
         <div className="flex gap-1">
-          <form action={async () => { await moveRubricAction(rubric.id, programId, "up", rubricInitialState); }}><button className="button-quiet text-xs" disabled={rubric.scoreCount > 0 || index === 0}><UiText>{"위로"}</UiText></button></form>
-          <form action={async () => { await moveRubricAction(rubric.id, programId, "down", rubricInitialState); }}><button className="button-quiet text-xs" disabled={rubric.scoreCount > 0 || index === count - 1}><UiText>{"아래로"}</UiText></button></form>
-        <form action={archiveAction}><button className="button-quiet text-xs text-[var(--danger)]" disabled={archiving || rubric.scoreCount > 0}><UiText>{"채점표 삭제"}</UiText></button></form>
+          <form action={async () => { await moveRubricAction(rubric.id, programId, "up", rubricInitialState); }}><IconButton type="submit" disabled={rubric.scoreCount > 0 || index === 0} aria-label={`${rubric.title} 위로 이동`} title="위로 이동"><ArrowUpIcon className="size-5" /></IconButton></form>
+          <form action={async () => { await moveRubricAction(rubric.id, programId, "down", rubricInitialState); }}><IconButton type="submit" disabled={rubric.scoreCount > 0 || index === count - 1} aria-label={`${rubric.title} 아래로 이동`} title="아래로 이동"><ArrowDownIcon className="size-5" /></IconButton></form>
+        <form action={archiveAction}><IconButton type="submit" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={archiving || rubric.scoreCount > 0} aria-label={`${rubric.title} 채점표 삭제`} title="채점표 삭제"><TrashIcon className="size-5" /></IconButton></form>
         </div>
       </div>
       <ActionMessage state={state.message ? state : archiveState} />
@@ -128,7 +130,7 @@ function Scope({ programId, title, description, divisionId, rubrics }: { program
     <section className="grid gap-4">
       <div><h3 className="text-lg font-bold"><UiText>{title}</UiText></h3><p className="mt-1 text-sm text-[var(--muted)]"><UiText>{description}</UiText></p></div>
       <NewRubricForm programId={programId} divisionId={divisionId} />
-      {rubrics.length ? <div className="grid gap-3">{rubrics.map((rubric, index) => <RubricCard key={rubric.id} programId={programId} rubric={rubric} index={index} count={rubrics.length} />)}</div> : <p className="rounded-2xl border border-dashed border-[var(--line)] p-4 text-sm text-[var(--muted)]"><UiText>{"설정된 채점표가 없습니다."}</UiText></p>}
+      {rubrics.length ? <div className="grid gap-3">{rubrics.map((rubric, index) => <RubricCard key={rubric.id} programId={programId} rubric={rubric} index={index} count={rubrics.length} />)}</div> : <EmptyState variant="compact" title="설정된 채점표가 없습니다" description="새 채점표를 추가하면 이 목록에 표시됩니다." />}
     </section>
   );
 }

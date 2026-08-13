@@ -12,12 +12,16 @@ import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shel
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-items";
+import { buildAdminProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
+import { ListAdminTopicPreviewService } from "@/modules/topic/application/list-admin-topic-preview";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
+import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { AppShell } from "@/app/_components/app-shell";
@@ -31,6 +35,7 @@ const applicationDashboardHref = {
   PENDING: "/dashboard?view=pending",
   ACCEPTED: "/dashboard?view=active",
   REJECTED: "/dashboard?view=rejected",
+  WITHDRAWN: "/dashboard?view=rejected",
 } as const;
 
 function Period({ label, startsAt, endsAt }: { label: string; startsAt: Date; endsAt: Date }) {
@@ -41,26 +46,32 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { topicId } = await params;
-  const topic = await new ListPublishedTopicsService(
-    new PrismaTopicQueryRepository(prisma),
-  ).find(topicId);
+  const topicAudience = actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT";
+  const topicRepository = new PrismaTopicQueryRepository(prisma, topicAudience);
+  const topic = actor.role === "ADMIN"
+    ? await new ListAdminTopicPreviewService(topicRepository).find(actor, topicId)
+    : await new ListPublishedTopicsService(topicRepository).find(topicId);
   if (!topic) notFound();
   const applicationService = new ListOwnTopicApplicationsService(
     new PrismaTopicApplicationQueryRepository(prisma),
   );
+  const now = new Date();
   const [sidebarItems, application, leaderTeams] = await Promise.all([
-    loadProgramSidebarItems(),
+    actor.role === "ADMIN"
+      ? new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor)
+        .then((programs) => buildAdminProgramSidebarItems(programs, "projects", "overview", now))
+      : loadProgramSidebarItems("active", {}, topicAudience),
     actor.role === "STUDENT" ? applicationService.findForTopic(actor, topic.id) : Promise.resolve(null),
     actor.role === "STUDENT"
       ? new PrismaStudentTeamRecruitmentQueryRepository(prisma).listLeaderTeams(actor.id)
       : Promise.resolve([]),
   ]);
-  const now = new Date();
-  const recruiting = topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const directApplicationsEnabled = !topic.studentProjectCreationEnabled;
+  const recruiting = directApplicationsEnabled && topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
   const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
       <Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -78,6 +89,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
             {topic.advisorEnabled ? <p className="text-sm font-semibold text-[var(--muted)]">{topic.authorName}<UiText>{topic.authorRole === "PROFESSOR" ? " 교수" : " · 학생 제안"}</UiText></p> : null}
             <p className="text-sm font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
             <StatusBadge tone={recruiting ? "success" : "neutral"}><UiText>{memberLabel}</UiText></StatusBadge>
+            {actor.role === "ADMIN" && topic.programStatus === "DRAFT" ? <StatusBadge tone="neutral"><UiText>{"비공개 미리보기"}</UiText></StatusBadge> : null}
           </div>
           <h1 className="mt-3 max-w-4xl text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{topic.title}</UiText></h1>
         </div>
@@ -86,7 +98,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <>
           <div>
             {application ? <Link href={applicationDashboardHref[application.status]} className="button-secondary w-full"><UiText>{"지원 상태 ·"}</UiText>{" "}{topicApplicationStatusPresentation[application.status].label}</Link>
-              : actor.role === "STUDENT" && recruiting ? <TopicApplicationEditor topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} leaderTeams={leaderTeams} />
+              : actor.role === "STUDENT" && recruiting ? <TopicApplicationEditor topicId={topic.id} topicTitle={topic.title} applicationMode={topic.applicationMode} applicationQuestions={topic.applicationQuestions} capacity={topic.capacity} teamMaxSize={topic.projectTeamMaxSize ?? 6} leaderTeams={leaderTeams} />
                 : null}
           </div>
         </>
@@ -106,7 +118,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
           <TranslatedText text={topic.description} className="mt-5 max-w-3xl whitespace-pre-wrap text-[1.05rem] leading-8 text-[var(--muted)]" />
         </section>
 
-        <section aria-labelledby="topic-requirements">
+        {directApplicationsEnabled && topic.recruitmentEnabled ? <section aria-labelledby="topic-requirements">
           <h2 id="topic-requirements" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"지원 조건"}</UiText></h2>
           <dl className="mt-5 border-y border-[var(--line)]">
             {[
@@ -121,7 +133,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
               </div>
             ))}
           </dl>
-        </section>
+        </section> : null}
       </div>
     </ProjectDetailShell>
     </ExplorerLayout>

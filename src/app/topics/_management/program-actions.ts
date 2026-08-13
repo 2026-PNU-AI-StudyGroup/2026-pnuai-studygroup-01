@@ -15,8 +15,18 @@ async function actor() { const value = await getCurrentActor(); if (!value) redi
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
 const programIconSchema = z.enum(PROGRAM_ICON_KEYS);
-const votingIdentityVisibilitySchema = z.enum(["ANONYMOUS", "NAMED"]);
 const voteLimitScopeSchema = z.enum(["PROGRAM", "DIVISION"]);
+const programCreateRubricSchema = z.object({
+  divisionName: z.string().nullable(),
+  title: z.string().trim().min(1).max(100),
+  gradingDueAt: koreanLocalDateTime,
+  audience: z.enum(["STAFF_ONLY", "TEAM_MEMBERS"]),
+  criteria: z.array(z.object({ label: z.string().trim().min(1).max(60), maxPoints: z.coerce.number().int().min(1).max(100) })).max(50),
+});
+const programCreateDefinitionsSchema = z.object({
+  rubricDefinitions: z.array(programCreateRubricSchema).max(30),
+  reportDefinitions: z.array(z.object({ title: z.string().trim().min(1).max(100), dueAt: koreanLocalDateTime })).max(30),
+});
 
 const programSettingsSchema = z.object({
   name: z.string(),
@@ -44,28 +54,45 @@ const programSettingsSchema = z.object({
   confirmedVoteFromScope: voteLimitScopeSchema.optional(),
   confirmedVoteLimit: z.coerce.number().int().min(1).optional(),
   confirmedVoteLimitScope: voteLimitScopeSchema.optional(),
-  identityVisibility: votingIdentityVisibilitySchema.optional(),
 }).superRefine((value, context) => {
-  if (value.votingEnabled && (!value.votingStartsAt || !value.votingEndsAt || !value.voteLimit || !value.identityVisibility || !value.voteLimitScope)) {
+  if (value.votingEnabled && (!value.votingStartsAt || !value.votingEndsAt || !value.voteLimit || !value.voteLimitScope)) {
     context.addIssue({ code: "custom", message: "투표 설정을 모두 입력해 주세요." });
   }
 });
 
-function parseProgramSettings(formData: FormData) {
+function parseProgramSettings(formData: FormData, options?: { useExecutionPeriodAsSubmissionPeriod?: boolean }) {
+  const entries = Object.fromEntries(formData);
   return programSettingsSchema.safeParse({
-    ...Object.fromEntries(formData),
+    ...entries,
+    ...(options?.useExecutionPeriodAsSubmissionPeriod ? {
+      submissionStartsAt: entries.executionStartsAt,
+      submissionEndsAt: entries.executionEndsAt,
+    } : {}),
     votingEnabled: formData.get("votingEnabled") === "true",
     selfVotingAllowed: formData.get("selfVotingAllowed") === "true",
   });
 }
 
+function parseJsonArray(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function createProgramAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ name: z.string(), category: z.string(), description: z.string(), divisionNames: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, icon: programIconSchema, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.boolean() }).safeParse({
+  const parsed = z.object({ name: z.string(), category: z.string(), description: z.string(), divisionNames: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, icon: programIconSchema, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int() }).safeParse({
     ...Object.fromEntries(formData),
-    studentProjectCreationEnabled: formData.get("studentProjectCreationEnabled") === "true",
   });
-  const settings = parseProgramSettings(formData);
-  if (!parsed.success || !settings.success) return { status: "error", message: "프로그램 내용과 공통 일정·투표 기간을 확인해 주세요." };
+  const settings = parseProgramSettings(formData, { useExecutionPeriodAsSubmissionPeriod: true });
+  const definitions = programCreateDefinitionsSchema.safeParse({
+    rubricDefinitions: parseJsonArray(formData.get("rubricDefinitions")),
+    reportDefinitions: parseJsonArray(formData.get("reportDefinitions")),
+  });
+  if (!parsed.success || !settings.success || !definitions.success) return { status: "error", message: "프로그램 내용과 일정·채점표·보고서 설정을 확인해 주세요." };
   let programId: string;
   try {
     programId = await service().create(await actor(), {
@@ -78,6 +105,8 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
       executionEndsAt: settings.data.executionEndsAt,
       submissionStartsAt: settings.data.submissionStartsAt,
       submissionEndsAt: settings.data.submissionEndsAt,
+      rubricDefinitions: definitions.data.rubricDefinitions,
+      reportDefinitions: definitions.data.reportDefinitions,
       divisionNames: parsed.data.divisionNames.split(",").map((name) => name.trim()).filter(Boolean),
       votingPolicy: settings.data.votingEnabled ? {
         startsAt: settings.data.votingStartsAt!,
@@ -85,14 +114,13 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
         voteLimit: settings.data.voteLimit!,
         voteLimitScope: settings.data.voteLimitScope!,
         selfVotingAllowed: settings.data.selfVotingAllowed,
-        identityVisibility: settings.data.identityVisibility!,
       } : null,
     });
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/admin/programs");
-  // 생성 직후 통합 관리 화면으로 보내 채점표·분과·공지 등 옵션을 이어서 설정하게 한다.
-  redirect(`/admin/programs/${programId}`);
+  revalidatePath("/topics");
+  redirect(`/topics?programId=${encodeURIComponent(programId)}&mode=manage&tab=settings`);
 }
 
 export async function updateProgramSettingsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
@@ -121,7 +149,6 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
         voteLimit: settings.data.voteLimit!,
         voteLimitScope: settings.data.voteLimitScope!,
         selfVotingAllowed: settings.data.selfVotingAllowed,
-        identityVisibility: settings.data.identityVisibility!,
       } : null,
       confirmVoteReset: settings.data.confirmedVoteCount && settings.data.confirmedVoteFromLimit && settings.data.confirmedVoteFromScope && settings.data.confirmedVoteLimit && settings.data.confirmedVoteLimitScope ? {
         voteCount: settings.data.confirmedVoteCount,
@@ -137,7 +164,6 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
   revalidatePath("/admin/programs");
   revalidatePath(`/admin/programs/${programId.data}`);
   revalidatePath("/topics");
-  revalidatePath("/projects/new");
   revalidatePath("/professor/topics/new");
   revalidatePath("/project-approvals");
   return { status: "success", message: "프로그램 정보와 운영 설정을 저장했습니다." };
@@ -153,29 +179,36 @@ export async function changeProgramIconAction(_state: ProgramActionState, formDa
 }
 
 export async function changeStudentProjectCreationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "학생 프로젝트 제안 설정을 다시 확인해 주세요." };
-  try { await service().changeStudentProjectCreation(await actor(), parsed.data.programId, parsed.data.enabled === "true"); }
+  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "프로젝트 참여 방식과 팀 인원을 다시 확인해 주세요." };
+  try {
+    await service().changeStudentProjectPolicy(await actor(), parsed.data.programId, {
+      enabled: parsed.data.enabled === "true",
+      minSize: parsed.data.projectTeamMinSize,
+      maxSize: parsed.data.projectTeamMaxSize,
+    });
+  }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}`); revalidatePath("/topics"); revalidatePath("/projects/new");
-  return { status: "success", message: parsed.data.enabled === "true" ? "학생 프로젝트 제안을 허용했습니다." : "학생 프로젝트 제안을 중지했습니다." };
+  revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}`); revalidatePath("/topics");
+  return { status: "success", message: "프로젝트 참여 방식을 저장했습니다." };
 }
 
 export async function changeProgramStatusAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const parsed = z.object({
     programId: z.string().min(1).max(200),
     operation: z.enum(["SET_PUBLIC", "CLOSE"]),
-    isPublic: z.enum(["true", "false"]).optional(),
+    audience: z.enum(["STUDENT", "FACULTY"]).optional(),
+    visible: z.enum(["true", "false"]).optional(),
   }).superRefine((value, context) => {
-    if (value.operation === "SET_PUBLIC" && value.isPublic === undefined) context.addIssue({ code: "custom", message: "공개 설정을 확인해 주세요." });
+    if (value.operation === "SET_PUBLIC" && (!value.audience || value.visible === undefined)) context.addIssue({ code: "custom", message: "공개 설정을 확인해 주세요." });
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "변경할 프로그램 상태를 다시 확인해 주세요." };
   try {
     const currentActor = await actor();
     if (parsed.data.operation === "CLOSE") await service().close(currentActor, parsed.data.programId);
-    else await service().setPublic(currentActor, parsed.data.programId, parsed.data.isPublic === "true");
+    else await service().setVisibility(currentActor, parsed.data.programId, parsed.data.audience!, parsed.data.visible === "true");
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/admin/programs"); revalidatePath(`/admin/programs/${parsed.data.programId}`); revalidatePath("/topics");
-  return { status: "success", message: parsed.data.operation === "CLOSE" ? "프로그램 운영을 마감했습니다." : parsed.data.isPublic === "true" ? "프로그램을 공개했습니다." : "프로그램을 비공개로 전환했습니다." };
+  return { status: "success", message: parsed.data.operation === "CLOSE" ? "프로그램 운영을 마감했습니다." : parsed.data.visible === "true" ? "공개했습니다." : "비공개로 전환했습니다." };
 }

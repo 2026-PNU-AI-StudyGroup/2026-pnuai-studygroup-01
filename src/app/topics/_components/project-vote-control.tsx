@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { toggleProjectVoteAction } from "@/app/_actions/project-vote-actions";
 import type { ProgramVoteBallot, ProjectVoteCandidate } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { BallotBoxIcon } from "@/shared/ui/workspace-icons";
 
 export type ProjectVoteSelection = {
   ballot?: ProgramVoteBallot;
@@ -79,6 +80,18 @@ export function ProjectVoteButton({ candidate, selection }: {
     >
       <UiText>{label}</UiText>
     </button>
+  );
+}
+
+export function ProjectVoteCountBadge({ voteCount }: { voteCount: number }) {
+  return (
+    <span
+      aria-label={`득표 ${voteCount}표`}
+      className="pointer-events-none absolute bottom-3 right-3 z-[2] inline-flex min-h-7 items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(31,35,48,.88)] px-2.5 text-xs font-semibold text-white shadow-sm"
+    >
+      <BallotBoxIcon className="size-4" />
+      <strong aria-hidden="true" className="tabular-nums">{voteCount}<UiText>{"표"}</UiText></strong>
+    </span>
   );
 }
 

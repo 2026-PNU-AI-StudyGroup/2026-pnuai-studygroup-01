@@ -2,9 +2,9 @@
 
 import { useActionState, useState } from "react";
 
-import { updateProgramSettingsAction } from "@/app/admin/programs/_actions/program-actions";
-import { CategorySelect } from "@/app/admin/programs/_components/category-select";
-import { initialProgramActionState } from "@/app/admin/programs/_lib/program-form-state";
+import { updateProgramSettingsAction } from "@/app/topics/_management/program-actions";
+import { CategorySelect } from "@/app/topics/_management/category-select";
+import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ChoiceCard, DateTimeInput, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
@@ -103,7 +103,7 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
         </FormField>
       </FormSection>
 
-      <FormSection id="voting-policy" title="프로젝트 투표" description="투표기간, 인당 가능 투표수, 자기 프로젝트 투표와 결과 공개 방식을 관리합니다." contentClassName="sm:grid-cols-2">
+      <FormSection id="voting-policy" title="프로젝트 투표" description="투표기간, 인당 가능 투표수와 자기 프로젝트 투표 허용 여부를 관리합니다." contentClassName="sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Toggle
             name="votingEnabled"
@@ -127,11 +127,6 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
           <legend className="form-field__label"><UiText>{"투표 범위"}</UiText></legend>
           <ChoiceCard name="voteLimitScope" value="PROGRAM" defaultChecked={!votingPolicy || votingPolicy.voteLimitScope === "PROGRAM"} required={enabled} disabled={!enabled} label="프로그램 전체" description="프로그램 전체에서 인당 N표까지 선택합니다." />
           <ChoiceCard name="voteLimitScope" value="DIVISION" defaultChecked={votingPolicy?.voteLimitScope === "DIVISION"} required={enabled} disabled={!enabled || divisionCount === 0} label="분과별" description={divisionCount ? "각 분과에서 각각 인당 N표까지 선택합니다." : "분과를 하나 이상 등록한 뒤 사용할 수 있습니다."} />
-        </fieldset>
-        <fieldset className="grid gap-3">
-          <legend className="form-field__label"><UiText>{"득표현황 투표자 표시"}</UiText></legend>
-          <ChoiceCard name="identityVisibility" value="ANONYMOUS" defaultChecked={votingPolicy?.identityVisibility === "ANONYMOUS"} required={enabled} disabled={!enabled} label="익명 집계" description="관리자 결과에서 개인별 선택을 숨깁니다." />
-          <ChoiceCard name="identityVisibility" value="NAMED" defaultChecked={votingPolicy?.identityVisibility === "NAMED"} required={enabled} disabled={!enabled} label="기명 집계" description="관리자 결과에서 사용자별 선택을 표시합니다." />
         </fieldset>
         <div className="sm:col-span-2">
           <ChoiceCard name="selfVotingAllowed" type="checkbox" value="true" defaultChecked={votingPolicy?.selfVotingAllowed} disabled={!enabled} label="자기 프로젝트 투표 허용" description="작성자·프로젝트 관리자·조교·팀원이 자신의 프로젝트에 투표할 수 있게 합니다." />

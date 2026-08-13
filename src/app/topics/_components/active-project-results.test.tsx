@@ -1,12 +1,18 @@
 import { render, screen } from "@testing-library/react";
+import Link from "next/link";
 import { describe, expect, it, vi } from "vitest";
-
-import { ActiveProjectResults } from "@/app/topics/_components/active-project-results";
-import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 
 vi.mock("@/app/topics/_components/topic-application-editor", () => ({
   TopicApplicationEditor: () => <button type="button">지원</button>,
 }));
+vi.mock("@/app/topics/_components/project-vote-control", () => ({
+  ProjectVoteButton: () => null,
+  ProjectVoteStatusPill: () => null,
+  useProjectVoteSelection: () => ({ ballot: undefined }),
+}));
+
+import { ActiveProjectResults } from "@/app/topics/_components/active-project-results";
+import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 
 const now = new Date("2026-07-27T00:00:00Z");
 
@@ -31,12 +37,14 @@ function topics(memberCount = 1): PublicTopicPage {
       capacity: 4,
       authorName: "학생 제안자",
       authorRole: "STUDENT",
-      status: "PUBLISHED",
+      status: "ACTIVE",
+      effectiveStatus: "FORMING",
       publishedAt: new Date("2026-07-01T00:00:00Z"),
       programName: "캡스톤",
       programCategory: "교과",
       programStatus: "OPEN",
       advisorEnabled: true,
+      studentProjectCreationEnabled: false,
       programRecruitmentStartsAt: new Date("2026-07-01T00:00:00Z"),
       programRecruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
       programExecutionStartsAt: new Date("2026-08-01T00:00:00Z"),
@@ -60,7 +68,7 @@ describe("ActiveProjectResults", () => {
         leaderTeams={[]}
         query=""
         now={now}
-        registrationAction={<a href="/projects/new">프로젝트 등록</a>}
+        registrationAction={<Link href="/projects/new">프로젝트 등록</Link>}
       />,
     );
 
@@ -87,12 +95,86 @@ describe("ActiveProjectResults", () => {
     expect(screen.getByText("4 / 4명")).toHaveClass("bg-[var(--surface-subtle)]");
   });
 
-  it("검색 또는 분과가 비어 있으면 필터 초기화 링크를 제공한다", () => {
+  it("학생 팀 프로젝트 운영 프로그램에서는 직접 지원을 숨긴다", () => {
+    const proposalModeTopics = topics();
+    proposalModeTopics.items[0].studentProjectCreationEnabled = true;
+    render(<ActiveProjectResults topics={proposalModeTopics} canApply leaderTeams={[]} query="" now={now} />);
+
+    expect(screen.queryByRole("button", { name: "지원" })).not.toBeInTheDocument();
+  });
+
+  it("관리자 카드 데이터가 있을 때만 진행 현황과 연락처 정보를 표시한다", () => {
+    const { rerender } = render(
+      <ActiveProjectResults topics={topics()} canApply={false} leaderTeams={[]} query="" now={now} />,
+    );
+    expect(screen.queryByRole("link", { name: "진행 현황" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "연락처 정보" })).not.toBeInTheDocument();
+
+    rerender(
+      <ActiveProjectResults
+        topics={topics()}
+        canApply={false}
+        leaderTeams={[]}
+        query=""
+        now={now}
+        adminProjectData={[{
+          topicId: topics().items[0].id,
+          team: { id: "team-1", name: "알파팀", members: [] },
+          reportProgress: { requiredCount: 2, submittedCount: 1, overdueCount: 1 },
+        }]}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "진행 현황" })).toHaveAttribute("href", "/projects/50000000-0000-4000-8000-000000000001");
+    expect(screen.getByRole("button", { name: "연락처 정보" })).toBeEnabled();
+    expect(screen.getByRole("progressbar", { name: "보고서 제출률" })).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByText(/1 \/ 2/)).toHaveTextContent("기한 초과 1건");
+  });
+
+  it("팀이 구성되지 않은 관리자 카드에는 보고서 진행 영역을 표시하지 않는다", () => {
+    render(
+      <ActiveProjectResults
+        topics={topics()}
+        canApply={false}
+        leaderTeams={[]}
+        query=""
+        now={now}
+        adminProjectData={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText("일정 미설정")).not.toBeInTheDocument();
+  });
+
+  it("프로그램에 필수 보고서 정의가 없으면 카드에 진행률 영역을 표시하지 않는다", () => {
+    render(
+      <ActiveProjectResults
+        topics={topics()}
+        canApply={false}
+        leaderTeams={[]}
+        query=""
+        now={now}
+        adminProjectData={[{
+          topicId: topics().items[0].id,
+          team: { id: "team-1", name: "알파팀", members: [] },
+          reportProgress: { requiredCount: 0, submittedCount: 0, overdueCount: 0 },
+        }]}
+      />,
+    );
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText("보고서 제출률")).not.toBeInTheDocument();
+  });
+
+  it("무필터 0건과 필터 0건을 구분하고 모든 조건을 초기화한다", () => {
     const emptyTopics = { ...topics(), items: [], total: 0 };
-    const { rerender } = render(<ActiveProjectResults topics={emptyTopics} canApply leaderTeams={[]} programId="program-1" query="" now={now} />);
+    const { rerender } = render(<ActiveProjectResults topics={emptyTopics} canApply leaderTeams={[]} query="" now={now} />);
+    expect(screen.getByRole("heading", { name: "아직 공개된 프로젝트가 없습니다" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "필터 초기화" })).not.toBeInTheDocument();
 
     rerender(<ActiveProjectResults topics={emptyTopics} canApply leaderTeams={[]} programId="program-1" query="길찾기" now={now} />);
-    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics?programId=program-1");
+    expect(screen.getByRole("heading", { name: "조건에 맞는 프로젝트가 없습니다" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics");
   });
 });

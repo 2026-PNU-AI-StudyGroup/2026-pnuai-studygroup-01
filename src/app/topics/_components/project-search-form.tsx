@@ -1,17 +1,20 @@
 import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { SearchIcon } from "@/shared/ui/workspace-icons";
+import type { AdminProjectOperationFilter } from "@/modules/team/application/list-admin-program-project-operations";
 
 export function ProjectSearchForm({
   view,
   programId,
   query,
   divisionId,
+  operation,
 }: {
   view: "active" | "past";
   programId?: string;
   query: string;
   divisionId?: string | "UNASSIGNED";
+  operation?: AdminProjectOperationFilter;
 }) {
   return (
     <form
@@ -22,6 +25,7 @@ export function ProjectSearchForm({
       {view === "past" ? <input type="hidden" name="view" value="past" /> : null}
       {programId ? <input type="hidden" name="programId" value={programId} /> : null}
       {divisionId ? <input type="hidden" name="divisionId" value={divisionId} /> : null}
+      {operation && operation !== "all" ? <input type="hidden" name="operation" value={operation} /> : null}
       <label className="relative block">
         <span className="sr-only"><UiText>{"프로젝트 검색"}</UiText></span>
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--muted)]" />

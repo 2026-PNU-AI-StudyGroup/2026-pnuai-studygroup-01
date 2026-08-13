@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   ApplyToTopicService,
-  StudentAlreadyAssignedError,
+  StudentAlreadyInProjectError,
   TeamLeaderRequiredError,
   TeamMemberUnavailableError,
   TopicAlreadyAppliedError,
@@ -61,7 +61,7 @@ export async function applyTopicAction(
     if (
       error instanceof TopicAlreadyAppliedError ||
       error instanceof TopicUnavailableForApplicationError ||
-      error instanceof StudentAlreadyAssignedError ||
+      error instanceof StudentAlreadyInProjectError ||
       error instanceof TeamMemberUnavailableError ||
       error instanceof TeamLeaderRequiredError ||
       error instanceof TopicApplicationForbiddenError ||

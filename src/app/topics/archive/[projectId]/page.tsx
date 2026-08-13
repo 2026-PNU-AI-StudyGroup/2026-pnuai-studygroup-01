@@ -9,6 +9,7 @@ import { notFound, redirect } from "next/navigation";
 import { EditorialProjectCover } from "@/app/topics/[topicId]/_components/editorial-project-cover";
 import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
+import { EmptyState } from "@/shared/ui/page-primitives";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-items";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -42,9 +43,9 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const { projectId } = await params;
   const [project, sidebarItems] = await Promise.all([
     new ListArchivedProjectsService(
-      new PrismaTeamArchiveQueryRepository(prisma),
+      new PrismaTeamArchiveQueryRepository(prisma, actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT"),
     ).find(projectId),
-    loadProgramSidebarItems("past"),
+    loadProgramSidebarItems("past", {}, actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT"),
   ]);
   if (!project) notFound();
   const skills = [...new Set([...project.requiredSkills, ...project.preferredSkills])];
@@ -54,7 +55,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const embeddedIds = new Set(videoArtifacts.map((entry) => entry.artifact.id));
   const linkArtifacts = project.artifacts.filter((artifact) => !embeddedIds.has(artifact.id));
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} showSettings={actor.role === "ADMIN"} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
       <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <ChevronIcon className="size-4 rotate-180" />
@@ -140,7 +141,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
                   </li>;
                 })}
               </ul>
-            ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
+            ) : <EmptyState variant="compact" title="공개된 결과물이 없습니다" />}
           </section>
         ) : null}
 

@@ -1,4 +1,4 @@
-import type { ProgramActionState } from "@/app/admin/programs/_actions/program-actions";
+import type { ProgramActionState } from "@/app/topics/_management/program-actions";
 
 export const initialProgramActionState: ProgramActionState = {
   status: "idle",
