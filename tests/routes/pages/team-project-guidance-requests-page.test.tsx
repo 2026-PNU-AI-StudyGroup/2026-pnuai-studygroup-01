@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import ProjectGuidanceRequestsPage from "@/app/teams/[teamId]/requests/page";
+import ProjectGuidanceRequestsPage from "@/app/projects/[projectId]/requests/page";
 
 const { findPage, loadTeamWorkspace, notFound } = vi.hoisted(() => ({
   findPage: vi.fn(),
@@ -11,7 +11,7 @@ const { findPage, loadTeamWorkspace, notFound } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ notFound }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamWorkspace,
 }));
 
@@ -31,7 +31,7 @@ vi.mock("@/modules/project-guidance-request/infrastructure/prisma-project-guidan
 
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 
-vi.mock("@/app/teams/[teamId]/_components/project-guidance-request-forms", () => ({
+vi.mock("@/app/projects/[projectId]/_components/project-guidance-request-forms", () => ({
   ProjectGuidanceRequestForm: () => <button type="button">새 요청 보내기</button>,
   ProjectGuidanceResponseForm: () => <button type="button">답변하기</button>,
   CancelProjectGuidanceRequestForm: () => <button>요청 취소</button>,
@@ -49,7 +49,7 @@ const workspace = {
   topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
   completedTaskCount: 0,
@@ -82,7 +82,7 @@ const workspace = {
 };
 
 const routeProps = {
-  params: Promise.resolve({ teamId: workspace.id }),
+  params: Promise.resolve({ projectId: workspace.id }),
   searchParams: Promise.resolve({}),
 };
 
@@ -211,7 +211,7 @@ describe("ProjectGuidanceRequestsPage", () => {
   it("종료된 프로젝트에는 새 요청 대신 읽기 전용 안내를 보여준다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       actor: student,
-      workspace: { ...workspace, status: "CLOSED" },
+      workspace: { ...workspace, status: "COMPLETED" },
     });
     findPage.mockResolvedValue({
       items: [],

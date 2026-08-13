@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamOverviewPage from "@/app/teams/[teamId]/page";
+import TeamOverviewPage from "@/app/projects/[projectId]/page";
 
 const { loadTeamWorkspace, listForTeamOverview, resolveAnnouncementAudience } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
@@ -9,8 +9,16 @@ const { loadTeamWorkspace, listForTeamOverview, resolveAnnouncementAudience } = 
   resolveAnnouncementAudience: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamWorkspace,
+}));
+
+vi.mock("@/app/projects/[projectId]/_actions/team-project-info-actions", () => ({
+  updateTeamProjectInfoAction: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
 }));
 
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
@@ -39,8 +47,10 @@ const workspace = {
   id: "team-1",
   topicId: "topic-1",
   name: "모두의 길",
+  programName: "2026 캡스톤디자인",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  topicDescription: "누구나 이동할 수 있는 길을 안내합니다.",
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
   completedTaskCount: 0,
@@ -54,6 +64,7 @@ const workspace = {
     isPrimaryAdvisor: false,
     isAssistant: false,
     isTeamMember: true,
+    isTeamLeader: false,
     canSupervise: false,
     canContribute: true,
   },
@@ -91,6 +102,8 @@ const workspace = {
 
 describe("TeamOverviewPage", () => {
   beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
+    HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); };
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
     resolveAnnouncementAudience.mockResolvedValue({ role: "STUDENT", actorId: "student-1", teamIds: ["team-1"], programIds: [] });
@@ -102,8 +115,12 @@ describe("TeamOverviewPage", () => {
   it("사이드 내비와 구성원 사이드바를 본문에서 반복하지 않고 일정과 다음 행동만 요약한다", async () => {
     loadTeamWorkspace.mockResolvedValue({ workspace });
 
-    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
+    const projectHeading = screen.getByRole("heading", { level: 1, name: "모두의 길" });
+    expect(projectHeading.previousElementSibling).toHaveClass("eyebrow");
+    expect(projectHeading.previousElementSibling).toHaveTextContent("2026 캡스톤디자인");
+    expect(screen.getByText("실내 길찾기")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "프로그램 일정" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "팀원 1명" })).not.toBeInTheDocument();
     expect(screen.queryByText("student@pusan.ac.kr")).not.toBeInTheDocument();
@@ -120,14 +137,14 @@ describe("TeamOverviewPage", () => {
       },
     });
 
-    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.queryByRole("heading", { name: "조교 1명" })).not.toBeInTheDocument();
     expect(screen.queryByText("박조교")).not.toBeInTheDocument();
     expect(screen.queryByText("assistant@pusan.ac.kr")).not.toBeInTheDocument();
   });
 
-  it("감독자 헤더에는 사이드바와 중복되는 상태 대신 조교 관리 행동만 둔다", async () => {
+  it("감독자 헤더에는 프로젝트 정보 수정과 조교 관리 행동을 둔다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
@@ -142,13 +159,49 @@ describe("TeamOverviewPage", () => {
       },
     });
 
-    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.getByRole("link", { name: "조교 관리" })).toHaveAttribute(
       "href",
       "/professor/topics/topic-1/assistants",
     );
+    expect(screen.getByRole("button", { name: "프로젝트 정보 수정" })).toBeEnabled();
     expect(screen.queryByText("프로젝트 운영 중")).not.toBeInTheDocument();
+  });
+
+  it("팀장은 프로젝트 정보 수정 링크를 사용할 수 있다", async () => {
+    loadTeamWorkspace.mockResolvedValue({
+      workspace: {
+        ...workspace,
+        access: { ...workspace.access, isTeamLeader: true },
+      },
+    });
+
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
+
+    const editButton = screen.getByRole("button", { name: "프로젝트 정보 수정" });
+    expect(editButton).toBeEnabled();
+    expect(editButton).not.toHaveTextContent("프로젝트 정보 수정");
+
+    fireEvent.click(editButton);
+
+    const dialog = screen.getByRole("dialog", { name: "프로젝트 정보 수정" });
+    expect(dialog).toBeVisible();
+    expect(dialog).toHaveClass("w-[min(36rem,calc(100%-2rem))]");
+    expect(screen.getByRole("textbox", { name: "프로젝트명" })).toHaveValue("모두의 길");
+    expect(screen.getByRole("textbox", { name: "프로젝트 설명" })).toHaveValue("누구나 이동할 수 있는 길을 안내합니다.");
+    expect(screen.getByRole("textbox", { name: "프로젝트 설명" })).toHaveClass("min-h-40");
+  });
+
+  it("일반 팀원에게 프로젝트 정보 수정 버튼과 팀장 권한 안내를 보여준다", async () => {
+    loadTeamWorkspace.mockResolvedValue({ workspace });
+
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
+
+    const button = screen.getByRole("button", { name: "프로젝트 정보 수정" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("title", "팀장만 수정할 수 있습니다");
+    expect(screen.queryByRole("link", { name: "프로젝트 정보 수정" })).not.toBeInTheDocument();
   });
 
   it("감독자에게도 팀 대화와 보고서 목적지를 본문에서 반복하지 않는다", async () => {
@@ -166,7 +219,7 @@ describe("TeamOverviewPage", () => {
       },
     });
 
-    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.queryByRole("link", { name: "지도 의견 남기기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "보고서 관리" })).not.toBeInTheDocument();
@@ -205,11 +258,11 @@ describe("TeamOverviewPage", () => {
       },
     });
 
-    render(await TeamOverviewPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.getByRole("heading", { name: "지연된 데이터 정리" })).toBeInTheDocument();
     expect(screen.getByText("기한 초과")).toBeInTheDocument();
     expect(screen.getByText("윤서준")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "할 일 전체 보기" })).toHaveAttribute("href", "/teams/team-1/tasks");
+    expect(screen.getByRole("link", { name: "할 일 전체 보기" })).toHaveAttribute("href", "/projects/team-1/tasks");
   });
 });

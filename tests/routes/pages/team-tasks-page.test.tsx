@@ -1,13 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamTasksPage from "@/app/teams/[teamId]/tasks/page";
+import TeamTasksPage from "@/app/projects/[projectId]/tasks/page";
 
 const { loadTeamWorkspace } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamWorkspace,
 }));
 
@@ -15,7 +15,7 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/task-forms", () => ({
+vi.mock("@/app/projects/[projectId]/_components/task-forms", () => ({
   TaskCompletionForm: () => <button data-testid="task-completion-form">완료</button>,
   TaskCreateDialog: () => <button data-testid="new-task-dialog">새 할 일</button>,
   TaskEditDialog: ({ status, assigneeIds }: { status: string; assigneeIds: string[] }) => (
@@ -28,7 +28,7 @@ const workspace = {
   topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 1,
   completedTaskCount: 0,
@@ -77,7 +77,7 @@ describe("TeamTasksPage", () => {
   it("기여자도 정적 상태와 담당자를 확인하고 별도 편집 컨트롤을 사용한다", async () => {
     loadTeamWorkspace.mockResolvedValue({ workspace });
 
-    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.getByTestId("task-edit-dialog")).toHaveTextContent("IN_PROGRESS:student-1");
     expect(screen.getByTestId("new-task-dialog")).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe("TeamTasksPage", () => {
       },
     });
 
-    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
@@ -139,7 +139,7 @@ describe("TeamTasksPage", () => {
       },
     });
 
-    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     const activeSection = screen.getByRole("heading", { name: "남은 할 일" }).closest("section");
     expect(activeSection).not.toBeNull();
@@ -156,11 +156,11 @@ describe("TeamTasksPage", () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
-        status: "CLOSED" as const,
+        status: "COMPLETED" as const,
       },
     });
 
-    render(await TeamTasksPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamTasksPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.queryByTestId("new-task-dialog")).not.toBeInTheDocument();
     expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
