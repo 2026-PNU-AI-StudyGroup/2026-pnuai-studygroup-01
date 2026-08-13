@@ -92,7 +92,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
 
     <ProjectDetailShell
       heading={
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-4xl">
           <p className="text-sm font-semibold text-[var(--muted)]">{project.startYear} · {project.programName} · {project.teamName}{project.divisionName ? ` · ${project.divisionName}` : ""}</p>
           <h1 className="mt-3 text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{project.topicTitle}</UiText></h1>
           <div className="mt-6 space-y-2.5">
@@ -120,7 +120,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
         </div>
       }
     >
-      <div className="mx-auto max-w-3xl space-y-11">
+      <div className="mx-auto max-w-4xl space-y-11">
         {media.length ? <ProjectMediaCarousel items={media} /> : null}
 
         <section aria-labelledby="archive-description">
