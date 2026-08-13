@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { renderMarkdown } from "@/app/feedback/_lib/render-markdown";
+import { renderMarkdown } from "@/shared/ui/render-markdown";
 
 function html(source: string): string {
   return renderToStaticMarkup(renderMarkdown(source));

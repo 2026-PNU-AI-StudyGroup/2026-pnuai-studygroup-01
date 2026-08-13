@@ -15,7 +15,7 @@ import { ListArchivedProjectsService } from "@/modules/team/application/archive-
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { TranslatedText } from "@/app/_components/translated-text";
+import { renderMarkdown } from "@/shared/ui/render-markdown";
 import {
   ChevronIcon,
   DocumentIcon,
@@ -92,27 +92,40 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
 
     <ProjectDetailShell
       heading={
-        <div>
-          <p className="text-sm font-semibold text-[var(--muted)]">{project.startYear} · {project.programName}{project.divisionName ? ` · ${project.divisionName}` : ""}</p>
-          <h1 className="mt-3 max-w-4xl text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{project.topicTitle}</UiText></h1>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-[var(--primary-subtle)] px-3 py-1 text-xs font-bold text-[var(--primary)]">{project.teamName}</span>
-            {project.memberNames.map((name) => (
-              <span key={name} className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{name}</span>
-            ))}
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-semibold text-[var(--muted)]">{project.startYear} · {project.programName} · {project.teamName}{project.divisionName ? ` · ${project.divisionName}` : ""}</p>
+          <h1 className="mt-3 text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{project.topicTitle}</UiText></h1>
+          <div className="mt-6 space-y-2.5">
+            {project.memberNames[0] ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--primary-hover)] py-1 text-[0.7rem] font-bold text-[var(--primary)]"><UiText>{"팀장"}</UiText></span>
+                <span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{project.memberNames[0]}</span>
+              </div>
+            ) : null}
+            {project.memberNames.length > 1 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--line)] py-1 text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"팀원"}</UiText></span>
+                {project.memberNames.slice(1).map((name) => (
+                  <span key={name} className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{name}</span>
+                ))}
+              </div>
+            ) : null}
             {project.advisorEnabled ? (
-              <span className="inline-flex items-center rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">{project.professorName} {project.advisorRole}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--line)] py-1 text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"지도교수"}</UiText></span>
+                <span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{project.professorName} {project.advisorRole}</span>
+              </div>
             ) : null}
           </div>
         </div>
       }
     >
-      <div className="max-w-3xl space-y-11">
+      <div className="mx-auto max-w-3xl space-y-11">
         {media.length ? <ProjectMediaCarousel items={media} /> : null}
 
         <section aria-labelledby="archive-description">
           <h2 id="archive-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2>
-          <TranslatedText text={project.topicDescription} className="mt-3 whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" />
+          <div className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]">{renderMarkdown(project.topicDescription)}</div>
         </section>
 
         <section aria-labelledby="archive-artifacts">
