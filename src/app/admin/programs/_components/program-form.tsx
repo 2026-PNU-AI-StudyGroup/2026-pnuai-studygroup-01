@@ -137,6 +137,17 @@ export function ProgramForm({ successHref, categoryOptions }: { successHref?: st
       </div>
     </FormSection>
 
+    <FormSection title="공개" description="공개하면 학생·교수의 프로젝트 찾기 사이드바에 바로 노출됩니다. 언제든 설정에서 비공개로 되돌릴 수 있습니다.">
+      <ChoiceCard
+        name="publishNow"
+        type="checkbox"
+        value="true"
+        defaultChecked
+        label="만들자마자 공개"
+        description="체크를 해제하면 비공개 초안으로 저장하고, 준비된 뒤 설정에서 공개할 수 있습니다."
+      />
+    </FormSection>
+
     <div className="form-action-bar">
       <div>{state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}</div>
       <button type="submit" className="button-primary max-sm:w-full" disabled={pending}><UiText>{pending ? "등록 중" : "프로그램 등록"}</UiText></button>
