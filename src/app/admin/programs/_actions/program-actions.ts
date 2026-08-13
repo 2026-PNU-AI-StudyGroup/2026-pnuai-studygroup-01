@@ -66,9 +66,10 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
   });
   const settings = parseProgramSettings(formData);
   if (!parsed.success || !settings.success) return { status: "error", message: "프로그램 내용과 공통 일정·투표 기간을 확인해 주세요." };
+  const currentActor = await actor();
   let programId: string;
   try {
-    programId = await service().create(await actor(), {
+    programId = await service().create(currentActor, {
       ...parsed.data,
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
@@ -90,6 +91,11 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
     });
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
+  // "만들자마자 공개" 체크 시 생성 직후 공개로 전환한다(두 단계 → 한 단계).
+  if (formData.get("publishNow") === "true") {
+    try { await service().setPublic(currentActor, programId, true); }
+    catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
+  }
   revalidatePath("/admin/programs");
   // 생성 직후 통합 관리 화면으로 보내 채점표·분과·공지 등 옵션을 이어서 설정하게 한다.
   redirect(`/admin/programs/${programId}`);
