@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import GlobalError from "@/app/error";
-import TeamWorkspaceError from "@/app/teams/[teamId]/error";
+import TeamWorkspaceError from "@/app/projects/[projectId]/error";
 
 describe("오류 경계 탈출 경로", () => {
   it("전역 오류에서 재시도와 안전한 프로젝트 이동 경로를 함께 제공한다", () => {

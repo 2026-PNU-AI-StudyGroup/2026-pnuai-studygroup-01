@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 import { UiText } from "@/shared/i18n/i18n-provider";
+import { DownloadIcon } from "@/shared/ui/workspace-icons";
 
 // 포스터를 본문에 이미지로 바로 노출한다. 이미지가 아니거나(파일 없음/ PDF 등) 로드 실패 시 다운로드 링크로 폴백.
 export function ArtifactPoster({ src, title }: { src: string; title: string }) {
@@ -17,7 +18,7 @@ export function ArtifactPoster({ src, title }: { src: string; title: string }) {
   if (failed) {
     return (
       <a className="button-secondary gap-2" href={src}>
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M10 3v10m0 0 3.5-3.5M10 13 6.5 9.5M4 15.5h12" /></svg>
+        <DownloadIcon className="size-4 shrink-0" />
         <UiText>{"파일 받기"}</UiText>
       </a>
     );

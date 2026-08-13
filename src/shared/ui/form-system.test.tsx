@@ -55,11 +55,15 @@ describe("form-system controls", () => {
 
     expect(container.querySelector('input[type="date"]')).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "일정" }));
-    expect(screen.getByRole("dialog", { name: "일정" })).toBeVisible();
+    const calendar = screen.getByRole("dialog", { name: "일정" });
+    expect(calendar).toBeVisible();
+    expect(calendar).toHaveStyle({ width: "320px" });
+    expect(screen.queryByRole("button", { name: "오늘" })).toBeNull();
     expect(screen.getByRole("gridcell", { name: "2026년 8월 6일" })).toBeDisabled();
     fireEvent.click(screen.getByRole("gridcell", { name: "2026년 8월 8일" }));
 
     expect(new FormData(container.querySelector("form")!).get("scheduledAt")).toBe("2026-08-08");
+    expect(screen.queryByRole("dialog", { name: "일정" })).toBeNull();
   });
 
   it("일시 선택에서 선택한 날짜와 시간을 같은 서버 값으로 제출한다", () => {
@@ -70,11 +74,40 @@ describe("form-system controls", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
+    expect(screen.getByRole("dialog", { name: "회의 일시" })).toHaveStyle({ width: "440px" });
     expect(screen.getByLabelText("시간")).toHaveValue("13:20");
     fireEvent.change(screen.getByLabelText("시간"), { target: { value: "15:45" } });
     fireEvent.click(screen.getByRole("gridcell", { name: "2026년 8월 8일" }));
 
     expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-08T15:45");
+  });
+
+  it("날짜를 유지하고 시간만 바꿀 때 확인 버튼으로 반영한다", () => {
+    const { container } = render(
+      <form>
+        <DateTimeInput aria-label="회의 일시" name="meetingAt" defaultValue="2026-08-07T13:20" />
+      </form>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
+    fireEvent.change(screen.getByLabelText("시간"), { target: { value: "15:45" } });
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+
+    expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-07T15:45");
+  });
+
+  it("일시 선택을 취소하면 기존 서버 값을 유지한다", () => {
+    const { container } = render(
+      <form>
+        <DateTimeInput aria-label="회의 일시" name="meetingAt" defaultValue="2026-08-07T13:20" />
+      </form>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
+    fireEvent.change(screen.getByLabelText("시간"), { target: { value: "15:45" } });
+    fireEvent.click(screen.getByRole("button", { name: "취소" }));
+
+    expect(new FormData(container.querySelector("form")!).get("meetingAt")).toBe("2026-08-07T13:20");
   });
 
   it("controlled 일시 값이 바뀌면 다음 달력 열기와 서버 값에 반영한다", () => {

@@ -43,11 +43,13 @@ type FormSectionProps = {
   className?: string;
   contentClassName?: string;
   id?: string;
+  plain?: boolean;
+  hidden?: boolean;
 };
 
-export function FormSection({ number, title, description, children, className = "", contentClassName = "", id }: FormSectionProps) {
+export function FormSection({ number, title, description, children, className = "", contentClassName = "", id, plain = false, hidden }: FormSectionProps) {
   return (
-    <section id={id} className={`form-section ${className}`}>
+    <section id={id} hidden={hidden} className={`form-section ${plain ? "form-section--plain" : ""} ${className}`}>
       <header className="form-section__header">
         {number ? <span className="form-section__number">{number}</span> : null}
         <div>

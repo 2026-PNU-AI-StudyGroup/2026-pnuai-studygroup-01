@@ -22,6 +22,7 @@ import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { SearchIcon, UndoIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("사용자 관리");
@@ -43,7 +44,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
       <AdminWorkspace currentPath="/admin/users" title="사용자" description="가입한 구성원의 역할과 계정 상태를 확인하고, 필요한 경우 계정을 비활성화해 로그인 상태를 종료합니다.">
         <form role="search" className="admin-panel grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-6">
           <label className="grid gap-2 text-sm font-semibold"><UiText>{"이름 또는 이메일 검색"}</UiText><UiInput className="form-control" type="search" name="q" maxLength={100} defaultValue={query} placeholder="예: 홍길동 또는 user@pusan.ac.kr" /></label>
-          <button type="submit" className="button-primary max-sm:w-full"><UiText>{"검색"}</UiText></button>
+          <button type="submit" className="button-primary gap-2 max-sm:w-full"><SearchIcon className="size-4 shrink-0" /><UiText>{"검색"}</UiText></button>
         </form>
         <AdminSection
           id="user-list-title"
@@ -52,7 +53,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
         >
           {data.items.length === 0 ? (
             <AdminSectionEmpty>
-              <EmptyState variant="embedded" title="조건에 맞는 사용자가 없습니다" description="검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." action={query ? <Link href="/admin/users" className="button-secondary"><UiText>{"검색 초기화"}</UiText></Link> : undefined} />
+              <EmptyState variant="section" title={query ? "조건에 맞는 사용자가 없습니다" : "아직 가입한 사용자가 없습니다"} description={query ? "검색어를 지우거나 이름과 이메일 철자를 확인해 주세요." : "사용자가 처음 로그인하면 이 목록에 표시됩니다."} action={query ? <Link href="/admin/users" className="button-secondary gap-2"><UndoIcon className="size-4 shrink-0" /><UiText>{"검색 초기화"}</UiText></Link> : undefined} />
             </AdminSectionEmpty>
           ) : (
             <ol className={adminRecordListClassName}>

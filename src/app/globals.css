@@ -309,6 +309,8 @@ summary::-webkit-details-marker {
 
   .custom-select__menu {
     position: fixed;
+    inset: auto;
+    margin: 0;
     z-index: 70;
     max-height: min(22rem, 50vh);
     overflow-y: auto;
@@ -476,9 +478,14 @@ summary::-webkit-details-marker {
   }
 
   .custom-select__empty {
+    display: flex;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: center;
     padding: 1rem;
     color: var(--muted);
     font-size: 0.875rem;
+    font-weight: 600;
     text-align: center;
   }
 
@@ -594,6 +601,14 @@ summary::-webkit-details-marker {
     gap: 1.125rem;
   }
 
+  .form-section.form-section--plain {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+
   .form-action-bar {
     display: flex;
     flex-wrap: wrap;
@@ -641,15 +656,6 @@ summary::-webkit-details-marker {
 
   .topic-form__actions {
     padding: 0.25rem 1.25rem 1.25rem;
-  }
-
-  .topic-form--wizard {
-    border: 0;
-    border-radius: 0;
-  }
-
-  .topic-form--wizard .form-section {
-    border-bottom: 0;
   }
 
   .choice-card {
@@ -771,6 +777,329 @@ summary::-webkit-details-marker {
     font-size: 0.75rem;
   }
 
+  .program-create-form {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    max-width: 72rem;
+    gap: 1.25rem;
+    margin-inline: auto;
+  }
+
+  .program-create-form__anchor-nav {
+    position: sticky;
+    top: 4.5rem;
+    z-index: 19;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(max-content, 1fr));
+    min-width: 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--workspace) 94%, white);
+    backdrop-filter: blur(14px);
+    scrollbar-width: none;
+  }
+
+  .program-create-form__anchor-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .program-create-form__anchor-nav button {
+    position: relative;
+    display: inline-flex;
+    min-height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 750;
+    white-space: nowrap;
+    transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
+  }
+
+  .program-create-form__anchor-nav button::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: transparent;
+    content: "";
+  }
+
+  .program-create-form__anchor-nav svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .program-create-form__anchor-nav button:hover,
+  .program-create-form__anchor-nav button:focus-visible {
+    background: color-mix(in srgb, var(--primary-subtle) 45%, transparent);
+    color: var(--primary);
+  }
+
+  .program-create-form__anchor-nav button[aria-current="step"] {
+    color: var(--primary);
+  }
+
+  .program-create-form__anchor-nav button[aria-current="step"]::after {
+    background: var(--primary);
+  }
+
+  .program-create-form__progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .program-create-form__progress span {
+    font-weight: 700;
+  }
+
+  .program-create-form__progress strong {
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .program-create-form__sections {
+    display: grid;
+    min-width: 0;
+    gap: 1rem;
+  }
+
+  .program-create-form .program-create-form__section {
+    scroll-margin-top: 9.5rem;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 6px 20px rgb(31 35 48 / 0.035);
+  }
+
+  .program-create-form .program-create-form__section[hidden] {
+    display: none;
+  }
+
+  .program-create-form__section .form-section__title {
+    font-size: 1.125rem;
+  }
+
+  .program-create-form__section .form-section__description {
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+  }
+
+  .program-create-form__basic-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .program-create-form__description-input {
+    position: relative;
+  }
+
+  .program-create-form__description-input textarea {
+    min-height: 8rem;
+    padding-bottom: 2rem;
+  }
+
+  .program-create-form__description-input > span {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.625rem;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .program-create-form__period-list {
+    gap: 0.25rem;
+  }
+
+  .program-create-form__period-row {
+    display: grid;
+    min-width: 0;
+    gap: 0.75rem;
+    padding-block: 0.375rem;
+  }
+
+  .program-create-form__period-title,
+  .program-create-form__setting-label {
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-weight: 750;
+    line-height: 1.45;
+  }
+
+  .program-create-form__period-inputs {
+    display: grid;
+    min-width: 0;
+    gap: 0.75rem;
+  }
+
+  .program-create-form__period-field {
+    display: grid;
+    min-width: 0;
+    gap: 0.3rem;
+  }
+
+  .program-create-form__period-label {
+    color: var(--muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .program-create-form__period-separator {
+    display: none;
+    color: var(--muted);
+  }
+
+  .program-create-form__operation-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .program-create-form__radio-group {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+  }
+
+  .program-create-form__radio-group legend,
+  .program-create-form__team-policy > strong,
+  .program-create-form__vote-limit strong {
+    margin-bottom: 0.25rem;
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-weight: 750;
+  }
+
+  .program-create-form__radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: fit-content;
+    color: var(--ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .program-create-form__team-policy {
+    display: grid;
+    align-content: start;
+    gap: 0.625rem;
+  }
+
+  .program-create-form__team-policy > p,
+  .program-create-form__vote-limit p {
+    margin-top: -0.5rem;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    line-height: 1.5;
+  }
+
+  .program-create-form__stepper {
+    display: grid;
+    width: min(100%, 14rem);
+    grid-template-columns: minmax(0, 1fr) 2.75rem 2.75rem;
+    overflow: hidden;
+    border: 1px solid var(--field-border);
+    border-radius: var(--radius-control);
+    background: var(--field-surface);
+  }
+
+  .program-create-form__stepper .form-control {
+    min-height: 2.875rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .program-create-form__stepper button {
+    min-height: 2.875rem;
+    border-left: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 1.125rem;
+  }
+
+  .program-create-form__stepper button:hover:not(:disabled) {
+    background: var(--primary-subtle);
+    color: var(--primary);
+  }
+
+  .program-create-form__voting-options {
+    display: grid;
+    gap: 1.25rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1.25rem;
+  }
+
+  .program-create-form__vote-limit {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .program-create-form__vote-option-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .program-create-form__vote-option-grid .choice-card {
+    min-height: 4.75rem;
+    align-items: flex-start;
+    border-radius: var(--radius-control);
+    padding: 0.875rem;
+  }
+
+  /* Program creation actions stay reachable while the form scrolls. */
+  .program-create-form__actions {
+    position: sticky;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    z-index: 18;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    border-color: color-mix(in srgb, var(--line-strong) 80%, transparent);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 -8px 28px rgb(31 35 48 / 0.1);
+    backdrop-filter: blur(16px);
+  }
+
+  .program-create-form__action-status {
+    min-width: 0;
+    text-align: right;
+  }
+
+  .program-create-form__step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .program-create-form__cancel {
+    gap: 0.375rem;
+  }
+
+  .program-create-form__cancel svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .tag-input {
     display: flex;
     min-height: 3rem;
@@ -855,8 +1184,79 @@ summary::-webkit-details-marker {
       padding: 1.5rem;
     }
 
+    .form-section.form-section--plain {
+      padding: 0;
+    }
+
     .topic-form__actions {
       padding: 0.25rem 1.5rem 1.5rem;
+    }
+
+    .program-create-form__basic-grid {
+      grid-template-columns: minmax(13rem, 0.75fr) minmax(0, 1.25fr);
+    }
+
+    .program-create-form__full-row {
+      grid-column: 1 / -1;
+    }
+
+    .program-create-form__period-inputs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .program-create-form .program-create-form__section {
+      padding: 1.5rem 1.75rem;
+    }
+
+    .program-create-form__period-row {
+      grid-template-columns: 7rem minmax(0, 1fr);
+      align-items: center;
+    }
+
+    .program-create-form__vote-limit {
+      grid-template-columns: 12rem minmax(12rem, 14rem);
+      align-items: end;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .program-create-form__operation-grid,
+    .program-create-form__vote-option-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .program-create-form__anchor-nav {
+      top: 0;
+    }
+
+    .program-create-form .program-create-form__section {
+      scroll-margin-top: 5.5rem;
+    }
+
+    .program-create-form__actions {
+      bottom: 1rem;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .program-create-form__actions {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .program-create-form__actions .button-secondary,
+    .program-create-form__actions .button-primary {
+      padding-inline: 0.875rem;
+    }
+
+    .program-create-form__action-status {
+      font-size: 0.75rem;
     }
   }
 
@@ -1037,6 +1437,8 @@ summary::-webkit-details-marker {
 
   .date-time-input__calendar {
     position: fixed;
+    inset: auto;
+    margin: 0;
     z-index: 70;
     overflow-y: auto;
     border: 1px solid #dfe3eb;
@@ -1171,7 +1573,7 @@ summary::-webkit-details-marker {
 
   .date-time-input__calendar-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.75rem;
     border-top: 1px solid var(--line);
@@ -1190,39 +1592,6 @@ summary::-webkit-details-marker {
   .date-time-input__calendar-footer button:hover,
   .date-time-input__calendar-footer button:focus-visible {
     background: var(--primary-subtle);
-  }
-
-  @media (min-width: 480px) {
-    .date-time-input__calendar[data-type="datetime-local"] {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 7rem;
-      column-gap: 0.75rem;
-    }
-
-    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__calendar-header,
-    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__weekdays,
-    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__days {
-      grid-column: 1;
-    }
-
-    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__time-field {
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      grid-template-columns: minmax(0, 1fr);
-      align-self: start;
-      gap: 0.375rem;
-      margin-top: 0;
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .date-time-input__calendar[data-type="datetime-local"] .date-time-input__calendar-footer {
-      grid-column: 2;
-      grid-row: 3;
-      align-self: end;
-      margin-top: 0;
-      padding-top: 0;
-    }
   }
 
   input[type="number"].form-control,

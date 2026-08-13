@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
 
@@ -32,6 +32,7 @@ export function TagInput({
   const { t } = useI18n();
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const composingRef = useRef(false);
   const [uncontrolledTags, setUncontrolledTags] = useState(() => normalizeTags(defaultValue));
   const [draft, setDraft] = useState("");
   const controlled = controlledValue !== undefined;
@@ -83,6 +84,8 @@ export function TagInput({
         placeholder={tags.length ? "" : t(placeholder)}
         required={required && tags.length === 0}
         maxLength={maxLength}
+        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionEnd={() => { composingRef.current = false; }}
         onChange={(event) => {
           const next = event.target.value;
           if (/[,;\n]/.test(next)) addTags(splitTags(next));
@@ -90,6 +93,7 @@ export function TagInput({
         }}
         onBlur={commitDraft}
         onKeyDown={(event) => {
+          if (composingRef.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
           if (event.key === "Enter" || event.key === "," || event.key === ";") {
             event.preventDefault();
             commitDraft();

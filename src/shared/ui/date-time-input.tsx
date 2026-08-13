@@ -16,6 +16,7 @@ import { createPortal } from "react-dom";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
 import { IconButton } from "@/shared/ui/icon-button";
+import { useTopLayerPopover } from "@/shared/ui/use-top-layer-popover";
 
 type DateTimeInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -60,13 +61,14 @@ export function DateTimeInput({
   const { locale, t } = useI18n();
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const [timeInputValue, setTimeInputValue] = useState(() => getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
+  const [draftDate, setDraftDate] = useState<CalendarDate | undefined>(() => parseDateValue(controlledValue ?? defaultValue, type));
   const [open, setOpen] = useState(false);
   const [invalid, setInvalid] = useState(false);
   const [portalHost, setPortalHost] = useState<Element | null>(null);
   const initialDate = parseDateValue(controlledValue ?? defaultValue, type) ?? today();
   const [visibleMonth, setVisibleMonth] = useState(() => monthStart(initialDate));
   const rootRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const proxyRef = useRef<HTMLInputElement>(null);
   const draftTimeRef = useRef(getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
@@ -75,9 +77,15 @@ export function DateTimeInput({
   const value = controlledValue ?? uncontrolledValue;
   const selectedDate = parseDateValue(value, type);
   const visibleDays = calendarDays(visibleMonth);
-  const floatingStyle = useFloatingCalendar(rootRef, open, type);
+  const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
+  const floatingStyle = useFloatingCalendar(rootRef, open, type, topLayer);
   const hasValue = Boolean(selectedDate);
   const showInvalid = invalid && Boolean(required && !disabled && !hasValue);
+  const canConfirm = Boolean(
+    draftDate
+      && (type === "date" || isValidTime(timeInputValue))
+      && isValueAllowed(composeValue(draftDate, timeInputValue, type), min, max),
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -96,13 +104,13 @@ export function DateTimeInput({
   useEffect(() => {
     if (!open) return;
     const frame = window.requestAnimationFrame(() => {
-      const focusDate = selectedDate && isDateAllowed(selectedDate, min, max)
-        ? selectedDate
+      const focusDate = draftDate && isDateAllowed(draftDate, min, max)
+        ? draftDate
         : firstAllowedDate(visibleDays, min, max);
       if (focusDate) dayRefs.current.get(dateKey(focusDate))?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [max, min, open, selectedDate, visibleDays]);
+  }, [draftDate, max, min, open, visibleDays]);
 
   function close(restoreFocus = true) {
     setOpen(false);
@@ -112,6 +120,7 @@ export function DateTimeInput({
   function openCalendar() {
     const date = selectedDate ?? today();
     setVisibleMonth(monthStart(date));
+    setDraftDate(selectedDate);
     const nextDraftTime = getTime(value) ?? DEFAULT_TIME;
     draftTimeRef.current = nextDraftTime;
     setTimeInputValue(nextDraftTime);
@@ -145,18 +154,23 @@ export function DateTimeInput({
       ? draftTimeRef.current
       : boundaryTime(date, min, max) ?? DEFAULT_TIME;
     const nextValue = composeValue(date, time, type);
-    if (isValueAllowed(nextValue, min, max)) commit(nextValue);
+    if (!isValueAllowed(nextValue, min, max)) return;
+    draftTimeRef.current = time;
+    setTimeInputValue(time);
+    commit(nextValue);
     close();
   }
 
   function changeTime(nextTime: string) {
     setTimeInputValue(nextTime);
     if (!isValidTime(nextTime)) return;
-    const next = nextTime;
-    draftTimeRef.current = next;
-    if (!selectedDate) return;
-    const nextValue = composeValue(selectedDate, next, type);
-    if (isValueAllowed(nextValue, min, max)) commit(nextValue);
+    draftTimeRef.current = nextTime;
+  }
+
+  function confirmSelection() {
+    if (!draftDate || !canConfirm) return;
+    commit(composeValue(draftDate, timeInputValue, type));
+    close();
   }
 
   function moveMonth(amount: number) {
@@ -250,6 +264,7 @@ export function DateTimeInput({
       {open && portalHost ? createPortal(
         <section
           ref={menuRef}
+          popover={popoverSupported ? "manual" : undefined}
           id={calendarId}
           role="dialog"
           aria-label={inputLabel}
@@ -285,11 +300,11 @@ export function DateTimeInput({
                 }}
                 type="button"
                 role="gridcell"
-                className={`date-time-input__day${sameDate(date, selectedDate) ? " date-time-input__day--selected" : ""}${sameDate(date, today()) ? " date-time-input__day--today" : ""}`}
+                className={`date-time-input__day${sameDate(date, draftDate) ? " date-time-input__day--selected" : ""}${sameDate(date, today()) ? " date-time-input__day--today" : ""}`}
                 aria-label={formatDateLabel(date, locale)}
-                aria-selected={sameDate(date, selectedDate)}
+                aria-selected={sameDate(date, draftDate)}
                 disabled={!isDateAllowed(date, min, max)}
-                tabIndex={sameDate(date, selectedDate) || (!selectedDate && sameDate(date, today())) ? 0 : -1}
+                tabIndex={sameDate(date, draftDate) || (!draftDate && sameDate(date, today())) ? 0 : -1}
                 onKeyDown={(event) => handleDayKeyDown(event, date)}
                 onClick={() => selectDate(date)}
               >
@@ -314,8 +329,8 @@ export function DateTimeInput({
             </label>
           ) : null}
           <footer className="date-time-input__calendar-footer">
-            <button type="button" onClick={() => selectDate(today())}>{t("오늘")}</button>
-            {hasValue ? <IconButton type="button" onClick={() => { commit(""); close(); }} aria-label="지우기" title="지우기">×</IconButton> : null}
+            <IconButton type="button" onClick={confirmSelection} aria-label={t("확인")} title={t("확인")} disabled={!canConfirm}>✓</IconButton>
+            <IconButton type="button" onClick={() => close()} aria-label={t("취소")} title={t("취소")}>×</IconButton>
           </footer>
         </section>,
         portalHost,
@@ -454,6 +469,7 @@ function useFloatingCalendar(
   rootRef: RefObject<HTMLDivElement | null>,
   open: boolean,
   type: "date" | "datetime-local",
+  topLayer: boolean,
 ): CSSProperties {
   const [style, setStyle] = useState<CSSProperties>({});
 
@@ -464,20 +480,24 @@ function useFloatingCalendar(
       if (!rect) return;
       const dialog = rootRef.current?.closest("dialog");
       const dialogRect = dialog?.getBoundingClientRect();
+      const dialogLeft = topLayer ? 0 : (dialogRect?.left ?? 0);
+      const dialogTop = topLayer ? 0 : (dialogRect?.top ?? 0);
+      const dialogScrollLeft = topLayer ? 0 : (dialog?.scrollLeft ?? 0);
+      const dialogScrollTop = topLayer ? 0 : (dialog?.scrollTop ?? 0);
       const gutter = 8;
-      const minimumWidth = type === "datetime-local" && window.innerWidth >= 480 ? 440 : 320;
-      const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, minimumWidth));
+      const calendarWidth = type === "datetime-local" && window.innerWidth >= 480 ? 440 : 320;
+      const width = Math.min(window.innerWidth - gutter * 2, calendarWidth);
       const availableBelow = window.innerHeight - rect.bottom - gutter;
       const availableAbove = rect.top - gutter;
-      const desiredHeight = type === "datetime-local" && window.innerWidth >= 480 ? 320 : 450;
+      const desiredHeight = 450;
       const openAbove = availableBelow < desiredHeight && availableAbove > availableBelow;
       const maxHeight = Math.max(180, openAbove ? availableAbove : availableBelow);
       const top = openAbove ? Math.max(gutter, rect.top - Math.min(desiredHeight, maxHeight) - gutter) : rect.bottom + gutter;
       setStyle({
         // Modal dialogs establish a top-layer containing block in Chromium.
         // Convert viewport coordinates before rendering into the dialog portal.
-        left: Math.max(gutter, Math.min(rect.left, window.innerWidth - width - gutter)) - (dialogRect?.left ?? 0) + (dialog?.scrollLeft ?? 0),
-        top: top - (dialogRect?.top ?? 0) + (dialog?.scrollTop ?? 0),
+        left: Math.max(gutter, Math.min(rect.left, window.innerWidth - width - gutter)) - dialogLeft + dialogScrollLeft,
+        top: top - dialogTop + dialogScrollTop,
         width,
         maxHeight,
       });
@@ -489,7 +509,7 @@ function useFloatingCalendar(
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, rootRef, type]);
+  }, [open, rootRef, topLayer, type]);
 
   return style;
 }

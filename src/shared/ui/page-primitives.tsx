@@ -16,24 +16,29 @@ export function PageHeader({ eyebrow, title, description, actions, compact = fal
   );
 }
 
-export function EmptyState({ title, description, action, variant = "page" }: {
+export function EmptyState({ title, description, action, variant = "results" }: {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
-  variant?: "page" | "embedded";
+  variant?: "results" | "section" | "compact";
 }) {
-  const hasSupportingContent = Boolean(description || action);
-  const containerClassName = variant === "embedded"
-    ? `grid ${hasSupportingContent ? "min-h-28 gap-5 py-6" : "min-h-20 py-5"} text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center`
-    : `grid ${hasSupportingContent ? "min-h-36 gap-6 py-7" : "min-h-28 py-6"} rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-6 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7`;
+  const Title = variant === "results" ? "h2" : variant === "section" ? "h3" : "p";
+  const containerClassName = variant === "results"
+    ? "flex min-h-44 flex-col items-center justify-center px-5 py-12 text-center sm:min-h-52 sm:py-16"
+    : variant === "section"
+      ? "flex min-h-28 flex-col items-center justify-center px-1 py-8 text-center"
+      : "flex min-h-16 flex-wrap items-center justify-between gap-3 py-4 text-left";
+  const titleClassName = variant === "compact"
+    ? "text-sm font-semibold text-[var(--ink)]"
+    : "text-lg font-semibold tracking-[-0.025em] text-[var(--ink)]";
 
   return (
-    <div className={containerClassName} data-empty-state={variant}>
-      <div className="max-w-2xl">
-        <h2 className="text-lg font-semibold tracking-[-0.025em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
-        {description ? <p className="muted mt-2 text-[0.9375rem] leading-6"><UiText>{description}</UiText></p> : null}
+    <div className={containerClassName} data-empty-state={variant} role="status">
+      <div className={variant === "compact" ? "min-w-0 flex-1" : "max-w-2xl"}>
+        <Title className={titleClassName}><UiText>{title}</UiText></Title>
+        {description ? <p className={`text-[var(--muted)] ${variant === "compact" ? "mt-1 text-sm leading-5" : "mt-2 text-[0.9375rem] leading-6"}`}><UiText>{description}</UiText></p> : null}
       </div>
-      {action ? <div className="flex sm:justify-end">{action}</div> : null}
+      {action ? <div className={variant === "compact" ? "flex shrink-0" : "mt-5 flex justify-center"}>{action}</div> : null}
     </div>
   );
 }

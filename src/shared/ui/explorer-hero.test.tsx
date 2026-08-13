@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import Link from "next/link";
 
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
@@ -37,5 +38,20 @@ describe("ExplorerHero", () => {
     expect(primaryRow).toContainElement(screen.getByRole("button", { name: "검색" }));
     expect(primaryRow).not.toContainElement(disclosure);
     expect(primaryRow?.nextElementSibling).toContainElement(disclosure);
+  });
+
+  it("제목 전용 동작은 제목 바로 옆에 둔다", () => {
+    render(
+      <ExplorerHero
+        title="AI 해커톤"
+        titleAction={<Link href="/admin/programs/program-1" aria-label="AI 해커톤 관리">설정</Link>}
+        action={<button type="button">검색</button>}
+      />,
+    );
+
+    const heading = screen.getByRole("heading", { name: "AI 해커톤" });
+    const manage = screen.getByRole("link", { name: "AI 해커톤 관리" });
+    expect(heading.parentElement).toContainElement(manage);
+    expect(heading.parentElement).not.toContainElement(screen.getByRole("button", { name: "검색" }));
   });
 });

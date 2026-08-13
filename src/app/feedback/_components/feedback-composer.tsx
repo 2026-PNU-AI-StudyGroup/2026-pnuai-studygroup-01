@@ -17,6 +17,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { ChoiceCard, FormField } from "@/shared/ui/form-system";
 import { PageHeader } from "@/shared/ui/page-primitives";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 function FieldLabel({ children }: { children: string }) {
   return <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{children}</UiText></span>;
@@ -39,8 +40,8 @@ export function FeedbackComposer() {
       <PageHeader
         title="피드백 게시판"
         actions={!open ? (
-        <button className="button-primary" type="button" onClick={() => setOpen(true)}>
-          <UiText>{"게시글 쓰기"}</UiText>
+        <button className="button-primary gap-2" type="button" onClick={() => setOpen(true)}>
+          <AddIcon className="size-4 shrink-0" /><UiText>{"게시글 쓰기"}</UiText>
         </button>
         ) : undefined}
       />

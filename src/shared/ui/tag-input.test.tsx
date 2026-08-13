@@ -25,4 +25,23 @@ describe("TagInput", () => {
 
     expect(container.querySelector<HTMLInputElement>('input[name="interests"]')).toHaveValue("웹, 데이터, 접근성");
   });
+
+  it("한글 조합 중 Enter는 마지막 글자를 중복 확정하지 않는다", () => {
+    const { container } = render(<TagInput name="divisions" ariaLabel="분과 이름" />);
+    const input = screen.getByRole("textbox", { name: "분과 이름" });
+
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "창업" } });
+    fireEvent.keyDown(input, { key: "Enter", keyCode: 229, isComposing: true });
+
+    expect(screen.queryByRole("button", { name: "창업 삭제" })).not.toBeInTheDocument();
+    expect(container.querySelector<HTMLInputElement>('input[name="divisions"]')).toHaveValue("창업");
+
+    fireEvent.compositionEnd(input);
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(screen.getAllByRole("button", { name: "창업 삭제" })).toHaveLength(1);
+    expect(container.querySelector<HTMLInputElement>('input[name="divisions"]')).toHaveValue("창업");
+    expect(input).toHaveValue("");
+  });
 });

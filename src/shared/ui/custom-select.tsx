@@ -5,6 +5,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import { useTopLayerPopover } from "@/shared/ui/use-top-layer-popover";
 
 type SelectOption = {
   value: string;
@@ -66,7 +67,8 @@ export function CustomSelect({
   const filteredOptions = filterOptions(options, query);
   const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selected = options.find((option) => option.value === value);
-  const floatingStyle = useFloatingMenu(rootRef, open);
+  const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
+  const floatingStyle = useFloatingMenu(rootRef, open, topLayer);
   const showInvalid = invalid && Boolean(required && !disabled && !value);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
@@ -168,6 +170,7 @@ export function CustomSelect({
       {open && portalHost ? createPortal(
         <div
           ref={menuRef}
+          popover={popoverSupported ? "manual" : undefined}
           id={showSearch ? undefined : listboxId}
           role={showSearch ? undefined : "listbox"}
           className="custom-select__menu"
@@ -231,7 +234,7 @@ export function CustomSelect({
               {value === option.value ? <Check /> : null}
             </button>
           ))}
-          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t("검색 결과가 없습니다.")}</p> : null}
+          {filteredOptions.length === 0 ? <p className="custom-select__empty" role="status">{t("검색 결과가 없습니다")}</p> : null}
           </div>
         </div>,
         portalHost,
@@ -287,7 +290,8 @@ export function CustomMultiSelect({
   const filteredOptions = filterOptions(options, query);
   const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selectedOptions = options.filter((option) => values.includes(option.value));
-  const floatingStyle = useFloatingMenu(rootRef, open);
+  const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
+  const floatingStyle = useFloatingMenu(rootRef, open, topLayer);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
     setOpen(false);
@@ -373,6 +377,7 @@ export function CustomMultiSelect({
       {open && portalHost ? createPortal(
         <div
           ref={menuRef}
+          popover={popoverSupported ? "manual" : undefined}
           id={showSearch ? undefined : listboxId}
           role={showSearch ? undefined : "listbox"}
           aria-multiselectable={showSearch ? undefined : "true"}
@@ -444,7 +449,7 @@ export function CustomMultiSelect({
               </button>
             );
           })}
-          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t(query ? "검색 결과가 없습니다." : "선택할 수 있는 팀원이 없습니다.")}</p> : null}
+          {filteredOptions.length === 0 ? <p className="custom-select__empty" role="status">{t(query ? "검색 결과가 없습니다" : "선택할 수 있는 팀원이 없습니다")}</p> : null}
           </div>
         </div>,
         portalHost,
@@ -614,6 +619,7 @@ function isActuallyTabbable(element: HTMLElement, scope: Document | HTMLDialogEl
 function useFloatingMenu(
   rootRef: React.RefObject<HTMLDivElement | null>,
   open: boolean,
+  topLayer: boolean,
 ): React.CSSProperties {
   const [style, setStyle] = useState<React.CSSProperties>({});
 
@@ -624,8 +630,12 @@ function useFloatingMenu(
       if (!rect) return;
       const dialog = rootRef.current?.closest("dialog");
       const dialogRect = dialog?.getBoundingClientRect();
+      const dialogLeft = topLayer ? 0 : (dialogRect?.left ?? 0);
+      const dialogTop = topLayer ? 0 : (dialogRect?.top ?? 0);
+      const dialogScrollLeft = topLayer ? 0 : (dialog?.scrollLeft ?? 0);
+      const dialogScrollTop = topLayer ? 0 : (dialog?.scrollTop ?? 0);
       const gutter = 8;
-      const width = Math.max(rect.width, 224);
+      const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, 224));
       const left = Math.min(rect.left, window.innerWidth - width - gutter);
       const spaceBelow = window.innerHeight - rect.bottom - gutter;
       const spaceAbove = rect.top - gutter;
@@ -635,8 +645,8 @@ function useFloatingMenu(
       setStyle({
         // Modal dialogs establish a top-layer containing block in Chromium.
         // Convert viewport coordinates before rendering into the dialog portal.
-        left: Math.max(gutter, left) - (dialogRect?.left ?? 0) + (dialog?.scrollLeft ?? 0),
-        top: top - (dialogRect?.top ?? 0) + (dialog?.scrollTop ?? 0),
+        left: Math.max(gutter, left) - dialogLeft + dialogScrollLeft,
+        top: top - dialogTop + dialogScrollTop,
         width,
         maxHeight,
       });
@@ -648,7 +658,7 @@ function useFloatingMenu(
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, rootRef]);
+  }, [open, rootRef, topLayer]);
 
   return style;
 }
