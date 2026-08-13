@@ -10,13 +10,20 @@ import { readLimitedJson, RequestBodyTooLargeError } from "@/shared/http/read-li
 const maximumRequestBytes = 16 * 1_024;
 
 const inputSchema = z.object({
-  teamId: z.string().uuid(),
-  purpose: z.enum(["REPORT", "ARTIFACT"]),
-  consumer: z.enum(["REPORT", "ARTIFACT"]),
+  teamId: z.string().uuid().optional(),
+  purpose: z.enum(["REPORT", "ARTIFACT", "ANNOUNCEMENT"]),
+  consumer: z.enum(["REPORT", "ARTIFACT", "ANNOUNCEMENT"]),
   originalName: z.string(),
   contentType: z.string(),
   size: z.number(),
   sha256: z.string(),
+}).superRefine((value, context) => {
+  const validScope = value.purpose === "ANNOUNCEMENT"
+    ? value.teamId === undefined
+    : value.teamId !== undefined;
+  if (!validScope || value.consumer !== value.purpose) {
+    context.addIssue({ code: "custom", message: "업로드 범위를 확인해 주세요." });
+  }
 });
 
 export async function POST(request: Request) {

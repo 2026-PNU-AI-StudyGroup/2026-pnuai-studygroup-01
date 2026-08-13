@@ -5,11 +5,15 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/app/_components/app-shell";
 import { AnnouncementForm } from "@/app/announcements/_components/announcement-form";
 import { resolveAnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
-import { canCreateAnnouncement } from "@/modules/announcement/domain/announcement-policy";
+import {
+  canCreateAnnouncement,
+  canCreateSystemAnnouncement,
+} from "@/modules/announcement/domain/announcement-policy";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { PageHeader } from "@/shared/ui/page-primitives";
+import { ChevronIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("새 공지 작성");
@@ -20,15 +24,14 @@ export default async function NewAnnouncementPage({ searchParams }: { searchPara
   if (!actor) redirect("/sign-in");
   if (!canCreateAnnouncement(actor.role)) redirect("/announcements");
   const targets = await resolveAnnouncementTargets(actor);
-  // ?target=program:<id> 로 들어오면 소관인 경우에만 대상 미리 선택.
+  // 프로젝트 공지는 프로젝트 화면에서 전달한 소관 팀으로만 작성한다.
   const requested = (await searchParams).target;
   const requestedTarget = Array.isArray(requested) ? requested[0] : requested;
-  const initialTarget = requestedTarget && (
-    targets.programs.some((program) => `program:${program.id}` === requestedTarget) ||
-    targets.teams.some((team) => `team:${team.id}` === requestedTarget)
-  ) ? requestedTarget : "";
-  const initialTeam = targets.teams.find((team) => `team:${team.id}` === initialTarget);
-  const listHref = initialTeam ? `/teams/${initialTeam.id}/announcements` : "/announcements";
+  const initialTeam = targets.teams.find((team) => `team:${team.id}` === requestedTarget);
+  if (!initialTeam && !canCreateSystemAnnouncement(actor.role)) redirect("/announcements");
+  const initialTarget = initialTeam ? `team:${initialTeam.id}` : "";
+  const listHref = initialTeam ? `/projects/${initialTeam.projectId}/announcements` : "/announcements";
+  const systemScope = !initialTeam;
 
   return (
     <AppShell
@@ -41,11 +44,20 @@ export default async function NewAnnouncementPage({ searchParams }: { searchPara
         <div className="mx-auto max-w-4xl space-y-7">
           <PageHeader
             compact
-            title="새 공지 작성"
-            description="모든 구성원이 확인해야 할 운영 안내를 작성합니다."
-            actions={<Link className="button-secondary" href={listHref}><UiText>{"목록으로"}</UiText></Link>}
+            title={systemScope ? "시스템 공지 작성" : "프로젝트 공지 작성"}
+            description={systemScope
+              ? "모든 로그인 사용자가 확인해야 할 시스템 운영 안내를 작성합니다."
+              : `${initialTeam.name} 구성원이 확인해야 할 프로젝트 운영 안내를 작성합니다.`}
+            actions={<Link className="button-secondary gap-2" href={listHref}><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>}
           />
-          <AnnouncementForm targets={targets} initialTarget={initialTarget} />
+          <AnnouncementForm
+            targets={targets}
+            initialTarget={initialTarget}
+            initialVisibility={systemScope ? "AUTHENTICATED" : "TARGET_MEMBERS"}
+            creationScope={systemScope ? "SYSTEM" : "SCOPED"}
+            targetLocked
+            targetLabel={systemScope ? "시스템 전체" : initialTeam.name}
+          />
         </div>
       </main>
     </AppShell>

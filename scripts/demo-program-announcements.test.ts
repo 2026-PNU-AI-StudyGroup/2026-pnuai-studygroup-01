@@ -18,7 +18,6 @@ function program(index: number): DemoProgramAnnouncementProgram {
     executionEndsAt: new Date(`${year}-11-30T23:59:59+09:00`),
     submissionStartsAt: new Date(`${year}-12-01T00:00:00+09:00`),
     submissionEndsAt: new Date(`${year}-12-20T23:59:59+09:00`),
-    lifecycleStatus: index < 3 ? "ACTIVE" : "CLOSED",
   };
 }
 

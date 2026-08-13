@@ -2,11 +2,12 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 
-import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
-import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
+import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
+import { announcementScopeWhere } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
+import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 
 export async function GET(
   _request: Request,
@@ -15,13 +16,26 @@ export async function GET(
   const actor = await getCurrentActor();
   if (!actor) return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
   const { fileId } = await params;
+  const announcementAudience = await resolveAnnouncementAudience(actor);
+  const completedProgramWhere = actor.role === "ADMIN"
+    ? { endsAt: { lte: new Date() } }
+    : actor.role === "PROFESSOR"
+      ? { isFacultyPublic: true, endsAt: { lte: new Date() } }
+      : { isStudentPublic: true, endsAt: { lte: new Date() } };
   const file = await prisma.storedFile.findFirst({
     where: {
       id: fileId,
       status: "ATTACHED",
       OR: [
-        { team: teamActorWhere(actor) },
-        { purpose: "ARTIFACT", team: { status: "CLOSED" } },
+        { projectTeam: teamActorWhere(actor) },
+        {
+          purpose: "ARTIFACT",
+          projectTeam: {
+            confirmedAt: { not: null },
+            project: { program: completedProgramWhere },
+          },
+        },
+        { announcementAttachment: { announcement: announcementScopeWhere(announcementAudience) } },
       ],
     },
     select: { objectKey: true, originalName: true },
@@ -33,14 +47,4 @@ export async function GET(
     ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
   }), { expiresIn: 5 * 60 });
   return NextResponse.redirect(url);
-}
-
-function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {
-  if (actor.role === "ADMIN") return {};
-  return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
-    ],
-  };
 }

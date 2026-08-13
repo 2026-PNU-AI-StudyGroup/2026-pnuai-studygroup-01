@@ -8,7 +8,6 @@ export type DemoProgramAnnouncementProgram = {
   executionEndsAt: Date;
   submissionStartsAt: Date;
   submissionEndsAt: Date;
-  lifecycleStatus: "ACTIVE" | "CLOSED";
 };
 
 export type DemoProgramAnnouncement = {
@@ -81,7 +80,7 @@ const noticeTemplates: NoticeTemplate[] = [
     content: (context) => `안녕하세요. ${context.name} 운영팀입니다.\n\n프로그램 참여 과정에서 일정 누락이 발생하지 않도록 모집부터 결과물 제출까지의 전체 운영 일정을 안내드립니다. 아래 일정은 PMS에 등록된 공식 일정을 기준으로 하며, 변경이 필요한 경우 별도 공지로 안내합니다.\n\n1. 참가 신청 및 팀 등록\n- 기간: ${period(context.recruitmentStartsAt, context.recruitmentEndsAt)}\n- 확인 사항: 신청 정보, 소속, 연락 가능한 이메일\n\n2. 프로젝트 수행\n- 기간: ${period(context.executionStartsAt, context.executionEndsAt)}\n- 확인 사항: 팀별 진행 기록, 지도·멘토링 의견 반영\n\n3. 결과물 제출\n- 기간: ${period(context.submissionStartsAt, context.submissionEndsAt)}\n- 제출 항목: ${context.resultLabel}\n\n프로그램 전체 기간: ${period(context.startsAt, context.endsAt)}${closing(context, "세부 일정은 프로그램 화면의 일정 정보와 각 제출 항목을 함께 확인해 주시기 바랍니다.")}`,
   },
   {
-    key: "team",
+    key: "project_team",
     title: "참여자·팀 정보 최종 확인 요청",
     content: (context) => `안녕하세요. ${context.unit}입니다.\n\n${context.participantLabel}의 명단과 팀 정보가 최종 운영 자료에 반영될 예정입니다. 잘못된 정보가 보고서 승인, 평가 배정 또는 결과물 공개 단계까지 이어지지 않도록 아래 항목을 확인해 주세요.\n\n확인 대상\n- 팀명과 프로젝트명\n- 팀장 및 팀원 성명\n- 지도교수 또는 담당 멘토\n- 팀원이 실제로 사용하는 연락처\n\n확인 기간: ${period(context.recruitmentStartsAt, context.recruitmentEndsAt)}\n수정 절차: PMS의 현재 정보를 확인한 뒤 변경 사유와 정확한 내용을 담당자에게 전달\n유의 사항: 팀원 변경은 당사자와 지도 담당자의 확인이 완료된 경우에만 반영합니다.${closing(context, "현재 정보가 정확한 경우에는 별도 회신 없이 프로그램 참여를 계속해 주세요.")}`,
   },
@@ -164,8 +163,9 @@ export function buildDemoProgramAnnouncements(
     ...remaining.slice(rotation),
     ...remaining.slice(0, rotation),
   ].slice(0, count);
-  const anchorAt = program.lifecycleStatus === "ACTIVE"
-    ? new Date("2026-08-11T09:00:00+09:00")
+  const referenceAt = new Date("2026-08-11T09:00:00+09:00");
+  const anchorAt = program.endsAt > referenceAt
+    ? referenceAt
     : new Date(program.endsAt.getTime() - 30 * 86_400_000);
 
   return orderedTemplates.map((template, announcementIndex) => {
@@ -175,7 +175,7 @@ export function buildDemoProgramAnnouncements(
       title: template.title,
       content: template.content(context),
       pinned: announcementIndex === 0,
-      visibility: programIndex === 0 && template.key === "team"
+      visibility: programIndex === 0 && template.key === "project_team"
         ? "TARGET_MEMBERS"
         : "AUTHENTICATED",
       createdAt: new Date(anchorAt.getTime() - announcementIndex * 86_400_000),

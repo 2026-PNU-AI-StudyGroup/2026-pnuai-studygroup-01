@@ -1,28 +1,22 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import {
   createAnnouncementAction,
+  createSystemAnnouncementAction,
   type AnnouncementActionState,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
-import {
-  ANNOUNCEMENT_CATEGORIES,
-  ANNOUNCEMENT_CATEGORY_LABELS,
-} from "@/app/announcements/_lib/announcement-categories";
 import { AnnouncementTargetPicker } from "@/app/announcements/_components/announcement-target-picker";
 import type { AnnouncementTargets } from "@/app/announcements/_lib/announcement-audience";
-import type { AnnouncementCategory, AnnouncementVisibility } from "@/modules/announcement/application/announcement-ports";
+import type { AnnouncementAttachmentRecord, AnnouncementVisibility } from "@/modules/announcement/application/announcement-ports";
+import { AnnouncementAttachmentEditor } from "@/modules/announcement/ui/announcement-attachment-editor";
+import { appendAnnouncementUploads, type AnnouncementUploadProgress } from "@/modules/announcement/ui/upload-announcement-attachments";
+import { fileUploadProgressLabel, isUploadAbortError, uploadFailureMessage } from "@/modules/file/ui/upload-file";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { CustomSelect } from "@/shared/ui/custom-select";
 import { ChoiceCard, Toggle } from "@/shared/ui/form-system";
-
-const CATEGORY_OPTIONS = ANNOUNCEMENT_CATEGORIES.map((value) => ({
-  value,
-  label: ANNOUNCEMENT_CATEGORY_LABELS[value],
-}));
 
 const initialState: AnnouncementActionState = {
   status: "idle",
@@ -34,28 +28,41 @@ export function AnnouncementForm({
   targets,
   initialTitle = "",
   initialContent = "",
-  initialCategory = "GENERAL",
   initialPinned = false,
   initialTarget = "",
   initialVisibility = "AUTHENTICATED",
+  initialAttachments = [],
+  returnHref,
+  creationScope = "SCOPED",
+  targetLocked = false,
+  targetLabel,
 }: {
   announcementId?: string;
   targets: AnnouncementTargets;
   initialTitle?: string;
   initialContent?: string;
-  initialCategory?: AnnouncementCategory;
   initialPinned?: boolean;
   initialTarget?: string;
   initialVisibility?: AnnouncementVisibility;
+  initialAttachments?: AnnouncementAttachmentRecord[];
+  returnHref?: string;
+  creationScope?: "SYSTEM" | "SCOPED";
+  targetLocked?: boolean;
+  targetLabel?: string;
 }) {
-  const action = announcementId
-    ? updateAnnouncementAction.bind(null, announcementId)
-    : createAnnouncementAction;
-  const [state, formAction, pending] = useActionState(action, initialState);
+  const [state, setState] = useState(initialState);
+  const [pending, startTransition] = useTransition();
   const [target, setTarget] = useState(initialTarget);
   const [visibility, setVisibility] = useState<AnnouncementVisibility>(initialVisibility);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [retainedAttachmentIds, setRetainedAttachmentIds] = useState(initialAttachments.map((attachment) => attachment.fileId));
+  const [uploadProgress, setUploadProgress] = useState<AnnouncementUploadProgress | null>(null);
+  const uploadControllerRef = useRef<AbortController | null>(null);
+  const completedUploadsRef = useRef(new Map<File, string>());
   const editing = Boolean(announcementId);
   const isProgramTarget = target.startsWith("program:");
+
+  useEffect(() => () => uploadControllerRef.current?.abort(), []);
 
   const changeTarget = (nextTarget: string) => {
     setTarget(nextTarget);
@@ -65,20 +72,54 @@ export function AnnouncementForm({
   };
 
   return (
-    <form action={formAction} className="panel overflow-hidden">
+    <form
+      className="panel overflow-hidden"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        setState(initialState);
+        startTransition(async () => {
+          try {
+            const uploadController = new AbortController();
+            uploadControllerRef.current = uploadController;
+            await appendAnnouncementUploads(formData, selectedFiles, completedUploadsRef.current, {
+              signal: uploadController.signal,
+              onProgress: setUploadProgress,
+            });
+            uploadControllerRef.current = null;
+            setUploadProgress(null);
+            const result = announcementId
+              ? await updateAnnouncementAction(announcementId, initialState, formData)
+              : creationScope === "SYSTEM"
+                ? await createSystemAnnouncementAction(initialState, formData)
+                : await createAnnouncementAction(initialState, formData);
+            setState(result);
+          } catch (error) {
+            if (!isUploadAbortError(error)) {
+              setState({ status: "error", message: error instanceof Error ? error.message : uploadFailureMessage });
+            }
+          } finally {
+            uploadControllerRef.current = null;
+            setUploadProgress(null);
+          }
+        });
+      }}
+    >
+      {returnHref ? <input type="hidden" name="returnTo" value={returnHref} /> : null}
       <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
-        <label className="grid max-w-xs gap-2 text-sm font-semibold text-[var(--ink)]">
-          <span><UiText>{"분류"}</UiText></span>
-          <CustomSelect
-            name="category"
-            ariaLabel="공지 분류"
-            options={CATEGORY_OPTIONS}
-            defaultValue={initialCategory}
-          />
-        </label>
         <div className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"대상"}</UiText></span>
-          <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} value={target} onValueChange={changeTarget} />
+          {targetLocked ? (
+            <>
+              <input type="hidden" name="target" value={target || "GLOBAL"} />
+              <div className="rounded-[var(--radius-control)] border border-[var(--field-border)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold text-[var(--ink)]">
+                <UiText>{targetLabel ?? (isProgramTarget ? "선택한 프로그램" : target.startsWith("team:") ? "선택한 프로젝트" : "시스템 전체")}</UiText>
+              </div>
+            </>
+          ) : (
+            <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} value={target} onValueChange={changeTarget} />
+          )}
           <span className="text-xs font-medium text-[var(--muted)]">
             <UiText>{isProgramTarget
               ? "프로그램 공지는 로그인 사용자 전체 또는 프로그램 구성원에게 공개할 수 있습니다."
@@ -132,7 +173,20 @@ export function AnnouncementForm({
             required
           />
         </label>
+        <AnnouncementAttachmentEditor
+          existingAttachments={initialAttachments}
+          retainedAttachmentIds={retainedAttachmentIds}
+          selectedFiles={selectedFiles}
+          disabled={pending}
+          onRetainedAttachmentIdsChange={setRetainedAttachmentIds}
+          onSelectedFilesChange={setSelectedFiles}
+        />
         <Toggle name="pinned" defaultChecked={initialPinned} label="목록 상단에 고정" />
+        {uploadProgress ? (
+          <p role="status" aria-live="polite" className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold">
+            <UiText>{`${uploadProgress.fileIndex + 1}/${uploadProgress.fileCount} ${uploadProgress.fileName} · ${fileUploadProgressLabel(uploadProgress.progress)}`}</UiText>
+          </p>
+        ) : null}
         {state.message ? (
           <p
             className="rounded-[var(--radius-control)] bg-[var(--danger-subtle)] px-4 py-3 text-sm font-semibold text-[var(--danger)]"
@@ -142,7 +196,8 @@ export function AnnouncementForm({
           </p>
         ) : null}
       </div>
-      <div className="flex justify-end border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-8">
+      <div className="flex justify-end gap-2 border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-8">
+        {uploadProgress ? <button type="button" className="button-secondary" onClick={() => uploadControllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
         <button
           className="button-primary max-sm:w-full"
           type="submit"

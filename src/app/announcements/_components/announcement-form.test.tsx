@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/announcements/_actions/announcement-actions", () => ({
   createAnnouncementAction: vi.fn(),
+  createSystemAnnouncementAction: vi.fn(),
   updateAnnouncementAction: vi.fn(),
 }));
 
@@ -10,10 +11,25 @@ import { AnnouncementForm } from "@/app/announcements/_components/announcement-f
 
 const targets = {
   programs: [{ id: "program-1", name: "졸업과제" }],
-  teams: [{ id: "team-1", name: "팀 하나", programId: "program-1" }],
+  teams: [{ id: "team-1", name: "팀 하나", programId: "program-1", projectId: "project-1" }],
 };
 
 describe("공지 작성 열람 범위", () => {
+  it("시스템 공지 대상은 고정되어 프로그램·프로젝트를 선택할 수 없다", () => {
+    const { container } = render(
+      <AnnouncementForm
+        targets={targets}
+        creationScope="SYSTEM"
+        targetLocked
+        targetLabel="시스템 전체"
+      />,
+    );
+
+    expect(screen.getByText("시스템 전체")).toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup", { name: "공지 대상" })).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="target"]')).toHaveValue("GLOBAL");
+  });
+
   it("프로그램 공지는 로그인 사용자 전체를 기본 선택한다", () => {
     render(<AnnouncementForm targets={targets} initialTarget="program:program-1" />);
 
