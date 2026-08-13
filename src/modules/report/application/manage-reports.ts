@@ -126,6 +126,30 @@ export class ArtifactManagementService {
     });
     if (!removed) throw new ReportOperationNotAllowedError();
   }
+
+  async setThumbnail(actor: CurrentActor, input: {
+    teamId: string;
+    fileId: string | null;
+  }, now = new Date()) {
+    const updated = await this.artifactWriter.setThumbnail({
+      ...input,
+      actor,
+      updatedAt: now,
+    });
+    if (!updated) throw new ReportOperationNotAllowedError();
+  }
+
+  async reorderArtifacts(actor: CurrentActor, input: {
+    teamId: string;
+    orderedIds: string[];
+  }, now = new Date()) {
+    const reordered = await this.artifactWriter.reorderArtifacts({
+      ...input,
+      actor,
+      reorderedAt: now,
+    });
+    if (!reordered) throw new ReportOperationNotAllowedError();
+  }
 }
 
 export class ReportFeedbackService {

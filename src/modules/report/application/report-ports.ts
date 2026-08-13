@@ -40,8 +40,10 @@ export type ReportWorkspace = {
     title: string;
     fileId?: string;
     externalUrl?: string;
+    position: number;
     createdAt: Date;
   }>;
+  thumbnailPath?: string;
 };
 
 export interface ReportWorkspaceReader {
@@ -101,5 +103,17 @@ export interface ArtifactWriter {
     teamId: string;
     actor: CurrentActor;
     removedAt: Date;
+  }): Promise<boolean>;
+  setThumbnail(input: {
+    teamId: string;
+    actor: CurrentActor;
+    fileId: string | null;
+    updatedAt: Date;
+  }): Promise<boolean>;
+  reorderArtifacts(input: {
+    teamId: string;
+    actor: CurrentActor;
+    orderedIds: string[];
+    reorderedAt: Date;
   }): Promise<boolean>;
 }

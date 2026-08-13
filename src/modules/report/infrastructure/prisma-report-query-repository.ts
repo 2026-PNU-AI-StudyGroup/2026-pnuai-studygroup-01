@@ -56,6 +56,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
             },
           },
         },
+        thumbnailPath: true,
         artifacts: {
           orderBy: { createdAt: "desc" },
           select: {
@@ -64,6 +65,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
             title: true,
             fileId: true,
             externalUrl: true,
+            position: true,
             createdAt: true,
           },
         },
@@ -106,6 +108,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         fileId: artifact.fileId ?? undefined,
         externalUrl: artifact.externalUrl ?? undefined,
       })),
+      thumbnailPath: team.thumbnailPath ?? undefined,
     };
   }
 }

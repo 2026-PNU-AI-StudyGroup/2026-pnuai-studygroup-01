@@ -39,3 +39,16 @@ export const artifactRemovalSchema = z.object({
   teamId: z.string().uuid(),
   artifactId: z.string().uuid(),
 });
+
+export const artifactReorderSchema = z.object({
+  teamId: z.string().uuid(),
+  orderedIds: z
+    .string()
+    .transform((value) => value.split(",").filter(Boolean))
+    .pipe(z.array(z.string().uuid()).min(1)),
+});
+
+export const teamThumbnailSchema = z.object({
+  teamId: z.string().uuid(),
+  uploadId: z.string().uuid().optional(),
+});
