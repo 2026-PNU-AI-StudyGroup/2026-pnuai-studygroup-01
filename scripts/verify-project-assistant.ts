@@ -8,9 +8,6 @@ import { ConfirmTeamService } from "@/modules/team/application/confirm-team";
 import { PrismaTeamConfirmationRepository } from "@/modules/team/infrastructure/prisma-team-confirmation-repository";
 import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
 import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
-import { ChangeTopicStatusService } from "@/modules/topic/application/change-topic-status";
-import { PrismaTopicCommandRepository } from "@/modules/topic/infrastructure/prisma-topic-command-repository";
-import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const suffix = randomUUID();
@@ -63,8 +60,8 @@ async function verify() {
       executionEndsAt: new Date(now.getTime() + 60 * 24 * 60 * 60_000),
       submissionStartsAt: now,
       submissionEndsAt: endsAt,
-      isPublic: true,
-      lifecycleStatus: "ACTIVE",
+      isStudentPublic: true,
+      isFacultyPublic: true,
     },
   });
   await prisma.topic.create({
@@ -76,7 +73,7 @@ async function verify() {
       title: `조교 권한 검증 ${suffix}`,
       description: "프로젝트 조교 권한 검증",
       capacity: 3,
-      status: "PUBLISHED",
+      status: "ACTIVE",
       applicationQuestions: {
         create: { label: "참여 동기", maxLength: 500, position: 0 },
       },
@@ -104,12 +101,10 @@ async function verify() {
   }
 
   const studentAssistant = invitees[0];
-  await prisma.team.create({
+  await prisma.projectTeam.create({
     data: {
       id: teamId,
-      programId,
-      topicId,
-      professorId,
+      projectId: topicId,
       name: "조교 권한 검증 팀",
     },
   });
@@ -123,13 +118,12 @@ async function verify() {
       decidedAt: now,
     },
   });
-  await prisma.teamMember.create({
+  await prisma.projectTeamMembership.create({
     data: {
-      teamId,
-      programId,
-      topicId,
-      studentId: studentAssistant.id,
-      applicationId,
+      projectTeamId: teamId,
+      userId: studentAssistant.id,
+      sourceApplicationId: applicationId,
+      role: "LEADER",
     },
   });
   await new ConfirmTeamService(
@@ -139,7 +133,7 @@ async function verify() {
   for (const invitee of invitees) {
     const workspace = await new TeamWorkspaceQueryService(
       new PrismaTeamWorkspaceQueryRepository(prisma),
-    ).get(invitee, teamId);
+    ).get(invitee, topicId);
     if (!workspace.access.canSupervise || !workspace.access.isAssistant) {
       throw new Error(`${invitee.role} 조교에게 감독 권한이 부여되지 않았습니다.`);
     }
@@ -159,8 +153,8 @@ async function verify() {
 async function cleanup() {
   await prisma.notification.deleteMany({ where: { recipientId: { in: userIds } } });
   await prisma.auditLog.deleteMany({ where: { actorId: { in: userIds } } });
-  await prisma.teamMember.deleteMany({ where: { teamId } });
-  await prisma.team.deleteMany({ where: { id: teamId } });
+  await prisma.projectTeamMembership.deleteMany({ where: { projectTeamId: teamId } });
+  await prisma.projectTeam.deleteMany({ where: { id: teamId } });
   await prisma.topicApplication.deleteMany({ where: { id: applicationId } });
   await prisma.projectAssistantInvitation.deleteMany({ where: { topicId } });
   await prisma.projectAssistant.deleteMany({ where: { topicId } });

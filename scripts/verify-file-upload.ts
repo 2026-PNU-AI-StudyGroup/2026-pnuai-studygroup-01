@@ -18,7 +18,7 @@ let programId: string | null = null;
 
 async function cleanup() {
   if (programId) {
-    await prisma.team.deleteMany({ where: { programId } });
+    await prisma.projectTeam.deleteMany({ where: { project: { programId } } });
     await prisma.topicApplication.deleteMany({ where: { topic: { programId } } });
     await prisma.topic.deleteMany({ where: { programId } });
     await prisma.projectProgram.deleteMany({ where: { id: programId } });
@@ -39,18 +39,18 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `업로드 검증 프로그램 ${professorId}`, category: "검증", description: "업로드 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
     programId: program.id, authorId: professorId, managerId: professorId, title: "업로드 검증", description: "업로드 검증", capacity: 1,
-    status: "PUBLISHED", publishedAt: new Date("2026-01-01"),
+    status: "ACTIVE", publishedAt: new Date("2026-01-01"),
   } });
   const application = await prisma.topicApplication.create({ data: {
     topicId: topic.id, studentId, message: "업로드 검증", status: "ACCEPTED", decidedAt: new Date(),
   } });
-  const team = await prisma.team.create({ data: { programId: program.id, topicId: topic.id, professorId, name: "업로드 검증 팀" } });
-  await prisma.teamMember.create({ data: { teamId: team.id, programId: program.id, topicId: topic.id, studentId, applicationId: application.id } });
+  const team = await prisma.projectTeam.create({ data: { projectId: topic.id, name: "업로드 검증 팀", confirmedAt: new Date() } });
+  await prisma.projectTeamMembership.create({ data: { projectTeamId: team.id, userId: studentId, sourceApplicationId: application.id, role: "LEADER" } });
 
   const storage = new S3ObjectStorage(s3, objectStorageBucket);
   const service = new UploadService(new PrismaUploadIntentRepository(prisma), storage);
@@ -73,7 +73,7 @@ async function main() {
   const stored = await prisma.storedFile.findUniqueOrThrow({ where: { id: intent.uploadId } });
   if (stored.status !== "READY" || stored.sha256 !== sha256) throw new Error("파일 완료 상태 또는 해시가 일치하지 않습니다.");
   const reportDefinition = await prisma.programReportDefinition.create({ data: { programId: program.id, title: "업로드 검증 보고서", dueAt: new Date("2026-12-31T23:59:00+09:00"), position: 0 } });
-  const report = await prisma.report.create({ data: { teamId: team.id, definitionId: reportDefinition.id, titleSnapshot: reportDefinition.title, dueAt: reportDefinition.dueAt } });
+  const report = await prisma.report.create({ data: { projectTeamId: team.id, definitionId: reportDefinition.id, titleSnapshot: reportDefinition.title, dueAt: reportDefinition.dueAt } });
   await prisma.reportVersion.create({ data: {
     reportId: report.id, version: 1, fileId: stored.id, submitterId: studentId, description: "업로드 검증",
   } });
@@ -81,7 +81,7 @@ async function main() {
   if (attached.status !== "ATTACHED") throw new Error("보고서 파일이 ATTACHED로 전환되지 않았습니다.");
 
   const wrongPurposeFile = await prisma.storedFile.create({ data: {
-    teamId: team.id, ownerId: studentId, purpose: "ARTIFACT", consumer: "ARTIFACT", status: "READY",
+    projectTeamId: team.id, ownerId: studentId, purpose: "ARTIFACT", consumer: "ARTIFACT", status: "READY",
     objectKey: `verification/${randomUUID()}`, originalName: "artifact.pdf",
     uploadObjectKey: `staging/verification/${randomUUID()}`,
     contentType: "application/pdf", size: 1, sha256, expiresAt: new Date(),
@@ -193,7 +193,7 @@ async function main() {
       { id: studentId, role: "STUDENT" },
       raceIntent.value.uploadId,
     ),
-    prisma.team.delete({ where: { id: team.id } }),
+    prisma.projectTeam.delete({ where: { id: team.id } }),
   ]);
   if (deleteRace.status !== "fulfilled") throw deleteRace.reason;
   if (

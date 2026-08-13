@@ -32,7 +32,7 @@ let programId: string | null = null;
 
 async function cleanup() {
   if (programId) {
-    await prisma.team.deleteMany({ where: { programId } });
+    await prisma.projectTeam.deleteMany({ where: { project: { programId } } });
     await prisma.topicApplication.deleteMany({
       where: { topic: { programId } },
     });
@@ -87,7 +87,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `워크스페이스 검증 프로그램 ${professorId}`, category: "검증", description: "워크스페이스 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({
@@ -98,7 +98,7 @@ async function main() {
       title: "워크스페이스 검증 주제",
       description: "워크스페이스 통합 검증",
       capacity: 2,
-      status: "PUBLISHED",
+      status: "ACTIVE",
       publishedAt: new Date("2026-01-01T00:00:00Z"),
     },
   });
@@ -111,21 +111,18 @@ async function main() {
       decidedAt: new Date(),
     },
   });
-  const team = await prisma.team.create({
+  const team = await prisma.projectTeam.create({
     data: {
-      programId: program.id,
-      topicId: topic.id,
-      professorId,
+      projectId: topic.id,
       name: "워크스페이스 검증 팀",
     },
   });
-  await prisma.teamMember.create({
+  await prisma.projectTeamMembership.create({
     data: {
-      teamId: team.id,
-      programId: program.id,
-      topicId: topic.id,
-      studentId,
-      applicationId: application.id,
+      projectTeamId: team.id,
+      userId: studentId,
+      sourceApplicationId: application.id,
+      role: "LEADER",
     },
   });
 
@@ -187,7 +184,7 @@ async function main() {
     TaskNotFoundError,
   );
   await expectRejected(
-    () => queryService.get({ id: professorId, role: "STUDENT" }, team.id),
+    () => queryService.get({ id: professorId, role: "STUDENT" }, topic.id),
     TeamNotFoundError,
   );
   await taskService.updateTask(student, {
@@ -197,7 +194,7 @@ async function main() {
     status: "DONE",
   });
 
-  const workspace = await queryService.get(student, team.id);
+  const workspace = await queryService.get(student, topic.id);
   if (
     workspace.taskCount !== 1 ||
     workspace.completedTaskCount !== 1 ||
@@ -210,13 +207,13 @@ async function main() {
   const olderCreatedAt = new Date("2026-07-01T00:00:00.000Z");
   await prisma.discussionPost.createMany({
     data: Array.from({ length: 50 }, (_, index) => ({
-      teamId: team.id,
+      projectTeamId: team.id,
       authorId: student.id,
       content: `이전 토론 ${index + 1}`,
       createdAt: olderCreatedAt,
     })),
   });
-  const secondHistoryPage = await queryService.get(student, team.id, 2);
+  const secondHistoryPage = await queryService.get(student, topic.id, 2);
   if (
     secondHistoryPage.discussionPage !== 2 ||
     secondHistoryPage.discussionTotal !== 51 ||
@@ -224,7 +221,7 @@ async function main() {
   ) {
     throw new Error("대화의 이전 이력 페이지를 조회할 수 없습니다.");
   }
-  const boundedHistoryPage = await queryService.get(student, team.id, 999);
+  const boundedHistoryPage = await queryService.get(student, topic.id, 999);
   if (boundedHistoryPage.discussionPage !== 2) {
     throw new Error("범위를 벗어난 이력 페이지가 마지막 페이지로 정규화되지 않았습니다.");
   }

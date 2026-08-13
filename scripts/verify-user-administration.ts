@@ -42,7 +42,7 @@ async function main() {
     repository.setActive({ actorId: secondAdminId, targetId: firstAdminId, isActive: false, changedAt: new Date() }),
   ]);
   const activeAdmins = await prisma.user.count({
-    where: { id: { in: verificationUserIds }, role: "ADMIN", isActive: true },
+    where: { id: { in: verificationUserIds }, role: "ADMIN", accountStatus: "ACTIVE" },
   });
   const sortedOutcomes = [...outcomes].sort();
   if (activeAdmins !== 1 || sortedOutcomes.join(",") !== "LAST_ADMIN,UPDATED") {
