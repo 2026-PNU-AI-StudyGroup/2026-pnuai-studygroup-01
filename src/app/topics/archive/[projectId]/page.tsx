@@ -120,7 +120,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
         </div>
       }
     >
-      <div className="mx-auto max-w-3xl space-y-11">
+      <div className="max-w-3xl space-y-11">
         {media.length ? <ProjectMediaCarousel items={media} /> : null}
 
         <section aria-labelledby="archive-description">
