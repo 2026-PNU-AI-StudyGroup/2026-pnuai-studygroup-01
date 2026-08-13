@@ -18,6 +18,7 @@ const artifactTypes = [
   ["PRESENTATION_VIDEO", "발표 영상"],
   ["SOURCE_CODE", "소스 코드"],
   ["POSTER", "포스터"],
+  ["IMAGE", "이미지"],
   ["OTHER", "기타"],
 ] as const;
 

@@ -25,7 +25,7 @@ import {
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("지난 프로젝트 상세");
 }
-const artifactType = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
+const artifactType = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타", IMAGE: "이미지" } as const;
 
 // YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
 function toYoutubeEmbedUrl(url: string | null | undefined): string | null {
@@ -61,12 +61,15 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   ]);
   if (!project) notFound();
 
-  // 대표 미디어(이미지·유튜브)를 하나의 캐러셀로: 대표 이미지 → 발표 영상 → 포스터 순.
+  // 대표 미디어를 하나의 캐러셀로: 갤러리 이미지(순서대로) → 대표 이미지 → 발표 영상 → 포스터.
   const videoArtifacts = project.artifacts
     .map((artifact) => ({ artifact, embedUrl: artifact.type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(artifact.externalUrl) : null }))
     .filter((entry): entry is { artifact: typeof entry.artifact; embedUrl: string } => entry.embedUrl !== null);
   const embeddedIds = new Set(videoArtifacts.map((entry) => entry.artifact.id));
+  const galleryImages = project.artifacts.filter((artifact) => artifact.type === "IMAGE" && (artifact.fileId || artifact.externalUrl));
+  const galleryImageIds = new Set(galleryImages.map((artifact) => artifact.id));
   const media: ProjectMediaItem[] = [
+    ...galleryImages.map((artifact) => ({ kind: "image" as const, src: artifact.fileId ? `/api/files/${artifact.fileId}` : artifact.externalUrl!, alt: artifact.title })),
     ...(project.thumbnailPath ? [{ kind: "image" as const, src: project.thumbnailPath, alt: `${project.topicTitle} 대표 이미지` }] : []),
     ...videoArtifacts.map(({ artifact, embedUrl }) => ({ kind: "video" as const, embedUrl, title: artifact.title })),
     ...(project.posterPath ? [{ kind: "image" as const, src: project.posterPath, alt: `${project.topicTitle} 프로젝트 포스터` }] : []),
@@ -78,8 +81,8 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const github = parseGithubRepo(githubUrl);
   const githubArtifactId = github && githubUrl === githubArtifact?.externalUrl ? githubArtifact?.id : undefined;
 
-  // 나머지 첨부 자료(임베드 영상·GitHub 카드 제외)를 다운로드 칩으로.
-  const resourceArtifacts = project.artifacts.filter((artifact) => !embeddedIds.has(artifact.id) && artifact.id !== githubArtifactId);
+  // 나머지 첨부 자료(임베드 영상·갤러리 이미지·GitHub 카드 제외)를 다운로드 칩으로.
+  const resourceArtifacts = project.artifacts.filter((artifact) => !embeddedIds.has(artifact.id) && !galleryImageIds.has(artifact.id) && artifact.id !== githubArtifactId);
   const hasResults = Boolean(github) || resourceArtifacts.length > 0;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
@@ -125,7 +128,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
 
         <section aria-labelledby="archive-description">
           <h2 id="archive-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2>
-          <div className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]">{renderMarkdown(project.topicDescription)}</div>
+          <div className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]">{renderMarkdown(project.showcaseIntro ?? project.topicDescription)}</div>
         </section>
 
         <section aria-labelledby="archive-artifacts">

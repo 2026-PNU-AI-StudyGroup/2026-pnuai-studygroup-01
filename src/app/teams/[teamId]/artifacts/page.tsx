@@ -14,7 +14,7 @@ import { EmptyState } from "@/shared/ui/page-primitives";
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
 }
-const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
+const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타", IMAGE: "이미지" } as const;
 type ArtifactType = keyof typeof artifactTypeLabel;
 
 // YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
@@ -38,7 +38,7 @@ function ArtifactMedia({ type, title, fileId, externalUrl }: {
       </div>
     );
   }
-  if (type === "POSTER" && (fileId || externalUrl)) {
+  if ((type === "POSTER" || type === "IMAGE") && (fileId || externalUrl)) {
     return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
   }
   if (externalUrl) {

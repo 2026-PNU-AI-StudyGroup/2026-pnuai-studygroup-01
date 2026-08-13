@@ -89,7 +89,7 @@ describe("PastProjectsView", () => {
   it("기존 구분선과 팀, 참여 구조를 유지하고 기술 태그는 제거한다", () => {
     render(
       <PastProjectsView
-        projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터" }] }]}
+        projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터", position: 0 }] }]}
         total={1}
         page={1}
         totalPages={1}

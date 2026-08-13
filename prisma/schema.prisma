@@ -90,6 +90,7 @@ enum ArtifactType {
   SOURCE_CODE
   POSTER
   OTHER
+  IMAGE
 }
 
 enum RecruitmentPostStatus {
@@ -857,6 +858,7 @@ model Team {
   sourceUrl         String?
   thumbnailPath     String?
   posterPath        String?
+  showcaseIntro     String?
   status            TeamStatus               @default(FORMING)
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
@@ -1264,6 +1266,7 @@ model Artifact {
   title          String
   fileId         String?      @unique
   externalUrl    String?
+  position       Int          @default(0)
   createdAt      DateTime     @default(now())
   team           Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   registeredBy   User         @relation(fields: [registeredById], references: [id])

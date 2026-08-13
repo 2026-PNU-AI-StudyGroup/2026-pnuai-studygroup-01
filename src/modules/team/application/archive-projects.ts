@@ -22,13 +22,15 @@ export type ArchivedProject = {
   sourceUrl?: string;
   thumbnailPath?: string;
   posterPath?: string;
+  showcaseIntro?: string;
   artifacts: Array<{
     id: string;
-    type: "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER";
+    type: "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER" | "IMAGE";
     title: string;
     fileId?: string;
     fileName?: string;
     externalUrl?: string;
+    position: number;
   }>;
 };
 
