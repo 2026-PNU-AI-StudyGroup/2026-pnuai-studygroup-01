@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
 import { ArtifactManagementForm } from "@/app/teams/[teamId]/_components/artifact-management-form";
+import { ShowcaseManager } from "@/app/teams/[teamId]/_components/showcase-manager";
 import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
@@ -14,7 +15,7 @@ import { EmptyState } from "@/shared/ui/page-primitives";
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
 }
-const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타" } as const;
+const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타", IMAGE: "이미지" } as const;
 type ArtifactType = keyof typeof artifactTypeLabel;
 
 // YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
@@ -38,7 +39,7 @@ function ArtifactMedia({ type, title, fileId, externalUrl }: {
       </div>
     );
   }
-  if (type === "POSTER" && (fileId || externalUrl)) {
+  if ((type === "POSTER" || type === "IMAGE") && (fileId || externalUrl)) {
     return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
   }
   if (externalUrl) {
@@ -86,6 +87,21 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
             ? "결과물 등록 기간이 종료되어 새 결과물을 등록할 수 없습니다."
             : "공개할 소스 코드, 발표 영상, 포스터를 파일 또는 링크로 등록하세요.";
 
+  const showcaseImages = reportWorkspace.artifacts
+    .filter((artifact) => artifact.type === "IMAGE" && (artifact.fileId || artifact.externalUrl))
+    .sort((a, b) => a.position - b.position || a.createdAt.getTime() - b.createdAt.getTime())
+    .map((artifact) => ({
+      id: artifact.id,
+      title: artifact.title,
+      src: artifact.fileId ? `/api/files/${artifact.fileId}` : artifact.externalUrl!,
+    }));
+
+  // ShowcaseManager가 갤러리(IMAGE)를 순서대로 관리하므로, 아래 결과물 목록에서는 IMAGE를
+  // 빼서 같은 이미지가 서로 다른 순서로 두 번 보이는 혼란을 없앤다(편집 권한일 때만 편집기 노출).
+  const listedArtifacts = canRegisterArtifact
+    ? reportWorkspace.artifacts.filter((artifact) => artifact.type !== "IMAGE")
+    : reportWorkspace.artifacts;
+
   return (
     <section aria-labelledby="artifacts-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
@@ -95,6 +111,9 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         bordered={false}
         actions={canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
       />
+      {canRegisterArtifact ? (
+        <ShowcaseManager teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} />
+      ) : null}
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"
@@ -114,9 +133,9 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
           </p>
         </aside>
       ) : null}
-      {reportWorkspace.artifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
+      {listedArtifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
         <ul className="max-w-3xl space-y-9">
-          {reportWorkspace.artifacts.map((artifact) => {
+          {listedArtifacts.map((artifact) => {
             const titleId = `artifact-title-${artifact.id}`;
             return (
               <li key={artifact.id} className="min-w-0" data-artifact-type={artifact.type.toLowerCase()}>

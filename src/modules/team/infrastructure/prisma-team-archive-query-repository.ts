@@ -12,6 +12,7 @@ const archivedProjectSelect = {
   sourceUrl: true,
   thumbnailPath: true,
   posterPath: true,
+  showcaseIntro: true,
   topic: { select: {
     id: true,
     title: true,
@@ -29,13 +30,14 @@ const archivedProjectSelect = {
     select: { student: { select: { name: true } } },
   },
   artifacts: {
-    orderBy: { createdAt: "asc" as const },
+    orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
     select: {
       id: true,
       type: true,
       title: true,
       fileId: true,
       externalUrl: true,
+      position: true,
       file: { select: { originalName: true } },
     },
   },
@@ -160,6 +162,7 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     sourceUrl: team.sourceUrl ?? undefined,
     thumbnailPath: team.thumbnailPath ?? undefined,
     posterPath: team.posterPath ?? undefined,
+    showcaseIntro: team.showcaseIntro ?? undefined,
     artifacts: team.artifacts.map(({ file, ...artifact }) => ({
       id: artifact.id,
       type: artifact.type,
@@ -167,6 +170,7 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
       fileId: artifact.fileId ?? undefined,
       fileName: file?.originalName,
       externalUrl: artifact.externalUrl ?? undefined,
+      position: artifact.position,
     })),
   };
 }

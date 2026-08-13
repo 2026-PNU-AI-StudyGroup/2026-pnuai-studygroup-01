@@ -19,6 +19,10 @@ vi.mock("@/app/teams/[teamId]/_components/artifact-registration-form", () => ({
   ArtifactRegistrationForm: () => <button type="button">결과물 등록</button>,
 }));
 
+vi.mock("@/app/teams/[teamId]/_components/showcase-manager", () => ({
+  ShowcaseManager: () => null,
+}));
+
 const actor = {
   id: "student-1",
   name: "정하늘",

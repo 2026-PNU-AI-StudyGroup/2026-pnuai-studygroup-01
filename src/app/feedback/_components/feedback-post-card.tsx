@@ -7,7 +7,7 @@ import {
   type FeedbackTypeValue,
   type TargetScreenValue,
 } from "@/app/feedback/_lib/feedback-options";
-import { renderMarkdown } from "@/app/feedback/_lib/render-markdown";
+import { renderMarkdown } from "@/shared/ui/render-markdown";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
