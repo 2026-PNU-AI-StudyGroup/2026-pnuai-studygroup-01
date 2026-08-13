@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   const account = DEVELOPMENT_MOCK_ACCOUNTS[requestedRole];
   const user = await prisma.user.findFirst({
-    where: { id: account.id, role: requestedRole, isActive: true },
+    where: { id: account.id, role: requestedRole, accountStatus: "ACTIVE" },
     select: { id: true },
   });
   if (!user) {

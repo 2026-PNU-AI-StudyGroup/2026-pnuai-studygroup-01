@@ -14,6 +14,7 @@ import { AccountSectionLayout } from "@/app/account/_components/account-section-
 import { ProfilePhotoEditor } from "@/app/account/_components/profile-photo-editor";
 import { StudentAccountForm } from "@/app/account/_components/student-account-form";
 import { StudentProfileForm } from "@/app/account/_components/student-profile-form";
+import { AccountWithdrawalForm } from "@/app/account/_components/account-withdrawal-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 계정");
@@ -72,6 +73,16 @@ export default async function AccountPage() {
               </div>
             </section>
           ) : null}
+
+          <section aria-labelledby="withdraw-account-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+            <div>
+              <h2 id="withdraw-account-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"계정 탈퇴"}</UiText></h2>
+            </div>
+            <div className="min-w-0">
+              <p className="mb-4 text-sm leading-6 text-[var(--muted)]"><UiText>{"탈퇴하면 로그인 권한은 즉시 회수되며 프로젝트 이력과 작성물은 보존됩니다."}</UiText></p>
+              <AccountWithdrawalForm />
+            </div>
+          </section>
 
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">

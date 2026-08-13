@@ -5,12 +5,15 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { StudentProfileForbiddenError, StudentProfileService } from "@/modules/identity/application/manage-student-profile";
+import { AccountWithdrawalError, WithdrawAccountService } from "@/modules/identity/application/withdraw-account";
 import { InvalidStudentProfileError } from "@/modules/identity/domain/student-profile";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
+import { PrismaAccountWithdrawalRepository } from "@/modules/identity/infrastructure/prisma-account-withdrawal-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type StudentProfileActionState = { status: "idle" | "error" | "success"; message: string };
+export type AccountWithdrawalActionState = { status: "idle" | "error"; message: string };
 
 const schema = z.object({
   phone: z.string().max(40),
@@ -67,4 +70,19 @@ export async function saveStudentAccountAction(_state: StudentProfileActionState
   revalidatePath("/account");
   revalidatePath("/teams");
   return { status: "success", message: "학사 정보를 저장했습니다." };
+}
+
+export async function withdrawAccountAction(
+  _state: AccountWithdrawalActionState,
+): Promise<AccountWithdrawalActionState> {
+  void _state;
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  try {
+    await new WithdrawAccountService(new PrismaAccountWithdrawalRepository(prisma)).execute(actor);
+  } catch (error) {
+    if (error instanceof AccountWithdrawalError) return { status: "error", message: error.message };
+    throw error;
+  }
+  redirect("/sign-in?account=withdrawn");
 }

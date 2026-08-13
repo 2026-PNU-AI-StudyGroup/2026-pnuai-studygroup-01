@@ -32,6 +32,17 @@ const actionLabel: Record<AuditAction, string> = {
   USER_REACTIVATED: "사용자 재활성화",
   TEAM_CONFIRMED: "팀 확정",
   TEAM_CLOSED: "프로젝트 종료",
+  USER_WITHDRAWN: "계정 탈퇴",
+  PROJECT_TEAM_CONFIRMED: "프로젝트 팀 확정",
+  PROJECT_COMPLETED: "프로젝트 완료 (이전 정책)",
+  PROJECT_CANCELED: "프로젝트 취소 (이전 정책)",
+  PROJECT_RESTORED: "프로젝트 복구 (이전 정책)",
+  PROJECT_REVIEW_REQUESTED: "프로젝트 재검토 요청",
+  PROJECT_TEAM_MEMBER_LEFT: "프로젝트 팀원 탈퇴",
+  PROJECT_TEAM_MEMBER_REMOVED: "프로젝트 팀원 제외",
+  PROJECT_TEAM_LEADERSHIP_TRANSFERRED: "프로젝트 팀장 이전",
+  PROJECT_TEAM_MEMBERSHIP_CORRECTED: "프로젝트 팀 명단 정정",
+  PROGRAM_CLOSED: "프로그램 종료",
   REPORT_REQUIREMENT_SET: "보고서 요구 설정",
   REPORT_REQUIREMENT_REMOVED: "보고서 일정 삭제",
   REPORT_APPROVED: "보고서 승인",
@@ -71,7 +82,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         >
           {data.items.length === 0 ? (
             <AdminSectionEmpty>
-              <EmptyState variant="embedded" title="아직 변경 기록이 없습니다" description="중요한 운영 변경은 자동으로 기록됩니다." />
+              <EmptyState variant="section" title="아직 변경 기록이 없습니다" description="중요한 운영 변경은 자동으로 기록됩니다." />
             </AdminSectionEmpty>
           ) : (
             <ol className={adminRecordListClassName}>
