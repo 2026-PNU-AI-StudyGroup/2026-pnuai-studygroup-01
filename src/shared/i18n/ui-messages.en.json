@@ -475,6 +475,7 @@
   "목록으로": "Go to list",
   "무엇을 개선하면 좋을지 자유롭게 적어 주세요. 마크다운을 사용할 수 있습니다.": "Describe freely what could be improved. Markdown is supported.",
   "문서·압축·영상·이미지 · 최대 1GB": "Documents, archives, videos, and images · Up to 1 GB",
+  "문서·압축·영상·이미지 · 최대 1GB · 이미지·포스터는 가로형(16:9) 권장": "Documents, archives, videos, and images · Up to 1 GB · Landscape (16:9) recommended for images and posters",
   "문항": "Questionnaire item",
   "문항 {0} 삭제": "Delete question item {0}",
   "문항 {0} 응답 조건": "Response requirement for question {0}",

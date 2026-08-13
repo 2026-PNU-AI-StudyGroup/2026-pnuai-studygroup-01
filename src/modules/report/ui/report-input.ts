@@ -22,7 +22,7 @@ export const reportFeedbackSchema = z.object({
 
 export const artifactRegistrationSchema = z.object({
   teamId: z.string().uuid(),
-  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER"]),
+  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER", "IMAGE"]),
   title: z.string().trim().min(1).max(200),
   uploadId: z.string().uuid().optional(),
   externalUrl: z.url().optional(),
@@ -31,7 +31,7 @@ export const artifactRegistrationSchema = z.object({
 export const artifactUpdateSchema = z.object({
   teamId: z.string().uuid(),
   artifactId: z.string().uuid(),
-  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER"]),
+  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER", "IMAGE"]),
   title: z.string().trim().min(1).max(200),
 });
 
