@@ -11,7 +11,7 @@ export class TopicApplicationNotFoundError extends Error {
 
 export class TopicApplicationDecisionForbiddenError extends Error {
   constructor() {
-    super("프로젝트 작성자 또는 관리자만 지원서를 처리할 수 있습니다.");
+    super("지원서를 처리할 권한이 없습니다.");
     this.name = "TopicApplicationDecisionForbiddenError";
   }
 }
@@ -62,9 +62,9 @@ export class DecideTopicApplicationService {
         "프로젝트의 모집 정원이 이미 찼습니다.",
       );
     }
-    if (outcome === "STUDENT_ALREADY_ASSIGNED") {
+    if (outcome === "STUDENT_ALREADY_IN_PROJECT") {
       throw new TopicApplicationDecisionConflictError(
-        "학생이 이미 같은 프로그램의 다른 팀에 소속되어 있습니다.",
+        "학생이 이미 이 프로젝트 팀에 소속되어 있습니다.",
       );
     }
     if (outcome === "CONFLICT") {

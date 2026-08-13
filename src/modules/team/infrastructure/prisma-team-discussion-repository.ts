@@ -21,28 +21,34 @@ export class PrismaTeamDiscussionRepository
     const createdAt = new Date();
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        INSERT INTO "discussion_post" ("id", "teamId", "authorId", "content", "createdAt")
-        SELECT ${id}, "team"."id", ${input.actor.id}, ${input.content}, ${createdAt}
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
+        INSERT INTO "discussion_post" ("id", "projectTeamId", "authorId", "content", "createdAt")
+        SELECT ${id}, "project_team"."id", ${input.actor.id}, ${input.content}, ${createdAt}
+        FROM "project_team"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND EXISTS (
+            SELECT 1 FROM "topic"
+            JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+            WHERE "topic"."id" = "project_team"."projectId"
+              AND "topic"."status" = 'ACTIVE'
+              AND "project_program"."endsAt" > ${createdAt}
+          )
           AND ${teamActorSql(input.actor)}
         RETURNING "id"
       `);
       if (!rows[0]) return null;
       await enqueueTranslations(transaction, [input.content]);
 
-      const team = await transaction.team.findUniqueOrThrow({
+      const team = await transaction.projectTeam.findUniqueOrThrow({
         where: { id: input.teamId },
-        select: { name: true, professorId: true, topicId: true },
+        select: { name: true, project: { select: { id: true, managerId: true } } },
       });
       const [members, assistants, author] = await Promise.all([
-        transaction.teamMember.findMany({
-          where: { teamId: input.teamId },
-          select: { studentId: true },
+        transaction.projectTeamMembership.findMany({
+          where: { projectTeamId: input.teamId, endedAt: null },
+          select: { userId: true },
         }),
         transaction.projectAssistant.findMany({
-          where: { topicId: team.topicId },
+          where: { topicId: team.project.id },
           select: { userId: true },
         }),
         transaction.user.findUniqueOrThrow({
@@ -51,8 +57,8 @@ export class PrismaTeamDiscussionRepository
         }),
       ]);
       const recipientIds = [...new Set([
-        team.professorId,
-        ...members.map(({ studentId }) => studentId),
+        ...(team.project.managerId ? [team.project.managerId] : []),
+        ...members.map(({ userId }) => userId),
         ...assistants.map(({ userId }) => userId),
       ])].filter((userId) => userId !== input.actor.id);
       await createDiscussionNotifications(
@@ -61,7 +67,7 @@ export class PrismaTeamDiscussionRepository
           recipientId,
           title: "새 팀 대화 메시지가 도착했습니다",
           body: `${author.name}님이 ${team.name} 팀 대화에 메시지를 보냈습니다.`,
-          href: `/teams/${input.teamId}/discussion`,
+          href: `/projects/${team.project.id}/discussion`,
           dedupeKey: `discussion:${id}:${recipientId}`,
           createdAt,
         })),

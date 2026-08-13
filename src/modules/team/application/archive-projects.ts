@@ -1,4 +1,3 @@
-import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 
 export type ArchivedProject = {
@@ -59,27 +58,6 @@ export interface ArchivedProjectReader {
   countClosed(filters: ArchiveFilters): Promise<number>;
   listClosed(input: { offset: number; limit: number; filters: ArchiveFilters }): Promise<ArchivedProject[]>;
   findClosed(id: string): Promise<ArchivedProject | null>;
-}
-
-export interface TeamCloser {
-  close(teamId: string, actor: CurrentActor): Promise<boolean>;
-}
-
-export class TeamCloseNotAllowedError extends Error {
-  constructor() {
-    super("설정된 모든 보고서의 최신 버전이 승인된 확정 팀만 종료할 수 있습니다.");
-    this.name = "TeamCloseNotAllowedError";
-  }
-}
-
-export class CloseTeamService {
-  constructor(private readonly closer: TeamCloser) {}
-
-  async close(actor: CurrentActor, teamId: string): Promise<void> {
-    if (!(await this.closer.close(teamId, actor))) {
-      throw new TeamCloseNotAllowedError();
-    }
-  }
 }
 
 export class ListArchivedProjectsService {

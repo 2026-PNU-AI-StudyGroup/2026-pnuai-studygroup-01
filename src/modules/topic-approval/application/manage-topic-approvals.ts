@@ -15,7 +15,7 @@ export type TopicApprovalRequestSummary = {
   requestedProfessorId: string | null;
   requestedProfessorName: string | null;
   studentTeamVersion?: number | null;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "CANCELED";
   reviewComment: string;
   createdAt: Date;
   decidedAt: Date | null;
@@ -80,16 +80,19 @@ export class TopicApprovalService {
     input: Omit<TopicDraft, "authorId"> & { route: TopicApprovalRoute; requestedProfessorId?: string; studentTeamId?: string },
   ) {
     if (actor.role !== "STUDENT") throw new TopicApprovalOperationError("학생만 학생 프로젝트 승인 요청을 만들 수 있습니다.");
+    const { route, requestedProfessorId, studentTeamId, ...topicInput } = input;
     const details = {
-      ...input,
+      ...topicInput,
       title: input.title.trim(),
       description: input.description.trim(),
-      requiredSkills: [...new Set(input.requiredSkills.map((skill) => skill.trim()).filter(Boolean))],
-      preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
-      roleExpectations: input.roleExpectations.trim(),
-      availabilityRequirement: input.availabilityRequirement.trim(),
-      recruitmentEnabled: input.recruitmentEnabled ?? true,
-      applicationQuestions: input.applicationQuestions.map((question) => ({ ...question, label: question.label.trim() })),
+      requiredSkills: [],
+      preferredSkills: [],
+      roleExpectations: "",
+      availabilityRequirement: "",
+      recruitmentEnabled: false,
+      applicationMode: "TEAM_ONLY" as const,
+      applicationQuestions: [],
+      capacity: 1,
     };
     assertValidTopicDetails(details);
     const program = await this.programs.findOpen(input.programId);
@@ -101,16 +104,18 @@ export class TopicApprovalService {
     if (!program.studentProjectCreationEnabled) {
       throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     }
-    if (!program.advisorEnabled && input.route !== "ADMIN") {
+    if (!studentTeamId) throw new TopicApprovalOperationError("프로젝트를 제안할 팀을 선택해 주세요.");
+    if (!program.advisorEnabled && route !== "ADMIN") {
       throw new TopicApprovalOperationError("지도교수가 없는 프로그램은 관리자에게만 승인을 요청할 수 있습니다.");
     }
-    if (input.route === "PROFESSOR" && !input.requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
-    if (input.route === "ADMIN" && input.requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
+    if (route === "PROFESSOR" && !requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
+    if (route === "ADMIN" && requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
     const id = await this.repository.create({
       ...details,
       authorId: actor.id,
-      route: input.route,
-      requestedProfessorId: input.route === "PROFESSOR" ? input.requestedProfessorId! : null,
+      route,
+      requestedProfessorId: route === "PROFESSOR" ? requestedProfessorId! : null,
+      studentTeamId,
       requestedAt,
     });
     if (!id) throw new TopicApprovalOperationError("승인 대상 교수 또는 프로그램 상태를 확인해 주세요.");

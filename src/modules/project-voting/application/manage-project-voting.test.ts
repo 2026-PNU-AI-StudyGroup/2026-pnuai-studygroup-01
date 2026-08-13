@@ -17,7 +17,6 @@ const ballot = {
     voteLimit: 2,
     voteLimitScope: "PROGRAM" as const,
     selfVotingAllowed: false,
-    identityVisibility: "ANONYMOUS" as const,
   },
   phase: "OPEN" as const,
   candidates: [

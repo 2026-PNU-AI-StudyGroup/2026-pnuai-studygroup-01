@@ -16,7 +16,7 @@ export type CreateTopicApplicationInput = {
 export type CreateTopicApplicationResult =
   | { outcome: "CREATED"; id: string }
   | { outcome: "ALREADY_APPLIED" }
-  | { outcome: "STUDENT_ALREADY_ASSIGNED" }
+  | { outcome: "STUDENT_ALREADY_IN_PROJECT" }
   | { outcome: "TEAM_MEMBER_UNAVAILABLE" }
   | { outcome: "TOPIC_UNAVAILABLE" };
 
@@ -49,10 +49,10 @@ export type TopicApplicationSummary = {
   id: string;
   topicId: string;
   topicTitle: string;
-  topicStatus: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
+  topicStatus: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE" | "COMPLETED" | "CANCELED";
   programName: string;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
-  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
   reviewComment: string;
   message: string;
   skills: string[];
@@ -70,7 +70,7 @@ export type TopicApplicationPage = {
   page: number;
   totalPages: number;
   total: number;
-  counts: Record<"PENDING" | "ACCEPTED" | "REJECTED", number>;
+  counts: Record<"PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN", number>;
 };
 
 export type OwnTopicApplicationStatus = Extract<
@@ -152,7 +152,7 @@ export interface ProfessorTopicApplicationReader {
 
 export type TopicApplicationDecisionState = {
   id: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
   topicManagerId: string | null;
   topicAssistantIds: string[];
 };
@@ -160,7 +160,7 @@ export type TopicApplicationDecisionState = {
 export type AcceptTopicApplicationOutcome =
   | "ACCEPTED"
   | "CAPACITY_REACHED"
-  | "STUDENT_ALREADY_ASSIGNED"
+  | "STUDENT_ALREADY_IN_PROJECT"
   | "FORBIDDEN"
   | "CONFLICT";
 

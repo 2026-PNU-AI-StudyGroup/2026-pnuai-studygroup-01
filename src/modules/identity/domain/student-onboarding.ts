@@ -58,3 +58,19 @@ export function normalizeStudentOnboardingProfile(
     contactEmail,
   };
 }
+
+export function needsStudentOnboardingAfterRoleChange(profile: {
+  department: string | null;
+  studentNumber: string | null;
+  grade: number | null;
+  phoneNumber: string | null;
+  contactEmail: string | null;
+  onboardingCompletedAt: Date | null;
+}): boolean {
+  return profile.onboardingCompletedAt === null ||
+    profile.department === null ||
+    profile.studentNumber === null ||
+    profile.grade === null ||
+    profile.phoneNumber === null ||
+    profile.contactEmail === null;
+}

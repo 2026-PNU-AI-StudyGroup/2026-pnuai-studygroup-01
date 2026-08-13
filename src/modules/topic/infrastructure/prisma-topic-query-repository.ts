@@ -4,6 +4,8 @@ import type {
   ManagedTopicReader,
   ManagedTopicPage,
   ManagedTopicSummary,
+  AdminTopicPreviewLister,
+  AdminTopicPreviewQuery,
   PublicTopicLister,
   PublicTopicPage,
   PublicTopicQuery,
@@ -12,13 +14,14 @@ import type {
 } from "@/modules/topic/application/topic-ports";
 import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
+import { effectiveProjectStatus } from "@/modules/topic/domain/project-lifecycle";
 
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
-  team: { select: { _count: { select: { members: true } } } },
+  program: { select: { name: true, category: true, isStudentPublic: true, isFacultyPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+  projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
     select: {
@@ -65,8 +68,9 @@ const managedTopicSelect = {
       applications: { where: { status: "PENDING" } },
     },
   },
-  team: {
+  projectTeam: {
     select: {
+      confirmedAt: true,
       _count: {
         select: {
           recruitmentPosts: { where: { status: "OPEN" } },
@@ -74,7 +78,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isPublic: true, lifecycleStatus: true, advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+  program: { select: { name: true, category: true, isStudentPublic: true, isFacultyPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -85,9 +89,12 @@ type PublicTopicRow = Prisma.TopicGetPayload<{
 }>;
 
 export class PrismaTopicQueryRepository
-  implements TopicLister, ManagedTopicReader, PublicTopicLister
+  implements TopicLister, ManagedTopicReader, PublicTopicLister, AdminTopicPreviewLister
 {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(
+    private readonly client: PrismaClient,
+    private readonly audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
+  ) {}
 
   listByManager(managerId: string): Promise<ManagedTopicSummary[]> {
     return this.list({ managerId });
@@ -138,7 +145,15 @@ export class PrismaTopicQueryRepository
     return topic ? toTopicSummary(topic) : null;
   }
 
-  async listPublished(query: PublicTopicQuery): Promise<PublicTopicPage> {
+  listPublished(query: PublicTopicQuery): Promise<PublicTopicPage> {
+    return this.listPublishedMatching(query, true);
+  }
+
+  listPublishedForAdmin(query: AdminTopicPreviewQuery): Promise<PublicTopicPage> {
+    return this.listPublishedMatching(query, false);
+  }
+
+  private async listPublishedMatching(query: PublicTopicQuery | AdminTopicPreviewQuery, publicProgramsOnly: boolean): Promise<PublicTopicPage> {
     const escapedQuery = query.query.toLowerCase().replace(/[\\%_]/g, "\\$&");
     const skillTopicIds = query.query
       ? await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
@@ -158,13 +173,32 @@ export class PrismaTopicQueryRepository
       { program: { name: { contains: escapedQuery, mode: "insensitive" } } },
     ] } : {};
     const divisionWhere: Prisma.TopicWhereInput = query.divisionId === "UNASSIGNED" ? { divisionId: null } : query.divisionId ? { divisionId: query.divisionId } : {};
-    const baseWhere: Prisma.TopicWhereInput = {
-      status: "PUBLISHED",
-      programId: query.programId,
-      program: { isPublic: true, lifecycleStatus: "ACTIVE" },
-      ...divisionWhere,
-      ...search,
-    };
+    const topicIdsWhere: Prisma.TopicWhereInput = "topicIds" in query && query.topicIds !== undefined
+      ? { id: { in: query.topicIds } }
+      : {};
+    const visibilityWhere: Prisma.TopicWhereInput = publicProgramsOnly
+      ? {
+          status: "ACTIVE",
+          programId: query.programId,
+          program: programVisibilityWhere(this.audience),
+        }
+      : {
+          programId: query.programId,
+          OR: [
+            { status: "ACTIVE" },
+            { program: { endsAt: { lte: query.now } } },
+          ],
+        };
+    const baseWhere: Prisma.TopicWhereInput = { AND: [
+      visibilityWhere,
+      topicIdsWhere,
+      divisionWhere,
+      search,
+      publicProgramsOnly ? { OR: [
+        { program: { endsAt: { gt: query.now } } },
+        { projectTeam: { confirmedAt: { not: null } } },
+      ] } : {},
+    ] };
     const where = baseWhere;
     const total = await this.client.topic.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
@@ -190,7 +224,7 @@ export class PrismaTopicQueryRepository
     );
     return {
       items: topics.map((topic) =>
-        toPublicTopic(topic, ownStatusByTopic.get(topic.id) ?? null)),
+        toPublicTopic(topic, ownStatusByTopic.get(topic.id) ?? null, this.audience)),
       page,
       totalPages,
       total,
@@ -201,17 +235,35 @@ export class PrismaTopicQueryRepository
     const topic = await this.client.topic.findFirst({
       where: {
         id,
-        status: "PUBLISHED",
-        program: { isPublic: true, lifecycleStatus: "ACTIVE" },
+        status: "ACTIVE",
+        program: programVisibilityWhere(this.audience),
+        OR: [
+          { program: { endsAt: { gt: new Date() } } },
+          { projectTeam: { confirmedAt: { not: null } } },
+        ],
       },
       include: publicTopicInclude,
     });
-    return topic ? toPublicTopic(topic) : null;
+    return topic ? toPublicTopic(topic, null, this.audience) : null;
+  }
+
+  async findPublishedForAdmin(id: string): Promise<PublicTopicSummary | null> {
+    const topic = await this.client.topic.findFirst({
+      where: {
+        id,
+        OR: [
+          { status: "ACTIVE" },
+          { program: { endsAt: { lte: new Date() } } },
+        ],
+      },
+      include: publicTopicInclude,
+    });
+    return topic ? toPublicTopic(topic, null, this.audience) : null;
   }
 }
 
 function toTopicSummary(
-  { author, program, division, _count, team, ...topic }: ManagedTopicRow,
+  { author, program, division, _count, projectTeam, ...topic }: ManagedTopicRow,
 ): ManagedTopicSummary {
   return {
     ...topic,
@@ -219,9 +271,13 @@ function toTopicSummary(
     authorRole: author.role,
     programName: program.name,
     programCategory: program.category,
+    effectiveStatus: effectiveProjectStatus({ status: topic.status, programEndsAt: program.endsAt, confirmedAt: projectTeam?.confirmedAt ?? null }),
     divisionName: division?.name ?? null,
-    programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
+    programStatus: program.endsAt <= new Date() ? "CLOSED" : program.isStudentPublic || program.isFacultyPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
+    studentProjectCreationEnabled: program.studentProjectCreationEnabled,
+    projectTeamMinSize: program.projectTeamMinSize,
+    projectTeamMaxSize: program.projectTeamMaxSize,
     programRecruitmentStartsAt: program.recruitmentStartsAt,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
@@ -229,13 +285,14 @@ function toTopicSummary(
     programSubmissionStartsAt: program.submissionStartsAt,
     programSubmissionEndsAt: program.submissionEndsAt,
     pendingApplicationCount: _count.applications,
-    openRecruitmentPostCount: team?._count.recruitmentPosts ?? 0,
+    openRecruitmentPostCount: projectTeam?._count.recruitmentPosts ?? 0,
   };
 }
 
 function toPublicTopic(
-  { author, manager, program, division, team, ...topic }: PublicTopicRow,
+  { author, manager, program, division, projectTeam, ...topic }: PublicTopicRow,
   ownApplicationStatus: PublicTopicSummary["ownApplicationStatus"] = null,
+  audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
 ): PublicTopicSummary {
   return {
     ...topic,
@@ -245,16 +302,32 @@ function toPublicTopic(
     startYear: getProgramStartYear(program.startsAt),
     programName: program.name,
     programCategory: program.category,
+    effectiveStatus: effectiveProjectStatus({ status: topic.status, programEndsAt: program.endsAt, confirmedAt: projectTeam?.confirmedAt ?? null }),
     divisionName: division?.name ?? null,
-    programStatus: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
+    programStatus: program.endsAt <= new Date() ? "CLOSED" : isProgramVisibleTo(program, audience) ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
+    studentProjectCreationEnabled: program.studentProjectCreationEnabled,
+    projectTeamMinSize: program.projectTeamMinSize,
+    projectTeamMaxSize: program.projectTeamMaxSize,
     programRecruitmentStartsAt: program.recruitmentStartsAt,
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
     programSubmissionStartsAt: program.submissionStartsAt,
     programSubmissionEndsAt: program.submissionEndsAt,
-    memberCount: team?._count.members ?? 0,
+    memberCount: projectTeam?._count.memberships ?? 0,
     ownApplicationStatus,
   };
+}
+
+function programVisibilityWhere(audience: "STUDENT" | "FACULTY" | "ADMIN"): Prisma.ProjectProgramWhereInput {
+  if (audience === "ADMIN") return {};
+  return audience === "FACULTY" ? { isFacultyPublic: true } : { isStudentPublic: true };
+}
+
+function isProgramVisibleTo(
+  program: { isStudentPublic: boolean; isFacultyPublic: boolean },
+  audience: "STUDENT" | "FACULTY" | "ADMIN",
+) {
+  return audience === "ADMIN" || (audience === "FACULTY" ? program.isFacultyPublic : program.isStudentPublic);
 }

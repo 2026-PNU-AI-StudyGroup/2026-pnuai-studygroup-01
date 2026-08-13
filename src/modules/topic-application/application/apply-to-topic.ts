@@ -20,16 +20,16 @@ export class TopicUnavailableForApplicationError extends Error {
   }
 }
 
-export class StudentAlreadyAssignedError extends Error {
+export class StudentAlreadyInProjectError extends Error {
   constructor() {
-    super("이미 같은 프로그램의 팀에 소속되어 있습니다.");
-    this.name = "StudentAlreadyAssignedError";
+    super("이미 이 프로젝트 팀에 소속되어 있습니다.");
+    this.name = "StudentAlreadyInProjectError";
   }
 }
 
 export class TeamMemberUnavailableError extends Error {
   constructor() {
-    super("팀원 중 이미 지원했거나 같은 프로그램의 다른 프로젝트 팀에 소속된 사용자가 있습니다.");
+    super("팀원 중 이미 이 프로젝트에 지원했거나 프로젝트 팀에 소속된 사용자가 있습니다.");
     this.name = "TeamMemberUnavailableError";
   }
 }
@@ -76,8 +76,8 @@ export class ApplyToTopicService {
     if (result.outcome === "TOPIC_UNAVAILABLE") {
       throw new TopicUnavailableForApplicationError();
     }
-    if (result.outcome === "STUDENT_ALREADY_ASSIGNED") {
-      throw new StudentAlreadyAssignedError();
+    if (result.outcome === "STUDENT_ALREADY_IN_PROJECT") {
+      throw new StudentAlreadyInProjectError();
     }
     if (result.outcome === "TEAM_MEMBER_UNAVAILABLE") {
       throw new TeamMemberUnavailableError();

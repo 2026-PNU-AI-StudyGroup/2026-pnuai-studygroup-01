@@ -144,9 +144,12 @@ export class PrismaStudentTeamRecruitmentCommandRepository
         FROM "student_team_recruitment_application" a
         JOIN "student_team_recruitment_post" p ON p."id" = a."postId"
         JOIN "student_team" t ON t."id" = p."teamId"
+        JOIN "user" applicant ON applicant."id" = a."studentId"
         WHERE a."id" = ${input.applicationId} AND t."deletedAt" IS NULL
           AND p."status" = 'OPEN'
           AND p."deadlineAt" > ${input.decidedAt}
+          AND applicant."role" = 'STUDENT'
+          AND applicant."accountStatus" = 'ACTIVE'
         FOR UPDATE OF a, p, t
       `);
       const target = rows[0];

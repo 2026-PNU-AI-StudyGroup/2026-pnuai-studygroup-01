@@ -1,7 +1,7 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export type TopicPublication = {
-  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
   publishedAt: Date | null;
 };
 
@@ -96,13 +96,13 @@ export function assertValidTopicPublication(
   const isPendingOrRejected =
     (publication.status === "PENDING_APPROVAL" || publication.status === "REJECTED") && publication.publishedAt === null;
   const isPublishedConsistent =
-    (publication.status === "PUBLISHED" || publication.status === "CLOSED") &&
+    publication.status === "ACTIVE" &&
     publication.publishedAt !== null &&
     Number.isFinite(publication.publishedAt.getTime());
 
   if (!isPendingOrRejected && !isPublishedConsistent) {
     throw new InvalidTopicDetailsError(
-      "승인 대기·반려 프로젝트는 공개 시각이 없어야 하고 공개·마감 프로젝트는 공개 시각이 필요합니다.",
+      "승인 대기·반려 프로젝트는 공개 시각이 없어야 하고 승인된 프로젝트는 공개 시각이 필요합니다.",
     );
   }
 }

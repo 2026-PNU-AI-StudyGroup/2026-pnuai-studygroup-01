@@ -4,20 +4,34 @@ import type {
   AdminProjectOverviewReader,
 } from "@/modules/team/application/list-admin-project-overview";
 import { isReportSubmissionOverdue } from "@/modules/team/domain/project-progress";
-import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
+import {
+  getProgramStartYear,
+  isProgramVotingOpen,
+} from "@/modules/project-program/domain/project-program-policy";
 
 const overviewInclude = {
+  votingPolicy: {
+    select: {
+      startsAt: true,
+      endsAt: true,
+      voteLimit: true,
+      voteLimitScope: true,
+      selfVotingAllowed: true,
+    },
+  },
   topics: {
     orderBy: { createdAt: "desc" },
     select: {
+      id: true,
       title: true,
-      team: {
+      status: true,
+      projectTeam: {
         select: {
           id: true,
           name: true,
-          status: true,
-          members: { select: { id: true } },
-          topic: {
+          confirmedAt: true,
+          memberships: { where: { endedAt: null }, select: { id: true } },
+          project: {
             select: {
               manager: { select: { name: true } },
             },
@@ -62,21 +76,28 @@ export class PrismaAdminProjectOverviewReader
       category: program.category,
       icon: program.icon,
       startYear: getProgramStartYear(program.startsAt),
-      status: program.lifecycleStatus === "CLOSED" ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
+      status: program.endsAt <= now ? "CLOSED" : program.isStudentPublic || program.isFacultyPublic ? "OPEN" : "DRAFT",
+      isStudentPublic: program.isStudentPublic,
+      isFacultyPublic: program.isFacultyPublic,
+      votingEndsAt: isProgramVotingOpen(program.votingPolicy, now)
+        ? program.votingPolicy?.endsAt
+        : undefined,
       advisorEnabled: program.advisorEnabled,
-      projects: topics.flatMap(({ title, team }) => team ? [{
-        id: team.id,
-        name: team.name,
+      projects: topics.flatMap(({ id, title, projectTeam }) => projectTeam ? [{
+        id,
+        name: projectTeam.name,
         topicTitle: title,
-        professorName: team.topic.manager?.name ?? "담당 교수 미정",
+        professorName: projectTeam.project.manager?.name ?? "담당 교수 미정",
         advisorEnabled: program.advisorEnabled,
-        status: team.status,
-        memberCount: team.members.length,
-        reportCount: team.reports.length,
-        submittedReportCount: team.reports.filter(
+        status: program.endsAt <= now
+          ? projectTeam.confirmedAt ? "COMPLETED" as const : "CANCELED" as const
+          : projectTeam.confirmedAt ? "IN_PROGRESS" as const : "FORMING" as const,
+        memberCount: projectTeam.memberships.length,
+        reportCount: projectTeam.reports.length,
+        submittedReportCount: projectTeam.reports.filter(
           (report) => report.versions.length > 0,
         ).length,
-        overdueReportCount: team.reports.filter(
+        overdueReportCount: projectTeam.reports.filter(
           (report) => isReportSubmissionOverdue(
             report.dueAt,
             report.versions.length > 0,

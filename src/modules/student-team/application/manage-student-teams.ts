@@ -55,7 +55,13 @@ export class StudentTeamCommandService {
     }
     const result = await this.writer.invite({ teamId: input.teamId, leaderId: actor.id, email, invitedAt: this.now() });
     if (result !== "INVITED") {
-      throw new StudentTeamOperationError(result === "ALREADY_MEMBER" ? "이미 팀에 참여 중인 사용자입니다." : "팀장만 활성 팀에 초대할 수 있습니다.");
+      throw new StudentTeamOperationError(
+        result === "ALREADY_MEMBER"
+          ? "이미 팀에 참여 중인 사용자입니다."
+          : result === "LOCKED"
+            ? "프로젝트 승인 대기 중에는 팀원을 새로 초대할 수 없습니다."
+            : "팀장만 활성 팀에 초대할 수 있습니다.",
+      );
     }
   }
 
@@ -75,16 +81,25 @@ export class StudentTeamCommandService {
 
   async transferLeadership(actor: CurrentUser, teamId: string, nextLeaderId: string) {
     assertStudent(actor);
-    if (!await this.writer.transferLeadership({ teamId, leaderId: actor.id, nextLeaderId })) {
+    if (!await this.writer.transferLeadership({ teamId, leaderId: actor.id, nextLeaderId, changedAt: this.now() })) {
       throw new StudentTeamOperationError("팀장 권한은 현재 팀원에게만 이전할 수 있습니다.");
     }
   }
 
   async removeMember(actor: CurrentUser, teamId: string, studentId: string) {
     assertStudent(actor);
-    if (!await this.writer.removeMember({ teamId, leaderId: actor.id, studentId })) {
+    if (!await this.writer.removeMember({ teamId, leaderId: actor.id, studentId, changedAt: this.now() })) {
       throw new StudentTeamOperationError("팀장 본인은 내보낼 수 없으며, 팀장만 팀원을 관리할 수 있습니다.");
     }
+  }
+
+  async leave(actor: CurrentUser, teamId: string) {
+    assertStudent(actor);
+    const result = await this.writer.leave({ teamId, studentId: actor.id, leftAt: this.now() });
+    if (result === "LEADER_TRANSFER_REQUIRED") {
+      throw new StudentTeamOperationError("팀장은 다른 현재 팀원에게 팀장을 이전한 뒤 탈퇴할 수 있습니다.");
+    }
+    if (result !== "LEFT") throw new StudentTeamOperationError("탈퇴할 수 있는 팀이 아닙니다.");
   }
 
   async delete(actor: CurrentUser, teamId: string) {

@@ -7,6 +7,7 @@ type ManagedUser = {
   email: string;
   role: UserRole;
   isActive: boolean;
+  accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
   createdAt: Date;
   activeResponsibilityCount: number;
 };

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   canCreateAnnouncement,
+  canCreateSystemAnnouncement,
   canManageAnnouncement,
   canViewAnnouncement,
 } from "@/modules/announcement/domain/announcement-policy";
@@ -11,6 +12,12 @@ describe("공지사항 권한 정책", () => {
     expect(canCreateAnnouncement("STUDENT")).toBe(false);
     expect(canCreateAnnouncement("PROFESSOR")).toBe(true);
     expect(canCreateAnnouncement("ADMIN")).toBe(true);
+  });
+
+  it("시스템 공지는 관리자만 작성할 수 있다", () => {
+    expect(canCreateSystemAnnouncement("STUDENT")).toBe(false);
+    expect(canCreateSystemAnnouncement("PROFESSOR")).toBe(false);
+    expect(canCreateSystemAnnouncement("ADMIN")).toBe(true);
   });
 
   it("교수는 자신의 공지만 관리할 수 있고 관리자는 모든 공지를 관리한다", () => {

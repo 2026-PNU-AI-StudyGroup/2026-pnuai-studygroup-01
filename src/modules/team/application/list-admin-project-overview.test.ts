@@ -13,6 +13,7 @@ describe("관리자 프로젝트 현황 조회", () => {
       category: "교과",
       startYear: 2026,
       status: "OPEN" as const,
+      isStudentPublic: true,
       advisorEnabled: true,
       projects: [],
     }];

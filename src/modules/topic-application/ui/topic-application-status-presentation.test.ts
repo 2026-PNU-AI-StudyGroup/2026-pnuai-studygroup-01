@@ -8,6 +8,7 @@ describe("주제 지원 상태 표현", () => {
       PENDING: { label: "검토 중", tone: "info" },
       ACCEPTED: { label: "선정", tone: "success" },
       REJECTED: { label: "미선정", tone: "danger" },
+      WITHDRAWN: { label: "철회", tone: "danger" },
     });
   });
 });

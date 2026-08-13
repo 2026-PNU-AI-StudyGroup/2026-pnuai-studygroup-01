@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
-import {
-  createApplicationResultNotifications,
-  createTopicApprovalNotification,
-} from "@/modules/notification/infrastructure/notification-events";
+import { createTopicApprovalNotification } from "@/modules/notification/infrastructure/notification-events";
 import type { TopicApprovalRepository, TopicApprovalRequestDetail, TopicApprovalRequestPage, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
@@ -31,21 +28,23 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   constructor(private readonly client: PrismaClient) {}
 
   listProfessors() {
-    return this.client.user.findMany({ where: { role: "PROFESSOR", isActive: true }, orderBy: [{ name: "asc" }, { email: "asc" }], select: { id: true, name: true, email: true } });
+    return this.client.user.findMany({ where: { role: "PROFESSOR", accountStatus: "ACTIVE" }, orderBy: [{ name: "asc" }, { email: "asc" }], select: { id: true, name: true, email: true } });
   }
 
   create(input: TopicDraft & { route: "PROFESSOR" | "ADMIN"; requestedProfessorId: string | null; studentTeamId?: string; requestedAt: Date }): Promise<string | null> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{
         id: string;
-        isPublic: boolean;
-        lifecycleStatus: "ACTIVE" | "CLOSED";
+        isStudentPublic: boolean;
         advisorEnabled: boolean;
         studentProjectCreationEnabled: boolean;
+        projectTeamMinSize: number;
+        projectTeamMaxSize: number;
         projectRegistrationStartsAt: Date;
         projectRegistrationEndsAt: Date;
+        endsAt: Date;
       }>>(Prisma.sql`
-        SELECT "id", "isPublic", "lifecycleStatus", "advisorEnabled", "studentProjectCreationEnabled", "projectRegistrationStartsAt", "projectRegistrationEndsAt"
+        SELECT "id", "isStudentPublic", "endsAt", "advisorEnabled", "studentProjectCreationEnabled", "projectTeamMinSize", "projectTeamMaxSize", "projectRegistrationStartsAt", "projectRegistrationEndsAt"
         FROM "project_program"
         WHERE "id" = ${input.programId}
         FOR SHARE
@@ -53,19 +52,20 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       const program = programs[0];
       if (
         !program ||
-        !program.isPublic ||
-        program.lifecycleStatus !== "ACTIVE" ||
+        !program.isStudentPublic ||
+        program.endsAt <= input.requestedAt ||
         program.projectRegistrationStartsAt > input.requestedAt ||
         program.projectRegistrationEndsAt <= input.requestedAt ||
         !program.studentProjectCreationEnabled
       ) return null;
+      if (!input.studentTeamId) return null;
       if (!program.advisorEnabled && input.route !== "ADMIN") return null;
       const divisions = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "program_track" WHERE "programId" = ${input.programId} FOR SHARE
       `);
       if ((divisions.length > 0 && !input.divisionId) || (input.divisionId != null && !divisions.some(({ id }) => id === input.divisionId))) return null;
       if (input.route === "PROFESSOR") {
-        const professor = await transaction.user.findFirst({ where: { id: input.requestedProfessorId!, role: "PROFESSOR", isActive: true }, select: { id: true } });
+        const professor = await transaction.user.findFirst({ where: { id: input.requestedProfessorId!, role: "PROFESSOR", accountStatus: "ACTIVE" }, select: { id: true } });
         if (!professor) return null;
       }
       const lockedStudentTeam = input.studentTeamId
@@ -86,24 +86,20 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             id: true,
             compositionVersion: true,
             members: {
-              select: { studentId: true, student: { select: { role: true, isActive: true } } },
+              select: { studentId: true, student: { select: { role: true, accountStatus: true } } },
             },
+            _count: { select: { invitations: { where: { status: "PENDING" } } } },
           },
         })
         : null;
       if (input.studentTeamId) {
         if (
           !studentTeam ||
-          studentTeam.members.length === 0 ||
-          studentTeam.members.some(({ student }) => student.role !== "STUDENT" || !student.isActive)
+          studentTeam.members.length < program.projectTeamMinSize ||
+          studentTeam.members.length > program.projectTeamMaxSize ||
+          studentTeam.members.some(({ student }) => student.role !== "STUDENT" || student.accountStatus !== "ACTIVE") ||
+          studentTeam._count.invitations > 0
         ) return null;
-        const alreadyAssigned = await transaction.teamMember.count({
-          where: {
-            programId: input.programId,
-            studentId: { in: studentTeam.members.map(({ studentId }) => studentId) },
-          },
-        });
-        if (alreadyAssigned) return null;
       }
       const { applicationQuestions, route, requestedProfessorId, studentTeamId, requestedAt, ...topic } = input;
       const id = randomUUID();
@@ -120,7 +116,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           createdAt: requestedAt,
           updatedAt: requestedAt,
           applicationQuestions: { create: applicationQuestions.map((question, position) => ({ id: randomUUID(), ...question, position })) },
-          approvalRequest: { create: { id: randomUUID(), requesterId: input.authorId, route, requestedProfessorId, studentTeamId: studentTeam ? studentTeamId : undefined, studentTeamVersion: studentTeam?.compositionVersion, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
+          approvalRequests: { create: { id: randomUUID(), requesterId: input.authorId, route, requestedProfessorId, studentTeamId: studentTeam ? studentTeamId : undefined, studentTeamVersion: studentTeam?.compositionVersion, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
         },
       });
       await enqueueTranslations(transaction, [
@@ -273,19 +269,23 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         }
 
         const programs = await transaction.$queryRaw<Array<{
-          lifecycleStatus: "ACTIVE" | "CLOSED";
           projectRegistrationStartsAt: Date;
           projectRegistrationEndsAt: Date;
+          endsAt: Date;
           recruitmentEndsAt: Date;
+          studentProjectCreationEnabled: boolean;
+          projectTeamMinSize: number;
+          projectTeamMaxSize: number;
         }>>(Prisma.sql`
-          SELECT "project_program"."lifecycleStatus", "project_program"."projectRegistrationStartsAt", "project_program"."projectRegistrationEndsAt", "project_program"."recruitmentEndsAt"
+          SELECT "project_program"."endsAt", "project_program"."projectRegistrationStartsAt", "project_program"."projectRegistrationEndsAt", "project_program"."recruitmentEndsAt", "project_program"."studentProjectCreationEnabled", "project_program"."projectTeamMinSize", "project_program"."projectTeamMaxSize"
           FROM "project_program"
           JOIN "topic" ON "topic"."programId" = "project_program"."id"
           WHERE "topic"."id" = ${initialRequest.topicId}
           FOR UPDATE OF "project_program"
         `);
         if (
-          programs[0]?.lifecycleStatus !== "ACTIVE" ||
+          !programs[0] || programs[0].endsAt <= input.decidedAt ||
+          !programs[0].studentProjectCreationEnabled ||
           programs[0].projectRegistrationStartsAt > input.decidedAt ||
           programs[0].projectRegistrationEndsAt <= input.decidedAt
         ) return "UNAVAILABLE";
@@ -315,6 +315,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         if (
           initialRequest.studentTeamId && (
             !studentTeam ||
+            studentTeam.pendingInvitationCount > 0 ||
             request.studentTeamVersion == null ||
             input.studentTeamVersion !== request.studentTeamVersion ||
             !input.teamCompositionConfirmed ||
@@ -327,7 +328,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             where: { id: topic.id },
             data: {
               managerId: input.actorId,
-              status: "PUBLISHED",
+              status: "ACTIVE",
               publishedAt: input.decidedAt,
             },
           });
@@ -336,18 +337,13 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           const members = await transaction.studentTeamMember.findMany({
             where: { teamId: studentTeam.id },
             orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
-            select: { studentId: true, student: { select: { role: true, isActive: true } } },
+            select: { studentId: true, student: { select: { role: true, accountStatus: true } } },
           });
           if (
-            members.length === 0 ||
-            members.some(({ student }) => student.role !== "STUDENT" || !student.isActive)
-          ) return "UNAVAILABLE";
-          const studentIds = members.map(({ studentId }) => studentId);
-          const alreadyAssigned = await transaction.teamMember.count({
-            where: { programId: topic.programId, studentId: { in: studentIds } },
-          });
-          if (alreadyAssigned) return "UNAVAILABLE";
-
+            members.length < programs[0].projectTeamMinSize ||
+            members.length > programs[0].projectTeamMaxSize ||
+            members.some(({ student }) => student.role !== "STUDENT" || student.accountStatus !== "ACTIVE")
+          ) return "TEAM_CHANGED";
           const groupId = randomUUID();
           await transaction.topicApplicationGroup.create({
             data: {
@@ -381,42 +377,31 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             where: { id: topic.id },
             data: {
               managerId: input.actorId,
-              status: "PUBLISHED",
+              status: "ACTIVE",
               publishedAt: input.decidedAt,
               capacity: members.length,
             },
           });
-          const executionTeam = await transaction.team.create({
+          const executionTeam = await transaction.projectTeam.create({
             data: {
-              programId: topic.programId,
-              topicId: topic.id,
-              professorId: input.actorId,
+              projectId: topic.id,
               name: studentTeam.name,
-              status: "CONFIRMED",
+              confirmedAt: input.decidedAt,
               createdAt: input.decidedAt,
               updatedAt: input.decidedAt,
             },
             select: { id: true },
           });
           await assignProgramDeliverablesToTeam(transaction, executionTeam.id, input.decidedAt);
-          await transaction.teamMember.createMany({
+          await transaction.projectTeamMembership.createMany({
             data: applications.map((application) => ({
-              teamId: executionTeam.id,
-              programId: topic.programId,
-              topicId: topic.id,
-              studentId: application.studentId,
-              applicationId: application.id,
+              projectTeamId: executionTeam.id,
+              userId: application.studentId,
+              sourceApplicationId: application.id,
+              role: application.studentId === studentTeam.leaderId ? "LEADER" as const : "MEMBER" as const,
               joinedAt: input.decidedAt,
             })),
           });
-          await rejectOtherPendingApplications(
-            transaction,
-            topic.programId,
-            studentIds,
-            applications.map(({ id }) => id),
-            input.actorId,
-            input.decidedAt,
-          );
         }
         await transaction.topicApprovalRequest.update({
           where: { id: request.id },
@@ -428,19 +413,25 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2002" &&
-          isStudentProgramUniqueConflict(error)
-        ) return "UNAVAILABLE";
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === "P2034" &&
           attempt < DECISION_ATTEMPTS
         ) continue;
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          isActiveProjectMembershipConflict(error.meta?.target)
+        ) return "UNAVAILABLE";
         throw error;
       }
     }
     return "UNAVAILABLE";
   }
+}
+
+function isActiveProjectMembershipConflict(target: unknown): boolean {
+  if (!Array.isArray(target)) return false;
+  const fields = new Set(target.filter((field): field is string => typeof field === "string"));
+  return fields.has("projectTeamId") && fields.has("userId");
 }
 
 type ApprovalRequestLockRow = {
@@ -484,7 +475,7 @@ type LockedApprovalTopic = {
   title: string;
   capacity: number;
   recruitmentEnabled: boolean;
-  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
 };
 
 function lockApprovalRequest(
@@ -502,13 +493,23 @@ function lockApprovalRequest(
 function lockStudentTeam(
   transaction: Prisma.TransactionClient,
   studentTeamId: string | null,
-): Promise<{ id: string; leaderId: string; name: string; compositionVersion: number } | undefined> {
+): Promise<{ id: string; leaderId: string; name: string; compositionVersion: number; pendingInvitationCount: number } | undefined> {
   if (!studentTeamId) return Promise.resolve(undefined);
-  return transaction.$queryRaw<Array<{ id: string; leaderId: string; name: string; compositionVersion: number }>>(Prisma.sql`
-    SELECT "id", "leaderId", "name", "compositionVersion"
+  return transaction.$queryRaw<Array<{ id: string; leaderId: string; name: string; compositionVersion: number; pendingInvitationCount: number }>>(Prisma.sql`
+    SELECT "student_team"."id",
+           "student_team"."leaderId",
+           "student_team"."name",
+           "student_team"."compositionVersion",
+           (
+             SELECT COUNT(*)::int
+             FROM "student_team_invitation"
+             WHERE "student_team_invitation"."teamId" = "student_team"."id"
+               AND "student_team_invitation"."status" = 'PENDING'
+           ) AS "pendingInvitationCount"
     FROM "student_team"
-    WHERE "id" = ${studentTeamId} AND "deletedAt" IS NULL
-    FOR UPDATE
+    WHERE "student_team"."id" = ${studentTeamId}
+      AND "student_team"."deletedAt" IS NULL
+    FOR UPDATE OF "student_team"
   `).then((rows) => rows[0]);
 }
 
@@ -534,79 +535,5 @@ function isSamePendingApprovalRequest(
     locked.requestedProfessorId === initial.requestedProfessorId &&
     locked.studentTeamId === initial.studentTeamId
       && locked.studentTeamVersion === initial.studentTeamVersion
-  );
-}
-
-function isStudentProgramUniqueConflict(
-  error: Prisma.PrismaClientKnownRequestError,
-): boolean {
-  const target = error.meta?.target;
-  return (
-    Array.isArray(target) &&
-    target.includes("programId") &&
-    target.includes("studentId")
-  );
-}
-
-async function rejectOtherPendingApplications(
-  transaction: Prisma.TransactionClient,
-  programId: string,
-  studentIds: string[],
-  acceptedApplicationIds: string[],
-  decidedById: string,
-  decidedAt: Date,
-): Promise<void> {
-  const directConflicts = await transaction.topicApplication.findMany({
-    where: {
-      id: { notIn: acceptedApplicationIds },
-      studentId: { in: studentIds },
-      status: "PENDING",
-      topic: { programId },
-    },
-    select: { id: true, groupId: true },
-  });
-  if (!directConflicts.length) return;
-
-  const conflictIds = directConflicts.map(({ id }) => id);
-  const conflictGroupIds = directConflicts.flatMap(({ groupId }) => groupId ? [groupId] : []);
-  const rejected = await transaction.topicApplication.findMany({
-    where: {
-      status: "PENDING",
-      OR: [
-        { id: { in: conflictIds } },
-        { groupId: { in: conflictGroupIds } },
-      ],
-    },
-    select: {
-      id: true,
-      studentId: true,
-      topic: { select: { title: true } },
-    },
-  });
-  if (!rejected.length) return;
-
-  const rejectedIds = rejected.map(({ id }) => id);
-  await transaction.topicApplication.updateMany({
-    where: { id: { in: rejectedIds }, status: "PENDING" },
-    data: {
-      status: "REJECTED",
-      decidedAt,
-      decidedById,
-      reviewComment: "같은 프로그램의 다른 프로젝트 참여가 확정되어 자동 미선정되었습니다.",
-    },
-  });
-  await transaction.recruitmentApplication.updateMany({
-    where: { topicApplicationId: { in: rejectedIds }, status: "PENDING" },
-    data: { status: "REJECTED", decidedAt },
-  });
-  await createApplicationResultNotifications(
-    transaction,
-    rejected.map((application) => ({
-      applicationId: application.id,
-      recipientId: application.studentId,
-      topicTitle: application.topic.title,
-      outcome: "REJECTED",
-      createdAt: decidedAt,
-    })),
   );
 }

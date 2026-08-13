@@ -1,4 +1,5 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 export type MemberContactInfo = { phone: string; kakao: string; github: string; instagram: string };
 
@@ -32,7 +33,7 @@ export function MemberContacts({ phone, kakao, github, instagram }: MemberContac
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm font-semibold"><UiText>{"등록된 연락처가 없습니다"}</UiText></p>
+        <EmptyState variant="compact" title="등록된 연락처가 없습니다" />
       )}
     </div>
   );

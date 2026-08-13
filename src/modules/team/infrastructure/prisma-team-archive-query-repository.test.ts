@@ -9,7 +9,7 @@ describe("지난 프로젝트 기술 검색", () => {
     const queryRaw = vi.fn(async () => [{ id: "team-next" }]);
     const client = {
       $queryRaw: queryRaw,
-      team: { count },
+      projectTeam: { count },
     } as unknown as PrismaClient;
 
     await new PrismaTeamArchiveQueryRepository(client).countClosed({ query: "next" });
@@ -17,7 +17,8 @@ describe("지난 프로젝트 기술 검색", () => {
     expect(queryRaw).toHaveBeenCalledOnce();
     expect(count).toHaveBeenCalledWith({
       where: expect.objectContaining({
-        status: "CLOSED",
+        confirmedAt: { not: null },
+        project: { program: { isStudentPublic: true, endsAt: { lte: expect.any(Date) } } },
         AND: [expect.objectContaining({
           OR: expect.arrayContaining([{ id: { in: ["team-next"] } }]),
         })],
@@ -64,6 +65,25 @@ describe("지난 프로젝트 기술 검색", () => {
         projectRegistrationStartsAt: true,
         projectRegistrationEndsAt: true,
         votingPolicy: { select: { startsAt: true, endsAt: true } },
+      }),
+    }));
+  });
+
+  it("아카이브 명단에는 종료되지 않은 멤버십만 포함한다", async () => {
+    const findMany = vi.fn(async () => []);
+    const client = {
+      projectTeam: { findMany },
+    } as unknown as PrismaClient;
+
+    await new PrismaTeamArchiveQueryRepository(client).listClosed({
+      offset: 0,
+      limit: 20,
+      filters: {},
+    });
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({
+        memberships: expect.objectContaining({ where: { endedAt: null } }),
       }),
     }));
   });

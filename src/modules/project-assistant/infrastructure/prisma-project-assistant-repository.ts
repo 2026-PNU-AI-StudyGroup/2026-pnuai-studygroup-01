@@ -121,10 +121,10 @@ export class PrismaProjectAssistantRepository
       if (!topic) return "FORBIDDEN";
       const invitee = await transaction.user.findUnique({
         where: { email: input.email },
-        select: { id: true, isActive: true },
+        select: { id: true, accountStatus: true },
       });
       if (!invitee) return "NOT_FOUND";
-      if (!invitee.isActive) return "INACTIVE";
+      if (invitee.accountStatus !== "ACTIVE") return "INACTIVE";
       if (invitee.id === topic.managerId) return "SELF";
       if (await transaction.projectAssistant.findUnique({
         where: { topicId_userId: { topicId: input.topicId, userId: invitee.id } },
@@ -193,7 +193,7 @@ export class PrismaProjectAssistantRepository
       const invitation = invitations[0];
       if (!invitation) return "INVALID";
       const activeInvitee = await transaction.user.findFirst({
-        where: { id: input.actor.id, isActive: true },
+        where: { id: input.actor.id, accountStatus: "ACTIVE" },
         select: { id: true },
       });
       if (!activeInvitee) return "INVALID";

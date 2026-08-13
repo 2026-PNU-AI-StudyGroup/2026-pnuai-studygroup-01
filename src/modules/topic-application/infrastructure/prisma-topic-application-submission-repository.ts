@@ -17,7 +17,7 @@ export class PrismaTopicApplicationSubmissionRepository
 
   async findConfiguration(topicId: string, appliedAt: Date): Promise<TopicApplicationConfiguration | null> {
     const topic = await this.client.topic.findFirst({
-      where: { id: topicId, status: "PUBLISHED", recruitmentEnabled: true, program: { isPublic: true, lifecycleStatus: "ACTIVE", recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt } } },
+      where: { id: topicId, status: "ACTIVE", recruitmentEnabled: true, program: { isStudentPublic: true, endsAt: { gt: appliedAt }, studentProjectCreationEnabled: false, recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt } } },
       select: { id: true, applicationMode: true, capacity: true, applicationQuestions: { orderBy: { position: "asc" }, select: { id: true, label: true, maxLength: true, required: true } } },
     });
     return topic ? { topicId: topic.id, mode: topic.applicationMode, capacity: topic.capacity, questions: topic.applicationQuestions } : null;
@@ -28,8 +28,8 @@ export class PrismaTopicApplicationSubmissionRepository
   ): Promise<CreateTopicApplicationResult> {
     const id = randomUUID();
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; lifecycleStatus: "ACTIVE" | "CLOSED"; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
-        SELECT "project_program"."isPublic", "project_program"."lifecycleStatus", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
+      const programs = await transaction.$queryRaw<Array<{ isStudentPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."isStudentPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
@@ -40,43 +40,38 @@ export class PrismaTopicApplicationSubmissionRepository
         SELECT "topic"."id", "topic"."programId", "topic"."capacity", "topic"."applicationMode"
         FROM "topic"
         WHERE "topic"."id" = ${input.topicId}
-          AND "topic"."status" = 'PUBLISHED'
+          AND "topic"."status" = 'ACTIVE'
           AND "topic"."recruitmentEnabled" = true
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isPublic || programs[0].lifecycleStatus !== "ACTIVE" || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
+      if (!programs[0]?.isStudentPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
         return { outcome: "TOPIC_UNAVAILABLE" } as const;
       }
       if (topic.applicationMode === "TEAM_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
-      const teams = await transaction.$queryRaw<Array<{ status: "FORMING" | "CONFIRMED" | "CLOSED" }>>(Prisma.sql`
-        SELECT "status" FROM "team" WHERE "topicId" = ${input.topicId} FOR UPDATE
+      const teams = await transaction.$queryRaw<Array<{ confirmedAt: Date | null }>>(Prisma.sql`
+        SELECT "confirmedAt" FROM "project_team" WHERE "projectId" = ${input.topicId} FOR UPDATE
       `);
-      if (teams[0] && teams[0].status !== "FORMING") return { outcome: "TOPIC_UNAVAILABLE" } as const;
-      const students = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; isActive: boolean }>>(Prisma.sql`
-        SELECT "id", "role", "isActive" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE
+      if (teams[0]?.confirmedAt) return { outcome: "TOPIC_UNAVAILABLE" } as const;
+      const students = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN"; accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN" }>>(Prisma.sql`
+        SELECT "id", "role", "accountStatus" FROM "user" WHERE "id" = ${input.studentId} FOR UPDATE
       `);
       if (!areActiveStudents(students, 1)) return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
-      const membership = await transaction.teamMember.findUnique({
-        where: {
-          programId_studentId: {
-            programId: topic.programId,
-            studentId: input.studentId,
-          },
-        },
+      const membership = await transaction.projectTeamMembership.findFirst({
+        where: { userId: input.studentId, endedAt: null, projectTeam: { projectId: input.topicId } },
         select: { id: true },
       });
       if (membership) {
-        return { outcome: "STUDENT_ALREADY_ASSIGNED" } as const;
+        return { outcome: "STUDENT_ALREADY_IN_PROJECT" } as const;
       }
 
-      const team = await transaction.team.findUnique({
-        where: { topicId: input.topicId },
-        select: { _count: { select: { members: true } } },
+      const team = await transaction.projectTeam.findUnique({
+        where: { projectId: input.topicId },
+        select: { _count: { select: { memberships: { where: { endedAt: null } } } } },
       });
-      if ((team?._count.members ?? 0) >= topic.capacity) {
+      if ((team?._count.memberships ?? 0) >= topic.capacity) {
         return { outcome: "TOPIC_UNAVAILABLE" } as const;
       }
 
@@ -126,20 +121,20 @@ export class PrismaTopicApplicationSubmissionRepository
     input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
   ): Promise<CreateTopicApplicationResult> {
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; lifecycleStatus: "ACTIVE" | "CLOSED"; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
-        SELECT "project_program"."isPublic", "project_program"."lifecycleStatus", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
+      const programs = await transaction.$queryRaw<Array<{ isStudentPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; projectTeamMaxSize: number; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."isStudentPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."projectTeamMaxSize", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
       `);
       const topics = await transaction.$queryRaw<Array<{ id: string; programId: string; capacity: number; applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM" }>>(Prisma.sql`
         SELECT "id", "programId", "capacity", "applicationMode" FROM "topic"
-        WHERE "id" = ${input.topicId} AND "status" = 'PUBLISHED'
+        WHERE "id" = ${input.topicId} AND "status" = 'ACTIVE'
           AND "recruitmentEnabled" = true
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isPublic || programs[0].lifecycleStatus !== "ACTIVE" || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
+      if (!programs[0]?.isStudentPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const studentTeams = await transaction.$queryRaw<Array<{ id: string; leaderId: string }>>(Prisma.sql`
         SELECT "id", "leaderId" FROM "student_team"
@@ -152,14 +147,14 @@ export class PrismaTopicApplicationSubmissionRepository
       const members = await transaction.studentTeamMember.findMany({
         where: { teamId: input.studentTeamId },
         orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
-        select: { studentId: true, role: true, student: { select: { role: true, isActive: true } } },
+        select: { studentId: true, role: true, student: { select: { role: true, accountStatus: true } } },
       });
-      if (members.length === 0 || members.length > topic.capacity || !areActiveStudents(members.map(({ student, studentId }) => ({ id: studentId, ...student })), members.length)) {
+      if (members.length === 0 || members.length > programs[0].projectTeamMaxSize || members.length > topic.capacity || !areActiveStudents(members.map(({ student, studentId }) => ({ id: studentId, ...student })), members.length)) {
         return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;
       }
       const memberIds = members.map(({ studentId }) => studentId);
       const unavailable = await transaction.user.count({ where: { id: { in: memberIds }, OR: [
-        { teamMemberships: { some: { programId: topic.programId } } },
+        { projectTeamMemberships: { some: { endedAt: null, projectTeam: { projectId: input.topicId } } } },
         { topicApplications: { some: { topicId: input.topicId } } },
       ] } });
       if (unavailable) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;

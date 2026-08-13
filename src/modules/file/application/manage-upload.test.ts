@@ -12,7 +12,7 @@ function dependencies() {
     createForActor: vi.fn(async () => true),
     findPendingForOwner: vi.fn(),
     isCompletedForOwner: vi.fn(async () => false),
-    finalizeWithTeamLock: vi.fn(async (_id, _ownerId, _readyAt, promote) => {
+    finalizeWithScopeLock: vi.fn(async (_id, _ownerId, _readyAt, promote) => {
       await promote({
         id: "upload-1",
         objectKey: "teams/team-1/files/upload-1",
@@ -68,6 +68,44 @@ describe("파일 업로드", () => {
         uploadObjectKey: expect.stringMatching(/^staging\/team-1\//),
       }),
     );
+  });
+
+  it("교수의 공지 첨부 업로드는 팀 없이 공지 전용 경로를 사용한다", async () => {
+    const deps = dependencies();
+    const service = new UploadService(deps.repository, deps.storage);
+    await service.create(
+      { id: "professor-1", role: "PROFESSOR" },
+      {
+        purpose: "ANNOUNCEMENT",
+        consumer: "ANNOUNCEMENT",
+        originalName: "notice.anything",
+        contentType: "application/octet-stream",
+        size: 100,
+        sha256: "a".repeat(64),
+      },
+      new Date("2026-01-01T00:00:00Z"),
+    );
+    expect(deps.repository.createForActor).toHaveBeenCalledWith(expect.objectContaining({
+      teamId: null,
+      objectKey: expect.stringMatching(/^announcements\/professor-1\/files\//),
+    }));
+  });
+
+  it("학생의 공지 첨부 업로드 예약을 거부한다", async () => {
+    const deps = dependencies();
+    const service = new UploadService(deps.repository, deps.storage);
+    await expect(service.create(
+      { id: "student-1", role: "STUDENT" },
+      {
+        purpose: "ANNOUNCEMENT",
+        consumer: "ANNOUNCEMENT",
+        originalName: "notice.bin",
+        contentType: "application/octet-stream",
+        size: 100,
+        sha256: "a".repeat(64),
+      },
+    )).rejects.toBeInstanceOf(UploadNotFoundError);
+    expect(deps.repository.createForActor).not.toHaveBeenCalled();
   });
 
   it("이미 완료된 동일 소유자의 재시도를 성공으로 처리한다", async () => {

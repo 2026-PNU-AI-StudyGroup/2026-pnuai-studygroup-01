@@ -22,47 +22,57 @@ export class PrismaReportSubmissionRepository
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "project_program"."id"
         FROM "project_program"
-        JOIN "team" ON "team"."programId" = "project_program"."id"
-        JOIN "report" ON "report"."teamId" = "team"."id"
-        WHERE "team"."id" = ${input.teamId}
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        JOIN "project_team" ON "project_team"."projectId" = "topic"."id"
+        JOIN "report" ON "report"."projectTeamId" = "project_team"."id"
+        WHERE "project_team"."id" = ${input.teamId}
           AND "report"."id" = ${input.reportId}
+          AND "topic"."status" = 'ACTIVE'
+          AND ${input.submittedAt} < "project_program"."endsAt"
         FOR UPDATE OF "project_program"
       `);
       if (programs.length !== 1) return null;
       const authorized = await transaction.$queryRaw<Array<{
         id: string;
-        professorId: string;
-        topicId: string;
+        managerId: string | null;
+        projectId: string;
         name: string;
       }>>(Prisma.sql`
-        SELECT "team"."id", "team"."professorId", "team"."topicId", "team"."name"
-        FROM "team"
-        JOIN "topic" ON "topic"."id" = "team"."topicId"
-        JOIN "project_program" ON "project_program"."id" = "team"."programId"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" = 'CONFIRMED'
-          AND "project_program"."lifecycleStatus" = 'ACTIVE'
-          AND ${input.submittedAt} >= "project_program"."submissionStartsAt"
-          AND ${input.submittedAt} <= "project_program"."submissionEndsAt"
-          AND ${input.submittedAt} <= "project_program"."endsAt"
+        SELECT "project_team"."id", "topic"."managerId", "project_team"."projectId", "project_team"."name"
+        FROM "project_team"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_team"."confirmedAt" IS NOT NULL
+          AND ${input.submittedAt} < "project_program"."endsAt"
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
-            OR EXISTS (
-              SELECT 1 FROM "team_member"
-              WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
+            OR (
+              ${input.submittedAt} >= "project_program"."submissionStartsAt"
+              AND ${input.submittedAt} <= "project_program"."submissionEndsAt"
+              AND EXISTS (
+                SELECT 1 FROM "project_team_membership"
+                WHERE "projectTeamId" = "project_team"."id"
+                  AND "userId" = ${input.actor.id}
+                  AND "endedAt" IS NULL
+              )
             )
           )
-        FOR UPDATE OF "team"
+        FOR UPDATE OF "project_team"
       `);
       if (authorized.length !== 1) return null;
       const requirements = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "report"."id" FROM "report"
         JOIN "program_report_definition" ON "program_report_definition"."id" = "report"."definitionId"
         WHERE "report"."id" = ${input.reportId}
-          AND "report"."teamId" = ${input.teamId}
+          AND "report"."projectTeamId" = ${input.teamId}
           AND "report"."required" = true
           AND "program_report_definition"."archivedAt" IS NULL
-          AND ${input.submittedAt} <= "report"."dueAt"
+          AND (
+            ${input.actor.role}::"UserRole" = 'ADMIN'
+            OR ${input.submittedAt} <= "report"."dueAt"
+          )
         FOR UPDATE OF "report"
       `);
       const report = requirements[0];
@@ -70,7 +80,7 @@ export class PrismaReportSubmissionRepository
       const files = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "stored_file"
         WHERE "id" = ${input.fileId}
-          AND "teamId" = ${input.teamId}
+          AND "projectTeamId" = ${input.teamId}
           AND "ownerId" = ${input.actor.id}
           AND "purpose" = 'REPORT'
           AND "status" = 'READY'
@@ -96,11 +106,11 @@ export class PrismaReportSubmissionRepository
         },
       });
       const assistants = await transaction.projectAssistant.findMany({
-        where: { topicId: authorized[0].topicId },
+        where: { topicId: authorized[0].projectId },
         select: { userId: true },
       });
       const supervisorIds = [...new Set([
-        authorized[0].professorId,
+        ...(authorized[0].managerId ? [authorized[0].managerId] : []),
         ...assistants.map(({ userId }) => userId),
       ])];
       const reportSnapshot = await transaction.report.findUniqueOrThrow({
@@ -114,7 +124,7 @@ export class PrismaReportSubmissionRepository
           recipientId,
           title: `${authorized[0].name} 보고서가 제출되었습니다`,
           body: `${reportSnapshot.titleSnapshot} 버전 ${version}이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
-          href: `/teams/${input.teamId}/reports`,
+          href: `/projects/${authorized[0].projectId}/reports`,
           createdAt: input.submittedAt,
         })),
       );

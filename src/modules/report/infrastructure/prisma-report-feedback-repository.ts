@@ -6,8 +6,17 @@ import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/
 import type { ReportFeedbackWriter } from "@/modules/report/application/report-ports";
 
 // 지도교수·조교·관리자만 피드백을 남길 수 있다.
-function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
-  return teamSupervisorWhere(actor);
+function teamActorWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInput {
+  return {
+    AND: [
+      {
+        project: {
+          status: "ACTIVE",
+        },
+      },
+      teamSupervisorWhere(actor),
+    ],
+  };
 }
 
 export class PrismaReportFeedbackRepository implements ReportFeedbackWriter {

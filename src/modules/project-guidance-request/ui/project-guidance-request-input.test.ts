@@ -10,14 +10,13 @@ const teamId = "70000000-0000-4000-8000-000000000001";
 const requestId = "71000000-0000-4000-8000-000000000001";
 
 describe("프로젝트 지도 요청 입력", () => {
-  it("회의 희망 시각을 부산 시간으로 변환하고 문자열을 정규화한다", () => {
+  it("회의 요청 문자열을 희망 시각 없이 정규화한다", () => {
     const parsed = createProjectGuidanceRequestSchema.parse({
       teamId,
       kind: "MEETING",
       title: "  중간 점검 회의  ",
       content: "  진행 상황과 다음 일정을 함께 논의하고 싶습니다.  ",
       referenceUrl: " https://example.com/progress ",
-      preferredAt: "2026-08-15T14:30",
     });
 
     expect(parsed).toEqual({
@@ -26,7 +25,6 @@ describe("프로젝트 지도 요청 입력", () => {
       title: "중간 점검 회의",
       content: "진행 상황과 다음 일정을 함께 논의하고 싶습니다.",
       referenceUrl: "https://example.com/progress",
-      preferredAt: new Date("2026-08-15T05:30:00.000Z"),
     });
   });
 
@@ -37,7 +35,6 @@ describe("프로젝트 지도 요청 입력", () => {
       title: "설계 검토 요청",
       content: "현재 설계안의 책임 분리를 검토해 주세요.",
       referenceUrl: "",
-      preferredAt: "",
     });
     const responded = respondProjectGuidanceRequestSchema.parse({
       teamId,
@@ -47,7 +44,6 @@ describe("프로젝트 지도 요청 입력", () => {
     });
 
     expect(created.referenceUrl).toBeUndefined();
-    expect(created.preferredAt).toBeUndefined();
     expect(responded.scheduledAt).toBeUndefined();
   });
 
@@ -63,22 +59,6 @@ describe("프로젝트 지도 요청 입력", () => {
   });
 
   it.each([
-    "2026-02-29T10:00",
-    "2026-13-01T10:00",
-    "2026-08-15T24:00",
-    "2026-08-15",
-  ])("실제로 존재하지 않거나 형식이 잘못된 날짜 %s를 거부한다", (preferredAt) => {
-    expect(createProjectGuidanceRequestSchema.safeParse({
-      teamId,
-      kind: "MEETING",
-      title: "중간 점검 회의",
-      content: "진행 상황과 다음 일정을 함께 논의하고 싶습니다.",
-      referenceUrl: "",
-      preferredAt,
-    }).success).toBe(false);
-  });
-
-  it.each([
     "not-a-url",
     "ftp://example.com/reference",
     "//example.com/reference",
@@ -89,7 +69,6 @@ describe("프로젝트 지도 요청 입력", () => {
       title: "설계 검토 요청",
       content: "현재 설계안의 책임 분리를 검토해 주세요.",
       referenceUrl,
-      preferredAt: "",
     }).success).toBe(false);
   });
 
@@ -100,7 +79,6 @@ describe("프로젝트 지도 요청 입력", () => {
       title: "설계 검토 요청",
       content: "현재 설계안의 책임 분리를 검토해 주세요.",
       referenceUrl: "",
-      preferredAt: "",
     }).success).toBe(false);
     expect(respondProjectGuidanceRequestSchema.safeParse({
       teamId,
@@ -121,7 +99,6 @@ describe("프로젝트 지도 요청 입력", () => {
       title: "제",
       content: "짧음",
       referenceUrl: "",
-      preferredAt: "",
     }).success).toBe(false);
     expect(respondProjectGuidanceRequestSchema.safeParse({
       teamId,

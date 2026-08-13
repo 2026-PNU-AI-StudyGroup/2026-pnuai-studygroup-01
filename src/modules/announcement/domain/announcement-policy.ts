@@ -5,6 +5,10 @@ export function canCreateAnnouncement(role: UserRole): boolean {
   return role === "PROFESSOR" || role === "ADMIN";
 }
 
+export function canCreateSystemAnnouncement(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
 // 팀 공지는 팀원만, 프로그램 구성원 공지는 프로그램 소속만 열람한다.
 // 전체 공지와 AUTHENTICATED 프로그램 공지는 로그인 사용자 누구나 열람한다.
 export function canViewAnnouncement(

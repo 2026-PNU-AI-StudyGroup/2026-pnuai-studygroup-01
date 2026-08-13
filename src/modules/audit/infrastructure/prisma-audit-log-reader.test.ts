@@ -7,7 +7,7 @@ function client(entries: unknown[]) {
   return {
     auditLog: { count: vi.fn().mockResolvedValue(entries.length), findMany: vi.fn().mockResolvedValue(entries) },
     user: { findMany: vi.fn().mockResolvedValue([]) },
-    team: { findMany: vi.fn().mockResolvedValue([]) },
+    projectTeam: { findMany: vi.fn().mockResolvedValue([]) },
     topic: { findMany: vi.fn().mockResolvedValue([]) },
     programDivision: { findMany: vi.fn().mockResolvedValue([]) },
     projectProgram: { findMany: vi.fn().mockResolvedValue([{ id: "program-1", name: "캡스톤" }]) },

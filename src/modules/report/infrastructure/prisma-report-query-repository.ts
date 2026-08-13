@@ -13,7 +13,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
     teamId: string,
     actor: CurrentActor,
   ): Promise<ReportWorkspace | null> {
-    const team = await this.client.team.findFirst({
+    const team = await this.client.projectTeam.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       select: {
         reports: {
@@ -110,12 +110,19 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
   }
 }
 
-function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
+function teamActorWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInput {
   if (actor.role === "ADMIN") return {};
+  const now = new Date();
   return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
+    AND: [
+      { OR: [
+        { project: { program: { endsAt: { gt: now } } } },
+        { confirmedAt: { not: null } },
+      ] },
+      { OR: [
+        teamSupervisorWhere(actor),
+        { memberships: { some: { userId: actor.id, endedAt: null } } },
+      ] },
     ],
   };
 }

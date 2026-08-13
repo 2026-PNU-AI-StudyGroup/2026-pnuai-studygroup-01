@@ -1,4 +1,5 @@
 import type { CurrentActor, CurrentUser } from "@/modules/identity/domain/current-actor";
+import type { UserRole } from "@/modules/identity/domain/user-role";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import {
   getProgramVotingPhase,
@@ -31,12 +32,18 @@ export type ProgramVoteResult = {
   topicId: string;
   title: string;
   description: string;
+  teamName: string | null;
   divisionId: string | null;
   divisionName: string | null;
   divisionPosition?: number | null;
   voteCount: number;
   rank: number;
-  voters: Array<{ id: string; name: string; email: string }>;
+  voters: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: "STUDENT" | "PROFESSOR" | "ADMIN";
+  }>;
 };
 
 export type ProgramVotingResults = {
@@ -58,8 +65,8 @@ export type ReplaceProgramVotesOutcome =
   | "SELF_VOTE_FORBIDDEN";
 
 export interface ProjectVotingRepository {
-  findBallot(programId: string, voterId: string, now: Date): Promise<ProgramVoteBallot | null>;
-  replaceVotes(input: { programId: string; voterId: string; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome>;
+  findBallot(programId: string, voterId: string, voterRole: UserRole, now: Date): Promise<ProgramVoteBallot | null>;
+  replaceVotes(input: { programId: string; voterId: string; voterRole: UserRole; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome>;
   findResults(programId: string, now: Date): Promise<ProgramVotingResults | null>;
 }
 
@@ -72,16 +79,17 @@ export class ProjectVotingService {
   ) {}
 
   getBallot(actor: CurrentUser, programId: string) {
-    return this.repository.findBallot(programId, actor.id, this.now());
+    return this.repository.findBallot(programId, actor.id, actor.role, this.now());
   }
 
   async saveVotes(actor: CurrentUser, programId: string, topicIds: readonly string[]) {
-    const ballot = await this.repository.findBallot(programId, actor.id, this.now());
+    const ballot = await this.repository.findBallot(programId, actor.id, actor.role, this.now());
     if (!ballot) throw new ProjectVotingOperationError("투표 설정이 없는 프로그램입니다.");
     const selectedTopicIds = normalizeVoteSelection(topicIds, ballot.policy, ballot.candidates);
     const outcome = await this.repository.replaceVotes({
       programId,
       voterId: actor.id,
+      voterRole: actor.role,
       topicIds: selectedTopicIds,
       votedAt: this.now(),
     });

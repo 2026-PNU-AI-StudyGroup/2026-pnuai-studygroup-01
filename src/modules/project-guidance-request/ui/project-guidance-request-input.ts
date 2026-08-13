@@ -55,7 +55,6 @@ export const createProjectGuidanceRequestSchema = z.object({
   title: z.string().trim().min(2).max(100),
   content: z.string().trim().min(5).max(2_000),
   referenceUrl: optionalHttpUrl,
-  preferredAt: optionalKoreanLocalDateTime,
 });
 
 export const respondProjectGuidanceRequestSchema = z.object({

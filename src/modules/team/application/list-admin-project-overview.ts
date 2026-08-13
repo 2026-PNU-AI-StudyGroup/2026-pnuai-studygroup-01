@@ -7,7 +7,7 @@ export type AdminProjectOverviewItem = {
   topicTitle: string;
   professorName: string;
   advisorEnabled: boolean;
-  status: "FORMING" | "CONFIRMED" | "CLOSED";
+  status: "FORMING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
   memberCount: number;
   reportCount: number;
   submittedReportCount: number;
@@ -21,6 +21,9 @@ export type AdminProjectOverviewProgram = {
   icon: ProgramIconKey;
   startYear: number;
   status: "DRAFT" | "OPEN" | "CLOSED";
+  isStudentPublic: boolean;
+  isFacultyPublic: boolean;
+  votingEndsAt?: Date;
   advisorEnabled: boolean;
   projects: AdminProjectOverviewItem[];
 };

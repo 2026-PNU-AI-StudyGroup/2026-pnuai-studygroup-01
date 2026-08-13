@@ -1,30 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  CloseTeamService,
   ListArchivedProjectsService,
-  TeamCloseNotAllowedError,
-  type TeamCloser,
 } from "@/modules/team/application/archive-projects";
-
-describe("팀 종료", () => {
-  it("감독 권한이 없는 학생 요청은 저장소 경계에서 거부한다", async () => {
-    const closer: TeamCloser = { close: vi.fn(async () => false) };
-    await expect(new CloseTeamService(closer).close(
-      { id: "student", role: "STUDENT" },
-      "team-1",
-    )).rejects.toBeInstanceOf(TeamCloseNotAllowedError);
-    expect(closer.close).toHaveBeenCalledOnce();
-  });
-
-  it("승인 조건을 충족한 지도교수 요청을 완료한다", async () => {
-    const closer: TeamCloser = { close: vi.fn(async () => true) };
-    await expect(new CloseTeamService(closer).close(
-      { id: "professor", role: "PROFESSOR" },
-      "team-1",
-    )).resolves.toBeUndefined();
-  });
-});
 
 describe("아카이브 페이지", () => {
   it("페이지 번호를 offset과 제한으로 변환한다", async () => {

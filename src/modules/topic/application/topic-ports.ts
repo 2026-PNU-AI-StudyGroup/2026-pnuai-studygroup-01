@@ -43,13 +43,17 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   applicationQuestions: TopicApplicationQuestionSummary[];
   authorName: string;
   authorRole: "STUDENT" | "PROFESSOR" | "ADMIN";
-  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
+  effectiveStatus: "PENDING_APPROVAL" | "REJECTED" | "FORMING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
   publishedAt: Date | null;
   programName: string;
   programCategory: string;
   divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
+  studentProjectCreationEnabled: boolean;
+  projectTeamMinSize?: number;
+  projectTeamMaxSize?: number;
   programRecruitmentStartsAt: Date;
   programRecruitmentEndsAt: Date;
   programExecutionStartsAt: Date;
@@ -88,13 +92,12 @@ export type TopicStateRecord = {
   authorId: string;
   managerId: string | null;
   assistantIds: string[];
-  status: "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "CLOSED";
+  status: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
   recruitmentEnabled: boolean;
 };
 
 export interface TopicStateRepository {
   findState(id: string): Promise<TopicStateRecord | null>;
-  closePublished(id: string, actor: CurrentActor): Promise<boolean>;
   closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean>;
 }
 
@@ -103,7 +106,7 @@ export type PublicTopicSummary = TopicSummary & {
   professorName: string | null;
   startYear: number;
   memberCount: number;
-  ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | null;
+  ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | null;
 };
 
 export type PublicTopicQuery = {
@@ -116,6 +119,10 @@ export type PublicTopicQuery = {
   now: Date;
 };
 
+export type AdminTopicPreviewQuery = PublicTopicQuery & {
+  topicIds?: string[];
+};
+
 export type PublicTopicPage = {
   items: PublicTopicSummary[];
   page: number;
@@ -126,4 +133,9 @@ export type PublicTopicPage = {
 export interface PublicTopicLister {
   listPublished(query: PublicTopicQuery): Promise<PublicTopicPage>;
   findPublished(id: string): Promise<PublicTopicSummary | null>;
+}
+
+export interface AdminTopicPreviewLister {
+  listPublishedForAdmin(query: AdminTopicPreviewQuery): Promise<PublicTopicPage>;
+  findPublishedForAdmin(id: string): Promise<PublicTopicSummary | null>;
 }

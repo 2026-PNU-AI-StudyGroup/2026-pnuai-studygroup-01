@@ -7,7 +7,7 @@ export type TeamListItem = {
   name: string;
   programName: string;
   topicTitle: string;
-  status: "FORMING" | "CONFIRMED" | "CLOSED";
+  status: "FORMING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
   memberCount: number;
   taskCount: number;
   completedTaskCount: number;
@@ -33,6 +33,7 @@ export type TeamListPage = {
 
 export type TeamWorkspace = TeamListItem & {
   topicId: string;
+  topicDescription: string;
   professorName: string;
   professor: {
     id: string;
@@ -44,10 +45,10 @@ export type TeamWorkspace = TeamListItem & {
     isPrimaryAdvisor: boolean;
     isAssistant: boolean;
     isTeamMember: boolean;
+    isTeamLeader: boolean;
     canSupervise: boolean;
     canContribute: boolean;
   };
-  canClose: boolean;
   schedule: {
     recruitmentStartsAt: Date;
     programRecruitmentEndsAt: Date;
@@ -66,6 +67,7 @@ export type TeamWorkspace = TeamListItem & {
     id: string;
     name: string;
     email: string;
+    role: "LEADER" | "MEMBER";
     department: string | null;
     studentNumber: string | null;
     grade: number | null;

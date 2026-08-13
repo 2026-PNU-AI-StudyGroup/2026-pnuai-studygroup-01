@@ -11,6 +11,7 @@ import type {
   TopicApplicationLister,
   TopicApplicationSummary,
 } from "@/modules/topic-application/application/topic-application-ports";
+import { effectiveProjectStatus } from "@/modules/topic/domain/project-lifecycle";
 
 const studentSummarySelect = {
   id: true,
@@ -28,7 +29,8 @@ const studentSummarySelect = {
     select: {
       title: true,
       status: true,
-      program: { select: { name: true, isPublic: true, lifecycleStatus: true } },
+      program: { select: { name: true, isStudentPublic: true, endsAt: true } },
+      projectTeam: { select: { confirmedAt: true } },
     },
   },
   student: { select: { name: true, email: true } },
@@ -112,9 +114,12 @@ function toStudentSummary(application: StudentSummaryRow): TopicApplicationSumma
   return {
     ...record,
     topicTitle: topic.title,
-    topicStatus: topic.status,
+    topicStatus: (() => {
+      const status = effectiveProjectStatus({ status: topic.status, programEndsAt: topic.program.endsAt, confirmedAt: topic.projectTeam?.confirmedAt ?? null });
+      return status === "FORMING" || status === "IN_PROGRESS" ? "ACTIVE" : status;
+    })(),
     programName: topic.program.name,
-    programStatus: topic.program.lifecycleStatus === "CLOSED" ? "CLOSED" : topic.program.isPublic ? "OPEN" : "DRAFT",
+    programStatus: topic.program.endsAt <= new Date() ? "CLOSED" : topic.program.isStudentPublic ? "OPEN" : "DRAFT",
     applicationKind: group?.kind ?? "INDIVIDUAL",
     teamMembers: group
       ? group.applications.map(({ studentId, participantRole, student: member }) => ({ studentId, name: member.name, email: member.email, role: participantRole }))
@@ -191,6 +196,7 @@ export class PrismaTopicApplicationQueryRepository implements
         PENDING: groupedCounts.find(({ status }) => status === "PENDING")?._count._all ?? 0,
         ACCEPTED: groupedCounts.find(({ status }) => status === "ACCEPTED")?._count._all ?? 0,
         REJECTED: groupedCounts.find(({ status }) => status === "REJECTED")?._count._all ?? 0,
+        WITHDRAWN: groupedCounts.find(({ status }) => status === "WITHDRAWN")?._count._all ?? 0,
       },
     };
   }
@@ -248,21 +254,18 @@ export class PrismaTopicApplicationQueryRepository implements
           select: { id: true },
         }).then((items) => items.map(({ id: applicationId }) => applicationId))
       : [application.id];
-    const currentMemberCount = await this.client.teamMember.count({
-      where: { team: { topicId: application.topicId } },
+    const currentMemberCount = await this.client.projectTeamMembership.count({
+      where: { projectTeam: { projectId: application.topicId }, endedAt: null },
     });
     const closesRecruitment = currentMemberCount + acceptedApplicationIds.length >= application.topic.capacity;
-    const directConflicts = await this.client.topicApplication.findMany({
+    const directConflicts = closesRecruitment ? await this.client.topicApplication.findMany({
       where: {
         id: { notIn: selectedApplicationIds },
         status: "PENDING",
-        OR: [
-          { studentId: { in: acceptedApplicationIds }, topic: { programId: application.topic.programId } },
-          ...(closesRecruitment ? [{ topicId: application.topicId }] : []),
-        ],
+        topicId: application.topicId,
       },
       select: { id: true, groupId: true },
-    });
+    }) : [];
     const conflictIds = directConflicts.map(({ id: conflictId }) => conflictId);
     const conflictGroupIds = directConflicts.flatMap(({ groupId }) => groupId ? [groupId] : []);
     const automaticallyRejectedApplicationCount = directConflicts.length
@@ -351,6 +354,7 @@ export class PrismaTopicApplicationQueryRepository implements
         PENDING: groupedCounts.find(({ status }) => status === "PENDING")?._count._all ?? 0,
         ACCEPTED: groupedCounts.find(({ status }) => status === "ACCEPTED")?._count._all ?? 0,
         REJECTED: groupedCounts.find(({ status }) => status === "REJECTED")?._count._all ?? 0,
+        WITHDRAWN: groupedCounts.find(({ status }) => status === "WITHDRAWN")?._count._all ?? 0,
       },
     };
   }

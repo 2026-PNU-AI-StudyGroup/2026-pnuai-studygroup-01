@@ -28,14 +28,14 @@ export class PrismaTeamTaskRepository implements TaskWriter {
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         INSERT INTO "task" (
-          "id", "teamId", "createdById", "title", "dueAt",
+          "id", "projectTeamId", "createdById", "title", "dueAt",
           "status", "createdAt", "updatedAt"
         )
-        SELECT ${id}, "team"."id", ${input.actor.id}, ${input.title},
+        SELECT ${id}, "project_team"."id", ${input.actor.id}, ${input.title},
           ${input.dueAt}, 'TODO'::"TaskStatus", ${now}, ${now}
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
+        FROM "project_team"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND ${activeProjectTeamSql(now)}
           AND ${teamRecordActorSql(input.actor)}
           AND ${validTeamAssigneesSql(assigneeIds)}
         RETURNING "id"
@@ -75,13 +75,13 @@ export class PrismaTeamTaskRepository implements TaskWriter {
             ELSE NULL
           END,
           "updatedAt" = ${now}
-        FROM "team"
+        FROM "project_team"
         WHERE "task"."id" = ${input.id}
-          AND "team"."id" = "task"."teamId"
-          AND "team"."status" <> 'CLOSED'
+          AND "project_team"."id" = "task"."projectTeamId"
+          AND ${activeProjectTeamSql(now)}
           AND ${teamRecordActorSql(input.actor)}
           AND ${validTeamAssigneesSql(uniqueAssigneeIds)}
-        RETURNING "task"."teamId"
+        RETURNING "task"."projectTeamId" AS "teamId"
       `);
       const task = rows[0];
       if (!task) return null;
@@ -108,13 +108,13 @@ export class PrismaTeamTaskRepository implements TaskWriter {
       SET "status" = 'DONE'::"TaskStatus",
         "completedAt" = ${now},
         "updatedAt" = ${now}
-      FROM "team"
+      FROM "project_team"
       WHERE "task"."id" = ${id}
         AND "task"."status" <> 'DONE'::"TaskStatus"
-        AND "team"."id" = "task"."teamId"
-        AND "team"."status" <> 'CLOSED'
+        AND "project_team"."id" = "task"."projectTeamId"
+        AND ${activeProjectTeamSql(now)}
         AND ${teamRecordActorSql(actor)}
-      RETURNING "task"."teamId"
+      RETURNING "task"."projectTeamId" AS "teamId"
     `);
     return rows[0] ?? null;
   }
@@ -126,27 +126,39 @@ export class PrismaTeamTaskRepository implements TaskWriter {
       SET "status" = 'TODO'::"TaskStatus",
         "completedAt" = NULL,
         "updatedAt" = ${now}
-      FROM "team"
+      FROM "project_team"
       WHERE "task"."id" = ${id}
         AND "task"."status" = 'DONE'::"TaskStatus"
-        AND "team"."id" = "task"."teamId"
-        AND "team"."status" <> 'CLOSED'
+        AND "project_team"."id" = "task"."projectTeamId"
+        AND ${activeProjectTeamSql(now)}
         AND ${teamRecordActorSql(actor)}
-      RETURNING "task"."teamId"
+      RETURNING "task"."projectTeamId" AS "teamId"
     `);
     return rows[0] ?? null;
   }
 
   async deleteTask(id: string, actor: CurrentActor): Promise<{ teamId: string } | null> {
+    const now = new Date();
     const rows = await this.client.$queryRaw<Array<{ teamId: string }>>(Prisma.sql`
       DELETE FROM "task"
-      USING "team"
+      USING "project_team"
       WHERE "task"."id" = ${id}
-        AND "team"."id" = "task"."teamId"
-        AND "team"."status" <> 'CLOSED'
+        AND "project_team"."id" = "task"."projectTeamId"
+        AND ${activeProjectTeamSql(now)}
         AND ${teamRecordActorSql(actor)}
-      RETURNING "task"."teamId"
+      RETURNING "task"."projectTeamId" AS "teamId"
     `);
     return rows[0] ?? null;
   }
+}
+
+function activeProjectTeamSql(now: Date): Prisma.Sql {
+  return Prisma.sql`EXISTS (
+    SELECT 1
+    FROM "topic"
+    JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+    WHERE "topic"."id" = "project_team"."projectId"
+      AND "topic"."status" = 'ACTIVE'
+      AND "project_program"."endsAt" > ${now}
+  )`;
 }

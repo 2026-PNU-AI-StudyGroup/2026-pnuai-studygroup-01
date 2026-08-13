@@ -5,12 +5,19 @@ import {
   teamSupervisorWhere,
 } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
-export function teamActorWhere(actor: CurrentActor): Prisma.TeamWhereInput {
+export function teamActorWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInput {
   if (actor.role === "ADMIN") return {};
+  const now = new Date();
   return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
+    AND: [
+      { OR: [
+        { project: { program: { endsAt: { gt: now } } } },
+        { confirmedAt: { not: null } },
+      ] },
+      { OR: [
+        teamSupervisorWhere(actor),
+        { memberships: { some: { userId: actor.id, endedAt: null } } },
+      ] },
     ],
   };
 }
@@ -20,9 +27,10 @@ export function teamActorSql(actor: CurrentActor): Prisma.Sql {
   return Prisma.sql`(
     ${teamSupervisorSql(actor)}
     OR EXISTS (
-      SELECT 1 FROM "team_member"
-      WHERE "team_member"."teamId" = "team"."id"
-        AND "team_member"."studentId" = ${actor.id}
+      SELECT 1 FROM "project_team_membership"
+      WHERE "project_team_membership"."projectTeamId" = "project_team"."id"
+        AND "project_team_membership"."userId" = ${actor.id}
+        AND "project_team_membership"."endedAt" IS NULL
     )
   )`;
 }
@@ -34,18 +42,20 @@ export function teamRecordActorSql(actor: CurrentActor): Prisma.Sql {
 
 export function teamMemberSql(actorId: string): Prisma.Sql {
   return Prisma.sql`EXISTS (
-    SELECT 1 FROM "team_member"
-    WHERE "team_member"."teamId" = "team"."id"
-      AND "team_member"."studentId" = ${actorId}
+    SELECT 1 FROM "project_team_membership"
+    WHERE "project_team_membership"."projectTeamId" = "project_team"."id"
+      AND "project_team_membership"."userId" = ${actorId}
+      AND "project_team_membership"."endedAt" IS NULL
   )`;
 }
 
 export function validTeamAssigneesSql(assigneeIds: string[]): Prisma.Sql {
   if (assigneeIds.length === 0) return Prisma.sql`TRUE`;
   return Prisma.sql`(
-    SELECT COUNT(DISTINCT "team_member"."studentId")
-    FROM "team_member"
-    WHERE "team_member"."teamId" = "team"."id"
-      AND "team_member"."studentId" IN (${Prisma.join(assigneeIds)})
+    SELECT COUNT(DISTINCT "project_team_membership"."userId")
+    FROM "project_team_membership"
+    WHERE "project_team_membership"."projectTeamId" = "project_team"."id"
+      AND "project_team_membership"."userId" IN (${Prisma.join(assigneeIds)})
+      AND "project_team_membership"."endedAt" IS NULL
   ) = ${assigneeIds.length}`;
 }

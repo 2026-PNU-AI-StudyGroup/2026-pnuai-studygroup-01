@@ -11,7 +11,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
     const findFirst = vi.fn(async () => ({ id: "team-1" }));
     const findMany = vi.fn(async () => [{
       id: "request-1",
-      teamId: "team-1",
+      projectTeamId: "team-1",
       requesterId: student.id,
       kind: "REVIEW",
       title: "설계 검토",
@@ -28,7 +28,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       responder: null,
     }]);
     const client = {
-      team: { findFirst },
+      projectTeam: { findFirst },
       projectGuidanceRequest: {
         count: vi.fn()
           .mockResolvedValueOnce(1)
@@ -41,7 +41,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       .findPage("team-1", student, 1, 20);
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ id: "team-1", OR: expect.any(Array) }),
+      where: expect.objectContaining({ id: "team-1", AND: expect.any(Array) }),
     }));
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       orderBy: [
@@ -67,8 +67,8 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       $queryRaw: vi.fn(async () => [{
         id: "team-1",
         name: "모두의 길",
-        professorId: professor.id,
-        topicId: "topic-1",
+        managerId: professor.id,
+        projectId: "topic-1",
         requesterName: "정하늘",
       }]),
       projectGuidanceRequest: {
@@ -154,7 +154,13 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
         id: "request-1",
         requesterId: student.id,
         status: "PENDING",
-        team: { status: "CONFIRMED" },
+        projectTeam: {
+          confirmedAt: { not: null },
+          project: {
+            status: "ACTIVE",
+            program: { endsAt: { gt: canceledAt } },
+          },
+        },
       },
       data: { status: "CANCELED", canceledAt, updatedAt: canceledAt },
     });

@@ -5,6 +5,7 @@ import type {
   ProfessorAccessRevokeOutcome,
   ProfessorAccessRepository,
 } from "@/modules/identity/application/manage-professor-access";
+import { needsStudentOnboardingAfterRoleChange } from "@/modules/identity/domain/student-onboarding";
 
 export class PrismaProfessorAccessRepository implements ProfessorAccessRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -21,16 +22,10 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       select: { id: true, email: true, name: true, role: true },
     });
     const userIds = users.map(({ id }) => id);
-    const [activeTopics, activeTeams] = userIds.length ? await Promise.all([
-      this.client.topic.findMany({
-        where: { managerId: { in: userIds }, status: { not: "CLOSED" } },
+    const activeTopics = userIds.length ? await this.client.topic.findMany({
+        where: { managerId: { in: userIds }, status: "ACTIVE" },
         select: { id: true, managerId: true },
-      }),
-      this.client.team.findMany({
-        where: { professorId: { in: userIds }, status: { in: ["FORMING", "CONFIRMED"] } },
-        select: { topicId: true, professorId: true },
-      }),
-    ]) : [[], []];
+      }) : [];
     const responsibilityIdsByUserId = new Map<string, Set<string>>();
     for (const { id, managerId } of activeTopics) {
       if (managerId) {
@@ -38,11 +33,6 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
         ids.add(id);
         responsibilityIdsByUserId.set(managerId, ids);
       }
-    }
-    for (const { topicId, professorId } of activeTeams) {
-      const ids = responsibilityIdsByUserId.get(professorId) ?? new Set<string>();
-      ids.add(topicId);
-      responsibilityIdsByUserId.set(professorId, ids);
     }
     const accountByEmail = new Map(users.map(({ id, email, ...account }) => [email, {
       account,
@@ -66,7 +56,7 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       id: entry.id,
       action: entry.action === "PROFESSOR_ACCESS_GRANTED" ? "PROFESSOR_ACCESS_GRANTED" : "PROFESSOR_ACCESS_REVOKED",
       targetEmail: entry.targetId,
-      actorName: entry.actor.name,
+      actorName: entry.actor?.name ?? "시스템",
       createdAt: entry.createdAt,
     }));
   }
@@ -108,14 +98,19 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       if (!allowlist) return "NOT_FOUND";
       const account = await transaction.user.findUnique({
         where: { email },
-        select: { id: true },
+        select: {
+          id: true,
+          department: true,
+          studentNumber: true,
+          grade: true,
+          phoneNumber: true,
+          contactEmail: true,
+          onboardingCompletedAt: true,
+        },
       });
       if (account) {
-        const [activeTopicCount, activeTeamCount] = await Promise.all([
-          transaction.topic.count({ where: { managerId: account.id, status: { not: "CLOSED" } } }),
-          transaction.team.count({ where: { professorId: account.id, status: { in: ["FORMING", "CONFIRMED"] } } }),
-        ]);
-        if (activeTopicCount > 0 || activeTeamCount > 0) return "ACTIVE_PROJECTS";
+        const activeTopicCount = await transaction.topic.count({ where: { managerId: account.id, status: "ACTIVE" } });
+        if (activeTopicCount > 0) return "ACTIVE_PROJECTS";
       }
       const result = await transaction.professorAllowlist.updateMany({
         where: { email, revokedAt: null },
@@ -124,7 +119,12 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       if (result.count !== 1) return "NOT_FOUND";
       await transaction.user.updateMany({
         where: { email, role: "PROFESSOR" },
-        data: { role: "STUDENT" },
+        data: {
+          role: "STUDENT",
+          onboardingRequired: account
+            ? needsStudentOnboardingAfterRoleChange(account)
+            : true,
+        },
       });
       await transaction.auditLog.create({ data: {
         actorId: revokedById,

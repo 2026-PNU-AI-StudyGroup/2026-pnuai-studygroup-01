@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 
 function transactionFor(input: {
-  status?: "FORMING" | "CONFIRMED" | "CLOSED";
+  status?: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
   divisionId?: string | null;
   rubricMode?: "INHERIT_COMMON" | "CUSTOM" | null;
   reports?: Array<{ id: string; title: string; dueAt: Date }>;
@@ -13,12 +13,12 @@ function transactionFor(input: {
   const reportCreateMany = vi.fn(async () => ({ count: input.reports?.length ?? 0 }));
   const evaluationCreateMany = vi.fn(async () => ({ count: input.rubrics?.length ?? 0 }));
   const tx = {
-    team: {
+    projectTeam: {
       findUnique: vi.fn(async () => ({
         id: "team-1",
-        programId: "program-1",
-        status: input.status ?? "FORMING",
-        topic: {
+        project: {
+          programId: "program-1",
+          status: input.status ?? "ACTIVE",
           divisionId: input.divisionId ?? null,
           division: input.divisionId
             ? { rubricMode: input.rubricMode ?? "INHERIT_COMMON" }
@@ -29,7 +29,7 @@ function transactionFor(input: {
     programReportDefinition: { findMany: vi.fn(async () => input.reports ?? []) },
     report: { createMany: reportCreateMany },
     rubricDefinition: { findMany: vi.fn(async () => input.rubrics ?? []) },
-    teamRubricEvaluation: { createMany: evaluationCreateMany },
+    projectTeamRubricEvaluation: { createMany: evaluationCreateMany },
   } as unknown as Prisma.TransactionClient;
   return { tx, reportCreateMany, evaluationCreateMany };
 }
@@ -52,15 +52,15 @@ describe("프로그램 산출물 팀 할당", () => {
 
     expect(setup.reportCreateMany).toHaveBeenCalledWith({
       data: [
-        expect.objectContaining({ teamId: "team-1", definitionId: "report-definition-1", titleSnapshot: "설계 검토", required: true }),
-        expect.objectContaining({ teamId: "team-1", definitionId: "report-definition-2", titleSnapshot: "최종 산출물", required: true }),
+        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-1", titleSnapshot: "설계 검토", required: true }),
+        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-2", titleSnapshot: "최종 산출물", required: true }),
       ],
       skipDuplicates: true,
     });
     expect(setup.evaluationCreateMany).toHaveBeenCalledWith({
       data: [
-        { teamId: "team-1", rubricId: "common-rubric-1", createdAt: assignedAt },
-        { teamId: "team-1", rubricId: "common-rubric-2", createdAt: assignedAt },
+        { projectTeamId: "team-1", rubricId: "common-rubric-1", createdAt: assignedAt },
+        { projectTeamId: "team-1", rubricId: "common-rubric-2", createdAt: assignedAt },
       ],
       skipDuplicates: true,
     });
@@ -84,8 +84,8 @@ describe("프로그램 산출물 팀 할당", () => {
     expect(setup.evaluationCreateMany).toHaveBeenCalledTimes(1);
   });
 
-  it("종료된 팀에는 새 요구사항을 할당하지 않는다", async () => {
-    const setup = transactionFor({ status: "CLOSED", reports: [{ id: "definition-1", title: "보고서", dueAt: new Date() }], rubrics: [{ id: "rubric-1" }] });
+  it("활성 상태가 아닌 프로젝트에는 새 요구사항을 할당하지 않는다", async () => {
+    const setup = transactionFor({ status: "REJECTED", reports: [{ id: "definition-1", title: "보고서", dueAt: new Date() }], rubrics: [{ id: "rubric-1" }] });
 
     await assignProgramDeliverablesToTeam(setup.tx, "team-1", new Date());
 

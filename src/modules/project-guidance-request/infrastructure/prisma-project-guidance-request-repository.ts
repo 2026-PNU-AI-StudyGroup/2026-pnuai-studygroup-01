@@ -27,20 +27,20 @@ export class PrismaProjectGuidanceRequestRepository
     requestedPage: number,
     pageSize: number,
   ): Promise<ProjectGuidanceRequestPage | null> {
-    const team = await this.client.team.findFirst({
+    const team = await this.client.projectTeam.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       select: { id: true },
     });
     if (!team) return null;
 
     const [total, pendingTotal] = await Promise.all([
-      this.client.projectGuidanceRequest.count({ where: { teamId } }),
-      this.client.projectGuidanceRequest.count({ where: { teamId, status: "PENDING" } }),
+      this.client.projectGuidanceRequest.count({ where: { projectTeamId: teamId } }),
+      this.client.projectGuidanceRequest.count({ where: { projectTeamId: teamId, status: "PENDING" } }),
     ]);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, totalPages);
     const rows = await this.client.projectGuidanceRequest.findMany({
-      where: { teamId },
+      where: { projectTeamId: teamId },
       orderBy: [
         { status: "asc" },
         { createdAt: "desc" },
@@ -50,7 +50,7 @@ export class PrismaProjectGuidanceRequestRepository
       take: pageSize,
       select: {
         id: true,
-        teamId: true,
+        projectTeamId: true,
         requesterId: true,
         kind: true,
         title: true,
@@ -69,8 +69,9 @@ export class PrismaProjectGuidanceRequestRepository
     });
 
     return {
-      items: rows.map(({ requester, responder, ...request }) => ({
+      items: rows.map(({ requester, responder, projectTeamId, ...request }) => ({
         ...request,
+        teamId: projectTeamId,
         requesterName: requester.name,
         responderName: responder?.name ?? null,
       })),
@@ -99,43 +100,38 @@ export class PrismaProjectGuidanceRequestRepository
       const teams = await transaction.$queryRaw<Array<{
         id: string;
         name: string;
-        professorId: string;
-        topicId: string;
+        managerId: string;
+        projectId: string;
         requesterName: string;
       }>>(Prisma.sql`
         SELECT
-          "team"."id",
-          "team"."name",
-          "team"."professorId",
-          "team"."topicId",
+          "project_team"."id",
+          "project_team"."name",
+          "topic"."managerId",
+          "project_team"."projectId",
           "requester"."name" AS "requesterName"
-        FROM "team"
-        JOIN "topic" ON "topic"."id" = "team"."topicId"
+        FROM "project_team"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
         JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         JOIN "user" AS "requester" ON "requester"."id" = ${input.actor.id}
-        JOIN "user" AS "professor" ON "professor"."id" = "team"."professorId"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" = 'CONFIRMED'
+        JOIN "user" AS "professor" ON "professor"."id" = "topic"."managerId"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND "project_team"."confirmedAt" IS NOT NULL
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_program"."endsAt" > ${input.requestedAt}
           AND "project_program"."advisorEnabled" = TRUE
-          AND "requester"."isActive" = TRUE
+          AND "requester"."accountStatus" = 'ACTIVE'
           AND "professor"."role" = 'PROFESSOR'
-          AND "professor"."isActive" = TRUE
+          AND "professor"."accountStatus" = 'ACTIVE'
           AND ${teamMemberSql(input.actor.id)}
-          AND (
-            ${input.kind}::"ProjectGuidanceRequestKind" = 'REVIEW'
-            OR (
-              ${input.preferredAt}::TIMESTAMP > ${input.requestedAt}
-              AND ${input.preferredAt}::TIMESTAMP <= "project_program"."executionEndsAt"
-            )
-          )
-        FOR UPDATE OF "team"
+        FOR UPDATE OF "project_team"
       `);
       const team = teams[0];
       if (!team) return "NOT_ALLOWED";
 
       const pending = await transaction.projectGuidanceRequest.findFirst({
         where: {
-          teamId: input.teamId,
+          projectTeamId: input.teamId,
           requesterId: input.actor.id,
           kind: input.kind,
           status: "PENDING",
@@ -148,7 +144,7 @@ export class PrismaProjectGuidanceRequestRepository
       await transaction.projectGuidanceRequest.create({
         data: {
           id,
-          teamId: input.teamId,
+          projectTeamId: input.teamId,
           requesterId: input.actor.id,
           kind: input.kind,
           title: input.title,
@@ -162,11 +158,11 @@ export class PrismaProjectGuidanceRequestRepository
       await enqueueTranslations(transaction, [input.title, input.content]);
 
       const assistants = await transaction.projectAssistant.findMany({
-        where: { topicId: team.topicId },
+        where: { topicId: team.projectId },
         select: { userId: true },
       });
       const supervisorIds = [...new Set([
-        team.professorId,
+        team.managerId,
         ...assistants.map(({ userId }) => userId),
       ])].filter((userId) => userId !== input.actor.id);
       await createProjectRequestNotifications(
@@ -177,7 +173,7 @@ export class PrismaProjectGuidanceRequestRepository
             ? "새 회의 요청이 도착했습니다"
             : "새 검토 요청이 도착했습니다",
           body: `${team.requesterName}님이 ${team.name} 프로젝트에서 ${input.title} 요청을 보냈습니다.`,
-          href: `/teams/${team.id}/requests`,
+          href: `/projects/${team.projectId}/requests`,
           dedupeKey: `project-guidance-request:${id}:${recipientId}`,
           createdAt: input.requestedAt,
         })),
@@ -198,8 +194,8 @@ export class PrismaProjectGuidanceRequestRepository
         SELECT "project_program"."id"
         FROM "project_program"
         JOIN "topic" ON "topic"."programId" = "project_program"."id"
-        JOIN "team" ON "team"."topicId" = "topic"."id"
-        JOIN "project_guidance_request" ON "project_guidance_request"."teamId" = "team"."id"
+        JOIN "project_team" ON "project_team"."projectId" = "topic"."id"
+        JOIN "project_guidance_request" ON "project_guidance_request"."projectTeamId" = "project_team"."id"
         WHERE "project_guidance_request"."id" = ${input.requestId}
         FOR UPDATE OF "project_program"
       `);
@@ -211,20 +207,24 @@ export class PrismaProjectGuidanceRequestRepository
         teamName: string;
         requesterId: string;
         kind: "MEETING" | "REVIEW";
+        projectId: string;
       }>>(Prisma.sql`
         SELECT
           "project_guidance_request"."id",
-          "team"."id" AS "teamId",
-          "team"."name" AS "teamName",
+          "project_team"."id" AS "teamId",
+          "project_team"."projectId",
+          "project_team"."name" AS "teamName",
           "project_guidance_request"."requesterId",
           "project_guidance_request"."kind"
         FROM "project_guidance_request"
-        JOIN "team" ON "team"."id" = "project_guidance_request"."teamId"
-        JOIN "topic" ON "topic"."id" = "team"."topicId"
+        JOIN "project_team" ON "project_team"."id" = "project_guidance_request"."projectTeamId"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
         JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         WHERE "project_guidance_request"."id" = ${input.requestId}
           AND "project_guidance_request"."status" = 'PENDING'
-          AND "team"."status" = 'CONFIRMED'
+          AND "project_team"."confirmedAt" IS NOT NULL
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_program"."endsAt" > ${input.respondedAt}
           AND ${teamSupervisorSql(input.actor)}
           AND (
             ${input.scheduledAt}::TIMESTAMP IS NULL
@@ -257,7 +257,7 @@ export class PrismaProjectGuidanceRequestRepository
           ? "회의 요청에 답변이 도착했습니다"
           : "검토 요청에 답변이 도착했습니다",
         body: notificationSummary(input.response),
-        href: `/teams/${request.teamId}/requests`,
+          href: `/projects/${request.projectId}/requests`,
         dedupeKey: `project-guidance-response:${request.id}`,
         createdAt: input.respondedAt,
       }]);
@@ -275,7 +275,13 @@ export class PrismaProjectGuidanceRequestRepository
         id: input.requestId,
         requesterId: input.actor.id,
         status: "PENDING",
-        team: { status: "CONFIRMED" },
+        projectTeam: {
+          confirmedAt: { not: null },
+          project: {
+            status: "ACTIVE",
+            program: { endsAt: { gt: input.canceledAt } },
+          },
+        },
       },
       data: {
         status: "CANCELED",

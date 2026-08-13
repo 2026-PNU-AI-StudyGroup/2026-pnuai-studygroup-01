@@ -2,7 +2,7 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
 export class TeamConfirmationNotAllowedError extends Error {
   constructor() {
-    super("지도교수 또는 관리자만 구성 중인 팀을 확정할 수 있습니다.");
+    super("팀을 확정할 권한이 없습니다.");
     this.name = "TeamConfirmationNotAllowedError";
   }
 }
