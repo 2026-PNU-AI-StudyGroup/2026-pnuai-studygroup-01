@@ -33,7 +33,7 @@ export function Brand({
           }`}
         >
           <span className="block"><UiText>{"부산대학교"}</UiText></span>
-          <span className={`block ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}><UiText>{"프로젝트 관리 시스템"}</UiText></span>
+          <span className={`block tracking-[0.08em] ${inverse ? "text-white/70" : "text-[var(--muted)]"}`}>AIPMS</span>
         </span>
       ) : null}
     </UiLink>
