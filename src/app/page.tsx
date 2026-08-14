@@ -28,6 +28,8 @@ export default async function Home({
         redirect("/onboarding");
       }
     }
+    // 자문위원은 배정된 프로젝트만 다루므로 담당 프로젝트 화면이 첫 화면이다.
+    if (actor.role === "ADVISOR") redirect("/advisor");
     redirect("/topics");
   }
 
