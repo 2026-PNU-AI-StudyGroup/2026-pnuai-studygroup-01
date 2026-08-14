@@ -1909,5 +1909,22 @@
   "팀이 아직 구성되지 않았습니다": "The team has not been formed yet",
   "등록된 결과물이 없습니다.": "No artifacts have been registered.",
   "제출된 보고서가 없습니다.": "No reports have been submitted.",
-  "버전": "Version"
+  "버전": "Version",
+  "채점표가 준비되지 않았습니다.": "No rubric is available yet.",
+  "점수는 0부터 항목 배점까지만 입력할 수 있습니다.": "Scores must be between 0 and the maximum points for each criterion.",
+  "점수를 저장했습니다.": "Scores saved.",
+  "피드백을 등록했습니다.": "Feedback posted.",
+  "작성한 피드백이 없습니다.": "You have not written any feedback yet.",
+  "프로그램이 종료되어 더 이상 작성할 수 없습니다.": "The program has ended, so you can no longer submit entries.",
+  "팀에 전달할 피드백을 작성해 주세요.": "Write the feedback you want to share with the team.",
+  "자문위원 피드백": "Advisor feedback",
+  "자문위원 피드백이 없습니다": "No advisor feedback yet",
+  "담당 자문위원이 피드백을 남기면 이곳에 표시됩니다.": "Feedback from the assigned advisors will appear here.",
+  "자문위원 점수": "Advisor scores",
+  "자문위원 채점이 없습니다": "No advisor scores yet",
+  "담당 자문위원이 채점을 저장하면 이곳에 표시됩니다.": "Scores saved by the assigned advisors will appear here.",
+  "자문위원만 사용할 수 있습니다.": "Only advisors can use this.",
+  "할당된 프로젝트가 아닙니다.": "This project is not assigned to you.",
+  "점수를 저장하지 못했습니다.": "Could not save the scores.",
+  "피드백을 저장하지 못했습니다.": "Could not save the feedback."
 }

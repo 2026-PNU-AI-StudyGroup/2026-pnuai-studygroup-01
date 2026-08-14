@@ -8,6 +8,7 @@ import { canTeamMemberViewEvaluation, isEvaluationComplete } from "@/modules/rub
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { renderMarkdown } from "@/shared/ui/render-markdown";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 평가");
@@ -36,6 +37,23 @@ export default async function TeamEvaluationsPage({ params }: { params: Promise<
       scores: { select: { criterionId: true, points: true, scoredByName: true, updatedAt: true } },
     },
   });
+  const advisorFeedback = await prisma.advisorFeedback.findMany({
+    where: { teamId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, body: true, createdAt: true, advisor: { select: { name: true } } },
+  });
+  const advisorEvaluations = isStaff
+    ? await prisma.advisorEvaluation.findMany({
+        where: { teamId },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          advisor: { select: { name: true } },
+          rubric: { select: { title: true, criteria: { select: { maxPoints: true } } } },
+          scores: { select: { points: true } },
+        },
+      })
+    : [];
   const evaluations = records.map((record) => {
     const points = new Map(record.scores.map((score) => [score.criterionId, score.points]));
     const criteria = record.rubric.criteria.map((criterion) => ({ ...criterion, points: points.get(criterion.id) ?? null }));
@@ -81,6 +99,42 @@ export default async function TeamEvaluationsPage({ params }: { params: Promise<
           })}
         </div>
       )}
+
+      <section aria-labelledby="advisor-feedback-title" className="space-y-3">
+        <h2 id="advisor-feedback-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"자문위원 피드백"}</UiText></h2>
+        {advisorFeedback.length === 0 ? (
+          <EmptyState title="자문위원 피드백이 없습니다" description="담당 자문위원이 피드백을 남기면 이곳에 표시됩니다." />
+        ) : (
+          <ul className="grid gap-4">
+            {advisorFeedback.map((entry) => (
+              <li key={entry.id} className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5">
+                <p className="text-sm font-bold"><UiText>{entry.advisor.name}</UiText><span className="muted ml-2 text-xs font-medium"><UiDate value={entry.createdAt} mode="dateTime" /></span></p>
+                <div className="mt-2 space-y-3 text-[0.9375rem] text-[var(--ink)]">{renderMarkdown(entry.body)}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {isStaff ? (
+        <section aria-labelledby="advisor-scores-title" className="space-y-3">
+          <h2 id="advisor-scores-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"자문위원 점수"}</UiText></h2>
+          {advisorEvaluations.length === 0 ? (
+            <EmptyState title="자문위원 채점이 없습니다" description="담당 자문위원이 채점을 저장하면 이곳에 표시됩니다." />
+          ) : (
+            <ul className="divide-y divide-[var(--line)] rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
+              {advisorEvaluations.map((evaluation) => (
+                <li key={evaluation.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <div><p className="text-sm font-bold"><UiText>{evaluation.advisor.name}</UiText></p><p className="muted text-xs"><UiText>{evaluation.rubric.title}</UiText></p></div>
+                  <strong className="text-lg">
+                    {evaluation.scores.reduce((sum, score) => sum + score.points, 0)} / {evaluation.rubric.criteria.reduce((sum, criterion) => sum + criterion.maxPoints, 0)}
+                  </strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </section>
   );
 }

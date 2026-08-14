@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { findTeamRubric } from "@/modules/advisor/infrastructure/prisma-advisor-review-repository";
 
 // 자문위원 담당 목록.
 export async function listAssignedProjects(client: PrismaClient, advisorId: string) {
@@ -58,4 +59,27 @@ export async function findAssignedProject(client: PrismaClient, advisorId: strin
     },
   });
   return assignment?.topic ?? null;
+}
+
+// 상세 화면 폼용: 팀 채점표 항목 + 이 위원이 이미 남긴 점수·피드백.
+export async function findAdvisorReview(client: PrismaClient, advisorId: string, teamId: string) {
+  const rubric = await findTeamRubric(client, teamId);
+  const [evaluation, feedback] = await Promise.all([
+    rubric
+      ? client.advisorEvaluation.findUnique({
+          where: { teamId_advisorId_rubricId: { teamId, advisorId, rubricId: rubric.id } },
+          select: { scores: { select: { criterionId: true, points: true } } },
+        })
+      : null,
+    client.advisorFeedback.findMany({
+      where: { teamId, advisorId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, body: true, createdAt: true },
+    }),
+  ]);
+  const points = new Map(evaluation?.scores.map((score) => [score.criterionId, score.points]) ?? []);
+  return {
+    criteria: rubric?.criteria.map((criterion) => ({ ...criterion, points: points.get(criterion.id) ?? null })) ?? null,
+    feedback,
+  };
 }

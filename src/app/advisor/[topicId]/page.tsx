@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { findAssignedProject } from "@/modules/advisor/infrastructure/prisma-advisor-workspace-query";
+import { AdvisorFeedbackForm } from "@/app/advisor/_components/advisor-feedback-form";
+import { AdvisorScoringForm } from "@/app/advisor/_components/advisor-scoring-form";
+import { findAdvisorReview, findAssignedProject } from "@/modules/advisor/infrastructure/prisma-advisor-workspace-query";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
@@ -20,6 +22,8 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
   const { topicId } = await params;
   const topic = await findAssignedProject(prisma, actor.id, topicId);
   if (!topic) notFound();
+  const review = topic.team ? await findAdvisorReview(prisma, actor.id, topic.team.id) : null;
+  const readOnly = new Date() > topic.program.endsAt;
 
   return (
     <section aria-labelledby="advisor-project-title" className="mx-auto max-w-4xl space-y-9">
@@ -93,6 +97,20 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
                 })}
               </ul>
             )}
+          </section>
+
+          <section aria-labelledby="advisor-project-scoring">
+            <h2 id="advisor-project-scoring" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"채점표"}</UiText></h2>
+            {review?.criteria?.length ? (
+              <AdvisorScoringForm topicId={topic.id} criteria={review.criteria} readOnly={readOnly} />
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"채점표가 준비되지 않았습니다."}</UiText></p>
+            )}
+          </section>
+
+          <section aria-labelledby="advisor-project-feedback">
+            <h2 id="advisor-project-feedback" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"피드백"}</UiText></h2>
+            <AdvisorFeedbackForm topicId={topic.id} feedback={review?.feedback ?? []} readOnly={readOnly} />
           </section>
         </>
       )}
