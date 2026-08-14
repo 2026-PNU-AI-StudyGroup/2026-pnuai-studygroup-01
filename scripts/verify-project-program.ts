@@ -108,7 +108,7 @@ async function main() {
     votingPolicy: null,
   });
   const scheduledProgram = await prisma.projectProgram.findUniqueOrThrow({ where: { id: program.id } });
-  if (scheduledProgram.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
+  if (!scheduledProgram.recruitmentStartsAt || scheduledProgram.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
     throw new Error("프로그램 공통 일정 변경이 저장되지 않았습니다.");
   }
 

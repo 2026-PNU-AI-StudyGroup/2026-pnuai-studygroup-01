@@ -47,8 +47,8 @@ export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
   availabilityRequirement: string;
   applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
   capacity: number;
-  programRecruitmentStartsAt: Date;
-  programRecruitmentEndsAt: Date;
+  programRecruitmentStartsAt: Date | null;
+  programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
   programSubmissionStartsAt: Date;

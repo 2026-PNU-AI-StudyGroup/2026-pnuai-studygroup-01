@@ -83,6 +83,25 @@ describe("프로젝트 프로그램 관리", () => {
     })).toThrow("제출 기간은 프로그램 운영 기간 안에 있어야 합니다.");
   });
 
+  it("학생 팀 프로젝트 제안형은 모집 기간을 저장하지 않는다", () => {
+    const normalized = normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      studentProjectCreationEnabled: true,
+    });
+    expect(normalized.recruitmentStartsAt).toBeNull();
+    expect(normalized.recruitmentEndsAt).toBeNull();
+
+    expect(() => normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      recruitmentStartsAt: null,
+      recruitmentEndsAt: null,
+    })).toThrow("등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요.");
+  });
+
   it("운영이 종료됐어도 진행 중인 투표 프로그램은 사이드바 목록에 포함한다", async () => {
     const now = new Date("2026-08-07T12:00:00+09:00");
     const value = repository({ listSidebarVisible: vi.fn(async () => []) });
@@ -194,25 +213,56 @@ describe("프로젝트 프로그램 관리", () => {
   });
 
   it("관리자가 프로젝트 참여 방식과 팀 인원 정책을 변경한다", async () => {
-    const value = repository({ changeStudentProjectPolicy: vi.fn(async () => true) });
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
     await new ProjectProgramService(value).changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: true, minSize: 2, maxSize: 6 });
-    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: true, minSize: 2, maxSize: 6 });
+    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: true, minSize: 2, maxSize: 6, recruitmentStartsAt: null, recruitmentEndsAt: null });
   });
 
   it("팀 최대 인원이 최소 인원보다 작으면 정책 변경을 거부한다", async () => {
-    const value = repository({ changeStudentProjectPolicy: vi.fn(async () => true) });
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
     await expect(new ProjectProgramService(value).changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: true, minSize: 7, maxSize: 6 })).rejects.toThrow("프로젝트 팀 최대 인원은 최소 인원 이상 100명 이하여야 합니다.");
     expect(value.changeStudentProjectPolicy).not.toHaveBeenCalled();
   });
 
   it("직접 지원형은 사용하지 않는 최소 인원을 1명으로 정규화한다", async () => {
-    const value = repository({ changeStudentProjectPolicy: vi.fn(async () => true) });
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
     await new ProjectProgramService(value).changeStudentProjectPolicy(
       { id: "admin", role: "ADMIN" },
       "program-1",
       { enabled: false, minSize: 6, maxSize: 4 },
     );
-    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: false, minSize: 1, maxSize: 4 });
+    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: false, minSize: 1, maxSize: 4, recruitmentStartsAt: programInput.recruitmentStartsAt, recruitmentEndsAt: programInput.recruitmentEndsAt });
+  });
+
+  it("학생 제안형에서 직접 지원형으로 바꿀 때 새 모집 기간을 요구한다", async () => {
+    const current = { ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0, studentProjectCreationEnabled: true, recruitmentStartsAt: null, recruitmentEndsAt: null };
+    const value = repository({ findById: vi.fn(async () => current), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
+    const service = new ProjectProgramService(value);
+
+    await expect(service.changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: false, minSize: 1, maxSize: 6 })).rejects.toThrow("등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요.");
+    await service.changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", {
+      enabled: false, minSize: 1, maxSize: 6,
+      recruitmentStartsAt: new Date("2026-04-01T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+    });
+    expect(value.changeStudentProjectPolicy).toHaveBeenLastCalledWith("program-1", expect.objectContaining({
+      enabled: false,
+      recruitmentStartsAt: new Date("2026-04-01T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+    }));
+  });
+
+  it("프로젝트가 하나라도 있으면 참여 방식을 전환하지 않는다", async () => {
+    const value = repository({
+      findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 1, teamCount: 0 })),
+      changeStudentProjectPolicy: vi.fn(async () => "TOPICS_EXIST" as const),
+    });
+
+    await expect(new ProjectProgramService(value).changeStudentProjectPolicy(
+      { id: "admin", role: "ADMIN" },
+      "program-1",
+      { enabled: true, minSize: 2, maxSize: 6 },
+    )).rejects.toThrow("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
   });
 
   it("관리자가 프로그램 아이콘을 변경한다", async () => {

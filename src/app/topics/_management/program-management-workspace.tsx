@@ -9,8 +9,8 @@ import { ProgramIconForm } from "@/app/topics/_management/program-icon-picker";
 import {
   type ProgramManagementTab,
   programManagementHref,
-  programProjectsHref,
-} from "@/modules/project-program/ui/program-management-query";
+} from "@/modules/project-program/ui/program-management-route";
+import { topicsHref } from "@/app/topics/_lib/topics-query";
 import { ProgramPolicyForm } from "@/app/topics/_management/program-policy-form";
 import { ProgramReportRequirementForm } from "@/app/topics/_management/program-report-requirement-form";
 import { ProgramStatusForm } from "@/app/topics/_management/program-status-form";
@@ -20,9 +20,6 @@ import { StudentProjectCreationForm } from "@/app/topics/_management/student-pro
 import { TrackManager, type TrackRow } from "@/app/topics/_management/track-manager";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
-import type { AdminProjectOverviewProgram } from "@/modules/team/application/list-admin-project-overview";
-import type { AdminProjectProgressFilter } from "@/modules/team/ui/admin-project-overview-query";
-import { AdminProjectOverviewContent } from "@/modules/team/ui/admin-project-overview";
 import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -31,7 +28,6 @@ import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
 
 const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
-  { key: "overview", label: "현황" },
   { key: "settings", label: "설정" },
   { key: "rubric", label: "채점표" },
   { key: "tracks", label: "분과" },
@@ -66,7 +62,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
             </Link>
           ) : null}
           <Link
-            href={programProjectsHref(program.id)}
+            href={topicsHref({ programId: program.id })}
             aria-label={`${program.name} 프로젝트 보기`}
             className="grid size-9 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
           >
@@ -75,7 +71,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
             </svg>
           </Link>
         </div>
-        <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"프로그램의 프로젝트와 운영 설정을 한 화면에서 관리합니다."}</UiText></p>
+        <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"프로그램의 운영 설정을 관리합니다."}</UiText></p>
       </header>
       <UiNav aria-label="프로그램 관리 탭" className="mt-5 flex flex-wrap gap-1 border-b border-[var(--line)]">
         {TABS.map((entry) => (
@@ -109,17 +105,11 @@ export async function ProgramManagementWorkspace({
   actor,
   programId,
   tab,
-  overviewPrograms,
-  selectedProgress,
-  requestedPage,
   pendingApprovalCount = 0,
 }: {
   actor: CurrentActor;
   programId: string;
   tab: ProgramManagementTab;
-  overviewPrograms: AdminProjectOverviewProgram[];
-  selectedProgress: AdminProjectProgressFilter;
-  requestedPage: number;
   pendingApprovalCount?: number;
 }) {
   let program;
@@ -134,9 +124,7 @@ export async function ProgramManagementWorkspace({
 
   let content: React.ReactNode;
 
-  if (tab === "overview") {
-    content = <AdminProjectOverviewContent programs={overviewPrograms} selectedProgramId={program.id} selectedProgress={selectedProgress} requestedPage={requestedPage} />;
-  } else if (tab === "settings") {
+  if (tab === "settings") {
     const [categoryOptions, reportScheduleWarningCount, guidanceScheduleWarningCount] = await Promise.all([
       listProgramCategories(),
       prisma.report.count({ where: { projectTeam: { project: { programId: program.id } }, OR: [{ dueAt: { lt: program.submissionStartsAt } }, { dueAt: { gt: program.submissionEndsAt } }] } }),
@@ -149,8 +137,8 @@ export async function ProgramManagementWorkspace({
     content = <div className="grid gap-4">
       {warnings.length ? <UiAside role="status" aria-label="일정 확인 필요" className="rounded-[var(--radius-panel)] border border-[var(--warning)] bg-[var(--warning-subtle)] px-5 py-4 text-sm text-[var(--warning-ink)]"><p className="font-bold"><UiText>{"현재 프로그램 일정과 맞지 않는 항목이 있습니다."}</UiText></p><ul className="mt-2 list-disc space-y-1 pl-5">{warnings.map((warning) => <li key={warning}><UiText>{warning}</UiText></li>)}</ul></UiAside> : null}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
-        <ProgramPolicyForm key={program.id} programId={program.id} name={program.name} category={program.category} categoryOptions={categoryOptions} description={program.description} startsAt={program.startsAt} endsAt={program.endsAt} advisorEnabled={program.advisorEnabled} registrationStartsAt={program.projectRegistrationStartsAt ?? program.startsAt} registrationEndsAt={program.projectRegistrationEndsAt ?? program.endsAt} recruitmentStartsAt={program.recruitmentStartsAt} recruitmentEndsAt={program.recruitmentEndsAt} executionStartsAt={program.executionStartsAt} executionEndsAt={program.executionEndsAt} submissionStartsAt={program.submissionStartsAt} submissionEndsAt={program.submissionEndsAt} votingPolicy={program.votingPolicy ?? null} divisionCount={program.divisions?.length ?? 0} />
-        <UiAside aria-label="보조 운영 설정" className="grid gap-4"><StudentProjectCreationForm id={program.id} enabled={program.studentProjectCreationEnabled} minSize={program.projectTeamMinSize ?? 2} maxSize={program.projectTeamMaxSize ?? 6} /><ProgramIconForm id={program.id} icon={program.icon} /></UiAside>
+        <ProgramPolicyForm key={program.id} programId={program.id} name={program.name} category={program.category} categoryOptions={categoryOptions} description={program.description} startsAt={program.startsAt} endsAt={program.endsAt} advisorEnabled={program.advisorEnabled} studentProjectCreationEnabled={program.studentProjectCreationEnabled} registrationStartsAt={program.projectRegistrationStartsAt ?? program.startsAt} registrationEndsAt={program.projectRegistrationEndsAt ?? program.endsAt} recruitmentStartsAt={program.recruitmentStartsAt} recruitmentEndsAt={program.recruitmentEndsAt} executionStartsAt={program.executionStartsAt} executionEndsAt={program.executionEndsAt} submissionStartsAt={program.submissionStartsAt} submissionEndsAt={program.submissionEndsAt} votingPolicy={program.votingPolicy ?? null} divisionCount={program.divisions?.length ?? 0} />
+        <UiAside aria-label="보조 운영 설정" className="grid gap-4"><StudentProjectCreationForm id={program.id} enabled={program.studentProjectCreationEnabled} minSize={program.projectTeamMinSize ?? 2} maxSize={program.projectTeamMaxSize ?? 6} recruitmentStartsAt={program.recruitmentStartsAt} recruitmentEndsAt={program.recruitmentEndsAt} /><ProgramIconForm id={program.id} icon={program.icon} /></UiAside>
       </div>
       <ProgramStatusForm id={program.id} isPublic={program.isPublic === true} endsAt={program.endsAt} />
     </div>;

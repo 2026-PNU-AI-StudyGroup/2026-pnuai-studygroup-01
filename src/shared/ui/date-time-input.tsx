@@ -224,7 +224,7 @@ export function DateTimeInput({
         aria-hidden="true"
         className={styles.validationProxy}
         data-validation-proxy="date-time-input"
-        onChange={onChange}
+        onChange={(event) => onChange?.(event)}
         onInvalid={(event) => {
           event.preventDefault();
           setInvalid(true);

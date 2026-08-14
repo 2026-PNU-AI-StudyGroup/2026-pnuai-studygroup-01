@@ -29,7 +29,7 @@ export class PrismaTopicApplicationSubmissionRepository
   ): Promise<CreateTopicApplicationResult> {
     const id = randomUUID();
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }>>(Prisma.sql`
         SELECT "project_program"."isPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
@@ -46,7 +46,7 @@ export class PrismaTopicApplicationSubmissionRepository
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
+      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || !programs[0].recruitmentStartsAt || !programs[0].recruitmentEndsAt || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
         return { outcome: "TOPIC_UNAVAILABLE" } as const;
       }
       if (topic.applicationMode === "TEAM_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
@@ -123,7 +123,7 @@ export class PrismaTopicApplicationSubmissionRepository
     input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
   ): Promise<CreateTopicApplicationResult> {
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; projectTeamMaxSize: number; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; projectTeamMaxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }>>(Prisma.sql`
         SELECT "project_program"."isPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."projectTeamMaxSize", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
@@ -136,7 +136,7 @@ export class PrismaTopicApplicationSubmissionRepository
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
+      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || !programs[0].recruitmentStartsAt || !programs[0].recruitmentEndsAt || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const studentTeams = await transaction.$queryRaw<Array<{ id: string; leaderId: string }>>(Prisma.sql`
         SELECT "id", "leaderId" FROM "student_team"

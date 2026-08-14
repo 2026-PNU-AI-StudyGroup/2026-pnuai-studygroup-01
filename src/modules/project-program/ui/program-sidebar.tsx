@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { UiLink, UiNav, UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
+import { programCreateHref, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
@@ -29,7 +30,7 @@ export type ProgramSidebarItem = {
 function AddProgramLink({ className }: { className: string }) {
   return (
     <UiLink
-      href="/topics?mode=create"
+      href={programCreateHref()}
       aria-label="새 프로그램 추가"
       className={className}
     >
@@ -219,7 +220,7 @@ function CategoryProgramGroup({
                   )}
                   {showSettings ? (
                     <UiLink
-                      href={`/topics?programId=${encodeURIComponent(program.id)}&mode=manage&tab=settings`}
+                      href={programManagementHref(program.id)}
                       tabIndex={open ? undefined : -1}
                       aria-label={`${program.name} 설정`}
                       className="absolute right-1 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-white hover:text-[var(--primary)] focus-visible:bg-white focus-visible:text-[var(--primary)]"

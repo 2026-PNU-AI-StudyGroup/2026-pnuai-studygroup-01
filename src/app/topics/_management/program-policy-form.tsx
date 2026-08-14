@@ -19,10 +19,11 @@ type ProgramPolicyFormProps = {
   startsAt: Date;
   endsAt: Date;
   advisorEnabled: boolean;
+  studentProjectCreationEnabled: boolean;
   registrationStartsAt: Date;
   registrationEndsAt: Date;
-  recruitmentStartsAt: Date;
-  recruitmentEndsAt: Date;
+  recruitmentStartsAt: Date | null;
+  recruitmentEndsAt: Date | null;
   executionStartsAt: Date;
   executionEndsAt: Date;
   submissionStartsAt: Date;
@@ -45,7 +46,7 @@ function koreanDateTimeLocal(value: Date): string {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function ProgramPolicyForm({ programId, name, category, categoryOptions, description, startsAt, endsAt, advisorEnabled, registrationStartsAt, registrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
+export function ProgramPolicyForm({ programId, name, category, categoryOptions, description, startsAt, endsAt, advisorEnabled, studentProjectCreationEnabled, registrationStartsAt, registrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy, divisionCount = 0 }: ProgramPolicyFormProps) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
   const [state, action, pending] = useActionState(updateProgramSettingsAction, initialProgramActionState);
 
@@ -83,13 +84,15 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
         </FormField>
       </FormSection>
 
-      <FormSection title="프로그램 공통 일정" description="이 프로그램의 모든 프로젝트에 모집·수행·제출 기간을 동일하게 적용합니다." contentClassName="sm:grid-cols-2">
-        <FormField id="settings-recruitment-starts-at" label="모집 시작" required>
-          <DateTimeInput id="settings-recruitment-starts-at" name="recruitmentStartsAt" defaultValue={koreanDateTimeLocal(recruitmentStartsAt)} required />
-        </FormField>
-        <FormField id="settings-recruitment-ends-at" label="모집 종료" required>
-          <DateTimeInput id="settings-recruitment-ends-at" name="recruitmentEndsAt" defaultValue={koreanDateTimeLocal(recruitmentEndsAt)} required />
-        </FormField>
+      <FormSection title="프로그램 공통 일정" description={studentProjectCreationEnabled ? "학생 팀 제안형에서는 모집 기간 없이 수행·제출 기간을 적용합니다." : "이 프로그램의 모든 프로젝트에 모집·수행·제출 기간을 동일하게 적용합니다."} contentClassName="sm:grid-cols-2">
+        {!studentProjectCreationEnabled ? <>
+          <FormField id="settings-recruitment-starts-at" label="모집 시작" required>
+            <DateTimeInput id="settings-recruitment-starts-at" name="recruitmentStartsAt" defaultValue={recruitmentStartsAt ? koreanDateTimeLocal(recruitmentStartsAt) : ""} required />
+          </FormField>
+          <FormField id="settings-recruitment-ends-at" label="모집 종료" required>
+            <DateTimeInput id="settings-recruitment-ends-at" name="recruitmentEndsAt" defaultValue={recruitmentEndsAt ? koreanDateTimeLocal(recruitmentEndsAt) : ""} required />
+          </FormField>
+        </> : null}
         <FormField id="settings-execution-starts-at" label="수행 시작" required>
           <DateTimeInput id="settings-execution-starts-at" name="executionStartsAt" defaultValue={koreanDateTimeLocal(executionStartsAt)} required />
         </FormField>

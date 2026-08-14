@@ -66,11 +66,11 @@ describe("ProgramSidebar", () => {
     expect(screen.getAllByRole("link", { name: "새 프로그램 추가" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "새 프로그램 추가" })[0]).toHaveAttribute(
       "href",
-      "/topics?mode=create",
+      "/topics/manage/new",
     );
     expect(within(navigation).getByRole("link", { name: "캡스톤 2025 설정" })).toHaveAttribute(
       "href",
-      "/topics?programId=capstone-2025&mode=manage&tab=settings",
+      "/topics/manage/capstone-2025",
     );
     expect(within(navigation).getByRole("link", { name: "창의융합 해커톤 2026 설정", hidden: true })).toHaveAttribute(
       "tabindex",

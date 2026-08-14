@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Prisma, type Prisma as PrismaTypes } from "@/generated/prisma/client";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -24,9 +25,10 @@ async function requireAdmin() {
   return actor.role === "ADMIN" ? actor : null;
 }
 
-function refresh() {
+function refresh(programId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/topics");
+  revalidatePath(programManagementHref(programId, "rubric"));
 }
 
 async function lockProgram(tx: PrismaTypes.TransactionClient, programId: string) {
@@ -89,7 +91,7 @@ export async function createRubricAction(
   if (outcome === "DUPLICATE") return failure("같은 범위에 동일한 제목의 채점표가 있습니다.");
   if (outcome === "SCOPE") return failure("전용 모드인 분과에만 분과 채점표를 만들 수 있습니다.");
   if (outcome !== "OK") return failure("프로그램을 찾을 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점표를 추가하고 대상 팀에 할당했습니다.");
 }
 
@@ -123,7 +125,7 @@ export async function updateRubricAction(
   if (outcome === "LOCKED") return failure("점수가 저장되어 채점표 제목은 변경할 수 없습니다.");
   if (outcome === "SCORE_CONFLICT") return failure("새 마감보다 늦게 저장된 점수가 있어 변경할 수 없습니다.");
   if (outcome !== "OK") return failure("채점표를 찾을 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점표 설정을 변경했습니다.");
 }
 
@@ -144,7 +146,7 @@ export async function archiveRubricAction(rubricId: string, programId: string, _
   });
   if (outcome === "SCORED") return failure("점수가 저장된 채점표는 삭제하거나 보관할 수 없습니다.");
   if (outcome !== "OK") return failure("채점표를 찾을 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점표를 삭제했습니다.");
 }
 
@@ -171,7 +173,7 @@ export async function createCriterionAction(rubricId: string, programId: string,
     return true;
   });
   if (!created) return failure("점수가 저장되었거나 프로그램이 종료되어 구조를 변경할 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점 항목을 추가했습니다.");
 }
 
@@ -187,7 +189,7 @@ export async function deleteCriterionAction(criterionId: string, rubricId: strin
     return result.count === 1;
   });
   if (!deleted) return failure("점수가 저장되었거나 항목이 변경되어 삭제할 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점 항목을 삭제했습니다.");
 }
 
@@ -209,7 +211,7 @@ export async function moveCriterionAction(criterionId: string, rubricId: string,
     return true;
   });
   if (!moved) return failure("점수가 저장되었거나 항목이 변경되어 순서를 바꿀 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("");
 }
 
@@ -226,7 +228,7 @@ export async function updateCriterionAction(criterionId: string, rubricId: strin
     return true;
   });
   if (!updated) return failure("점수가 저장되었거나 항목이 변경되어 수정할 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("채점 항목을 변경했습니다.");
 }
 
@@ -248,7 +250,7 @@ export async function moveRubricAction(rubricId: string, programId: string, dire
     return true;
   });
   if (!moved) return failure("점수가 저장되었거나 채점표가 변경되어 순서를 바꿀 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success("");
 }
 
@@ -293,6 +295,6 @@ export async function setDivisionRubricModeAction(programId: string, divisionId:
   });
   if (outcome === "SCORED") return failure("이 분과 팀에 저장된 점수가 있어 상속 모드를 바꿀 수 없습니다.");
   if (outcome !== "OK") return failure("분과 또는 프로그램을 찾을 수 없습니다.");
-  refresh();
+  refresh(programId);
   return success(mode === "CUSTOM" ? "공통 채점표를 복제해 분과 전용 모드로 전환했습니다." : "분과 전용 채점표를 제거하고 공통 채점표 상속으로 전환했습니다.");
 }

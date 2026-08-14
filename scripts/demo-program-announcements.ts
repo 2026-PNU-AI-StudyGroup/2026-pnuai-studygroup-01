@@ -2,8 +2,8 @@ export type DemoProgramAnnouncementProgram = {
   name: string;
   startsAt: Date;
   endsAt: Date;
-  recruitmentStartsAt: Date;
-  recruitmentEndsAt: Date;
+  recruitmentStartsAt: Date | null;
+  recruitmentEndsAt: Date | null;
   executionStartsAt: Date;
   executionEndsAt: Date;
   submissionStartsAt: Date;
@@ -19,7 +19,9 @@ export type DemoProgramAnnouncement = {
   createdAt: Date;
 };
 
-type ProgramNoticeContext = DemoProgramAnnouncementProgram & {
+type ProgramNoticeContext = Omit<DemoProgramAnnouncementProgram, "recruitmentStartsAt" | "recruitmentEndsAt"> & {
+  recruitmentStartsAt: Date;
+  recruitmentEndsAt: Date;
   unit: string;
   contact: string;
   location: string;
@@ -155,7 +157,10 @@ export function buildDemoProgramAnnouncements(
   if (!profile || count === undefined) {
     throw new Error(`프로그램 공지 프로필이 없습니다: ${program.name}`);
   }
-  const context: ProgramNoticeContext = { ...program, ...profile };
+  if (!program.recruitmentStartsAt || !program.recruitmentEndsAt) {
+    throw new Error(`${program.name} 데모 공지는 프로젝트 모집 기간이 있는 프로그램에서만 생성할 수 있습니다.`);
+  }
+  const context: ProgramNoticeContext = { ...program, recruitmentStartsAt: program.recruitmentStartsAt, recruitmentEndsAt: program.recruitmentEndsAt, ...profile };
   const remaining = noticeTemplates.slice(1);
   const rotation = programIndex % remaining.length;
   const orderedTemplates = [

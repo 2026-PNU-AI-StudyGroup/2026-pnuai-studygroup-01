@@ -73,7 +73,8 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
   adminData?: AdminProjectCardData;
 }) {
   const href = `/topics/${topic.id}`;
-  const recruiting = !topic.studentProjectCreationEnabled && topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const hasRecruitmentPeriod = Boolean(topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt);
+  const recruiting = !topic.studentProjectCreationEnabled && hasRecruitmentPeriod && topic.recruitmentEnabled && topic.programRecruitmentStartsAt! <= now && topic.programRecruitmentEndsAt! > now && topic.memberCount < topic.capacity;
   const application = topic.ownApplicationStatus;
   const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === topic.id);
   const hasProjectAction = Boolean(application || (canApply && recruiting));
@@ -83,11 +84,11 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
     ? "neutral" as const
     : topic.memberCount >= topic.capacity
     ? "neutral" as const
-    : topic.programRecruitmentStartsAt > now
+    : !hasRecruitmentPeriod || topic.programRecruitmentStartsAt! > now
       ? "neutral" as const
-      : topic.programRecruitmentEndsAt <= now
+      : topic.programRecruitmentEndsAt! <= now
         ? "neutral" as const
-        : topic.programRecruitmentEndsAt.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1_000
+        : topic.programRecruitmentEndsAt!.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1_000
           ? "warning" as const
           : "success" as const;
 

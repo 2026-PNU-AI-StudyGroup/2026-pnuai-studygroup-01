@@ -342,7 +342,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           projectRegistrationStartsAt: Date;
           projectRegistrationEndsAt: Date;
           endsAt: Date;
-          recruitmentEndsAt: Date;
+          recruitmentEndsAt: Date | null;
           studentProjectCreationEnabled: boolean;
           projectTeamMinSize: number;
           projectTeamMaxSize: number;
@@ -371,7 +371,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           !topic ||
           topic.status !== "PENDING_APPROVAL"
         ) return "UNAVAILABLE";
-        if (topic.recruitmentEnabled && programs[0].recruitmentEndsAt <= input.decidedAt) return "UNAVAILABLE";
+        if (topic.recruitmentEnabled && (!programs[0].recruitmentEndsAt || programs[0].recruitmentEndsAt <= input.decidedAt)) return "UNAVAILABLE";
 
         const studentTeam = initialRequest.studentTeamId
           ? await lockStudentTeam(transaction, initialRequest.studentTeamId)

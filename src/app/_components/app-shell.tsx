@@ -34,7 +34,6 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         myProjects: "내 프로젝트",
         teamRecruit: "팀 모집",
         announcements: "공지사항",
-        allProjects: "전체 현황",
         mentoredProjects: "지도 현황",
         manageTopics: "주제 관리",
         projectApprovals: "프로젝트 승인",
@@ -45,7 +44,6 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         myProjects: "My projects",
         teamRecruit: "Recruit",
         announcements: "Notices",
-        allProjects: "Overview",
         mentoredProjects: "Advising",
         manageTopics: "Topic management",
         projectApprovals: "Project approvals",
@@ -62,7 +60,6 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   if (role === "ADMIN") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/topics?mode=manage&tab=overview", activePath: "/dashboard", label: label.allProjects, icon: "home" },
       { href: "/project-approvals", label: label.projectApprovals, icon: "approval" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
       { href: "/admin/professors", activePath: "/admin", label: label.manageOps, icon: "settings" },
@@ -78,6 +75,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
   const activePath = item.activePath ?? item.href;
+  if (role === "ADMIN" && item.href === "/topics") {
+    return isSectionActive("/topics", currentPath) && !isSectionActive("/topics/manage", currentPath);
+  }
   if (role === "STUDENT" && item.href === "/topics") {
     return isSectionActive("/topics", currentPath);
   }
@@ -90,7 +90,9 @@ function isNavigationActive(item: NavigationItem, currentPath: string, role: Use
       isSectionActive("/teams", currentPath);
   }
   if (role === "ADMIN" && activePath === "/admin") {
-    return currentPath.startsWith("/admin/") || currentPath.startsWith("/professor/");
+    return currentPath.startsWith("/admin/") ||
+      currentPath.startsWith("/professor/") ||
+      isSectionActive("/topics/manage", currentPath);
   }
   if (activePath !== "/professor/topics") return isSectionActive(activePath, currentPath);
   return currentPath.startsWith("/professor/");

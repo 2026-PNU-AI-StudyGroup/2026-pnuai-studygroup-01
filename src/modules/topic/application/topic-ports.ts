@@ -54,8 +54,8 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   studentProjectCreationEnabled: boolean;
   projectTeamMinSize?: number;
   projectTeamMaxSize?: number;
-  programRecruitmentStartsAt: Date;
-  programRecruitmentEndsAt: Date;
+  programRecruitmentStartsAt: Date | null;
+  programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
   programSubmissionStartsAt: Date;

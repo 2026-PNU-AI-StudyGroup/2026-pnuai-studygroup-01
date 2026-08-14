@@ -1,7 +1,7 @@
 import type { ProgramSidebarItem } from "@/modules/project-program/ui/program-sidebar";
 import { programLifecycleStatus, type ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
-import { type ProgramManagementTab, programManagementHref } from "@/modules/project-program/ui/program-management-query";
+import { type ProgramManagementTab, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
 
 export type ProgramSidebarQuery = {

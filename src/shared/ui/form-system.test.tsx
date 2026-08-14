@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ChoiceCard, DateTimeInput, FileInput, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
 
@@ -33,6 +33,17 @@ describe("form-system controls", () => {
     expect(proxy).not.toHaveAttribute("readonly");
     expect(proxy.willValidate).toBe(true);
     expect(proxy.checkValidity()).toBe(false);
+  });
+
+  it("제어형 값과 onValueChange만 사용해도 읽기 전용 필드 경고를 내지 않는다", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      render(<DateTimeInput aria-label="마감일" value="2026-08-07T13:20" onValueChange={vi.fn()} />);
+
+      expect(consoleError.mock.calls.flat().join(" ")).not.toContain("without an `onChange` handler");
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it("토글은 체크 상태와 FormData 이름을 유지한다", () => {

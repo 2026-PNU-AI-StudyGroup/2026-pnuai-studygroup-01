@@ -16,10 +16,9 @@ const {
   getPublicVotingResults,
   activeProjectsView,
   appShell,
-  listAdminOverview,
   listAdminPendingApprovalCounts,
-  programManagementWorkspace,
   parseProgramManagementTab,
+  redirect,
 } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
   listArchived: vi.fn(),
@@ -32,13 +31,15 @@ const {
   getPublicVotingResults: vi.fn(),
   activeProjectsView: vi.fn(),
   appShell: vi.fn(),
-  listAdminOverview: vi.fn(),
   listAdminPendingApprovalCounts: vi.fn(),
-  programManagementWorkspace: vi.fn(),
-  parseProgramManagementTab: vi.fn((value: string | undefined) => value === "settings" ? "settings" : "overview"),
+  parseProgramManagementTab: vi.fn((value: string | undefined) =>
+    ["settings", "rubric", "tracks", "reports", "votes"].includes(value ?? "")
+      ? value
+      : "settings"),
+  redirect: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({ getLocalizedMetadata: vi.fn() }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
 vi.mock("@/modules/project-program/application/manage-project-programs", () => ({
@@ -81,16 +82,11 @@ vi.mock("@/modules/team/application/list-admin-program-project-operations", () =
   ListAdminProgramProjectOperationsService: class {},
   parseAdminProjectOperationFilter: vi.fn().mockReturnValue("all"),
 }));
-vi.mock("@/modules/team/application/list-admin-project-overview", () => ({
-  ListAdminProjectOverviewService: class { execute = listAdminOverview; },
-}));
-vi.mock("@/modules/team/ui/admin-project-overview-query", () => ({
-  parseAdminProjectPage: vi.fn().mockReturnValue(1),
-  parseAdminProjectProgressFilter: vi.fn().mockReturnValue("all"),
-}));
-vi.mock("@/modules/project-program/ui/program-management-query", () => ({
+vi.mock("@/modules/project-program/ui/program-management-route", () => ({
   parseProgramManagementTab,
-  programManagementHref: vi.fn((programId: string) => `/topics?programId=${programId}&mode=manage`),
+  programCreateHref: vi.fn(() => "/topics/manage/new"),
+  programManagementHref: vi.fn((programId: string, tab = "settings") =>
+    tab === "settings" ? `/topics/manage/${programId}` : `/topics/manage/${programId}/${tab}`),
 }));
 vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
   TopicApprovalService: class {
@@ -108,7 +104,6 @@ vi.mock("@/modules/topic/infrastructure/prisma-topic-query-repository", () => ({
 vi.mock("@/modules/topic-approval/infrastructure/prisma-topic-approval-repository", () => ({ PrismaTopicApprovalRepository: class {} }));
 vi.mock("@/modules/team/infrastructure/prisma-admin-project-card-data-reader", () => ({ PrismaAdminProjectCardDataReader: class {} }));
 vi.mock("@/modules/team/infrastructure/prisma-admin-program-project-operations-reader", () => ({ PrismaAdminProgramProjectOperationsReader: class {} }));
-vi.mock("@/modules/team/infrastructure/prisma-admin-project-overview-reader", () => ({ PrismaAdminProjectOverviewReader: class {} }));
 vi.mock("@/modules/team/infrastructure/prisma-team-archive-query-repository", () => ({ PrismaTeamArchiveQueryRepository: class {} }));
 vi.mock("@/modules/project-voting/infrastructure/prisma-project-voting-repository", () => ({ PrismaProjectVotingRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: { topic: { findFirst: vi.fn() } } }));
@@ -136,13 +131,6 @@ vi.mock("@/app/topics/_components/project-search-form", () => ({ ProjectSearchFo
 vi.mock("@/app/topics/_components/admin-project-operations-summary", () => ({ AdminProjectOperationsSummary: () => null }));
 vi.mock("@/app/topics/_components/project-proposal-modal", () => ({ ProjectProposalModal: () => null }));
 vi.mock("@/app/topics/_components/student-project-registration-link", () => ({ StudentProjectRegistrationLink: () => null }));
-vi.mock("@/app/topics/_management/program-management-workspace", () => ({
-  ProgramCreateWorkspace: () => null,
-  ProgramManagementWorkspace: (props: unknown) => {
-    programManagementWorkspace(props);
-    return null;
-  },
-}));
 vi.mock("@/modules/announcement/ui/program-announcement-create-modal", () => ({ ProgramAnnouncementCreateModal: () => null }));
 vi.mock("@/app/topics/_actions/create-program-announcement-action", () => ({ createProgramAnnouncementAction: vi.fn() }));
 
@@ -160,10 +148,9 @@ describe("TopicsPage", () => {
     getVotingBallot.mockResolvedValue(undefined);
     getVotingResults.mockResolvedValue(null);
     getPublicVotingResults.mockResolvedValue(null);
-    listAdminOverview.mockResolvedValue([]);
     listAdminPendingApprovalCounts.mockResolvedValue([]);
-    programManagementWorkspace.mockReset();
     appShell.mockReset();
+    redirect.mockReset();
   });
 
   it.each([
@@ -210,9 +197,11 @@ describe("TopicsPage", () => {
   });
 
   it.each([
-    { tab: "overview", currentPath: "/dashboard" },
-    { tab: "settings", currentPath: "/admin/professors" },
-  ])("관리 탭 $tab을 전역 메뉴 문맥 $currentPath로 전달한다", async ({ tab, currentPath }) => {
+    { searchParams: { mode: "create" }, href: "/topics/manage/new" },
+    { searchParams: { mode: "manage", tab: "reports", programId: "program-1" }, href: "/topics/manage/program-1/reports" },
+    { searchParams: { mode: "manage", tab: "settings", programId: "program-1" }, href: "/topics/manage/program-1" },
+    { searchParams: { mode: "manage", tab: "overview", programId: "program-1" }, href: "/topics?programId=program-1" },
+  ])("기존 관리 주소를 $href로 이동한다", async ({ searchParams, href }) => {
     const program = {
       id: "program-1",
       name: "캡스톤",
@@ -222,32 +211,13 @@ describe("TopicsPage", () => {
     };
     getCurrentActor.mockResolvedValue({ id: "admin-1", name: "관리자", role: "ADMIN" });
     listPrograms.mockResolvedValue([program]);
+    redirect.mockImplementationOnce((target: string) => {
+      throw new Error(`REDIRECT:${target}`);
+    });
 
-    render(await TopicsPage({ searchParams: Promise.resolve({ mode: "manage", tab, programId: program.id }) }));
+    await expect(TopicsPage({ searchParams: Promise.resolve(searchParams) }))
+      .rejects.toThrow(`REDIRECT:${href}`);
 
-    expect(appShell).toHaveBeenCalledWith(expect.objectContaining({ currentPath }));
-  });
-
-  it("프로그램별 승인 대기 집계를 선택 프로그램 관리 화면에 전달한다", async () => {
-    const program = {
-      id: "program-1",
-      name: "캡스톤",
-      category: "캡스톤 디자인",
-      icon: "FOLDER",
-      startYear: 2026,
-      topicCount: 1,
-      isPublic: false,
-      endsAt: new Date("2026-12-31T00:00:00Z"),
-      divisions: [],
-      studentProjectCreationEnabled: false,
-    };
-    getCurrentActor.mockResolvedValue({ id: "admin-1", name: "관리자", role: "ADMIN" });
-    listPrograms.mockResolvedValue([program]);
-    listAdminPendingApprovalCounts.mockResolvedValue([{ programId: "program-1", count: 2 }]);
-
-    render(await TopicsPage({ searchParams: Promise.resolve({ mode: "manage", programId: "program-1" }) }));
-
-    expect(listAdminPendingApprovalCounts).toHaveBeenCalledWith(expect.objectContaining({ role: "ADMIN" }));
-    expect(programManagementWorkspace).toHaveBeenCalledWith(expect.objectContaining({ pendingApprovalCount: 2 }));
+    expect(redirect).toHaveBeenCalledWith(href);
   });
 });

@@ -71,6 +71,8 @@ export type UpdateProjectProgramSettingsOutcome =
   | { status: "VOTE_RESET_CONFIRMATION_REQUIRED"; impact: ProgramVoteResetImpact }
   | "DIVISIONS_REQUIRED";
 
+export type ChangeStudentProjectPolicyOutcome = "UPDATED" | "NOT_FOUND" | "TOPICS_EXIST";
+
 export interface ProjectProgramRepository {
   create(input: ProjectProgramDetails & ProjectProgramCreateSetup & { createdById: string }): Promise<string | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
@@ -82,7 +84,7 @@ export interface ProjectProgramRepository {
   setVisibility?(id: string, visible: boolean, changedAt: Date): Promise<boolean>;
   close?(id: string, changedById: string, changedAt: Date): Promise<boolean>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
-  changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number }): Promise<boolean>;
+  changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }): Promise<ChangeStudentProjectPolicyOutcome>;
   changeIcon(id: string, icon: ProgramIconKey): Promise<boolean>;
   findPublicActive?(id: string): Promise<{
     id: string;
@@ -90,8 +92,8 @@ export interface ProjectProgramRepository {
     endsAt: Date;
     projectRegistrationStartsAt?: Date;
     projectRegistrationEndsAt?: Date;
-    recruitmentStartsAt: Date;
-    recruitmentEndsAt: Date;
+    recruitmentStartsAt: Date | null;
+    recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
     submissionStartsAt: Date;
@@ -107,8 +109,8 @@ export interface ProjectProgramRepository {
     endsAt: Date;
     projectRegistrationStartsAt?: Date;
     projectRegistrationEndsAt?: Date;
-    recruitmentStartsAt: Date;
-    recruitmentEndsAt: Date;
+    recruitmentStartsAt: Date | null;
+    recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
     submissionStartsAt: Date;
@@ -195,13 +197,42 @@ export class ProjectProgramService {
     if (status === "OPEN") return this.setPublic(actor, id, true, now);
     return this.close(actor, id, now);
   }
-  async changeStudentProjectPolicy(actor: CurrentActor, id: string, input: { enabled: boolean; minSize: number; maxSize: number }) {
+  async changeStudentProjectPolicy(actor: CurrentActor, id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt?: Date | null; recruitmentEndsAt?: Date | null }) {
     assertProgramAdmin(actor);
+    const program = await this.repository.findById(id);
+    if (!program) throw new ProjectProgramOperationError("프로젝트 참여 방식을 변경할 프로그램이 없습니다.");
     const normalized = { ...input, minSize: input.enabled ? input.minSize : 1 };
     assertValidProjectTeamSizePolicy(normalized.minSize, normalized.maxSize);
-    if (!(await this.repository.changeStudentProjectPolicy(id, normalized))) {
-      throw new ProjectProgramOperationError("프로젝트 참여 방식을 변경할 프로그램이 없습니다.");
-    }
+    const recruitmentStartsAt = normalized.enabled
+      ? null
+      : program.studentProjectCreationEnabled
+        ? normalized.recruitmentStartsAt ?? null
+        : program.recruitmentStartsAt;
+    const recruitmentEndsAt = normalized.enabled
+      ? null
+      : program.studentProjectCreationEnabled
+        ? normalized.recruitmentEndsAt ?? null
+        : program.recruitmentEndsAt;
+    const validProgram = normalizeProjectProgram({
+      ...program,
+      projectRegistrationStartsAt: program.projectRegistrationStartsAt ?? program.startsAt,
+      projectRegistrationEndsAt: program.projectRegistrationEndsAt ?? program.endsAt,
+      studentProjectCreationEnabled: normalized.enabled,
+      projectTeamMinSize: normalized.minSize,
+      projectTeamMaxSize: normalized.maxSize,
+      recruitmentStartsAt,
+      recruitmentEndsAt,
+    });
+    const outcome = await this.repository.changeStudentProjectPolicy(id, {
+      enabled: normalized.enabled,
+      minSize: validProgram.projectTeamMinSize!,
+      maxSize: validProgram.projectTeamMaxSize!,
+      recruitmentStartsAt: validProgram.recruitmentStartsAt,
+      recruitmentEndsAt: validProgram.recruitmentEndsAt,
+    });
+    if (outcome === "UPDATED") return;
+    if (outcome === "TOPICS_EXIST") throw new ProjectProgramOperationError("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
+    throw new ProjectProgramOperationError("프로젝트 참여 방식을 변경할 프로그램이 없습니다.");
   }
   async changeIcon(actor: CurrentActor, id: string, icon: ProgramIconKey) {
     assertProgramAdmin(actor);

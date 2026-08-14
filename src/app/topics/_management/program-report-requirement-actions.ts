@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { ProgramReportDefinitionService, type ProgramReportDefinitionOutcome } from "@/modules/report/application/manage-program-report-definitions";
 import { PrismaProgramReportDefinitionRepository } from "@/modules/report/infrastructure/prisma-program-report-definition-repository";
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
@@ -28,9 +29,10 @@ function parseDefinition(formData: FormData) {
   });
 }
 
-function refresh() {
+function refresh(programId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/topics");
+  revalidatePath(programManagementHref(programId, "reports"));
 }
 
 export async function createProgramReportDefinitionAction(programId: string, _state: ProgramReportActionState, formData: FormData): Promise<ProgramReportActionState> {
@@ -41,7 +43,7 @@ export async function createProgramReportDefinitionAction(programId: string, _st
     const outcome = await service().create(await admin(), programId, parsed.data);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
-    refresh();
+    refresh(programId);
     return success("보고서를 프로그램의 현재 팀에 추가했습니다.");
   } catch (cause) {
     return error(cause instanceof Error ? cause.message : "보고서를 추가할 수 없습니다.");
@@ -55,7 +57,7 @@ export async function updateProgramReportDefinitionAction(definitionId: string, 
     const outcome = await service().update(await admin(), definitionId, parsed.data);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
-    refresh();
+    refresh(programId);
     return success("보고서 설정을 변경했습니다.");
   } catch (cause) {
     return error(cause instanceof Error ? cause.message : "보고서 설정을 변경할 수 없습니다.");
@@ -69,7 +71,7 @@ export async function moveProgramReportDefinitionAction(definitionId: string, pr
     const outcome = await service().move(await admin(), definitionId, direction);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
-    refresh();
+    refresh(programId);
     return success("");
   } catch (cause) {
     return error(cause instanceof Error ? cause.message : "보고서 순서를 변경할 수 없습니다.");
@@ -83,7 +85,7 @@ export async function archiveProgramReportDefinitionAction(definitionId: string,
     const outcome = await service().archive(await admin(), definitionId);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
-    refresh();
+    refresh(programId);
     return success("보고서를 보관했습니다.");
   } catch (cause) {
     return error(cause instanceof Error ? cause.message : "보고서를 보관할 수 없습니다.");

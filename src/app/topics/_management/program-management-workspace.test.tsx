@@ -17,7 +17,7 @@ const program = {
 
 describe("ProgramManagementHeader", () => {
   it("승인 대기가 있으면 해당 프로그램의 대기 요청으로 연결한다", () => {
-    render(<ProgramManagementHeader program={program} tab="overview" pendingApprovalCount={2} />);
+    render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={2} />);
 
     expect(screen.getByRole("link", { name: "승인 대기 2건 · 검토하기" })).toHaveAttribute(
       "href",
@@ -26,7 +26,7 @@ describe("ProgramManagementHeader", () => {
   });
 
   it("승인 대기가 없으면 검토 링크를 표시하지 않는다", () => {
-    render(<ProgramManagementHeader program={program} tab="overview" pendingApprovalCount={0} />);
+    render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={0} />);
 
     expect(screen.queryByText("검토하기")).not.toBeInTheDocument();
   });

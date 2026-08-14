@@ -13,7 +13,7 @@ import { ProgramForm } from "@/app/topics/_management/program-form";
 
 describe("ProgramForm", () => {
   function renderForm() {
-    return render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} cancelHref="/topics?programId=program-1&mode=manage&tab=overview" />);
+    return render(<ProgramForm categoryOptions={["캡스톤", "해커톤"]} cancelHref="/topics/manage/program-1" />);
   }
 
   it("기본 정보에 분과 설정을 포함하고 채점표·보고서까지 6단계로 탐색한다", () => {
@@ -29,8 +29,10 @@ describe("ProgramForm", () => {
     fireEvent.click(screen.getByRole("radio", { name: "전체 공개" }));
     expect(screen.getByRole("radio", { name: "전체 공개" })).toBeChecked();
     expect(screen.getByRole("textbox", { name: "분과 이름" })).toHaveAttribute("placeholder", "예: 창업 트랙, 융합 트랙");
+    expect(screen.getByRole("button", { name: "운영 설정" })).toHaveAttribute("aria-controls", "program-operation");
+    expect(screen.getByRole("button", { name: "운영 설정" })).toHaveTextContent("2. 운영 설정");
     expect(screen.getByRole("button", { name: "일정" })).toHaveAttribute("aria-controls", "program-schedule");
-    expect(screen.getByRole("button", { name: "일정" })).toHaveTextContent("2. 일정");
+    expect(screen.getByRole("button", { name: "일정" })).toHaveTextContent("3. 일정");
     expect(screen.getByRole("button", { name: "운영 설정" })).toHaveAttribute("aria-controls", "program-operation");
     expect(screen.getByRole("button", { name: "투표" })).toHaveAttribute("aria-controls", "program-voting");
     expect(screen.getByRole("button", { name: "채점표" })).toHaveAttribute("aria-controls", "program-rubrics");
@@ -47,7 +49,7 @@ describe("ProgramForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "기본 정보" }));
     fireEvent.click(screen.getByRole("button", { name: "다음" }));
-    expect(screen.getByRole("heading", { name: "2. 일정" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "2. 운영 설정" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "이전" })).toBeInTheDocument();
   });
 
@@ -152,6 +154,10 @@ describe("ProgramForm", () => {
     expect(screen.getByRole("spinbutton", { name: "팀 최소 인원" })).toHaveValue(2);
     expect(screen.getByRole("spinbutton", { name: "팀 최대 인원" })).toHaveValue(6);
     expect(screen.getByRole("group", { name: "팀 인원" })).toHaveTextContent("~");
+    fireEvent.click(screen.getByRole("button", { name: "일정" }));
+    expect(screen.queryByText("모집 기간")).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="recruitmentStartsAt"]')).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="recruitmentEndsAt"]')).not.toBeInTheDocument();
   });
 
   it("명시적인 목적지로 돌아가는 취소 버튼을 sticky action bar에 둔다", () => {
@@ -159,7 +165,7 @@ describe("ProgramForm", () => {
 
     expect(screen.getByRole("link", { name: "프로그램 생성을 취소하고 관리 화면으로 돌아가기" })).toHaveAttribute(
       "href",
-      "/topics?programId=program-1&mode=manage&tab=overview",
+      "/topics/manage/program-1",
     );
     const actionBar = document.querySelector("[data-program-form-actions]");
     expect(actionBar).toContainElement(screen.getByRole("button", { name: "다음" }));

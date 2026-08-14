@@ -39,13 +39,13 @@ const baseResults: ProgramVotingResults = {
 
 describe("ProgramVoteResults", () => {
   it("투표 예정 상태에도 정책과 후보 요약을 표시한다", () => {
-    render(<ProgramVoteResults results={baseResults} refreshedAt="2026. 8. 19. 12:00:00" policySettingsHref="/topics?programId=program-1&mode=manage&tab=settings#voting-policy" />);
+    render(<ProgramVoteResults results={baseResults} refreshedAt="2026. 8. 19. 12:00:00" policySettingsHref="/topics/manage/program-1#voting-policy" />);
 
     expect(screen.getAllByText("투표 예정")).toHaveLength(2);
     expect(screen.getByText("프로그램 전체 투표 · 인당 3표")).toBeInTheDocument();
     expect(screen.getByText("후보 프로젝트").parentElement).toHaveTextContent("1개");
     expect(screen.getByText("투표가 시작되면 득표현황을 실시간으로 확인할 수 있습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "투표 정책 수정" })).toHaveAttribute("href", "/topics?programId=program-1&mode=manage&tab=settings#voting-policy");
+    expect(screen.getByRole("link", { name: "투표 정책 수정" })).toHaveAttribute("href", "/topics/manage/program-1#voting-policy");
   });
 
   it("분과별 결과에 섹션별 프로젝트 수와 총 표 수를 표시하고 투표자는 접어 둔다", () => {
@@ -61,7 +61,7 @@ describe("ProgramVoteResults", () => {
       ],
     };
 
-    render(<ProgramVoteResults results={results} refreshedAt="2026. 8. 20. 12:00:00" policySettingsHref="/topics?programId=program-1&mode=manage&tab=settings#voting-policy" />);
+    render(<ProgramVoteResults results={results} refreshedAt="2026. 8. 20. 12:00:00" policySettingsHref="/topics/manage/program-1#voting-policy" />);
 
     expect(screen.getByRole("heading", { name: "창업 분과" }).parentElement).toHaveTextContent("프로젝트 1개 · 4표");
     expect(screen.getByRole("heading", { name: "미분과" }).parentElement).toHaveTextContent("프로젝트 1개 · 3표");
@@ -78,7 +78,7 @@ describe("ProgramVoteResults", () => {
       results: [{ ...baseResults.results[0], divisionId: "startup", divisionName: "창업" }],
     };
 
-    render(<I18nProvider locale="en"><ProgramVoteResults results={results} refreshedAt="2026. 8. 20. 12:00:00" policySettingsHref="/topics?programId=program-1&mode=manage&tab=settings#voting-policy" /></I18nProvider>);
+    render(<I18nProvider locale="en"><ProgramVoteResults results={results} refreshedAt="2026. 8. 20. 12:00:00" policySettingsHref="/topics/manage/program-1#voting-policy" /></I18nProvider>);
 
     expect(screen.getByRole("heading", { name: "창업 division" })).toBeInTheDocument();
   });

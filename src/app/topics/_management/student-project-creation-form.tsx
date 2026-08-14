@@ -5,13 +5,23 @@ import { useActionState, useState } from "react";
 import { changeStudentProjectCreationAction } from "@/app/topics/_management/program-actions";
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
 
-export function StudentProjectCreationForm({ id, enabled, minSize, maxSize, disabled = false }: {
+function koreanDateTimeLocal(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
+}
+
+export function StudentProjectCreationForm({ id, enabled, minSize, maxSize, recruitmentStartsAt, recruitmentEndsAt, disabled = false }: {
   id: string;
   enabled: boolean;
   minSize: number;
   maxSize: number;
+  recruitmentStartsAt: Date | null;
+  recruitmentEndsAt: Date | null;
   disabled?: boolean;
 }) {
   const [proposalMode, setProposalMode] = useState(enabled);
@@ -35,6 +45,14 @@ export function StudentProjectCreationForm({ id, enabled, minSize, maxSize, disa
             <TextInput id="policy-project-team-max-size" name="projectTeamMaxSize" type="number" min={1} max={100} defaultValue={maxSize} disabled={disabled} required />
           </FormField>
         </div>
+        {enabled && !proposalMode ? <div className="grid gap-3 sm:grid-cols-2">
+          <FormField id="policy-recruitment-starts-at" label="모집 시작" required>
+            <DateTimeInput id="policy-recruitment-starts-at" name="recruitmentStartsAt" defaultValue={recruitmentStartsAt ? koreanDateTimeLocal(recruitmentStartsAt) : ""} disabled={disabled} required />
+          </FormField>
+          <FormField id="policy-recruitment-ends-at" label="모집 종료" required>
+            <DateTimeInput id="policy-recruitment-ends-at" name="recruitmentEndsAt" defaultValue={recruitmentEndsAt ? koreanDateTimeLocal(recruitmentEndsAt) : ""} disabled={disabled} required />
+          </FormField>
+        </div> : null}
         <div className="form-action-bar mt-5">
           <div>{state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}</div>
           {disabled ? <p className="text-sm text-[var(--muted)]"><UiText>{"마감된 프로그램에서는 이 설정을 변경할 수 없습니다."}</UiText></p> : <button type="submit" className="button-secondary max-sm:w-full" disabled={pending}><UiText>{pending ? "저장 중" : "참여 방식 저장"}</UiText></button>}

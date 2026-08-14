@@ -116,7 +116,7 @@ describe("buildProgramSidebarItems", () => {
       visibility: "private",
       projectCount: 4,
       pendingApprovalCount: 3,
-      href: "/topics?programId=open-2026&mode=manage&tab=settings",
+      href: "/topics/manage/open-2026",
     }));
   });
 });

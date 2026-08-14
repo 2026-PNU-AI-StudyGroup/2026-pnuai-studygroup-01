@@ -6,6 +6,7 @@ import { ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError
 import { InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
 import { PROGRAM_ICON_KEYS } from "@/modules/project-program/domain/program-icon";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -38,8 +39,8 @@ const programSettingsSchema = z.object({
   advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"),
   projectRegistrationStartsAt: koreanLocalDateTime,
   projectRegistrationEndsAt: koreanLocalDateTime,
-  recruitmentStartsAt: koreanLocalDateTime,
-  recruitmentEndsAt: koreanLocalDateTime,
+  recruitmentStartsAt: koreanLocalDateTime.optional(),
+  recruitmentEndsAt: koreanLocalDateTime.optional(),
   executionStartsAt: koreanLocalDateTime,
   executionEndsAt: koreanLocalDateTime,
   submissionStartsAt: koreanLocalDateTime,
@@ -105,6 +106,9 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
     reportDefinitions: parseJsonArray(formData.get("reportDefinitions")),
   });
   if (!parsed.success || !settings.success || !definitions.success) return { status: "error", message: "프로그램 내용과 일정·채점표·보고서 설정을 확인해 주세요." };
+  if (!parsed.data.studentProjectCreationEnabled && (!settings.data.recruitmentStartsAt || !settings.data.recruitmentEndsAt)) {
+    return { status: "error", message: "등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요." };
+  }
   let programId: string;
   try {
     const { visibility, ...program } = parsed.data;
@@ -113,8 +117,8 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
       isPublic: visibility === "PUBLIC",
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
-      recruitmentStartsAt: settings.data.recruitmentStartsAt,
-      recruitmentEndsAt: settings.data.recruitmentEndsAt,
+      recruitmentStartsAt: parsed.data.studentProjectCreationEnabled ? null : settings.data.recruitmentStartsAt!,
+      recruitmentEndsAt: parsed.data.studentProjectCreationEnabled ? null : settings.data.recruitmentEndsAt!,
       executionStartsAt: settings.data.executionStartsAt,
       executionEndsAt: settings.data.executionEndsAt,
       submissionStartsAt: settings.data.submissionStartsAt,
@@ -135,7 +139,8 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/topics");
-  redirect(`/topics?programId=${encodeURIComponent(programId)}&mode=manage&tab=settings`);
+  revalidatePath(programManagementHref(programId));
+  redirect(programManagementHref(programId));
 }
 
 export async function updateProgramSettingsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
@@ -152,8 +157,8 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
       advisorEnabled: settings.data.advisorEnabled,
       projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
       projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
-      recruitmentStartsAt: settings.data.recruitmentStartsAt,
-      recruitmentEndsAt: settings.data.recruitmentEndsAt,
+      recruitmentStartsAt: settings.data.recruitmentStartsAt ?? null,
+      recruitmentEndsAt: settings.data.recruitmentEndsAt ?? null,
       executionStartsAt: settings.data.executionStartsAt,
       executionEndsAt: settings.data.executionEndsAt,
       submissionStartsAt: settings.data.submissionStartsAt,
@@ -179,6 +184,7 @@ export async function updateProgramSettingsAction(_state: ProgramActionState, fo
     throw error;
   }
   revalidatePath("/topics");
+  revalidatePath(programManagementHref(programId.data));
   revalidatePath("/professor/topics/new");
   revalidatePath("/project-approvals");
   return { status: "success", message: "프로그램 정보와 운영 설정을 저장했습니다." };
@@ -189,22 +195,27 @@ export async function changeProgramIconAction(_state: ProgramActionState, formDa
   if (!parsed.success) return { status: "error", message: "프로그램 아이콘을 다시 선택해 주세요." };
   try { await service().changeIcon(await actor(), parsed.data.programId, parsed.data.icon); }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/topics"); revalidatePath("/dashboard");
+  revalidatePath("/topics");
+  revalidatePath(programManagementHref(parsed.data.programId));
+  revalidatePath("/dashboard");
   return { status: "success", message: "프로그램 아이콘을 변경했습니다." };
 }
 
 export async function changeStudentProjectCreationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int() }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int(), recruitmentStartsAt: koreanLocalDateTime.optional(), recruitmentEndsAt: koreanLocalDateTime.optional() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "프로젝트 참여 방식과 팀 인원을 다시 확인해 주세요." };
   try {
     await service().changeStudentProjectPolicy(await actor(), parsed.data.programId, {
       enabled: parsed.data.enabled === "true",
       minSize: parsed.data.projectTeamMinSize,
       maxSize: parsed.data.projectTeamMaxSize,
+      recruitmentStartsAt: parsed.data.recruitmentStartsAt,
+      recruitmentEndsAt: parsed.data.recruitmentEndsAt,
     });
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/topics");
+  revalidatePath(programManagementHref(parsed.data.programId));
   return { status: "success", message: "프로젝트 참여 방식을 저장했습니다." };
 }
 
@@ -224,5 +235,6 @@ export async function changeProgramStatusAction(_state: ProgramActionState, form
   }
   catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/topics");
+  revalidatePath(programManagementHref(parsed.data.programId));
   return { status: "success", message: parsed.data.operation === "CLOSE" ? "프로그램 운영을 마감했습니다." : parsed.data.visible === "true" ? "공개했습니다." : "비공개로 전환했습니다." };
 }

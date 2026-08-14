@@ -325,7 +325,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       </label>
       <div className="rounded-lg bg-[var(--surface-subtle)] px-4 py-3 text-sm">
         <span className="block text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 기간"}</UiText></span>
-        <span className="mt-1 block font-semibold"><UiText>{selectedProgram ? `${programDate.format(selectedProgram.recruitmentStartsAt)} – ${programDate.format(selectedProgram.recruitmentEndsAt)}` : "프로그램을 선택하세요"}</UiText></span>
+        <span className="mt-1 block font-semibold"><UiText>{selectedProgram?.recruitmentStartsAt && selectedProgram.recruitmentEndsAt ? `${programDate.format(selectedProgram.recruitmentStartsAt)} – ${programDate.format(selectedProgram.recruitmentEndsAt)}` : "모집 기간 없음"}</UiText></span>
       </div>
       </FormSection>
       </> : null}

@@ -59,7 +59,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const [sidebarItems, application, leaderTeams] = await Promise.all([
     actor.role === "ADMIN"
       ? new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor)
-        .then((programs) => buildAdminProgramSidebarItems(programs, "projects", "overview", now))
+        .then((programs) => buildAdminProgramSidebarItems(programs, "projects", "settings", now))
       : loadProgramSidebarItems("active", {}, topicAudience),
     actor.role === "STUDENT" ? applicationService.findForTopic(actor, topic.id) : Promise.resolve(null),
     actor.role === "STUDENT"
@@ -67,7 +67,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       : Promise.resolve([]),
   ]);
   const directApplicationsEnabled = !topic.studentProjectCreationEnabled;
-  const recruiting = directApplicationsEnabled && topic.recruitmentEnabled && topic.programRecruitmentStartsAt <= now && topic.programRecruitmentEndsAt > now && topic.memberCount < topic.capacity;
+  const recruiting = directApplicationsEnabled && topic.recruitmentEnabled && Boolean(topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt) && topic.programRecruitmentStartsAt! <= now && topic.programRecruitmentEndsAt! > now && topic.memberCount < topic.capacity;
   const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
@@ -108,7 +108,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <>
           <h2 id="topic-schedule" className="text-xl font-bold"><UiText>{"프로그램 일정"}</UiText></h2>
           <p className="mt-2 text-sm font-semibold text-[var(--muted)]"><UiText>{`소속 프로그램 · 분과: ${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
-          <dl className="mt-5"><Period label="프로그램 모집 기간" startsAt={topic.programRecruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /><Period label="수행 기간" startsAt={topic.programExecutionStartsAt} endsAt={topic.programExecutionEndsAt} /><Period label="제출 기간" startsAt={topic.programSubmissionStartsAt} endsAt={topic.programSubmissionEndsAt} /></dl>
+          <dl className="mt-5">{topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt ? <Period label="프로그램 모집 기간" startsAt={topic.programRecruitmentStartsAt} endsAt={topic.programRecruitmentEndsAt} /> : null}<Period label="수행 기간" startsAt={topic.programExecutionStartsAt} endsAt={topic.programExecutionEndsAt} /><Period label="제출 기간" startsAt={topic.programSubmissionStartsAt} endsAt={topic.programSubmissionEndsAt} /></dl>
         </>
       }
     >

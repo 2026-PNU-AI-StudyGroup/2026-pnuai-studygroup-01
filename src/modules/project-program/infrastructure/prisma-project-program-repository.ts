@@ -5,6 +5,7 @@ import type {
   ProjectProgramRepository,
   ProjectProgramCreateSetup,
   ProjectProgramSettings,
+  ChangeStudentProjectPolicyOutcome,
   UpdateProjectProgramSettingsOutcome,
 } from "@/modules/project-program/application/manage-project-programs";
 import { getProgramStartYear, type ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
@@ -228,16 +229,32 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     return status === "OPEN" ? this.setVisibility(id, true, changedAt) : this.close(id, changedById, changedAt);
   }
 
-  async changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number }): Promise<boolean> {
-    const result = await this.client.projectProgram.updateMany({
-      where: { id },
-      data: {
-        studentProjectCreationEnabled: input.enabled,
-        projectTeamMinSize: input.minSize,
-        projectTeamMaxSize: input.maxSize,
-      },
+  async changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }): Promise<ChangeStudentProjectPolicyOutcome> {
+    return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string; studentProjectCreationEnabled: boolean }>>(Prisma.sql`
+        SELECT "id", "studentProjectCreationEnabled"
+        FROM "project_program"
+        WHERE "id" = ${id}
+        FOR UPDATE
+      `);
+      const program = programs[0];
+      if (!program) return "NOT_FOUND";
+      if (program.studentProjectCreationEnabled !== input.enabled) {
+        const topic = await transaction.topic.findFirst({ where: { programId: id }, select: { id: true } });
+        if (topic) return "TOPICS_EXIST";
+      }
+      await transaction.projectProgram.update({
+        where: { id },
+        data: {
+          studentProjectCreationEnabled: input.enabled,
+          projectTeamMinSize: input.minSize,
+          projectTeamMaxSize: input.maxSize,
+          recruitmentStartsAt: input.recruitmentStartsAt,
+          recruitmentEndsAt: input.recruitmentEndsAt,
+        },
+      });
+      return "UPDATED";
     });
-    return result.count === 1;
   }
 
   async changeIcon(id: string, icon: ProgramIconKey): Promise<boolean> {
@@ -251,8 +268,8 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     endsAt: Date;
     projectRegistrationStartsAt: Date;
     projectRegistrationEndsAt: Date;
-    recruitmentStartsAt: Date;
-    recruitmentEndsAt: Date;
+    recruitmentStartsAt: Date | null;
+    recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
     submissionStartsAt: Date;

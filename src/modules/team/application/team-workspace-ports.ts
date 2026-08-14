@@ -50,8 +50,8 @@ export type TeamWorkspace = TeamListItem & {
     canContribute: boolean;
   };
   schedule: {
-    recruitmentStartsAt: Date;
-    programRecruitmentEndsAt: Date;
+    recruitmentStartsAt: Date | null;
+    programRecruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
     submissionStartsAt: Date;

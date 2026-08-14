@@ -13,8 +13,8 @@ export function ProjectPortalHero({ view, program, search, titleAction }: {
     endsAt?: Date | string;
     projectRegistrationStartsAt?: Date | string;
     projectRegistrationEndsAt?: Date | string;
-    recruitmentStartsAt?: Date | string;
-    recruitmentEndsAt?: Date | string;
+    recruitmentStartsAt?: Date | string | null;
+    recruitmentEndsAt?: Date | string | null;
     executionStartsAt?: Date | string;
     executionEndsAt?: Date | string;
     submissionStartsAt?: Date | string;
@@ -77,8 +77,8 @@ function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, project
   endsAt: Date | string;
   projectRegistrationStartsAt?: Date | string;
   projectRegistrationEndsAt?: Date | string;
-  recruitmentStartsAt?: Date | string;
-  recruitmentEndsAt?: Date | string;
+  recruitmentStartsAt?: Date | string | null;
+  recruitmentEndsAt?: Date | string | null;
   executionStartsAt?: Date | string;
   executionEndsAt?: Date | string;
   submissionStartsAt?: Date | string;

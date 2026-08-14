@@ -21,8 +21,8 @@ export type ProjectProgramDetails = {
   endsAt: Date;
   projectRegistrationStartsAt: Date;
   projectRegistrationEndsAt: Date;
-  recruitmentStartsAt: Date;
-  recruitmentEndsAt: Date;
+  recruitmentStartsAt: Date | null;
+  recruitmentEndsAt: Date | null;
   executionStartsAt: Date;
   executionEndsAt: Date;
   submissionStartsAt: Date;
@@ -64,6 +64,8 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
       ? input.projectTeamMinSize ?? DEFAULT_PROJECT_TEAM_MIN_SIZE
       : 1,
     projectTeamMaxSize: input.projectTeamMaxSize ?? DEFAULT_PROJECT_TEAM_MAX_SIZE,
+    recruitmentStartsAt: input.studentProjectCreationEnabled ? null : input.recruitmentStartsAt,
+    recruitmentEndsAt: input.studentProjectCreationEnabled ? null : input.recruitmentEndsAt,
   };
   if (!value.name || value.name.length > 200) throw new InvalidProjectProgramError("프로그램명은 1자 이상 200자 이하여야 합니다.");
   if (!value.category || value.category.length > 100) throw new InvalidProjectProgramError("분류는 1자 이상 100자 이하여야 합니다.");
@@ -72,6 +74,9 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
   assertProjectRegistrationPeriod(value.projectRegistrationStartsAt, value.projectRegistrationEndsAt);
   if (value.projectRegistrationStartsAt < value.startsAt || value.projectRegistrationEndsAt > value.endsAt) {
     throw new InvalidProjectProgramError("프로젝트 등록 기간은 프로그램 운영 기간 안에 있어야 합니다.");
+  }
+  if (!value.studentProjectCreationEnabled && (!value.recruitmentStartsAt || !value.recruitmentEndsAt)) {
+    throw new InvalidProjectProgramError("등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요.");
   }
   assertValidProgramSchedule(value);
   assertValidProjectTeamSizePolicy(value.projectTeamMinSize, value.projectTeamMaxSize);
@@ -109,8 +114,12 @@ export function assertValidProgramSchedule(schedule: Pick<ProjectProgramDetails,
   "executionStartsAt" | "executionEndsAt" |
   "submissionStartsAt" | "submissionEndsAt"
 >) {
+  const hasRecruitmentPeriod = schedule.recruitmentStartsAt !== null || schedule.recruitmentEndsAt !== null;
+  if (hasRecruitmentPeriod && (!schedule.recruitmentStartsAt || !schedule.recruitmentEndsAt)) {
+    throw new InvalidProjectProgramError("프로젝트 모집 기간의 시작과 종료를 함께 입력해 주세요.");
+  }
   const periods = [
-    ["프로젝트 모집", schedule.recruitmentStartsAt, schedule.recruitmentEndsAt],
+    ...(schedule.recruitmentStartsAt && schedule.recruitmentEndsAt ? [["프로젝트 모집", schedule.recruitmentStartsAt, schedule.recruitmentEndsAt] as const] : []),
     ["수행", schedule.executionStartsAt, schedule.executionEndsAt],
     ["제출", schedule.submissionStartsAt, schedule.submissionEndsAt],
   ] as const;
@@ -126,7 +135,12 @@ export function isProgramRecruitmentOpen(
   program: Pick<ProjectProgramDetails, "recruitmentStartsAt" | "recruitmentEndsAt">,
   now: Date,
 ) {
-  return program.recruitmentStartsAt <= now && now < program.recruitmentEndsAt;
+  return Boolean(
+    program.recruitmentStartsAt &&
+    program.recruitmentEndsAt &&
+    program.recruitmentStartsAt <= now &&
+    now < program.recruitmentEndsAt,
+  );
 }
 
 export function isProjectRegistrationOpen(

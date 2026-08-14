@@ -83,10 +83,10 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
                       <dt className="text-[var(--muted)] lg:text-xs"><UiText>{"모집 정원"}</UiText></dt>
                       <dd className="font-semibold lg:mt-1">{topic.capacity}<UiText>{"명"}</UiText></dd>
                     </dl>
-                    <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block">
+                    {topic.programRecruitmentEndsAt ? <dl className="grid grid-cols-[5rem_1fr] gap-1 text-sm lg:block">
                       <dt className="text-[var(--muted)] lg:text-xs"><UiText>{"프로그램 모집 마감"}</UiText></dt>
                       <dd className="font-semibold lg:mt-1"><UiDate value={topic.programRecruitmentEndsAt} mode="dateTime" /></dd>
-                    </dl>
+                    </dl> : null}
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                       <IconLink href={`/professor/topics/${topic.id}`} aria-label={`${topic.title} 상세`} title="프로젝트 상세"><ChevronIcon className="size-5" /></IconLink>
                       <TopicStatusButton

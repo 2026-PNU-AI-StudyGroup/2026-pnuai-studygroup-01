@@ -20,8 +20,8 @@ import { TagInput } from "@/shared/ui/tag-input";
 
 const PROGRAM_FORM_SECTIONS = [
   { id: "program-basic", label: "기본 정보" },
-  { id: "program-schedule", label: "일정" },
   { id: "program-operation", label: "운영 설정" },
+  { id: "program-schedule", label: "일정" },
   { id: "program-voting", label: "투표" },
   { id: "program-rubrics", label: "채점표" },
   { id: "program-reports", label: "보고서" },
@@ -212,17 +212,7 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
         <input type="hidden" name="icon" value="FOLDER" />
       </FormSection>
 
-      <FormSection id="program-schedule" hidden={activeSection !== "program-schedule"} title="2. 일정" description="프로그램 운영과 관련된 일정을 설정하세요." className={styles.section} contentClassName={styles.periodList} density="compact" sectionMarker="program-create">
-        <ProgramPeriodRow label="전체 운영 기간" fieldLabel="운영" emphasis startId="program-starts-at" startName="startsAt" endId="program-ends-at" endName="endsAt" />
-        <div className={styles.detailPeriods}>
-          <strong className={styles.detailPeriodsTitle}><UiText>{"세부 일정"}</UiText></strong>
-          <ProgramPeriodRow label="등록 기간" startId="program-registration-starts-at" startName="projectRegistrationStartsAt" endId="program-registration-ends-at" endName="projectRegistrationEndsAt" />
-          <ProgramPeriodRow label="모집 기간" startId="program-recruitment-starts-at" startName="recruitmentStartsAt" endId="program-recruitment-ends-at" endName="recruitmentEndsAt" />
-          <ProgramPeriodRow label="수행 기간" startId="program-execution-starts-at" startName="executionStartsAt" endId="program-execution-ends-at" endName="executionEndsAt" />
-        </div>
-      </FormSection>
-
-      <FormSection id="program-operation" hidden={activeSection !== "program-operation"} title="3. 운영 설정" description="프로그램의 운영 방식을 설정하세요." className={styles.section} contentClassName={styles.operationGrid} density="compact" sectionMarker="program-create">
+      <FormSection id="program-operation" hidden={activeSection !== "program-operation"} title="2. 운영 설정" description="프로그램의 운영 방식을 설정하세요." className={styles.section} contentClassName={styles.operationGrid} density="compact" sectionMarker="program-create">
         <fieldset className={styles.radioGroup}>
           <legend><UiText>{"지도교수 유무"}</UiText></legend>
           <ChoiceCard variant="inline" name="advisorEnabled" value="true" checked={advisorEnabled === true} onChange={() => setAdvisorEnabled(true)} required label="지도교수 있음" />
@@ -237,6 +227,16 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
           <strong><UiText>{"팀 인원"}</UiText></strong>
           <p><UiText>{studentProjectCreationEnabled ? "프로젝트를 제안할 수 있는 팀의 인원 범위" : "한 팀이 구성할 수 있는 최대 인원"}</UiText></p>
           <TeamSizeRange studentProjectCreationEnabled={studentProjectCreationEnabled} teamMinSize={teamMinSize} teamMaxSize={teamMaxSize} onTeamMinSizeChange={setTeamMinSize} onTeamMaxSizeChange={(value) => { setTeamMaxSize(value); if (teamMinSize > value) setTeamMinSize(value); }} />
+        </div>
+      </FormSection>
+
+      <FormSection id="program-schedule" hidden={activeSection !== "program-schedule"} title="3. 일정" description="프로그램 운영과 관련된 일정을 설정하세요." className={styles.section} contentClassName={styles.periodList} density="compact" sectionMarker="program-create">
+        <ProgramPeriodRow label="전체 운영 기간" fieldLabel="운영" emphasis startId="program-starts-at" startName="startsAt" endId="program-ends-at" endName="endsAt" />
+        <div className={styles.detailPeriods}>
+          <strong className={styles.detailPeriodsTitle}><UiText>{"세부 일정"}</UiText></strong>
+          <ProgramPeriodRow label="등록 기간" startId="program-registration-starts-at" startName="projectRegistrationStartsAt" endId="program-registration-ends-at" endName="projectRegistrationEndsAt" />
+          {!studentProjectCreationEnabled ? <ProgramPeriodRow label="모집 기간" startId="program-recruitment-starts-at" startName="recruitmentStartsAt" endId="program-recruitment-ends-at" endName="recruitmentEndsAt" /> : null}
+          <ProgramPeriodRow label="수행 기간" startId="program-execution-starts-at" startName="executionStartsAt" endId="program-execution-ends-at" endName="executionEndsAt" />
         </div>
       </FormSection>
 

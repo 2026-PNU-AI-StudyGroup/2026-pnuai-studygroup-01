@@ -29,8 +29,7 @@ import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastruct
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
-import { ProgramCreateWorkspace, ProgramManagementWorkspace } from "@/app/topics/_management/program-management-workspace";
-import { parseProgramManagementTab, programManagementHref } from "@/modules/project-program/ui/program-management-query";
+import { parseProgramManagementTab, programCreateHref, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { ListAdminTopicPreviewService } from "@/modules/topic/application/list-admin-topic-preview";
@@ -38,7 +37,6 @@ import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prism
 import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
-import { ListAdminProjectOverviewService } from "@/modules/team/application/list-admin-project-overview";
 import { ListAdminProjectCardDataService } from "@/modules/team/application/list-admin-project-card-data";
 import {
   ListAdminProgramProjectOperationsService,
@@ -46,8 +44,6 @@ import {
 } from "@/modules/team/application/list-admin-program-project-operations";
 import { PrismaAdminProjectCardDataReader } from "@/modules/team/infrastructure/prisma-admin-project-card-data-reader";
 import { PrismaAdminProgramProjectOperationsReader } from "@/modules/team/infrastructure/prisma-admin-program-project-operations-reader";
-import { PrismaAdminProjectOverviewReader } from "@/modules/team/infrastructure/prisma-admin-project-overview-reader";
-import { parseAdminProjectPage, parseAdminProjectProgressFilter } from "@/modules/team/ui/admin-project-overview-query";
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
@@ -70,7 +66,6 @@ type TopicsSearchParams = {
   modal?: SearchParamValue;
   mode?: SearchParamValue;
   tab?: SearchParamValue;
-  progress?: SearchParamValue;
   operation?: SearchParamValue;
 };
 
@@ -96,12 +91,6 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const params = await searchParams;
   const view: ProjectView = firstSearchParam(params.view) === "past" ? "past" : "active";
   const requestedMode = firstSearchParam(params.mode);
-  const mode: "projects" | "manage" | "create" = actor.role === "ADMIN" && requestedMode === "manage"
-    ? "manage"
-    : actor.role === "ADMIN" && requestedMode === "create"
-      ? "create"
-      : "projects";
-  const managementTab = parseProgramManagementTab(firstSearchParam(params.tab));
   const now = new Date();
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
@@ -148,45 +137,27 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   };
   let content: ReactNode;
 
-  const [adminPrograms, adminOverviewPrograms, adminPendingApprovalCounts] = actor.role === "ADMIN"
+  const [adminPrograms, adminPendingApprovalCounts] = actor.role === "ADMIN"
     ? await Promise.all([
         programService.listAll(actor),
-        mode === "manage" && managementTab === "overview"
-          ? new ListAdminProjectOverviewService(new PrismaAdminProjectOverviewReader(prisma)).execute(actor)
-          : Promise.resolve([]),
         approvalService.listAdminPendingCountsByProgram(actor),
       ])
-    : [undefined, [], []];
+    : [undefined, []];
   const pendingApprovalCounts = new Map(adminPendingApprovalCounts.map(({ programId, count }) => [programId, count]));
 
-  if (actor.role === "ADMIN" && (mode === "manage" || mode === "create")) {
+  if (actor.role === "ADMIN" && requestedMode === "create") {
+    redirect(programCreateHref());
+  }
+  if (actor.role === "ADMIN" && requestedMode === "manage") {
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const defaultProgram = adminPrograms?.find(({ endsAt }) => endsAt > now) ?? adminPrograms?.[0];
     const programId = adminPrograms?.some(({ id }) => id === requestedProgramId) ? requestedProgramId : defaultProgram?.id;
-    const createCancelHref = defaultProgram ? programManagementHref(defaultProgram.id) : "/topics";
-    if (mode === "manage" && programId && programId !== requestedProgramId) redirect(programManagementHref(programId, managementTab));
-    const sidebarItems = buildAdminProgramSidebarItems(adminPrograms ?? [], mode, managementTab, now, pendingApprovalCounts);
-    content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={mode === "create" ? undefined : programId} title="프로그램 관리" showSettings />}>
-        {mode === "create" ? (
-          <ProgramCreateWorkspace cancelHref={createCancelHref} />
-        ) : programId ? (
-          <ProgramManagementWorkspace
-            actor={actor}
-            programId={programId}
-            tab={managementTab}
-            overviewPrograms={adminOverviewPrograms}
-            selectedProgress={parseAdminProjectProgressFilter(firstSearchParam(params.progress))}
-            requestedPage={parseAdminProjectPage(firstSearchParam(params.page))}
-            pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0}
-          />
-        ) : (
-          <ProgramCreateWorkspace cancelHref={createCancelHref} />
-        )}
-      </ExplorerLayout>
-    );
-    const currentPath = mode === "create" || managementTab !== "overview" ? "/admin/professors" : "/dashboard";
-    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={currentPath}>{content}</AppShell>;
+    if (firstSearchParam(params.tab) === "overview") {
+      redirect(programId ? topicsHref({ programId }) : "/topics");
+    }
+    redirect(programId
+      ? programManagementHref(programId, parseProgramManagementTab(firstSearchParam(params.tab)))
+      : programCreateHref());
   }
 
   if (view === "past") {
@@ -219,7 +190,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? await adminProjectCardDataService.execute(actor, archive.projects.map(({ topicId }) => topicId))
       : undefined;
     const sidebarItems = actor.role === "ADMIN"
-      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", managementTab, now, pendingApprovalCounts)
+      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", "settings", now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
       ? <ProgramManageLink programId={programId} programName={selectedProgram.name} />
@@ -302,7 +273,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     }
     const archivedPrograms = hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role);
     const sidebarItems = actor.role === "ADMIN"
-      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", managementTab, now, pendingApprovalCounts)
+      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", "settings", now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
     const openProposalHref = `${closeProposalHref}${closeProposalHref.includes("?") ? "&" : "?"}modal=project-proposal`;
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram

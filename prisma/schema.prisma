@@ -606,8 +606,8 @@ model ProjectProgram {
   endsAt                        DateTime
   projectRegistrationStartsAt   DateTime
   projectRegistrationEndsAt     DateTime
-  recruitmentStartsAt           DateTime
-  recruitmentEndsAt             DateTime
+  recruitmentStartsAt           DateTime?
+  recruitmentEndsAt             DateTime?
   executionStartsAt             DateTime
   executionEndsAt               DateTime
   submissionStartsAt            DateTime
