@@ -1,129 +1,98 @@
-# 정보구조(IA) 재구조 설계
+# 정보구조(IA) 설계
 
-> [!WARNING]
-> 2026-08-10 시점의 역사 설계 기록입니다. 현재 경로·정책·구현 기준이 아니며, 작업 전에는 [`docs/policies/README.md`](../../policies/README.md)와 현재 코드를 확인합니다.
+## 공통 구조
 
-- 날짜: 2026-08-10
-- 브랜치: `design/ia-restructure` (main 기준)
-- 상태: 설계 확정 대기 → 승인 후 구현 계획(writing-plans)
+- 상단 공통 기능은 알림(`/notifications`)과 계정 메뉴를 사용한다.
+- 프로젝트 탐색과 프로그램 운영 설정은 분리한다.
+- 프로젝트 목록 조건만 `/topics`의 쿼리스트링으로 표현한다.
+- 관리자 프로그램 설정은 `/topics/manage` 하위 경로로 표현한다.
 
-## 1. 배경 / 문제
+## 역할별 1단계 메뉴
 
-기능은 충분하지만 화면 구조가 개발 폴더구조를 그대로 노출해, 사용자 멘탈 모델과 어긋난다. IA 감사 결과:
+### 학생
 
-- 실제 페이지 **48개** + 죽은 리다이렉트 별칭 **9개** = 라우트 57개. 전역 메뉴는 역할당 **4개**뿐이라 대부분 묻힘.
-- 전역 "팀" 메뉴가 `/teams`가 아니라 `/recruitments`(모집게시판)로 가고, 팀 관련이 5페이지에 흩어짐.
-- `applications` 세그먼트가 서로 다른 5개 의미로 재사용됨. `reports`도 팀 제출 vs 프로그램 요건으로 충돌.
-- `/dashboard`·`/project-approvals`가 역할에 따라 완전히 다른 화면(주소가 내용을 안 알려줌).
-- `/account`+`/account/profile`, `/admin/professors`+`/new`+`/history` 등 **"화면당 책임 1개" 규칙이 강제한 분리**가 "같은 기능 두 페이지" 체감을 만든다.
-- 이름 3중 불일치: 경로 `topics` = 라벨 "프로젝트 찾기" = 엔티티 `Topic`.
+1. 프로젝트 찾기
+2. 내 프로젝트
+3. 팀 모집
+4. 공지사항
 
-## 2. 목표 / 비목표
+### 교수
 
-**목표**
-- 역할별 상위 메뉴를 사용자 멘탈 모델에 맞춰 재편.
-- 강제 분리된 화면 묶음을 한 화면(요약+편집, 탭)으로 통합.
-- 죽은 별칭 삭제, 세그먼트 이름 정리, 라벨 명확화.
+1. 프로젝트 찾기
+2. 지도 현황
+3. 공지사항
+4. 주제 관리
 
-**비목표(이번 아님)**
-- 비주얼 톤/디자인 월드 재정의 → 구조 확정 후 별도 진행(편성표 방향은 폐기).
-- 도메인/서비스 로직 변경. IA는 라우팅·UI 층만 손댄다. 권한 판정(`TeamWorkspaceQueryService`, `requireProfessorWorkspaceActor` 등)은 유지.
-- 신규 기능 추가.
+### 관리자
 
-## 3. 확정 결정 (사용자 승인)
+1. 프로젝트 찾기
+2. 프로젝트 승인
+3. 공지사항
+4. 운영 관리
 
-1. 학생 팀 영역 = **"내 팀" 부모 + 하위 2탭**(작업공간 / 팀 꾸리기). 두 상위 메뉴로 쪼개지 않음. 팀 상태에 따라 기본 탭 자동 선택.
-2. **"화면당 책임 1개" 규칙 폐기** — `tests/routes/integration/route-responsibility-splits.test.tsx` 삭제. 통합의 전제.
-3. **죽은 별칭 9개 깔끔히 삭제**(리다이렉트도 남기지 않음).
-4. **편성표 톤 폐기, 톤은 완전히 새로** — 구조 확정 후 탐색.
+관리자의 `프로젝트 승인`은 전역 승인 대기함이다. `운영 관리`는 프로그램 설정, 교수 권한, 사용자, 이메일 전송, 관리 이력을 포함한다.
 
-## 4. 신규 사이트맵
+## 프로젝트 탐색
 
-공통 유틸(상단/사이드 고정): 🔔 알림(`/notifications`) · 계정 메뉴(계정 정보 · 피드백 보내기 · 로그아웃).
+| 주소 | 화면 |
+|---|---|
+| `/topics` | 진행 중 프로젝트 |
+| `/topics?view=past` | 지난 프로젝트 |
+| `/topics?programId=<id>` | 선택 프로그램의 진행 중 프로젝트 |
+| `/topics?view=past&programId=<id>` | 선택 프로그램의 지난 프로젝트 |
+| `/topics/<topicId>` | 진행 중 프로젝트 상세 |
+| `/topics/archive/<projectId>` | 지난 프로젝트 상세 |
 
-### 학생 (STUDENT)
-- **둘러보기** — 진행 중 프로젝트 · 지난 프로젝트(아카이브)
-- **내 팀**
-  - 작업공간: 개요 · 할 일 · 팀 대화 · 회의·검토 · 보고서 · 결과물
-  - 팀 꾸리기: 모집 둘러보기·지원 · 내 팀 만들기·초대·지원자 관리 · 내 지원 현황
-- **공지사항**
+`view`와 `programId`는 탐색 문맥이다. `q`, `divisionId`, `operation`, `page`는 목록 조건이다. 조건 초기화는 탐색 문맥을 유지하고 목록 조건만 제거한다.
 
-### 교수 (PROFESSOR)
-- **둘러보기**
-- **지도 현황** — 내가 지도하는 팀 · 보고서/일정 검토
-- **주제 관리** — 내 주제(등록·편집·일정·조교) · 받은 지원서 · 학생 제안 검토
-- **공지사항**
+## 관리자 프로그램 관리
 
-### 관리자 (ADMIN)
-- **둘러보기**
-- **전체 현황** — 프로젝트 overview
-- **운영 관리** — 프로그램(상세 안 탭: 설정·채점표·트랙·제출물 요건·투표) · 주제 승인 · 교수 권한(목록+등록+이력 한 화면) · 사용자 · 관리 이력
-- **공지사항**
+| 주소 | 화면 |
+|---|---|
+| `/topics/manage/new` | 프로그램 생성 |
+| `/topics/manage/<programId>` | 설정 |
+| `/topics/manage/<programId>/rubric` | 채점표 |
+| `/topics/manage/<programId>/tracks` | 분과 |
+| `/topics/manage/<programId>/reports` | 보고서 |
+| `/topics/manage/<programId>/votes` | 투표 |
 
-조교(role=STUDENT, 담당 있음)는 "내 팀" 옆에 **주제 관리(읽기)** 진입 유지.
+- 설정은 추가 세그먼트가 없는 기본 화면이다.
+- 프로그램을 전환하면 현재 관리 탭을 유지한다.
+- `/settings`, 알 수 없는 탭, 여러 단계의 잘못된 탭은 기본 설정 주소로 정규화한다.
+- 존재하지 않는 프로그램은 같은 탭의 기본 프로그램으로 이동한다.
+- 프로그램이 없으면 `/topics/manage/new`로 이동한다.
+- 프로그램별 프로젝트는 관리 탭에 복제하지 않고 `/topics?programId=<id>`에서 관리한다.
+- 프로그램별 승인 대기 건수는 프로그램 사이드바와 관리 화면 제목에 표시하고 `/project-approvals?programId=<id>&status=PENDING`으로 연결한다.
 
-## 5. 페이지 통합 매핑
+## 승인 대기함
 
-처리 구분: **유지** / **통합**(다른 화면으로 흡수, 라우트 삭제) / **삭제**(별칭) / **라벨**(경로 유지·이름만).
+| 주소 | 화면 |
+|---|---|
+| `/project-approvals` | 역할별 승인 요청 목록 |
+| `/project-approvals/<requestId>` | 승인 요청 상세 |
 
-| 현재 라우트 | 처리 | 신규 위치 / 비고 |
-|---|---|---|
-| `/`, `/onboarding` | 유지 | 로그인 / 학생 최초 입력 |
-| `/sign-in` | 유지 | 인증 진입 리다이렉트(별칭 아님, 존치) |
-| `/account` + `/account/profile` | 통합 | `/account` 한 화면(요약 + 지원정보 편집 인라인/탭). `/account/profile` 라우트 삭제 |
-| `/notifications`, `/feedback` | 유지 | `/feedback`은 **로그인 후 진입로 추가**(계정 메뉴) + 인증 인지 |
-| `/topics`, `/topics/[topicId]`, `/topics/archive/[projectId]` | 유지·라벨 | 둘러보기. 상위 라벨 "둘러보기"로 |
-| `/projects/new` | 유지 | 학생 제안(비학생 → 교수 등록으로 redirect 유지) |
-| `/programs`, `/programs/[id]/vote`, `/archive`, `/topics/applications` | 삭제 | 죽은 별칭 |
-| `/dashboard` | 유지·라벨 | 역할별 화면 유지, 라벨을 역할에 맞게(학생=작업공간 진입, 교수=지도 현황, 관리자=전체 현황) |
-| `/teams/[teamId]`(+`/tasks`,`/discussion`,`/requests`,`/reports`,`/artifacts`) | 유지 | "내 팀 > 작업공간" 아래. 권한은 기존 서비스 |
-| `/recruitments` | 유지 | "내 팀 > 팀 꾸리기 > 모집 둘러보기" |
-| `/recruitments/mine` | 통합/유지 | "팀 꾸리기 > 내 모집" 탭 |
-| `/recruitments/applications` | 통합/유지 | "팀 꾸리기 > 내 지원 현황" 탭 |
-| `/recruitments/[postId]/applications` | 유지 | 지원자 검토(딥) |
-| `/teams` | 통합/유지 | "팀 꾸리기 > 내 팀 만들기·관리" |
-| `/teams/manage/[teamId]` | 유지 | 팀 상세 관리(딥) |
-| `/recruitments/new`, `/teams/new`, `/teams/invitations` | 삭제 | 모달 별칭 → 실제 화면 내 버튼으로 |
-| `/project-approvals`(+`/[requestId]`) | 유지 | 교수="주제 관리 > 학생 제안", 관리자="운영 관리 > 주제 승인" |
-| `/professor/topics`(+`/new`,`/[id]`,`/edit`,`/schedule`,`/assistants`) | 유지 | "주제 관리 > 내 주제" |
-| `/professor/applications`(+`/[id]`) | 유지 | "주제 관리 > 받은 지원서" |
-| `/announcements`(+상세·`/new`·`/edit`) | 유지 | 공지사항 |
-| `/topics?mode=create` | 유지 | 관리자 프로그램 생성 |
-| `/topics?programId=<id>&mode=manage&tab=<tab>` | 통합 | 프로그램 현황·설정·채점표·분과·보고서·투표 관리. `tab=overview`은 전체 현황, 나머지 탭은 운영 관리 문맥 |
-| 전용 관리자 프로그램 라우트 전체 | 삭제 | 호환 리다이렉트 없이 404 |
-| `/admin/professors` + `/new` + `/history` | 통합 | `/admin/professors` 한 화면(목록 + 등록 인라인 + 이력 탭). `/new`,`/history` 라우트 삭제 |
-| `/admin/users`, `/admin/audit` | 유지 | 사용자 / 관리 이력 |
+관리자는 프로그램과 상태로 목록을 필터링한다. 상세 진입과 목록 복귀 시 프로그램·상태·페이지 문맥을 유지한다.
 
-## 6. 삭제 목록
+## 관리자 운영 관리
 
-- 별칭 라우트 8개: `/programs`, `/programs/[id]/vote`, `/archive`, `/topics/applications`, `/recruitments/new`, `/teams/new`, `/teams/invitations` (+ 모달 별칭). `/sign-in`은 존치.
-- 통합으로 사라지는 라우트: `/account/profile`, `/admin/professors/new`, `/admin/professors/history`, 전용 관리자 프로그램 라우트 전체.
+| 주소 | 화면 |
+|---|---|
+| `/admin/professors` | 교수 권한 |
+| `/admin/users` | 사용자 관리 |
+| `/admin/emails` | 이메일 전송 |
+| `/admin/audit` | 관리 이력 |
 
-## 7. 폐기/수정할 테스트
+관리자 프로그램 관리 경로와 `/admin/*`, 관리자용 `/professor/*` 경로에서는 `운영 관리` 메뉴를 활성화한다. `/topics/manage/*`에서는 `프로젝트 찾기`를 동시에 활성화하지 않는다.
 
-- **삭제**: `tests/routes/integration/route-responsibility-splits.test.tsx` (규칙 폐기).
-- **수정**: 삭제/통합 라우트를 참조하는 라우트 테스트, 나눠진 화면 단언(교수 등록/이력 분리, 계정 요약/편집 분리), `app-shell` 네비 항목·활성 판정 테스트.
-- **신규 문자열**: 바뀐 라벨·탭 이름은 `src/shared/i18n/ui-messages.en.json`에 등록(로컬라이제이션 테스트 통과).
+## 대시보드
 
-## 8. 네이밍 규칙
+- 학생과 교수의 `/dashboard`는 각 역할의 프로젝트 화면으로 유지한다.
+- 관리자의 `/dashboard`는 `programId`만 보존해 `/topics`로 이동한다.
 
-- 상위 라벨: 둘러보기 / 내 팀 / 지도 현황 / 주제 관리 / 전체 현황 / 운영 관리 / 공지사항.
-- `applications` 화면은 맥락별 사람 말 라벨로: "학생 제안"(주제 승인) · "받은 지원서" · "모집 지원자" · "내 지원 현황". (라우트 경로 자체 rename은 저우선·선택 — 링크/히스토리 churn 커서 이번 범위 밖 권장.)
-- `/dashboard` 라벨은 역할별로 명확히(위 4절).
+## 제거된 관리자 구조
 
-## 9. 구현 단계 (각 단계 = 독립 PR 지향)
+- 관리자 전용 전체 프로젝트 집계 화면
+- 프로그램 관리의 현황 탭과 진행 구간 필터
+- `/admin/programs`와 모든 하위 라우트
 
-- **Phase 0 — 정리(저위험)**: 별칭 8개 삭제 + `route-responsibility-splits` 테스트 삭제. 깨지는 링크 정리.
-- **Phase 1 — 계정·교수권한 통합**: `/account`(요약+편집), `/admin/professors`(목록+등록+이력). 관련 테스트 수정.
-- **Phase 2 — 프로그램 관리 통합**: 생성은 `/topics?mode=create`, 관리는 `/topics?programId=<id>&mode=manage&tab=<overview|settings|rubric|tracks|reports|votes>`로 통합한다. 전용 관리자 프로그램 라우트는 모두 삭제한다.
-- **Phase 3 — 학생 "내 팀" 재편(최대·주의)**: recruitments+teams를 "내 팀" 부모 + 작업공간/팀 꾸리기 탭으로. 권한 서비스 유지, 네비·활성 판정 재작성.
-- **Phase 4 — 교수 "주제 관리" / 관리자 "운영 관리" 그룹화**: professor-sidebar·admin-sidebar 재편, project-approvals 편입.
-- **Phase 5 — 라벨/네이밍 마감**: dashboard 역할 라벨, applications 라벨, `/feedback` 인앱 진입로.
-- **(별도) 톤/비주얼**: 구조 안정화 후 impeccable new-work로 새 디자인 월드 탐색.
-
-## 10. 리스크 / 미결
-
-- Phase 3(팀 재편)이 최대 리스크: 팀 워크스페이스 접근이 role 리다이렉트가 아닌 `TeamWorkspaceQueryService`로 통제되고, 관련 모듈이 자주 변경됨. 네비/활성 판정·모달 별칭 제거가 광범위.
-- 다수 라우트/라벨 테스트가 깨질 것 — 각 Phase에서 함께 갱신.
-- 별칭 완전 삭제로 외부 공유 링크가 있으면 404(사용자 수용).
-- 미결: `/dashboard` 역할별 3화면을 유지하되 URL을 나눌지(예: `/my/*`)는 저우선 — 이번엔 유지.
+기존 관리자 프로그램 쿼리 주소는 새 정식 주소로만 이동한다. 과거 현황 주소는 선택 프로그램의 `/topics?programId=<id>`로 이동한다.
