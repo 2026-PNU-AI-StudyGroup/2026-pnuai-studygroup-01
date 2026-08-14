@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ActiveProjectFilters } from "@/app/topics/_components/active-project-filters";
 import { ActiveProjectResults } from "@/app/topics/_components/active-project-results";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
-import type { ProgramVoteBallot, ProgramVotingResults } from "@/modules/project-voting/application/manage-project-voting";
+import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
 import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
 import type { AdminProjectOperationFilter } from "@/modules/team/application/list-admin-program-project-operations";
 
@@ -18,7 +18,7 @@ export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, q
   hasUnassigned?: boolean;
   now: Date;
   ballot?: ProgramVoteBallot;
-  votingResults?: ProgramVotingResults;
+  votingResults?: VotingResultsView;
   adminProjectData?: AdminProjectCardData[];
   operation?: AdminProjectOperationFilter;
   registrationAction?: ReactNode;

@@ -33,7 +33,7 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
   const topicRepository = new PrismaTopicQueryRepository(prisma);
   const [programs, topics] = await Promise.all([
     canCreateTopics
-      ? new ProjectProgramService(programRepository).listRegistrableOpen(new Date(), "FACULTY")
+      ? new ProjectProgramService(programRepository).listRegistrableOpen(new Date())
       : Promise.resolve([]),
     new ListOwnTopicsService(topicRepository).execute(actor, requestedPage),
   ]);

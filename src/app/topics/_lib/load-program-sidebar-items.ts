@@ -15,7 +15,7 @@ export async function loadProgramSidebarItems(
   const [sidebarPrograms, archivedPrograms] = await Promise.all([
     audience === "ADMIN"
       ? new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll({ id: "sidebar", role: "ADMIN" })
-      : new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listSidebarVisible(now, audience),
+      : new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listSidebarVisible(now),
     new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma, audience)).listPrograms(),
   ]);
   return buildProgramSidebarItems(sidebarPrograms, archivedPrograms, view, query, now);

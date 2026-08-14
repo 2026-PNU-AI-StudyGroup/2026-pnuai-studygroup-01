@@ -23,7 +23,7 @@ export default async function NewTopicPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") redirect("/topics");
-  const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listRegistrableOpen(new Date(), "FACULTY");
+  const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listRegistrableOpen(new Date());
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">

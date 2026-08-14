@@ -34,7 +34,7 @@ export default async function EditManagedTopicPage({ params }: { params: Promise
   if ((topic.effectiveStatus === "COMPLETED" || topic.effectiveStatus === "CANCELED") && actor.role !== "ADMIN") redirect(`/professor/topics/${topic.id}`);
   const programs = actor.role === "ADMIN"
     ? await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor)
-    : await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listPublic("FACULTY");
+    : await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listPublic();
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics">
       <ProfessorWorkspace
