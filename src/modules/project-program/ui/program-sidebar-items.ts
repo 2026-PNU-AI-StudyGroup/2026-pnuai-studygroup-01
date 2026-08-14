@@ -84,11 +84,12 @@ export function buildAdminProgramSidebarItems(
   mode: "projects" | "manage" | "create",
   tab: ProgramManagementTab,
   now = new Date(),
+  pendingApprovalCounts: ReadonlyMap<string, number> = new Map(),
 ): ProgramSidebarItem[] {
   return programs.map((program) => {
     const status = programLifecycleStatus(program) === "CLOSED"
       ? "past"
-      : program.isStudentPublic || program.isFacultyPublic
+      : program.isPublic
         ? "active"
         : "draft";
     const projectHref = status === "past"
@@ -109,7 +110,8 @@ export function buildAdminProgramSidebarItems(
       votingEndsAt: activeVotingEndsAt(program, now),
       votingHref: projectHref,
       projectCount: program.topicCount,
-      visibility: program.isStudentPublic || program.isFacultyPublic ? "public" : "private",
+      visibility: program.isPublic ? "public" : "private",
+      pendingApprovalCount: pendingApprovalCounts.get(program.id) || undefined,
     };
   });
 }

@@ -85,6 +85,16 @@ describe("ProgramSidebar", () => {
     expect(screen.queryByRole("region", { name: "투표 진행 프로그램" })).not.toBeInTheDocument();
   });
 
+  it("승인 대기가 있는 프로그램에만 경고 색상의 건수를 표시한다", () => {
+    const { rerender } = render(<ProgramSidebar items={[{ ...items[0], pendingApprovalCount: 2 }]} />);
+
+    expect(screen.getAllByText(/승인 대기/)).toHaveLength(2);
+    expect(screen.getAllByText(/승인 대기/)[0]).toHaveTextContent("승인 대기 2건");
+
+    rerender(<ProgramSidebar items={[{ ...items[0], pendingApprovalCount: 0 }]} />);
+    expect(screen.queryByText(/승인 대기/)).not.toBeInTheDocument();
+  });
+
   it("투표 중인 프로그램들을 최상단 카드로 강조하면서 각 대분류 목록에도 유지한다", () => {
     vi.useFakeTimers();
     try {

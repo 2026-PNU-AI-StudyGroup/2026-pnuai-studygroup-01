@@ -76,9 +76,8 @@ export class PrismaAdminProjectOverviewReader
       category: program.category,
       icon: program.icon,
       startYear: getProgramStartYear(program.startsAt),
-      status: program.endsAt <= now ? "CLOSED" : program.isStudentPublic || program.isFacultyPublic ? "OPEN" : "DRAFT",
-      isStudentPublic: program.isStudentPublic,
-      isFacultyPublic: program.isFacultyPublic,
+      status: program.endsAt <= now ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
+      isPublic: program.isPublic,
       votingEndsAt: isProgramVotingOpen(program.votingPolicy, now)
         ? program.votingPolicy?.endsAt
         : undefined,

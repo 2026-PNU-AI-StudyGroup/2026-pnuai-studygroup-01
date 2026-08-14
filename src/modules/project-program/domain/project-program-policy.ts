@@ -9,6 +9,8 @@ export type ProgramVotingPolicyDetails = {
   voteLimit: number;
   voteLimitScope?: VoteLimitScope;
   selfVotingAllowed: boolean;
+  resultsVisibleDuringVoting: boolean;
+  resultsVisibleAfterVoting: boolean;
 };
 
 export type ProjectProgramDetails = {
@@ -137,7 +139,7 @@ export function isProjectRegistrationOpen(
 }
 
 export function isProgramVotingOpen(
-  policy: ProgramVotingPolicyDetails | null | undefined,
+  policy: Pick<ProgramVotingPolicyDetails, "startsAt" | "endsAt"> | null | undefined,
   now: Date,
 ) {
   return Boolean(policy && policy.startsAt <= now && now < policy.endsAt);

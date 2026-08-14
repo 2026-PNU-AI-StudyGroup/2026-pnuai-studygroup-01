@@ -21,8 +21,7 @@ export type AdminProjectOverviewProgram = {
   icon: ProgramIconKey;
   startYear: number;
   status: "DRAFT" | "OPEN" | "CLOSED";
-  isStudentPublic: boolean;
-  isFacultyPublic: boolean;
+  isPublic: boolean;
   votingEndsAt?: Date;
   advisorEnabled: boolean;
   projects: AdminProjectOverviewItem[];

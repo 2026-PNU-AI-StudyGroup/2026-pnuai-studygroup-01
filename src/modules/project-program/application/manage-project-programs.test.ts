@@ -45,12 +45,14 @@ describe("프로젝트 프로그램 관리", () => {
       description: " 설명 ",
       projectRegistrationStartsAt: new Date("2026-04-01"),
       projectRegistrationEndsAt: new Date("2026-09-01"),
+      isPublic: true,
       votingPolicy: null,
     });
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       name: "PNU 창의융합 해커톤",
       projectRegistrationStartsAt: new Date("2026-04-01"),
       createdById: "admin",
+      isPublic: true,
     }));
     expect(programId).toBe("program-1");
   });
@@ -61,6 +63,7 @@ describe("프로젝트 프로그램 관리", () => {
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
+      isPublic: false,
     }));
   });
 
@@ -86,7 +89,7 @@ describe("프로젝트 프로그램 관리", () => {
 
     await new ProjectProgramService(value).listSidebarVisible(now);
 
-    expect(value.listSidebarVisible).toHaveBeenCalledWith(now, "STUDENT");
+    expect(value.listSidebarVisible).toHaveBeenCalledWith(now);
   });
 
   it("교수의 프로그램 개설을 거부한다", async () => {
@@ -104,9 +107,34 @@ describe("프로젝트 프로그램 관리", () => {
         voteLimit: 1,
         voteLimitScope: "DIVISION",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     })).rejects.toThrow("분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.");
     expect(value.create).not.toHaveBeenCalled();
+  });
+
+  it("투표 결과 공개 설정을 정규화 과정에서 그대로 보존한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+    await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: false,
+      },
+    });
+
+    expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
+      votingPolicy: expect.objectContaining({
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: false,
+      }),
+    }));
   });
 
   it("프로그램 생성 시 분과 채점표와 보고서 정의를 검증해 함께 전달한다", async () => {
@@ -129,6 +157,23 @@ describe("프로젝트 프로그램 관리", () => {
       rubricDefinitions: [expect.objectContaining({ title: "공식 평가", divisionName: "창업", criteria: [{ label: "완성도", maxPoints: 40 }] })],
       reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z") }],
     }));
+  });
+
+  it("평가 항목이 없는 채점표가 포함되면 프로그램 생성을 거부한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+
+    await expect(new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      rubricDefinitions: [{
+        divisionName: null,
+        title: "공식 평가",
+        gradingDueAt: new Date("2026-10-01T00:00:00Z"),
+        audience: "STAFF_ONLY",
+        criteria: [],
+      }],
+    })).rejects.toThrow("채점표에는 평가 항목을 하나 이상 추가해 주세요.");
+
+    expect(value.create).not.toHaveBeenCalled();
   });
 
   it("보고서 마감이 수행 기간 밖이면 프로그램 생성을 거부한다", async () => {
@@ -201,6 +246,8 @@ describe("프로젝트 프로그램 관리", () => {
         voteLimit: 1,
         voteLimitScope: "DIVISION",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     });
     await expect(result).rejects.toMatchObject({ impact } satisfies Partial<ProgramVoteResetConfirmationRequiredError>);

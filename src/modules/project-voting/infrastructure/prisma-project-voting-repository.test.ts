@@ -33,6 +33,8 @@ function client(topics: ResultTopic[] = [{
           voteLimit: 3,
           voteLimitScope: "PROGRAM",
           selfVotingAllowed: false,
+          resultsVisibleDuringVoting: false,
+          resultsVisibleAfterVoting: true,
         },
       }),
     },
@@ -53,8 +55,7 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
     value.projectProgram.findUnique = vi.fn().mockResolvedValue({
       id: "program-1",
       name: "캡스톤",
-      isStudentPublic: false,
-      isFacultyPublic: false,
+      isPublic: false,
       endsAt: new Date("2026-12-31T00:00:00Z"),
       votingPolicy: {
         startsAt: new Date("2026-08-01T00:00:00Z"),
@@ -62,6 +63,8 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
         voteLimit: 3,
         voteLimitScope: "PROGRAM",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     });
 
@@ -74,8 +77,7 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
     value.projectProgram.findUnique = vi.fn().mockResolvedValue({
       id: "program-1",
       name: "지난 캡스톤",
-      isStudentPublic: true,
-      isFacultyPublic: true,
+      isPublic: true,
       endsAt: new Date("2026-07-31T00:00:00Z"),
       votingPolicy: {
         startsAt: new Date("2026-08-01T00:00:00Z"),
@@ -83,6 +85,8 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
         voteLimit: 3,
         voteLimitScope: "PROGRAM",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: true,
       },
     });
     value.topic.findMany = vi.fn().mockResolvedValue([{
@@ -110,19 +114,60 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
     expect(ballot?.candidates[0].voteCount).toBe(4);
   });
 
-  it("교수진에만 공개된 프로그램은 교수에게 투표 용지를 제공한다", async () => {
+  it("결과가 비공개인 투표 용지는 득표 집계를 조회하지 않고 후보 득표수를 null로 반환한다", async () => {
     const value = client();
     value.projectProgram.findUnique = vi.fn().mockResolvedValue({
       id: "program-1",
-      name: "교수진 프로그램",
-      isStudentPublic: false,
-      isFacultyPublic: true,
+      name: "캡스톤",
+      isPublic: true,
       votingPolicy: {
         startsAt: new Date("2026-08-01T00:00:00Z"),
         endsAt: new Date("2026-08-31T00:00:00Z"),
         voteLimit: 3,
         voteLimitScope: "PROGRAM",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
+      },
+    });
+    value.topic.findMany = vi.fn().mockResolvedValue([{
+      id: "topic-1",
+      title: "프로젝트",
+      description: "설명",
+      divisionId: null,
+      division: null,
+      authorId: "professor-1",
+      managerId: "professor-1",
+      assistants: [],
+      projectTeam: { memberships: [] },
+    }]);
+    value.projectVote.findMany = vi.fn().mockResolvedValue([]);
+
+    const ballot = await new PrismaProjectVotingRepository(value).findBallot(
+      "program-1",
+      "voter-1",
+      "STUDENT",
+      new Date("2026-08-10T00:00:00Z"),
+    );
+
+    expect(ballot?.candidates[0].voteCount).toBeNull();
+    expect(value.projectVote.groupBy).not.toHaveBeenCalled();
+  });
+
+  it("공개 프로그램은 교수에게도 투표 용지를 제공한다", async () => {
+    const value = client();
+    value.projectProgram.findUnique = vi.fn().mockResolvedValue({
+      id: "program-1",
+      name: "공개 프로그램",
+      isPublic: true,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     });
     value.topic.findMany = vi.fn().mockResolvedValue([]);
@@ -172,11 +217,79 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
         voteLimit: 3,
         voteLimitScope: "DIVISION",
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     });
 
     const results = await new PrismaProjectVotingRepository(value).findResults("program-1", new Date("2026-08-10T00:00:00Z"));
 
     expect(results?.results.map(({ topicId }) => topicId)).toEqual(["topic-2", "topic-1", "topic-3"]);
+  });
+
+  it("공개 허용 시 투표자 정보를 조회하지 않고 집계와 순위만 반환한다", async () => {
+    const value = client([
+      { id: "topic-1", title: "가나다", description: "노출 금지 설명", projectTeam: { name: "가팀" }, divisionId: null, division: null, _count: { votes: 3 } },
+      { id: "topic-2", title: "라마바사", description: "노출 금지 설명", projectTeam: null, divisionId: null, division: null, _count: { votes: 1 } },
+    ]);
+    value.projectProgram.findUnique = vi.fn().mockResolvedValue({
+      id: "program-1",
+      name: "캡스톤",
+      isPublic: true,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: true,
+      },
+    });
+    value.projectVote.count = vi.fn().mockResolvedValue(4);
+
+    const results = await new PrismaProjectVotingRepository(value).findPublicResults(
+      "program-1",
+      "STUDENT",
+      new Date("2026-08-10T00:00:00Z"),
+    );
+
+    expect(results).toEqual({
+      programId: "program-1",
+      programName: "캡스톤",
+      phase: "OPEN",
+      voteLimitScope: "PROGRAM",
+      totalVotes: 4,
+      results: [
+        { topicId: "topic-1", title: "가나다", teamName: "가팀", divisionId: null, divisionName: null, divisionPosition: null, voteCount: 3, rank: 1 },
+        { topicId: "topic-2", title: "라마바사", teamName: null, divisionId: null, divisionName: null, divisionPosition: null, voteCount: 1, rank: 2 },
+      ],
+    });
+    expect(value.projectVote.findMany).not.toHaveBeenCalled();
+    expect(value.projectVote.groupBy).not.toHaveBeenCalled();
+  });
+
+  it("프로그램 또는 결과가 비공개면 집계를 조회하지 않는다", async () => {
+    const value = client();
+    value.projectProgram.findUnique = vi.fn().mockResolvedValue({
+      id: "program-1",
+      name: "캡스톤",
+      isPublic: false,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
+      },
+    });
+    const repository = new PrismaProjectVotingRepository(value);
+
+    await expect(repository.findPublicResults("program-1", "STUDENT", new Date("2026-08-10T00:00:00Z"))).resolves.toBeNull();
+    await expect(repository.findPublicResults("program-1", "PROFESSOR", new Date("2026-09-01T00:00:00Z"))).resolves.toBeNull();
+    expect(value.topic.findMany).not.toHaveBeenCalled();
+    expect(value.projectVote.count).not.toHaveBeenCalled();
   });
 });

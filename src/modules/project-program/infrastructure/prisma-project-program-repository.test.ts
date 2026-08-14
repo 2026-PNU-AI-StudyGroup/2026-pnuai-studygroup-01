@@ -66,11 +66,27 @@ describe("Prisma 프로그램 저장소", () => {
 
     await expect(repository.create({
       ...input,
+      isPublic: true,
       divisionNames: ["창업"],
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
+      },
       rubricDefinitions: [{ divisionName: "창업", title: "공식 평가", gradingDueAt: new Date("2026-10-01T00:00:00Z"), audience: "STAFF_ONLY", criteria: [{ label: "완성도", maxPoints: 40 }] }],
       reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z") }],
     })).resolves.toBe("program-1");
 
+    expect(transaction.projectProgram.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        isPublic: true,
+        votingPolicy: { create: expect.objectContaining({ resultsVisibleDuringVoting: false, resultsVisibleAfterVoting: true }) },
+      }),
+    }));
     expect(transaction.programDivision.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { rubricMode: "CUSTOM" } }));
     expect(transaction.rubricDefinition.create).toHaveBeenCalledWith({ data: expect.objectContaining({ programId: "program-1", divisionId: "division-1", title: "공식 평가" }) });
     expect(transaction.programReportDefinition.createMany).toHaveBeenCalledWith({ data: [{ programId: "program-1", title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z"), position: 0 }] });
@@ -89,16 +105,16 @@ describe("Prisma 프로그램 저장소", () => {
       $transaction: vi.fn(async (operation) => operation(transaction)),
     } as unknown as PrismaClient);
 
-    await expect(repository.setVisibility("program-1", "STUDENT", true, firstPublishedAt)).resolves.toBe(true);
-    await expect(repository.setVisibility("program-1", "STUDENT", true, reopenedAt)).resolves.toBe(true);
+    await expect(repository.setVisibility("program-1", true, firstPublishedAt)).resolves.toBe(true);
+    await expect(repository.setVisibility("program-1", true, reopenedAt)).resolves.toBe(true);
 
     expect(transaction.projectProgram.update).toHaveBeenNthCalledWith(1, {
       where: { id: "program-1" },
-      data: { isStudentPublic: true, firstPublishedAt },
+      data: { isPublic: true, firstPublishedAt },
     });
     expect(transaction.projectProgram.update).toHaveBeenNthCalledWith(2, {
       where: { id: "program-1" },
-      data: { isStudentPublic: true, firstPublishedAt: undefined },
+      data: { isPublic: true, firstPublishedAt: undefined },
     });
   });
 
@@ -119,6 +135,104 @@ describe("Prisma 프로그램 저장소", () => {
       votingPolicy: null,
     }, "admin-1")).resolves.toBe("UPDATED");
     expect(transaction.projectProgram.update).toHaveBeenCalled();
+  });
+
+  it("결과 공개 설정만 변경하면 기존 표를 삭제하거나 초기화 확인을 요구하지 않는다", async () => {
+    const currentPolicy = {
+      programId: "program-1",
+      startsAt: new Date("2026-08-01T00:00:00Z"),
+      endsAt: new Date("2026-08-31T00:00:00Z"),
+      voteLimit: 3,
+      voteLimitScope: "PROGRAM" as const,
+      selfVotingAllowed: false,
+      resultsVisibleDuringVoting: false,
+      resultsVisibleAfterVoting: true,
+    };
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1", endsAt: input.endsAt }]),
+      programVotingPolicy: {
+        findUnique: vi.fn().mockResolvedValue(currentPolicy),
+        update: vi.fn().mockResolvedValue({ ...currentPolicy, resultsVisibleDuringVoting: true, resultsVisibleAfterVoting: false }),
+      },
+      projectVote: {
+        count: vi.fn().mockResolvedValue(7),
+        groupBy: vi.fn().mockResolvedValue([]),
+        findFirst: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn(),
+      },
+      programDivision: { count: vi.fn().mockResolvedValue(1) },
+      auditLog: { create: vi.fn() },
+      projectProgram: { update: vi.fn().mockResolvedValue({ id: "program-1" }) },
+    };
+    const repository = new PrismaProjectProgramRepository({
+      $transaction: vi.fn(async (operation) => operation(transaction)),
+    } as unknown as PrismaClient);
+
+    const outcome = await repository.updateSettings("program-1", {
+      ...input,
+      votingPolicy: {
+        startsAt: currentPolicy.startsAt,
+        endsAt: currentPolicy.endsAt,
+        voteLimit: currentPolicy.voteLimit,
+        voteLimitScope: currentPolicy.voteLimitScope,
+        selfVotingAllowed: currentPolicy.selfVotingAllowed,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: false,
+      },
+    }, "admin-1");
+
+    expect(outcome).toBe("UPDATED");
+    expect(transaction.projectVote.findFirst).not.toHaveBeenCalled();
+    expect(transaction.projectVote.deleteMany).not.toHaveBeenCalled();
+    expect(transaction.auditLog.create).not.toHaveBeenCalled();
+    expect(transaction.programVotingPolicy.update).toHaveBeenCalledWith({
+      where: { programId: "program-1" },
+      data: expect.objectContaining({ resultsVisibleDuringVoting: true, resultsVisibleAfterVoting: false }),
+    });
+  });
+
+  it("투표 기간을 변경할 때는 변경된 기간 밖의 기존 표를 계속 차단한다", async () => {
+    const currentPolicy = {
+      programId: "program-1",
+      startsAt: new Date("2026-08-01T00:00:00Z"),
+      endsAt: new Date("2026-08-31T00:00:00Z"),
+      voteLimit: 3,
+      voteLimitScope: "PROGRAM" as const,
+      selfVotingAllowed: false,
+      resultsVisibleDuringVoting: false,
+      resultsVisibleAfterVoting: true,
+    };
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1", endsAt: input.endsAt }]),
+      programVotingPolicy: { findUnique: vi.fn().mockResolvedValue(currentPolicy) },
+      projectVote: {
+        count: vi.fn().mockResolvedValue(1),
+        findFirst: vi.fn().mockResolvedValue({ id: "vote-1" }),
+        deleteMany: vi.fn(),
+      },
+      programDivision: { count: vi.fn().mockResolvedValue(1) },
+      projectProgram: { update: vi.fn() },
+    };
+    const repository = new PrismaProjectProgramRepository({
+      $transaction: vi.fn(async (operation) => operation(transaction)),
+    } as unknown as PrismaClient);
+
+    const outcome = await repository.updateSettings("program-1", {
+      ...input,
+      votingPolicy: {
+        startsAt: new Date("2026-08-02T00:00:00Z"),
+        endsAt: currentPolicy.endsAt,
+        voteLimit: currentPolicy.voteLimit,
+        voteLimitScope: currentPolicy.voteLimitScope,
+        selfVotingAllowed: currentPolicy.selfVotingAllowed,
+        resultsVisibleDuringVoting: currentPolicy.resultsVisibleDuringVoting,
+        resultsVisibleAfterVoting: currentPolicy.resultsVisibleAfterVoting,
+      },
+    }, "admin-1");
+
+    expect(outcome).toBe("VOTE_PERIOD_CONFLICT");
+    expect(transaction.projectVote.findFirst).toHaveBeenCalled();
+    expect(transaction.projectProgram.update).not.toHaveBeenCalled();
   });
 
   it("프로그램 목록의 프로젝트 수에 마감된 프로젝트도 포함한다", async () => {

@@ -8,17 +8,14 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { FormSection } from "@/shared/ui/form-system";
 
-export function ProgramStatusForm({ id, isStudentPublic, isFacultyPublic, endsAt }: { id: string; isStudentPublic: boolean; isFacultyPublic: boolean; endsAt: Date }) {
+export function ProgramStatusForm({ id, isPublic, endsAt }: { id: string; isPublic: boolean; endsAt: Date }) {
   const [state, action, pending] = useActionState(changeProgramStatusAction, initialProgramActionState);
   const closed = endsAt <= new Date();
 
   return (
     <div className="grid gap-5">
-      <FormSection title="공개 설정" description="학생과 교수진의 프로그램 노출 범위를 각각 설정합니다. 운영 종료 여부와는 별개입니다.">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <VisibilityForm id={id} audience="STUDENT" label="학생 공개" visible={isStudentPublic} pending={pending} action={action} />
-          <VisibilityForm id={id} audience="FACULTY" label="교수진 공개" visible={isFacultyPublic} pending={pending} action={action} />
-        </div>
+      <FormSection title="공개 설정" description="비공개 프로그램은 관리자만 볼 수 있습니다. 운영 종료 여부와는 별개입니다.">
+        <VisibilityForm id={id} visible={isPublic} pending={pending} action={action} />
         {state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}
       </FormSection>
 
@@ -36,20 +33,17 @@ export function ProgramStatusForm({ id, isStudentPublic, isFacultyPublic, endsAt
   );
 }
 
-function VisibilityForm({ id, audience, label, visible, pending, action }: {
+function VisibilityForm({ id, visible, pending, action }: {
   id: string;
-  audience: "STUDENT" | "FACULTY";
-  label: string;
   visible: boolean;
   pending: boolean;
   action: (payload: FormData) => void;
 }) {
   return (
     <form action={action} aria-busy={pending} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] p-4">
-      <div><p className="font-bold"><UiText>{label}</UiText></p><p className="mt-1 text-sm text-[var(--muted)]"><UiText>{visible ? "공개 중" : "비공개"}</UiText></p></div>
+      <div><p className="font-bold"><UiText>{"프로그램 공개"}</UiText></p><p className="mt-1 text-sm text-[var(--muted)]"><UiText>{visible ? "학생과 교수진에게 공개 중" : "관리자만 볼 수 있음"}</UiText></p></div>
       <input type="hidden" name="programId" value={id} />
       <input type="hidden" name="operation" value="SET_PUBLIC" />
-      <input type="hidden" name="audience" value={audience} />
       <input type="hidden" name="visible" value={String(!visible)} />
       <button type="submit" className={visible ? "button-secondary" : "button-primary"} disabled={pending}><UiText>{visible ? "비공개 전환" : "공개"}</UiText></button>
     </form>

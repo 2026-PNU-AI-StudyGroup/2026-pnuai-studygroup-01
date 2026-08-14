@@ -31,7 +31,7 @@ describe("buildProgramSidebarItems", () => {
     submissionEndsAt: new Date("2026-12-01T00:00:00+09:00"),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
-    isStudentPublic: true,
+    isPublic: true,
   };
 
   it("진행 중 화면에서는 진행 중 프로그램을 우선한다", () => {
@@ -66,6 +66,8 @@ describe("buildProgramSidebarItems", () => {
         endsAt: votingEndsAt,
         voteLimit: 3,
         selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     };
     const archiveEntry = { id: "open-2026", name: "AI 부스터 2026", category: "교육", startYear: 2026, icon: "FOLDER" as const, ...archivedProgramPeriod };
@@ -104,15 +106,16 @@ describe("buildProgramSidebarItems", () => {
   it("관리자 사이드바는 팀 수가 아니라 전체 프로젝트 수와 비공개 상태를 사용한다", () => {
     const items = buildAdminProgramSidebarItems([{
       ...openProgram,
-      isStudentPublic: false,
+      isPublic: false,
       topicCount: 4,
       teamCount: 1,
-    }], "manage", "settings");
+    }], "manage", "settings", new Date(), new Map([["open-2026", 3]]));
 
     expect(items[0]).toEqual(expect.objectContaining({
       status: "draft",
       visibility: "private",
       projectCount: 4,
+      pendingApprovalCount: 3,
       href: "/topics?programId=open-2026&mode=manage&tab=settings",
     }));
   });

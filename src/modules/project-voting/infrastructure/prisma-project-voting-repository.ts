@@ -4,10 +4,11 @@ import {
   getProgramVotingPhase,
   type ProgramVoteBallot,
   type ProgramVotingResults,
+  type PublicProgramVotingResults,
   type ProjectVotingRepository,
   type ReplaceProgramVotesOutcome,
 } from "@/modules/project-voting/application/manage-project-voting";
-import { normalizeVoteSelection } from "@/modules/project-voting/domain/project-voting-policy";
+import { canViewPublicVotingResults, normalizeVoteSelection } from "@/modules/project-voting/domain/project-voting-policy";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
 const VOTABLE_TOPIC_STATUS = "ACTIVE" as const;
@@ -23,13 +24,13 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       select: {
         id: true,
         name: true,
-        isStudentPublic: true,
-        isFacultyPublic: true,
+        isPublic: true,
         votingPolicy: true,
       },
     });
     if (!program?.votingPolicy || !isVisibleTo(program, voterRole)) return null;
     const policy = program.votingPolicy;
+    const resultsVisible = voterRole === "ADMIN" || canViewPublicVotingResults(policy, now);
     const [candidates, votes, tallies] = await Promise.all([
       this.client.topic.findMany({
         where: { programId, publishedAt: { not: null }, status: VOTABLE_TOPIC_STATUS, OR: [
@@ -50,8 +51,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         },
       }),
       this.client.projectVote.findMany({ where: { programId, voterId }, select: { topicId: true } }),
-      // 팀별 득표수(집계만) — 모든 사용자에게 실시간 공개. 투표자 신원은 findResults(관리자)만.
-      this.client.projectVote.groupBy({ by: ["topicId"], where: { programId }, _count: { topicId: true } }),
+      resultsVisible
+        ? this.client.projectVote.groupBy({ by: ["topicId"], where: { programId }, _count: { topicId: true } })
+        : Promise.resolve([]),
     ]);
     const voteCounts = new Map(tallies.map((tally) => [tally.topicId, tally._count.topicId]));
     return {
@@ -70,7 +72,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           candidate.managerId === voterId ||
           candidate.assistants.length > 0 ||
           (candidate.projectTeam?.memberships.length ?? 0) > 0,
-        voteCount: voteCounts.get(candidate.id) ?? 0,
+        voteCount: resultsVisible ? voteCounts.get(candidate.id) ?? 0 : null,
       })).sort((left, right) => ballotSort(left, right, policy.voteLimitScope)),
       selectedTopicIds: votes.map(({ topicId }) => topicId),
     };
@@ -87,9 +89,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
 
       const visibility = input.voterRole === "ADMIN"
         ? Prisma.sql`TRUE`
-        : input.voterRole === "PROFESSOR"
-          ? Prisma.sql`"project_program"."isFacultyPublic" = true`
-          : Prisma.sql`"project_program"."isStudentPublic" = true`;
+        : Prisma.sql`"project_program"."isPublic" = true`;
       const policies = await transaction.$queryRaw<LockedVotingPolicy[]>(Prisma.sql`
         SELECT
           "program_voting_policy"."programId",
@@ -97,7 +97,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           "program_voting_policy"."endsAt",
           "program_voting_policy"."voteLimit",
           "program_voting_policy"."voteLimitScope",
-          "program_voting_policy"."selfVotingAllowed"
+          "program_voting_policy"."selfVotingAllowed",
+          "program_voting_policy"."resultsVisibleDuringVoting",
+          "program_voting_policy"."resultsVisibleAfterVoting"
         FROM "project_program"
         JOIN "program_voting_policy"
           ON "program_voting_policy"."programId" = "project_program"."id"
@@ -210,16 +212,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         ),
       }))
       .sort((left, right) => resultSort(left, right, policy.voteLimitScope));
-    const divisionRanking = new Map<string, { count: number; priorVoteCount?: number; rank: number }>();
-    const results = sorted.map((result) => {
-      const key = policy.voteLimitScope === "DIVISION" ? result.divisionId ?? "UNASSIGNED" : "PROGRAM";
-      const state = divisionRanking.get(key) ?? { count: 0, rank: 0 };
-      state.count += 1;
-      if (state.priorVoteCount !== result.voteCount) state.rank = state.count;
-      state.priorVoteCount = result.voteCount;
-      divisionRanking.set(key, state);
-      return { ...result, rank: state.rank };
-    });
+    const results = addRanks(sorted, policy.voteLimitScope);
     return {
       programId: program.id,
       programName: program.name,
@@ -230,13 +223,81 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       results,
     };
   }
+
+  async findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR", now: Date): Promise<PublicProgramVotingResults | null> {
+    const program = await this.client.projectProgram.findUnique({
+      where: { id: programId },
+      select: {
+        id: true,
+        name: true,
+        isPublic: true,
+        votingPolicy: true,
+      },
+    });
+    if (!program?.votingPolicy || !isVisibleTo(program, viewerRole) || !canViewPublicVotingResults(program.votingPolicy, now)) return null;
+
+    const policy = program.votingPolicy;
+    const phase = getProgramVotingPhase(policy, now);
+    if (phase === "UPCOMING") return null;
+    const [topics, totalVotes] = await Promise.all([
+      this.client.topic.findMany({
+        where: { programId, publishedAt: { not: null }, status: VOTABLE_TOPIC_STATUS, OR: [
+          { program: { endsAt: { gt: now } } },
+          { projectTeam: { confirmedAt: { not: null } } },
+        ] },
+        orderBy: [{ title: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          projectTeam: { select: { name: true } },
+          divisionId: true,
+          division: { select: { name: true, position: true } },
+          _count: { select: { votes: { where: { programId } } } },
+        },
+      }),
+      this.client.projectVote.count({ where: { programId } }),
+    ]);
+    const sorted = topics
+      .map((topic) => ({
+        topicId: topic.id,
+        title: topic.title,
+        teamName: topic.projectTeam?.name ?? null,
+        divisionId: topic.divisionId,
+        divisionName: topic.division?.name ?? null,
+        divisionPosition: topic.division?.position ?? null,
+        voteCount: topic._count.votes,
+      }))
+      .sort((left, right) => resultSort(left, right, policy.voteLimitScope));
+
+    return {
+      programId: program.id,
+      programName: program.name,
+      phase,
+      voteLimitScope: policy.voteLimitScope,
+      totalVotes,
+      results: addRanks(sorted, policy.voteLimitScope),
+    };
+  }
 }
 
-function isVisibleTo(
-  program: { isStudentPublic: boolean; isFacultyPublic: boolean },
-  role: UserRole,
-) {
-  return role === "ADMIN" || (role === "PROFESSOR" ? program.isFacultyPublic : program.isStudentPublic);
+function addRanks<T extends { divisionId: string | null; voteCount: number }>(
+  sorted: T[],
+  scope: ProgramVotingPolicyDetails["voteLimitScope"],
+): Array<T & { rank: number }> {
+  const divisionRanking = new Map<string, { count: number; priorVoteCount?: number; rank: number }>();
+  return sorted.map((result) => {
+    const key = scope === "DIVISION" ? result.divisionId ?? "UNASSIGNED" : "PROGRAM";
+    const state = divisionRanking.get(key) ?? { count: 0, rank: 0 };
+    state.count += 1;
+    if (state.priorVoteCount !== result.voteCount) state.rank = state.count;
+    state.priorVoteCount = result.voteCount;
+    divisionRanking.set(key, state);
+    return { ...result, rank: state.rank };
+  });
+}
+
+function isVisibleTo(program: { isPublic: boolean }, role: UserRole) {
+  return role === "ADMIN" || program.isPublic;
 }
 
 function ballotSort(

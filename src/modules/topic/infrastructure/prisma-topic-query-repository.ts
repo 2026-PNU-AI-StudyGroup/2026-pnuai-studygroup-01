@@ -20,7 +20,7 @@ const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isStudentPublic: true, isFacultyPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
   projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -78,7 +78,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isStudentPublic: true, isFacultyPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -273,7 +273,7 @@ function toTopicSummary(
     programCategory: program.category,
     effectiveStatus: effectiveProjectStatus({ status: topic.status, programEndsAt: program.endsAt, confirmedAt: projectTeam?.confirmedAt ?? null }),
     divisionName: division?.name ?? null,
-    programStatus: program.endsAt <= new Date() ? "CLOSED" : program.isStudentPublic || program.isFacultyPublic ? "OPEN" : "DRAFT",
+    programStatus: program.endsAt <= new Date() ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
     advisorEnabled: program.advisorEnabled,
     studentProjectCreationEnabled: program.studentProjectCreationEnabled,
     projectTeamMinSize: program.projectTeamMinSize,
@@ -322,12 +322,12 @@ function toPublicTopic(
 
 function programVisibilityWhere(audience: "STUDENT" | "FACULTY" | "ADMIN"): Prisma.ProjectProgramWhereInput {
   if (audience === "ADMIN") return {};
-  return audience === "FACULTY" ? { isFacultyPublic: true } : { isStudentPublic: true };
+  return { isPublic: true };
 }
 
 function isProgramVisibleTo(
-  program: { isStudentPublic: boolean; isFacultyPublic: boolean },
+  program: { isPublic: boolean },
   audience: "STUDENT" | "FACULTY" | "ADMIN",
 ) {
-  return audience === "ADMIN" || (audience === "FACULTY" ? program.isFacultyPublic : program.isStudentPublic);
+  return audience === "ADMIN" || program.isPublic;
 }

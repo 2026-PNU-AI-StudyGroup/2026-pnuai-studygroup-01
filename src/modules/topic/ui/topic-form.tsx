@@ -8,8 +8,9 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicSummary } from "@/modules/topic/application/topic-ports";
 import type { TopicDetails } from "@/modules/topic/domain/topic-policy";
+import styles from "@/modules/topic/ui/topic-form.module.css";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { ChoiceCard, FormField, FormSection, TextInput, Textarea } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, FormStaticValue, TextInput, Textarea } from "@/shared/ui/form-system";
 import { IconButton } from "@/shared/ui/icon-button";
 import { TagInput } from "@/shared/ui/tag-input";
 import { AddIcon, TrashIcon } from "@/shared/ui/workspace-icons";
@@ -121,6 +122,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       ], [recruitmentEnabled, studentProposal]);
   const currentWizardStepIndex = Math.min(wizardStep, wizardSteps.length - 1);
   const currentWizardStep = wizardSteps[currentWizardStepIndex];
+  const formSectionAppearance = wizard ? "plain" : "embedded";
   const onWizardStepChange = wizard?.onStepChange;
   const formRef = useRef<HTMLFormElement>(null);
   const wizardSubmitIntentRef = useRef(false);
@@ -186,14 +188,14 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         }
       }}
       aria-busy={pending}
-      className={wizard ? "mx-auto grid max-w-4xl gap-6" : "topic-form mx-auto grid max-w-4xl gap-4"}
+      className={wizard ? "mx-auto grid max-w-4xl gap-6" : `${styles.root} mx-auto grid max-w-4xl gap-4`}
     >
       {initialTopic ? <input type="hidden" name="topicId" value={initialTopic.id} /> : null}
-      <FormSection id="topic-basic" title={studentProposal ? "프로젝트 정보" : "기본 정보"} plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
+      <FormSection id="topic-basic" title={studentProposal ? "프로젝트 정보" : "기본 정보"} appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
         <div className={`grid gap-4 ${!initialTopic && selectedProgram?.divisions?.length ? "sm:grid-cols-2" : ""}`}>
         {initialTopic ? <FormField label="프로그램">
           <input type="hidden" name="programId" value={initialTopic.programId} />
-          <span className="form-static-value">{initialTopic.programName}</span>
+          <FormStaticValue>{initialTopic.programName}</FormStaticValue>
           <span className="mt-1 block text-sm text-[var(--muted)]"><UiText>{initialTopic.divisionName ? `분과 · ${initialTopic.divisionName}` : "미분과"}</UiText></span>
         </FormField> : <FormField id="topic-program" label="프로그램">
           <CustomSelect
@@ -235,7 +237,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         {studentProposal ? <><input type="hidden" name="applicationMode" value="TEAM_ONLY" /><input type="hidden" name="capacity" value="1" /></> : null}
       </FormSection>
       {recruitmentEnabled && !studentProposal ? <>
-      <FormSection id="topic-requirements" title="지원 조건" plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "REQUIREMENTS" ? "hidden" : ""} contentClassName="sm:grid-cols-2">
+      <FormSection id="topic-requirements" title="지원 조건" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "REQUIREMENTS" ? "hidden" : ""} contentClassName="sm:grid-cols-2">
         <FormField id="topic-required-skills" label="필수 기술">
           <TagInput id="topic-required-skills" name="requiredSkills" ariaLabel="필수 기술" value={requiredSkills} onValuesChange={setRequiredSkills} maxLength={1000} required placeholder="TypeScript, Python" />
         </FormField>
@@ -249,14 +251,14 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <UiTextarea id="topic-availability" name="availabilityRequirement" value={availabilityRequirement} onChange={(e) => setAvailabilityRequirement(e.target.value)} maxLength={500} required rows={3} className="form-control" placeholder="예: 매주 수요일 18시 정기 회의 참여" />
         </FormField>
       </FormSection>
-      <FormSection id="topic-application" title="지원서" plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "APPLICATION" ? "hidden" : ""}>
+      <FormSection id="topic-application" title="지원서" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "APPLICATION" ? "hidden" : ""}>
         <fieldset className="grid gap-3 sm:grid-cols-3">
           <legend className="sr-only"><UiText>{"프로젝트 지원 방식"}</UiText></legend>
           {[
             ["INDIVIDUAL_ONLY", "개인만"],
             ["TEAM_ONLY", "팀만"],
             ["INDIVIDUAL_OR_TEAM", "개인·팀"],
-          ].map(([value, label, description]) => <ChoiceCard key={value} name="applicationMode" value={value} checked={applicationMode === value} onChange={() => setApplicationMode(value as TopicDetails["applicationMode"])} required label={label} description={description} />)}
+          ].map(([value, label, description]) => <ChoiceCard key={value} density={wizard ? "default" : "compact"} name="applicationMode" value={value} checked={applicationMode === value} onChange={() => setApplicationMode(value as TopicDetails["applicationMode"])} required label={label} description={description} />)}
         </fieldset>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h3 className="font-semibold"><UiText>{"문항"}</UiText></h3>
@@ -317,7 +319,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           ))}
         </ol>
       </FormSection>
-      <FormSection id="topic-schedule" title="모집" plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""} contentClassName="sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-end">
+      <FormSection id="topic-schedule" title="모집" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""} contentClassName="sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-end">
       <label className="grid gap-2 text-sm font-medium">
         <UiText>{"모집 인원"}</UiText><TextInput name="capacity" type="number" min="1" max="100" value={capacity} onChange={(event) => setCapacity(Number(event.target.value))} required />
       </label>
@@ -352,7 +354,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           </dl>
         </section>
       ) : null}
-      {studentProposal && studentApproval ? <FormSection id="topic-team" title="팀 선택" plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""}>
+      {studentProposal && studentApproval ? <FormSection id="topic-team" title="팀 선택" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""}>
         {eligibleStudentTeams.length || wizard?.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`확정 팀원 ${projectTeamMinSize}–${projectTeamMaxSize}명인 팀만 선택할 수 있습니다.`} required>
           <CustomSelect
             id="topic-student-team"
@@ -377,14 +379,14 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         {pendingInvitationTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`초대 응답 대기 중인 팀 ${pendingInvitationTeams.length}개는 모든 초대가 처리된 뒤 선택할 수 있습니다.`}</UiText></p> : null}
         {invalidSizeTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`팀 인원 기준(${projectTeamMinSize}–${projectTeamMaxSize}명)에 맞지 않는 팀 ${invalidSizeTeams.length}개는 선택할 수 없습니다.`}</UiText></p> : null}
       </FormSection> : null}
-      {studentApproval ? <FormSection id="topic-approval" title="검토 요청" plain={Boolean(wizard)} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
+      {studentApproval ? <FormSection id="topic-approval" title="검토 요청" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
         {advisorEnabled === false ? (
           <><input type="hidden" name="approvalRoute" value="ADMIN" /><p className="text-sm text-[var(--muted)]"><UiText>{"이 프로그램의 승인 요청은 관리자가 검토합니다."}</UiText></p></>
         ) : advisorEnabled === true ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <ChoiceCard name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} label="교수 검토" />
-              <ChoiceCard name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} label="관리자 검토" />
+              <ChoiceCard density={wizard ? "default" : "compact"} name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} label="교수 검토" />
+              <ChoiceCard density={wizard ? "default" : "compact"} name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} label="관리자 검토" />
             </div>
             {approvalRoute === "PROFESSOR" ? <FormField id="topic-professor" label="검토 요청 교수"><CustomSelect id="topic-professor" name="requestedProfessorId" ariaLabel="검토 요청 교수" value={requestedProfessorId} onValueChange={setRequestedProfessorId} required searchable placeholder="교수를 검색하거나 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></FormField> : null}
           </>
@@ -392,7 +394,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           null
         )}
       </FormSection> : null}
-      <div className="topic-form__actions flex flex-wrap items-center justify-end gap-3">
+      <div className={`${styles.actions} flex flex-wrap items-center justify-end gap-3`}>
           {state.message ? (
             <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-bold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
               <UiText>{state.message}</UiText>

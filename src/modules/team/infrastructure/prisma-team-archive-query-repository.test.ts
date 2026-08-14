@@ -18,7 +18,7 @@ describe("지난 프로젝트 기술 검색", () => {
     expect(count).toHaveBeenCalledWith({
       where: expect.objectContaining({
         confirmedAt: { not: null },
-        project: { program: { isStudentPublic: true, endsAt: { lte: expect.any(Date) } } },
+        project: { program: { isPublic: true, endsAt: { lte: expect.any(Date) } } },
         AND: [expect.objectContaining({
           OR: expect.arrayContaining([{ id: { in: ["team-next"] } }]),
         })],

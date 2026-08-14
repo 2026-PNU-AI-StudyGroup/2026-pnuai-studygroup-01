@@ -19,9 +19,7 @@ export async function GET(
   const announcementAudience = await resolveAnnouncementAudience(actor);
   const completedProgramWhere = actor.role === "ADMIN"
     ? { endsAt: { lte: new Date() } }
-    : actor.role === "PROFESSOR"
-      ? { isFacultyPublic: true, endsAt: { lte: new Date() } }
-      : { isStudentPublic: true, endsAt: { lte: new Date() } };
+    : { isPublic: true, endsAt: { lte: new Date() } };
   const file = await prisma.storedFile.findFirst({
     where: {
       id: fileId,

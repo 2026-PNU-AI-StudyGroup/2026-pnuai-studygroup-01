@@ -23,6 +23,7 @@ export type ProgramSidebarItem = {
   votingHref?: string;
   projectCount?: number;
   visibility?: "public" | "private";
+  pendingApprovalCount?: number;
 };
 
 function AddProgramLink({ className }: { className: string }) {
@@ -51,6 +52,9 @@ function ProgramMetadata({ program, className }: {
       ) : null}
       {program.visibility ? (
         <> · <UiText>{program.visibility === "public" ? "공개" : "비공개"}</UiText></>
+      ) : null}
+      {program.pendingApprovalCount ? (
+        <> · <UiText>{"승인 대기"}</UiText> {program.pendingApprovalCount}<UiText>{"건"}</UiText></>
       ) : null}
     </span>
   );
@@ -198,6 +202,9 @@ function CategoryProgramGroup({
                       ) : null}
                       {program.visibility && !privateProgram ? (
                         <span className="text-[var(--muted)]">· <UiText>{program.visibility === "public" ? "공개" : "비공개"}</UiText></span>
+                      ) : null}
+                      {program.pendingApprovalCount ? (
+                        <span className="font-bold text-[var(--warning-ink)]">· <UiText>{"승인 대기"}</UiText> {program.pendingApprovalCount}<UiText>{"건"}</UiText></span>
                       ) : null}
                     </span>
                   </span>

@@ -233,5 +233,5 @@ function closedProjectWhere(
 
 function programVisibilityWhere(audience: "STUDENT" | "FACULTY" | "ADMIN") {
   if (audience === "ADMIN") return {};
-  return audience === "FACULTY" ? { isFacultyPublic: true } : { isStudentPublic: true };
+  return { isPublic: true };
 }

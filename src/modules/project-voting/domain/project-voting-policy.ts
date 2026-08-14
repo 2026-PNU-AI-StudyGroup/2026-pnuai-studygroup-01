@@ -8,6 +8,12 @@ export function getProgramVotingPhase(policy: ProgramVotingPolicyDetails, now: D
   return "OPEN";
 }
 
+export function canViewPublicVotingResults(policy: ProgramVotingPolicyDetails, now: Date): boolean {
+  const phase = getProgramVotingPhase(policy, now);
+  if (phase === "UPCOMING") return false;
+  return phase === "OPEN" ? policy.resultsVisibleDuringVoting : policy.resultsVisibleAfterVoting;
+}
+
 export function normalizeVoteSelection(topicIds: readonly string[], policy: ProgramVotingPolicyDetails, candidates: ReadonlyArray<{ id: string; divisionId?: string | null }>): string[] {
   const selectedTopicIds = [...new Set(topicIds.map((id) => id.trim()).filter(Boolean))];
   const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));

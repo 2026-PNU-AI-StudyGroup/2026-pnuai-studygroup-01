@@ -2,24 +2,22 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { TopicApplicationEditor } from "@/app/topics/_components/topic-application-editor";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
-import { ProjectVoteButton, ProjectVoteCountBadge, ProjectVoteStatusPill, useProjectVoteSelection, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
-import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
-import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
-import { ProjectPagination } from "@/app/topics/_components/project-pagination";
-import styles from "@/app/topics/_components/project-gallery.module.css";
-import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
+import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
+import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
+import { ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
+import { ProjectVoteButton, ProjectVoteCountBadge, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
+import { hasTopicsFilters, topicsHref } from "@/app/topics/_lib/topics-query";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
-import type { ProgramVoteBallot, ProgramVotingResults } from "@/modules/project-voting/application/manage-project-voting";
+import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
 import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
 import type { AdminProjectOperationFilter } from "@/modules/team/application/list-admin-program-project-operations";
 import { calculateReportSubmissionRate } from "@/modules/team/domain/project-progress";
-import { EmptyState, ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
-import { UndoIcon } from "@/shared/ui/workspace-icons";
+import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
+import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 const applicationAction = {
   PENDING: { label: "지원서 검토 중", href: "/dashboard?view=pending" },
@@ -28,6 +26,12 @@ const applicationAction = {
 } as const;
 
 type TopicItem = PublicTopicPage["items"][number];
+
+const projectStatusPresentation = {
+  PENDING_APPROVAL: { label: "승인 대기", tone: "warning" },
+  REJECTED: { label: "반려됨", tone: "danger" },
+  ...teamStatusPresentation,
+} as const;
 
 function ArrowIcon() {
   return <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-2 size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -51,6 +55,14 @@ function AdminProjectCardProgress({ data }: { data: AdminProjectCardData }) {
   );
 }
 
+function ProjectStatusBadge({ topic, recruiting }: { topic: TopicItem; recruiting: boolean }) {
+  const status = recruiting
+    ? { label: "모집 중", tone: "success" as const }
+    : projectStatusPresentation[topic.effectiveStatus];
+
+  return <ProjectGalleryStatusBadge label={status.label} tone={status.tone} />;
+}
+
 function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDataEnabled, adminData }: {
   topic: TopicItem;
   canApply: boolean;
@@ -65,6 +77,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
   const application = topic.ownApplicationStatus;
   const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === topic.id);
   const hasProjectAction = Boolean(application || (canApply && recruiting));
+  const showActionLayer = adminDataEnabled || hasProjectAction || Boolean(voteCandidate);
   const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
   const availabilityTone = !topic.recruitmentEnabled || topic.studentProjectCreationEnabled
     ? "neutral" as const
@@ -79,27 +92,19 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
           : "success" as const;
 
   return (
-    <li className="min-w-0">
-      <article aria-labelledby={`topic-${topic.id}`} className={styles.card}>
-        <div className="relative">
-          <ProjectGalleryCover
-            programName={topic.programName}
-            title={topic.title}
-          />
-          {voteCandidate ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : null}
-        </div>
-        <div className={styles.body}>
-          <div className="flex items-start justify-between gap-3">
-            <h3 id={`topic-${topic.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
-              <Link href={href} className={styles.titleLink}><UiText>{topic.title}</UiText></Link>
-            </h3>
-            <StatusBadge tone={availabilityTone}><UiText>{memberLabel}</UiText></StatusBadge>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-[var(--primary)]"><UiText>{`${topic.programName} · ${topic.divisionName ?? "미분과"}`}</UiText></p>
-          {topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : null}
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{topic.description}</UiText></p>
-
-          <div className={`mt-auto pt-5 ${styles.actionLayer}`}>
+    <ProjectGalleryCardShell
+      id={`topic-${topic.id}`}
+      title={topic.title}
+      href={href}
+      programName={topic.programName}
+      divisionName={topic.divisionName}
+      description={topic.description}
+      coverStatus={<ProjectStatusBadge topic={topic} recruiting={recruiting} />}
+      coverOverlay={typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : undefined}
+      titleAside={<StatusBadge tone={availabilityTone}><span className="whitespace-nowrap"><UiText>{memberLabel}</UiText></span></StatusBadge>}
+      details={topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : undefined}
+      actions={showActionLayer ? (
+        <>
             {adminData ? <AdminProjectCardProgress data={adminData} /> : null}
             {adminDataEnabled ? <AdminProjectCardActions projectTitle={topic.title} data={adminData} /> : null}
             {application === "ACCEPTED" ? (
@@ -127,14 +132,11 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
                 <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
               </div>
             ) : null}
-          </div>
-        </div>
-      </article>
-    </li>
+        </>
+      ) : undefined}
+    />
   );
 }
-
-const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
 
 export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, votingResults, adminProjectData, operation, registrationAction }: {
   topics: PublicTopicPage;
@@ -145,56 +147,46 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   divisionId?: string | "UNASSIGNED";
   now: Date;
   ballot?: ProgramVoteBallot;
-  votingResults?: ProgramVotingResults;
+  votingResults?: VotingResultsView;
   adminProjectData?: AdminProjectCardData[];
   operation?: AdminProjectOperationFilter;
   registrationAction?: ReactNode;
 }) {
-  const hasFilters = Boolean(programId || query || divisionId || operation && operation !== "all");
-  const voteSelection = useProjectVoteSelection(ballot);
+  const hasFilters = hasTopicsFilters({ q: query, divisionId, operation });
   const adminDataByTopicId = new Map(adminProjectData?.map((data) => [data.topicId, data]));
   return (
-    <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
-      <div className="mb-4 flex min-h-9 flex-wrap items-center gap-3">
-        {registrationAction}
-        <ProjectVoteStatusPill selection={voteSelection} />
-        {votingResults ? <ProjectVoteResultsDialog results={votingResults} /> : null}
-        <h2 id="project-results-title" className="sr-only"><UiText>{"프로젝트 목록"}</UiText></h2>
-        <p className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{topics.total}</strong><UiText>{"개"}</UiText></p>
-      </div>
-      {!topics.items.length ? (
-        <EmptyState
-          title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 공개된 프로젝트가 없습니다"}
-          description={hasFilters
-            ? operation && operation !== "all"
-              ? "프로그램, 분과, 검색어 또는 운영 조건을 바꿔 다시 확인해 주세요."
-              : "프로그램, 분과 또는 검색어를 바꿔 다시 확인해 주세요."
-            : "공개된 프로젝트가 생기면 이 목록에서 확인할 수 있습니다."}
-          action={hasFilters ? <Link href={activeProjectsHref({})} className="button-secondary gap-2"><UndoIcon className="size-4 shrink-0" /><UiText>{"필터 초기화"}</UiText></Link> : undefined}
+    <ProjectResultsLayout
+      items={topics.items}
+      itemKey={(topic) => topic.id}
+      total={topics.total}
+      page={topics.page}
+      totalPages={topics.totalPages}
+      hasFilters={hasFilters}
+      resetHref={topicsHref({ programId })}
+      emptyState={{
+        unfilteredTitle: "아직 공개된 프로젝트가 없습니다",
+        unfilteredDescription: "공개된 프로젝트가 생기면 이 목록에서 확인할 수 있습니다.",
+        filteredDescription: operation && operation !== "all"
+          ? "분과, 검색어 또는 운영 조건을 바꿔 다시 확인해 주세요."
+          : "분과 또는 검색어를 바꿔 다시 확인해 주세요.",
+      }}
+      listLabel="프로젝트 목록"
+      paginationLabel="프로젝트 페이지"
+      hrefForPage={(page) => topicsHref({ programId, q: query, divisionId, operation, page })}
+      headerAction={registrationAction}
+      ballot={ballot}
+      votingResults={votingResults}
+      renderItem={(topic, voteSelection) => (
+        <ProjectCard
+          topic={topic}
+          canApply={canApply}
+          leaderTeams={leaderTeams}
+          now={now}
+          voteSelection={voteSelection}
+          adminDataEnabled={adminProjectData !== undefined}
+          adminData={adminDataByTopicId.get(topic.id)}
         />
-      ) : (
-        <UiUl aria-label="프로젝트 목록" className={cardGridClassName}>
-          {topics.items.map((topic) => (
-            <ProjectCard
-              key={topic.id}
-              topic={topic}
-              canApply={canApply}
-              leaderTeams={leaderTeams}
-              now={now}
-              voteSelection={voteSelection}
-              adminDataEnabled={adminProjectData !== undefined}
-              adminData={adminDataByTopicId.get(topic.id)}
-            />
-          ))}
-        </UiUl>
       )}
-
-      <ProjectPagination
-        page={topics.page}
-        totalPages={topics.totalPages}
-        ariaLabel="프로젝트 페이지"
-        href={(page) => activeProjectsHref({ programId, query, divisionId, operation, page })}
-      />
-    </section>
+    />
   );
 }

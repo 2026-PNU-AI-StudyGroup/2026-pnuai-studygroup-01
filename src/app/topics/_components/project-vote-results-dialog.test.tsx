@@ -2,7 +2,10 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
-import type { ProgramVotingResults } from "@/modules/project-voting/application/manage-project-voting";
+import type {
+  ProgramVotingResults,
+  PublicProgramVotingResults,
+} from "@/modules/project-voting/application/manage-project-voting";
 
 const results: ProgramVotingResults = {
   programId: "program-1",
@@ -14,6 +17,8 @@ const results: ProgramVotingResults = {
     voteLimit: 3,
     voteLimitScope: "PROGRAM",
     selfVotingAllowed: false,
+    resultsVisibleDuringVoting: false,
+    resultsVisibleAfterVoting: true,
   },
   totalVotes: 15,
   participantCount: 7,
@@ -57,6 +62,24 @@ const results: ProgramVotingResults = {
   ],
 };
 
+const publicResults: PublicProgramVotingResults = {
+  programId: results.programId,
+  programName: results.programName,
+  phase: "OPEN",
+  voteLimitScope: "PROGRAM",
+  totalVotes: results.totalVotes,
+  results: results.results.map((result) => ({
+    topicId: result.topicId,
+    title: result.title,
+    teamName: result.teamName,
+    divisionId: result.divisionId,
+    divisionName: result.divisionName,
+    divisionPosition: result.divisionPosition,
+    voteCount: result.voteCount,
+    rank: result.rank,
+  })),
+};
+
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute("open", "");
@@ -69,7 +92,7 @@ beforeEach(() => {
 
 describe("프로젝트 투표 결과 모달", () => {
   it("투표 상태 오른쪽에서 열고 전체 득표수 내림차순 표를 보여준다", () => {
-    render(<ProjectVoteResultsDialog results={results} />);
+    render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} />);
 
     fireEvent.click(screen.getByRole("button", { name: "투표 결과" }));
     const dialog = screen.getByRole("dialog", { name: "투표 결과" });
@@ -90,7 +113,7 @@ describe("프로젝트 투표 결과 모달", () => {
   });
 
   it("분과별 보기에서는 분과 순서대로 나누고 각 분과 안을 득표순으로 정렬한다", () => {
-    render(<ProjectVoteResultsDialog results={results} />);
+    render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} />);
     fireEvent.click(screen.getByRole("button", { name: "투표 결과" }));
     fireEvent.click(screen.getByRole("button", { name: "분과별 득표순" }));
 
@@ -102,7 +125,7 @@ describe("프로젝트 투표 결과 모달", () => {
   });
 
   it("프로젝트명을 누르면 투표자의 이름, 이메일과 역할 표를 펼친다", () => {
-    render(<ProjectVoteResultsDialog results={results} />);
+    render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} />);
     fireEvent.click(screen.getByRole("button", { name: "투표 결과" }));
     const projectButton = screen.getByRole("button", { name: "융합 낮은 프로젝트" });
 
@@ -118,8 +141,20 @@ describe("프로젝트 투표 결과 모달", () => {
     expect(voterTable).toHaveTextContent("김학생student@example.com학생");
   });
 
+  it("공개 결과는 집계만 보여주고 프로젝트 행·투표자 정보를 펼치지 않는다", () => {
+    render(<ProjectVoteResultsDialog view={{ mode: "PUBLIC", results: publicResults }} />);
+    fireEvent.click(screen.getByRole("button", { name: "투표 결과" }));
+
+    expect(screen.getByRole("dialog", { name: "투표 결과" })).toHaveTextContent("총 15표");
+    expect(screen.getByRole("rowheader", { name: "융합 낮은 프로젝트" })).not.toHaveAttribute("aria-expanded");
+    expect(screen.queryByRole("button", { name: "융합 낮은 프로젝트" })).not.toBeInTheDocument();
+    expect(screen.queryByText("김학생")).not.toBeInTheDocument();
+    expect(screen.queryByText("student@example.com")).not.toBeInTheDocument();
+    expect(screen.queryByText(/투표자/)).not.toBeInTheDocument();
+  });
+
   it("닫으면 모달을 닫고 실행 버튼으로 초점을 돌린다", () => {
-    render(<ProjectVoteResultsDialog results={results} />);
+    render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} />);
     const trigger = screen.getByRole("button", { name: "투표 결과" });
     fireEvent.click(trigger);
     fireEvent.click(screen.getByRole("button", { name: "투표 결과 닫기" }));

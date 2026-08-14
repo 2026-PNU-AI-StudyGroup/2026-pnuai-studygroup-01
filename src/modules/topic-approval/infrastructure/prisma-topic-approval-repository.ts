@@ -3,7 +3,8 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import { createTopicApprovalNotification } from "@/modules/notification/infrastructure/notification-events";
-import type { TopicApprovalRepository, TopicApprovalRequestDetail, TopicApprovalRequestPage, TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
+import type { PendingApprovalCountByProgram, TopicApprovalListFilter, TopicApprovalRepository, TopicApprovalRequestDetail, TopicApprovalRequestPage } from "@/modules/topic-approval/application/manage-topic-approvals";
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
@@ -35,7 +36,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{
         id: string;
-        isStudentPublic: boolean;
+        isPublic: boolean;
         advisorEnabled: boolean;
         studentProjectCreationEnabled: boolean;
         projectTeamMinSize: number;
@@ -44,7 +45,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         projectRegistrationEndsAt: Date;
         endsAt: Date;
       }>>(Prisma.sql`
-        SELECT "id", "isStudentPublic", "endsAt", "advisorEnabled", "studentProjectCreationEnabled", "projectTeamMinSize", "projectTeamMaxSize", "projectRegistrationStartsAt", "projectRegistrationEndsAt"
+        SELECT "id", "isPublic", "endsAt", "advisorEnabled", "studentProjectCreationEnabled", "projectTeamMinSize", "projectTeamMaxSize", "projectRegistrationStartsAt", "projectRegistrationEndsAt"
         FROM "project_program"
         WHERE "id" = ${input.programId}
         FOR SHARE
@@ -52,7 +53,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       const program = programs[0];
       if (
         !program ||
-        !program.isStudentPublic ||
+        !program.isPublic ||
         program.endsAt <= input.requestedAt ||
         program.projectRegistrationStartsAt > input.requestedAt ||
         program.projectRegistrationEndsAt <= input.requestedAt ||
@@ -103,6 +104,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       }
       const { applicationQuestions, route, requestedProfessorId, studentTeamId, requestedAt, ...topic } = input;
       const id = randomUUID();
+      const approvalRequestId = randomUUID();
       await transaction.topic.create({
         data: {
           id,
@@ -116,7 +118,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           createdAt: requestedAt,
           updatedAt: requestedAt,
           applicationQuestions: { create: applicationQuestions.map((question, position) => ({ id: randomUUID(), ...question, position })) },
-          approvalRequests: { create: { id: randomUUID(), requesterId: input.authorId, route, requestedProfessorId, studentTeamId: studentTeam ? studentTeamId : undefined, studentTeamVersion: studentTeam?.compositionVersion, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
+          approvalRequests: { create: { id: approvalRequestId, requesterId: input.authorId, route, requestedProfessorId, studentTeamId: studentTeam ? studentTeamId : undefined, studentTeamVersion: studentTeam?.compositionVersion, status: "PENDING", createdAt: requestedAt, updatedAt: requestedAt } },
         },
       });
       await enqueueTranslations(transaction, [
@@ -128,6 +130,55 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         topic.availabilityRequirement,
         ...applicationQuestions.map(({ label }) => label),
       ]);
+      const reviewerIds = route === "PROFESSOR"
+        ? [requestedProfessorId!]
+        : (await transaction.user.findMany({
+          where: { role: "ADMIN", accountStatus: "ACTIVE" },
+          select: { id: true },
+        })).map(({ id: userId }) => userId);
+      const notifications = [
+        ...reviewerIds.map((recipientId) => ({
+          recipientId,
+          title: "프로젝트 제안 승인 요청이 도착했습니다",
+          body: `${topic.title} 프로젝트 제안을 검토해 주세요.`,
+          titleEn: "Project proposal approval requested",
+          bodyEn: `Review the proposal for ${topic.title} in PMS.`,
+          href: "/project-approvals",
+          key: `topic-approval-request:${approvalRequestId}:${recipientId}`,
+        })),
+        {
+          recipientId: input.authorId,
+          title: "프로젝트 제안 승인 요청이 접수되었습니다",
+          body: `${topic.title} 프로젝트 제안이 접수되었습니다. 검토 결과는 PMS에서 안내합니다.`,
+          titleEn: "Project proposal approval request received",
+          bodyEn: `Your proposal for ${topic.title} was received. PMS will provide the review result.`,
+          href: "/project-approvals",
+          key: `topic-approval-request-receipt:${approvalRequestId}:${input.authorId}`,
+        },
+      ];
+      await transaction.notification.createMany({
+        data: notifications.map(({ recipientId, title, body, href, key }) => ({
+          recipientId,
+          type: "TOPIC_APPROVAL" as const,
+          title,
+          body,
+          href,
+          dedupeKey: key,
+          createdAt: requestedAt,
+        })),
+        skipDuplicates: true,
+      });
+      await enqueueEmailEvents(transaction, notifications.map(({ recipientId, title, body, titleEn, bodyEn, href, key }) => ({
+        kind: "TOPIC_APPROVAL" as const,
+        recipientId,
+        title,
+        body,
+        titleEn,
+        bodyEn,
+        href,
+        idempotencyKey: `email:${key}`,
+        createdAt: requestedAt,
+      })));
       return id;
     });
   }
@@ -136,12 +187,15 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     actor: CurrentUser,
     requestedPage: number,
     pageSize: number,
-    status?: TopicApprovalRequestSummary["status"],
+    filter: TopicApprovalListFilter = {},
   ): Promise<TopicApprovalRequestPage> {
     const visibility = visibleApprovalRequest(actor);
-    const where: Prisma.TopicApprovalRequestWhereInput = status
-      ? { AND: [visibility, { status }] }
-      : visibility;
+    const conditions: Prisma.TopicApprovalRequestWhereInput[] = [visibility];
+    if (filter.status) conditions.push({ status: filter.status });
+    if (filter.programId) conditions.push({ topic: { programId: filter.programId } });
+    const where: Prisma.TopicApprovalRequestWhereInput = conditions.length === 1
+      ? visibility
+      : { AND: conditions };
     const safePageSize = Math.min(Math.max(pageSize, 1), 100);
     const total = await this.client.topicApprovalRequest.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / safePageSize));
@@ -152,7 +206,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       skip: (page - 1) * safePageSize,
       take: safePageSize,
       include: {
-        topic: { select: { title: true } },
+        topic: { select: { title: true, programId: true, program: { select: { name: true, category: true } } } },
         requester: { select: { name: true } },
         requestedProfessor: { select: { name: true } },
       },
@@ -161,6 +215,9 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       items: requests.map(({ topic, requester, requestedProfessor, ...request }) => ({
         ...request,
         topicTitle: topic.title,
+        programId: topic.programId,
+        programName: topic.program.name,
+        programCategory: topic.program.category,
         requesterName: requester.name,
         requestedProfessorName: requestedProfessor?.name ?? null,
       })),
@@ -168,6 +225,18 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       totalPages,
       total,
     };
+  }
+
+  async listAdminPendingCountsByProgram(): Promise<PendingApprovalCountByProgram[]> {
+    const rows = await this.client.$queryRaw<Array<{ programId: string; count: number }>>(Prisma.sql`
+      SELECT topic."programId" AS "programId", COUNT(*)::integer AS "count"
+      FROM "topic_approval_request" AS request
+      INNER JOIN "topic" AS topic ON topic."id" = request."topicId"
+      WHERE request."status" = 'PENDING'
+        AND request."route" = 'ADMIN'
+      GROUP BY topic."programId"
+    `);
+    return rows.map(({ programId, count }) => ({ programId, count: Number(count) }));
   }
 
   async findVisible(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null> {
@@ -187,7 +256,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         },
         topic: {
           include: {
-            program: { select: { name: true, category: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+            program: { select: { id: true, name: true, category: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
             applicationQuestions: {
               orderBy: { position: "asc" },
               select: { id: true, label: true, maxLength: true, required: true },
@@ -201,6 +270,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
     return {
       ...summary,
       topicTitle: topic.title,
+      programId: topic.program.id,
       requesterName: requester.name,
       requestedProfessorName: requestedProfessor?.name ?? null,
       programName: topic.program.name,
@@ -462,6 +532,10 @@ function notifyTopicApprovalResult(
     body: status === "APPROVED"
       ? `${request.topic.title} 제안이 승인되어 공개되었습니다.`
       : `${request.topic.title} 제안이 반려되었습니다. 검토 의견을 확인해 주세요.`,
+    titleEn: status === "APPROVED" ? "Project proposal approved" : "Project proposal rejected",
+    bodyEn: status === "APPROVED"
+      ? `The proposal for ${request.topic.title} was approved and is now visible.`
+      : `The proposal for ${request.topic.title} was rejected. Review the feedback in PMS.`,
     href: "/project-approvals",
     dedupeKey: `topic-approval:${request.id}:${status}`,
     createdAt,

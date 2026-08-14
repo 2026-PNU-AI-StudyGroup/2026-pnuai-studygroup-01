@@ -36,6 +36,8 @@ const ballot: ProgramVoteBallot = {
     endsAt: new Date("2026-08-31T00:00:00Z"),
     voteLimit: 3,
     selfVotingAllowed: false,
+    resultsVisibleDuringVoting: true,
+    resultsVisibleAfterVoting: true,
   },
   phase: "OPEN",
   candidates: [{ id: project.topicId, title: project.topicTitle, description: project.topicDescription, isSelfProject: false, voteCount: 0 }],
@@ -66,6 +68,27 @@ describe("PastProjectsView", () => {
     expect(voteStatus.parentElement).toBe(total?.parentElement);
   });
 
+  it("결과 비공개 투표 용지는 투표 기능만 유지하고 득표 배지를 숨긴다", () => {
+    render(
+      <PastProjectsView
+        projects={[project]}
+        total={1}
+        page={1}
+        totalPages={1}
+        query=""
+        programId="program-1"
+        ballot={{
+          ...ballot,
+          policy: { ...ballot.policy, resultsVisibleDuringVoting: false },
+          candidates: ballot.candidates.map((candidate) => ({ ...candidate, voteCount: null })),
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/득표 \d+표/)).not.toBeInTheDocument();
+  });
+
   it("썸네일 카드에는 프로젝트의 프로그램·분과 소속을 함께 표시한다", () => {
     render(
       <PastProjectsView
@@ -81,6 +104,7 @@ describe("PastProjectsView", () => {
     const article = detailLink.closest("article");
     expect(article?.querySelector("[data-project-cover]")).toBeInTheDocument();
     expect(article).toHaveTextContent("CSE 캡스톤디자인 2025 · 융합");
+    expect(screen.getByText("완료")).toHaveClass("rounded-full", "text-white", "backdrop-blur-sm");
     expect(article).toHaveTextContent("모두의 길 팀 · 김도윤 교수");
     expect(detailLink).toHaveAttribute(
       "href",
@@ -190,12 +214,12 @@ describe("PastProjectsView", () => {
     );
 
     expect(screen.queryByRole("link", { name: "조건 초기화" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics?view=past");
+    expect(screen.getByRole("link", { name: "필터 초기화" })).toHaveAttribute("href", "/topics?view=past&programId=program-1");
     expect(screen.queryByRole("link", { name: "전체 프로젝트 보기" })).not.toBeInTheDocument();
   });
 
-  it("조건이 없고 결과가 비면 최초 데이터 안내만 표시한다", () => {
-    render(<PastProjectsView projects={[]} total={0} page={1} totalPages={1} query="" />);
+  it("프로그램이 선택돼도 검색 조건이 없고 결과가 비면 최초 데이터 안내만 표시한다", () => {
+    render(<PastProjectsView projects={[]} total={0} page={1} totalPages={1} query="" programId="program-1" />);
 
     expect(screen.getByRole("heading", { name: "아직 지난 프로젝트가 없습니다" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "필터 초기화" })).not.toBeInTheDocument();

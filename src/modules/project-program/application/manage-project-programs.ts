@@ -12,7 +12,7 @@ import type { ProgramIconKey } from "@/modules/project-program/domain/program-ic
 
 export type ProjectProgramRecord = Omit<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">> & {
   id: string; startYear: number;
-  isStudentPublic?: boolean; isFacultyPublic?: boolean; topicCount: number; teamCount: number;
+  isPublic?: boolean; topicCount: number; teamCount: number;
   firstPublishedAt?: Date | null; endProcessedAt?: Date | null;
   status?: "DRAFT" | "OPEN" | "CLOSED";
   divisions?: Array<{ id: string; name: string; position: number }>;
@@ -20,6 +20,7 @@ export type ProjectProgramRecord = Omit<ProjectProgramDetails, "projectRegistrat
 };
 
 export type ProjectProgramCreateInput = Omit<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">> & {
+  isPublic?: boolean;
   divisionNames?: string[];
   votingPolicy?: ProgramVotingPolicyDetails | null;
   rubricDefinitions?: ProgramCreateRubricDefinitionInput[];
@@ -37,6 +38,7 @@ export type ProgramCreateRubricDefinitionInput = {
 export type ProgramCreateReportDefinitionInput = { title: string; dueAt: Date };
 
 export type ProjectProgramCreateSetup = {
+  isPublic?: boolean;
   divisionNames?: string[];
   votingPolicy: ProgramVotingPolicyDetails | null;
   rubricDefinitions?: ProgramCreateRubricDefinitionInput[];
@@ -72,12 +74,12 @@ export type UpdateProjectProgramSettingsOutcome =
 export interface ProjectProgramRepository {
   create(input: ProjectProgramDetails & ProjectProgramCreateSetup & { createdById: string }): Promise<string | "DUPLICATE">;
   listAll(): Promise<ProjectProgramRecord[]>;
-  listPublic?(audience?: "STUDENT" | "FACULTY"): Promise<ProjectProgramRecord[]>;
+  listPublic?(): Promise<ProjectProgramRecord[]>;
   listOpen(): Promise<ProjectProgramRecord[]>;
-  listSidebarVisible(now: Date, audience?: "STUDENT" | "FACULTY"): Promise<ProjectProgramRecord[]>;
+  listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]>;
   findById(id: string): Promise<ProjectProgramRecord | null>;
   updateSettings(id: string, input: ProjectProgramSettings, actorId: string): Promise<UpdateProjectProgramSettingsOutcome>;
-  setVisibility?(id: string, audience: "STUDENT" | "FACULTY", visible: boolean, changedAt: Date): Promise<boolean>;
+  setVisibility?(id: string, visible: boolean, changedAt: Date): Promise<boolean>;
   close?(id: string, changedById: string, changedAt: Date): Promise<boolean>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
   changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number }): Promise<boolean>;
@@ -127,12 +129,12 @@ export class ProgramVoteResetConfirmationRequiredError extends ProjectProgramOpe
 
 export class ProjectProgramService {
   constructor(private readonly repository: ProjectProgramRepository) {}
-  listPublic(audience: "STUDENT" | "FACULTY" = "STUDENT") { return this.repository.listPublic?.(audience) ?? this.repository.listOpen(); }
+  listPublic() { return this.repository.listPublic?.() ?? this.repository.listOpen(); }
   /** @deprecated Use listPublic; public visibility is now independent of closure. */
   listOpen() { return this.listPublic(); }
-  listSidebarVisible(now = new Date(), audience: "STUDENT" | "FACULTY" = "STUDENT") { return this.repository.listSidebarVisible(now, audience); }
-  async listRegistrableOpen(now = new Date(), audience: "STUDENT" | "FACULTY" = "STUDENT") {
-    return (await this.listPublic(audience)).filter((program) => programLifecycleStatus(program, now) === "ACTIVE" && isProjectRegistrationOpen(program, now));
+  listSidebarVisible(now = new Date()) { return this.repository.listSidebarVisible(now); }
+  async listRegistrableOpen(now = new Date()) {
+    return (await this.listPublic()).filter((program) => programLifecycleStatus(program, now) === "ACTIVE" && isProjectRegistrationOpen(program, now));
   }
   async listStudentCreatableOpen(now = new Date()) {
     return (await this.listRegistrableOpen(now)).filter(({ studentProjectCreationEnabled }) => studentProjectCreationEnabled);
@@ -140,7 +142,14 @@ export class ProjectProgramService {
   async listAll(actor: CurrentActor) { assertProgramAdmin(actor); return this.repository.listAll(); }
   async create(actor: CurrentActor, input: ProjectProgramCreateInput) {
     assertProgramAdmin(actor);
-    const { votingPolicy, divisionNames = [], rubricDefinitions = [], reportDefinitions = [], ...details } = input;
+    const {
+      votingPolicy,
+      divisionNames = [],
+      rubricDefinitions = [],
+      reportDefinitions = [],
+      isPublic = false,
+      ...details
+    } = input;
     const normalizedDivisionNames = normalizeDivisionNames(divisionNames);
     const normalizedVotingPolicy = votingPolicy ? normalizeProgramVotingPolicy(votingPolicy) : null;
     const normalizedRubricDefinitions = normalizeCreateRubrics(rubricDefinitions, normalizedDivisionNames, details.startsAt, details.endsAt);
@@ -155,6 +164,7 @@ export class ProjectProgramService {
         projectRegistrationEndsAt: input.projectRegistrationEndsAt ?? input.endsAt,
       }),
       votingPolicy: normalizedVotingPolicy,
+      isPublic,
       divisionNames: normalizedDivisionNames,
       rubricDefinitions: normalizedRubricDefinitions,
       reportDefinitions: normalizedReportDefinitions,
@@ -163,15 +173,15 @@ export class ProjectProgramService {
     if (outcome === "DUPLICATE") throw new ProjectProgramOperationError("같은 시작 시각에 동일한 프로그램명이 있습니다.");
     return outcome;
   }
-  async setVisibility(actor: CurrentActor, id: string, audience: "STUDENT" | "FACULTY", visible: boolean, now = new Date()) {
+  async setVisibility(actor: CurrentActor, id: string, visible: boolean, now = new Date()) {
     assertProgramAdmin(actor);
     const changed = this.repository.setVisibility
-      ? await this.repository.setVisibility(id, audience, visible, now)
-      : audience === "STUDENT" && visible ? await this.repository.changeStatus(id, "OPEN", actor.id, now) : false;
+      ? await this.repository.setVisibility(id, visible, now)
+      : visible ? await this.repository.changeStatus(id, "OPEN", actor.id, now) : false;
     if (!changed) throw new ProjectProgramOperationError("공개 설정을 변경할 프로그램이 없습니다.");
   }
   async setPublic(actor: CurrentActor, id: string, visible: boolean, now = new Date()) {
-    return this.setVisibility(actor, id, "STUDENT", visible, now);
+    return this.setVisibility(actor, id, visible, now);
   }
   async close(actor: CurrentActor, id: string, now = new Date()) {
     assertProgramAdmin(actor);
@@ -290,6 +300,7 @@ function normalizeCreateRubrics(definitions: ProgramCreateRubricDefinitionInput[
     const duplicateKey = `${divisionName?.toLocaleLowerCase("ko-KR") ?? "common"}:${title.toLocaleLowerCase("ko-KR")}`;
     if (scopeTitles.has(duplicateKey)) throw new ProjectProgramOperationError("같은 범위에 동일한 제목의 채점표가 있습니다.");
     scopeTitles.add(duplicateKey);
+    if (definition.criteria.length === 0) throw new ProjectProgramOperationError("채점표에는 평가 항목을 하나 이상 추가해 주세요.");
     if (definition.criteria.length > 50) throw new ProjectProgramOperationError("채점 항목은 채점표당 최대 50개까지 등록할 수 있습니다.");
     const criteria = definition.criteria.map((criterion) => {
       const label = criterion.label.trim();

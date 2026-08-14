@@ -18,6 +18,8 @@ function selection(voteLimitScope: "PROGRAM" | "DIVISION", selectedTopicIds: str
       voteLimit: 3,
       voteLimitScope,
       selfVotingAllowed: false,
+      resultsVisibleDuringVoting: false,
+      resultsVisibleAfterVoting: true,
     },
     phase: "OPEN",
     candidates: [],

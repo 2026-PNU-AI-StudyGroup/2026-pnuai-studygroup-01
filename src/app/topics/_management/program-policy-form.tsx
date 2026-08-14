@@ -5,9 +5,10 @@ import { useActionState, useState } from "react";
 import { updateProgramSettingsAction } from "@/app/topics/_management/program-actions";
 import { CategorySelect } from "@/app/topics/_management/category-select";
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
+import { ProgramVotingResultVisibilityFields } from "@/app/topics/_management/program-voting-result-visibility";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard, DateTimeInput, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, FormField, FormLegend, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
 
 type ProgramPolicyFormProps = {
   programId: string;
@@ -68,7 +69,7 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
           <DateTimeInput id="settings-program-ends-at" name="endsAt" defaultValue={koreanDateTimeLocal(endsAt)} required />
         </FormField>
         <fieldset className="grid gap-3 sm:col-span-2">
-          <legend className="form-field__label"><UiText>{"지도교수 배정 여부"}</UiText></legend>
+          <FormLegend><UiText>{"지도교수 배정 여부"}</UiText></FormLegend>
           <ChoiceCard name="advisorEnabled" value="true" defaultChecked={advisorEnabled} required label="지도교수 있음" description="학생 제안은 지정한 지도교수가 검토합니다." />
           <ChoiceCard name="advisorEnabled" value="false" defaultChecked={!advisorEnabled} required label="지도교수 없음" description="학생 제안은 관리자가 검토합니다." />
         </fieldset>
@@ -124,12 +125,19 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
           <TextInput id="settings-vote-limit" name="voteLimit" type="number" min={1} inputMode="numeric" defaultValue={votingPolicy?.voteLimit ?? ""} required={enabled} disabled={!enabled} />
         </FormField>
         <fieldset className="grid gap-3 sm:col-span-2">
-          <legend className="form-field__label"><UiText>{"투표 범위"}</UiText></legend>
+          <FormLegend><UiText>{"투표 범위"}</UiText></FormLegend>
           <ChoiceCard name="voteLimitScope" value="PROGRAM" defaultChecked={!votingPolicy || votingPolicy.voteLimitScope === "PROGRAM"} required={enabled} disabled={!enabled} label="프로그램 전체" description="프로그램 전체에서 인당 N표까지 선택합니다." />
           <ChoiceCard name="voteLimitScope" value="DIVISION" defaultChecked={votingPolicy?.voteLimitScope === "DIVISION"} required={enabled} disabled={!enabled || divisionCount === 0} label="분과별" description={divisionCount ? "각 분과에서 각각 인당 N표까지 선택합니다." : "분과를 하나 이상 등록한 뒤 사용할 수 있습니다."} />
         </fieldset>
         <div className="sm:col-span-2">
           <ChoiceCard name="selfVotingAllowed" type="checkbox" value="true" defaultChecked={votingPolicy?.selfVotingAllowed} disabled={!enabled} label="자기 프로젝트 투표 허용" description="작성자·프로젝트 관리자·조교·팀원이 자신의 프로젝트에 투표할 수 있게 합니다." />
+        </div>
+        <div className="sm:col-span-2">
+          <ProgramVotingResultVisibilityFields
+            defaultDuringVoting={votingPolicy?.resultsVisibleDuringVoting ?? false}
+            defaultAfterVoting={votingPolicy?.resultsVisibleAfterVoting ?? true}
+            disabled={!enabled}
+          />
         </div>
         {state.status === "confirm" && state.voteResetImpact ? <div role="alert" className="sm:col-span-2 rounded-xl border border-[var(--danger)] bg-[var(--danger-subtle)] p-4 text-sm">
           <input type="hidden" name="confirmedVoteCount" value={state.voteResetImpact.voteCount} />

@@ -617,8 +617,7 @@ model ProjectProgram {
   projectTeamMinSize            Int                       @default(2)
   projectTeamMaxSize            Int                       @default(6)
   icon                          ProgramIcon               @default(FOLDER)
-  isStudentPublic               Boolean                   @default(false)
-  isFacultyPublic               Boolean                   @default(false)
+  isPublic                      Boolean                   @default(false)
   firstPublishedAt              DateTime?
   endProcessedAt                DateTime?
   createdAt                     DateTime                  @default(now())
@@ -634,8 +633,7 @@ model ProjectProgram {
 
   @@unique([name, startsAt])
   @@index([endsAt, endProcessedAt])
-  @@index([isStudentPublic, startsAt, endsAt])
-  @@index([isFacultyPublic, startsAt, endsAt])
+  @@index([isPublic, startsAt, endsAt])
   @@map("project_program")
 }
 
@@ -807,15 +805,17 @@ model Topic {
 }
 
 model ProgramVotingPolicy {
-  programId         String         @id
-  startsAt          DateTime
-  endsAt            DateTime
-  voteLimit         Int
-  voteLimitScope    VoteLimitScope @default(PROGRAM)
-  selfVotingAllowed Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  program           ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId                    String         @id
+  startsAt                     DateTime
+  endsAt                       DateTime
+  voteLimit                    Int
+  voteLimitScope               VoteLimitScope @default(PROGRAM)
+  selfVotingAllowed            Boolean        @default(false)
+  resultsVisibleDuringVoting   Boolean        @default(false)
+  resultsVisibleAfterVoting    Boolean        @default(true)
+  createdAt                    DateTime       @default(now())
+  updatedAt                    DateTime       @updatedAt
+  program                      ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@map("program_voting_policy")
 }

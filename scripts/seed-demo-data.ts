@@ -494,8 +494,8 @@ async function seed() {
       const studentProjectCreationEnabled = input.category === opusProgramCategories.hackathon;
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt, endProcessedAt },
-        create: { ...programInput, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt, endProcessedAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isPublic: true, firstPublishedAt, endProcessedAt },
+        create: { ...programInput, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, endProcessedAt },
       });
     }
     const activeProgramSchedules = [

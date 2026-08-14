@@ -36,7 +36,7 @@ describe("TopicForm", () => {
           studentProjectCreationEnabled: true,
           projectTeamMinSize: 2,
           projectTeamMaxSize: 6,
-          isStudentPublic: true,
+          isPublic: true,
           topicCount: 0,
           teamCount: 0,
         }]}
@@ -46,8 +46,7 @@ describe("TopicForm", () => {
     );
 
     expect(onStepChange).toHaveBeenLastCalledWith({ index: 0, labels: ["팀 선택", "프로젝트 정보", "확인 및 제출"] });
-    expect(container.querySelector("form")).not.toHaveClass("topic-form");
-    expect(screen.getByRole("heading", { name: "팀 선택" }).closest("section")).toHaveClass("form-section--plain");
+    expect(screen.getByRole("heading", { name: "팀 선택" }).closest("section")).toHaveAttribute("data-form-section-appearance", "plain");
     expect(screen.getByText("팀 인원 기준(2–6명)에 맞지 않는 팀 1개는 선택할 수 없습니다.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "다음" })).toBeDisabled();
     fireEvent.click(screen.getByRole("combobox", { name: "참여 팀" }));
@@ -139,7 +138,7 @@ describe("TopicForm", () => {
           submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: false,
           studentProjectCreationEnabled: true,
-          isStudentPublic: true,
+          isPublic: true,
           topicCount: 0,
           teamCount: 0,
         }]}
@@ -183,7 +182,7 @@ describe("TopicForm", () => {
           submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
-          isStudentPublic: true,
+          isPublic: true,
           topicCount: 0,
           teamCount: 0,
         }]}
@@ -225,7 +224,7 @@ describe("TopicForm", () => {
           submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
-          isStudentPublic: true,
+          isPublic: true,
           topicCount: 0,
           teamCount: 0,
           divisions: [{ id: "division-1", name: "창업", position: 0 }],
@@ -234,7 +233,7 @@ describe("TopicForm", () => {
     );
 
     const divisionSelect = screen.getByRole("combobox", { name: "분과" });
-    const validationProxy = divisionSelect.parentElement?.querySelector(".custom-select__validation-proxy");
+    const validationProxy = divisionSelect.parentElement?.querySelector("[data-validation-proxy='custom-select']");
     expect(validationProxy).not.toBeNull();
     fireEvent.invalid(validationProxy!);
 

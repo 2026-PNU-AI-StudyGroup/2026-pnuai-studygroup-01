@@ -4,7 +4,8 @@ import { useId, useRef, useState } from "react";
 
 import type {
   ProgramVoteResult,
-  ProgramVotingResults,
+  PublicProgramVoteResult,
+  VotingResultsView,
 } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { EmptyState } from "@/shared/ui/page-primitives";
@@ -12,14 +13,18 @@ import { BarChartIcon, CloseIcon } from "@/shared/ui/workspace-icons";
 
 type ResultView = "overall" | "division";
 
-export function ProjectVoteResultsDialog({ results }: {
-  results: ProgramVotingResults;
+export function ProjectVoteResultsDialog({ view: resultsView }: {
+  view: VotingResultsView;
 }) {
+  const results = resultsView.results;
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [view, setView] = useState<ResultView>("overall");
   const sortedResults = sortByVotes(results.results);
   const divisionGroups = groupByDivision(results.results);
+  const votersByTopic = resultsView.mode === "ADMIN"
+    ? new Map(resultsView.results.results.map((result) => [result.topicId, result.voters]))
+    : null;
 
   function close() {
     dialogRef.current?.close();
@@ -85,9 +90,9 @@ export function ProjectVoteResultsDialog({ results }: {
                 </thead>
                 <tbody>
                   {view === "overall"
-                    ? sortedResults.map((result) => <ResultRow key={result.topicId} result={result} />)
+                    ? sortedResults.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} />)
                     : divisionGroups.map((group) => (
-                      <DivisionRows key={group.key} name={group.name} results={group.results} />
+                      <DivisionRows key={group.key} name={group.name} results={group.results} votersByTopic={votersByTopic} />
                     ))}
                 </tbody>
               </table>
@@ -120,9 +125,10 @@ function ViewButton({ selected, onClick, children }: {
   );
 }
 
-function DivisionRows({ name, results }: {
+function DivisionRows({ name, results, votersByTopic }: {
   name: string;
-  results: ProgramVoteResult[];
+  results: PublicProgramVoteResult[];
+  votersByTopic: Map<string, ProgramVoteResult["voters"]> | null;
 }) {
   return (
     <>
@@ -131,14 +137,24 @@ function DivisionRows({ name, results }: {
           <UiText>{name === "미분과" ? name : `${name} 분과`}</UiText>
         </th>
       </tr>
-      {results.map((result) => <ResultRow key={result.topicId} result={result} />)}
+      {results.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} />)}
     </>
   );
 }
 
-function ResultRow({ result }: { result: ProgramVoteResult }) {
+function ResultRow({ result, voters }: { result: PublicProgramVoteResult; voters?: ProgramVoteResult["voters"] }) {
   const [expanded, setExpanded] = useState(false);
   const votersId = useId();
+  if (!voters) {
+    return (
+      <tr className="border-t border-[var(--line)] first:border-t-0">
+        <th scope="row" className="px-4 py-3 font-semibold text-[var(--ink)]"><UiText>{result.title}</UiText></th>
+        <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.divisionName ?? "미분과"}</UiText></td>
+        <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.teamName ?? "팀 미구성"}</UiText></td>
+        <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{result.voteCount}<UiText>{"표"}</UiText></td>
+      </tr>
+    );
+  }
   return (
     <>
       <tr className="border-t border-[var(--line)] first:border-t-0">
@@ -163,7 +179,7 @@ function ResultRow({ result }: { result: ProgramVoteResult }) {
       {expanded ? (
         <tr id={votersId} className="border-t border-[var(--line)] bg-[var(--surface-subtle)]">
           <td colSpan={4} className="px-4 py-4">
-            <VoterTable voters={result.voters} />
+            <VoterTable voters={voters} />
           </td>
         </tr>
       ) : null}
@@ -206,18 +222,18 @@ function roleLabel(role: ProgramVoteResult["voters"][number]["role"]) {
   return role === "ADMIN" ? "관리자" : role === "PROFESSOR" ? "교수" : "학생";
 }
 
-function sortByVotes(results: ProgramVoteResult[]) {
+function sortByVotes(results: PublicProgramVoteResult[]) {
   return [...results].sort((left, right) => (
     right.voteCount - left.voteCount || left.title.localeCompare(right.title, "ko")
   ));
 }
 
-function groupByDivision(results: ProgramVoteResult[]) {
+function groupByDivision(results: PublicProgramVoteResult[]) {
   const groups = new Map<string, {
     key: string;
     name: string;
     position: number;
-    results: ProgramVoteResult[];
+    results: PublicProgramVoteResult[];
   }>();
   for (const result of results) {
     const key = result.divisionId ?? "UNASSIGNED";

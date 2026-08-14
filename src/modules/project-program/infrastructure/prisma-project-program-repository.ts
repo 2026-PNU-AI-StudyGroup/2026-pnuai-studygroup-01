@@ -17,12 +17,18 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   async create(input: ProjectProgramDetails & ProjectProgramCreateSetup & { createdById: string }): Promise<string | "DUPLICATE"> {
     try {
       return await this.client.$transaction(async (transaction) => {
-        const { votingPolicy, divisionNames = [], rubricDefinitions = [], reportDefinitions = [], ...program } = input;
+        const {
+          votingPolicy,
+          divisionNames = [],
+          rubricDefinitions = [],
+          reportDefinitions = [],
+          isPublic = false,
+          ...program
+        } = input;
         const created = await transaction.projectProgram.create({
           data: {
             ...program,
-            isStudentPublic: false,
-            isFacultyPublic: false,
+            isPublic,
             votingPolicy: votingPolicy ? { create: votingPolicy } : undefined,
             divisions: divisionNames.length ? { create: divisionNames.map((name, position) => ({ name, position })) } : undefined,
           },
@@ -63,14 +69,14 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   }
 
   listAll(): Promise<ProjectProgramRecord[]> { return this.list({}); }
-  listPublic(audience: "STUDENT" | "FACULTY" = "STUDENT"): Promise<ProjectProgramRecord[]> {
-    return this.list(audience === "STUDENT" ? { isStudentPublic: true } : { isFacultyPublic: true });
+  listPublic(): Promise<ProjectProgramRecord[]> {
+    return this.list({ isPublic: true });
   }
   listOpen(): Promise<ProjectProgramRecord[]> { return this.listPublic(); }
-  listSidebarVisible(now: Date, audience: "STUDENT" | "FACULTY" = "STUDENT"): Promise<ProjectProgramRecord[]> {
+  listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]> {
     // Visibility is an explicit setting and does not expire with the operating period.
     void now;
-    return this.list(audience === "STUDENT" ? { isStudentPublic: true } : { isFacultyPublic: true });
+    return this.list({ isPublic: true });
   }
   async findById(id: string): Promise<ProjectProgramRecord | null> {
     return (await this.list({ id }))[0] ?? null;
@@ -87,7 +93,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     });
     return programs.map(({ topics, ...program }) => ({
       ...program,
-      status: program.endsAt <= new Date() ? "CLOSED" : program.isStudentPublic || program.isFacultyPublic ? "OPEN" : "DRAFT",
+      status: program.endsAt <= new Date() ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
       startYear: getProgramStartYear(program.startsAt),
       topicCount: topics.length,
       teamCount: topics.filter(({ projectTeam }) => projectTeam !== null).length,
@@ -114,6 +120,8 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       } else if (currentPolicy) {
         const requestedScope = input.votingPolicy.voteLimitScope ?? "PROGRAM";
         const policyChanged = currentPolicy.voteLimit !== input.votingPolicy.voteLimit || currentPolicy.voteLimitScope !== requestedScope;
+        const periodChanged = currentPolicy.startsAt.getTime() !== input.votingPolicy.startsAt.getTime() ||
+          currentPolicy.endsAt.getTime() !== input.votingPolicy.endsAt.getTime();
         const resetConfirmed = input.confirmVoteReset?.voteCount === voteCount &&
           input.confirmVoteReset.from.voteLimit === currentPolicy.voteLimit &&
           input.confirmVoteReset.from.voteLimitScope === currentPolicy.voteLimitScope &&
@@ -137,17 +145,19 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             return "VOTE_LIMIT_CONFLICT";
           }
         }
-        const votesOutsidePeriod = await transaction.projectVote.findFirst({
-          where: {
-            programId: id,
-            OR: [
-              { createdAt: { lt: input.votingPolicy.startsAt } },
-              { createdAt: { gte: input.votingPolicy.endsAt } },
-            ],
-          },
-          select: { id: true },
-        });
-        if (votesOutsidePeriod) return "VOTE_PERIOD_CONFLICT";
+        if (periodChanged) {
+          const votesOutsidePeriod = await transaction.projectVote.findFirst({
+            where: {
+              programId: id,
+              OR: [
+                { createdAt: { lt: input.votingPolicy.startsAt } },
+                { createdAt: { gte: input.votingPolicy.endsAt } },
+              ],
+            },
+            select: { id: true },
+          });
+          if (votesOutsidePeriod) return "VOTE_PERIOD_CONFLICT";
+        }
         if (currentPolicy.selfVotingAllowed && !input.votingPolicy.selfVotingAllowed) {
           const selfVote = await findSelfVote(transaction, id);
           if (selfVote) return "SELF_VOTE_CONFLICT";
@@ -187,7 +197,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     });
   }
 
-  setVisibility(id: string, audience: "STUDENT" | "FACULTY", visible: boolean, changedAt: Date): Promise<boolean> {
+  setVisibility(id: string, visible: boolean, changedAt: Date): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const rows = await transaction.$queryRaw<Array<{ id: string; firstPublishedAt: Date | null }>>(Prisma.sql`
         SELECT "id", "firstPublishedAt" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
@@ -197,7 +207,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       await transaction.projectProgram.update({
         where: { id },
         data: {
-          ...(audience === "STUDENT" ? { isStudentPublic: visible } : { isFacultyPublic: visible }),
+          isPublic: visible,
           firstPublishedAt: visible && program.firstPublishedAt === null ? changedAt : undefined,
         },
       });
@@ -215,7 +225,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   }
 
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean> {
-    return status === "OPEN" ? this.setVisibility(id, "STUDENT", true, changedAt) : this.close(id, changedById, changedAt);
+    return status === "OPEN" ? this.setVisibility(id, true, changedAt) : this.close(id, changedById, changedAt);
   }
 
   async changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number }): Promise<boolean> {
@@ -253,7 +263,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     projectTeamMaxSize: number;
   } | null> {
     return this.client.projectProgram.findFirst({
-      where: { id, isStudentPublic: true, endsAt: { gt: new Date() } },
+      where: { id, isPublic: true, endsAt: { gt: new Date() } },
       select: {
         id: true,
         startsAt: true,
