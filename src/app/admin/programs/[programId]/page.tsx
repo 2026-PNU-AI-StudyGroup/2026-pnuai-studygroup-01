@@ -7,6 +7,8 @@ import { ProgramStatusForm } from "@/app/admin/programs/_components/program-stat
 import { StudentProjectCreationForm } from "@/app/admin/programs/_components/student-project-creation-form";
 import { ProgramVoteResults } from "@/app/admin/programs/_components/program-vote-results";
 import { ProgramReportRequirementForm } from "@/app/admin/programs/_components/program-report-requirement-form";
+import { ProgramAdvisorPanel } from "@/app/admin/programs/_components/program-advisor-panel";
+import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { RubricManager, type RubricDivisionRow, type RubricRow } from "@/app/admin/programs/[programId]/rubric/_components/rubric-manager";
 import { TrackManager, type TrackRow } from "@/app/admin/programs/[programId]/tracks/_components/track-manager";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
@@ -29,6 +31,7 @@ const TABS = [
   { key: "tracks", label: "분과" },
   { key: "reports", label: "보고서" },
   { key: "votes", label: "투표" },
+  { key: "advisors", label: "자문위원" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -135,6 +138,13 @@ export default async function ProgramDetailPage({ params, searchParams }: { para
         <ProgramReportRequirementForm programId={program.id} definitions={definitions} />
       </FormSection>
     );
+  } else if (tab === "advisors") {
+    const [advisors, topics, matrix] = await Promise.all([
+      listProgramAdvisors(prisma, program.id),
+      listProgramTopicsForAssignment(prisma, program.id),
+      advisorScoreMatrix(prisma, program.id),
+    ]);
+    content = <ProgramAdvisorPanel programId={program.id} advisors={advisors} topics={topics} matrix={matrix} />;
   } else {
     const refreshedAt = new Date();
     const votingResults = program.votingPolicy
