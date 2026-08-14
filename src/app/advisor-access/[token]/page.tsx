@@ -1,4 +1,4 @@
-import { AdvisorAccessClient } from "./access-client";
+import { AdvisorAccessClient } from "./_components/access-client";
 
 export default async function AdvisorAccessPage({
   params,
