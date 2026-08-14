@@ -71,6 +71,8 @@ export default async function DashboardPage({
 }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
+  // 자문위원은 배정된 프로젝트만 다루므로 전용 화면으로 보낸다(이 대시보드는 항상 비어 있다).
+  if (actor.role === "ADVISOR") redirect("/advisor");
   const params = await searchParams;
   const student = actor.role === "STUDENT";
   const requestedView = parseProjectDashboardView(firstSearchParam(params.view));
