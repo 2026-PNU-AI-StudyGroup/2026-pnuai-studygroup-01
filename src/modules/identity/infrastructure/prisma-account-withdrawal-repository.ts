@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { AccountWithdrawalRepository, WithdrawAccountOutcome } from "@/modules/identity/application/withdraw-account";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
 export class PrismaAccountWithdrawalRepository implements AccountWithdrawalRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -119,6 +120,18 @@ export class PrismaAccountWithdrawalRepository implements AccountWithdrawalRepos
         where: { id: user.id },
         data: { accountStatus: "WITHDRAWN", withdrawnAt },
       });
+      await enqueueEmailEvents(transaction, [{
+        kind: "ACCOUNT_STATUS",
+        recipientId: user.id,
+        title: "PMS 계정 탈퇴가 완료되었습니다",
+        body: "로그인 권한은 즉시 회수되며 프로젝트 이력과 작성물은 운영 정책에 따라 보존됩니다.",
+        titleEn: "PMS account withdrawal completed",
+        bodyEn: "Your sign-in access has been revoked. Project history and submissions are retained under the operating policy.",
+        href: "/sign-in",
+        idempotencyKey: `email:user-withdrawn:${user.id}:${withdrawnAt.getTime()}`,
+        createdAt: withdrawnAt,
+        allowInactiveRecipient: true,
+      }]);
       await transaction.auditLog.create({ data: {
         actorId: user.id,
         action: "USER_WITHDRAWN",

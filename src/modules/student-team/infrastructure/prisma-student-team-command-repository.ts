@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import type { OutboxEmailEvent } from "@/modules/email/application/email-delivery-ports";
 import type { StudentTeamWriter } from "@/modules/student-team/application/student-team-ports";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
 export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
   constructor(private readonly client: PrismaClient) {}
@@ -119,6 +121,32 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           },
           update: {},
         });
+      }
+      if (!invitee || (invitee.accountStatus === "ACTIVE" && invitee.role === "STUDENT")) {
+        const emailEvent: OutboxEmailEvent = invitee
+          ? {
+              kind: "TEAM_INVITATION",
+              recipientId: invitee.id,
+              title: "새 팀 초대가 도착했습니다",
+              body: "PMS 팀 관리에서 초대를 확인하고 참여 여부를 선택해 주세요.",
+              titleEn: "New team invitation",
+              bodyEn: "Review the invitation and choose whether to join from Team Management in PMS.",
+              href: "/teams",
+              idempotencyKey: `email:student-team-invitation:${invitation.id}:${input.invitedAt.getTime()}`,
+              createdAt: input.invitedAt,
+            }
+          : {
+              kind: "TEAM_INVITATION",
+              recipientEmail: input.email,
+              title: "새 팀 초대가 도착했습니다",
+              body: "PMS 팀 관리에서 초대를 확인하고 참여 여부를 선택해 주세요.",
+              titleEn: "New team invitation",
+              bodyEn: "Review the invitation and choose whether to join from Team Management in PMS.",
+              href: "/teams",
+              idempotencyKey: `email:student-team-invitation:${invitation.id}:${input.invitedAt.getTime()}`,
+              createdAt: input.invitedAt,
+            };
+        await enqueueEmailEvents(transaction, [emailEvent]);
       }
       return "INVITED";
     });

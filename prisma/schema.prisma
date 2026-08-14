@@ -215,6 +215,38 @@ enum NotificationType {
   SYSTEM
 }
 
+enum EmailDeliveryKind {
+  TEAM_INVITATION
+  PROJECT_ASSISTANT_INVITATION
+  RECRUITMENT_APPLICATION
+  RECRUITMENT_RESULT
+  TOPIC_APPLICATION
+  APPLICATION_RESULT
+  TOPIC_APPROVAL
+  PROJECT_REQUEST
+  TASK_ASSIGNMENT
+  PROJECT_MEMBERSHIP
+  DEADLINE
+  ACCOUNT_STATUS
+  PROFESSOR_ACCESS
+  REPORT_ACTIVITY
+  DISCUSSION
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  PROCESSING
+  RETRY_WAIT
+  SENT
+  FAILED
+  CANCELED
+}
+
+enum EmailDeliveryRecipientType {
+  REGISTERED
+  DIRECT
+}
+
 enum TranslationJobStatus {
   PENDING
   PROCESSING
@@ -296,6 +328,8 @@ model User {
   projectProgramsCreated             ProjectProgram[]
   auditLogsCreated                   AuditLog[]                          @relation("AuditLogActor")
   notifications                      Notification[]
+  emailPreference                    EmailPreference?
+  emailDeliveries                    EmailDelivery[]
   studentProfile                     StudentProfile?
   topicApplicationGroupsLed          TopicApplicationGroup[]             @relation("TopicApplicationGroupLeader")
   studentTeamsLed                    StudentTeam[]                       @relation("StudentTeamLeader")
@@ -416,6 +450,61 @@ model Notification {
 
   @@index([recipientId, readAt, createdAt])
   @@map("notification")
+}
+
+model EmailPreference {
+  userId                String   @id
+  reportActivityEnabled Boolean  @default(false)
+  discussionEnabled     Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_preference")
+}
+
+model EmailDelivery {
+  id             String              @id @default(uuid())
+  kind           EmailDeliveryKind
+  recipientUserId String?
+  recipientType  EmailDeliveryRecipientType @default(REGISTERED)
+  recipientEmail String
+  locale         String              @default("ko")
+  title          String?
+  body           String?
+  titleEn        String?
+  bodyEn         String?
+  href           String?
+  priority       Int                 @default(100)
+  optional       Boolean             @default(false)
+  allowInactiveRecipient Boolean     @default(false)
+  idempotencyKey String              @unique
+  status         EmailDeliveryStatus @default(PENDING)
+  attempts       Int                 @default(0)
+  availableAt    DateTime            @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  sentAt         DateTime?
+  providerMessageId String?
+  lastError      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  recipient      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, availableAt, priority, createdAt])
+  @@index([sentAt])
+  @@index([recipientUserId, createdAt])
+  @@index([status, lockedBy])
+  @@map("email_delivery")
+}
+
+model EmailWorkerLease {
+  name        String   @id
+  ownerId     String?
+  lockedUntil DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_worker_lease")
 }
 
 model StudentProfile {

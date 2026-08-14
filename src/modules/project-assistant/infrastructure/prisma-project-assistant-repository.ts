@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   InviteProjectAssistantResult,
@@ -157,6 +158,17 @@ export class PrismaProjectAssistantRepository
           createdAt: input.invitedAt,
         },
       });
+      await enqueueEmailEvents(transaction, [{
+        kind: "PROJECT_ASSISTANT_INVITATION",
+        recipientId: invitee.id,
+        title: "프로젝트 조교 초대가 도착했습니다",
+        body: `${topic.title} 프로젝트의 관리 권한을 요청했습니다.`,
+        titleEn: "Project assistant invitation",
+        bodyEn: `You have been invited to help manage ${topic.title}.`,
+        href: "/dashboard?assistantInvitations=open",
+        idempotencyKey: `email:project-assistant-invitation:${invitationId}`,
+        createdAt: input.invitedAt,
+      }]);
       await transaction.auditLog.create({
         data: {
           actorId: input.actor.id,

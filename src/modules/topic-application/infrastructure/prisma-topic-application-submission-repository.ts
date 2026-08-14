@@ -9,6 +9,7 @@ import type {
   TopicApplicationConfiguration,
 } from "@/modules/topic-application/application/topic-application-ports";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
 export class PrismaTopicApplicationSubmissionRepository
   implements TopicApplicationCreator
@@ -17,7 +18,7 @@ export class PrismaTopicApplicationSubmissionRepository
 
   async findConfiguration(topicId: string, appliedAt: Date): Promise<TopicApplicationConfiguration | null> {
     const topic = await this.client.topic.findFirst({
-      where: { id: topicId, status: "ACTIVE", recruitmentEnabled: true, program: { isStudentPublic: true, endsAt: { gt: appliedAt }, studentProjectCreationEnabled: false, recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt } } },
+      where: { id: topicId, status: "ACTIVE", recruitmentEnabled: true, program: { isPublic: true, endsAt: { gt: appliedAt }, studentProjectCreationEnabled: false, recruitmentStartsAt: { lte: appliedAt }, recruitmentEndsAt: { gt: appliedAt } } },
       select: { id: true, applicationMode: true, capacity: true, applicationQuestions: { orderBy: { position: "asc" }, select: { id: true, label: true, maxLength: true, required: true } } },
     });
     return topic ? { topicId: topic.id, mode: topic.applicationMode, capacity: topic.capacity, questions: topic.applicationQuestions } : null;
@@ -28,8 +29,8 @@ export class PrismaTopicApplicationSubmissionRepository
   ): Promise<CreateTopicApplicationResult> {
     const id = randomUUID();
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isStudentPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
-        SELECT "project_program"."isStudentPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
+      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."isPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
@@ -45,7 +46,7 @@ export class PrismaTopicApplicationSubmissionRepository
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isStudentPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
+      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic) {
         return { outcome: "TOPIC_UNAVAILABLE" } as const;
       }
       if (topic.applicationMode === "TEAM_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
@@ -113,6 +114,7 @@ export class PrismaTopicApplicationSubmissionRepository
         },
       });
       await enqueueTranslations(transaction, input.answers.map(({ value }) => value));
+      await notifyTopicApplicationSubmitted(transaction, input.topicId, group.id, [input.studentId], input.appliedAt);
       return { outcome: "CREATED", id } as const;
     });
   }
@@ -121,8 +123,8 @@ export class PrismaTopicApplicationSubmissionRepository
     input: CreateTopicApplicationInput & { kind: "TEAM"; studentTeamId: string },
   ): Promise<CreateTopicApplicationResult> {
     return this.client.$transaction(async (transaction) => {
-      const programs = await transaction.$queryRaw<Array<{ isStudentPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; projectTeamMaxSize: number; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
-        SELECT "project_program"."isStudentPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."projectTeamMaxSize", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
+      const programs = await transaction.$queryRaw<Array<{ isPublic: boolean; endsAt: Date; studentProjectCreationEnabled: boolean; projectTeamMaxSize: number; recruitmentStartsAt: Date; recruitmentEndsAt: Date }>>(Prisma.sql`
+        SELECT "project_program"."isPublic", "project_program"."endsAt", "project_program"."studentProjectCreationEnabled", "project_program"."projectTeamMaxSize", "project_program"."recruitmentStartsAt", "project_program"."recruitmentEndsAt"
         FROM "project_program" JOIN "topic" ON "topic"."programId" = "project_program"."id"
         WHERE "topic"."id" = ${input.topicId}
         FOR UPDATE OF "project_program"
@@ -134,7 +136,7 @@ export class PrismaTopicApplicationSubmissionRepository
         FOR UPDATE
       `);
       const topic = topics[0];
-      if (!programs[0]?.isStudentPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
+      if (!programs[0]?.isPublic || programs[0].endsAt <= input.appliedAt || programs[0].studentProjectCreationEnabled || programs[0].recruitmentStartsAt > input.appliedAt || programs[0].recruitmentEndsAt <= input.appliedAt || !topic || topic.applicationMode === "INDIVIDUAL_ONLY") return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const studentTeams = await transaction.$queryRaw<Array<{ id: string; leaderId: string }>>(Prisma.sql`
         SELECT "id", "leaderId" FROM "student_team"
@@ -182,8 +184,65 @@ export class PrismaTopicApplicationSubmissionRepository
       }));
       await transaction.topicApplication.createMany({ data: applications });
       await enqueueTranslations(transaction, input.answers.map(({ value }) => value));
+      await notifyTopicApplicationSubmitted(transaction, input.topicId, group.id, memberIds, input.appliedAt);
       return { outcome: "CREATED", id: applications.find(({ studentId }) => studentId === input.studentId)!.id } as const;
     });
   }
 
+}
+
+async function notifyTopicApplicationSubmitted(
+  transaction: Prisma.TransactionClient,
+  topicId: string,
+  groupId: string,
+  applicantIds: string[],
+  createdAt: Date,
+) {
+  const topic = await transaction.topic.findUnique({
+    where: { id: topicId },
+    select: { title: true, managerId: true, assistants: { select: { userId: true } } },
+  });
+  if (!topic) return;
+  const reviewerIds = [...new Set([
+    ...(topic.managerId ? [topic.managerId] : []),
+    ...topic.assistants.map(({ userId }) => userId),
+  ])];
+  const reviewerTitle = "프로젝트 지원이 도착했습니다";
+  const reviewerBody = `${topic.title} 프로젝트 지원서를 확인해 주세요.`;
+  const reviewerTitleEn = "New project application";
+  const reviewerBodyEn = `Review the application for ${topic.title} in PMS.`;
+  const reviewerHref = `/professor/applications?topicId=${encodeURIComponent(topicId)}`;
+  const applicantTitle = "프로젝트 지원이 접수되었습니다";
+  const applicantBody = `${topic.title} 프로젝트 지원이 접수되었습니다. 검토 결과는 PMS에서 안내합니다.`;
+  const applicantTitleEn = "Project application received";
+  const applicantBodyEn = `Your application for ${topic.title} was received. PMS will provide the review result.`;
+  const applicantHref = "/dashboard";
+  const recipients = [
+    ...reviewerIds.map((recipientId) => ({ recipientId, title: reviewerTitle, body: reviewerBody, titleEn: reviewerTitleEn, bodyEn: reviewerBodyEn, href: reviewerHref, key: `topic-application-submitted:${groupId}:${recipientId}` })),
+    ...[...new Set(applicantIds)].map((recipientId) => ({ recipientId, title: applicantTitle, body: applicantBody, titleEn: applicantTitleEn, bodyEn: applicantBodyEn, href: applicantHref, key: `topic-application-receipt:${groupId}:${recipientId}` })),
+  ];
+  if (!recipients.length) return;
+  await transaction.notification.createMany({
+    data: recipients.map(({ recipientId, title, body, href, key }) => ({
+      recipientId,
+      type: "SYSTEM" as const,
+      title,
+      body,
+      href,
+      dedupeKey: key,
+      createdAt,
+    })),
+    skipDuplicates: true,
+  });
+  await enqueueEmailEvents(transaction, recipients.map(({ recipientId, title, body, titleEn, bodyEn, href, key }) => ({
+    kind: "TOPIC_APPLICATION" as const,
+    recipientId,
+    title,
+    body,
+    titleEn,
+    bodyEn,
+    href,
+    idempotencyKey: `email:${key}`,
+    createdAt,
+  })));
 }

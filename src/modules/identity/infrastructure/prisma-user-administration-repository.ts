@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 import type { ManagedUserPage, UserAdministrationRepository } from "@/modules/identity/application/manage-users";
 
 export class PrismaUserAdministrationRepository implements UserAdministrationRepository {
@@ -77,6 +78,37 @@ export class PrismaUserAdministrationRepository implements UserAdministrationRep
       });
       if (updated.count !== 1) return "UNCHANGED";
       if (!input.isActive) await transaction.session.deleteMany({ where: { userId: target.id } });
+      const title = input.isActive ? "PMS 계정이 활성화되었습니다" : "PMS 계정이 비활성화되었습니다";
+      const body = input.isActive
+        ? "이제 PMS에 다시 로그인할 수 있습니다."
+        : "관리자에 의해 계정 사용이 중지되었습니다. 문의가 있으면 운영진에게 연락해 주세요.";
+      const titleEn = input.isActive ? "PMS account activated" : "PMS account disabled";
+      const bodyEn = input.isActive
+        ? "You can sign in to PMS again."
+        : "An administrator disabled your account. Contact the PMS administrators if you need assistance.";
+      await transaction.notification.create({
+        data: {
+          recipientId: target.id,
+          type: "SYSTEM",
+          title,
+          body,
+          href: "/account",
+          dedupeKey: `user-account-status:${target.id}:${input.isActive ? "ACTIVE" : "DISABLED"}:${input.changedAt.getTime()}`,
+          createdAt: input.changedAt,
+        },
+      });
+      await enqueueEmailEvents(transaction, [{
+        kind: "ACCOUNT_STATUS",
+        recipientId: target.id,
+        title,
+        body,
+        titleEn,
+        bodyEn,
+        href: "/account",
+        idempotencyKey: `email:user-account-status:${target.id}:${input.isActive ? "ACTIVE" : "DISABLED"}:${input.changedAt.getTime()}`,
+        createdAt: input.changedAt,
+        allowInactiveRecipient: !input.isActive,
+      }]);
       await transaction.auditLog.create({ data: {
         actorId: input.actorId,
         action: input.isActive ? "USER_REACTIVATED" : "USER_DEACTIVATED",

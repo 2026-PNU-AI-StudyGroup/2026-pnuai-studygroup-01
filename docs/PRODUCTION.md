@@ -27,6 +27,18 @@ Reverse Proxy를 사용할 때는 기본값인 `127.0.0.1`을 유지한다.
 openssl rand -base64 48
 ```
 
+### Gmail OAuth2 SMTP
+
+메일 발송용 Google OAuth 클라이언트는 사용자 로그인용 클라이언트와 별도 Google Cloud 프로젝트로 분리한다. Gmail API scope로 refresh token을 발급할 OAuth 앱은 운영 전 Publishing status를 `Production`으로 전환하고, Google이 검증을 요구하면 검증 완료 뒤에만 `EMAIL_DELIVERY_ENABLED=true`로 바꾼다.
+
+1. 전용 Gmail 발송 계정의 주소를 `GMAIL_SMTP_USER`에 등록한다.
+2. 로컬 OAuth 클라이언트의 loopback Redirect URI `http://127.0.0.1:43827/oauth2/callback`을 Google Cloud Console에 등록한다.
+3. `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_SMTP_USER`를 로컬 환경에 설정하고 `npm run emails:gmail-authorize`를 실행한다.
+4. 출력된 `GMAIL_OAUTH_REFRESH_TOKEN`만 NAS 비밀 환경변수에 등록한다. 토큰을 파일·로그·저장소에 기록하지 않는다.
+5. 발송 계정 자신에게 HTML/plain-text 테스트 메일 한 건을 확인한 후에만 이메일 워커를 활성화한다.
+
+OAuth 동의를 수행한 계정과 `GMAIL_SMTP_USER`가 다르면 권한 발급 스크립트가 중단된다. 토큰이 회수·만료되거나 Gmail SMTP가 `535`를 반환하면 워커를 비활성화하고 관리자가 다시 동의한다. `SENT`는 Gmail SMTP가 접수한 상태일 뿐 최종 받은편지함 도착을 뜻하지 않으며, 반송 메일은 발송 계정의 받은편지함에서 운영자가 확인한다.
+
 애플리케이션 컨테이너는 PostgreSQL과 MinIO를 외부에 공개하지 않는다. 앱의 `3000` 포트도 기본 Compose에서 `127.0.0.1`에만 바인딩하며, 같은 호스트의 Reverse Proxy만 접근하게 한다. Reverse Proxy에서 TLS를 종료하고 `X-Forwarded-Proto=https`를 전달한다. 운영 도메인의 HTTPS 응답에는 프록시에서 `Strict-Transport-Security: max-age=31536000; includeSubDomains`를 추가한다. 전체 하위 도메인이 HTTPS로 운영된다는 확인 전에는 `includeSubDomains`를 사용하지 않는다.
 
 ## 배포
@@ -74,6 +86,18 @@ curl -fsS -X POST \
 글 저장 트랜잭션은 원문과 한·영 번역 작업을 PostgreSQL에 함께 기록한다. 워커는 최대 10건을 `FOR UPDATE SKIP LOCKED`로 선점하고 로컬 모델의 안정성을 위해 순차 처리한다. 실패 작업은 지수 백오프로 최대 5회 재시도하며, 10분 이상 잠긴 작업은 다음 호출에서 회수한다. 마이그레이션은 배포 전에 존재하던 번역 대상 원문도 같은 큐에 백필한다. Ollama 장애 중에도 원문 조회와 글 작성은 계속 가능하며, 복구 후 대기 작업이 이어서 처리된다.
 
 5회 실패해 `FAILED`가 된 작업은 Ollama 원인을 조치한 뒤 `npm run translations:retry-failed`로 재등록한다. 이 명령은 실패 작업만 초기화하고 즉시 한 배치를 처리한다.
+
+이메일 대기열도 1분마다 호출한다.
+
+```bash
+curl -fsS -X POST \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  https://<운영 도메인>/api/cron/emails
+```
+
+업무 트랜잭션은 PostgreSQL 아웃박스에만 이메일 작업을 기록하며 SMTP를 직접 호출하지 않는다. 워커는 PostgreSQL lock과 `FOR UPDATE SKIP LOCKED`로 최대 25건을 선점하고, 중요 메일부터 한 수신자씩 Gmail SMTP TLS(`smtp.gmail.com:465`)로 발송한다. 재시도는 1분·5분·30분·2시간 후이며 최대 5회이다. 네트워크·SMTP 4xx는 재시도하고, 영구 SMTP 5xx는 실패 처리한다. 24시간 기준 전체 450건, 선택형 보고서·토론 100건을 넘으면 작업은 실패하지 않고 다음 가능한 시각으로 이월된다.
+
+이메일 작업의 전달 보장은 최소 한 번이다. SMTP 접수 뒤 DB 상태 기록 전에 연결이 끊기면 동일한 `Message-ID`로 중복 메일이 전송될 수 있다. 발송 성공 또는 취소 전이 시 제목·본문·링크와 취소 사유는 즉시 삭제하며, 실패 작업만 재등록을 위해 해당 내용을 유지한다.
 
 ## 백업과 복구
 

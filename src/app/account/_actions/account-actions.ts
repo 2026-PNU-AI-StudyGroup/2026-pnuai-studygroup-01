@@ -46,6 +46,35 @@ const academicSchema = z.object({
   contactEmail: z.string().max(300),
 });
 
+const emailPreferenceSchema = z.object({
+  reportActivityEnabled: z.enum(["on", "off"]).default("off"),
+  discussionEnabled: z.enum(["on", "off"]).default("off"),
+});
+
+export async function saveEmailPreferenceAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = emailPreferenceSchema.safeParse({
+    reportActivityEnabled: formData.get("reportActivityEnabled") === "on" ? "on" : "off",
+    discussionEnabled: formData.get("discussionEnabled") === "on" ? "on" : "off",
+  });
+  if (!parsed.success) return { status: "error", message: "이메일 수신 설정을 확인해 주세요." };
+  await prisma.emailPreference.upsert({
+    where: { userId: actor.id },
+    create: {
+      userId: actor.id,
+      reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
+      discussionEnabled: parsed.data.discussionEnabled === "on",
+    },
+    update: {
+      reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
+      discussionEnabled: parsed.data.discussionEnabled === "on",
+    },
+  });
+  revalidatePath("/account");
+  return { status: "success", message: "이메일 수신 설정을 저장했습니다." };
+}
+
 export async function saveStudentAccountAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
   const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");

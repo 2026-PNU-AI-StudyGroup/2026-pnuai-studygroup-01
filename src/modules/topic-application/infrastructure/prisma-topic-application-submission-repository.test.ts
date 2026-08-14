@@ -22,7 +22,7 @@ describe("Prisma 프로젝트 지원 저장소", () => {
   it("트랜잭션 시점에 학생 팀 프로젝트 운영으로 바뀌면 직접 지원을 거부한다", async () => {
     const queryRaw = vi.fn()
       .mockResolvedValueOnce([{
-        isStudentPublic: true,
+        isPublic: true,
         endsAt: new Date("2026-12-31T00:00:00Z"),
         studentProjectCreationEnabled: true,
         recruitmentStartsAt: new Date("2026-07-01T00:00:00Z"),
@@ -53,7 +53,7 @@ describe("Prisma 프로젝트 지원 저장소", () => {
     const transaction = {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{
-          isStudentPublic: true,
+          isPublic: true,
           endsAt: new Date("2026-12-31T00:00:00Z"),
           studentProjectCreationEnabled: false,
           projectTeamMaxSize: 2,

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
   ProfessorAccessRecord,
@@ -6,6 +8,8 @@ import type {
   ProfessorAccessRepository,
 } from "@/modules/identity/application/manage-professor-access";
 import { needsStudentOnboardingAfterRoleChange } from "@/modules/identity/domain/student-onboarding";
+import type { OutboxEmailEvent } from "@/modules/email/application/email-delivery-ports";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
 export class PrismaProfessorAccessRepository implements ProfessorAccessRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -66,6 +70,14 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
       await transaction.$queryRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${email}, 0))::text AS "lock"
       `);
+      const existing = await transaction.professorAllowlist.findUnique({
+        where: { email },
+        select: { revokedAt: true },
+      });
+      if (existing?.revokedAt === null) return;
+
+      const grantedAt = new Date();
+      const auditId = randomUUID();
       await transaction.professorAllowlist.upsert({
         where: { email },
         create: { email, createdById },
@@ -76,12 +88,56 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
         // 교수 승격 시 학생 온보딩 요구 해제(추후 강등 시 온보딩 트랩 방지).
         data: { role: "PROFESSOR", onboardingRequired: false },
       });
+      const account = await transaction.user.findUnique({ where: { email }, select: { id: true } });
+      const title = "교수 권한이 부여되었습니다";
+      const body = "PMS에 로그인하면 교수 역할로 프로젝트 업무를 관리할 수 있습니다.";
+      const titleEn = "Professor access granted";
+      const bodyEn = "Sign in to PMS to manage project work with professor access.";
+      if (account) {
+        await transaction.notification.create({
+          data: {
+            recipientId: account.id,
+            type: "SYSTEM",
+            title,
+            body,
+            href: "/dashboard",
+            dedupeKey: `professor-access-granted:${auditId}`,
+            createdAt: grantedAt,
+          },
+        });
+      }
+      const emailEvent: OutboxEmailEvent = account
+        ? {
+            kind: "PROFESSOR_ACCESS",
+            recipientId: account.id,
+            title,
+            body,
+            titleEn,
+            bodyEn,
+            href: "/dashboard",
+            idempotencyKey: `email:professor-access-granted:${auditId}`,
+            createdAt: grantedAt,
+          }
+        : {
+            kind: "PROFESSOR_ACCESS",
+            recipientEmail: email,
+            title,
+            body,
+            titleEn,
+            bodyEn,
+            href: "/dashboard",
+            idempotencyKey: `email:professor-access-granted:${auditId}`,
+            createdAt: grantedAt,
+          };
+      await enqueueEmailEvents(transaction, [emailEvent]);
       await transaction.auditLog.create({ data: {
+        id: auditId,
         actorId: createdById,
         action: "PROFESSOR_ACCESS_GRANTED",
         targetType: "PUSAN_EMAIL",
         targetId: email,
         metadata: {},
+        createdAt: grantedAt,
       } });
     });
   }
@@ -126,6 +182,47 @@ export class PrismaProfessorAccessRepository implements ProfessorAccessRepositor
             : true,
         },
       });
+      const title = "교수 권한이 회수되었습니다";
+      const body = "PMS에서 교수 역할이 해제되었습니다. 계정 상태를 확인해 주세요.";
+      const titleEn = "Professor access revoked";
+      const bodyEn = "Your professor role has been removed in PMS. Review your account status.";
+      if (account) {
+        await transaction.notification.create({
+          data: {
+            recipientId: account.id,
+            type: "SYSTEM",
+            title,
+            body,
+            href: "/account",
+            dedupeKey: `professor-access-revoked:${email}:${revokedAt.getTime()}`,
+            createdAt: revokedAt,
+          },
+        });
+      }
+      const emailEvent: OutboxEmailEvent = account
+        ? {
+            kind: "PROFESSOR_ACCESS",
+            recipientId: account.id,
+            title,
+            body,
+            titleEn,
+            bodyEn,
+            href: "/account",
+            idempotencyKey: `email:professor-access-revoked:${email}:${revokedAt.getTime()}`,
+            createdAt: revokedAt,
+          }
+        : {
+            kind: "PROFESSOR_ACCESS",
+            recipientEmail: email,
+            title,
+            body,
+            titleEn,
+            bodyEn,
+            href: "/account",
+            idempotencyKey: `email:professor-access-revoked:${email}:${revokedAt.getTime()}`,
+            createdAt: revokedAt,
+          };
+      await enqueueEmailEvents(transaction, [emailEvent]);
       await transaction.auditLog.create({ data: {
         actorId: revokedById,
         action: "PROFESSOR_ACCESS_REVOKED",

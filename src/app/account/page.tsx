@@ -15,6 +15,7 @@ import { ProfilePhotoEditor } from "@/app/account/_components/profile-photo-edit
 import { StudentAccountForm } from "@/app/account/_components/student-account-form";
 import { StudentProfileForm } from "@/app/account/_components/student-profile-form";
 import { AccountWithdrawalForm } from "@/app/account/_components/account-withdrawal-form";
+import { EmailPreferenceForm } from "@/app/account/_components/email-preference-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 계정");
@@ -29,7 +30,13 @@ export default async function AccountPage() {
   const account = actor.role === "STUDENT"
     ? await prisma.user.findUnique({ where: { id: actor.id }, select: { department: true, studentNumber: true, grade: true, contactEmail: true } })
     : null;
-  const profileImage = await new PrismaProfileImageRepository(prisma).findForOwner(actor.id);
+  const [profileImage, emailPreference] = await Promise.all([
+    new PrismaProfileImageRepository(prisma).findForOwner(actor.id),
+    prisma.emailPreference.findUnique({
+      where: { userId: actor.id },
+      select: { reportActivityEnabled: true, discussionEnabled: true },
+    }),
+  ]);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/account">
@@ -73,6 +80,16 @@ export default async function AccountPage() {
               </div>
             </section>
           ) : null}
+
+          <section aria-labelledby="email-preference-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+            <div>
+              <h2 id="email-preference-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"이메일 알림"}</UiText></h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"중요 업무 이메일은 항상 학교 이메일로 발송됩니다. 아래 항목만 선택할 수 있습니다."}</UiText></p>
+            </div>
+            <div className="min-w-0">
+              <EmailPreferenceForm preference={emailPreference} />
+            </div>
+          </section>
 
           <section aria-labelledby="withdraw-account-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
             <div>

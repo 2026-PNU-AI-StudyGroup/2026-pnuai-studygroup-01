@@ -29,7 +29,7 @@ const studentSummarySelect = {
     select: {
       title: true,
       status: true,
-      program: { select: { name: true, isStudentPublic: true, endsAt: true } },
+      program: { select: { name: true, isPublic: true, endsAt: true } },
       projectTeam: { select: { confirmedAt: true } },
     },
   },
@@ -119,7 +119,7 @@ function toStudentSummary(application: StudentSummaryRow): TopicApplicationSumma
       return status === "FORMING" || status === "IN_PROGRESS" ? "ACTIVE" : status;
     })(),
     programName: topic.program.name,
-    programStatus: topic.program.endsAt <= new Date() ? "CLOSED" : topic.program.isStudentPublic ? "OPEN" : "DRAFT",
+    programStatus: topic.program.endsAt <= new Date() ? "CLOSED" : topic.program.isPublic ? "OPEN" : "DRAFT",
     applicationKind: group?.kind ?? "INDIVIDUAL",
     teamMembers: group
       ? group.applications.map(({ studentId, participantRole, student: member }) => ({ studentId, name: member.name, email: member.email, role: participantRole }))

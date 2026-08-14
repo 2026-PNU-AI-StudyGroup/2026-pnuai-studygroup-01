@@ -173,6 +173,8 @@ export class PrismaProjectGuidanceRequestRepository
             ? "새 회의 요청이 도착했습니다"
             : "새 검토 요청이 도착했습니다",
           body: `${team.requesterName}님이 ${team.name} 프로젝트에서 ${input.title} 요청을 보냈습니다.`,
+          titleEn: input.kind === "MEETING" ? "New meeting request" : "New review request",
+          bodyEn: `${team.requesterName} submitted a new request for the ${team.name} project.`,
           href: `/projects/${team.projectId}/requests`,
           dedupeKey: `project-guidance-request:${id}:${recipientId}`,
           createdAt: input.requestedAt,
@@ -257,6 +259,8 @@ export class PrismaProjectGuidanceRequestRepository
           ? "회의 요청에 답변이 도착했습니다"
           : "검토 요청에 답변이 도착했습니다",
         body: notificationSummary(input.response),
+        titleEn: request.kind === "MEETING" ? "Meeting request response" : "Review request response",
+        bodyEn: "A response has been added to your request. Open PMS to read it.",
           href: `/projects/${request.projectId}/requests`,
         dedupeKey: `project-guidance-response:${request.id}`,
         createdAt: input.respondedAt,
@@ -270,26 +274,77 @@ export class PrismaProjectGuidanceRequestRepository
     actor: CurrentActor;
     canceledAt: Date;
   }): Promise<boolean> {
-    const result = await this.client.projectGuidanceRequest.updateMany({
-      where: {
-        id: input.requestId,
-        requesterId: input.actor.id,
-        status: "PENDING",
-        projectTeam: {
-          confirmedAt: { not: null },
-          project: {
-            status: "ACTIVE",
-            program: { endsAt: { gt: input.canceledAt } },
-          },
+    return this.client.$transaction(async (transaction) => {
+      const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "project_program"."id"
+        FROM "project_program"
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        JOIN "project_team" ON "project_team"."projectId" = "topic"."id"
+        JOIN "project_guidance_request" ON "project_guidance_request"."projectTeamId" = "project_team"."id"
+        WHERE "project_guidance_request"."id" = ${input.requestId}
+        FOR UPDATE OF "project_program"
+      `);
+      if (programs.length !== 1) return false;
+
+      const requests = await transaction.$queryRaw<Array<{
+        id: string;
+        kind: "MEETING" | "REVIEW";
+        projectId: string;
+        managerId: string;
+        teamName: string;
+        requesterName: string;
+      }>>(Prisma.sql`
+        SELECT
+          "project_guidance_request"."id",
+          "project_guidance_request"."kind",
+          "project_team"."projectId",
+          "topic"."managerId",
+          "project_team"."name" AS "teamName",
+          "requester"."name" AS "requesterName"
+        FROM "project_guidance_request"
+        JOIN "project_team" ON "project_team"."id" = "project_guidance_request"."projectTeamId"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+        JOIN "user" AS "requester" ON "requester"."id" = "project_guidance_request"."requesterId"
+        WHERE "project_guidance_request"."id" = ${input.requestId}
+          AND "project_guidance_request"."requesterId" = ${input.actor.id}
+          AND "project_guidance_request"."status" = 'PENDING'
+          AND "project_team"."confirmedAt" IS NOT NULL
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_program"."endsAt" > ${input.canceledAt}
+        FOR UPDATE OF "project_guidance_request"
+      `);
+      const request = requests[0];
+      if (!request) return false;
+
+      await transaction.projectGuidanceRequest.update({
+        where: { id: request.id },
+        data: {
+          status: "CANCELED",
+          canceledAt: input.canceledAt,
+          updatedAt: input.canceledAt,
         },
-      },
-      data: {
-        status: "CANCELED",
-        canceledAt: input.canceledAt,
-        updatedAt: input.canceledAt,
-      },
+      });
+      const assistants = await transaction.projectAssistant.findMany({
+        where: { topicId: request.projectId },
+        select: { userId: true },
+      });
+      const supervisorIds = [...new Set([
+        request.managerId,
+        ...assistants.map(({ userId }) => userId),
+      ])].filter((recipientId) => recipientId !== input.actor.id);
+      await createProjectRequestNotifications(transaction, supervisorIds.map((recipientId) => ({
+        recipientId,
+        title: request.kind === "MEETING" ? "회의 요청이 취소되었습니다" : "검토 요청이 취소되었습니다",
+        body: `${request.requesterName}님이 ${request.teamName} 프로젝트의 요청을 취소했습니다.`,
+        titleEn: request.kind === "MEETING" ? "Meeting request canceled" : "Review request canceled",
+        bodyEn: `${request.requesterName} canceled a request for the ${request.teamName} project.`,
+        href: `/projects/${request.projectId}/requests`,
+        dedupeKey: `project-guidance-canceled:${request.id}:${recipientId}`,
+        createdAt: input.canceledAt,
+      })));
+      return true;
     });
-    return result.count === 1;
   }
 }
 
