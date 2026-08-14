@@ -7,24 +7,34 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
   constructor(private readonly client: PrismaClient) {}
 
   // 동일 이메일 기존 ADVISOR는 재사용, 타 역할 이메일이면 거부(null).
-  async registerAdvisor(input: { name: string; email: string }) {
+  async registerAdvisor(input: { name: string; email: string; actorId: string }) {
     const email = normalizeEmail(input.email);
     const existing = await this.client.user.findUnique({ where: { email }, select: { id: true, role: true } });
     if (existing) return existing.role === "ADVISOR" ? { userId: existing.id } : null;
     try {
-      const created = await this.client.user.create({
-        data: {
-          id: randomUUID(),
-          email,
-          name: input.name.trim(),
-          role: "ADVISOR",
-          emailVerified: false,
-          isActive: true,
-          onboardingRequired: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        select: { id: true },
+      const created = await this.client.$transaction(async (transaction) => {
+        const user = await transaction.user.create({
+          data: {
+            id: randomUUID(),
+            email,
+            name: input.name.trim(),
+            role: "ADVISOR",
+            emailVerified: false,
+            isActive: true,
+            onboardingRequired: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          select: { id: true },
+        });
+        await transaction.auditLog.create({ data: {
+          actorId: input.actorId,
+          action: "ADVISOR_REGISTERED",
+          targetType: "ADVISOR",
+          targetId: user.id,
+          metadata: { email },
+        } });
+        return user;
       });
       return { userId: created.id };
     } catch (error) {
@@ -37,21 +47,38 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
     }
   }
 
-  async issueToken(input: { userId: string; tokenHash: string; expiresAt: Date }) {
-    await this.client.advisorAccessToken.create({
-      data: { id: randomUUID(), userId: input.userId, tokenHash: input.tokenHash, expiresAt: input.expiresAt },
-    });
+  async issueToken(input: { userId: string; tokenHash: string; expiresAt: Date; actorId: string }) {
+    await this.client.$transaction([
+      this.client.advisorAccessToken.create({
+        data: { id: randomUUID(), userId: input.userId, tokenHash: input.tokenHash, expiresAt: input.expiresAt },
+      }),
+      this.client.auditLog.create({ data: {
+        actorId: input.actorId,
+        action: "ADVISOR_TOKEN_ISSUED",
+        targetType: "ADVISOR",
+        targetId: input.userId,
+        metadata: { expiresAt: input.expiresAt.toISOString() },
+      } }),
+    ]);
     return true;
   }
 
   // 토큰 회수 = 접근 차단이어야 하므로 활성 세션도 함께 종료한다.
-  async revokeTokens(input: { userId: string; revokedAt: Date }) {
+  async revokeTokens(input: { userId: string; revokedAt: Date; actorId: string }) {
     await this.client.$transaction([
       this.client.advisorAccessToken.updateMany({
         where: { userId: input.userId, revokedAt: null },
         data: { revokedAt: input.revokedAt },
       }),
       this.client.session.deleteMany({ where: { userId: input.userId, user: { role: "ADVISOR" } } }),
+      this.client.auditLog.create({ data: {
+        actorId: input.actorId,
+        action: "ADVISOR_TOKEN_REVOKED",
+        targetType: "ADVISOR",
+        targetId: input.userId,
+        metadata: {},
+        createdAt: input.revokedAt,
+      } }),
     ]);
     return true;
   }
@@ -86,6 +113,13 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
           });
         }
       }
+      await transaction.auditLog.create({ data: {
+        actorId: input.grantedById,
+        action: "ADVISOR_TEAMS_ASSIGNED",
+        targetType: "ADVISOR",
+        targetId: input.userId,
+        metadata: { programId: input.programId, topicIds: input.topicIds },
+      } });
     });
     return true;
   }

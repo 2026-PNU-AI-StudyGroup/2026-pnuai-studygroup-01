@@ -11,36 +11,49 @@ function uniqueConflict() {
   });
 }
 
+// 등록은 user.create와 감사로그를 한 트랜잭션에서 처리하므로 콜백을 그대로 실행하는 목을 쓴다.
+function clientWithRacingCreate(racedUser: { id: string; role: string } | null) {
+  const user = {
+    findUnique: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(racedUser),
+    create: vi.fn().mockRejectedValue(uniqueConflict()),
+  };
+  const auditLog = { create: vi.fn().mockResolvedValue({}) };
+  return {
+    user,
+    auditLog,
+    $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback({ user, auditLog })),
+  } as unknown as PrismaClient;
+}
+
 describe("PrismaAdvisorAdminRepository.registerAdvisor", () => {
   it("동시 등록 레이스(P2002)로 create가 실패하면 재조회해 ADVISOR면 재사용한다", async () => {
-    const client = {
-      user: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValueOnce(null) // 최초 조회: 없음
-          .mockResolvedValueOnce({ id: "adv-1", role: "ADVISOR" }), // 레이스 후 재조회
-        create: vi.fn().mockRejectedValue(uniqueConflict()),
-      },
-    } as unknown as PrismaClient;
-    const repository = new PrismaAdvisorAdminRepository(client);
+    const repository = new PrismaAdvisorAdminRepository(clientWithRacingCreate({ id: "adv-1", role: "ADVISOR" }));
 
-    await expect(repository.registerAdvisor({ name: "김위원", email: "advisor@example.com" }))
+    await expect(repository.registerAdvisor({ name: "김위원", email: "advisor@example.com", actorId: "admin-1" }))
       .resolves.toEqual({ userId: "adv-1" });
   });
 
   it("레이스 후 재조회한 사용자가 ADVISOR가 아니면 거부한다", async () => {
+    const repository = new PrismaAdvisorAdminRepository(clientWithRacingCreate({ id: "stu-1", role: "STUDENT" }));
+
+    await expect(repository.registerAdvisor({ name: "김위원", email: "student@example.com", actorId: "admin-1" }))
+      .resolves.toBeNull();
+  });
+
+  it("등록에 성공하면 감사 로그를 남긴다", async () => {
+    const user = { findUnique: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: "adv-9" }) };
+    const auditLog = { create: vi.fn().mockResolvedValue({}) };
     const client = {
-      user: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce({ id: "stu-1", role: "STUDENT" }),
-        create: vi.fn().mockRejectedValue(uniqueConflict()),
-      },
+      user,
+      auditLog,
+      $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback({ user, auditLog })),
     } as unknown as PrismaClient;
     const repository = new PrismaAdvisorAdminRepository(client);
 
-    await expect(repository.registerAdvisor({ name: "김위원", email: "student@example.com" }))
-      .resolves.toBeNull();
+    await expect(repository.registerAdvisor({ name: "김위원", email: "advisor@example.com", actorId: "admin-1" }))
+      .resolves.toEqual({ userId: "adv-9" });
+    expect(auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorId: "admin-1", action: "ADVISOR_REGISTERED", targetId: "adv-9" }),
+    });
   });
 });
