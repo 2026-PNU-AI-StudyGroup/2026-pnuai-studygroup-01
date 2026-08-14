@@ -11,6 +11,7 @@ const roleLabel = {
   STUDENT: "학생",
   PROFESSOR: "교수",
   ADMIN: "관리자",
+  ADVISOR: "자문위원",
 } as const;
 
 export function ProjectAssistantManagementPanel({

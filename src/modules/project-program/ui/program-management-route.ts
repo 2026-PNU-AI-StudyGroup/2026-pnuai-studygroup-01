@@ -3,6 +3,7 @@ export const programManagementTabs = [
   "rubric",
   "tracks",
   "reports",
+  "advisors",
   "votes",
 ] as const;
 

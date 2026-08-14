@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { saveEmailPreferenceAction, type StudentProfileActionState } from "@/app/account/_actions/account-actions";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiInput } from "@/modules/translation/ui/localized-elements";
 
 const initialState: StudentProfileActionState = { status: "idle", message: "" };
 
@@ -20,14 +21,14 @@ export function EmailPreferenceForm({ preference }: {
             <strong className="block text-sm"><UiText>{"보고서 제출·검토 활동"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"보고서가 제출되거나 검토될 때 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <input name="reportActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.reportActivityEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
+          <UiInput name="reportActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.reportActivityEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
         </label>
         <label className="flex items-start justify-between gap-5">
           <span>
             <strong className="block text-sm"><UiText>{"프로젝트 토론 활동"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"프로젝트 토론에 새 글이 등록될 때 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <input name="discussionEnabled" type="checkbox" value="on" defaultChecked={preference?.discussionEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
+          <UiInput name="discussionEnabled" type="checkbox" value="on" defaultChecked={preference?.discussionEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
         </label>
       </fieldset>
       <div className="form-action-bar">

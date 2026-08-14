@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { testUtils } from "better-auth/plugins";
 
 import { Prisma } from "@/generated/prisma/client";
+import { advisorTokenAuth } from "@/modules/advisor/infrastructure/advisor-token-auth-plugin";
 import {
   canProvisionInstitutionUser,
   normalizeEmail,
@@ -34,7 +35,9 @@ async function reconcileProfessorRole(userId: string): Promise<void> {
         onboardingCompletedAt: true,
       },
     });
-    if (!user || user.role === "ADMIN") return;
+    // ADVISOR는 교수 허용목록 대상이 아니므로 재조정에서 제외한다. 제외하지 않으면
+    // 자문위원이 토큰 로그인할 때마다 STUDENT로 강등된다.
+    if (!user || user.role === "ADMIN" || user.role === "ADVISOR") return;
     const email = normalizeEmail(user.email);
     await transaction.$queryRaw(Prisma.sql`
       SELECT pg_advisory_xact_lock(hashtextextended(${email}, 0))::text AS "lock"
@@ -158,7 +161,7 @@ export const auth = betterAuth({
           prompt: "select_account",
         },
       },
-  plugins: developmentMockAuthEnabled ? [testUtils()] : [],
+  plugins: developmentMockAuthEnabled ? [testUtils(), advisorTokenAuth()] : [advisorTokenAuth()],
   databaseHooks: {
     user: {
       create: {

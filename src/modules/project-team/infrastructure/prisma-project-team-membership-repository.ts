@@ -17,7 +17,7 @@ export class PrismaProjectTeamMembershipRepository implements ProjectTeamMembers
   private endActiveMembership(input: {
     projectTeamId: string;
     targetUserId: string;
-    actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" };
+    actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR" };
     changedAt: Date;
     endReason: "LEFT" | "REMOVED";
     action: "PROJECT_TEAM_MEMBER_LEFT" | "PROJECT_TEAM_MEMBER_REMOVED";

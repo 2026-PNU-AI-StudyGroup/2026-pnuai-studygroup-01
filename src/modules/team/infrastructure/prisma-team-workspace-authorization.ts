@@ -15,6 +15,7 @@ export function teamActorWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInpu
         { confirmedAt: { not: null } },
       ] },
       { OR: [
+        ...(actor.role === "ADVISOR" ? [{ project: { advisors: { some: { userId: actor.id } } } }] : []),
         teamSupervisorWhere(actor),
         { memberships: { some: { userId: actor.id, endedAt: null } } },
       ] },
@@ -24,6 +25,11 @@ export function teamActorWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInpu
 
 export function teamActorSql(actor: CurrentActor): Prisma.Sql {
   if (actor.role === "ADMIN") return Prisma.sql`TRUE`;
+  if (actor.role === "ADVISOR") return Prisma.sql`EXISTS (
+    SELECT 1 FROM "project_advisor"
+    WHERE "project_advisor"."topicId" = "project_team"."projectId"
+      AND "project_advisor"."userId" = ${actor.id}
+  )`;
   return Prisma.sql`(
     ${teamSupervisorSql(actor)}
     OR EXISTS (

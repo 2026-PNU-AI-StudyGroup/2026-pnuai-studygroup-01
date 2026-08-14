@@ -19,6 +19,7 @@ const ballot = {
     startsAt: new Date("2026-08-01T00:00:00.000Z"),
     endsAt: new Date("2026-08-30T00:00:00.000Z"),
     voteLimit: 2,
+    staffVoteLimit: 5,
     voteLimitScope: "PROGRAM" as const,
     selfVotingAllowed: false,
     resultsVisibleDuringVoting: false,
@@ -86,6 +87,46 @@ describe("프로그램 프로젝트 투표", () => {
       "program-1",
       ["topic-1"],
     )).rejects.toThrow(new ProjectVotingOperationError("자기 프로젝트에는 투표할 수 없습니다."));
+  });
+
+  describe("자문위원·관리자 투표 한도", () => {
+    const staffBallot = {
+      ...ballot,
+      policy: { ...ballot.policy, voteLimit: 3, staffVoteLimit: 5 },
+      candidates: Array.from({ length: 6 }, (_, index) => ({
+        id: `topic-${index + 1}`, title: `프로젝트 ${index + 1}`, description: "",
+        divisionId: null, divisionName: null, isSelfProject: false, voteCount: 0,
+      })),
+    };
+    const staffRepository = () => repository({ findBallot: vi.fn(async () => staffBallot) });
+    const user = (role: "ADVISOR" | "ADMIN" | "STUDENT") => ({ id: "voter-1", role, name: "사용자", email: "user@example.com", image: null });
+    const topicIds = (count: number) => Array.from({ length: count }, (_, index) => `topic-${index + 1}`);
+
+    it.each(["ADVISOR", "ADMIN"] as const)("%s는 staffVoteLimit까지 저장한다", async (role) => {
+      const value = staffRepository();
+      await new ProjectVotingService(value, () => now).saveVotes(user(role), "program-1", topicIds(4));
+      expect(value.replaceVotes).toHaveBeenCalledWith(expect.objectContaining({ topicIds: topicIds(4) }));
+    });
+
+    it("학생은 기존 voteLimit을 넘기면 거절한다", async () => {
+      const value = staffRepository();
+      await expect(new ProjectVotingService(value, () => now).saveVotes(user("STUDENT"), "program-1", topicIds(4)))
+        .rejects.toBeInstanceOf(ProjectVotingPolicyError);
+      expect(value.replaceVotes).not.toHaveBeenCalled();
+    });
+
+    it("자문위원도 staffVoteLimit을 넘기면 거절한다", async () => {
+      const value = staffRepository();
+      await expect(new ProjectVotingService(value, () => now).saveVotes(user("ADVISOR"), "program-1", topicIds(6)))
+        .rejects.toBeInstanceOf(ProjectVotingPolicyError);
+      expect(value.replaceVotes).not.toHaveBeenCalled();
+    });
+
+    it("getBallot은 자문위원에게 staffVoteLimit을 유효 한도로 준다", async () => {
+      const service = new ProjectVotingService(staffRepository(), () => now);
+      expect((await service.getBallot(user("ADVISOR"), "program-1"))?.policy.voteLimit).toBe(5);
+      expect((await service.getBallot(user("STUDENT"), "program-1"))?.policy.voteLimit).toBe(3);
+    });
   });
 
   it("관리자만 득표현황을 조회한다", async () => {

@@ -15,11 +15,13 @@ import { ProgramPolicyForm } from "@/app/topics/_management/program-policy-form"
 import { ProgramReportRequirementForm } from "@/app/topics/_management/program-report-requirement-form";
 import { ProgramStatusForm } from "@/app/topics/_management/program-status-form";
 import { ProgramVoteResults } from "@/app/topics/_management/program-vote-results";
+import { ProgramAdvisorPanel } from "@/app/topics/_management/program-advisor-panel";
 import { RubricManager, type RubricDivisionRow, type RubricRow } from "@/app/topics/_management/rubric-manager";
 import { StudentProjectCreationForm } from "@/app/topics/_management/student-project-creation-form";
 import { TrackManager, type TrackRow } from "@/app/topics/_management/track-manager";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
+import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -32,6 +34,7 @@ const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
   { key: "rubric", label: "채점표" },
   { key: "tracks", label: "분과" },
   { key: "reports", label: "보고서" },
+  { key: "advisors", label: "자문위원" },
   { key: "votes", label: "투표" },
 ];
 
@@ -158,6 +161,13 @@ export async function ProgramManagementWorkspace({
     const records = await prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, reports: { select: { _count: { select: { versions: true } } } } } });
     const definitions = records.map(({ reports, ...definition }) => ({ ...definition, versionCount: reports.reduce((sum, report) => sum + report._count.versions, 0) }));
     content = <FormSection title="보고서" description="제출 보고서의 제목, 마감, 순서를 관리합니다."><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></FormSection>;
+  } else if (tab === "advisors") {
+    const [advisors, topics, matrix] = await Promise.all([
+      listProgramAdvisors(prisma, program.id),
+      listProgramTopicsForAssignment(prisma, program.id),
+      advisorScoreMatrix(prisma, program.id),
+    ]);
+    content = <ProgramAdvisorPanel programId={program.id} advisors={advisors} topics={topics} matrix={matrix} />;
   } else {
     const refreshedAt = new Date();
     const votingResults = program.votingPolicy ? await new ProjectVotingService(new PrismaProjectVotingRepository(prisma), () => refreshedAt).getResults(actor, program.id) : null;

@@ -49,6 +49,43 @@ function client(topics: ResultTopic[] = [{
   } as unknown as PrismaClient;
 }
 
+function voteClient(role: string, voteLimit: number, staffVoteLimit: number) {
+  const transaction = {
+    $queryRaw: vi.fn()
+      .mockResolvedValueOnce([{ id: "voter-1", role }])
+      .mockResolvedValueOnce([{
+        programId: "program-1",
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit,
+        staffVoteLimit,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        identityVisibility: "ANONYMOUS",
+      }]),
+    topic: {
+      findMany: vi.fn().mockResolvedValue([
+        { id: "topic-1", divisionId: null, authorId: "professor-1", managerId: "professor-1", assistants: [], team: null },
+        { id: "topic-2", divisionId: null, authorId: "professor-1", managerId: "professor-1", assistants: [], team: null },
+      ]),
+    },
+    projectVote: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), createMany: vi.fn().mockResolvedValue({ count: 2 }) },
+  };
+  return { $transaction: vi.fn(async (run: (value: typeof transaction) => unknown) => run(transaction)) } as unknown as PrismaClient;
+}
+
+describe("PrismaProjectVotingRepository 표 저장", () => {
+  const input = { programId: "program-1", voterId: "voter-1", topicIds: ["topic-1", "topic-2"], votedAt: new Date("2026-08-10T00:00:00Z") };
+
+  it("자문위원에게는 staffVoteLimit을 적용해 저장한다", async () => {
+    await expect(new PrismaProjectVotingRepository(voteClient("ADVISOR", 1, 5)).replaceVotes(input)).resolves.toBe("SAVED");
+  });
+
+  it("학생에게는 기존 voteLimit을 적용해 거절한다", async () => {
+    await expect(new PrismaProjectVotingRepository(voteClient("STUDENT", 1, 5)).replaceVotes(input)).resolves.toBe("INVALID_CANDIDATE");
+  });
+});
+
 describe("PrismaProjectVotingRepository 결과 조회", () => {
   it("비공개 프로그램의 투표 용지를 제공하지 않는다", async () => {
     const value = client();

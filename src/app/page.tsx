@@ -28,6 +28,8 @@ export default async function Home({
         redirect("/onboarding");
       }
     }
+    // 자문위원은 배정된 프로젝트만 다루므로 담당 프로젝트 화면이 첫 화면이다.
+    if (actor.role === "ADVISOR") redirect("/advisor");
     redirect("/topics");
   }
 
@@ -61,6 +63,15 @@ export default async function Home({
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />
               ) : null}
               <div className="mt-6 grid gap-2 border-t border-[var(--line)] pt-5">
+                <a
+                  href="https://aipms.notion.site/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="button-secondary w-full justify-center"
+                >
+                  <UiText>{"사용 매뉴얼"}</UiText>
+                  <span className="sr-only"> <UiText>{"새 창"}</UiText></span>
+                </a>
                 <Link href="/feedback" className="button-primary w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
                 </Link>

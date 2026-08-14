@@ -39,7 +39,7 @@ describe("파일 다운로드 권한", () => {
             purpose: "ARTIFACT",
             projectTeam: expect.objectContaining({
               confirmedAt: { not: null },
-              project: { program: expect.objectContaining({ isStudentPublic: true }) },
+                project: { program: expect.objectContaining({ isPublic: true, endsAt: { lte: expect.any(Date) } }) },
             }),
           }),
           { announcementAttachment: { announcement: { OR: [{ visibility: "AUTHENTICATED" }] } } },
@@ -56,7 +56,7 @@ describe("파일 다운로드 권한", () => {
     expect(response.status).toBe(404);
   });
 
-  it("교수에게는 교수진 공개 프로그램의 종료 결과물을 허용한다", async () => {
+  it("교수에게는 공개된 종료 프로그램의 결과물을 허용한다", async () => {
     mocks.actor.mockResolvedValue({ id: "professor-1", role: "PROFESSOR" });
     mocks.audience.mockResolvedValue({ role: "PROFESSOR", actorId: "professor-1", teamIds: [], programIds: [] });
     mocks.findFirst.mockResolvedValue({ objectKey: "artifacts/file", originalName: "결과물.pdf" });
@@ -69,7 +69,7 @@ describe("파일 다운로드 권한", () => {
           expect.objectContaining({
             purpose: "ARTIFACT",
             projectTeam: expect.objectContaining({
-              project: { program: expect.objectContaining({ isFacultyPublic: true }) },
+              project: { program: expect.objectContaining({ isPublic: true, endsAt: { lte: expect.any(Date) } }) },
             }),
           }),
         ]),

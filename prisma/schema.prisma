@@ -11,6 +11,7 @@ enum UserRole {
   STUDENT
   PROFESSOR
   ADMIN
+  ADVISOR
 }
 
 enum UserAccountStatus {
@@ -103,6 +104,7 @@ enum ArtifactType {
   SOURCE_CODE
   POSTER
   OTHER
+  IMAGE
 }
 
 enum RecruitmentPostStatus {
@@ -203,6 +205,10 @@ enum AuditAction {
   PROGRAM_RUBRIC_UPDATED
   PROGRAM_RUBRIC_ARCHIVED
   PROGRAM_DIVISION_RUBRIC_MODE_CHANGED
+  ADVISOR_REGISTERED
+  ADVISOR_TOKEN_ISSUED
+  ADVISOR_TOKEN_REVOKED
+  ADVISOR_TEAMS_ASSIGNED
 }
 
 enum NotificationType {
@@ -346,6 +352,11 @@ model User {
   profileImage                       UserProfileImage?
   profileImageUploads                ProfileImageUpload[]                @relation("ProfileImageUploadOwner")
   projectVotes                       ProjectVote[]
+  advisorAccessTokens                AdvisorAccessToken[]
+  projectAdvisors                    ProjectAdvisor[]                    @relation("ProjectAdvisorUser")
+  grantedProjectAdvisors             ProjectAdvisor[]                    @relation("ProjectAdvisorGrantor")
+  advisorEvaluations                 AdvisorEvaluation[]
+  advisorFeedbacks                   AdvisorFeedback[]
 
   @@map("user")
 }
@@ -674,21 +685,22 @@ model ProgramReportDefinition {
 }
 
 model RubricDefinition {
-  id           String                 @id @default(uuid())
-  programId    String
-  divisionId   String?
-  title        String
-  gradingDueAt DateTime
-  position     Int                    @default(0)
-  audience     RubricAudience         @default(STAFF_ONLY)
-  archivedAt   DateTime?
-  legacy       Boolean                @default(false)
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  program      ProjectProgram         @relation(fields: [programId], references: [id], onDelete: Cascade)
-  division     ProgramDivision?       @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
-  criteria     RubricCriterion[]
-  evaluations  ProjectTeamRubricEvaluation[]
+  id                 String                 @id @default(uuid())
+  programId          String
+  divisionId         String?
+  title              String
+  gradingDueAt       DateTime
+  position           Int                    @default(0)
+  audience           RubricAudience         @default(STAFF_ONLY)
+  archivedAt         DateTime?
+  legacy             Boolean                @default(false)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  program            ProjectProgram         @relation(fields: [programId], references: [id], onDelete: Cascade)
+  division           ProgramDivision?       @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
+  criteria           RubricCriterion[]
+  evaluations        ProjectTeamRubricEvaluation[]
+  advisorEvaluations AdvisorEvaluation[]
 
   @@unique([id, programId])
   @@index([programId, divisionId, archivedAt, position])
@@ -696,14 +708,15 @@ model RubricDefinition {
 }
 
 model RubricCriterion {
-  id        String           @id @default(uuid())
-  rubricId  String
-  label     String
-  maxPoints Int              @default(10)
-  position  Int              @default(0)
-  createdAt DateTime         @default(now())
-  rubric    RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Cascade)
-  scores    RubricScore[]
+  id            String           @id @default(uuid())
+  rubricId      String
+  label         String
+  maxPoints     Int              @default(10)
+  position      Int              @default(0)
+  createdAt     DateTime         @default(now())
+  rubric        RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  scores        RubricScore[]
+  advisorScores AdvisorScore[]
 
   @@index([rubricId, position])
   @@map("rubric_criterion")
@@ -795,6 +808,7 @@ model Topic {
   assistants              ProjectAssistant[]
   assistantInvitations    ProjectAssistantInvitation[]
   votes                   ProjectVote[]
+  advisors                ProjectAdvisor[]
 
   @@unique([id, programId])
   @@index([programId, status])
@@ -805,17 +819,18 @@ model Topic {
 }
 
 model ProgramVotingPolicy {
-  programId                    String         @id
-  startsAt                     DateTime
-  endsAt                       DateTime
-  voteLimit                    Int
-  voteLimitScope               VoteLimitScope @default(PROGRAM)
-  selfVotingAllowed            Boolean        @default(false)
-  resultsVisibleDuringVoting   Boolean        @default(false)
-  resultsVisibleAfterVoting    Boolean        @default(true)
-  createdAt                    DateTime       @default(now())
-  updatedAt                    DateTime       @updatedAt
-  program                      ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId                  String         @id
+  startsAt                   DateTime
+  endsAt                     DateTime
+  voteLimit                  Int
+  staffVoteLimit             Int            @default(5)
+  voteLimitScope             VoteLimitScope @default(PROGRAM)
+  selfVotingAllowed          Boolean        @default(false)
+  resultsVisibleDuringVoting Boolean        @default(false)
+  resultsVisibleAfterVoting  Boolean        @default(true)
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+  program                    ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@map("program_voting_policy")
 }
@@ -867,6 +882,76 @@ model ProjectAssistantInvitation {
   @@index([topicId, status, createdAt])
   @@index([inviteeId, status, createdAt])
   @@map("project_assistant_invitation")
+}
+
+model AdvisorAccessToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("advisor_access_token")
+}
+
+model ProjectAdvisor {
+  id          String   @id @default(uuid())
+  topicId     String
+  userId      String
+  grantedById String
+  createdAt   DateTime @default(now())
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user        User     @relation("ProjectAdvisorUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy   User     @relation("ProjectAdvisorGrantor", fields: [grantedById], references: [id], onDelete: Restrict)
+
+  @@unique([topicId, userId])
+  @@index([userId, createdAt])
+  @@map("project_advisor")
+}
+
+model AdvisorEvaluation {
+  id            String           @id @default(uuid())
+  projectTeamId String
+  advisorId     String
+  rubricId      String
+  createdAt     DateTime         @default(now())
+  projectTeam   ProjectTeam      @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  advisor       User             @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  rubric        RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  scores    AdvisorScore[]
+
+  @@unique([projectTeamId, advisorId, rubricId])
+  @@index([projectTeamId])
+  @@map("advisor_evaluation")
+}
+
+model AdvisorScore {
+  id           String            @id @default(uuid())
+  evaluationId String
+  criterionId  String
+  points       Int
+  updatedAt    DateTime          @updatedAt
+  evaluation   AdvisorEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterion    RubricCriterion   @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+
+  @@unique([evaluationId, criterionId])
+  @@map("advisor_score")
+}
+
+model AdvisorFeedback {
+  id            String      @id @default(uuid())
+  projectTeamId String
+  advisorId     String
+  body          String
+  createdAt     DateTime    @default(now())
+  projectTeam   ProjectTeam @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  advisor       User        @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+
+  @@index([projectTeamId, createdAt])
+  @@map("advisor_feedback")
 }
 
 model TopicApplication {
@@ -994,6 +1079,9 @@ model ProjectTeam {
   recruitmentPosts  RecruitmentPost[]
   guidanceRequests  ProjectGuidanceRequest[]
   announcements     Announcement[]
+  showcaseIntro      String?
+  advisorEvaluations AdvisorEvaluation[]
+  advisorFeedbacks   AdvisorFeedback[]
 
   @@index([confirmedAt])
   @@map("project_team")
@@ -1383,6 +1471,7 @@ model Artifact {
   title          String
   fileId         String?      @unique
   externalUrl    String?
+  position       Int          @default(0)
   createdAt      DateTime     @default(now())
   projectTeam    ProjectTeam  @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
   registeredBy   User         @relation(fields: [registeredById], references: [id])

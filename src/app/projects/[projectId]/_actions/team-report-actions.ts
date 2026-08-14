@@ -20,10 +20,12 @@ import { PrismaReportSubmissionRepository } from "@/modules/report/infrastructur
 import {
   artifactRegistrationSchema,
   artifactRemovalSchema,
+  artifactReorderSchema,
   artifactUpdateSchema,
   reportDecisionSchema,
   reportFeedbackSchema,
   reportSubmissionSchema,
+  teamThumbnailSchema,
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -160,6 +162,43 @@ export async function removeArtifactAction(
     await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).removeArtifact(actor, parsed.data);
     revalidatePath("/projects", "layout");
     return { status: "success", message: "결과물을 삭제했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function reorderArtifactsAction(formData: FormData): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = artifactReorderSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "이미지 순서를 확인해 주세요." };
+  try {
+    await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).reorderArtifacts(actor, parsed.data);
+    revalidatePath("/projects", "layout");
+    return { status: "success", message: "이미지 순서를 변경했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function setTeamThumbnailAction(formData: FormData): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const values = Object.fromEntries(formData);
+  if (values.uploadId === "") delete values.uploadId;
+  const parsed = teamThumbnailSchema.safeParse(values);
+  if (!parsed.success) return { status: "error", message: "대표 이미지를 확인해 주세요." };
+  try {
+    await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).setThumbnail(actor, {
+      teamId: parsed.data.teamId,
+      fileId: parsed.data.uploadId ?? null,
+    });
+    revalidatePath("/projects", "layout");
+    return { status: "success", message: parsed.data.uploadId ? "대표 이미지를 저장했습니다." : "대표 이미지를 삭제했습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

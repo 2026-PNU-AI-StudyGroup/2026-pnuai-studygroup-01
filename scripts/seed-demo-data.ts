@@ -107,8 +107,13 @@ const opusProgramCategories = {
   kakaoTechCampus: "카카오 테크 캠퍼스",
 } as const;
 
+// 로컬 데모용 자문위원 초대 링크: /advisor-access/<이 토큰>. 로컬 시드 전용이라 고정값을 쓴다.
+const DEMO_ADVISOR_INVITE_TOKEN = "demo-advisor-invite-token-for-local-development";
+
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
+  // 목 로그인의 "자문위원 화면 열기"가 쓰는 계정. DEVELOPMENT_MOCK_ACCOUNTS.ADVISOR와 같은 값이어야 한다.
+  externalAdvisor: "30000000-0000-4000-8000-000000000001",
   professors: [
     "10000000-0000-4000-8000-000000000001",
     "10000000-0000-4000-8000-000000000002",
@@ -146,6 +151,12 @@ const ids = {
   activeStoredFiles: Array.from({ length: 5 }, (_, index) => `e1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   activeArtifacts: Array.from({ length: 3 }, (_, index) => `d1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   announcements: Array.from({ length: 5 }, (_, index) => `a1000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  advisorRubric: "33000000-0000-4000-8000-000000000001",
+  advisorCriteria: ["34000000-0000-4000-8000-000000000001", "34000000-0000-4000-8000-000000000002"],
+  advisorTeamEvaluation: "35000000-0000-4000-8000-000000000001",
+  advisorEvaluation: "36000000-0000-4000-8000-000000000001",
+  advisorScores: ["37000000-0000-4000-8000-000000000001", "37000000-0000-4000-8000-000000000002"],
+  advisorFeedback: "38000000-0000-4000-8000-000000000001",
 };
 const baseProfessorEmails = ids.professors.map((_, index) => `demo.professor${index + 1}@pusan.ac.kr`);
 const opusAdvisorEmails = ids.opusAdvisors.map((_, index) => `demo.opus.advisor${index + 1}@pusan.ac.kr`);
@@ -292,6 +303,12 @@ async function seed() {
     await tx.objectDeletionJob.deleteMany({
       where: { id: { in: demoStoredFileIds.flatMap((id) => [id, `${id}:upload`]) } },
     });
+    // 자문위원 데모 데이터(배정·토큰·채점·피드백)는 계정 기준으로 정리한다.
+    await tx.advisorScore.deleteMany({ where: { evaluation: { advisorId: ids.externalAdvisor } } });
+    await tx.advisorEvaluation.deleteMany({ where: { advisorId: ids.externalAdvisor } });
+    await tx.advisorFeedback.deleteMany({ where: { advisorId: ids.externalAdvisor } });
+    await tx.advisorAccessToken.deleteMany({ where: { userId: ids.externalAdvisor } });
+    await tx.projectAdvisor.deleteMany({ where: { userId: ids.externalAdvisor } });
     await tx.artifact.deleteMany({ where: { id: { in: [...ids.artifacts, ...ids.activeArtifacts] } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: [...ids.approvalDecisions, ...ids.activeApprovalDecisions] } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: [...ids.reportVersions, ...ids.activeReportVersions] } } });
@@ -324,6 +341,8 @@ async function seed() {
       ...demoStudentNames.map<[string, string, string, UserRole]>((name, index) => [
         ids.students[index], name, `demo.student${index + 1}@pusan.ac.kr`, UserRole.STUDENT,
       ]),
+      // 교외 자문위원은 초대 링크로 로그인하므로 학교 메일이 아니다.
+      [ids.externalAdvisor, "정민서", "demo.advisor@example.com", UserRole.ADVISOR],
     ];
     for (const [id, name, email, role] of people) {
       await tx.user.upsert({
@@ -495,10 +514,13 @@ async function seed() {
       const { schedule: suppliedSchedule, advisorEnabled = true, ...programInput } = input;
       const schedule = suppliedSchedule ?? defaultProgramSchedule(input.startsAt, input.endsAt);
       const studentProjectCreationEnabled = input.category === opusProgramCategories.hackathon;
+      const effectiveSchedule = studentProjectCreationEnabled
+        ? { ...schedule, recruitmentStartsAt: null, recruitmentEndsAt: null }
+        : schedule;
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isPublic: true, firstPublishedAt, endProcessedAt },
-        create: { ...programInput, ...schedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, endProcessedAt },
+        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...effectiveSchedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isPublic: true, firstPublishedAt, endProcessedAt },
+        create: { ...programInput, ...effectiveSchedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, endProcessedAt },
       });
     }
     const activeProgramSchedules = [
@@ -798,6 +820,56 @@ async function seed() {
     const firstApplicationIndexByTopic = new Map<number, number>();
     acceptedApplicationRows.forEach(([topicIndex], index) => {
       if (!firstApplicationIndexByTopic.has(topicIndex)) firstApplicationIndexByTopic.set(topicIndex, index);
+    });
+    // 자문위원 데모: 확정된 두 팀에 배정하고, 목 로그인 대신 실제 초대 링크도 쓸 수 있게 토큰을 넣는다.
+    // 토큰 원문은 해시만 저장하므로 데모용 고정 문자열을 쓴다(로컬 전용).
+    await tx.projectAdvisor.createMany({ data: [0, 1].map((topicIndex) => ({
+      id: `31000000-0000-4000-8000-${String(topicIndex + 1).padStart(12, "0")}`,
+      topicId: ids.topics[topicIndex],
+      userId: ids.externalAdvisor,
+      grantedById: ids.admin,
+      createdAt: new Date("2026-07-12T15:00:00+09:00"),
+    })) });
+    await tx.advisorAccessToken.create({ data: {
+      id: "32000000-0000-4000-8000-000000000001",
+      userId: ids.externalAdvisor,
+      tokenHash: createHash("sha256").update(DEMO_ADVISOR_INVITE_TOKEN).digest("hex"),
+      expiresAt: new Date("2027-12-31T14:59:00+09:00"),
+      createdAt: new Date("2026-07-12T15:00:00+09:00"),
+    } });
+    const advisorRubric = await tx.rubricDefinition.upsert({
+      where: { id: ids.advisorRubric },
+      update: { programId: activePrograms[0].id, title: "외부 자문위원 기술 검토", gradingDueAt: new Date("2026-12-10T23:59:59+09:00"), position: 90, audience: "STAFF_ONLY", archivedAt: null, legacy: false },
+      create: { id: ids.advisorRubric, programId: activePrograms[0].id, title: "외부 자문위원 기술 검토", gradingDueAt: new Date("2026-12-10T23:59:59+09:00"), position: 90, audience: "STAFF_ONLY" },
+    });
+    for (const [index, [label, maxPoints]] of ([['문제 해결의 적합성', 50], ['구현 완성도', 50]] as const).entries()) {
+      await tx.rubricCriterion.upsert({
+        where: { id: ids.advisorCriteria[index] },
+        update: { rubricId: advisorRubric.id, label, maxPoints, position: index },
+        create: { id: ids.advisorCriteria[index], rubricId: advisorRubric.id, label, maxPoints, position: index },
+      });
+    }
+    await tx.projectTeamRubricEvaluation.upsert({
+      where: { projectTeamId_rubricId: { projectTeamId: ids.teams[0], rubricId: advisorRubric.id } },
+      update: {},
+      create: { id: ids.advisorTeamEvaluation, projectTeamId: ids.teams[0], rubricId: advisorRubric.id },
+    });
+    const advisorEvaluation = await tx.advisorEvaluation.upsert({
+      where: { projectTeamId_advisorId_rubricId: { projectTeamId: ids.teams[0], advisorId: ids.externalAdvisor, rubricId: advisorRubric.id } },
+      update: {},
+      create: { id: ids.advisorEvaluation, projectTeamId: ids.teams[0], advisorId: ids.externalAdvisor, rubricId: advisorRubric.id, createdAt: new Date("2026-08-12T13:00:00+09:00") },
+    });
+    for (const [index, points] of [43, 46].entries()) {
+      await tx.advisorScore.upsert({
+        where: { evaluationId_criterionId: { evaluationId: advisorEvaluation.id, criterionId: ids.advisorCriteria[index] } },
+        update: { points },
+        create: { id: ids.advisorScores[index], evaluationId: advisorEvaluation.id, criterionId: ids.advisorCriteria[index], points },
+      });
+    }
+    await tx.advisorFeedback.upsert({
+      where: { id: ids.advisorFeedback },
+      update: { projectTeamId: ids.teams[0], advisorId: ids.externalAdvisor, body: "현장 이동약자의 실제 경로 선택 과정을 더 많이 관찰해 예외 상황을 보강해 보세요.", createdAt: new Date("2026-08-12T13:30:00+09:00") },
+      create: { id: ids.advisorFeedback, projectTeamId: ids.teams[0], advisorId: ids.externalAdvisor, body: "현장 이동약자의 실제 경로 선택 과정을 더 많이 관찰해 예외 상황을 보강해 보세요.", createdAt: new Date("2026-08-12T13:30:00+09:00") },
     });
     await tx.projectTeamMembership.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
       const teamIndex = teamIndexByTopic.get(topicIndex);
@@ -1628,6 +1700,7 @@ async function seed() {
     studentDemoProject: seedResult.studentDemoProject,
     localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
     verificationResidueRemoved: seedResult.verificationResidueRemoved,
+    advisorInvitePath: `/advisor-access/${DEMO_ADVISOR_INVITE_TOKEN}`,
   }));
 }
 

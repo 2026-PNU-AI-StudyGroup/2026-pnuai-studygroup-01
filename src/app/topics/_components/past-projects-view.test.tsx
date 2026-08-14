@@ -35,6 +35,7 @@ const ballot: ProgramVoteBallot = {
     startsAt: new Date("2026-08-01T00:00:00Z"),
     endsAt: new Date("2026-08-31T00:00:00Z"),
     voteLimit: 3,
+    staffVoteLimit: 5,
     selfVotingAllowed: false,
     resultsVisibleDuringVoting: true,
     resultsVisibleAfterVoting: true,
@@ -115,7 +116,7 @@ describe("PastProjectsView", () => {
   it("팀과 지도교수를 한 줄로 표시하고 참여·결과물 정보 박스를 제거한다", () => {
     render(
       <PastProjectsView
-        projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터" }] }]}
+        projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터", position: 0 }] }]}
         total={1}
         page={1}
         totalPages={1}

@@ -34,14 +34,13 @@ import { ProjectAssistantQueryService } from "@/modules/project-assistant/applic
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
-import { topicsHref } from "@/app/topics/_lib/topics-query";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
 }
 
 function ProjectDashboardFrame({ role, counts, view, children }: {
-  role: "STUDENT" | "PROFESSOR";
+  role: "STUDENT" | "PROFESSOR" | "ADVISOR";
   counts: ProjectDashboardCounts;
   view: ProjectDashboardView;
   children: ReactNode;
@@ -65,6 +64,8 @@ export default async function DashboardPage({
 }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
+  // 자문위원은 배정된 프로젝트만 다루므로 전용 화면으로 보낸다(이 대시보드는 항상 비어 있다).
+  if (actor.role === "ADVISOR") redirect("/advisor");
   const params = await searchParams;
   const student = actor.role === "STUDENT";
   const requestedView = parseProjectDashboardView(firstSearchParam(params.view));
@@ -74,7 +75,7 @@ export default async function DashboardPage({
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   if (actor.role === "ADMIN") {
     const selectedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200);
-    redirect(topicsHref({ programId: selectedProgramId || undefined }));
+    redirect(selectedProgramId ? `/topics?programId=${encodeURIComponent(selectedProgramId)}` : "/topics");
   }
 
   const teamStatus = view === "active" ? "ACTIVE" : view === "completed" ? "COMPLETED" : undefined;

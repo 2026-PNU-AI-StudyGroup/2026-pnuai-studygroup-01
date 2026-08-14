@@ -1,6 +1,8 @@
+import type { UserRole } from "@/modules/identity/domain/user-role";
+
 export function areActiveStudents(
   users: Array<{
-    role: "STUDENT" | "PROFESSOR" | "ADMIN";
+    role: UserRole;
     accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
   }>,
   expectedCount: number,

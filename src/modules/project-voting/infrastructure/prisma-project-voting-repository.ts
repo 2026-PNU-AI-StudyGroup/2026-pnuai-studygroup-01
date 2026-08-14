@@ -8,8 +8,8 @@ import {
   type ProjectVotingRepository,
   type ReplaceProgramVotesOutcome,
 } from "@/modules/project-voting/application/manage-project-voting";
-import { canViewPublicVotingResults, normalizeVoteSelection } from "@/modules/project-voting/domain/project-voting-policy";
 import type { UserRole } from "@/modules/identity/domain/user-role";
+import { canViewPublicVotingResults, normalizeVoteSelection, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUS = "ACTIVE" as const;
 
@@ -78,16 +78,18 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     };
   }
 
-  async replaceVotes(input: { programId: string; voterId: string; voterRole: UserRole; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome> {
+  async replaceVotes(input: { programId: string; voterId: string; voterRole?: UserRole; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome> {
     return this.client.$transaction(async (transaction) => {
-      const voters = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "id" FROM "user"
+      const voters = await transaction.$queryRaw<Array<{ id: string; role: string }>>(Prisma.sql`
+        SELECT "id", "role" FROM "user"
         WHERE "id" = ${input.voterId} AND "accountStatus" = 'ACTIVE'
         FOR UPDATE
       `);
-      if (!voters[0]) return "INACTIVE_VOTER";
+      const voter = voters[0];
+      if (!voter) return "INACTIVE_VOTER";
+      const voterRole = voter.role as UserRole;
 
-      const visibility = input.voterRole === "ADMIN"
+      const visibility = voterRole === "ADMIN"
         ? Prisma.sql`TRUE`
         : Prisma.sql`"project_program"."isPublic" = true`;
       const policies = await transaction.$queryRaw<LockedVotingPolicy[]>(Prisma.sql`
@@ -96,6 +98,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           "program_voting_policy"."startsAt",
           "program_voting_policy"."endsAt",
           "program_voting_policy"."voteLimit",
+          "program_voting_policy"."staffVoteLimit",
           "program_voting_policy"."voteLimitScope",
           "program_voting_policy"."selfVotingAllowed",
           "program_voting_policy"."resultsVisibleDuringVoting",
@@ -107,8 +110,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           AND ${visibility}
         FOR UPDATE OF "project_program", "program_voting_policy"
       `);
-      const policy = policies[0];
-      if (!policy) return "NOT_FOUND";
+      const locked = policies[0];
+      if (!locked) return "NOT_FOUND";
+      const policy = withEffectiveVoteLimit(locked, voterRole);
       if (getProgramVotingPhase(policy, input.votedAt) !== "OPEN") return "NOT_OPEN";
 
       const candidates = input.topicIds.length
@@ -192,7 +196,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       id: string;
       name: string;
       email: string;
-      role: "STUDENT" | "PROFESSOR" | "ADMIN";
+      role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR";
     }>>();
     for (const vote of votesWithVoters) {
       votersByTopic.set(vote.topicId, [...(votersByTopic.get(vote.topicId) ?? []), vote.voter]);
@@ -224,7 +228,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     };
   }
 
-  async findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR", now: Date): Promise<PublicProgramVotingResults | null> {
+  async findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR" | "ADVISOR", now: Date): Promise<PublicProgramVotingResults | null> {
     const program = await this.client.projectProgram.findUnique({
       where: { id: programId },
       select: {

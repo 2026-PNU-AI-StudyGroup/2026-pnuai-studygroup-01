@@ -17,6 +17,7 @@ const baseResults: ProgramVotingResults = {
     startsAt: new Date("2026-08-20T00:00:00Z"),
     endsAt: new Date("2026-08-31T00:00:00Z"),
     voteLimit: 3,
+    staffVoteLimit: 5,
     voteLimitScope: "PROGRAM",
     selfVotingAllowed: false,
     resultsVisibleDuringVoting: false,

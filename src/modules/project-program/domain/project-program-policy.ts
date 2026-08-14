@@ -7,6 +7,7 @@ export type ProgramVotingPolicyDetails = {
   startsAt: Date;
   endsAt: Date;
   voteLimit: number;
+  staffVoteLimit?: number;
   voteLimitScope?: VoteLimitScope;
   selfVotingAllowed: boolean;
   resultsVisibleDuringVoting: boolean;
@@ -98,10 +99,14 @@ export function normalizeProgramVotingPolicy(input: ProgramVotingPolicyDetails):
   if (!Number.isSafeInteger(input.voteLimit) || input.voteLimit < 1) {
     throw new InvalidProjectProgramError("인당 가능 투표수는 1 이상이어야 합니다.");
   }
+  const staffVoteLimit = input.staffVoteLimit ?? 5;
+  if (!Number.isSafeInteger(staffVoteLimit) || staffVoteLimit < 1) {
+    throw new InvalidProjectProgramError("자문위원·관리자 가능 투표수는 1 이상이어야 합니다.");
+  }
   if (input.voteLimitScope !== undefined && input.voteLimitScope !== "PROGRAM" && input.voteLimitScope !== "DIVISION") {
     throw new InvalidProjectProgramError("투표 범위를 다시 선택해 주세요.");
   }
-  return { ...input, voteLimitScope: input.voteLimitScope ?? "PROGRAM" };
+  return { ...input, staffVoteLimit, voteLimitScope: input.voteLimitScope ?? "PROGRAM" };
 }
 
 export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {

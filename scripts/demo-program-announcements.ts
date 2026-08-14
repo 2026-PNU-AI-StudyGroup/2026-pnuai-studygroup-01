@@ -157,10 +157,11 @@ export function buildDemoProgramAnnouncements(
   if (!profile || count === undefined) {
     throw new Error(`프로그램 공지 프로필이 없습니다: ${program.name}`);
   }
-  if (!program.recruitmentStartsAt || !program.recruitmentEndsAt) {
-    throw new Error(`${program.name} 데모 공지는 프로젝트 모집 기간이 있는 프로그램에서만 생성할 수 있습니다.`);
-  }
-  const context: ProgramNoticeContext = { ...program, recruitmentStartsAt: program.recruitmentStartsAt, recruitmentEndsAt: program.recruitmentEndsAt, ...profile };
+  // 학생 제안형 프로그램은 별도 모집 기간이 없으므로 프로그램 시작부터 수행 시작 전까지를
+  // 팀 구성·프로젝트 등록 안내 기간으로 사용한다. 운영 정책의 NULL 제약은 유지한다.
+  const recruitmentStartsAt = program.recruitmentStartsAt ?? program.startsAt;
+  const recruitmentEndsAt = program.recruitmentEndsAt ?? program.executionStartsAt;
+  const context: ProgramNoticeContext = { ...program, recruitmentStartsAt, recruitmentEndsAt, ...profile };
   const remaining = noticeTemplates.slice(1);
   const rotation = programIndex % remaining.length;
   const orderedTemplates = [

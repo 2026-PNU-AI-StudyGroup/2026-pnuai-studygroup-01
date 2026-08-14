@@ -11,6 +11,7 @@ import type {
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { ANNOUNCEMENT_ATTACHMENT_MAX_COUNT } from "@/modules/file/domain/upload-policy";
 import { isAnnouncementAttachmentSetAllowed } from "@/modules/announcement/domain/announcement-attachment-policy";
+import type { UserRole } from "@/modules/identity/domain/user-role";
 
 const selectAnnouncement = {
   id: true,
@@ -47,7 +48,7 @@ type SelectedAnnouncement = {
   programId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  author: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" };
+  author: { name: string; role: UserRole };
   projectTeam: { name: string; projectId: string } | null;
   program: { name: string } | null;
   attachments: Array<{

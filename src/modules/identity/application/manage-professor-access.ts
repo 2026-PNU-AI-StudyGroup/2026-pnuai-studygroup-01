@@ -1,12 +1,12 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import { isPusanEmail, normalizeEmail } from "@/modules/identity/domain/user-role";
+import { isPusanEmail, normalizeEmail, type UserRole } from "@/modules/identity/domain/user-role";
 
 export type ProfessorAccessRecord = {
   id: string;
   email: string;
   createdAt: Date;
   revokedAt: Date | null;
-  account: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" } | null;
+  account: { name: string; role: UserRole } | null;
   activeResponsibilityCount: number;
 };
 

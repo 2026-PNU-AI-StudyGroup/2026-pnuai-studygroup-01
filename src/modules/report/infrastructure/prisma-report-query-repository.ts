@@ -56,14 +56,16 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
             },
           },
         },
+        thumbnailPath: true,
         artifacts: {
-          orderBy: { createdAt: "desc" },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           select: {
             id: true,
             type: true,
             title: true,
             fileId: true,
             externalUrl: true,
+            position: true,
             createdAt: true,
           },
         },
@@ -81,7 +83,8 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         feedback: report.feedback.map((item) => ({
           id: item.id,
           authorName: item.author.name,
-          authorRole: item.author.role,
+          // 피드백 작성자는 지도교수·조교·관리자로 제한되어 ADVISOR가 올 수 없다(report-feedback-repository의 teamSupervisorWhere 참고).
+          authorRole: item.author.role as "STUDENT" | "PROFESSOR" | "ADMIN",
           body: item.body,
           createdAt: item.createdAt,
         })),
@@ -106,6 +109,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         fileId: artifact.fileId ?? undefined,
         externalUrl: artifact.externalUrl ?? undefined,
       })),
+      thumbnailPath: team.thumbnailPath ?? undefined,
     };
   }
 }

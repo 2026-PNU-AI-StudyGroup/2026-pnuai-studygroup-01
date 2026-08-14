@@ -3,11 +3,11 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { teamFileAccessWhere } from "@/modules/advisor/infrastructure/advisor-file-access";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
 import { announcementScopeWhere } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
-import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 
 export async function GET(
   _request: Request,
@@ -25,7 +25,7 @@ export async function GET(
       id: fileId,
       status: "ATTACHED",
       OR: [
-        { projectTeam: teamActorWhere(actor) },
+        { projectTeam: teamFileAccessWhere(actor) },
         {
           purpose: "ARTIFACT",
           projectTeam: {

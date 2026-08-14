@@ -258,6 +258,15 @@ ALTER INDEX "team_rubric_evaluation_teamId_idx" RENAME TO "project_team_rubric_e
 ALTER INDEX "team_rubric_evaluation_rubricId_idx" RENAME TO "project_team_rubric_evaluation_rubricId_idx";
 ALTER INDEX "team_rubric_evaluation_teamId_rubricId_key" RENAME TO "project_team_rubric_evaluation_projectTeamId_rubricId_key";
 
+-- main의 외부 자문위원 테이블도 같은 프로젝트 팀 aggregate를 가리키도록 함께 전환한다.
+ALTER TABLE "advisor_evaluation" RENAME COLUMN "teamId" TO "projectTeamId";
+ALTER TABLE "advisor_feedback" RENAME COLUMN "teamId" TO "projectTeamId";
+ALTER TABLE "advisor_evaluation" RENAME CONSTRAINT "advisor_evaluation_teamId_fkey" TO "advisor_evaluation_projectTeamId_fkey";
+ALTER TABLE "advisor_feedback" RENAME CONSTRAINT "advisor_feedback_teamId_fkey" TO "advisor_feedback_projectTeamId_fkey";
+ALTER INDEX "advisor_evaluation_teamId_idx" RENAME TO "advisor_evaluation_projectTeamId_idx";
+ALTER INDEX "advisor_evaluation_teamId_advisorId_rubricId_key" RENAME TO "advisor_evaluation_projectTeamId_advisorId_rubricId_key";
+ALTER INDEX "advisor_feedback_teamId_createdAt_idx" RENAME TO "advisor_feedback_projectTeamId_createdAt_idx";
+
 DROP TYPE "TeamMemberRole";
 DROP TYPE "TeamStatus";
 

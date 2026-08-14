@@ -31,7 +31,7 @@ describe("PrismaProfessorAccessRepository", () => {
   it("새 교수 권한 부여는 하나의 감사 이벤트 ID를 알림과 이메일 idempotency key에 사용한다", async () => {
     const notificationCreate = vi.fn(async () => ({ id: "notification-1" }));
     const emailCreateMany = vi.fn(async () => ({ count: 1 }));
-    const auditCreate = vi.fn(async () => ({ id: "audit-1" }));
+    const auditCreate = vi.fn<(...args: [{ data: { id: string } }]) => Promise<{ id: string }>>().mockResolvedValue({ id: "audit-1" });
     const transaction = {
       $queryRaw: vi.fn(async () => []),
       professorAllowlist: {

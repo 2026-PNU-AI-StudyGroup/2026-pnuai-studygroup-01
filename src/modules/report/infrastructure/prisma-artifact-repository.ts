@@ -141,4 +141,76 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       return true;
     });
   }
+
+  setThumbnail(input: {
+    teamId: string;
+    actor: CurrentActor;
+    fileId: string | null;
+    updatedAt: Date;
+  }): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const authorized = await this.authorizeTeam(transaction, {
+        teamId: input.teamId,
+        actor: input.actor,
+        at: input.updatedAt,
+      });
+      if (authorized.length !== 1) return false;
+      if (input.fileId) {
+        // 대표 이미지는 아티팩트 행으로 연결되지 않으므로 attach 트리거가 동작하지 않는다.
+        // 소유자·팀·용도·READY를 확인하는 동시에 직접 ATTACHED로 승격해 /api/files가 제공하고
+        // 정리 작업이 삭제하지 않도록 한다.
+        const attached = await transaction.$executeRaw(Prisma.sql`
+          UPDATE "stored_file"
+          SET "status" = 'ATTACHED'
+          WHERE "id" = ${input.fileId}
+            AND "projectTeamId" = ${input.teamId}
+            AND "ownerId" = ${input.actor.id}
+            AND "purpose" = 'ARTIFACT'
+            AND "consumer" = 'ARTIFACT'
+            AND "status" = 'READY'
+        `);
+        if (attached !== 1) return false;
+      }
+      await transaction.projectTeam.update({
+        where: { id: input.teamId },
+        data: { project: { update: { thumbnailPath: input.fileId ? `/api/files/${input.fileId}` : null } } },
+      });
+      return true;
+    });
+  }
+
+  reorderArtifacts(input: {
+    teamId: string;
+    actor: CurrentActor;
+    orderedIds: string[];
+    reorderedAt: Date;
+  }): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const authorized = await this.authorizeTeam(transaction, {
+        teamId: input.teamId,
+        actor: input.actor,
+        at: input.reorderedAt,
+      });
+      if (authorized.length !== 1) return false;
+
+      // 갤러리 순서는 IMAGE 아티팩트의 position으로 결정. 넘어온 순서 중 이 팀의 IMAGE만
+      // 추린 뒤, 빠진 것은 기존 순서대로 뒤에 붙여 position을 0..n으로 다시 매긴다.
+      const images = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "artifact"
+        WHERE "projectTeamId" = ${input.teamId} AND "type" = 'IMAGE'
+        ORDER BY "position" ASC, "createdAt" ASC
+        FOR UPDATE
+      `);
+      const existing = images.map((image) => image.id);
+      const known = input.orderedIds.filter((id) => existing.includes(id));
+      const remaining = existing.filter((id) => !known.includes(id));
+      const finalOrder = [...known, ...remaining];
+      await Promise.all(
+        finalOrder.map((id, position) =>
+          transaction.artifact.update({ where: { id }, data: { position } }),
+        ),
+      );
+      return true;
+    });
+  }
 }

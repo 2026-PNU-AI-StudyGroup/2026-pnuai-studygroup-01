@@ -9,6 +9,7 @@ import { getProgramStartYear } from "@/modules/project-program/domain/project-pr
 const archivedProjectSelect = {
   id: true,
   name: true,
+  showcaseIntro: true,
   project: { select: {
     id: true,
     title: true,
@@ -30,13 +31,14 @@ const archivedProjectSelect = {
     select: { user: { select: { name: true } } },
   },
   artifacts: {
-    orderBy: { createdAt: "asc" as const },
+    orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
     select: {
       id: true,
       type: true,
       title: true,
       fileId: true,
       externalUrl: true,
+      position: true,
       file: { select: { originalName: true } },
     },
   },
@@ -178,6 +180,7 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     sourceUrl: team.project.sourceUrl ?? undefined,
     thumbnailPath: team.project.thumbnailPath ?? undefined,
     posterPath: team.project.posterPath ?? undefined,
+    showcaseIntro: team.showcaseIntro ?? undefined,
     artifacts: team.artifacts.map(({ file, ...artifact }) => ({
       id: artifact.id,
       type: artifact.type,
@@ -185,6 +188,7 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
       fileId: artifact.fileId ?? undefined,
       fileName: file?.originalName,
       externalUrl: artifact.externalUrl ?? undefined,
+      position: artifact.position,
     })),
   };
 }

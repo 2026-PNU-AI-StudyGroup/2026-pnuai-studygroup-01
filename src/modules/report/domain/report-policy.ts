@@ -1,5 +1,5 @@
 export type ApprovalDecision = "APPROVED" | "REVISION_REQUESTED";
-export type ArtifactType = "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER";
+export type ArtifactType = "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER" | "IMAGE";
 
 export class InvalidReportInputError extends Error {
   constructor() {
