@@ -26,6 +26,7 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
   const now = new Date();
 
   return (
+    <main className="content-shell page-enter">
     <section aria-labelledby="advisor-project-title" className="mx-auto max-w-4xl space-y-9">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{topic.program.name}</UiText></p>
@@ -126,5 +127,6 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
         </>
       )}
     </section>
+    </main>
   );
 }

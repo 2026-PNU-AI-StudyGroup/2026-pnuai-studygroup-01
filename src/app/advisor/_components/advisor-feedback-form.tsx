@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { addAdvisorFeedbackAction, type AdvisorReviewState } from "@/app/advisor/_actions/advisor-review-actions";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
+import { renderMarkdown } from "@/shared/ui/render-markdown";
 
 const initialState: AdvisorReviewState = { status: "idle", message: "" };
 
@@ -28,7 +29,8 @@ export function AdvisorFeedbackForm({
           {feedback.map((entry) => (
             <li key={entry.id} className="px-5 py-4">
               <time className="muted text-xs" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-6 [overflow-wrap:anywhere]"><UiText>{entry.body}</UiText></p>
+              {/* 팀 평가 탭과 같은 마크다운 렌더를 써서 작성자가 본 그대로 보이게 한다. */}
+              <div className="mt-1 space-y-2 text-sm leading-6 [overflow-wrap:anywhere]">{renderMarkdown(entry.body)}</div>
             </li>
           ))}
         </ul>

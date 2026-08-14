@@ -26,6 +26,7 @@ export default async function AdvisorAssignmentsPage() {
   const projects = await listAssignedProjects(prisma, actor.id);
 
   return (
+    <main className="content-shell page-enter">
     <section aria-labelledby="advisor-assignments-title" className="mx-auto max-w-5xl space-y-6">
       <header>
         <h1 id="advisor-assignments-title" className="text-[clamp(1.375rem,2.2vw,1.75rem)] font-bold leading-[1.2] tracking-[-0.035em]">
@@ -64,5 +65,6 @@ export default async function AdvisorAssignmentsPage() {
         </ul>
       )}
     </section>
+    </main>
   );
 }
