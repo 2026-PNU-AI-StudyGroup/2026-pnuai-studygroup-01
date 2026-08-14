@@ -119,6 +119,8 @@ const ids = {
   programs: Array.from({ length: 11 }, (_, index) => `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   retiredPrograms: ["40000000-0000-4000-8000-000000000012"],
   topics: Array.from({ length: 6 + archivedProjectCount }, (_, index) => `50000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  approvalTopics: Array.from({ length: 28 }, (_, index) => `51000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
+  approvalRequests: Array.from({ length: 28 }, (_, index) => `52000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   applications: Array.from({ length: 14 + archivedProjectMemberNames.length }, (_, index) => `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
   localViewerApplication: "61000000-0000-4000-8000-000000000001",
   teams: Array.from({ length: 4 + archivedProjectCount }, (_, index) => `70000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`),
@@ -307,7 +309,8 @@ async function seed() {
     // older fixture. Remove every application attached to a demo topic before
     // replacing that topic, rather than relying on the current fixture IDs.
     await tx.topicApplication.deleteMany({ where: { topicId: { in: ids.topics } } });
-    await tx.topic.deleteMany({ where: { id: { in: ids.topics } } });
+    await tx.topicApprovalRequest.deleteMany({ where: { id: { in: ids.approvalRequests } } });
+    await tx.topic.deleteMany({ where: { id: { in: [...ids.topics, ...ids.approvalTopics] } } });
     await tx.projectProgram.deleteMany({ where: { id: { in: ids.retiredPrograms } } });
 
     const people: Array<[string, string, string, UserRole]> = [
@@ -1228,6 +1231,123 @@ async function seed() {
       data: studentTeamRecruitmentApplicationRows,
     });
 
+    // 관리자 승인 대기함과 프로그램별 대기 건수 UI를 바로 검증할 수 있는 제안들이다.
+    // 교수 검토 경로는 관리자 집계에서 제외되는지 함께 확인한다.
+    const pendingApprovalDraftGroups = [
+      {
+        programIndex: 0,
+        route: "ADMIN" as const,
+        requiredSkills: ["TypeScript", "제품 기획"],
+        preferredSkills: ["사용자 리서치", "Figma"],
+        titles: [
+          "지역 상권 접근성을 위한 보행 경로 분석",
+          "실험실 안전점검 기록 자동화",
+          "캠퍼스 강의실 예약 혼잡 예측",
+          "졸업작품 장비 대여 통합 관리",
+          "저시력자를 위한 발표 자료 접근성 검사",
+          "교내 분실물 이미지 분류 서비스",
+          "대학원생 연구실 좌석 예약 서비스",
+          "학과 행사 운영 체크리스트 플랫폼",
+        ],
+      },
+      {
+        programIndex: 1,
+        route: "ADMIN" as const,
+        requiredSkills: ["Python", "데이터 분석"],
+        preferredSkills: ["생성형 AI", "서비스 기획"],
+        titles: [
+          "AI 기반 강의 노트 핵심 정리",
+          "축제 부스 대기시간 예측",
+          "교내 식단 탄소발자국 비교",
+          "OCR 영수증 기반 예산 기록",
+          "다국어 캠퍼스 안내 챗봇",
+          "개인별 학습 루틴 코치",
+          "실시간 스터디 매칭 서비스",
+          "사진으로 찾는 빈 강의실",
+        ],
+      },
+      {
+        programIndex: 2,
+        route: "ADMIN" as const,
+        requiredSkills: ["Python", "LLM"],
+        preferredSkills: ["평가 설계", "MLOps"],
+        titles: [
+          "회의록 요약 품질 평가 도구",
+          "비정형 민원 데이터 분류 모델",
+          "논문 키워드 탐색 에이전트",
+          "한국어 문서 RAG 정확도 진단",
+          "수강 후기 감성 분석 대시보드",
+          "이미지 기반 폐기물 분리배출 도우미",
+          "학습 데이터 편향 점검 리포트",
+          "AI 서비스 프롬프트 회귀 테스트",
+        ],
+      },
+      {
+        programIndex: 0,
+        route: "PROFESSOR" as const,
+        requiredSkills: ["Next.js", "문제 해결"],
+        preferredSkills: ["UX 설계", "테스트 자동화"],
+        titles: [
+          "산학협력 문의 대응 챗봇",
+          "연구실 장비 사용 예약 도우미",
+          "컴퓨터공학 용어 학습 퀴즈 생성기",
+          "학부 연구생 업무 온보딩 보드",
+        ],
+      },
+    ] as const;
+    let pendingApprovalSeedIndex = 0;
+    const pendingApprovalSeeds = pendingApprovalDraftGroups.flatMap((group) => group.titles.map((title) => {
+      const index = pendingApprovalSeedIndex++;
+      const createdAt = new Date(`2026-08-${String(13 - Math.floor(index / 4)).padStart(2, "0")}T${String(18 - (index % 4)).padStart(2, "0")}:00:00+09:00`);
+      return {
+        title,
+        programIndex: group.programIndex,
+        route: group.route,
+        requiredSkills: group.requiredSkills,
+        preferredSkills: group.preferredSkills,
+        requesterId: ids.students[index % activeDemoStudentNames.length],
+        createdAt,
+      };
+    }));
+    if (pendingApprovalSeeds.length !== ids.approvalTopics.length || pendingApprovalSeeds.length !== ids.approvalRequests.length) {
+      throw new Error("승인 대기 데모 ID와 제안 수가 일치하지 않습니다.");
+    }
+    await tx.topic.createMany({
+      data: pendingApprovalSeeds.map((proposal, index) => ({
+        id: ids.approvalTopics[index],
+        programId: activePrograms[proposal.programIndex].id,
+        authorId: proposal.requesterId,
+        managerId: null,
+        title: proposal.title,
+        description: `${proposal.title}의 실제 사용 흐름을 인터뷰와 프로토타입으로 검증하고, 학기 말에 재현 가능한 결과물과 운영 문서를 남기는 제안입니다.`,
+        advisorRole: proposal.route === "PROFESSOR" ? "김도윤 교수" : "운영진 검토",
+        requiredSkills: [...proposal.requiredSkills],
+        preferredSkills: [...proposal.preferredSkills],
+        roleExpectations: "문제 정의, 구현, 사용자 검증 중 한 역할을 맡아 주 1회 진행 상황을 공유",
+        availabilityRequirement: "주 1회 정기 회의와 중간·최종 발표 참여",
+        applicationMode: "TEAM_ONLY",
+        recruitmentEnabled: false,
+        capacity: 4,
+        status: "PENDING_APPROVAL",
+        publishedAt: null,
+        createdAt: proposal.createdAt,
+        updatedAt: proposal.createdAt,
+      })),
+    });
+    await tx.topicApprovalRequest.createMany({
+      data: pendingApprovalSeeds.map((proposal, index) => ({
+        id: ids.approvalRequests[index],
+        topicId: ids.approvalTopics[index],
+        requesterId: proposal.requesterId,
+        route: proposal.route,
+        requestedProfessorId: proposal.route === "PROFESSOR" ? ids.professors[0] : null,
+        status: "PENDING",
+        reviewComment: "",
+        createdAt: proposal.createdAt,
+        updatedAt: proposal.createdAt,
+      })),
+    });
+
     await tx.task.createMany({ data: [
       { id: ids.tasks[0], projectTeamId: ids.teams[0], createdById: ids.students[0], title: "경사로·엘리베이터 직접 확인하기", dueAt: new Date("2026-04-30T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-04-29T16:30:00+09:00") },
       { id: ids.tasks[1], projectTeamId: ids.teams[0], createdById: ids.students[0], title: "휠체어 사용자와 길찾기 테스트하기", dueAt: new Date("2026-07-25T18:00:00+09:00"), status: "DONE", completedAt: new Date("2026-07-24T19:10:00+09:00") },
@@ -1467,6 +1587,8 @@ async function seed() {
       studentTeams: ids.studentTeams.length,
       studentTeamRecruitmentPosts: ids.studentTeamRecruitments.length,
       studentTeamRecruitmentApplications: ids.studentTeamRecruitmentApplications.length,
+      pendingAdminApprovals: pendingApprovalSeeds.filter((proposal) => proposal.route === "ADMIN").length,
+      pendingProfessorApprovals: pendingApprovalSeeds.filter((proposal) => proposal.route === "PROFESSOR").length,
       activeReports: ids.activeReports.length,
       activeReportVersions: ids.activeReportVersions.length,
       activeArtifacts: ids.activeArtifacts.length,
@@ -1494,6 +1616,8 @@ async function seed() {
     studentTeams: seedResult.studentTeams,
     studentTeamRecruitmentPosts: seedResult.studentTeamRecruitmentPosts,
     studentTeamRecruitmentApplications: seedResult.studentTeamRecruitmentApplications,
+    pendingAdminApprovals: seedResult.pendingAdminApprovals,
+    pendingProfessorApprovals: seedResult.pendingProfessorApprovals,
     notifications: seedResult.connectedToDemoProject ? 4 : 0,
     archivedProjects: archivedProjectCount,
     approvedFinalReports: archivedProjectCount,

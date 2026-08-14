@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { activeProjectsHref } from "@/app/topics/_lib/active-project-query";
+import { topicsHref } from "@/app/topics/_lib/topics-query";
 import type {
   AdminProjectOperationFilter,
   AdminProgramProjectOperations,
@@ -45,10 +45,10 @@ export function AdminProjectOperationsSummary({
             return (
               <Link
                 key={card.filter}
-                href={activeProjectsHref({
+                href={topicsHref({
                   programId,
                   divisionId,
-                  query,
+                  q: query,
                   operation: card.filter,
                 })}
                 aria-current={selected ? "page" : undefined}

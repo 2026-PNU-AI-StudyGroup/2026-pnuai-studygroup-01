@@ -3,19 +3,30 @@ import type { ProjectProgramRepository } from "@/modules/project-program/applica
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { assertValidTopicDetails } from "@/modules/topic/domain/topic-policy";
 import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
+import type { TopicApprovalStatus } from "@/modules/topic-approval/domain/topic-approval-status";
+
+export { topicApprovalStatuses, type TopicApprovalStatus } from "@/modules/topic-approval/domain/topic-approval-status";
 
 export type TopicApprovalRoute = "PROFESSOR" | "ADMIN";
+export type TopicApprovalListFilter = {
+  programId?: string;
+  status?: TopicApprovalStatus;
+};
+export type PendingApprovalCountByProgram = { programId: string; count: number };
 export type TopicApprovalRequestSummary = {
   id: string;
   topicId: string;
   topicTitle: string;
+  programId: string;
+  programName: string;
+  programCategory: string;
   requesterId: string;
   requesterName: string;
   route: TopicApprovalRoute;
   requestedProfessorId: string | null;
   requestedProfessorName: string | null;
   studentTeamVersion?: number | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "CANCELED";
+  status: TopicApprovalStatus;
   reviewComment: string;
   createdAt: Date;
   decidedAt: Date | null;
@@ -29,8 +40,6 @@ export type TopicApprovalRequestPage = {
 };
 
 export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
-  programName: string;
-  programCategory: string;
   description: string;
   requiredSkills: string[];
   preferredSkills: string[];
@@ -58,8 +67,9 @@ export interface TopicApprovalRepository {
     actor: CurrentUser,
     page: number,
     pageSize: number,
-    status?: TopicApprovalRequestSummary["status"],
+    filter?: TopicApprovalListFilter,
   ): Promise<TopicApprovalRequestPage>;
+  listAdminPendingCountsByProgram(): Promise<PendingApprovalCountByProgram[]>;
   findVisible(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null>;
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; studentTeamVersion?: number; teamCompositionConfirmed?: boolean; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "TEAM_CHANGED" | "UNAVAILABLE">;
 }
@@ -122,12 +132,17 @@ export class TopicApprovalService {
     return id;
   }
 
-  async list(actor: CurrentUser, requestedPage = 1, pageSize = 20): Promise<TopicApprovalRequestPage> {
+  async list(actor: CurrentUser, requestedPage = 1, pageSize = 20, filter: TopicApprovalListFilter = {}): Promise<TopicApprovalRequestPage> {
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     if (actor.role === "STUDENT" || actor.role === "PROFESSOR" || actor.role === "ADMIN") {
-      return this.repository.listVisiblePage(actor, page, pageSize);
+      return this.repository.listVisiblePage(actor, page, pageSize, filter);
     }
     return { items: [], page: 1, totalPages: 1, total: 0 };
+  }
+
+  async listAdminPendingCountsByProgram(actor: CurrentUser) {
+    if (actor.role !== "ADMIN") return [];
+    return this.repository.listAdminPendingCountsByProgram();
   }
 
   async get(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null> {
@@ -136,7 +151,7 @@ export class TopicApprovalService {
 
   async listPendingForReview(actor: CurrentUser, pageSize = 5) {
     if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") return [];
-    return (await this.repository.listVisiblePage(actor, 1, pageSize, "PENDING")).items;
+    return (await this.repository.listVisiblePage(actor, 1, pageSize, { status: "PENDING" })).items;
   }
 
   async decide(actor: CurrentUser, input: { requestId: string; decision: "APPROVE" | "REJECT"; reviewComment: string; studentTeamVersion?: number; teamCompositionConfirmed?: boolean }) {

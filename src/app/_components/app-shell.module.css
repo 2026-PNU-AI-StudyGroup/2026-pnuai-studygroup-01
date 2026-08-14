@@ -1,0 +1,9 @@
+.root {
+  --content-shell-margin-inline: 0;
+  --content-shell-max-width: none;
+  --content-shell-animation: portal-rise 280ms var(--silk-ease) both;
+}
+
+.mainContent {
+  min-height: calc(100vh - 4.5rem);
+}

@@ -3,18 +3,22 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { AdminSection, adminRecordListClassName, adminRecordRowClassName } from "@/app/_components/admin-section";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { projectApprovalDetailHref, type ProjectApprovalQuery } from "@/modules/topic-approval/ui/project-approval-query";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
 const status = { PENDING: ["검토 대기", "info"], APPROVED: ["승인", "success"], REJECTED: ["반려", "danger"], WITHDRAWN: ["철회", "neutral"], CANCELED: ["취소", "neutral"] } as const;
 const approvalLedgerColumns = "xl:grid-cols-[minmax(16rem,1.45fr)_7.5rem_8.5rem_11rem_6rem]";
 const adminApprovalLedgerColumns = "2xl:grid-cols-[minmax(13rem,1.4fr)_6.5rem_7rem_8.5rem_6rem]";
 
-export function ProjectApprovalLedger({ requests, student, adminSurface = false }: {
+export function ProjectApprovalLedger({ requests, student, adminSurface = false, query, total, title: titleOverride }: {
   requests: TopicApprovalRequestSummary[];
   student: boolean;
   adminSurface?: boolean;
+  query?: ProjectApprovalQuery;
+  total?: number;
+  title?: string;
 }) {
-  const title = student ? "보낸 요청" : "승인 대기";
+  const title = titleOverride ?? (student ? "보낸 요청" : "승인 대기");
   const description = student ? "검토 요청 대상과 결과를 확인합니다." : "제안 내용과 검토 요청 대상을 확인한 뒤 처리합니다.";
   const columns = adminSurface ? adminApprovalLedgerColumns : approvalLedgerColumns;
   const desktopGrid = adminSurface ? "2xl:grid 2xl:gap-5" : "xl:grid xl:gap-5";
@@ -38,6 +42,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
               <div className="min-w-0">
                 <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"프로젝트"}</UiText></p>
                 <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]"><UiText>{request.topicTitle}</UiText></h3>
+                <p className="mt-1 truncate text-xs font-semibold text-[var(--muted)]"><UiText>{request.programCategory}</UiText> · <UiText>{request.programName}</UiText></p>
               </div>
               <div>
                 <p className={`mb-1.5 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"상태"}</UiText></p>
@@ -53,7 +58,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
               </div>
               <div className="min-w-0">
                 <p className={`mb-2 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"상세"}</UiText></p>
-                <Link href={`/project-approvals/${request.id}`} className={actionLabel === "검토" ? "button-primary" : "button-secondary"}>
+                <Link href={projectApprovalDetailHref(request.id, query)} className={actionLabel === "검토" ? "button-primary" : "button-secondary"}>
                   <UiText>{actionLabel}</UiText>
                 </Link>
               </div>
@@ -64,7 +69,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false 
     </>;
 
   if (adminSurface) {
-    return <AdminSection id="approval-ledger-title" title={title} description={description} meta={<><strong>{requests.length}</strong><UiText>{"건"}</UiText></>}>
+    return <AdminSection id="approval-ledger-title" title={title} description={description} meta={<><strong>{total ?? requests.length}</strong><UiText>{"건"}</UiText></>}>
       {ledger}
     </AdminSection>;
   }

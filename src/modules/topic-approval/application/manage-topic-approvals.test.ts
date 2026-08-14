@@ -13,7 +13,7 @@ const input = {
 function dependencies() {
   const repository: TopicApprovalRepository = {
     listProfessors: vi.fn(async () => []), create: vi.fn(async () => "topic-1"),
-    listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), findVisible: vi.fn(async () => null), decide: vi.fn(async () => "APPROVED" as const),
+    listVisiblePage: vi.fn(async () => ({ items: [], page: 1, totalPages: 1, total: 0 })), listAdminPendingCountsByProgram: vi.fn(async () => []), findVisible: vi.fn(async () => null), decide: vi.fn(async () => "APPROVED" as const),
   };
   const programs: Pick<ProjectProgramRepository, "findOpen"> = {
     findOpen: vi.fn(async () => ({ id: "program-1", startsAt: new Date("2026-01-01T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"), recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"), executionStartsAt: new Date("2026-02-01T00:00:00Z"), executionEndsAt: new Date("2026-11-30T00:00:00Z"), submissionStartsAt: new Date("2026-11-01T00:00:00Z"), submissionEndsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: 2, projectTeamMaxSize: 6 })),
@@ -132,7 +132,16 @@ describe("학생 프로젝트 승인", () => {
 
     await new TopicApprovalService(repository, programs).listPendingForReview(professor);
 
-    expect(repository.listVisiblePage).toHaveBeenCalledWith(professor, 1, 5, "PENDING");
+    expect(repository.listVisiblePage).toHaveBeenCalledWith(professor, 1, 5, { status: "PENDING" });
+  });
+
+  it("관리자에게만 프로그램별 승인 대기 집계를 제공한다", async () => {
+    const { repository, programs } = dependencies();
+    vi.mocked(repository.listAdminPendingCountsByProgram).mockResolvedValue([{ programId: "program-1", count: 2 }]);
+
+    await expect(new TopicApprovalService(repository, programs).listAdminPendingCountsByProgram({ ...actor, role: "ADMIN" })).resolves.toEqual([{ programId: "program-1", count: 2 }]);
+    await expect(new TopicApprovalService(repository, programs).listAdminPendingCountsByProgram(actor)).resolves.toEqual([]);
+    expect(repository.listAdminPendingCountsByProgram).toHaveBeenCalledTimes(1);
   });
 
   it("승인 상세 조회도 현재 사용자에게 보이는 요청만 저장소에 위임한다", async () => {
