@@ -3,20 +3,22 @@ import type { AdvisorAssignmentContext, AdvisorReviewRepository } from "@/module
 
 // 팀에 이미 배정된 채점표(TeamRubricEvaluation)를 그대로 사용한다.
 // 분과별(CUSTOM)/공통(INHERIT_COMMON) 선택은 배정 시점에 끝나 있으므로 여기서 다시 계산하지 않는다.
-export async function findTeamRubric(client: PrismaClient, teamId: string) {
-  const assigned = await client.teamRubricEvaluation.findFirst({
+export async function findTeamRubrics(client: PrismaClient, teamId: string) {
+  const assigned = await client.teamRubricEvaluation.findMany({
     where: { teamId, rubric: { archivedAt: null, legacy: false } },
     orderBy: [{ rubric: { position: "asc" } }, { createdAt: "asc" }],
     select: {
       rubric: {
         select: {
           id: true,
+          title: true,
+          gradingDueAt: true,
           criteria: { orderBy: { position: "asc" }, select: { id: true, label: true, maxPoints: true } },
         },
       },
     },
   });
-  return assigned?.rubric ?? null;
+  return assigned.map((evaluation) => evaluation.rubric);
 }
 
 export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
@@ -32,7 +34,7 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
     return {
       teamId: topic.team.id,
       programEndsAt: topic.program.endsAt,
-      rubric: await findTeamRubric(this.client, topic.team.id),
+      rubrics: await findTeamRubrics(this.client, topic.team.id),
     };
   }
 

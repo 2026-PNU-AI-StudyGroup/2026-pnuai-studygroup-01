@@ -10,10 +10,14 @@ const initialState: AdvisorReviewState = { status: "idle", message: "" };
 
 export function AdvisorScoringForm({
   topicId,
+  rubricId,
+  title,
   criteria,
   readOnly,
 }: {
   topicId: string;
+  rubricId: string;
+  title: string;
   criteria: Array<{ id: string; label: string; maxPoints: number; points: number | null }>;
   readOnly: boolean;
 }) {
@@ -23,8 +27,10 @@ export function AdvisorScoringForm({
   const maximum = criteria.reduce((sum, criterion) => sum + criterion.maxPoints, 0);
 
   return (
-    <form action={action} className="mt-3 grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5">
+    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5">
       <input type="hidden" name="topicId" value={topicId} />
+      <input type="hidden" name="rubricId" value={rubricId} />
+      <h3 className="text-base font-bold tracking-[-0.02em]"><UiText>{title}</UiText></h3>
       {criteria.map((criterion) => (
         <label key={criterion.id} className="grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-3 text-sm">
           <span className="font-semibold">
@@ -40,7 +46,6 @@ export function AdvisorScoringForm({
             required
             disabled={readOnly}
             className="form-control"
-            aria-label={`${criterion.label} 점수`}
             onChange={(event) => setPoints((previous) => ({ ...previous, [criterion.id]: Number(event.target.value) || 0 }))}
           />
         </label>
@@ -54,7 +59,7 @@ export function AdvisorScoringForm({
         </p>
       ) : null}
       {readOnly ? (
-        <p className="muted text-sm"><UiText>{"프로그램이 종료되어 더 이상 작성할 수 없습니다."}</UiText></p>
+        <p className="muted text-sm"><UiText>{"채점 기간이 종료되었습니다."}</UiText></p>
       ) : (
         <div><button className="button-primary" disabled={pending}><UiText>{pending ? "저장 중" : "점수 저장"}</UiText></button></div>
       )}

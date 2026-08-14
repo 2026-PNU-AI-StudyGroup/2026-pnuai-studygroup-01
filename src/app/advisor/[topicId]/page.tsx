@@ -23,7 +23,7 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
   const topic = await findAssignedProject(prisma, actor.id, topicId);
   if (!topic) notFound();
   const review = topic.team ? await findAdvisorReview(prisma, actor.id, topic.team.id) : null;
-  const readOnly = new Date() > topic.program.endsAt;
+  const now = new Date();
 
   return (
     <section aria-labelledby="advisor-project-title" className="mx-auto max-w-4xl space-y-9">
@@ -101,8 +101,19 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
 
           <section aria-labelledby="advisor-project-scoring">
             <h2 id="advisor-project-scoring" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"채점표"}</UiText></h2>
-            {review?.criteria?.length ? (
-              <AdvisorScoringForm topicId={topic.id} criteria={review.criteria} readOnly={readOnly} />
+            {review?.rubrics.length ? (
+              <div className="mt-3 grid gap-4">
+                {review.rubrics.map((rubric) => (
+                  <AdvisorScoringForm
+                    key={rubric.id}
+                    topicId={topic.id}
+                    rubricId={rubric.id}
+                    title={rubric.title}
+                    criteria={rubric.criteria}
+                    readOnly={now > rubric.gradingDueAt}
+                  />
+                ))}
+              </div>
             ) : (
               <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"채점표가 준비되지 않았습니다."}</UiText></p>
             )}
@@ -110,7 +121,7 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
 
           <section aria-labelledby="advisor-project-feedback">
             <h2 id="advisor-project-feedback" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"피드백"}</UiText></h2>
-            <AdvisorFeedbackForm topicId={topic.id} feedback={review?.feedback ?? []} readOnly={readOnly} />
+            <AdvisorFeedbackForm topicId={topic.id} feedback={review?.feedback ?? []} readOnly={now > topic.program.endsAt} />
           </section>
         </>
       )}

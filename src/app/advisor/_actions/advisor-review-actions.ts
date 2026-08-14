@@ -20,8 +20,8 @@ function service() {
 export async function saveAdvisorScoresAction(_state: AdvisorReviewState, formData: FormData): Promise<AdvisorReviewState> {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  const topicId = topicSchema.safeParse(formData.get("topicId"));
-  if (!topicId.success) return { status: "error", message: "프로젝트를 찾을 수 없습니다." };
+  const target = z.object({ topicId: topicSchema, rubricId: topicSchema }).safeParse({ topicId: formData.get("topicId"), rubricId: formData.get("rubricId") });
+  if (!target.success) return { status: "error", message: "채점표를 찾을 수 없습니다." };
   const scores: Array<{ criterionId: string; points: number }> = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("score-")) continue;
@@ -30,8 +30,8 @@ export async function saveAdvisorScoresAction(_state: AdvisorReviewState, formDa
     scores.push({ criterionId: key.slice("score-".length), points: points.data });
   }
   try {
-    await service().saveScores(actor, { topicId: topicId.data, scores });
-    revalidatePath(`/advisor/${topicId.data}`);
+    await service().saveScores(actor, { ...target.data, scores });
+    revalidatePath(`/advisor/${target.data.topicId}`);
     return { status: "success", message: "점수를 저장했습니다." };
   } catch (error) {
     if (error instanceof AdvisorOperationError) return { status: "error", message: error.message };
