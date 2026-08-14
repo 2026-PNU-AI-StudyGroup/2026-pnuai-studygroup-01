@@ -34,6 +34,7 @@ const ballot: ProgramVoteBallot = {
     startsAt: new Date("2026-08-01T00:00:00Z"),
     endsAt: new Date("2026-08-31T00:00:00Z"),
     voteLimit: 3,
+    staffVoteLimit: 5,
     selfVotingAllowed: false,
     identityVisibility: "ANONYMOUS",
   },

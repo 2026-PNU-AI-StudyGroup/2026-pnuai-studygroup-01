@@ -64,6 +64,7 @@ describe("buildProgramSidebarItems", () => {
         startsAt: new Date("2026-08-06T09:00:00+09:00"),
         endsAt: votingEndsAt,
         voteLimit: 3,
+        staffVoteLimit: 5,
         selfVotingAllowed: false,
         identityVisibility: "ANONYMOUS" as const,
       },

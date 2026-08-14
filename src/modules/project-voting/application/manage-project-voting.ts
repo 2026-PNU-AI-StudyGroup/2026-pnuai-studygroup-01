@@ -4,6 +4,7 @@ import {
   getProgramVotingPhase,
   normalizeVoteSelection,
   ProjectVotingPolicyError,
+  withEffectiveVoteLimit,
   type ProgramVotingPhase,
 } from "@/modules/project-voting/domain/project-voting-policy";
 
@@ -71,12 +72,13 @@ export class ProjectVotingService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  getBallot(actor: CurrentUser, programId: string) {
-    return this.repository.findBallot(programId, actor.id, this.now());
+  async getBallot(actor: CurrentUser, programId: string) {
+    const ballot = await this.repository.findBallot(programId, actor.id, this.now());
+    return ballot ? { ...ballot, policy: withEffectiveVoteLimit(ballot.policy, actor.role) } : null;
   }
 
   async saveVotes(actor: CurrentUser, programId: string, topicIds: readonly string[]) {
-    const ballot = await this.repository.findBallot(programId, actor.id, this.now());
+    const ballot = await this.getBallot(actor, programId);
     if (!ballot) throw new ProjectVotingOperationError("투표 설정이 없는 프로그램입니다.");
     const selectedTopicIds = normalizeVoteSelection(topicIds, ballot.policy, ballot.candidates);
     const outcome = await this.repository.replaceVotes({

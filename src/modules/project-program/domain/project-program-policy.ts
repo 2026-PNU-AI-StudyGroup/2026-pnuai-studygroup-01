@@ -8,6 +8,7 @@ export type ProgramVotingPolicyDetails = {
   startsAt: Date;
   endsAt: Date;
   voteLimit: number;
+  staffVoteLimit: number;
   voteLimitScope?: VoteLimitScope;
   selfVotingAllowed: boolean;
   identityVisibility: VotingIdentityVisibility;
@@ -68,6 +69,9 @@ export function normalizeProgramVotingPolicy(input: ProgramVotingPolicyDetails):
   assertValidPeriod(input.startsAt, input.endsAt, "투표 시작 시각은 종료 시각보다 앞서야 합니다.");
   if (!Number.isSafeInteger(input.voteLimit) || input.voteLimit < 1) {
     throw new InvalidProjectProgramError("인당 가능 투표수는 1 이상이어야 합니다.");
+  }
+  if (!Number.isSafeInteger(input.staffVoteLimit) || input.staffVoteLimit < 1) {
+    throw new InvalidProjectProgramError("자문위원·관리자 가능 투표수는 1 이상이어야 합니다.");
   }
   if (input.identityVisibility !== "ANONYMOUS" && input.identityVisibility !== "NAMED") {
     throw new InvalidProjectProgramError("투표 공개 방식을 다시 선택해 주세요.");
