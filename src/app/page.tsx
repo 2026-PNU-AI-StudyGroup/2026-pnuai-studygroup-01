@@ -63,6 +63,15 @@ export default async function Home({
                 <DevelopmentRoleSignIn seedRequired={params?.mockLogin === "seed-required"} />
               ) : null}
               <div className="mt-6 grid gap-2 border-t border-[var(--line)] pt-5">
+                <a
+                  href="https://aipms.notion.site/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="button-secondary w-full justify-center"
+                >
+                  <UiText>{"사용 매뉴얼"}</UiText>
+                  <span className="sr-only"> <UiText>{"새 창"}</UiText></span>
+                </a>
                 <Link href="/feedback" className="button-primary w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
                 </Link>
