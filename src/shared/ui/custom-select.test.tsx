@@ -5,7 +5,7 @@ import { CustomMultiSelect, CustomSelect } from "@/shared/ui/custom-select";
 
 describe("CustomMultiSelect", () => {
   it("이름 첫 글자 타일 없이 체크박스와 텍스트만 표시한다", async () => {
-    const { container } = render(
+    render(
       <CustomMultiSelect
         name="members"
         ariaLabel="팀원"
@@ -15,7 +15,7 @@ describe("CustomMultiSelect", () => {
 
     fireEvent.click(screen.getByRole("combobox", { name: "팀원" }));
     await screen.findByRole("option", { name: /김학생/ });
-    expect(container.querySelector(".custom-multi-select__avatar")).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /김학생/ })).toHaveTextContent("학생");
   });
 });
 
@@ -40,6 +40,19 @@ describe("CustomSelect", () => {
     expect(screen.getByRole("combobox", { name: "상태" })).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("별도 FormData 값이 필요한 조합에서는 내부 선택값을 제출하지 않는다", () => {
+    const { container } = render(
+      <CustomSelect
+        ariaLabel="분류"
+        defaultValue="CAPSTONE"
+        options={[{ value: "CAPSTONE", label: "캡스톤" }]}
+      />,
+    );
+
+    expect(container.querySelector("input[type='hidden']")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-validation-proxy='custom-select']")).toBeInTheDocument();
+  });
+
   it("도움말 연결을 트리거에 유지한다", () => {
     render(
       <>
@@ -54,6 +67,25 @@ describe("CustomSelect", () => {
     );
 
     expect(screen.getByRole("combobox", { name: "학년" })).toHaveAttribute("aria-describedby", "grade-help");
+  });
+
+  it("현재 선택값은 요청한 목록에서만 다시 표시하지 않는다", () => {
+    render(
+      <CustomSelect
+        name="category"
+        ariaLabel="프로그램 분류"
+        defaultValue="CAPSTONE"
+        hideSelectedOption
+        options={[
+          { value: "CAPSTONE", label: "캡스톤" },
+          { value: "HACKATHON", label: "해커톤" },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("combobox", { name: "프로그램 분류" }));
+    expect(screen.queryByRole("option", { name: "캡스톤" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "해커톤" })).toBeInTheDocument();
   });
 
   it("제어형 값은 부모가 갱신할 때만 바뀌고 같은 값 재선택은 알리지 않는다", () => {
@@ -255,20 +287,13 @@ describe("CustomSelect", () => {
 
     const form = container.querySelector("form")!;
     const trigger = screen.getByRole("combobox", { name: "상태" });
-    const validationProxy = container.querySelector<HTMLInputElement>(".custom-select__validation-proxy");
+    const validationProxy = container.querySelector<HTMLInputElement>("[data-validation-proxy='custom-select']");
 
     expect(trigger).toHaveAttribute("aria-required", "true");
     expect(trigger).not.toHaveAttribute("aria-invalid");
     expect(validationProxy).toBeRequired();
     expect(validationProxy).not.toHaveAttribute("name");
-    expect(validationProxy).toHaveClass(
-      "absolute",
-      "size-px",
-      "overflow-hidden",
-      "opacity-0",
-      "pointer-events-none",
-      "[clip-path:inset(50%)]",
-    );
+    expect(validationProxy).toHaveAttribute("aria-hidden", "true");
 
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
 

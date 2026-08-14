@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const projectRoot = process.cwd();
 const globals = readFileSync(path.join(projectRoot, "src/app/globals.css"), "utf8");
+const dateTimeInputStyles = readFileSync(path.join(projectRoot, "src/shared/ui/date-time-input.module.css"), "utf8");
+const formSystemStyles = readFileSync(path.join(projectRoot, "src/shared/ui/form-system.module.css"), "utf8");
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -26,11 +28,17 @@ describe("form control system architecture", () => {
 
   it("네이티브 날짜 팝업 대신 공용 달력과 PMS 제어 스타일을 사용한다", () => {
     expect(globals).toContain("-webkit-appearance: none");
-    expect(globals).toContain(".date-time-input__calendar");
+    expect(dateTimeInputStyles).toContain(".calendar");
     expect(globals).not.toContain('input[type="date"].form-control::-webkit-calendar-picker-indicator');
     expect(globals).toContain('input[type="file"].form-control::file-selector-button');
     expect(globals).toContain('input[type="checkbox"]');
     expect(globals).toContain(".form-control:-webkit-autofill");
+  });
+
+  it("컴포넌트 전용 selector를 globals.css에 다시 두지 않는다", () => {
+    expect(globals).not.toMatch(/\.(?:program-create-form|custom-select|custom-multi-select|date-time-input|tag-input|form-field|form-section|choice-card|form-toggle|topic-form|app-shell|discussion-composer|email-chip)/);
+    expect(formSystemStyles).toContain(".section");
+    expect(formSystemStyles).toContain(".toggle");
   });
 
   it("앱과 도메인 UI에는 hidden 계약 입력 외 raw native form control을 두지 않는다", () => {

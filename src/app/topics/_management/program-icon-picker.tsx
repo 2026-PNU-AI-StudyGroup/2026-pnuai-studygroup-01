@@ -22,7 +22,7 @@ export function ProgramIconPicker({ name = "icon", value = "FOLDER", legend = "í
         {PROGRAM_ICON_KEYS.map((icon) => (
           <ChoiceCard
             key={icon}
-            className="choice-card--icon"
+            variant="icon"
             name={name}
             value={icon}
             defaultChecked={icon === value}

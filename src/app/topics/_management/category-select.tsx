@@ -19,12 +19,12 @@ export function CategorySelect({ options, defaultValue = "" }: { options: string
     <div className="grid gap-2">
       <CustomSelect
         id="program-category"
-        name="categoryChoice"
         ariaLabel="프로그램 분류"
         required
         invalidMessage="분류를 선택하세요"
         value={selected}
         onValueChange={setSelected}
+        hideSelectedOption
         placeholder="분류를 선택하세요"
         options={[
           ...options.map((option) => ({ value: option, label: option })),

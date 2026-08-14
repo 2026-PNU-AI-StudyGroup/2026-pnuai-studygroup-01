@@ -24,7 +24,7 @@ export type ProgramReportDefinitionRow = { id: string; title: string; dueAt: Dat
 export function ProgramReportRequirementForm({ programId, definitions }: { programId: string; definitions: ProgramReportDefinitionRow[] }) {
   const [state, action, pending] = useActionState(createProgramReportDefinitionAction.bind(null, programId), programReportInitialState);
   return <div className="grid gap-6">
-    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)_auto] sm:items-end">
+    <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-4 shadow-[var(--shadow-card)] sm:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)_auto] sm:items-end">
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"보고서 제목"}</UiText><UiInput name="title" maxLength={100} required className="form-control bg-white" placeholder="예: 요구사항 분석 보고서" /></label>
       <label className="grid gap-2 text-sm font-semibold"><UiText>{"제출 마감"}</UiText><DateTimeInput name="dueAt" required /></label>
       <button className="button-primary gap-2" disabled={pending}><AddIcon className="size-4 shrink-0" /><UiText>{pending ? "추가 중" : "보고서 추가"}</UiText></button>

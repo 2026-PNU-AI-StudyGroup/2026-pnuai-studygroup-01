@@ -1,0 +1,16 @@
+.root {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.actions {
+  padding: 0.25rem 1.25rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .actions {
+    padding: 0.25rem 1.5rem 1.5rem;
+  }
+}

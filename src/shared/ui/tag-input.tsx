@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import styles from "@/shared/ui/tag-input.module.css";
 
 type TagInputProps = {
   id?: string;
@@ -58,10 +59,10 @@ export function TagInput({
   }
 
   return (
-    <div className="tag-input" onClick={(event) => event.currentTarget.querySelector<HTMLInputElement>("input[type='text']")?.focus()}>
+    <div className={styles.root} onClick={(event) => event.currentTarget.querySelector<HTMLInputElement>("input[type='text']")?.focus()}>
       <input type="hidden" name={name} value={submittedValue} />
       {tags.map((tag) => (
-        <span key={tag.toLocaleLowerCase()} className="tag-input__chip">
+        <span key={tag.toLocaleLowerCase()} className={styles.chip}>
           {tag}
           <button
             type="button"
@@ -79,7 +80,7 @@ export function TagInput({
         id={inputId}
         type="text"
         aria-label={t(ariaLabel)}
-        className="tag-input__draft"
+        className={styles.draft}
         value={draft}
         placeholder={tags.length ? "" : t(placeholder)}
         required={required && tags.length === 0}

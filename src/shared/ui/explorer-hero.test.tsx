@@ -44,7 +44,7 @@ describe("ExplorerHero", () => {
     render(
       <ExplorerHero
         title="AI 해커톤"
-        titleAction={<Link href="/admin/programs/program-1" aria-label="AI 해커톤 관리">설정</Link>}
+        titleAction={<Link href="/topics?programId=program-1&mode=manage&tab=settings" aria-label="AI 해커톤 관리">설정</Link>}
         action={<button type="button">검색</button>}
       />,
     );

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { DateTimeInput, FileInput, FormField, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, FileInput, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
 
 describe("form-system controls", () => {
   it("공통 텍스트·날짜·파일 호스트가 서버 제출 계약을 유지한다", () => {
@@ -26,6 +26,15 @@ describe("form-system controls", () => {
     expect(formData.get("dueAt")).toBe("2026-08-07");
   });
 
+  it("필수 일시 선택은 프록시 입력을 통해 네이티브 검증에 참여한다", () => {
+    const { container } = render(<DateTimeInput aria-label="마감일" name="dueAt" required />);
+    const proxy = container.querySelector<HTMLInputElement>("[data-validation-proxy='date-time-input']")!;
+
+    expect(proxy).not.toHaveAttribute("readonly");
+    expect(proxy.willValidate).toBe(true);
+    expect(proxy.checkValidity()).toBe(false);
+  });
+
   it("토글은 체크 상태와 FormData 이름을 유지한다", () => {
     const { container } = render(
       <form>
@@ -37,6 +46,19 @@ describe("form-system controls", () => {
     expect(new FormData(container.querySelector("form")!).get("studentProjectCreationEnabled")).toBe("true");
     fireEvent.click(toggle);
     expect(new FormData(container.querySelector("form")!).has("studentProjectCreationEnabled")).toBe(false);
+  });
+
+  it("섹션과 선택 컨트롤의 화면 밀도를 명시적인 API로 정한다", () => {
+    render(
+      <FormSection title="운영 설정" appearance="embedded" density="compact">
+        <ChoiceCard density="compact" name="advisorEnabled" value="true" label="지도교수 있음" />
+      </FormSection>,
+    );
+
+    const section = screen.getByRole("heading", { name: "운영 설정" }).closest("section");
+    expect(section).toHaveAttribute("data-form-section-appearance", "embedded");
+    expect(section).toHaveAttribute("data-form-section-density", "compact");
+    expect(screen.getByRole("radio", { name: "지도교수 있음" })).toBeInTheDocument();
   });
 
   it("날짜를 자체 달력에서 선택하고 min·max 범위를 지킨다", () => {
@@ -74,7 +96,7 @@ describe("form-system controls", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "회의 일시" }));
-    expect(screen.getByRole("dialog", { name: "회의 일시" })).toHaveStyle({ width: "440px" });
+    expect(screen.getByRole("dialog", { name: "회의 일시" })).toHaveStyle({ width: "328px" });
     expect(screen.getByLabelText("시간")).toHaveValue("13:20");
     fireEvent.change(screen.getByLabelText("시간"), { target: { value: "15:45" } });
     fireEvent.click(screen.getByRole("gridcell", { name: "2026년 8월 8일" }));
