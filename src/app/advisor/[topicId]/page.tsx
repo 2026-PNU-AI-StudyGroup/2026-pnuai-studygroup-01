@@ -7,53 +7,11 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { renderMarkdown } from "@/shared/ui/render-markdown";
-import { ArtifactPoster } from "@/shared/ui/artifact-poster";
-import { DocumentIcon, ExternalLinkIcon } from "@/shared/ui/workspace-icons";
+import { ARTIFACT_TYPE_LABELS, ArtifactMedia, type ArtifactType } from "@/shared/ui/artifact-media";
+import { DocumentIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("담당 프로젝트 상세");
-}
-
-const ARTIFACT_TYPE_LABELS = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타", IMAGE: "이미지" } as const;
-type ArtifactType = keyof typeof ARTIFACT_TYPE_LABELS;
-
-// YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
-function toYoutubeEmbedUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
-}
-
-function ArtifactMedia({ type, title, fileId, externalUrl }: {
-  type: ArtifactType;
-  title: string;
-  fileId: string | null;
-  externalUrl: string | null;
-}) {
-  const embedUrl = type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(externalUrl) : null;
-  if (embedUrl) {
-    return (
-      <div className="aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
-        <iframe className="size-full" src={embedUrl} title={title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
-      </div>
-    );
-  }
-  if ((type === "POSTER" || type === "IMAGE") && (fileId || externalUrl)) {
-    return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
-  }
-  if (externalUrl) {
-    return (
-      <a className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline [overflow-wrap:anywhere]" href={externalUrl} target="_blank" rel="noreferrer">
-        <ExternalLinkIcon className="size-4 shrink-0" /><span className="min-w-0 break-all">{externalUrl}</span><span className="sr-only"> <UiText>{"새 창"}</UiText></span>
-      </a>
-    );
-  }
-  if (fileId) {
-    return (
-      <a className="button-secondary gap-2" href={`/api/files/${fileId}`}><DocumentIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
-    );
-  }
-  return null;
 }
 
 export default async function AdvisorProjectDetailPage({ params }: { params: Promise<{ topicId: string }> }) {

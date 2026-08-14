@@ -6,57 +6,14 @@ import type { Metadata } from "next";
 import { ArtifactRegistrationForm } from "@/app/teams/[teamId]/_components/artifact-registration-form";
 import { ArtifactManagementForm } from "@/app/teams/[teamId]/_components/artifact-management-form";
 import { ShowcaseManager } from "@/app/teams/[teamId]/_components/showcase-manager";
-import { DownloadIcon, ExternalLinkIcon } from "@/app/teams/[teamId]/_components/workspace-icons";
 import { WorkspacePageHeader } from "@/app/teams/[teamId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/teams/[teamId]/_lib/team-workspace-data";
-import { ArtifactPoster } from "@/shared/ui/artifact-poster";
+import { ARTIFACT_TYPE_LABELS, ArtifactMedia, type ArtifactType } from "@/shared/ui/artifact-media";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
 }
-const artifactTypeLabel = { PRESENTATION_VIDEO: "발표 영상", SOURCE_CODE: "소스 코드", POSTER: "포스터", OTHER: "기타", IMAGE: "이미지" } as const;
-type ArtifactType = keyof typeof artifactTypeLabel;
-
-// YouTube watch/short URL을 embed URL로 변환. 실패 시 null.
-function toYoutubeEmbedUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
-}
-
-function ArtifactMedia({ type, title, fileId, externalUrl }: {
-  type: ArtifactType;
-  title: string;
-  fileId: string | null | undefined;
-  externalUrl: string | null | undefined;
-}) {
-  const embedUrl = type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(externalUrl) : null;
-  if (embedUrl) {
-    return (
-      <div className="aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-black">
-        <iframe className="size-full" src={embedUrl} title={title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
-      </div>
-    );
-  }
-  if ((type === "POSTER" || type === "IMAGE") && (fileId || externalUrl)) {
-    return <ArtifactPoster src={externalUrl ?? `/api/files/${fileId}`} title={title} />;
-  }
-  if (externalUrl) {
-    return (
-      <a className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline [overflow-wrap:anywhere]" href={externalUrl} target="_blank" rel="noreferrer">
-        <ExternalLinkIcon className="size-4 shrink-0" /><span className="min-w-0 break-all">{externalUrl}</span><span className="sr-only"> {" "}<UiText>{"새 창"}</UiText></span>
-      </a>
-    );
-  }
-  if (fileId) {
-    return (
-      <a className="button-secondary gap-2" href={`/api/files/${fileId}`}><DownloadIcon className="size-4" /><UiText>{"파일 받기"}</UiText></a>
-    );
-  }
-  return null;
-}
-
 export default async function TeamArtifactsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const { actor, workspace, reportWorkspace } = await loadTeamReportWorkspace(teamId);
@@ -141,7 +98,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
               <li key={artifact.id} className="min-w-0" data-artifact-type={artifact.type.toLowerCase()}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <div className="min-w-0">
-                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{artifactTypeLabel[artifact.type]}</UiText></span>
+                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{ARTIFACT_TYPE_LABELS[artifact.type]}</UiText></span>
                     <h2 id={titleId} className="text-base font-bold leading-6 tracking-[-0.02em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
                   </div>
                   <time className="muted shrink-0 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
