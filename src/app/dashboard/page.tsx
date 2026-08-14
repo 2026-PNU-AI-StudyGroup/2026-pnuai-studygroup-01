@@ -34,6 +34,7 @@ import { ProjectAssistantQueryService } from "@/modules/project-assistant/applic
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
+import { topicsHref } from "@/app/topics/_lib/topics-query";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -60,7 +61,6 @@ export default async function DashboardPage({
     view?: SearchParamValue;
     page?: SearchParamValue;
     programId?: SearchParamValue;
-    progress?: SearchParamValue;
   }>;
 }) {
   const actor = await getCurrentActor();
@@ -73,14 +73,8 @@ export default async function DashboardPage({
     : requestedView;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   if (actor.role === "ADMIN") {
-    const target = new URLSearchParams({ mode: "manage", tab: "overview" });
     const selectedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200);
-    const selectedProgress = firstSearchParam(params.progress)?.trim();
-    const adminPage = firstSearchParam(params.page)?.trim();
-    if (selectedProgramId) target.set("programId", selectedProgramId);
-    if (selectedProgress) target.set("progress", selectedProgress);
-    if (adminPage) target.set("page", adminPage);
-    redirect(`/topics?${target.toString()}`);
+    redirect(topicsHref({ programId: selectedProgramId || undefined }));
   }
 
   const teamStatus = view === "active" ? "ACTIVE" : view === "completed" ? "COMPLETED" : undefined;

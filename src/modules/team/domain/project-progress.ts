@@ -1,11 +1,4 @@
 export type ProjectProgressStage = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-export type ProjectProgressBand =
-  | "NOT_STARTED"
-  | "EARLY"
-  | "MIDDLE"
-  | "LATE"
-  | "FINALIZING"
-  | "COMPLETED";
 
 export function calculateReportSubmissionRate(
   submittedReportCount: number,
@@ -24,15 +17,6 @@ export function classifyProjectProgress(progress: number): ProjectProgressStage 
   if (progress <= 0) return "NOT_STARTED";
   if (progress >= 100) return "COMPLETED";
   return "IN_PROGRESS";
-}
-
-export function classifyProjectProgressBand(progress: number): ProjectProgressBand {
-  if (progress <= 0) return "NOT_STARTED";
-  if (progress <= 25) return "EARLY";
-  if (progress <= 50) return "MIDDLE";
-  if (progress <= 75) return "LATE";
-  if (progress < 100) return "FINALIZING";
-  return "COMPLETED";
 }
 
 export function isReportSubmissionOverdue(

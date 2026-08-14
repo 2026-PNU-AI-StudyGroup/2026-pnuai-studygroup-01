@@ -11,14 +11,17 @@ const {
   listPendingApprovals,
   listTeams,
   listTopics,
+  redirect,
 } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
   listAssistantInvitations: vi.fn(),
   listPendingApprovals: vi.fn(),
   listTeams: vi.fn(),
   listTopics: vi.fn(),
+  redirect: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({
   prisma: { topic: { findMany: listTopics } },
@@ -41,11 +44,7 @@ vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
 vi.mock("@/modules/topic-application/application/list-own-topic-applications", () => ({
   ListOwnTopicApplicationsService: class {},
 }));
-vi.mock("@/modules/team/application/list-admin-project-overview", () => ({
-  ListAdminProjectOverviewService: class {},
-}));
 vi.mock("@/modules/team/infrastructure/prisma-team-workspace-query-repository", () => ({ PrismaTeamWorkspaceQueryRepository: class {} }));
-vi.mock("@/modules/team/infrastructure/prisma-admin-project-overview-reader", () => ({ PrismaAdminProjectOverviewReader: class {} }));
 vi.mock("@/modules/project-assistant/infrastructure/prisma-project-assistant-repository", () => ({ PrismaProjectAssistantRepository: class {} }));
 vi.mock("@/modules/topic-application/infrastructure/prisma-topic-application-query-repository", () => ({ PrismaTopicApplicationQueryRepository: class {} }));
 vi.mock("@/modules/topic-approval/infrastructure/prisma-topic-approval-repository", () => ({ PrismaTopicApprovalRepository: class {} }));
@@ -80,6 +79,7 @@ describe("DashboardPage empty states", () => {
     listAssistantInvitations.mockResolvedValue([]);
     listTopics.mockResolvedValue([]);
     listPendingApprovals.mockResolvedValue([]);
+    redirect.mockReset();
   });
 
   it("승인 0건을 명시하고 상단 행동과 중복되는 빈 상태 CTA는 만들지 않는다", async () => {
@@ -90,5 +90,23 @@ describe("DashboardPage empty states", () => {
     expect(screen.getByRole("heading", { name: "아직 연결된 프로젝트가 없습니다" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "주제 관리" })).toHaveAttribute("href", "/professor/topics");
     expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();
+  });
+
+  it("관리자는 programId만 유지해 프로젝트 찾기로 이동한다", async () => {
+    getCurrentActor.mockResolvedValue({
+      id: "admin-1",
+      name: "관리자",
+      email: "admin@pusan.ac.kr",
+      role: "ADMIN",
+    });
+    redirect.mockImplementationOnce((target: string) => {
+      throw new Error(`REDIRECT:${target}`);
+    });
+
+    await expect(DashboardPage({
+      searchParams: Promise.resolve({ programId: "program-1", page: "7" }),
+    })).rejects.toThrow("REDIRECT:/topics?programId=program-1");
+
+    expect(redirect).toHaveBeenCalledWith("/topics?programId=program-1");
   });
 });
