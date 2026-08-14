@@ -216,7 +216,8 @@ function toTopicSummary(
   return {
     ...topic,
     authorName: author.name,
-    authorRole: author.role,
+    // 주제 작성자는 학생·교수·관리자만 화면에서 생성할 수 있어 ADVISOR가 올 수 없다.
+    authorRole: author.role as "STUDENT" | "PROFESSOR" | "ADMIN",
     programName: program.name,
     programCategory: program.category,
     divisionName: division?.name ?? null,
@@ -240,7 +241,8 @@ function toPublicTopic(
   return {
     ...topic,
     authorName: author.name,
-    authorRole: author.role,
+    // 주제 작성자는 학생·교수·관리자만 화면에서 생성할 수 있어 ADVISOR가 올 수 없다.
+    authorRole: author.role as "STUDENT" | "PROFESSOR" | "ADMIN",
     professorName: program.advisorEnabled ? manager?.name ?? null : null,
     startYear: getProgramStartYear(program.startsAt),
     programName: program.name,

@@ -35,7 +35,7 @@ export async function GET(
   return NextResponse.redirect(url);
 }
 
-function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {
+function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR" }): Prisma.TeamWhereInput {
   if (actor.role === "ADMIN") return {};
   return {
     OR: [

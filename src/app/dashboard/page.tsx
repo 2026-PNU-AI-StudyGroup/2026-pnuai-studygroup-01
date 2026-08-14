@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 function ProjectDashboardFrame({ role, counts, view, children }: {
-  role: "STUDENT" | "PROFESSOR";
+  role: "STUDENT" | "PROFESSOR" | "ADVISOR";
   counts: ProjectDashboardCounts;
   view: ProjectDashboardView;
   children: ReactNode;

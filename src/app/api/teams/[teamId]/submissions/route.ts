@@ -79,7 +79,7 @@ function safePathSegment(value: string) {
   return value.normalize("NFC").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim() || "report";
 }
 
-function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {
+function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR" }): Prisma.TeamWhereInput {
   if (actor.role === "ADMIN") return {};
   return {
     OR: [
