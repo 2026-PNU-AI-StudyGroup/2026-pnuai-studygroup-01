@@ -2,11 +2,10 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 
-import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { teamFileAccessWhere } from "@/modules/advisor/infrastructure/advisor-file-access";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
-import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 
 export async function GET(
   _request: Request,
@@ -20,7 +19,7 @@ export async function GET(
       id: fileId,
       status: "ATTACHED",
       OR: [
-        { team: teamActorWhere(actor) },
+        { team: teamFileAccessWhere(actor) },
         { purpose: "ARTIFACT", team: { status: "CLOSED" } },
       ],
     },
@@ -33,14 +32,4 @@ export async function GET(
     ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
   }), { expiresIn: 5 * 60 });
   return NextResponse.redirect(url);
-}
-
-function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR" }): Prisma.TeamWhereInput {
-  if (actor.role === "ADMIN") return {};
-  return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
-    ],
-  };
 }
