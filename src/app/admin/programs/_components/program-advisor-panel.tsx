@@ -11,7 +11,7 @@ import {
 } from "@/app/admin/programs/_actions/advisor-actions";
 import type { AdvisorScoreMatrixRow, ProgramAdvisorRow, ProgramTopicForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { FormField, FormSection, TextInput } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
 
 const idleState: AdvisorActionState = { status: "idle", message: "" };
 
@@ -66,24 +66,38 @@ function ActionResult({ state }: { state: AdvisorActionState }) {
       <p role={state.status === "error" ? "alert" : "status"} className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger,#dc2626)]" : "text-[var(--primary)]"}`}>
         <UiText>{state.message}</UiText>
       </p>
-      {state.inviteLink ? <InviteLinkBox inviteLink={state.inviteLink} /> : null}
+      {/* key: 위원이 바뀌면 복사 상태를 새로 시작해 이전 위원 토큰이 남지 않도록 재마운트한다. */}
+      {state.inviteLink ? <InviteLinkBox key={state.inviteLink} inviteLink={state.inviteLink} /> : null}
     </div>
   );
 }
 
 function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
   const absoluteLink = `${window.location.origin}${inviteLink}`;
+  const copy = async () => {
+    try {
+      // secure context 밖에서는 navigator.clipboard 자체가 없다.
+      await navigator.clipboard.writeText(absoluteLink);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
+  };
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
-      <code className="min-w-0 break-all text-sm font-semibold">{absoluteLink}</code>
-      <button
-        type="button"
-        className="button-secondary text-sm"
-        onClick={() => navigator.clipboard.writeText(absoluteLink).then(() => setCopied(true))}
-      >
-        <UiText>{copied ? "복사됨" : "링크 복사"}</UiText>
-      </button>
+    <div className="grid gap-1.5 rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="min-w-0 break-all text-sm font-semibold">{absoluteLink}</code>
+        <button type="button" className="button-secondary text-sm" onClick={copy}>
+          <UiText>{copyStatus === "copied" ? "복사됨" : "링크 복사"}</UiText>
+        </button>
+        <button type="button" className="button-quiet text-sm" onClick={() => setDismissed(true)}>
+          <UiText>{"닫기"}</UiText>
+        </button>
+      </div>
+      {copyStatus === "failed" ? <p role="alert" className="text-xs font-semibold text-[var(--danger,#dc2626)]"><UiText>{"복사에 실패했습니다. 링크를 직접 선택해 복사해 주세요."}</UiText></p> : null}
     </div>
   );
 }
@@ -112,8 +126,14 @@ function RegisterSection({ programId }: { programId: string }) {
 }
 
 function AdvisorRow({ programId, advisor }: { programId: string; advisor: ProgramAdvisorRow }) {
-  const [reissueState, reissueAction, reissuePending] = useActionState(reissueAdvisorTokenAction, idleState);
-  const [revokeState, revokeAction, revokePending] = useActionState(revokeAdvisorTokenAction, idleState);
+  // 재발급·회수를 한 상태로 묶어야 회수 뒤에도 죽은 초대 링크가 화면에 남지 않는다.
+  const [state, action, pending] = useActionState(
+    (previous: AdvisorActionState, formData: FormData) =>
+      formData.get("intent") === "revoke"
+        ? revokeAdvisorTokenAction(previous, formData)
+        : reissueAdvisorTokenAction(previous, formData),
+    idleState,
+  );
   return (
     <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -129,20 +149,15 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
               <UiText>{"회수됨/없음"}</UiText>
             )}
           </span>
-          <form action={reissueAction}>
+          <form action={action} className="flex items-center gap-2">
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="userId" value={advisor.userId} />
-            <button type="submit" className="button-secondary text-sm" disabled={reissuePending}><UiText>{reissuePending ? "재발급 중" : "링크 재발급"}</UiText></button>
-          </form>
-          <form action={revokeAction}>
-            <input type="hidden" name="programId" value={programId} />
-            <input type="hidden" name="userId" value={advisor.userId} />
-            <button type="submit" className="button-quiet text-sm" disabled={revokePending || !advisor.activeToken}><UiText>{revokePending ? "회수 중" : "회수"}</UiText></button>
+            <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
+            <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending || !advisor.activeToken}><UiText>{"회수"}</UiText></button>
           </form>
         </div>
       </div>
-      <ActionResult state={reissueState} />
-      <ActionResult state={revokeState} />
+      <ActionResult state={state} />
     </li>
   );
 }
@@ -169,20 +184,18 @@ function AssignmentForm({ programId, advisor, topics }: { programId: string; adv
             const disabled = !topic.team;
             return (
               <li key={topic.id}>
-                <label className={`flex items-start gap-2.5 rounded-lg border border-[var(--line)] px-3 py-2.5 text-sm ${disabled ? "opacity-60" : "cursor-pointer hover:border-[var(--line-strong)]"}`}>
-                  <input type="checkbox" name="topicIds" value={topic.id} defaultChecked={assigned.has(topic.id)} disabled={disabled} className="mt-0.5" />
-                  {disabled && assigned.has(topic.id) ? <input type="hidden" name="topicIds" value={topic.id} /> : null}
-                  <span className="min-w-0">
-                    <strong className="block font-semibold text-[var(--ink)]"><UiText>{topic.title}</UiText></strong>
-                    <span className="mt-0.5 block text-xs text-[var(--muted)]">
-                      {topic.team ? (
-                        <UiText>{`${topic.team.name} · ${TEAM_STATUS_LABELS[topic.team.status] ?? topic.team.status}`}</UiText>
-                      ) : (
-                        <UiText>{"팀 미구성"}</UiText>
-                      )}
-                    </span>
-                  </span>
-                </label>
+                <ChoiceCard
+                  type="checkbox"
+                  name="topicIds"
+                  value={topic.id}
+                  defaultChecked={assigned.has(topic.id)}
+                  disabled={disabled}
+                  className={disabled ? "opacity-60" : ""}
+                  label={topic.title}
+                  description={topic.team ? `${topic.team.name} · ${TEAM_STATUS_LABELS[topic.team.status] ?? topic.team.status}` : "팀 미구성"}
+                />
+                {/* 팀이 사라진 기존 할당은 disabled 체크박스가 전송되지 않으므로 hidden으로 보존한다. */}
+                {disabled && assigned.has(topic.id) ? <input type="hidden" name="topicIds" value={topic.id} /> : null}
               </li>
             );
           })}

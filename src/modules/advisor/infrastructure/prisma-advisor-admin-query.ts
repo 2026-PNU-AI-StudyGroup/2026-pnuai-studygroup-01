@@ -38,6 +38,8 @@ export type AdvisorScoreMatrixRow = {
 };
 
 // 점수 집계: 프로그램 내 팀 × 자문위원 총점 매트릭스.
+// AdvisorEvaluation 유니크가 (teamId, advisorId, rubricId)라 한 위원이 팀당 루브릭 수만큼 행을 가진다.
+// 위원 단위로 합산하고 평균은 위원 수로 나눈다 — 루브릭을 더 많이 채점한 위원이 가중되지 않도록.
 export async function advisorScoreMatrix(client: PrismaClient, programId: string): Promise<AdvisorScoreMatrixRow[]> {
   const teams = await client.team.findMany({
     where: { programId },
@@ -45,6 +47,7 @@ export async function advisorScoreMatrix(client: PrismaClient, programId: string
     select: {
       id: true, name: true,
       advisorEvaluations: {
+        where: { rubric: { archivedAt: null } },
         select: {
           advisorId: true,
           advisor: { select: { name: true } },
@@ -54,11 +57,14 @@ export async function advisorScoreMatrix(client: PrismaClient, programId: string
     },
   });
   return teams.map((team) => {
-    const scores = team.advisorEvaluations.map((evaluation) => ({
-      advisorId: evaluation.advisorId,
-      advisorName: evaluation.advisor.name,
-      total: evaluation.scores.reduce((sum, score) => sum + score.points, 0),
-    }));
+    const byAdvisor = new Map<string, { advisorId: string; advisorName: string; total: number }>();
+    for (const evaluation of team.advisorEvaluations) {
+      const total = evaluation.scores.reduce((sum, score) => sum + score.points, 0);
+      const current = byAdvisor.get(evaluation.advisorId);
+      if (current) current.total += total;
+      else byAdvisor.set(evaluation.advisorId, { advisorId: evaluation.advisorId, advisorName: evaluation.advisor.name, total });
+    }
+    const scores = [...byAdvisor.values()];
     return {
       teamId: team.id, teamName: team.name, scores,
       average: scores.length ? scores.reduce((sum, s) => sum + s.total, 0) / scores.length : null,

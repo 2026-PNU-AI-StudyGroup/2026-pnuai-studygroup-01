@@ -981,6 +981,7 @@
   "점수 집계": "Score summary",
   "자문위원이 채점한 팀별 총점과 평균을 확인합니다.": "Review each team's total scores and averages from advisors.",
   "복사됨": "Copied",
+  "복사에 실패했습니다. 링크를 직접 선택해 복사해 주세요.": "Copy failed. Please select the link and copy it manually.",
   "링크 복사": "Copy link",
   "자문위원 등록": "Register advisor",
   "이름과 이메일을 등록하면 초대 링크가 발급됩니다. 링크를 복사해 자문위원에게 전달하세요.": "Registering a name and email issues an invite link. Copy the link and share it with the advisor.",
