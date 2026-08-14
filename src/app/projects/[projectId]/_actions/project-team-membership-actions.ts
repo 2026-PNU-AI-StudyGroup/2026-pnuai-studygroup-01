@@ -26,10 +26,16 @@ export async function projectTeamMembershipAction(
   const parsed = z.object({
     projectId: z.string().uuid(),
     projectTeamId: z.string().uuid(),
-    intent: z.enum(["LEAVE", "REMOVE", "TRANSFER"]),
+    intent: z.enum(["LEAVE", "REMOVE", "TRANSFER", "REMOVE_LEADER"]),
     targetUserId: z.string().uuid().optional(),
+    nextLeaderId: z.string().uuid().optional(),
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "팀원 변경 내용을 확인해 주세요." };
+  if (parsed.data.intent === "REMOVE_LEADER" && (
+    !parsed.data.targetUserId ||
+    !parsed.data.nextLeaderId ||
+    parsed.data.targetUserId === parsed.data.nextLeaderId
+  )) return { status: "error", message: "인계할 팀장을 다시 선택해 주세요." };
   const service = new ProjectTeamMembershipService(
     new PrismaProjectTeamMembershipRepository(prisma),
   );
@@ -40,6 +46,8 @@ export async function projectTeamMembershipAction(
       await service.remove(actor, parsed.data.projectTeamId, parsed.data.targetUserId);
     } else if (parsed.data.intent === "TRANSFER" && parsed.data.targetUserId) {
       await service.transferLeadership(actor, parsed.data.projectTeamId, parsed.data.targetUserId);
+    } else if (parsed.data.intent === "REMOVE_LEADER" && parsed.data.targetUserId && parsed.data.nextLeaderId) {
+      await service.removeLeaderAndTransfer(actor, parsed.data.projectTeamId, parsed.data.targetUserId, parsed.data.nextLeaderId);
     } else {
       return { status: "error", message: "대상 팀원을 선택해 주세요." };
     }
@@ -51,5 +59,8 @@ export async function projectTeamMembershipAction(
   }
   revalidatePath(`/projects/${parsed.data.projectId}`);
   revalidatePath("/dashboard");
+  if (parsed.data.intent === "LEAVE" || (parsed.data.intent === "REMOVE_LEADER" && parsed.data.targetUserId === actor.id)) {
+    redirect("/dashboard");
+  }
   return { status: "success", message: "프로젝트 팀 구성을 변경했습니다." };
 }

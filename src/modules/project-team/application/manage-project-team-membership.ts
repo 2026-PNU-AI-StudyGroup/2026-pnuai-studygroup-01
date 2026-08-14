@@ -12,6 +12,7 @@ export interface ProjectTeamMembershipRepository {
   leave(input: { projectTeamId: string; actor: CurrentActor; changedAt: Date }): Promise<ProjectTeamMembershipOutcome>;
   remove(input: { projectTeamId: string; targetUserId: string; actor: CurrentActor; changedAt: Date }): Promise<ProjectTeamMembershipOutcome>;
   transferLeadership(input: { projectTeamId: string; nextLeaderId: string; actor: CurrentActor; changedAt: Date }): Promise<ProjectTeamMembershipOutcome>;
+  removeLeaderAndTransfer(input: { projectTeamId: string; targetUserId: string; nextLeaderId: string; actor: CurrentActor; changedAt: Date }): Promise<ProjectTeamMembershipOutcome>;
 }
 
 export class ProjectTeamMembershipOperationError extends Error {}
@@ -32,6 +33,10 @@ export class ProjectTeamMembershipService {
 
   transferLeadership(actor: CurrentActor, projectTeamId: string, nextLeaderId: string) {
     return this.ensure(this.repository.transferLeadership({ projectTeamId, nextLeaderId, actor, changedAt: this.now() }));
+  }
+
+  removeLeaderAndTransfer(actor: CurrentActor, projectTeamId: string, targetUserId: string, nextLeaderId: string) {
+    return this.ensure(this.repository.removeLeaderAndTransfer({ projectTeamId, targetUserId, nextLeaderId, actor, changedAt: this.now() }));
   }
 
   private async ensure(outcomePromise: Promise<ProjectTeamMembershipOutcome>) {

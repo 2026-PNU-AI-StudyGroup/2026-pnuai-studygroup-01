@@ -7,6 +7,7 @@ import { type KeyboardEvent, useActionState, useEffect, useRef } from "react";
 
 import { createDiscussionPostAction } from "@/app/projects/[projectId]/_actions/team-workspace-actions";
 import { initialTeamActionState } from "@/app/projects/[projectId]/_lib/team-form-state";
+import styles from "@/app/projects/[projectId]/_components/discussion-post-form.module.css";
 
 export function DiscussionPostForm({
   teamId,
@@ -69,7 +70,7 @@ export function DiscussionPostForm({
               rows={2}
               placeholder={`${authorName}님의 메시지 입력`}
               onKeyDown={submitOnEnter}
-              className="discussion-composer__input min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+              className={`${styles.input} min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]`}
             />
             <UiButton type="submit" disabled={pending} className="button-primary min-h-11 shrink-0 px-3" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
               <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">

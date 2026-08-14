@@ -28,7 +28,7 @@ export function CreateStudentTeamForm() {
   const router = useRouter();
   const [state, action, pending] = useActionState(createStudentTeamAction, initialStudentTeamActionState);
   useEffect(() => {
-    if (state.status === "success" && state.teamId) router.replace(`/teams/manage/${state.teamId}`);
+    if (state.status === "success" && state.teamId) router.replace("/teams");
   }, [router, state.status, state.teamId]);
   return (
     <form action={action} className="grid gap-4" aria-busy={pending}>

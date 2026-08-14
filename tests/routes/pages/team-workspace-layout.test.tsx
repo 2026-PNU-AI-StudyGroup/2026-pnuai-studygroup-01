@@ -14,6 +14,10 @@ vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
 vi.mock("@/app/projects/[projectId]/_actions/team-workspace-actions", () => ({
   confirmTeamAction: vi.fn(),
 }));
+vi.mock("@/app/projects/[projectId]/_actions/project-team-membership-actions", () => ({
+  projectTeamMembershipAction: vi.fn(),
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/app/_components/app-shell", () => ({
   AppShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -65,6 +69,7 @@ const workspace = {
     isPrimaryAdvisor: false,
     isAssistant: false,
     isTeamMember: true,
+    isTeamLeader: false,
     canSupervise: false,
     canContribute: true,
   },

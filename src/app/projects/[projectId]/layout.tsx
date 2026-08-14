@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { TeamWorkspaceNavigation } from "@/app/projects/[projectId]/_components/team-workspace-navigation";
 import { TeamPeopleSidebar } from "@/app/projects/[projectId]/_components/team-people-sidebar";
-import { ProjectTeamMemberControls } from "@/app/projects/[projectId]/_components/project-team-member-controls";
 import { ConfirmTeamForm } from "@/app/projects/[projectId]/_components/confirm-team-form";
 import { AppShell } from "@/app/_components/app-shell";
 import { calculateReportSubmissionRate, hasReportSchedule } from "@/modules/team/domain/project-progress";
@@ -24,7 +23,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:pb-0">
+      <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)] lg:pb-0">
         <UiAside aria-label="프로젝트 정보와 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
           <div className="lg:sticky lg:top-8">
             <UiLink
@@ -59,16 +58,12 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               professor={workspace.professor}
               assistants={workspace.assistants}
               members={workspace.members}
+              projectId={workspace.topicId}
+              projectTeamId={workspace.id}
+              actorId={actor.id}
+              membershipChangesEnabled={workspace.status === "IN_PROGRESS"}
+              canManageMembers={workspace.access.canSupervise || workspace.access.isTeamLeader}
             />
-            {workspace.status === "IN_PROGRESS" ? (
-              <ProjectTeamMemberControls
-                projectId={workspace.topicId}
-                projectTeamId={workspace.id}
-                actorId={actor.id}
-                isAdmin={actor.role === "ADMIN"}
-                members={workspace.members.map(({ id, name, role }) => ({ id, name, role }))}
-              />
-            ) : null}
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
                 <ConfirmTeamForm teamId={workspace.id} />
