@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { AdvisorAdminRepository } from "@/modules/advisor/application/manage-advisors";
 import { normalizeEmail } from "@/modules/identity/domain/user-role";
 
@@ -11,21 +11,30 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
     const email = normalizeEmail(input.email);
     const existing = await this.client.user.findUnique({ where: { email }, select: { id: true, role: true } });
     if (existing) return existing.role === "ADVISOR" ? { userId: existing.id } : null;
-    const created = await this.client.user.create({
-      data: {
-        id: randomUUID(),
-        email,
-        name: input.name.trim(),
-        role: "ADVISOR",
-        emailVerified: false,
-        isActive: true,
-        onboardingRequired: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      select: { id: true },
-    });
-    return { userId: created.id };
+    try {
+      const created = await this.client.user.create({
+        data: {
+          id: randomUUID(),
+          email,
+          name: input.name.trim(),
+          role: "ADVISOR",
+          emailVerified: false,
+          isActive: true,
+          onboardingRequired: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        select: { id: true },
+      });
+      return { userId: created.id };
+    } catch (error) {
+      // 동시 등록 레이스: email @unique 충돌 시 재조회해 ADVISOR면 재사용, 아니면 거부.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const raced = await this.client.user.findUnique({ where: { email }, select: { id: true, role: true } });
+        return raced?.role === "ADVISOR" ? { userId: raced.id } : null;
+      }
+      throw error;
+    }
   }
 
   async issueToken(input: { userId: string; tokenHash: string; expiresAt: Date }) {
@@ -42,7 +51,7 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
         where: { userId: input.userId, revokedAt: null },
         data: { revokedAt: input.revokedAt },
       }),
-      this.client.session.deleteMany({ where: { userId: input.userId } }),
+      this.client.session.deleteMany({ where: { userId: input.userId, user: { role: "ADVISOR" } } }),
     ]);
     return true;
   }
