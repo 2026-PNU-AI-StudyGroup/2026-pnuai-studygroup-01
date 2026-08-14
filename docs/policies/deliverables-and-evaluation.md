@@ -18,7 +18,7 @@
 - 설명은 선택 사항이며 최대 2,000자다.
 - 제출 파일은 같은 팀과 제출자 소유의 완료된 보고서 파일이어야 한다.
 - 버전 번호는 보고서 안에서 1부터 순서대로 증가한다.
-- 담당교수·조교·관리자는 `CONFIRMED` 팀 보고서의 결정 없는 최신 버전만 승인하거나 수정 요청할 수 있다.
+- 프로그램 종료 전에는 담당교수·조교·관리자가 `CONFIRMED` 팀 보고서의 결정 없는 최신 버전만 승인하거나 수정 요청할 수 있다. 종료 뒤에는 관리자만 같은 결정을 할 수 있다.
 - 수정 요청은 1~2,000자 사유가 필요하고, 승인은 선택적 2,000자 의견을 가질 수 있다.
 - 한 보고서 버전에는 결정 하나만 저장한다.
 - 담당교수·조교·관리자는 보고서 단위 피드백을 1~2,000자로 추가할 수 있다.
@@ -84,4 +84,4 @@
 - 제출·결정: `src/modules/report/infrastructure/prisma-report-submission-repository.ts`, `src/modules/report/infrastructure/prisma-report-decision-repository.ts`
 - 업로드: `src/modules/file/domain/upload-policy.ts`, `src/modules/file/infrastructure/prisma-upload-intent-repository.ts`
 - 결과물: `src/modules/report/infrastructure/prisma-artifact-repository.ts`
-- 채점표·점수: `src/modules/rubric/domain/rubric-policy.ts`, `src/app/admin/programs/[programId]/rubric/_actions/rubric-actions.ts`, `src/app/teams/[teamId]/_actions/rubric-actions.ts`
+- 채점표·점수: `src/modules/rubric/domain/rubric-policy.ts`, `src/app/topics/_management/rubric-actions.ts`, `src/app/projects/[projectId]/_actions/rubric-actions.ts`

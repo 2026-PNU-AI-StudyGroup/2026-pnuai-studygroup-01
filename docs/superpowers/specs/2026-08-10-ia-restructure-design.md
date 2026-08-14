@@ -1,5 +1,8 @@
 # 정보구조(IA) 재구조 설계
 
+> [!WARNING]
+> 2026-08-10 시점의 역사 설계 기록입니다. 현재 경로·정책·구현 기준이 아니며, 작업 전에는 [`docs/policies/README.md`](../../policies/README.md)와 현재 코드를 확인합니다.
+
 - 날짜: 2026-08-10
 - 브랜치: `design/ia-restructure` (main 기준)
 - 상태: 설계 확정 대기 → 승인 후 구현 계획(writing-plans)
@@ -85,16 +88,16 @@
 | `/professor/topics`(+`/new`,`/[id]`,`/edit`,`/schedule`,`/assistants`) | 유지 | "주제 관리 > 내 주제" |
 | `/professor/applications`(+`/[id]`) | 유지 | "주제 관리 > 받은 지원서" |
 | `/announcements`(+상세·`/new`·`/edit`) | 유지 | 공지사항 |
-| `/admin/programs`, `/admin/programs/new` | 유지 | 프로그램 목록·생성 |
-| `/admin/programs/[id]/settings`,`/rubric`,`/tracks`,`/reports` | 통합 | `/admin/programs/[id]` 상세 안 **탭**(`?tab=settings\|rubric\|tracks\|reports`). 개별 `page.tsx` 삭제 |
-| `/admin/programs/[id]/votes` | 삭제 | 별칭 |
+| `/topics?mode=create` | 유지 | 관리자 프로그램 생성 |
+| `/topics?programId=<id>&mode=manage&tab=<tab>` | 통합 | 프로그램 현황·설정·채점표·분과·보고서·투표 관리. `tab=overview`은 전체 현황, 나머지 탭은 운영 관리 문맥 |
+| 전용 관리자 프로그램 라우트 전체 | 삭제 | 호환 리다이렉트 없이 404 |
 | `/admin/professors` + `/new` + `/history` | 통합 | `/admin/professors` 한 화면(목록 + 등록 인라인 + 이력 탭). `/new`,`/history` 라우트 삭제 |
 | `/admin/users`, `/admin/audit` | 유지 | 사용자 / 관리 이력 |
 
 ## 6. 삭제 목록
 
-- 별칭 라우트 9개: `/programs`, `/programs/[id]/vote`, `/archive`, `/topics/applications`, `/recruitments/new`, `/teams/new`, `/teams/invitations`, `/admin/programs/[id]/votes` (+ 모달 별칭). `/sign-in`은 존치.
-- 통합으로 사라지는 라우트: `/account/profile`, `/admin/professors/new`, `/admin/professors/history`, 프로그램 설정 4개(탭 흡수).
+- 별칭 라우트 8개: `/programs`, `/programs/[id]/vote`, `/archive`, `/topics/applications`, `/recruitments/new`, `/teams/new`, `/teams/invitations` (+ 모달 별칭). `/sign-in`은 존치.
+- 통합으로 사라지는 라우트: `/account/profile`, `/admin/professors/new`, `/admin/professors/history`, 전용 관리자 프로그램 라우트 전체.
 
 ## 7. 폐기/수정할 테스트
 
@@ -110,9 +113,9 @@
 
 ## 9. 구현 단계 (각 단계 = 독립 PR 지향)
 
-- **Phase 0 — 정리(저위험)**: 별칭 9개 삭제 + `route-responsibility-splits` 테스트 삭제. 깨지는 링크 정리.
+- **Phase 0 — 정리(저위험)**: 별칭 8개 삭제 + `route-responsibility-splits` 테스트 삭제. 깨지는 링크 정리.
 - **Phase 1 — 계정·교수권한 통합**: `/account`(요약+편집), `/admin/professors`(목록+등록+이력). 관련 테스트 수정.
-- **Phase 2 — 프로그램 설정 탭화**: `/admin/programs/[id]` 상세에 설정·채점표·트랙·제출물 요건·투표 탭(`?tab=`). 4개 개별 `page.tsx` 삭제·흡수.
+- **Phase 2 — 프로그램 관리 통합**: 생성은 `/topics?mode=create`, 관리는 `/topics?programId=<id>&mode=manage&tab=<overview|settings|rubric|tracks|reports|votes>`로 통합한다. 전용 관리자 프로그램 라우트는 모두 삭제한다.
 - **Phase 3 — 학생 "내 팀" 재편(최대·주의)**: recruitments+teams를 "내 팀" 부모 + 작업공간/팀 꾸리기 탭으로. 권한 서비스 유지, 네비·활성 판정 재작성.
 - **Phase 4 — 교수 "주제 관리" / 관리자 "운영 관리" 그룹화**: professor-sidebar·admin-sidebar 재편, project-approvals 편입.
 - **Phase 5 — 라벨/네이밍 마감**: dashboard 역할 라벨, applications 라벨, `/feedback` 인앱 진입로.

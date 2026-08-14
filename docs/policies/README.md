@@ -28,6 +28,7 @@
 | [팀과 프로젝트 공간](teams-and-workspaces.md) | 학생 팀 모집, 실행 팀, 할 일, 대화, 지도 요청, 조교 |
 | [보고서·결과물·평가](deliverables-and-evaluation.md) | 보고서 정의, 제출·승인, 파일, 결과물, 채점표 |
 | [공지·알림·번역·피드백](communication-and-operations.md) | 공지 공개 범위, 알림, 번역, 운영 피드백, 감사 기록 |
+| [정책·구현 불일치 감사](code-policy-mismatches.md) | 현재 정책 문서와 코드·운영 문서의 확인된 차이 |
 | [확인 필요 정책](open-questions.md) | 코드 충돌, 경계 불일치, 미확정 선택지 |
 
 ## 상태 모델 요약
