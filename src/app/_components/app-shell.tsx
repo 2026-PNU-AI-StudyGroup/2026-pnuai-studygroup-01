@@ -63,6 +63,12 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
       { href: "/admin/programs", label: label.manageOps, icon: "settings" },
     ];
   }
+  if (role === "ADVISOR") {
+    return [
+      { href: "/advisor", label: locale === "ko" ? "담당 프로젝트" : "My assignments", icon: "home" },
+      { href: "/topics", label: label.explore, icon: "search" },
+    ];
+  }
   return [
     { href: "/topics", label: label.explore, icon: "search" },
     { href: "/dashboard", label: label.mentoredProjects, icon: "home" },
@@ -134,8 +140,8 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     });
   }
   const roleLabel = locale === "ko"
-    ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : "관리자"
-    : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : "Administrator";
+    ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : role === "ADVISOR" ? "자문위원" : "관리자"
+    : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : role === "ADVISOR" ? "Advisor" : "Administrator";
   const shellCopy = locale === "ko"
     ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
     : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };

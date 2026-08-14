@@ -1,9 +1,8 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 
-import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { teamSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
+import { teamFileAccessWhere } from "@/modules/advisor/infrastructure/advisor-file-access";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
 import { buildZip, uniqueZipName, type ZipEntry } from "@/app/api/teams/[teamId]/submissions/_lib/zip";
@@ -17,7 +16,7 @@ export async function GET(
   const { teamId } = await params;
 
   const team = await prisma.team.findFirst({
-    where: { id: teamId, ...teamActorWhere(actor) },
+    where: { id: teamId, ...teamFileAccessWhere(actor) },
     select: { id: true, name: true },
   });
   if (!team) return NextResponse.json({ message: "팀을 찾을 수 없습니다." }, { status: 404 });
@@ -77,14 +76,4 @@ function entryName(file: SubmissionFile): string {
 
 function safePathSegment(value: string) {
   return value.normalize("NFC").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim() || "report";
-}
-
-function teamActorWhere(actor: { id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" }): Prisma.TeamWhereInput {
-  if (actor.role === "ADMIN") return {};
-  return {
-    OR: [
-      teamSupervisorWhere(actor),
-      { members: { some: { studentId: actor.id } } },
-    ],
-  };
 }

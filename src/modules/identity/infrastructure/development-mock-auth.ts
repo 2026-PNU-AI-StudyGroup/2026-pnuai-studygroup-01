@@ -16,6 +16,11 @@ export const DEVELOPMENT_MOCK_ACCOUNTS = {
     label: "관리자 화면 열기",
     description: "프로그램, 사용자와 운영 설정을 확인합니다.",
   },
+  ADVISOR: {
+    id: "30000000-0000-4000-8000-000000000001",
+    label: "자문위원 화면 열기",
+    description: "담당 프로젝트의 평가와 피드백 화면을 확인합니다.",
+  },
 } as const satisfies Record<UserRole, { id: string; label: string; description: string }>;
 
 const localHostnames = new Set(["localhost", "127.0.0.1", "::1"]);

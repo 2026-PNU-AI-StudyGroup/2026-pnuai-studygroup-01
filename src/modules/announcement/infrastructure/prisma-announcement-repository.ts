@@ -9,6 +9,7 @@ import type {
   AnnouncementWriteInput,
 } from "@/modules/announcement/application/announcement-ports";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { UserRole } from "@/modules/identity/domain/user-role";
 
 const selectAnnouncement = {
   id: true,
@@ -39,7 +40,7 @@ type SelectedAnnouncement = {
   programId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  author: { name: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" };
+  author: { name: string; role: UserRole };
   team: { name: string } | null;
   program: { name: string } | null;
 };

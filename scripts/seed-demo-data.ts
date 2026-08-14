@@ -109,8 +109,13 @@ const opusProgramCategories = {
   kakaoTechCampus: "카카오 테크 캠퍼스",
 } as const;
 
+// 로컬 데모용 자문위원 초대 링크: /advisor-access/<이 토큰>. 로컬 시드 전용이라 고정값을 쓴다.
+const DEMO_ADVISOR_INVITE_TOKEN = "demo-advisor-invite-token-for-local-development";
+
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
+  // 목 로그인의 "자문위원 화면 열기"가 쓰는 계정. DEVELOPMENT_MOCK_ACCOUNTS.ADVISOR와 같은 값이어야 한다.
+  externalAdvisor: "30000000-0000-4000-8000-000000000001",
   professors: [
     "10000000-0000-4000-8000-000000000001",
     "10000000-0000-4000-8000-000000000002",
@@ -291,6 +296,12 @@ async function seed() {
     await tx.objectDeletionJob.deleteMany({
       where: { id: { in: demoStoredFileIds.flatMap((id) => [id, `${id}:upload`]) } },
     });
+    // 자문위원 데모 데이터(배정·토큰·채점·피드백)는 계정 기준으로 정리한다.
+    await tx.advisorScore.deleteMany({ where: { evaluation: { advisorId: ids.externalAdvisor } } });
+    await tx.advisorEvaluation.deleteMany({ where: { advisorId: ids.externalAdvisor } });
+    await tx.advisorFeedback.deleteMany({ where: { advisorId: ids.externalAdvisor } });
+    await tx.advisorAccessToken.deleteMany({ where: { userId: ids.externalAdvisor } });
+    await tx.projectAdvisor.deleteMany({ where: { userId: ids.externalAdvisor } });
     await tx.artifact.deleteMany({ where: { id: { in: [...ids.artifacts, ...ids.activeArtifacts] } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: [...ids.approvalDecisions, ...ids.activeApprovalDecisions] } } });
     await tx.reportVersion.deleteMany({ where: { id: { in: [...ids.reportVersions, ...ids.activeReportVersions] } } });
@@ -322,6 +333,8 @@ async function seed() {
       ...demoStudentNames.map<[string, string, string, UserRole]>((name, index) => [
         ids.students[index], name, `demo.student${index + 1}@pusan.ac.kr`, UserRole.STUDENT,
       ]),
+      // 교외 자문위원은 초대 링크로 로그인하므로 학교 메일이 아니다.
+      [ids.externalAdvisor, "정민서", "demo.advisor@example.com", UserRole.ADVISOR],
     ];
     for (const [id, name, email, role] of people) {
       await tx.user.upsert({
@@ -749,6 +762,23 @@ async function seed() {
         : acceptedApplicationTiming(topicIndex).decidedAt,
     })) });
     const teamIndexByTopic = new Map(teamRows.map(([topicIndex], teamIndex) => [topicIndex, teamIndex]));
+
+    // 자문위원 데모: 확정된 두 팀에 배정하고, 목 로그인 대신 실제 초대 링크도 쓸 수 있게 토큰을 넣는다.
+    // 토큰 원문은 해시만 저장하므로 데모용 고정 문자열을 쓴다(로컬 전용).
+    await tx.projectAdvisor.createMany({ data: [0, 1].map((topicIndex) => ({
+      id: `31000000-0000-4000-8000-${String(topicIndex + 1).padStart(12, "0")}`,
+      topicId: ids.topics[topicIndex],
+      userId: ids.externalAdvisor,
+      grantedById: ids.admin,
+      createdAt: new Date("2026-07-12T15:00:00+09:00"),
+    })) });
+    await tx.advisorAccessToken.create({ data: {
+      id: "32000000-0000-4000-8000-000000000001",
+      userId: ids.externalAdvisor,
+      tokenHash: createHash("sha256").update(DEMO_ADVISOR_INVITE_TOKEN).digest("hex"),
+      expiresAt: new Date("2027-12-31T14:59:00+09:00"),
+      createdAt: new Date("2026-07-12T15:00:00+09:00"),
+    } });
     await tx.teamMember.createMany({ data: acceptedApplicationRows.map(([topicIndex, studentIndex], index) => {
       const teamIndex = teamIndexByTopic.get(topicIndex);
       if (teamIndex === undefined) throw new Error(`팀이 없는 주제에 합격 지원이 연결되었습니다: ${topicIndex}`);
@@ -1462,6 +1492,7 @@ async function seed() {
     studentDemoProject: seedResult.studentDemoProject,
     localViewer: seedResult.localViewer ? { ...seedResult.localViewer, connectedToDemoProject: seedResult.connectedToDemoProject } : null,
     verificationResidueRemoved: seedResult.verificationResidueRemoved,
+    advisorInvitePath: `/advisor-access/${DEMO_ADVISOR_INVITE_TOKEN}`,
   }));
 }
 

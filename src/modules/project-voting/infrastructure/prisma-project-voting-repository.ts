@@ -7,7 +7,7 @@ import {
   type ProjectVotingRepository,
   type ReplaceProgramVotesOutcome,
 } from "@/modules/project-voting/application/manage-project-voting";
-import { normalizeVoteSelection } from "@/modules/project-voting/domain/project-voting-policy";
+import { normalizeVoteSelection, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUSES: Array<"PUBLISHED" | "CLOSED"> = ["PUBLISHED", "CLOSED"];
 
@@ -73,12 +73,13 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
 
   async replaceVotes(input: { programId: string; voterId: string; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome> {
     return this.client.$transaction(async (transaction) => {
-      const voters = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "id" FROM "user"
+      const voters = await transaction.$queryRaw<Array<{ id: string; role: string }>>(Prisma.sql`
+        SELECT "id", "role" FROM "user"
         WHERE "id" = ${input.voterId} AND "isActive" = true
         FOR UPDATE
       `);
-      if (!voters[0]) return "INACTIVE_VOTER";
+      const voter = voters[0];
+      if (!voter) return "INACTIVE_VOTER";
 
       const policies = await transaction.$queryRaw<LockedVotingPolicy[]>(Prisma.sql`
         SELECT
@@ -86,6 +87,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           "program_voting_policy"."startsAt",
           "program_voting_policy"."endsAt",
           "program_voting_policy"."voteLimit",
+          "program_voting_policy"."staffVoteLimit",
           "program_voting_policy"."voteLimitScope",
           "program_voting_policy"."selfVotingAllowed",
           "program_voting_policy"."identityVisibility"
@@ -96,8 +98,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           AND "project_program"."isPublic" = true
         FOR UPDATE OF "project_program", "program_voting_policy"
       `);
-      const policy = policies[0];
-      if (!policy) return "NOT_FOUND";
+      const locked = policies[0];
+      if (!locked) return "NOT_FOUND";
+      const policy = withEffectiveVoteLimit(locked, voter.role);
       if (getProgramVotingPhase(policy, input.votedAt) !== "OPEN") return "NOT_OPEN";
 
       const candidates = input.topicIds.length

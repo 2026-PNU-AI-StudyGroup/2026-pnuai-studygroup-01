@@ -1,11 +1,12 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import type { UserRole } from "@/modules/identity/domain/user-role";
 
 export type ProjectAssistantSummary = {
   id: string;
   userId: string;
   name: string;
   email: string;
-  role: "STUDENT" | "PROFESSOR" | "ADMIN";
+  role: UserRole;
   createdAt: Date;
 };
 
@@ -30,7 +31,7 @@ export type ProjectAssistantManagement = {
     inviteeId: string;
     inviteeName: string;
     inviteeEmail: string;
-    inviteeRole: "STUDENT" | "PROFESSOR" | "ADMIN";
+    inviteeRole: UserRole;
     createdAt: Date;
   }>;
 };

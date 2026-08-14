@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 계정");
 }
 
-const roleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자" } as const;
+const roleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자", ADVISOR: "자문위원" } as const;
 
 export default async function AccountPage() {
   const actor = await getCurrentActor();

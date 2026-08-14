@@ -123,6 +123,9 @@ export function ProgramPolicyForm({ programId, name, category, categoryOptions, 
         <FormField id="settings-vote-limit" label="인당 가능 투표수" required={enabled}>
           <TextInput id="settings-vote-limit" name="voteLimit" type="number" min={1} inputMode="numeric" defaultValue={votingPolicy?.voteLimit ?? ""} required={enabled} disabled={!enabled} />
         </FormField>
+        <FormField id="settings-staff-vote-limit" label="자문위원·관리자 가능 투표수" description="자문위원과 관리자는 심사 목적이라 학생과 다른 한도를 씁니다." required={enabled}>
+          <TextInput id="settings-staff-vote-limit" name="staffVoteLimit" type="number" min={1} inputMode="numeric" defaultValue={votingPolicy?.staffVoteLimit ?? 5} required={enabled} disabled={!enabled} />
+        </FormField>
         <fieldset className="grid gap-3 sm:col-span-2">
           <legend className="form-field__label"><UiText>{"투표 범위"}</UiText></legend>
           <ChoiceCard name="voteLimitScope" value="PROGRAM" defaultChecked={!votingPolicy || votingPolicy.voteLimitScope === "PROGRAM"} required={enabled} disabled={!enabled} label="프로그램 전체" description="프로그램 전체에서 인당 N표까지 선택합니다." />

@@ -15,6 +15,7 @@ function selection(voteLimitScope: "PROGRAM" | "DIVISION", selectedTopicIds: str
       startsAt: new Date("2026-08-01T00:00:00Z"),
       endsAt: new Date("2026-08-31T00:00:00Z"),
       voteLimit: 3,
+      staffVoteLimit: 5,
       voteLimitScope,
       selfVotingAllowed: false,
       identityVisibility: "ANONYMOUS",

@@ -113,7 +113,7 @@ export default async function ProfessorsPage({ searchParams }: { searchParams: P
                   <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:col-start-1 xl:row-start-2 2xl:contents">
                     <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 text-sm 2xl:block">
                       <dt className="muted 2xl:text-xs"><UiText>{"계정 역할"}</UiText></dt>
-                      <dd className="2xl:mt-1"><UiText>{entry.account ? entry.account.role === "ADMIN" ? "관리자" : entry.account.role === "PROFESSOR" ? "교수" : "학생" : "미연결"}</UiText></dd>
+                      <dd className="2xl:mt-1"><UiText>{entry.account ? entry.account.role === "ADMIN" ? "관리자" : entry.account.role === "PROFESSOR" ? "교수" : entry.account.role === "ADVISOR" ? "자문위원" : "학생" : "미연결"}</UiText></dd>
                     </dl>
                     <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 text-sm 2xl:block">
                       <dt className="muted 2xl:text-xs"><UiText>{"최초 등록"}</UiText></dt>
