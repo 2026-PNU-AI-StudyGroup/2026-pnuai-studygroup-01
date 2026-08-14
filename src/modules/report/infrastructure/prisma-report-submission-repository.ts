@@ -124,6 +124,8 @@ export class PrismaReportSubmissionRepository
           recipientId,
           title: `${authorized[0].name} 보고서가 제출되었습니다`,
           body: `${reportSnapshot.titleSnapshot} 버전 ${version}이 제출되었습니다. 최신 파일과 설명을 검토해 주세요.`,
+          titleEn: "Report submitted",
+          bodyEn: `Version ${version} of ${reportSnapshot.titleSnapshot} was submitted. Review the latest file and description in PMS.`,
           href: `/projects/${authorized[0].projectId}/reports`,
           createdAt: input.submittedAt,
         })),

@@ -67,6 +67,8 @@ export class PrismaTeamDiscussionRepository
           recipientId,
           title: "새 팀 대화 메시지가 도착했습니다",
           body: `${author.name}님이 ${team.name} 팀 대화에 메시지를 보냈습니다.`,
+          titleEn: "New team discussion message",
+          bodyEn: `${author.name} posted a message in the ${team.name} team discussion.`,
           href: `/projects/${team.project.id}/discussion`,
           dedupeKey: `discussion:${id}:${recipientId}`,
           createdAt,

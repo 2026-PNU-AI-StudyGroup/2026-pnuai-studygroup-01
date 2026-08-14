@@ -89,6 +89,10 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
             body: approved
               ? `${teams[0].name}의 버전 ${reportVersion.version} 보고서가 승인되었습니다.`
               : input.comment,
+            titleEn: approved ? "Report approved" : "Report revision requested",
+            bodyEn: approved
+              ? `Version ${reportVersion.version} of the ${teams[0].name} report was approved.`
+              : "A revision was requested for the report. Open PMS to read the review comment.",
             href: `/projects/${teams[0].projectId}/reports`,
             createdAt: input.decidedAt,
           })),

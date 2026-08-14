@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotifications } from "@/modules/notification/infrastructure/notification-events";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
 type LifecycleActor =
   | { kind: "USER"; id: string }
@@ -137,6 +138,30 @@ async function finalizeProgramInTransaction(
     createdAt: input.processedAt,
   })));
   if (pendingApprovalRequests.length || pendingGuidanceRequests.length) {
+    await enqueueEmailEvents(transaction, [
+      ...pendingApprovalRequests.map((request) => ({
+        kind: "TOPIC_APPROVAL" as const,
+        recipientId: request.requesterId,
+        title: "프로젝트 제안이 취소되었습니다",
+        body: `${request.topic.title} 제안이 프로그램 종료로 취소되었습니다.`,
+        titleEn: "Project proposal canceled",
+        bodyEn: `The proposal for ${request.topic.title} was canceled because the program has ended.`,
+        href: "/dashboard",
+        idempotencyKey: `email:program-close:topic-approval:${request.id}`,
+        createdAt: input.processedAt,
+      })),
+      ...pendingGuidanceRequests.map((request) => ({
+        kind: "PROJECT_REQUEST" as const,
+        recipientId: request.requesterId,
+        title: "프로젝트 요청이 취소되었습니다",
+        body: `${request.projectTeam.name}의 대기 요청이 프로그램 종료로 취소되었습니다.`,
+        titleEn: "Project request canceled",
+        bodyEn: `The pending request from ${request.projectTeam.name} was canceled because the program has ended.`,
+        href: `/projects/${request.projectTeam.projectId}/requests`,
+        idempotencyKey: `email:program-close:guidance:${request.id}`,
+        createdAt: input.processedAt,
+      })),
+    ]);
     await transaction.notification.createMany({
       data: [
         ...pendingApprovalRequests.map((request) => ({
