@@ -18,8 +18,6 @@ const project: ArchivedProject = {
   divisionName: "융합",
   topicTitle: "실내 길찾기",
   topicDescription: "프로젝트 설명",
-  requiredSkills: ["TypeScript"],
-  preferredSkills: [],
   professorName: "김도윤",
   advisorRole: "교수",
   advisorEnabled: true,
@@ -109,7 +107,7 @@ describe("PastProjectsView", () => {
     expect(article).toHaveTextContent("모두의 길 팀 · 김도윤 교수");
     expect(detailLink).toHaveAttribute(
       "href",
-      "/topics/archive/project-1",
+      "/topics/50000000-0000-4000-8000-000000000001",
     );
   });
 

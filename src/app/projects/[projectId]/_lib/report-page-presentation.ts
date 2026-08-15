@@ -29,7 +29,7 @@ export function reportPresentationState(report: ReportItem): ReportPresentationS
 }
 
 export function isReportSubmissionOpen(report: ReportItem, now: Date): boolean {
-  return report.required && report.dueAt.getTime() >= now.getTime();
+  return report.submissionEnabled && report.dueAt.getTime() >= now.getTime();
 }
 
 function focusPriority(report: ReportItem, now: Date): number {
@@ -55,7 +55,7 @@ function focusKind(report: ReportItem, now: Date): StudentReportFocusKind {
 }
 
 export function selectStudentReportFocus(reports: ReportItem[], now: Date): StudentReportFocus | null {
-  const report = reports.filter((item) => item.required).sort((left, right) => {
+  const report = reports.filter((item) => item.required && item.submissionEnabled).sort((left, right) => {
     const priorityDifference = focusPriority(left, now) - focusPriority(right, now);
     if (priorityDifference !== 0) return priorityDifference;
 

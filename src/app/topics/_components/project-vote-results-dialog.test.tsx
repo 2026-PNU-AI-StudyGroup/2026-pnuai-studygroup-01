@@ -91,6 +91,14 @@ beforeEach(() => {
 });
 
 describe("프로젝트 투표 결과 모달", () => {
+  it("관리 화면에서는 전달된 득표현황 문구로 결과 모달을 연다", () => {
+    render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} triggerLabel="득표현황" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "득표현황" }));
+
+    expect(screen.getByRole("dialog", { name: "투표 결과" })).toBeInTheDocument();
+  });
+
   it("투표 상태 오른쪽에서 열고 전체 득표수 내림차순 표를 보여준다", () => {
     render(<ProjectVoteResultsDialog view={{ mode: "ADMIN", results }} />);
 

@@ -9,7 +9,7 @@ import {
   ProjectGuidanceResponseForm,
 } from "@/app/projects/[projectId]/_components/project-guidance-request-forms";
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import {
   ProjectGuidanceRequestNotFoundError,
   ProjectGuidanceRequestQueryService,
@@ -54,7 +54,7 @@ export default async function ProjectGuidanceRequestsPage({
 }) {
   const { projectId } = await params;
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
-  const { actor, workspace } = await loadTeamWorkspace(projectId);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId);
   if (!workspace.advisorEnabled) notFound();
   let requestPage;
   try {

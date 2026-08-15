@@ -353,6 +353,11 @@ describe("보고서 요구사항 화면", () => {
     expect(screen.queryByRole("dialog", { name: "결과물 등록" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "결과물 등록" }));
     expect(screen.getByRole("dialog", { name: "결과물 등록" })).toHaveAttribute("open");
+    const dialog = screen.getByRole("dialog", { name: "결과물 등록" });
+    const form = dialog.querySelector("form")!;
+    expect(screen.getByRole("button", { name: "외부 링크" }).closest("form")).toBe(form);
+    expect(screen.queryByRole("option", { name: "이미지" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "포스터" })).not.toBeInTheDocument();
     expect(screen.getByLabelText("외부 링크")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "파일 업로드" }));
     expect(screen.queryByLabelText("외부 링크")).not.toBeInTheDocument();

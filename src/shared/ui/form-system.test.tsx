@@ -49,10 +49,10 @@ describe("form-system controls", () => {
   it("토글은 체크 상태와 FormData 이름을 유지한다", () => {
     const { container } = render(
       <form>
-        <Toggle name="studentProjectCreationEnabled" value="true" defaultChecked label="학생 프로젝트 제안 허용" />
+        <Toggle name="studentProjectCreationEnabled" value="true" defaultChecked label="학생 프로젝트 등록 허용" />
       </form>,
     );
-    const toggle = screen.getByRole("checkbox", { name: "학생 프로젝트 제안 허용" });
+    const toggle = screen.getByRole("checkbox", { name: "학생 프로젝트 등록 허용" });
 
     expect(new FormData(container.querySelector("form")!).get("studentProjectCreationEnabled")).toBe("true");
     fireEvent.click(toggle);

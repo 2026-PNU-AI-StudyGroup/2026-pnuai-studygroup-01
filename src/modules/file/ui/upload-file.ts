@@ -234,7 +234,7 @@ function validateUploadCandidate(purpose: FilePurpose, file: File): void {
         purpose === "REPORT"
           ? "PDF 또는 Word 파일만 제출할 수 있으며 최대 용량은 25MB입니다."
           : purpose === "ARTIFACT"
-            ? "지원되는 결과물 파일만 등록할 수 있으며 최대 용량은 1GB입니다."
+            ? "지원되는 결과물 파일만 등록할 수 있으며 최대 용량은 100MB입니다."
             : "공지 첨부파일은 파일당 최대 500MiB까지 업로드할 수 있습니다.",
       );
     }
@@ -310,11 +310,14 @@ export function isUploadAbortError(error: unknown): boolean {
 }
 
 export async function uploadStoredFile(
-  input: { teamId?: string; purpose: FilePurpose },
+  input: { teamId?: string; purpose: FilePurpose; maxBytes?: number; maxBytesMessage?: string },
   file: File,
   options: UploadTeamFileOptions = {},
 ): Promise<string> {
-  const { teamId, purpose } = input;
+  const { teamId, purpose, maxBytes, maxBytesMessage } = input;
+  if (maxBytes !== undefined && file.size > maxBytes) {
+    throw new Error(maxBytesMessage ?? "파일 용량이 허용 범위를 초과했습니다.");
+  }
   validateUploadCandidate(purpose, file);
   assertUploadActive(options.signal);
   const digest = await hashTeamFile(file, options);

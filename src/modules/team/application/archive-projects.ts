@@ -12,8 +12,6 @@ export type ArchivedProject = {
   divisionName?: string | null;
   topicTitle: string;
   topicDescription: string;
-  requiredSkills: string[];
-  preferredSkills: string[];
   professorName: string;
   advisorRole: string;
   advisorEnabled: boolean;

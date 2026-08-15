@@ -1,20 +1,40 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { isReportSubmissionOverdue } from "@/modules/team/domain/project-progress";
 
-export const adminProjectOperationFilters = [
-  "all",
-  "operating",
-  "unassigned",
-  "overdue",
-  "submitted",
-] as const;
+export const adminProjectTeamFilters = ["all", "formed", "unassigned"] as const;
+export const adminProjectReportFilters = ["all", "overdue", "submitted"] as const;
 
-export type AdminProjectOperationFilter = typeof adminProjectOperationFilters[number];
+export type AdminProjectTeamFilter = typeof adminProjectTeamFilters[number];
+export type AdminProjectReportFilter = typeof adminProjectReportFilters[number];
+export type AdminProjectOperationFilters = {
+  team: AdminProjectTeamFilter;
+  report: AdminProjectReportFilter;
+};
 
-export function parseAdminProjectOperationFilter(value: string | undefined): AdminProjectOperationFilter {
-  return adminProjectOperationFilters.includes(value as AdminProjectOperationFilter)
-    ? value as AdminProjectOperationFilter
-    : "all";
+function parseFilter<T extends readonly string[]>(value: string | undefined, allowed: T): T[number] {
+  return allowed.includes(value ?? "") ? value as T[number] : "all" as T[number];
+}
+
+/** 이전 단일 operation 링크는 읽되, 모든 새 링크는 teamStatus/reportStatus를 사용한다. */
+export function parseAdminProjectOperationFilters(input: {
+  teamStatus?: string;
+  reportStatus?: string;
+  operation?: string;
+}): AdminProjectOperationFilters {
+  const legacy = input.operation === "operating"
+    ? { team: "formed", report: "all" }
+    : input.operation === "unassigned"
+      ? { team: "unassigned", report: "all" }
+      : input.operation === "overdue"
+        ? { team: "all", report: "overdue" }
+        : input.operation === "submitted"
+          ? { team: "all", report: "submitted" }
+          : { team: "all", report: "all" };
+
+  return {
+    team: parseFilter(input.teamStatus ?? legacy.team, adminProjectTeamFilters),
+    report: parseFilter(input.reportStatus ?? legacy.report, adminProjectReportFilters),
+  };
 }
 
 export type AdminProgramProjectOperationRecord = {
@@ -27,7 +47,7 @@ export type AdminProgramProjectOperationRecord = {
 export type AdminProgramProjectOperations = {
   summary: {
     total: number;
-    operating: number;
+    formed: number;
     unassigned: number;
     overdue: number;
     submitted: number;
@@ -36,7 +56,7 @@ export type AdminProgramProjectOperations = {
 };
 
 export interface AdminProgramProjectOperationsReader {
-  listByProgram(programId: string): Promise<AdminProgramProjectOperationRecord[]>;
+  listByProgram(programId: string, divisionId?: string | "UNASSIGNED"): Promise<AdminProgramProjectOperationRecord[]>;
 }
 
 export class AdminProgramProjectOperationsForbiddenError extends Error {}
@@ -50,7 +70,8 @@ export class ListAdminProgramProjectOperationsService {
   async execute(
     actor: CurrentActor,
     programId: string,
-    selectedFilter: AdminProjectOperationFilter,
+    filters: AdminProjectOperationFilters,
+    divisionId?: string | "UNASSIGNED",
   ): Promise<AdminProgramProjectOperations> {
     if (actor.role !== "ADMIN") {
       throw new AdminProgramProjectOperationsForbiddenError(
@@ -59,7 +80,7 @@ export class ListAdminProgramProjectOperationsService {
     }
 
     const now = this.now();
-    const projects = (await this.reader.listByProgram(programId)).map((project) => {
+    const projects = (await this.reader.listByProgram(programId, divisionId)).map((project) => {
       const reports = project.team?.reports ?? [];
       const operating = project.team !== null;
       const overdue = reports.some((report) =>
@@ -70,17 +91,19 @@ export class ListAdminProgramProjectOperationsService {
     });
 
     const matches = (project: typeof projects[number]) => {
-      if (selectedFilter === "operating") return project.operating;
-      if (selectedFilter === "unassigned") return !project.operating;
-      if (selectedFilter === "overdue") return project.overdue;
-      if (selectedFilter === "submitted") return project.submitted;
-      return true;
+      const teamMatches = filters.team === "all"
+        || filters.team === "formed" && project.operating
+        || filters.team === "unassigned" && !project.operating;
+      const reportMatches = filters.report === "all"
+        || filters.report === "overdue" && project.overdue
+        || filters.report === "submitted" && project.submitted;
+      return teamMatches && reportMatches;
     };
 
     return {
       summary: {
         total: projects.length,
-        operating: projects.filter(({ operating }) => operating).length,
+        formed: projects.filter(({ operating }) => operating).length,
         unassigned: projects.filter(({ operating }) => !operating).length,
         overdue: projects.filter(({ overdue }) => overdue).length,
         submitted: projects.filter(({ submitted }) => submitted).length,

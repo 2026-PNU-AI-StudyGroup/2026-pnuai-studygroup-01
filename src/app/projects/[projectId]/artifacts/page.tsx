@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { ArtifactRegistrationForm } from "@/app/projects/[projectId]/_components/artifact-registration-form";
 import { ArtifactManagementForm } from "@/app/projects/[projectId]/_components/artifact-management-form";
 import { ShowcaseManager } from "@/app/projects/[projectId]/_components/showcase-manager";
+import { ShowcaseVideoCard } from "@/app/projects/[projectId]/_components/showcase-video-card";
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { ARTIFACT_TYPE_LABELS, ArtifactMedia } from "@/shared/ui/artifact-media";
@@ -18,17 +19,17 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
   const { projectId } = await params;
   const { actor, workspace, reportWorkspace } = await loadTeamReportWorkspace(projectId);
   const now = new Date();
-  const isStudentRegistrationPeriod = now >= workspace.schedule.submissionStartsAt &&
-    now <= workspace.schedule.submissionEndsAt;
+  const isStudentRegistrationPeriod = now >= workspace.schedule.executionStartsAt &&
+    now <= workspace.schedule.executionEndsAt;
   const canRegisterArtifact = workspace.status === "IN_PROGRESS" &&
     workspace.access.canContribute &&
     (actor.role === "ADMIN" || isStudentRegistrationPeriod);
   const registrationPeriodState = workspace.status === "IN_PROGRESS" &&
     workspace.access.isTeamMember &&
     actor.role !== "ADMIN"
-    ? now < workspace.schedule.submissionStartsAt
+    ? now < workspace.schedule.executionStartsAt
       ? "BEFORE"
-      : now > workspace.schedule.submissionEndsAt
+      : now > workspace.schedule.executionEndsAt
         ? "AFTER"
         : null
     : null;
@@ -50,20 +51,21 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
       title: artifact.title,
       src: artifact.externalUrl ?? `/api/files/${artifact.fileId}`,
     }));
+  const showcaseVideo = reportWorkspace.artifacts.find((artifact) => artifact.type === "PRESENTATION_VIDEO");
   const visibleArtifacts = canRegisterArtifact
-    ? reportWorkspace.artifacts.filter((artifact) => artifact.type !== "IMAGE")
-    : reportWorkspace.artifacts;
+    ? reportWorkspace.artifacts.filter((artifact) => artifact.type !== "IMAGE" && artifact.type !== "PRESENTATION_VIDEO")
+    : reportWorkspace.artifacts.filter((artifact) => artifact.type !== "PRESENTATION_VIDEO");
 
   return (
     <section aria-labelledby="artifacts-title" className="mx-auto max-w-6xl space-y-7">
       <WorkspacePageHeader
         title="프로젝트 결과물"
         titleId="artifacts-title"
-        description="발표 자료와 소스 코드 등 공개 가능한 결과물을 관리합니다."
         bordered={false}
         actions={canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : undefined}
       />
       {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} /> : null}
+      <ShowcaseVideoCard teamId={workspace.id} video={showcaseVideo} canManage={canRegisterArtifact} />
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"
@@ -77,18 +79,18 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
           </div>
           <p className="text-sm font-bold text-[var(--ink)]">
             <UiText>{registrationPeriodState === "BEFORE" ? "등록 시작" : "등록 종료"}</UiText>{" "}
-            <time dateTime={(registrationPeriodState === "BEFORE" ? workspace.schedule.submissionStartsAt : workspace.schedule.submissionEndsAt).toISOString()}>
-              <UiDate value={registrationPeriodState === "BEFORE" ? workspace.schedule.submissionStartsAt : workspace.schedule.submissionEndsAt} mode="dateTime" />
+            <time dateTime={(registrationPeriodState === "BEFORE" ? workspace.schedule.executionStartsAt : workspace.schedule.executionEndsAt).toISOString()}>
+              <UiDate value={registrationPeriodState === "BEFORE" ? workspace.schedule.executionStartsAt : workspace.schedule.executionEndsAt} mode="dateTime" />
             </time>
           </p>
         </aside>
       ) : null}
       {visibleArtifacts.length === 0 ? <EmptyState title="아직 공개할 결과물이 없습니다" description={emptyDescription} /> : (
-        <ul className="max-w-3xl space-y-9">
+        <ul className="max-w-3xl space-y-4">
           {visibleArtifacts.map((artifact) => {
             const titleId = `artifact-title-${artifact.id}`;
             return (
-              <li key={artifact.id} className="min-w-0" data-artifact-type={artifact.type.toLowerCase()}>
+              <li key={artifact.id} className="min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:p-6" data-artifact-type={artifact.type.toLowerCase()}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <div className="min-w-0">
                     <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{ARTIFACT_TYPE_LABELS[artifact.type]}</UiText></span>
@@ -96,7 +98,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
                   </div>
                   <time className="muted shrink-0 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
                 </div>
-                <div className="mt-3">
+                <div className="mt-4">
                   <ArtifactMedia type={artifact.type} title={artifact.title} fileId={artifact.fileId} externalUrl={artifact.externalUrl} />
                   {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
                 </div>

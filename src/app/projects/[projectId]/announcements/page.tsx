@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 import { ProjectAnnouncementList } from "@/app/projects/[projectId]/_components/project-announcement-list";
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TeamAnnouncementsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const { actor, workspace } = await loadTeamWorkspace(projectId);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId);
   const audience = await resolveAnnouncementAudience(actor);
   const announcements = await new AnnouncementService(
     new PrismaAnnouncementRepository(prisma),

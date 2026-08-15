@@ -59,6 +59,14 @@ describe("ProgramSidebar", () => {
     expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025종료");
   });
 
+  it("관리 화면에서는 선택된 프로그램도 탐색 화면으로 나가는 링크로 유지한다", () => {
+    render(<ProgramSidebar items={items} selectedId="capstone-2025" selectedItemLinkable />);
+
+    expect(screen.getAllByRole("link", { name: /캡스톤 2025/ }).some((link) => (
+      link.getAttribute("href") === "/topics?view=past&programId=capstone-2025"
+    ))).toBe(true);
+  });
+
   it("관리자에게 각 프로그램의 설정 링크를 별도 동작으로 제공한다", () => {
     render(<ProgramSidebar items={items} selectedId="capstone-2025" showSettings />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });

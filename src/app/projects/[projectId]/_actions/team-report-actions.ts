@@ -12,6 +12,7 @@ import {
   ReportFeedbackService,
   ReportOperationNotAllowedError,
   ReportSubmissionService,
+  ShowcaseVideoService,
 } from "@/modules/report/application/manage-reports";
 import { PrismaArtifactRepository } from "@/modules/report/infrastructure/prisma-artifact-repository";
 import { PrismaReportDecisionRepository } from "@/modules/report/infrastructure/prisma-report-decision-repository";
@@ -25,6 +26,8 @@ import {
   reportDecisionSchema,
   reportFeedbackSchema,
   reportSubmissionSchema,
+  showcaseImageSchema,
+  showcaseVideoSchema,
   teamThumbnailSchema,
 } from "@/modules/report/ui/report-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -127,6 +130,48 @@ export async function registerArtifactAction(formData: FormData): Promise<Report
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function registerShowcaseImageAction(formData: FormData): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = showcaseImageSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "이미지 정보를 확인해 주세요." };
+  try {
+    await new ArtifactRegistrationService(
+      new PrismaArtifactRepository(prisma),
+    ).registerArtifact(actor, {
+      teamId: parsed.data.teamId,
+      type: parsed.data.type,
+      title: parsed.data.title,
+      fileId: parsed.data.uploadId,
+    });
+    revalidatePath("/projects", "layout");
+    return { status: "success", message: "이미지를 등록했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function upsertShowcaseVideoAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = showcaseVideoSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "YouTube 링크를 확인해 주세요." };
+  try {
+    await new ShowcaseVideoService(new PrismaArtifactRepository(prisma)).save(actor, parsed.data);
+    revalidatePath("/projects", "layout");
+    return { status: "success", message: "시연·발표 영상을 저장했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: "YouTube 링크를 확인해 주세요." };
     throw error;
   }
 }

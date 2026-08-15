@@ -52,7 +52,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
           <ProjectGalleryCardShell
             id={`past-project-${project.id}`}
             title={project.topicTitle}
-            href={`/topics/archive/${project.id}`}
+            href={`/topics/${project.topicId}`}
             programName={project.programName}
             divisionName={project.divisionName}
             description={project.topicDescription}

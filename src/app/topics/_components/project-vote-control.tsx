@@ -83,6 +83,29 @@ export function ProjectVoteButton({ candidate, selection }: {
   );
 }
 
+export function ArchivedProjectVoteAction({
+  ballot,
+  topicId,
+}: {
+  ballot?: ProgramVoteBallot;
+  topicId: string;
+}) {
+  const selection = useProjectVoteSelection(ballot);
+  const candidate = ballot?.phase === "OPEN"
+    ? ballot.candidates.find(({ id }) => id === topicId)
+    : undefined;
+  if (!candidate) return null;
+
+  return (
+    <section aria-label="프로젝트 투표">
+      <ProjectVoteStatusPill selection={selection} />
+      <div className="mt-3">
+        <ProjectVoteButton candidate={candidate} selection={selection} />
+      </div>
+    </section>
+  );
+}
+
 export function ProjectVoteCountBadge({ voteCount }: { voteCount: number }) {
   return (
     <span
@@ -105,16 +128,15 @@ export function ProjectVoteStatusPill({ selection }: { selection: ProjectVoteSel
       : ballot.policy.voteLimitScope === "DIVISION"
         ? `투표 가능: 분과별 최대 ${ballot.policy.voteLimit}표`
         : `투표 가능 ${selection.selectedTopicIds.size}/${ballot.policy.voteLimit}`;
-  const tone = ballot.phase === "OPEN"
-    ? "bg-[var(--success-subtle)] text-[var(--success)] ring-[color-mix(in_srgb,var(--success)_26%,transparent)]"
-    : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-[var(--line-strong)]";
+  const indicatorTone = ballot.phase === "OPEN" ? "bg-[var(--primary)]" : "bg-[var(--muted)]";
 
   return (
     <span
       role="status"
       aria-label="투표 현황"
-      className={`inline-flex min-h-8 items-center rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset ${tone}`}
+      className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-white px-3 text-xs font-bold text-[var(--ink)]"
     >
+      <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${indicatorTone}`} />
       <UiText>{label}</UiText>
     </span>
   );

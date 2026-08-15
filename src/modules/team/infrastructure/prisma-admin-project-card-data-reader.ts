@@ -45,7 +45,7 @@ export class PrismaAdminProjectCardDataReader implements AdminProjectCardDataRea
           },
         },
         reports: {
-          where: { required: true },
+          where: { required: true, submissionEnabled: true },
           select: {
             dueAt: true,
             versions: { take: 1, select: { id: true } },

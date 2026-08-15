@@ -28,6 +28,7 @@ const teamProjectInfoSelect = {
   memberships: {
     where: { endedAt: null },
     select: {
+      id: true,
       userId: true,
       role: true,
     },
@@ -55,6 +56,7 @@ function toProjectInfo(row: NonNullable<TeamProjectInfoRow>, actor: CurrentActor
   return {
     teamId: row.id,
     programName: row.project.program.name,
+    teamName: row.name,
     title: row.project.title,
     description: row.project.description,
     status: (() => {

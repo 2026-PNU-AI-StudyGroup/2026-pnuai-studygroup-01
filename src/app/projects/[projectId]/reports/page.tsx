@@ -54,7 +54,7 @@ function ReportCard({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-bold tracking-[-0.03em]"><UiText>{report.title}</UiText></h2>
-            {!report.required ? <StatusBadge tone="neutral"><UiText>{"보관됨"}</UiText></StatusBadge> : null}
+            {!report.submissionEnabled ? <StatusBadge tone="neutral"><UiText>{"보관됨"}</UiText></StatusBadge> : !report.required ? <StatusBadge tone="neutral"><UiText>{"선택 제출"}</UiText></StatusBadge> : <StatusBadge tone="info"><UiText>{"필수 제출"}</UiText></StatusBadge>}
             <StatusBadge tone={presentation.tone}><UiText>{presentation.label}</UiText></StatusBadge>
           </div>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -124,9 +124,10 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ pr
   const { workspace, reportWorkspace } = await loadTeamReportWorkspace(projectId);
   const now = new Date();
   const canReview = workspace.access.canSupervise && workspace.status !== "FORMING";
-  const requiredReports = reportWorkspace.reports.filter((report) => report.required);
+  const requiredReports = reportWorkspace.reports.filter((report) => report.required && report.submissionEnabled);
   const submittedCount = requiredReports.filter((report) => report.versions.length > 0).length;
-  const noSubmittableReports = workspace.status === "IN_PROGRESS" && workspace.access.canContribute && requiredReports.length > 0 && requiredReports.every((report) => !isReportSubmissionOpen(report, now));
+  const submitEnabledReports = reportWorkspace.reports.filter((report) => report.submissionEnabled);
+  const noSubmittableReports = workspace.status === "IN_PROGRESS" && workspace.access.canContribute && submitEnabledReports.length > 0 && submitEnabledReports.every((report) => !isReportSubmissionOpen(report, now));
   const emptyState = workspace.status === "FORMING"
     ? { title: "팀 확정 후 보고서를 제출할 수 있습니다", description: "팀이 확정되면 프로그램 보고서 일정에 따라 제출할 수 있습니다." }
     : workspace.status === "COMPLETED"
@@ -158,7 +159,7 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ pr
               key={report.id}
               teamId={workspace.id}
               report={report}
-              canSubmit={workspace.status === "IN_PROGRESS" && workspace.access.canContribute && report.required && isReportSubmissionOpen(report, now)}
+              canSubmit={workspace.status === "IN_PROGRESS" && workspace.access.canContribute && isReportSubmissionOpen(report, now)}
               canReview={canReview}
               isTeamMember={workspace.access.isTeamMember}
               advisorEnabled={workspace.advisorEnabled}

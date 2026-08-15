@@ -7,6 +7,7 @@ import {
   type ReportActionState,
   updateArtifactAction,
 } from "@/app/projects/[projectId]/_actions/team-report-actions";
+import { reportDialogClassName } from "@/app/projects/[projectId]/_components/report-form-layout";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
@@ -16,7 +17,6 @@ import { SettingsIcon } from "@/shared/ui/workspace-icons";
 const initialState: ReportActionState = { status: "idle", message: "" };
 
 const artifactTypes = [
-  ["PRESENTATION_VIDEO", "발표 영상"],
   ["SOURCE_CODE", "소스 코드"],
   ["POSTER", "포스터"],
   ["IMAGE", "이미지"],
@@ -51,10 +51,10 @@ export function ArtifactManagementForm({
       <button type="button" className="button-quiet mt-3 w-full gap-2" onClick={() => dialogRef.current?.showModal()} disabled={pending}>
         <SettingsIcon className="size-4 shrink-0" /><UiText>{"정보 수정·삭제"}</UiText>
       </button>
-      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className="w-[min(100%-2rem,34rem)] rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-0 shadow-[0_24px_70px_rgba(31,35,48,.18)]">
-        <div className="border-b border-[var(--line)] px-6 py-5">
-          <h2 id={titleId} className="text-lg font-bold"><UiText>{"결과물 정보 관리"}</UiText></h2>
-          <p className="muted mt-1 text-sm leading-6"><UiText>{artifact.fileId ? "파일은 교체할 수 없습니다. 바꾸려면 삭제 후 새 파일을 등록하세요." : "등록 방식과 링크는 유지한 채 제목과 종류만 수정할 수 있습니다."}</UiText></p>
+      <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-[34rem]`}>
+        <div className="border-b border-[var(--line)] px-5 py-4 sm:px-6">
+          <h2 id={titleId} className="sr-only"><UiText>{"결과물 수정"}</UiText></h2>
+          <p className="muted text-sm leading-6"><UiText>{artifact.fileId ? "파일은 교체할 수 없습니다. 바꾸려면 삭제 후 새 파일을 등록하세요." : "등록 방식과 링크는 유지한 채 제목과 종류만 수정할 수 있습니다."}</UiText></p>
         </div>
         <form action={updateAction} className="grid gap-5 px-6 py-6">
           <input type="hidden" name="teamId" value={teamId} />

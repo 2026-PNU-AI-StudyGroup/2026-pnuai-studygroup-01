@@ -184,6 +184,16 @@ export function DocumentIcon(props: IconProps) {
   );
 }
 
+export function VideoIcon(props: IconProps) {
+  return (
+    <svg {...iconProps} {...props}>
+      <rect x="4" y="6.25" width="12.5" height="11.5" rx="1.75" />
+      <path d="m16.5 10 3.5-2v8l-3.5-2" />
+      <path d="m9.5 10.25 3 1.75-3 1.75z" />
+    </svg>
+  );
+}
+
 export function BarChartIcon(props: IconProps) {
   return (
     <svg {...iconProps} {...props}>

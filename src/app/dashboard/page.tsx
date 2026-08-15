@@ -9,6 +9,7 @@ import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashbo
 import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-dashboard-sidebar";
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
+import { StudentReviewList } from "@/app/dashboard/_components/student-review-list";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
@@ -79,6 +80,10 @@ export default async function DashboardPage({
   }
 
   const teamStatus = view === "active" ? "ACTIVE" : view === "completed" ? "COMPLETED" : undefined;
+  const reviewPageSize = 20;
+  const reviewFetchSize = view === "pending"
+    ? Math.max(1, requestedPage) * reviewPageSize
+    : reviewPageSize;
   const teamPagePromise = new TeamWorkspaceQueryService(
     new PrismaTeamWorkspaceQueryRepository(prisma),
   ).listPage(actor, view === "all" || teamStatus ? requestedPage : 1, teamStatus);
@@ -94,15 +99,19 @@ export default async function DashboardPage({
       title: true,
       status: true,
       program: { select: { name: true } },
-      team: { select: { id: true } },
+      projectTeam: { select: { id: true } },
     },
   });
+  const approvalService = new TopicApprovalService(
+    new PrismaTopicApprovalRepository(prisma),
+    new PrismaProjectProgramRepository(prisma),
+  );
   const pendingApprovalPromise = actor.role === "PROFESSOR"
-    ? new TopicApprovalService(
-        new PrismaTopicApprovalRepository(prisma),
-        new PrismaProjectProgramRepository(prisma),
-      ).listPendingForReview(actor)
+    ? approvalService.listPendingForReview(actor)
     : Promise.resolve([]);
+  const ownPendingApprovalPromise = student
+    ? approvalService.list(actor, 1, reviewFetchSize, { status: "PENDING" })
+    : Promise.resolve(null);
   const applicationService = student
     ? new ListOwnTopicApplicationsService(
         new PrismaTopicApplicationQueryRepository(prisma),
@@ -111,19 +120,20 @@ export default async function DashboardPage({
   const primaryApplicationPromise = applicationService
     ? applicationService.execute(
         actor,
-        view === "pending" || view === "rejected" ? requestedPage : 1,
-        20,
+        view === "rejected" ? requestedPage : 1,
+        view === "pending" ? reviewFetchSize : 20,
         view === "rejected" ? "REJECTED" : "PENDING",
       )
     : null;
   const secondaryApplicationPromise = applicationService && view === "all"
     ? applicationService.execute(actor, 1, 20, "REJECTED")
     : null;
-  const [teamPage, assistantInvitations, assistantTopics, pendingApprovals, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
+  const [teamPage, assistantInvitations, assistantTopics, pendingApprovals, ownPendingApprovalPage, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
     teamPagePromise,
     assistantInvitationsPromise,
     assistantTopicsPromise,
     pendingApprovalPromise,
+    ownPendingApprovalPromise,
     primaryApplicationPromise,
     secondaryApplicationPromise,
   ]);
@@ -136,7 +146,7 @@ export default async function DashboardPage({
     REJECTED: 0,
   };
   const counts = buildProjectDashboardCounts({
-    pending: applicationCounts.PENDING,
+    pending: applicationCounts.PENDING + (ownPendingApprovalPage?.total ?? 0),
     rejected: applicationCounts.REJECTED,
     active: activeCount,
     completed: completedCount,
@@ -171,7 +181,7 @@ export default async function DashboardPage({
               </ul>
             </section>
           ) : null}
-          {assistantTopics.some(({ team }) => !team) ? (
+          {assistantTopics.some(({ projectTeam }) => !projectTeam) ? (
             <section aria-labelledby="assistant-topics-title">
               <div className="flex items-end justify-between border-b border-[var(--line)] pb-3">
                 <div>
@@ -180,7 +190,7 @@ export default async function DashboardPage({
                 </div>
               </div>
               <ul className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
-                {assistantTopics.filter(({ team }) => !team).map((topic) => (
+                {assistantTopics.filter(({ projectTeam }) => !projectTeam).map((topic) => (
                   <li key={topic.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <div>
                       <strong><UiText>{topic.title}</UiText></strong>
@@ -211,12 +221,12 @@ export default async function DashboardPage({
           {view === "all" && activeCount > 0 ? (
             <ProjectList
               role={actor.role}
-              teams={teams.filter((team) => team.status !== "COMPLETED")}
+              teams={teams.filter((team) => team.status === "IN_PROGRESS")}
               view="active"
             />
           ) : null}
-          {student && view === "all" && primaryApplicationPage && primaryApplicationPage.total > 0 ? (
-            <ProjectApplicationList page={primaryApplicationPage} status="PENDING" preview />
+          {student && view === "all" && primaryApplicationPage && ownPendingApprovalPage ? (
+            <StudentReviewList applications={primaryApplicationPage.items} registrations={ownPendingApprovalPage.items} total={primaryApplicationPage.total + ownPendingApprovalPage.total} preview />
           ) : null}
           {view === "all" && completedCount > 0 ? (
             <ProjectList
@@ -229,8 +239,8 @@ export default async function DashboardPage({
             <ProjectApplicationList page={secondaryApplicationPage} status="REJECTED" preview />
           ) : null}
 
-          {student && view === "pending" && primaryApplicationPage ? (
-            <ProjectApplicationList page={primaryApplicationPage} status="PENDING" />
+          {student && view === "pending" && primaryApplicationPage && ownPendingApprovalPage ? (
+            <StudentReviewList applications={primaryApplicationPage.items} registrations={ownPendingApprovalPage.items} total={primaryApplicationPage.total + ownPendingApprovalPage.total} page={requestedPage} pageSize={reviewPageSize} />
           ) : null}
           {student && view === "rejected" && primaryApplicationPage ? (
             <ProjectApplicationList page={primaryApplicationPage} status="REJECTED" />

@@ -14,6 +14,7 @@ import {
   normalizeDecisionComment,
   normalizeDescription,
   normalizeReportFeedback,
+  normalizeYoutubeUrl,
 } from "@/modules/report/domain/report-policy";
 
 export class ReportOperationNotAllowedError extends Error {
@@ -81,7 +82,7 @@ export class ArtifactRegistrationService {
     fileId?: string;
     externalUrl?: string;
   }, now = new Date()) {
-    if (!!input.fileId === !!input.externalUrl) {
+    if (input.type === "PRESENTATION_VIDEO" || !!input.fileId === !!input.externalUrl) {
       throw new ReportOperationNotAllowedError();
     }
     const normalized = normalizeArtifact(input);
@@ -105,6 +106,9 @@ export class ArtifactManagementService {
     type: ArtifactType;
     title: string;
   }, now = new Date()) {
+    if (input.type === "PRESENTATION_VIDEO") {
+      throw new ReportOperationNotAllowedError();
+    }
     const normalized = normalizeArtifact(input);
     const updated = await this.artifactWriter.updateArtifact({
       ...input,
@@ -149,6 +153,25 @@ export class ArtifactManagementService {
       reorderedAt: now,
     });
     if (!reordered) throw new ReportOperationNotAllowedError();
+  }
+}
+
+export class ShowcaseVideoService {
+  constructor(private readonly artifactWriter: ArtifactWriter) {}
+
+  async save(actor: CurrentActor, input: {
+    teamId: string;
+    externalUrl: string;
+  }, now = new Date()) {
+    const saved = await this.artifactWriter.upsertShowcaseVideo({
+      teamId: input.teamId,
+      actor,
+      type: "PRESENTATION_VIDEO",
+      title: "시연·발표 영상",
+      externalUrl: normalizeYoutubeUrl(input.externalUrl),
+      updatedAt: now,
+    });
+    if (!saved) throw new ReportOperationNotAllowedError();
   }
 }
 

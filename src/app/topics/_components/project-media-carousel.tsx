@@ -15,15 +15,20 @@ export type ProjectMediaItem =
 export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
   const carouselId = useId();
   const [index, setIndex] = useState(0);
-  if (items.length === 0) return null;
-  const current = items[Math.min(index, items.length - 1)];
+  const isEmpty = items.length === 0;
+  const current = items.length ? items[Math.min(index, items.length - 1)] : null;
   const move = (direction: -1 | 1) =>
     setIndex((value) => (value + direction + items.length) % items.length);
 
   return (
     <UiSection id={carouselId} aria-roledescription="carousel" aria-label="프로젝트 미디어" className="space-y-3">
-      <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)]">
-        {current.kind === "image" ? (
+      <div className={`relative aspect-video w-full overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] ${isEmpty ? "grid place-items-center" : ""}`}>
+        {isEmpty ? (
+          <div className="grid w-full place-items-center gap-1 text-center">
+            <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"프로젝트 이미지 준비 중"}</UiText></span>
+            <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"내 프로젝트 > 프로젝트 > 결과물에서 등록할 수 있습니다."}</UiText></span>
+          </div>
+        ) : current?.kind === "image" ? (
           <Image
             key={current.src}
             alt={current.alt}
@@ -45,13 +50,14 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
           />
         )}
 
-        {items.length > 1 ? (
+        {items.length > 1 || isEmpty ? (
           <>
             <button
               type="button"
               aria-controls={carouselId}
               onClick={() => move(-1)}
-              className="absolute left-2.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)]/90 text-[var(--ink)] backdrop-blur transition-colors hover:bg-[var(--surface)]"
+              disabled={isEmpty}
+              className="absolute left-2.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)]/90 text-[var(--ink)] backdrop-blur transition-colors hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-35"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.8]"><path d="m12 4-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <span className="sr-only"><UiText>{"이전 미디어"}</UiText></span>
@@ -60,7 +66,8 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
               type="button"
               aria-controls={carouselId}
               onClick={() => move(1)}
-              className="absolute right-2.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)]/90 text-[var(--ink)] backdrop-blur transition-colors hover:bg-[var(--surface)]"
+              disabled={isEmpty}
+              className="absolute right-2.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)]/90 text-[var(--ink)] backdrop-blur transition-colors hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-35"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.8]"><path d="m8 4 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <span className="sr-only"><UiText>{"다음 미디어"}</UiText></span>
@@ -69,9 +76,9 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
         ) : null}
       </div>
 
-      {items.length > 1 ? (
+      {items.length > 1 || isEmpty ? (
         <div className="flex items-center justify-center gap-1.5">
-          {items.map((item, dotIndex) => {
+          {isEmpty ? <button type="button" disabled aria-label="프로젝트 이미지 없음" className="h-2 w-5 rounded-full bg-[var(--line-strong)] opacity-35" /> : items.map((item, dotIndex) => {
             const active = dotIndex === Math.min(index, items.length - 1);
             const label = item.kind === "video" ? item.title : item.alt;
             return (

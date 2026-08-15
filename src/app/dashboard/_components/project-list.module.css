@@ -105,16 +105,15 @@
   white-space: nowrap;
 }
 
-.topic {
-  display: -webkit-box;
+.teamName {
   overflow: hidden;
-  min-height: 2.8rem;
   margin-top: 0.45rem;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.55;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 1024px) {
@@ -145,10 +144,6 @@
     grid-area: task;
   }
 
-  .projectCard:only-child .topic {
-    min-height: 0;
-    max-width: 48rem;
-  }
 }
 
 .progress {

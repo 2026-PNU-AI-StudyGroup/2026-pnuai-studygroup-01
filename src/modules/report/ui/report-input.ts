@@ -22,22 +22,35 @@ export const reportFeedbackSchema = z.object({
 
 export const artifactRegistrationSchema = z.object({
   teamId: z.string().uuid(),
-  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER", "IMAGE"]),
+  type: z.enum(["SOURCE_CODE", "OTHER"]),
   title: z.string().trim().min(1).max(200),
   uploadId: z.string().uuid().optional(),
   externalUrl: z.url().optional(),
 }).refine((value) => !!value.uploadId !== !!value.externalUrl);
 
+export const showcaseImageSchema = z.object({
+  teamId: z.string().uuid(),
+  type: z.literal("IMAGE"),
+  title: z.string().trim().min(1).max(200),
+  uploadId: z.string().uuid(),
+});
+
 export const artifactUpdateSchema = z.object({
   teamId: z.string().uuid(),
   artifactId: z.string().uuid(),
-  type: z.enum(["PRESENTATION_VIDEO", "SOURCE_CODE", "POSTER", "OTHER", "IMAGE"]),
+  type: z.enum(["SOURCE_CODE", "POSTER", "OTHER", "IMAGE"]),
   title: z.string().trim().min(1).max(200),
 });
 
 export const artifactRemovalSchema = z.object({
   teamId: z.string().uuid(),
   artifactId: z.string().uuid(),
+});
+
+export const showcaseVideoSchema = z.object({
+  teamId: z.string().uuid(),
+  type: z.literal("PRESENTATION_VIDEO"),
+  externalUrl: z.string().trim().min(1).max(2_048),
 });
 
 export const artifactReorderSchema = z.object({

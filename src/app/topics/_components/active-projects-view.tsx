@@ -5,9 +5,12 @@ import { ActiveProjectResults } from "@/app/topics/_components/active-project-re
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
 import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
-import type { AdminProjectOperationFilter } from "@/modules/team/application/list-admin-program-project-operations";
+import type {
+  AdminProjectReportFilter,
+  AdminProjectTeamFilter,
+} from "@/modules/team/application/list-admin-program-project-operations";
 
-export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, query, divisionId, divisions = [], hasUnassigned = false, now, ballot, votingResults, adminProjectData, operation, registrationAction }: {
+export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, query, divisionId, divisions = [], hasUnassigned = false, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, registrationAction }: {
   programId?: string;
   topics: PublicTopicPage;
   canApply: boolean;
@@ -20,13 +23,14 @@ export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, q
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
   adminProjectData?: AdminProjectCardData[];
-  operation?: AdminProjectOperationFilter;
+  teamStatus?: AdminProjectTeamFilter;
+  reportStatus?: AdminProjectReportFilter;
   registrationAction?: ReactNode;
 }) {
   return (
     <div className="min-w-0">
-      <ActiveProjectFilters programId={programId} query={query} divisionId={divisionId} divisions={divisions} hasUnassigned={hasUnassigned} operation={operation} />
-      <ActiveProjectResults topics={topics} canApply={canApply} leaderTeams={leaderTeams} programId={programId} query={query} divisionId={divisionId} now={now} ballot={ballot} votingResults={votingResults} adminProjectData={adminProjectData} operation={operation} registrationAction={registrationAction} />
+      <ActiveProjectFilters programId={programId} query={query} divisionId={divisionId} divisions={divisions} hasUnassigned={hasUnassigned} teamStatus={teamStatus} reportStatus={reportStatus} />
+      <ActiveProjectResults topics={topics} canApply={canApply} leaderTeams={leaderTeams} programId={programId} query={query} divisionId={divisionId} now={now} ballot={ballot} votingResults={votingResults} adminProjectData={adminProjectData} teamStatus={teamStatus} reportStatus={reportStatus} registrationAction={registrationAction} />
     </div>
   );
 }

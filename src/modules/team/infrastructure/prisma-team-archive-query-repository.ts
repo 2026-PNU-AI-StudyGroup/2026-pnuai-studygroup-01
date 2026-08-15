@@ -15,8 +15,6 @@ const archivedProjectSelect = {
     title: true,
     description: true,
     advisorRole: true,
-    requiredSkills: true,
-    preferredSkills: true,
     sourceUrl: true,
     thumbnailPath: true,
     posterPath: true,
@@ -101,11 +99,8 @@ export class PrismaTeamArchiveQueryRepository
   }
 
   async countClosed(filters: ArchiveFilters): Promise<number> {
-    const skillTeamIds = filters.query
-      ? await this.findSkillMatchingTeamIds(filters.query)
-      : undefined;
     return this.client.projectTeam.count({
-      where: closedProjectWhere(filters, skillTeamIds, this.audience),
+      where: closedProjectWhere(filters, this.audience),
     });
   }
 
@@ -114,11 +109,8 @@ export class PrismaTeamArchiveQueryRepository
     limit: number;
     filters: ArchiveFilters;
   }): Promise<ArchivedProject[]> {
-    const skillTeamIds = input.filters.query
-      ? await this.findSkillMatchingTeamIds(input.filters.query)
-      : undefined;
     const teams = await this.client.projectTeam.findMany({
-      where: closedProjectWhere(input.filters, skillTeamIds, this.audience),
+      where: closedProjectWhere(input.filters, this.audience),
       orderBy: [
         { project: { program: { startsAt: "desc" } } },
         { name: "asc" },
@@ -143,19 +135,6 @@ export class PrismaTeamArchiveQueryRepository
     return team ? toArchivedProject(team) : null;
   }
 
-  private async findSkillMatchingTeamIds(query: string): Promise<string[]> {
-    const rows = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      SELECT DISTINCT "project_team"."id"
-      FROM "project_team"
-      JOIN "topic" ON "topic"."id" = "project_team"."projectId"
-      CROSS JOIN LATERAL unnest("topic"."requiredSkills" || "topic"."preferredSkills") AS "skill"("value")
-      JOIN "project_program" ON "project_program"."id" = "topic"."programId"
-      WHERE "project_team"."confirmedAt" IS NOT NULL
-        AND "project_program"."endsAt" <= NOW()
-        AND strpos(lower("skill"."value"), lower(${query})) > 0
-    `);
-    return rows.map(({ id }) => id);
-  }
 }
 
 function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
@@ -171,8 +150,6 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     divisionName: team.project.division?.name ?? null,
     topicTitle: team.project.title,
     topicDescription: team.project.description,
-    requiredSkills: team.project.requiredSkills,
-    preferredSkills: team.project.preferredSkills,
     professorName: team.project.manager!.name,
     advisorRole: team.project.advisorRole,
     advisorEnabled: team.project.program.advisorEnabled,
@@ -195,7 +172,6 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
 
 function closedProjectWhere(
   filters: ArchiveFilters,
-  skillTeamIds?: string[],
   audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
 ): Prisma.ProjectTeamWhereInput {
   const conditions: Prisma.ProjectTeamWhereInput[] = [];
@@ -224,7 +200,6 @@ function closedProjectWhere(
       },
       { project: { title: { contains: query, mode: "insensitive" } } },
       { project: { description: { contains: query, mode: "insensitive" } } },
-      { id: { in: skillTeamIds ?? [] } },
       { artifacts: { some: { title: { contains: query, mode: "insensitive" } } } },
     ] });
   }

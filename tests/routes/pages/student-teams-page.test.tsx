@@ -4,10 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import StudentTeamsPage from "@/app/teams/page";
 
-const { getCurrentActor, listWorkspace, listStudentCreatableOpen } = vi.hoisted(() => ({
+const { getCurrentActor, listWorkspace } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
   listWorkspace: vi.fn(),
-  listStudentCreatableOpen: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
@@ -16,14 +15,8 @@ vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentAc
 vi.mock("@/modules/student-team/application/manage-student-teams", () => ({
   StudentTeamQueryService: class { listWorkspace = listWorkspace; },
 }));
-vi.mock("@/modules/project-program/application/manage-project-programs", () => ({
-  ProjectProgramService: class { listStudentCreatableOpen = listStudentCreatableOpen; },
-}));
 vi.mock("@/modules/student-team/infrastructure/prisma-student-team-query-repository", () => ({
   PrismaStudentTeamQueryRepository: class {},
-}));
-vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({
-  PrismaProjectProgramRepository: class {},
 }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({
@@ -48,9 +41,7 @@ describe("StudentTeamsPage", () => {
   beforeEach(() => {
     getCurrentActor.mockReset();
     listWorkspace.mockReset();
-    listStudentCreatableOpen.mockReset();
     getCurrentActor.mockResolvedValue({ id: "student-1", name: "정하늘", role: "STUDENT" });
-    listStudentCreatableOpen.mockResolvedValue([]);
   });
 
   it("참여 팀 제목과 개수를 실제 목록 영역 한 곳에서만 보여준다", async () => {
@@ -72,5 +63,6 @@ describe("StudentTeamsPage", () => {
     expect(screen.getByRole("link", { name: "첫 팀 만들기" })).toHaveAttribute("href", "/teams?modal=create");
     expect(screen.queryByRole("link", { name: "새 팀 만들기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /받은 초대/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "학생 프로젝트 등록" })).not.toBeInTheDocument();
   });
 });

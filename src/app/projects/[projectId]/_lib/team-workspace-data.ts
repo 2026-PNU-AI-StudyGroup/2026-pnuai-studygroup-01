@@ -22,8 +22,14 @@ export const loadTeamWorkspace = cache(async (projectId: string, discussionPage 
   }
 });
 
+export const loadActiveTeamWorkspace = cache(async (projectId: string, discussionPage = 1) => {
+  const result = await loadTeamWorkspace(projectId, discussionPage);
+  if (result.workspace.approvalPending) notFound();
+  return result;
+});
+
 export const loadTeamReportWorkspace = cache(async (projectId: string) => {
-  const { actor, workspace } = await loadTeamWorkspace(projectId);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId);
   try {
     const reportWorkspace = await new ReportQueryService(
       new PrismaReportQueryRepository(prisma),

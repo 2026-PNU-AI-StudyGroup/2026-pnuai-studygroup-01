@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 
 import {
   type ArtifactMethod,
+  ArtifactContentField,
   ArtifactMethodSelector,
   ArtifactRegistrationFields,
 } from "@/app/projects/[projectId]/_components/artifact-registration-fields";
@@ -76,16 +77,8 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
           allowPendingCancel={canCancelUpload}
           onClose={cancelOrClose}
         />
-        <ArtifactMethodSelector
-          method={method}
-          pending={pending}
-          onChange={(nextMethod) => {
-            setMethod(nextMethod);
-            setState(initialReportActionState);
-          }}
-        />
         <form
-          className="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-7"
+          className="grid gap-5 px-5 py-6 sm:px-7"
           onSubmit={(event) => {
             event.preventDefault();
             const form = event.currentTarget;
@@ -132,9 +125,18 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
             });
           }}
         >
-          <ArtifactRegistrationFields method={method} />
+          <ArtifactRegistrationFields />
+          <ArtifactMethodSelector
+            method={method}
+            pending={pending}
+            onChange={(nextMethod) => {
+              setMethod(nextMethod);
+              setState(initialReportActionState);
+            }}
+          />
+          <ArtifactContentField method={method} />
           {uploadProgress ? (
-            <div role="status" aria-live="polite" className="grid gap-2 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold sm:col-span-2">
+            <div role="status" aria-live="polite" className="grid gap-2 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold">
               <span><UiText>{teamFileUploadProgressLabel(uploadProgress)}</UiText></span>
               {uploadProgress.percent !== null ? <progress aria-label={teamFileUploadProgressLabel(uploadProgress)} className="h-2 w-full accent-[var(--primary)]" max={100} value={uploadProgress.percent} /> : null}
             </div>
@@ -142,7 +144,7 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
           {state.status === "error" ? (
             <p
               role="alert"
-              className="text-sm font-semibold text-[var(--danger)] sm:col-span-2"
+              className="text-sm font-semibold text-[var(--danger)]"
             >
               <UiText>{state.message}</UiText>
             </p>

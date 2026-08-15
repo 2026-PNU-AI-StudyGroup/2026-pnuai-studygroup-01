@@ -20,15 +20,12 @@ describe("buildProgramSidebarItems", () => {
     openedAt: new Date("2026-01-01T00:00:00+09:00"),
     topicCount: 1,
     teamCount: 0,
-    description: "",
     startsAt: new Date("2026-01-01T00:00:00+09:00"),
     endsAt: new Date("2099-12-31T23:59:59+09:00"),
     recruitmentStartsAt: new Date("2026-01-01T00:00:00+09:00"),
     recruitmentEndsAt: new Date("2026-12-01T00:00:00+09:00"),
     executionStartsAt: new Date("2026-01-01T00:00:00+09:00"),
     executionEndsAt: new Date("2026-12-01T00:00:00+09:00"),
-    submissionStartsAt: new Date("2026-01-01T00:00:00+09:00"),
-    submissionEndsAt: new Date("2026-12-01T00:00:00+09:00"),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
     isPublic: true,
@@ -110,14 +107,14 @@ describe("buildProgramSidebarItems", () => {
       isPublic: false,
       topicCount: 4,
       teamCount: 1,
-    }], "manage", "settings", new Date(), new Map([["open-2026", 3]]));
+    }], new Date(), new Map([["open-2026", 3]]));
 
     expect(items[0]).toEqual(expect.objectContaining({
       status: "draft",
       visibility: "private",
       projectCount: 4,
       pendingApprovalCount: 3,
-      href: "/topics/manage/open-2026",
+      href: "/topics?programId=open-2026",
     }));
   });
 });
