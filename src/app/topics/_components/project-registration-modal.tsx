@@ -14,11 +14,11 @@ function formSnapshot(form: HTMLFormElement): string {
   return JSON.stringify(Array.from(new FormData(form).entries()));
 }
 
-export function ProjectProposalModal({ programs, defaultProgramId, professors, studentTeams, closeHref }: {
+export function ProjectRegistrationModal({ programs, defaultProgramId, professors, studentTeams, closeHref }: {
   programs: ProjectProgramRecord[];
   defaultProgramId?: string;
   professors: Array<{ id: string; name: string; email: string }>;
-  studentTeams: Array<{ id: string; name: string; memberCount: number; pendingInvitationCount?: number }>;
+  studentTeams: Array<{ id: string; name: string; memberCount: number; pendingInvitationCount?: number; members: Array<{ id: string; name: string }> }>;
   closeHref: string;
 }) {
   const router = useRouter();
@@ -54,10 +54,10 @@ export function ProjectProposalModal({ programs, defaultProgramId, professors, s
       closeButtonRef={closeButtonRef}
       openOnMount
       eyebrow={`${step.index + 1} / ${step.labels.length}`}
-      title="프로젝트 제안"
+      title="프로젝트 등록"
       context={step.labels[step.index]}
       steps={(
-        <UiOl aria-label="프로젝트 제안 단계" className="mt-8 grid gap-3 text-xs font-bold">
+        <UiOl aria-label="프로젝트 등록 단계" className="mt-8 grid gap-3 text-xs font-bold">
           {step.labels.map((label, index) => (
             <li key={label} className={index === step.index ? "text-[var(--primary)]" : "text-[var(--muted)]"}>
               {index + 1}. <UiText>{label}</UiText>
@@ -65,7 +65,7 @@ export function ProjectProposalModal({ programs, defaultProgramId, professors, s
           ))}
         </UiOl>
       )}
-      closeLabel="프로젝트 제안 닫기"
+      closeLabel="프로젝트 등록 닫기"
       onRequestClose={requestClose}
     >
       <div className="px-6 py-7 sm:px-8 lg:px-10 lg:py-9">

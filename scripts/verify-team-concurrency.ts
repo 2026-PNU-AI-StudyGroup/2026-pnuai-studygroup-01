@@ -16,7 +16,7 @@ if (process.env.ALLOW_LOCAL_CONCURRENCY_TEST !== "true") {
 
 const professorId = randomUUID();
 const studentIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
-const proposalStudentId = randomUUID();
+const registrationStudentId = randomUUID();
 let createdProgramId: string | null = null;
 let crossProgramId: string | null = null;
 
@@ -40,11 +40,11 @@ async function cleanup() {
     crossProgramId = null;
   }
   await prisma.studentTeam.deleteMany({
-    where: { leaderId: { in: [proposalStudentId, ...studentIds] } },
+    where: { leaderId: { in: [registrationStudentId, ...studentIds] } },
   });
-  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, ...studentIds, proposalStudentId] } } });
+  await prisma.auditLog.deleteMany({ where: { actorId: { in: [professorId, ...studentIds, registrationStudentId] } } });
   await prisma.user.deleteMany({
-    where: { id: { in: [professorId, ...studentIds, proposalStudentId] } },
+    where: { id: { in: [professorId, ...studentIds, registrationStudentId] } },
   });
 }
 
@@ -94,9 +94,9 @@ async function main() {
         role: "STUDENT" as const,
       })),
       {
-        id: proposalStudentId,
-        name: "Proposal Concurrency Student",
-        email: `verification+${proposalStudentId}@pusan.ac.kr`,
+        id: registrationStudentId,
+        name: "Registration Concurrency Student",
+        email: `verification+${registrationStudentId}@pusan.ac.kr`,
         emailVerified: true,
         role: "STUDENT" as const,
       },
@@ -104,7 +104,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `동시성 검증 프로그램 ${professorId}`, category: "검증", description: "동시성 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   createdProgramId = program.id;
   const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
@@ -183,7 +183,7 @@ async function main() {
 
   const crossProgram = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `교차 프로그램 검증 ${professorId}`, category: "검증", description: "교차 프로그램 참여 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   crossProgramId = crossProgram.id;
   const crossProgramTopic = await createTopic("교차 프로그램 참여", 2, crossProgram.id);
@@ -253,17 +253,17 @@ async function main() {
     throw new Error(`수락과 거절 경합 불변식이 깨졌습니다: status=${oppositeDecisionState.status}, members=${oppositeDecisionMembers}`);
   }
 
-  const proposalStudentTeamId = await studentTeamRepository.create({
-    leaderId: proposalStudentId,
+  const registrationStudentTeamId = await studentTeamRepository.create({
+    leaderId: registrationStudentId,
     name: "승인 삭제 경합 팀",
     description: "프로젝트 승인과 기존 팀 삭제 잠금 순서 검증",
     createdAt: new Date("2026-07-01T00:00:00Z"),
   });
-  const proposalTopicId = await approvalRepository.create({
+  const registrationTopicId = await approvalRepository.create({
     programId: program.id,
-    authorId: proposalStudentId,
+    authorId: registrationStudentId,
     title: "기존 팀 승인 삭제 경합",
-    description: "기존 팀 제안 승인과 팀 삭제가 교착 없이 일관되게 끝나는지 검증",
+    description: "기존 팀 등록 승인과 팀 삭제가 교착 없이 일관되게 끝나는지 검증",
     requiredSkills: ["TypeScript"],
     preferredSkills: [],
     roleExpectations: "구현",
@@ -273,16 +273,18 @@ async function main() {
     capacity: 1,
     route: "PROFESSOR",
     requestedProfessorId: professorId,
-    studentTeamId: proposalStudentTeamId,
+    sourceStudentTeamId: registrationStudentTeamId,
+    projectRepresentativeId: registrationStudentId,
+    projectTeamName: "승인 삭제 경합 프로젝트팀",
     requestedAt: new Date("2026-07-01T00:00:00Z"),
   });
-  if (!proposalTopicId) throw new Error("기존 팀 승인 삭제 경합용 제안을 만들지 못했습니다.");
-  const proposalRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
-    where: { topicId: proposalTopicId, status: "PENDING" },
+  if (!registrationTopicId) throw new Error("기존 팀 승인 삭제 경합용 등록을 만들지 못했습니다.");
+  const registrationRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
+    where: { topicId: registrationTopicId, status: "PENDING" },
   });
   const approvalDeleteRace = await Promise.allSettled([
     approvalRepository.decide({
-      requestId: proposalRequest.id,
+      requestId: registrationRequest.id,
       actorId: professorId,
       actorRole: "PROFESSOR",
       decision: "APPROVE",
@@ -290,29 +292,29 @@ async function main() {
       decidedAt: new Date("2026-07-02T00:00:00Z"),
     }),
     studentTeamRepository.delete({
-      teamId: proposalStudentTeamId,
-      leaderId: proposalStudentId,
+      teamId: registrationStudentTeamId,
+      leaderId: registrationStudentId,
       deletedAt: new Date("2026-07-02T00:00:00Z"),
     }),
   ]);
   if (approvalDeleteRace[0].status !== "fulfilled") throw approvalDeleteRace[0].reason;
   if (approvalDeleteRace[1].status !== "fulfilled") throw approvalDeleteRace[1].reason;
-  const [proposalTopicState, proposalRequestState, proposalMemberships] = await Promise.all([
-    prisma.topic.findUniqueOrThrow({ where: { id: proposalTopicId } }),
-    prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: proposalRequest.id } }),
-    prisma.projectTeamMembership.count({ where: { projectTeam: { project: { programId: program.id } }, userId: proposalStudentId, endedAt: null } }),
+  const [registrationTopicState, registrationRequestState, registrationMemberships] = await Promise.all([
+    prisma.topic.findUniqueOrThrow({ where: { id: registrationTopicId } }),
+    prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: registrationRequest.id } }),
+    prisma.projectTeamMembership.count({ where: { projectTeam: { project: { programId: program.id } }, userId: registrationStudentId, endedAt: null } }),
   ]);
   const approvalDeleteOutcome = approvalDeleteRace[0].value;
   const approvalWon = approvalDeleteOutcome === "APPROVED";
   if (
     approvalDeleteRace[1].value !== true ||
     !["APPROVED", "UNAVAILABLE"].includes(approvalDeleteOutcome) ||
-    proposalRequestState.status === "PENDING" ||
-    (approvalWon && (proposalTopicState.status !== "ACTIVE" || proposalRequestState.status !== "APPROVED" || proposalMemberships !== 1)) ||
-    (!approvalWon && (proposalTopicState.status !== "REJECTED" || proposalRequestState.status !== "REJECTED" || proposalMemberships !== 0))
+    registrationRequestState.status === "PENDING" ||
+    (approvalWon && (registrationTopicState.status !== "ACTIVE" || registrationRequestState.status !== "APPROVED" || registrationMemberships !== 1)) ||
+    (!approvalWon && (registrationTopicState.status !== "REJECTED" || registrationRequestState.status !== "REJECTED" || registrationMemberships !== 0))
   ) {
     throw new Error(
-      `기존 팀 승인과 삭제 경합 불변식이 깨졌습니다: approval=${approvalDeleteOutcome}, deleted=${approvalDeleteRace[1].value}, topic=${proposalTopicState.status}, request=${proposalRequestState.status}, memberships=${proposalMemberships}`,
+      `기존 팀 승인과 삭제 경합 불변식이 깨졌습니다: approval=${approvalDeleteOutcome}, deleted=${approvalDeleteRace[1].value}, topic=${registrationTopicState.status}, request=${registrationRequestState.status}, memberships=${registrationMemberships}`,
     );
   }
 
@@ -334,7 +336,7 @@ async function main() {
     programId: crossProgram.id,
     authorId: studentIds[3],
     title: "기존 팀 승인 팀원 제거 경합",
-    description: "기존 팀 제안 승인과 개별 팀원 제거가 동일한 팀 구성으로 직렬화되는지 검증",
+    description: "기존 팀 등록 승인과 개별 팀원 제거가 동일한 팀 구성으로 직렬화되는지 검증",
     requiredSkills: ["TypeScript"],
     preferredSkills: [],
     roleExpectations: "구현",
@@ -344,10 +346,12 @@ async function main() {
     capacity: 2,
     route: "PROFESSOR",
     requestedProfessorId: professorId,
-    studentTeamId: memberRemovalTeamId,
+    sourceStudentTeamId: memberRemovalTeamId,
+    projectRepresentativeId: studentIds[3],
+    projectTeamName: "승인 팀원 제거 경합 프로젝트팀",
     requestedAt: new Date("2026-07-03T00:00:00Z"),
   });
-  if (!memberRemovalTopicId) throw new Error("기존 팀 승인 팀원 제거 경합용 제안을 만들지 못했습니다.");
+  if (!memberRemovalTopicId) throw new Error("기존 팀 승인 팀원 제거 경합용 등록을 만들지 못했습니다.");
   const memberRemovalRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
     where: { topicId: memberRemovalTopicId, status: "PENDING" },
   });
@@ -408,9 +412,9 @@ async function main() {
       },
       approvalDeleteRace: {
         approval: approvalDeleteOutcome,
-        topic: proposalTopicState.status,
-        request: proposalRequestState.status,
-        memberships: proposalMemberships,
+        topic: registrationTopicState.status,
+        request: registrationRequestState.status,
+        memberships: registrationMemberships,
       },
       approvalMemberRemovalRace: {
         approval: memberRemovalApprovalOutcome,

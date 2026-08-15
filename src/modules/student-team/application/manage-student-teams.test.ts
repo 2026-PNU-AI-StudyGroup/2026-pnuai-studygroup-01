@@ -30,14 +30,13 @@ describe("지속형 학생 팀 관리", () => {
     await expect(service.invite(actor, { teamId: "team-1", email: "other@example.com" })).rejects.toBeInstanceOf(StudentTeamOperationError);
   });
 
-  it("프로젝트 승인 대기 중인 팀에는 새 초대를 만들지 않는다", async () => {
+  it("프로젝트 등록 뒤에도 원본 학생팀 초대를 막지 않는다", async () => {
     const store = writer();
-    vi.mocked(store.invite).mockResolvedValue("LOCKED");
 
     await expect(new StudentTeamCommandService(store).invite(actor, {
       teamId: "team-1",
       email: "teammate@pusan.ac.kr",
-    })).rejects.toThrow("프로젝트 승인 대기 중에는 팀원을 새로 초대할 수 없습니다.");
+    })).resolves.toBeUndefined();
   });
 
   it("팀장 삭제는 저장소의 아카이브 보존 삭제 경계를 호출한다", async () => {

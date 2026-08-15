@@ -35,7 +35,13 @@ type StudentTeamRecruitmentHistory = {
 
 export interface StudentTeamRecruitmentReader {
   listPosts(actorId: string, page: number): Promise<StudentTeamRecruitmentPostList>;
-  listLeaderTeams(actorId: string): Promise<Array<{ id: string; name: string; memberCount: number; pendingInvitationCount: number }>>;
+  listLeaderTeams(actorId: string): Promise<Array<{
+    id: string;
+    name: string;
+    memberCount: number;
+    pendingInvitationCount: number;
+    members: Array<{ id: string; name: string }>;
+  }>>;
   listAuthoredPosts(actorId: string, page: number): Promise<{ posts: StudentTeamAuthoredRecruitmentPost[]; page: number; totalPages: number; total: number }>;
   listApplicationHistory(actorId: string, page: number): Promise<{ applications: StudentTeamRecruitmentHistory[]; page: number; totalPages: number; total: number }>;
   findPostApplications(postId: string, actorId: string, isAdmin: boolean): Promise<StudentTeamRecruitmentPostApplications | null>;

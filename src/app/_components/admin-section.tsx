@@ -10,17 +10,19 @@ export function AdminSection({
   title,
   description,
   meta,
+  actions,
   children,
 }: {
   id: string;
   title: ReactNode;
   description?: ReactNode;
   meta?: ReactNode;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section aria-labelledby={id} className="admin-panel overflow-hidden">
-      <header className="flex flex-col gap-3 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+      <header className="flex flex-col gap-4 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <h2 id={id} className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
             <UiText>{title}</UiText>
@@ -31,11 +33,8 @@ export function AdminSection({
             </p>
           ) : null}
         </div>
-        {meta !== undefined && meta !== null ? (
-          <div className="shrink-0 text-sm font-semibold text-[var(--muted)]">
-            <UiText>{meta}</UiText>
-          </div>
-        ) : null}
+        {actions !== undefined && actions !== null ? <div className="min-w-0 lg:ml-auto">{actions}</div> : null}
+        {meta !== undefined && meta !== null ? <div className="shrink-0 text-sm font-semibold text-[var(--muted)]"><UiText>{meta}</UiText></div> : null}
       </header>
       {children}
     </section>

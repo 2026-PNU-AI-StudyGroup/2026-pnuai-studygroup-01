@@ -1,828 +1,176 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 
 vi.mock("@/modules/translation/application/translation-queue", () => ({
   enqueueTranslations: vi.fn(async () => undefined),
 }));
 
-const requestedAt = new Date("2026-08-01T00:00:00Z");
-const recruitmentEndsAt = new Date("2026-08-10T00:00:00Z");
+vi.mock("@/modules/report/infrastructure/program-deliverable-assignment", () => ({
+  assignProgramDeliverablesToTeam: vi.fn(async () => undefined),
+}));
 
-function uniqueConflict(target: string[]) {
-  return new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
-    code: "P2002",
-    clientVersion: "7.8.0",
-    meta: { target },
-  });
-}
-
-const proposal = {
-  programId: "program-1",
-  authorId: "student-1",
-  title: "학생 제안",
-  description: "설명",
-  requiredSkills: ["TypeScript"],
-  preferredSkills: [],
-  roleExpectations: "개발",
-  availabilityRequirement: "주 1회",
-  applicationMode: "INDIVIDUAL_OR_TEAM" as const,
-  applicationQuestions: [{ label: "동기", maxLength: 500, required: true }],
-  capacity: 4,
-  recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"),
-  recruitmentEndsAt,
-  executionStartsAt: new Date("2026-08-11T00:00:00Z"),
-  executionEndsAt: new Date("2026-09-10T00:00:00Z"),
-  submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
-  submissionEndsAt: new Date("2026-09-20T00:00:00Z"),
-  route: "ADMIN" as const,
-  requestedProfessorId: null,
-  requestedAt,
+const requestedAt = new Date("2026-08-16T00:00:00Z");
+const registration = {
+  programId: "program-1", authorId: "student-1", title: "학생 등록", description: "설명",
+  requiredSkills: ["TypeScript"], preferredSkills: [], roleExpectations: "개발", availabilityRequirement: "주 1회",
+  applicationMode: "TEAM_ONLY" as const, applicationQuestions: [{ label: "동기", maxLength: 500, required: true }], capacity: 4,
+  recruitmentStartsAt: new Date("2026-08-01T00:00:00Z"), recruitmentEndsAt: new Date("2026-08-20T00:00:00Z"),
+  executionStartsAt: new Date("2026-08-21T00:00:00Z"), executionEndsAt: new Date("2026-09-20T00:00:00Z"),
+  route: "ADMIN" as const, requestedProfessorId: null,
+  sourceStudentTeamId: "student-team-1", projectRepresentativeId: "student-2", projectTeamName: "프로젝트 스냅샷 팀", requestedAt,
 };
 
-describe("학생 제안 프로젝트의 기존 팀 연결", () => {
+function openProgram() {
+  return {
+    id: "program-1", isPublic: true, endsAt: new Date("2026-12-31T00:00:00Z"), advisorEnabled: true,
+    studentProjectCreationEnabled: true, projectTeamMinSize: 2, projectTeamMaxSize: 6,
+    projectRegistrationStartsAt: new Date("2026-08-01T00:00:00Z"), projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+  };
+}
+
+describe("PrismaTopicApprovalRepository", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("저장 시점에도 지도교수가 없는 프로그램의 교수 승인 요청을 거부한다", async () => {
-    const createTopic = vi.fn();
+  it("등록 시 학생팀을 복사한 승인 대기 프로젝트팀을 만든다", async () => {
+    const create = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
-      $queryRaw: vi.fn().mockResolvedValue([{
-        id: "program-1",
-        status: "OPEN",
-        advisorEnabled: false,
-        studentProjectCreationEnabled: true,
-      }]),
-      user: { findFirst: vi.fn() },
-      topic: { create: createTopic },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).create({
-      ...proposal,
-      route: "PROFESSOR",
-      requestedProfessorId: "professor-1",
-    })).resolves.toBeNull();
-
-    expect(transaction.user.findFirst).not.toHaveBeenCalled();
-    expect(createTopic).not.toHaveBeenCalled();
-    const sql = (transaction.$queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
-    expect(sql).toContain('FROM "project_program"');
-    expect(sql).toContain("FOR SHARE");
-  });
-
-  it("기존 팀을 선택하면 정원을 현재 팀원 수로 고정하고 추가 모집을 끈다", async () => {
-    const createTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const transaction = {
-      $queryRaw: vi.fn()
-        .mockResolvedValueOnce([{
-          id: "program-1",
-          isPublic: true,
-          endsAt: new Date("2026-12-31T00:00:00Z"),
-          advisorEnabled: true,
-          studentProjectCreationEnabled: true,
-          projectTeamMinSize: 2,
-          projectTeamMaxSize: 6,
-          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
-      studentTeam: {
-        findFirst: vi.fn(async () => ({
-          id: "student-team-1",
-          compositionVersion: 1,
-          members: [
-            { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
-            { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
-          ],
-          _count: { invitations: 0 },
-        })),
-      },
-      projectTeamMembership: { count: vi.fn(async () => 0) },
-      topic: { create: createTopic },
-      user: { findMany: vi.fn(async () => []) },
-      notification: { createMany: vi.fn(async () => ({ count: 0 })) },
-      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await new PrismaTopicApprovalRepository(client).create({
-      ...proposal,
-      studentTeamId: "student-team-1",
-    });
-
-    expect(createTopic).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        managerId: null,
-        applicationMode: "TEAM_ONLY",
-        recruitmentEnabled: false,
-        capacity: 2,
-        approvalRequests: {
-          create: expect.objectContaining({ studentTeamId: "student-team-1" }),
-        },
-      }),
-    });
-    const lockSql = transaction.$queryRaw.mock.calls.map(([query]) =>
-      (query as { strings: readonly string[] }).strings.join("?"),
-    );
-    expect(lockSql[0]).toContain('FROM "project_program"');
-    expect(lockSql[0]).toContain("FOR SHARE");
-    expect(lockSql[2]).toContain('FROM "student_team"');
-    expect(lockSql[2]).toContain("FOR UPDATE");
-  });
-
-  it("프로그램의 최소 팀 인원을 충족하지 못한 팀 제안을 저장하지 않는다", async () => {
-    const createTopic = vi.fn();
-    const transaction = {
-      $queryRaw: vi.fn()
-        .mockResolvedValueOnce([{
-          id: "program-1",
-          isPublic: true,
-          endsAt: new Date("2026-12-31T00:00:00Z"),
-          advisorEnabled: false,
-          studentProjectCreationEnabled: true,
-          projectTeamMinSize: 2,
-          projectTeamMaxSize: 6,
-          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
-      studentTeam: {
-        findFirst: vi.fn(async () => ({
-          id: "student-team-1",
-          compositionVersion: 1,
-          members: [{ studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } }],
-          _count: { invitations: 0 },
-        })),
-      },
-      projectTeamMembership: { count: vi.fn() },
-      topic: { create: createTopic },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).create({
-      ...proposal,
-      studentTeamId: "student-team-1",
-    })).resolves.toBeNull();
-    expect(transaction.projectTeamMembership.count).not.toHaveBeenCalled();
-    expect(createTopic).not.toHaveBeenCalled();
-  });
-
-  it("학생 제안에 팀을 선택하지 않으면 저장하지 않는다", async () => {
-    const createTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const transaction = {
-      $queryRaw: vi.fn()
-        .mockResolvedValueOnce([{
-          id: "program-1",
-          isPublic: true,
-          endsAt: new Date("2026-12-31T00:00:00Z"),
-          advisorEnabled: true,
-          studentProjectCreationEnabled: true,
-          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        }])
-        .mockResolvedValueOnce([]),
-      studentTeam: { findFirst: vi.fn() },
-      projectTeamMembership: { count: vi.fn() },
-      topic: { create: createTopic },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await new PrismaTopicApprovalRepository(client).create(proposal);
-
-    expect(transaction.studentTeam.findFirst).not.toHaveBeenCalled();
-    expect(transaction.$queryRaw).toHaveBeenCalledTimes(1);
-    expect(createTopic).not.toHaveBeenCalled();
-  });
-
-  it("응답 대기 중인 초대가 있는 팀은 제안에 연결하지 않는다", async () => {
-    const createTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const transaction = {
-      $queryRaw: vi.fn()
-        .mockResolvedValueOnce([{
-          id: "program-1",
-          isPublic: true,
-          endsAt: new Date("2026-12-31T00:00:00Z"),
-          advisorEnabled: true,
-          studentProjectCreationEnabled: true,
-          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
-      studentTeam: {
-        findFirst: vi.fn(async () => ({
-          id: "student-team-1",
-          compositionVersion: 1,
-          members: [{ studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } }],
-          _count: { invitations: 1 },
-        })),
-      },
-      projectTeamMembership: { count: vi.fn() },
-      topic: { create: createTopic },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await new PrismaTopicApprovalRepository(client).create({
-      ...proposal,
-      studentTeamId: "student-team-1",
-    });
-
-    expect(transaction.projectTeamMembership.count).not.toHaveBeenCalled();
-    expect(createTopic).not.toHaveBeenCalled();
-  });
-
-  it("지원 비활성화 여부와 무관하게 팀 없는 학생 제안을 거부한다", async () => {
-    const createTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const transaction = {
-      $queryRaw: vi.fn()
-        .mockResolvedValueOnce([{
-          id: "program-1",
-          isPublic: true,
-          endsAt: new Date("2026-12-31T00:00:00Z"),
-          advisorEnabled: true,
-          studentProjectCreationEnabled: true,
-          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        }])
-        .mockResolvedValueOnce([]),
-      studentTeam: { findFirst: vi.fn() },
-      projectTeamMembership: { count: vi.fn() },
-      topic: { create: createTopic },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await new PrismaTopicApprovalRepository(client).create({ ...proposal, recruitmentEnabled: false });
-
-    expect(createTopic).not.toHaveBeenCalled();
-  });
-
-  it("교수 승인자를 학생 제안의 담당자로 지정한다", async () => {
-    const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "PROFESSOR" as const,
-      requestedProfessorId: "professor-1",
-      studentTeamId: null,
-      status: "PENDING" as const,
-    };
-    const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{
-        endsAt: new Date("2026-12-31T00:00:00Z"),
-        studentProjectCreationEnabled: true,
-        projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-        projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        recruitmentEndsAt,
-      }])
-      .mockResolvedValueOnce([{
-        id: "topic-1",
-        programId: "program-1",
-        authorId: "student-1",
-        title: "학생 제안",
-        capacity: 4,
-        recruitmentEnabled: true,
-        recruitmentEndsAt,
-        status: "PENDING_APPROVAL",
-      }])
-      .mockResolvedValueOnce([request]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topic: {
-        update: updateTopic,
-      },
-      topicApprovalRequest: {
-        findUnique: vi.fn(async () => request),
-        update: vi.fn(async () => ({ id: "request-1" })),
-      },
-      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
-      user: { findMany: vi.fn(async () => []) },
-      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "professor-1",
-      actorRole: "PROFESSOR",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt: requestedAt,
-    })).resolves.toBe("APPROVED");
-
-    expect(updateTopic).toHaveBeenCalledWith({
-      where: { id: "topic-1" },
-      data: {
-        managerId: "professor-1",
-        status: "ACTIVE",
-        publishedAt: requestedAt,
-      },
-    });
-    expect(queryRaw).toHaveBeenCalledTimes(3);
-    const lockSql = queryRaw.mock.calls.map(([query]) =>
-      (query as { strings: readonly string[] }).strings.join("?"),
-    );
-    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
-    expect(lockSql[1]).toContain('FROM "topic"');
-    expect(lockSql[1]).toContain("FOR UPDATE");
-    expect(lockSql[2]).toContain('FROM "topic_approval_request"');
-  });
-
-  it("지원받지 않는 제안은 기존 팀 없이 모집 종료 뒤에도 승인한다", async () => {
-    const decidedAt = new Date("2026-08-15T00:00:00Z");
-    const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "ADMIN" as const,
-      requestedProfessorId: null,
-      studentTeamId: null,
-      studentTeamVersion: null,
-      status: "PENDING" as const,
-    };
-    const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{
-        endsAt: new Date("2026-12-31T00:00:00Z"),
-        studentProjectCreationEnabled: true,
-        projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-        projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        recruitmentEndsAt,
-      }])
-      .mockResolvedValueOnce([{
-        id: "topic-1",
-        programId: "program-1",
-        authorId: "student-1",
-        title: "학생 제안",
-        capacity: 4,
-        recruitmentEnabled: false,
-        status: "PENDING_APPROVAL",
-      }])
-      .mockResolvedValueOnce([request]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topic: { update: updateTopic },
-      topicApprovalRequest: {
-        findUnique: vi.fn(async () => request),
-        update: vi.fn(async () => ({ id: "request-1" })),
-      },
-      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
-      user: { findMany: vi.fn(async () => []) },
-      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt,
-    })).resolves.toBe("APPROVED");
-
-    expect(updateTopic).toHaveBeenCalledWith({
-      where: { id: "topic-1" },
-      data: { managerId: "admin-1", status: "ACTIVE", publishedAt: decidedAt },
-    });
-  });
-
-  it("종료된 프로그램의 대기 요청은 승인하지 않는다", async () => {
-    const updateTopic = vi.fn();
-    const updateRequest = vi.fn();
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "ADMIN" as const,
-      requestedProfessorId: null,
-      studentTeamId: null,
-      status: "PENDING" as const,
-    };
-    const queryRaw = vi.fn().mockResolvedValueOnce([{ endsAt: requestedAt }]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topic: { update: updateTopic, updateMany: vi.fn(async () => ({ count: 0 })) },
-      topicApprovalRequest: {
-        findUnique: vi.fn(async () => request),
-        update: updateRequest,
-      },
-      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
-      user: { findMany: vi.fn(async () => []) },
-      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt: requestedAt,
-    })).resolves.toBe("UNAVAILABLE");
-
-    expect(updateTopic).not.toHaveBeenCalled();
-    expect(updateRequest).not.toHaveBeenCalled();
-    expect(queryRaw).toHaveBeenCalledTimes(1);
-  });
-
-  it("직접 지원형으로 전환된 프로그램의 기존 학생 제안을 승인하지 않는다", async () => {
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "ADMIN" as const,
-      requestedProfessorId: null,
-      studentTeamId: "student-team-1",
-      status: "PENDING" as const,
-    };
-    const queryRaw = vi.fn().mockResolvedValueOnce([{
-      endsAt: new Date("2026-12-31T00:00:00Z"),
-      studentProjectCreationEnabled: false,
-      projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-      projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-    }]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topicApprovalRequest: { findUnique: vi.fn(async () => request), update: vi.fn() },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt: requestedAt,
-    })).resolves.toBe("UNAVAILABLE");
-    expect(queryRaw).toHaveBeenCalledTimes(1);
-  });
-
-  it("거절은 최신 승인 요청 상태를 잠근 뒤 반영한다", async () => {
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "ADMIN" as const,
-      requestedProfessorId: null,
-      studentTeamId: null,
-      status: "PENDING" as const,
-    };
-    const updateRequest = vi.fn(async () => ({ id: "request-1" }));
-    const queryRaw = vi.fn().mockResolvedValueOnce([request]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topic: { updateMany: vi.fn(async () => ({ count: 1 })) },
-      topicApprovalRequest: {
-        findUnique: vi.fn(async () => request),
-        update: updateRequest,
-      },
-      notification: { createMany: vi.fn(async () => ({ count: 1 })) },
-      user: { findMany: vi.fn(async () => []) },
-      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-    };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
-
-    await expect(new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "REJECT",
-      reviewComment: "반려",
-      decidedAt: requestedAt,
-    })).resolves.toBe("REJECTED");
-
-    expect(updateRequest).toHaveBeenCalledWith({
-      where: { id: "request-1" },
-      data: {
-        status: "REJECTED",
-        reviewComment: "반려",
-        decidedById: "admin-1",
-        decidedAt: requestedAt,
-      },
-    });
-    const sql = (queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
-    expect(sql).toContain('FROM "topic_approval_request"');
-    expect(sql).toContain("FOR UPDATE");
-  });
-
-  it("같은 프로젝트의 활성 멤버십 고유키 충돌은 승인 불가로 처리한다", async () => {
-    const conflict = uniqueConflict(["projectTeamId", "userId"]);
-    const repository = new PrismaTopicApprovalRepository({
-      $transaction: vi.fn().mockRejectedValue(conflict),
-    } as unknown as PrismaClient);
-    const unrelatedConflict = uniqueConflict(["topicId"]);
-    const unrelatedRepository = new PrismaTopicApprovalRepository({
-      $transaction: vi.fn().mockRejectedValue(unrelatedConflict),
-    } as unknown as PrismaClient);
-
-    await expect(repository.decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt: requestedAt,
-    })).resolves.toBe("UNAVAILABLE");
-    await expect(unrelatedRepository.decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      decidedAt: requestedAt,
-    })).rejects.toBe(unrelatedConflict);
-  });
-
-  it("이전된 현재 팀장도 기존 팀 제안 상태를 조회한다", async () => {
-    const findMany = vi.fn(async () => []);
-    const client = {
-      topicApprovalRequest: { findMany, count: vi.fn(async () => 0) },
-    } as unknown as PrismaClient;
-
-    await new PrismaTopicApprovalRepository(client).listVisiblePage({
-      id: "student-2",
-      role: "STUDENT",
-      name: "새 팀장",
-      email: "student2@pusan.ac.kr",
-      image: null,
-    }, 1, 20);
-
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        OR: [
-          { requesterId: "student-2" },
-          {
-            studentTeam: {
-              leaderId: "student-2",
-              deletedAt: null,
-            },
-          },
-        ],
-      },
-    }));
-  });
-
-  it("교수 지도 화면 조회는 지정된 교수의 승인 대기 요청으로 제한한다", async () => {
-    const findMany = vi.fn(async () => []);
-    const client = {
-      topicApprovalRequest: { findMany, count: vi.fn(async () => 0) },
-    } as unknown as PrismaClient;
-    const professor = {
-      id: "professor-1",
-      role: "PROFESSOR" as const,
-      name: "박교수",
-      email: "professor@pusan.ac.kr",
-      image: null,
-    };
-
-    await new PrismaTopicApprovalRepository(client).listVisiblePage(professor, 1, 20, { programId: "program-1", status: "PENDING" });
-
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        AND: [
-          { route: "PROFESSOR", requestedProfessorId: "professor-1" },
-          { status: "PENDING" },
-          { topic: { programId: "program-1" } },
-        ],
-      },
-    }));
-  });
-
-  it("관리자 경로의 대기 요청만 프로그램별 한 번의 쿼리로 집계한다", async () => {
-    const queryRaw = vi.fn<(query: unknown) => Promise<Array<{ programId: string; count: number | bigint }>>>().mockResolvedValue([
-      { programId: "program-1", count: 2 },
-      { programId: "program-2", count: BigInt(1) },
-    ]);
-    const repository = new PrismaTopicApprovalRepository({ $queryRaw: queryRaw } as unknown as PrismaClient);
-
-    await expect(repository.listAdminPendingCountsByProgram()).resolves.toEqual([
-      { programId: "program-1", count: 2 },
-      { programId: "program-2", count: 1 },
-    ]);
-    expect(queryRaw).toHaveBeenCalledTimes(1);
-    const sql = (queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
-    expect(sql).toContain('request."status" = \'PENDING\'');
-    expect(sql).toContain('request."route" = \'ADMIN\'');
-    expect(sql).toContain('GROUP BY topic."programId"');
-  });
-
-  it("승인 상세는 지정된 교수에게만 전체 제안 정보를 반환한다", async () => {
-    const findFirst = vi.fn(async () => ({
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      route: "PROFESSOR" as const,
-      requestedProfessorId: "professor-1",
-      studentTeamId: null,
-      status: "PENDING" as const,
-      reviewComment: "",
-      decidedById: null,
-      decidedAt: null,
-      createdAt: requestedAt,
-      updatedAt: requestedAt,
-      requester: { name: "김학생" },
-      requestedProfessor: { name: "박교수" },
-      topic: {
-        title: "학생 제안",
-        description: "상세 설명",
-        requiredSkills: ["TypeScript"],
-        preferredSkills: ["Figma"],
-        roleExpectations: "개발",
-        availabilityRequirement: "주 1회",
-        applicationMode: "INDIVIDUAL_OR_TEAM" as const,
-        capacity: 4,
-        recruitmentStartsAt: proposal.recruitmentStartsAt,
-        recruitmentEndsAt: proposal.recruitmentEndsAt,
-        executionStartsAt: proposal.executionStartsAt,
-        executionEndsAt: proposal.executionEndsAt,
-        submissionStartsAt: proposal.submissionStartsAt,
-        submissionEndsAt: proposal.submissionEndsAt,
-        program: { id: "program-1", name: "캡스톤", category: "교과" },
-        applicationQuestions: [{ id: "question-1", label: "지원 동기", maxLength: 500, required: true }],
-      },
-    }));
-    const client = { topicApprovalRequest: { findFirst } } as unknown as PrismaClient;
-    const professor = { id: "professor-1", role: "PROFESSOR" as const, name: "박교수", email: "professor@pusan.ac.kr", image: null };
-
-    const result = await new PrismaTopicApprovalRepository(client).findVisible(professor, "request-1");
-
-    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { AND: [{ id: "request-1" }, { route: "PROFESSOR", requestedProfessorId: "professor-1" }] },
-    }));
-    expect(result).toMatchObject({
-      id: "request-1",
-      topicTitle: "학생 제안",
-      requesterName: "김학생",
-      requestedProfessorName: "박교수",
-      description: "상세 설명",
-      programName: "캡스톤",
-      programId: "program-1",
-      applicationQuestions: [{ label: "지원 동기" }],
-    });
-  });
-
-  it("승인 시 기존 팀원을 모두 확정 참여시키고 실행 팀을 바로 확정한다", async () => {
-    const createApplications = vi.fn(async () => ({ count: 2 }));
-    const createExecutionTeam = vi.fn(async () => ({ id: "execution-team-1" }));
-    const createMembers = vi.fn(async () => ({ count: 2 }));
-    const findApplications = vi.fn();
-    const rejectApplications = vi.fn(async () => ({ count: 1 }));
-    const rejectRecruitmentApplications = vi.fn(async () => ({ count: 1 }));
-    const createNotifications = vi.fn(async () => ({ count: 1 }));
-    const updateTopic = vi.fn(async () => ({ id: "topic-1" }));
-    const request = {
-      id: "request-1",
-      topicId: "topic-1",
-      requesterId: "student-1",
-      topic: { title: "학생 제안" },
-      route: "ADMIN" as const,
-      requestedProfessorId: null,
-      studentTeamId: "student-team-1",
-      studentTeamVersion: 1,
-      status: "PENDING" as const,
-    };
-    const queryRaw = vi.fn()
-      .mockResolvedValueOnce([{
-        endsAt: new Date("2026-12-31T00:00:00Z"),
-        studentProjectCreationEnabled: true,
-        projectTeamMinSize: 2,
-        projectTeamMaxSize: 6,
-        projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
-        projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
-        recruitmentEndsAt,
-      }])
-      .mockResolvedValueOnce([{
-        id: "topic-1",
-        programId: "program-1",
-        authorId: "student-1",
-        title: "학생 제안",
-        capacity: 2,
-        recruitmentEnabled: false,
-        recruitmentEndsAt,
-        status: "PENDING_APPROVAL",
-      }])
-      .mockResolvedValueOnce([{ id: "student-team-1", leaderId: "student-2", name: "기존 팀", compositionVersion: 1 }])
-      .mockResolvedValueOnce([request]);
-    const transaction = {
-      $queryRaw: queryRaw,
-      topic: {
-        update: updateTopic,
-      },
-      studentTeamMember: {
-        findMany: vi.fn(async () => [
+      $queryRaw: vi.fn().mockResolvedValueOnce([openProgram()]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "student-team-1" }]),
+      studentTeam: { findFirst: vi.fn(async () => ({ id: "student-team-1",
+        members: [
           { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
           { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
-        ]),
+        ],
+        _count: { invitations: 0 },
+      })) },
+      topic: { create }, user: { findMany: vi.fn(async () => []) },
+      notification: { createMany: vi.fn(async () => ({ count: 0 })) }, emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
+    };
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).create(registration)).resolves.toBeTruthy();
+
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      status: "PENDING_APPROVAL", capacity: 2,
+      approvalRequests: { create: expect.objectContaining({ requesterId: "student-1", route: "ADMIN" }) },
+      projectTeam: { create: expect.objectContaining({
+        name: "프로젝트 스냅샷 팀",
+        memberships: { create: expect.arrayContaining([
+          expect.objectContaining({ userId: "student-1", role: "MEMBER" }),
+          expect.objectContaining({ userId: "student-2", role: "LEADER" }),
+        ]) },
+      }) },
+    }) });
+  });
+
+  it("프로젝트 대표가 원본 학생팀 구성원이 아니면 생성하지 않는다", async () => {
+    const create = vi.fn();
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValueOnce([openProgram()]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "student-team-1" }]),
+      studentTeam: { findFirst: vi.fn(async () => ({ id: "student-team-1",
+        members: [
+          { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+          { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+        ],
+        _count: { invitations: 0 },
+      })) },
+      topic: { create },
+    };
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).create({ ...registration, projectRepresentativeId: "student-3" })).resolves.toBeNull();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("학생은 자신이 요청한 승인 건만 조회한다", async () => {
+    const findMany = vi.fn(async () => []);
+    const client = { topicApprovalRequest: { findMany, count: vi.fn(async () => 0) } } as unknown as PrismaClient;
+
+    await new PrismaTopicApprovalRepository(client).listVisiblePage({
+      id: "student-2", role: "STUDENT", name: "학생", email: "student@pusan.ac.kr", image: null,
+    }, 1, 20);
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { requesterId: "student-2" } }));
+  });
+
+  it("반려하면 승인 대기 프로젝트팀을 함께 삭제한다", async () => {
+    const request = {
+      id: "request-1", topicId: "topic-1", requesterId: "student-1", route: "ADMIN" as const,
+      requestedProfessorId: null, status: "PENDING" as const, topic: { title: "학생 등록" },
+    };
+    const removeTeam = vi.fn(async () => ({ count: 1 }));
+    const transaction = {
+      $queryRaw: vi.fn(async () => [request]),
+      topicApprovalRequest: { findUnique: vi.fn(async () => request), update: vi.fn(async () => request) },
+      topic: { updateMany: vi.fn(async () => ({ count: 1 })) }, projectTeam: { deleteMany: removeTeam },
+      notification: { createMany: vi.fn(async () => ({ count: 0 })) }, user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
+    };
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).decide({
+      requestId: "request-1", actorId: "admin-1", actorRole: "ADMIN", decision: "REJECT", reviewComment: "반려", decidedAt: requestedAt,
+    })).resolves.toBe("REJECTED");
+    expect(removeTeam).toHaveBeenCalledWith({ where: { projectId: "topic-1", confirmedAt: null } });
+  });
+
+  it("등록자가 철회하면 승인 요청과 대기 팀을 함께 종료한다", async () => {
+    const removeTeam = vi.fn(async () => ({ count: 1 }));
+    const transaction = {
+      $queryRaw: vi.fn(async () => [{ requestId: "request-1", requesterId: "student-1" }]),
+      topicApprovalRequest: { update: vi.fn(async () => ({ id: "request-1" })) },
+      topic: { update: vi.fn(async () => ({ id: "topic-1" })) },
+      projectTeam: { deleteMany: removeTeam },
+    };
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).withdraw({
+      projectId: "topic-1", requesterId: "student-1", withdrawnAt: requestedAt,
+    })).resolves.toBe("WITHDRAWN");
+    expect(removeTeam).toHaveBeenCalledWith({ where: { projectId: "topic-1", confirmedAt: null } });
+  });
+
+  it("승인하면 승인 대기 프로젝트팀을 새로 만들지 않고 확정한다", async () => {
+    const request = {
+      id: "request-1", topicId: "topic-1", requesterId: "student-1", route: "ADMIN" as const,
+      requestedProfessorId: null, status: "PENDING" as const, topic: { title: "학생 등록" },
+    };
+    const confirmTeam = vi.fn(async () => ({ id: "team-1" }));
+    const createGroup = vi.fn(async () => ({ id: "group-1" }));
+    const transaction = {
+      $queryRaw: vi.fn()
+        .mockResolvedValueOnce([{ projectRegistrationStartsAt: new Date("2026-08-01T00:00:00Z"), projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), studentProjectCreationEnabled: true }])
+        .mockResolvedValueOnce([{ id: "topic-1", programId: "program-1", authorId: "student-1", title: "학생 등록", capacity: 2, recruitmentEnabled: false, status: "PENDING_APPROVAL" }])
+        .mockResolvedValueOnce([request]),
+      topicApprovalRequest: { findUnique: vi.fn(async () => request), update: vi.fn(async () => request) },
+      projectTeam: {
+        findUnique: vi.fn(async () => ({
+          id: "team-1", confirmedAt: null,
+          memberships: [
+            { id: "membership-1", userId: "student-1", role: "LEADER", user: { role: "STUDENT", accountStatus: "ACTIVE" } },
+            { id: "membership-2", userId: "student-2", role: "MEMBER", user: { role: "STUDENT", accountStatus: "ACTIVE" } },
+          ],
+        })),
+        update: confirmTeam,
       },
-      projectTeamMembership: { count: vi.fn(async () => 0), createMany: createMembers },
-      topicApplicationGroup: { create: vi.fn(async () => ({ id: "group-1" })) },
-      topicApplication: {
-        createMany: createApplications,
-        findMany: findApplications,
-        updateMany: rejectApplications,
-      },
-      recruitmentApplication: { updateMany: rejectRecruitmentApplications },
-      notification: { createMany: createNotifications },
+      topicApplicationGroup: { create: createGroup },
+      topicApplication: { createMany: vi.fn(async () => ({ count: 2 })) },
+      projectTeamMembership: { update: vi.fn(async () => ({ id: "membership-1" })) },
+      topic: { update: vi.fn(async () => ({ id: "topic-1" })) },
+      notification: { createMany: vi.fn(async () => ({ count: 0 })) },
       user: { findMany: vi.fn(async () => []) },
       emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
-      projectTeam: {
-        create: createExecutionTeam,
-        findUnique: vi.fn(async () => ({
-          project: { programId: "program-1", divisionId: null },
-        })),
-      },
-      programReportDefinition: { findMany: vi.fn(async () => []) },
-      rubricDefinition: { findMany: vi.fn(async () => []) },
-      report: { createMany: vi.fn(async () => ({ count: 0 })) },
-      projectTeamRubricEvaluation: { createMany: vi.fn(async () => ({ count: 0 })) },
-      topicApprovalRequest: {
-        findUnique: vi.fn(async () => request),
-        update: vi.fn(async () => ({ id: "request-1" })),
-      },
     };
-    const client = {
-      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    } as unknown as PrismaClient;
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
 
-    const result = await new PrismaTopicApprovalRepository(client).decide({
-      requestId: "request-1",
-      actorId: "admin-1",
-      actorRole: "ADMIN",
-      decision: "APPROVE",
-      reviewComment: "승인",
-      studentTeamVersion: 1,
-      teamCompositionConfirmed: true,
-      decidedAt: requestedAt,
+    await expect(new PrismaTopicApprovalRepository(client).decide({
+      requestId: "request-1", actorId: "admin-1", actorRole: "ADMIN", decision: "APPROVE", reviewComment: "승인", decidedAt: requestedAt,
+    })).resolves.toBe("APPROVED");
+    expect(confirmTeam).toHaveBeenCalledWith({
+      where: { id: "team-1" },
+      data: { confirmedAt: requestedAt, updatedAt: requestedAt },
     });
-
-    expect(result).toBe("APPROVED");
-    expect(createApplications).toHaveBeenCalledWith({
-      data: expect.arrayContaining([
-        expect.objectContaining({ studentId: "student-1", status: "ACCEPTED", participantRole: "MEMBER" }),
-        expect.objectContaining({ studentId: "student-2", status: "ACCEPTED", participantRole: "LEADER" }),
-      ]),
-    });
-    expect(createExecutionTeam).toHaveBeenCalledWith({
-      data: expect.objectContaining({ projectId: "topic-1", name: "기존 팀", confirmedAt: requestedAt }),
-      select: { id: true },
-    });
-    expect(createMembers).toHaveBeenCalledWith({
-      data: expect.arrayContaining([
-        expect.objectContaining({ userId: "student-1", role: "MEMBER" }),
-        expect.objectContaining({ userId: "student-2", role: "LEADER" }),
-      ]),
-    });
-    expect(findApplications).not.toHaveBeenCalled();
-    expect(rejectApplications).not.toHaveBeenCalled();
-    expect(rejectRecruitmentApplications).not.toHaveBeenCalled();
-    expect(updateTopic).toHaveBeenCalledWith({
-      where: { id: "topic-1" },
-      data: {
-        managerId: "admin-1",
-        status: "ACTIVE",
-        publishedAt: requestedAt,
-        capacity: 2,
-      },
-    });
-    const lockSql = queryRaw.mock.calls.map(([query]) =>
-      (query as { strings: readonly string[] }).strings.join("?"),
-    );
-    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
-    expect(lockSql[1]).toContain('FROM "topic"');
-    expect(lockSql[2]).toContain('FROM "student_team"');
-    expect(lockSql[3]).toContain('FROM "topic_approval_request"');
+    expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ leaderId: "student-1" }) }));
   });
 });

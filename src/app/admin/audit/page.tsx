@@ -59,6 +59,7 @@ const actionLabel: Record<AuditAction, string> = {
   PROGRAM_REPORT_DEFINITION_CREATED: "프로그램 보고서 추가",
   PROGRAM_REPORT_DEFINITION_UPDATED: "프로그램 보고서 변경",
   PROGRAM_REPORT_DEFINITION_ARCHIVED: "프로그램 보고서 보관",
+  PROGRAM_REPORT_DEFINITION_DELETED: "프로그램 보고서 삭제",
   PROGRAM_RUBRIC_CREATED: "프로그램 채점표 추가",
   PROGRAM_RUBRIC_UPDATED: "프로그램 채점표 변경",
   PROGRAM_RUBRIC_ARCHIVED: "프로그램 채점표 삭제",

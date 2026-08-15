@@ -48,7 +48,7 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
     leaderId: string;
     email: string;
     invitedAt: Date;
-  }): Promise<"INVITED" | "NOT_FOUND" | "FORBIDDEN" | "ALREADY_MEMBER" | "LOCKED"> {
+  }): Promise<"INVITED" | "NOT_FOUND" | "FORBIDDEN" | "ALREADY_MEMBER"> {
     return this.client.$transaction(async (transaction) => {
       const teams = await transaction.$queryRaw<Array<{
         id: string;
@@ -61,10 +61,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
       const team = teams[0];
       if (!team) return "NOT_FOUND";
       if (team.leaderId !== input.leaderId) return "FORBIDDEN";
-      const pendingProposalCount = await transaction.topicApprovalRequest.count({
-        where: { studentTeamId: input.teamId, status: "PENDING" },
-      });
-      if (pendingProposalCount > 0) return "LOCKED";
       const invitee = await transaction.user.findUnique({
         where: { email: input.email },
         select: { id: true, accountStatus: true, role: true },
@@ -227,7 +223,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         where: { id: invitation.teamId },
         data: { compositionVersion: { increment: 1 }, updatedAt: input.respondedAt },
       });
-      await cancelPendingProposals(transaction, invitation.teamId, input.respondedAt, "팀 구성 변경");
       // 초대 수락으로 정원이 찬 모집 공고를 닫는다. 대기 지원은 모집 종료로
       // 조회해 실제 거절과 자동 종료를 구분한다.
       const memberCount = await transaction.studentTeamMember.count({
@@ -287,7 +282,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         where: { id: input.teamId },
         data: { leaderId: input.nextLeaderId, compositionVersion: { increment: 1 } },
       });
-      await cancelPendingProposals(transaction, input.teamId, input.changedAt, "팀장 변경");
       return true;
     });
   }
@@ -320,7 +314,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
           where: { id: input.teamId },
           data: { compositionVersion: { increment: 1 } },
         });
-        await cancelPendingProposals(transaction, input.teamId, input.changedAt, "팀원 제외");
       }
       return result.count === 1;
     });
@@ -351,7 +344,6 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         where: { id: input.teamId },
         data: { compositionVersion: { increment: 1 }, updatedAt: input.leftAt },
       });
-      await cancelPendingProposals(transaction, input.teamId, input.leftAt, "팀원 탈퇴");
       return "LEFT";
     });
   }
@@ -386,33 +378,7 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         },
         data: { status: "REJECTED", decidedAt: input.deletedAt },
       });
-      await cancelPendingProposals(transaction, input.teamId, input.deletedAt, "팀 삭제");
       return true;
     });
   }
-}
-
-async function cancelPendingProposals(
-  transaction: Prisma.TransactionClient,
-  studentTeamId: string,
-  canceledAt: Date,
-  reason: string,
-) {
-  const requests = await transaction.topicApprovalRequest.findMany({
-    where: { studentTeamId, status: "PENDING" },
-    select: { id: true, topicId: true },
-  });
-  if (!requests.length) return;
-  await transaction.topicApprovalRequest.updateMany({
-    where: { id: { in: requests.map(({ id }) => id) }, status: "PENDING" },
-    data: {
-      status: "CANCELED",
-      reviewComment: `${reason}로 승인 요청이 취소되었습니다.`,
-      decidedAt: canceledAt,
-    },
-  });
-  await transaction.topic.updateMany({
-    where: { id: { in: requests.map(({ topicId }) => topicId) }, status: "PENDING_APPROVAL" },
-    data: { status: "REJECTED" },
-  });
 }

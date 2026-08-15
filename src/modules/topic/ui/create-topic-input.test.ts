@@ -62,7 +62,6 @@ describe("주제 폼 입력", () => {
 
     expect(parsed).not.toHaveProperty("recruitmentStartsAt");
     expect(parsed).not.toHaveProperty("executionStartsAt");
-    expect(parsed).not.toHaveProperty("submissionStartsAt");
     expect(createTopicInputSchema.safeParse({
       ...input,
       recruitmentStartsAt: "2026-03-01T09:00",

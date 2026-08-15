@@ -1,12 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-import type { TopicApprovalStatus } from "@/modules/topic-approval/domain/topic-approval-status";
-import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import type { TopicApprovalStatus } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { CustomSelect } from "@/shared/ui/custom-select";
 
 const statusOptions: Array<{ value: TopicApprovalStatus | ""; label: string }> = [
@@ -18,61 +14,58 @@ const statusOptions: Array<{ value: TopicApprovalStatus | ""; label: string }> =
   { value: "CANCELED", label: "취소" },
 ];
 
+function approvalsHref({ programId, status }: { programId?: string; status?: TopicApprovalStatus }) {
+  const params = new URLSearchParams();
+  if (programId) params.set("programId", programId);
+  if (status) params.set("status", status);
+  const query = params.toString();
+  return query ? `/project-approvals?${query}` : "/project-approvals";
+}
+
 export function ProjectApprovalFilters({
   programs,
   programId,
   status,
+  pendingCountByProgram,
 }: {
   programs: Array<{ id: string; name: string; category: string }>;
   programId?: string;
   status?: TopicApprovalStatus;
+  pendingCountByProgram: Record<string, number>;
 }) {
   const router = useRouter();
-  const [selectedProgramId, setSelectedProgramId] = useState(programId ?? "");
-  const [selectedStatus, setSelectedStatus] = useState<TopicApprovalStatus | "">(status ?? "");
-  const filtered = Boolean(programId || status);
+  const totalPending = Object.values(pendingCountByProgram).reduce((total, count) => total + count, 0);
+  const update = (next: { programId?: string; status?: TopicApprovalStatus }) => {
+    router.replace(approvalsHref(next));
+  };
+
   return (
-    <form
-      role="search"
-      aria-label="승인 요청 필터"
-      className="grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_auto_auto] md:items-end"
-      onSubmit={(event) => {
-        event.preventDefault();
-        router.push(projectApprovalsHref({
-          programId: selectedProgramId || undefined,
-          status: selectedStatus || undefined,
-        }));
-      }}
-    >
-      <label className="grid gap-2 text-sm font-semibold">
-        <UiText>{"프로그램"}</UiText>
-        <CustomSelect
-          ariaLabel="프로그램"
-          value={selectedProgramId}
-          onValueChange={setSelectedProgramId}
-          options={[
-            { value: "", label: "전체 프로그램" },
-            ...programs.map((program) => ({
-              value: program.id,
-              label: program.name,
-              description: program.category,
-            })),
-          ]}
-        />
-      </label>
-      <label className="grid gap-2 text-sm font-semibold">
-        <UiText>{"상태"}</UiText>
-        <CustomSelect
-          ariaLabel="승인 상태"
-          value={selectedStatus}
-          onValueChange={(value) => setSelectedStatus(value as TopicApprovalStatus | "")}
-          options={statusOptions}
-        />
-      </label>
-      <button type="submit" className="button-primary min-h-11"><UiText>{"조회"}</UiText></button>
-      {filtered ? (
-        <Link href={projectApprovalsHref()} className="button-secondary min-h-11"><UiText>{"조건 초기화"}</UiText></Link>
-      ) : null}
-    </form>
+    <div aria-label="승인 요청 필터" className="flex flex-wrap items-center gap-2">
+      <CustomSelect
+        ariaLabel="프로그램"
+        density="compact"
+        className="min-w-[13rem]"
+        value={programId ?? ""}
+        onValueChange={(value) => update({ programId: value || undefined, status })}
+        options={[
+          { value: "", label: "전체 프로그램" },
+          ...programs.map((program) => ({
+            value: program.id,
+            label: program.name,
+            description: `${program.category} · 승인 대기 ${pendingCountByProgram[program.id] ?? 0}건`,
+          })),
+        ]}
+      />
+      <CustomSelect
+        ariaLabel="상태"
+        density="compact"
+        className="min-w-[8.5rem]"
+        value={status ?? ""}
+        onValueChange={(value) => update({ programId, status: (value || undefined) as TopicApprovalStatus | undefined })}
+        options={statusOptions.map((option) => option.value === "PENDING"
+          ? { ...option, description: `현재 ${totalPending}건` }
+          : option)}
+      />
+    </div>
   );
 }

@@ -58,8 +58,6 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
-  programSubmissionStartsAt: Date;
-  programSubmissionEndsAt: Date;
 };
 
 export type ManagedTopicSummary = TopicSummary & {
@@ -106,6 +104,7 @@ export type PublicTopicSummary = TopicSummary & {
   professorName: string | null;
   startYear: number;
   memberCount: number;
+  teamMembers?: Array<{ name: string; role: "LEADER" | "MEMBER" }>;
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | null;
 };
 

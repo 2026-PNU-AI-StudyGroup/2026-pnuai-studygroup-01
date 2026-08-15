@@ -10,7 +10,7 @@ export default async function NewStudentProjectPage({ searchParams }: {
   if (actor.role !== "STUDENT") redirect("/professor/topics/new");
 
   const programId = firstSearchParam((await searchParams).programId)?.trim();
-  const target = new URLSearchParams({ modal: "project-proposal" });
+  const target = new URLSearchParams({ modal: "project-registration" });
   if (programId) target.set("programId", programId.slice(0, 200));
   redirect(`/topics?${target.toString()}`);
 }

@@ -48,21 +48,16 @@ export class PrismaAccountWithdrawalRepository implements AccountWithdrawalRepos
       if (preTeamIds.length) {
         await transaction.studentTeamMember.deleteMany({ where: { studentId: user.id, teamId: { in: preTeamIds } } });
         await transaction.studentTeam.updateMany({ where: { id: { in: preTeamIds } }, data: { compositionVersion: { increment: 1 }, updatedAt: withdrawnAt } });
-        const pendingProposals = await transaction.topicApprovalRequest.findMany({
-          where: { studentTeamId: { in: preTeamIds }, status: "PENDING" },
-          select: { id: true, topicId: true },
-        });
-        if (pendingProposals.length) {
-          await transaction.topicApprovalRequest.updateMany({
-            where: { id: { in: pendingProposals.map(({ id }) => id) } },
-            data: { status: "CANCELED", reviewComment: "팀원 계정 탈퇴로 승인 요청이 취소되었습니다.", decidedAt: withdrawnAt },
-          });
-          await transaction.topic.updateMany({
-            where: { id: { in: pendingProposals.map(({ topicId }) => topicId) }, status: "PENDING_APPROVAL" },
-            data: { status: "REJECTED" },
-          });
-        }
       }
+
+      const pendingTeamRegistrations = user.role === "STUDENT" ? await transaction.projectTeamMembership.findMany({
+        where: {
+          userId: user.id,
+          endedAt: null,
+          projectTeam: { confirmedAt: null, project: { status: "PENDING_APPROVAL" } },
+        },
+        select: { projectTeam: { select: { projectId: true } } },
+      }) : [];
 
       await transaction.projectTeamMembership.updateMany({
         where: { userId: user.id, endedAt: null, projectTeam: { project: { status: "ACTIVE", program: { endsAt: { gt: withdrawnAt } } } } },
@@ -112,6 +107,23 @@ export class PrismaAccountWithdrawalRepository implements AccountWithdrawalRepos
         await transaction.topic.updateMany({
           where: { id: { in: ownApprovals.map(({ topicId }) => topicId) }, status: "PENDING_APPROVAL" },
           data: { status: "REJECTED" },
+        });
+      }
+      const pendingRegistrationTopicIds = [...new Set([
+        ...pendingTeamRegistrations.map(({ projectTeam }) => projectTeam.projectId),
+        ...ownApprovals.map(({ topicId }) => topicId),
+      ])];
+      if (pendingRegistrationTopicIds.length) {
+        await transaction.topicApprovalRequest.updateMany({
+          where: { topicId: { in: pendingRegistrationTopicIds }, status: "PENDING" },
+          data: { status: "CANCELED", reviewComment: "구성원 계정 탈퇴로 승인 요청이 취소되었습니다.", decidedAt: withdrawnAt },
+        });
+        await transaction.topic.updateMany({
+          where: { id: { in: pendingRegistrationTopicIds }, status: "PENDING_APPROVAL" },
+          data: { status: "REJECTED" },
+        });
+        await transaction.projectTeam.deleteMany({
+          where: { projectId: { in: pendingRegistrationTopicIds }, confirmedAt: null },
         });
       }
 

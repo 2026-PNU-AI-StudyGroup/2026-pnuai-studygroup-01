@@ -27,6 +27,12 @@ export class PrismaAdminProjectLifecycleWriter implements AdminProjectLifecycleW
       if (project.status !== "REJECTED") return "INVALID_TRANSITION";
       if (project.endsAt <= input.changedAt) return "PROGRAM_ENDED";
 
+      const projectTeam = await transaction.projectTeam.findUnique({
+        where: { projectId: project.id },
+        select: { id: true, confirmedAt: true },
+      });
+      if (!projectTeam || projectTeam.confirmedAt) return "TEAM_SNAPSHOT_REQUIRED";
+
       const previous = await transaction.topicApprovalRequest.findFirst({
         where: { topicId: project.id },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -34,8 +40,6 @@ export class PrismaAdminProjectLifecycleWriter implements AdminProjectLifecycleW
           requesterId: true,
           route: true,
           requestedProfessorId: true,
-          studentTeamId: true,
-          studentTeamVersion: true,
         },
       });
       if (!previous) return "NO_APPROVAL_HISTORY";

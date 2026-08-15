@@ -16,7 +16,7 @@ export const emailDeliveryKindLabel: Record<EmailDeliveryKind, string> = {
   RECRUITMENT_RESULT: "팀원 모집 결과",
   TOPIC_APPLICATION: "프로젝트 지원",
   APPLICATION_RESULT: "프로젝트 지원 결과",
-  TOPIC_APPROVAL: "프로젝트 제안 승인",
+  TOPIC_APPROVAL: "프로젝트 등록 승인",
   PROJECT_REQUEST: "지도·검토 요청",
   TASK_ASSIGNMENT: "할 일",
   PROJECT_MEMBERSHIP: "프로젝트 구성원",

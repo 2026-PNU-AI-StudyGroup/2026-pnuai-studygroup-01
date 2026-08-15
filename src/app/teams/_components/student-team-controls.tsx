@@ -98,7 +98,7 @@ export function LeaveStudentTeamForm({ teamId, teamName }: { teamId: string; tea
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name="teamId" value={teamId} />
-      <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀에서 탈퇴하시겠습니까? 대기 중인 프로젝트 제안은 취소됩니다.`}><UiText>{"팀 탈퇴"}</UiText></ConfirmSubmitButton>
+      <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀에서 탈퇴하시겠습니까? 대기 중인 프로젝트 등록은 취소됩니다.`}><UiText>{"팀 탈퇴"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );

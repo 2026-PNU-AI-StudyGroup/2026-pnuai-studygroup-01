@@ -34,8 +34,6 @@ function repositories(programExists = true) {
       recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       executionStartsAt: new Date("2026-03-11T00:00:00Z"),
       executionEndsAt: new Date("2026-11-30T00:00:00Z"),
-      submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
-      submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
       isPublic: false,
@@ -44,7 +42,6 @@ function repositories(programExists = true) {
       teamCount: 0,
       name: "프로그램",
       category: "교과",
-      description: "설명",
       icon: "FOLDER" as const,
     } : null),
   };
@@ -106,8 +103,6 @@ describe("주제 초안 생성", () => {
       recruitmentEndsAt: new Date("2026-03-10T00:00:00Z"),
       executionStartsAt: new Date("2026-03-11T00:00:00Z"),
       executionEndsAt: new Date("2026-11-30T00:00:00Z"),
-      submissionStartsAt: new Date("2026-11-01T00:00:00Z"),
-      submissionEndsAt: new Date("2026-12-31T00:00:00Z"),
       advisorEnabled: true,
       studentProjectCreationEnabled: false,
       isPublic: false,
@@ -116,7 +111,6 @@ describe("주제 초안 생성", () => {
       teamCount: 0,
       name: "프로그램",
       category: "교과",
-      description: "설명",
       icon: "FOLDER",
     });
     await expect(new CreateTopicService(topics, programs, () => new Date("2026-03-01T00:00:00Z")).execute(

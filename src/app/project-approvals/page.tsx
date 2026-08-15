@@ -1,126 +1,93 @@
-import Link from "next/link";
-import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
 import { AppShell } from "@/app/_components/app-shell";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
+import { ProjectApprovalFilters } from "@/app/project-approvals/_components/project-approval-filters";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
-import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
-import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { TopicApprovalService, topicApprovalStatuses, type TopicApprovalStatus } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
+import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
-import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { AddIcon } from "@/shared/ui/workspace-icons";
-import { ProjectApprovalFilters } from "@/app/project-approvals/_components/project-approval-filters";
-import { parseTopicApprovalStatus, projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 승인 요청");
 }
 
-type ProjectApprovalsSearchParams = {
+type SearchParams = {
   page?: SearchParamValue;
   programId?: SearchParamValue;
   status?: SearchParamValue;
 };
 
-export default async function ProjectApprovalsPage({ searchParams }: { searchParams: Promise<ProjectApprovalsSearchParams> }) {
+function approvalsHref({ page, programId, status }: { page?: number; programId?: string; status?: TopicApprovalStatus }) {
+  const params = new URLSearchParams();
+  if (programId) params.set("programId", programId);
+  if (status) params.set("status", status);
+  if (page && page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `/project-approvals?${query}` : "/project-approvals";
+}
+
+export default async function ProjectApprovalsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
+  if (actor.role !== "ADMIN") redirect("/dashboard");
+
   const params = await searchParams;
-  const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
   const requestedStatus = firstSearchParam(params.status)?.trim();
-  const selectedStatus = parseTopicApprovalStatus(requestedStatus);
+  const selectedStatus = topicApprovalStatuses.includes(requestedStatus as TopicApprovalStatus)
+    ? requestedStatus as TopicApprovalStatus
+    : undefined;
+  const requestedPage = Number(firstSearchParam(params.page) ?? "1");
+  const now = new Date();
   const programRepository = new PrismaProjectProgramRepository(prisma);
   const programService = new ProjectProgramService(programRepository);
-  const approvalService = new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), programRepository);
-  const [adminPrograms, studentCreatablePrograms] = await Promise.all([
-    actor.role === "ADMIN" ? programService.listAll(actor) : Promise.resolve([]),
-    actor.role === "STUDENT"
-      ? programService.listStudentCreatableOpen()
-      : Promise.resolve([]),
+  const approvalService = new TopicApprovalService(
+    new PrismaTopicApprovalRepository(prisma),
+    programRepository,
+  );
+  const [programs, pendingApprovalCounts] = await Promise.all([
+    programService.listAll(actor),
+    approvalService.listAdminPendingCountsByProgram(actor),
   ]);
-  const selectedProgramId = actor.role === "ADMIN"
-    ? adminPrograms.find(({ id }) => id === requestedProgramId)?.id
-    : requestedProgramId;
-  if ((requestedStatus && !selectedStatus) || (actor.role === "ADMIN" && requestedProgramId && !selectedProgramId)) {
-    redirect(projectApprovalsHref({ programId: selectedProgramId, status: selectedStatus }));
-  }
-  const requestPage = await approvalService.list(actor, requestedPage, 20, {
-    programId: selectedProgramId,
-    status: selectedStatus,
-  });
-  const requests = requestPage.items;
-  const currentQuery = { programId: selectedProgramId, status: selectedStatus, page: requestPage.page };
-  const student = actor.role === "STUDENT";
-  const canCreateStudentProject = student && studentCreatablePrograms.length > 0;
-  let emptyTitle = "승인 요청이 없습니다";
-  if (student) emptyTitle = "보낸 승인 요청이 없습니다";
-  else if (selectedProgramId || selectedStatus) emptyTitle = "조건에 맞는 승인 요청이 없습니다";
-  const emptyDescription = student
-    ? "프로젝트를 직접 제안하고 교수 또는 관리자에게 승인을 요청할 수 있습니다."
-    : "새 승인 요청이 도착하면 이 목록에 표시됩니다.";
-  const content = requests.length === 0
-    ? (
-      <EmptyState
-        title={emptyTitle}
-        description={emptyDescription}
-        action={canCreateStudentProject ? <Link className="button-primary gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"프로젝트 제안"}</UiText></Link> : undefined}
-      />
-    )
-    : <ProjectApprovalLedger requests={requests} student={student} query={currentQuery} total={requestPage.total} title={student ? undefined : "승인 요청"} />;
-  const pagination = (
-    <ProjectPagination
-      page={requestPage.page}
-      totalPages={requestPage.totalPages}
-      ariaLabel="프로젝트 승인 요청 페이지"
-      href={(page) => projectApprovalsHref({ programId: selectedProgramId, status: selectedStatus, page })}
-    />
+  const activePrograms = programs.filter(({ endsAt }) => endsAt > now);
+  const selectedProgramId = activePrograms.some(({ id }) => id === requestedProgramId) ? requestedProgramId : undefined;
+  const pendingCountByProgram = Object.fromEntries(
+    pendingApprovalCounts.map(({ programId, count }) => [programId, count]),
   );
 
-  if (actor.role === "ADMIN") {
-    return (
-      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals">
-        <main className="content-shell page-enter space-y-8">
-          <PageHeader title="프로젝트 승인 요청" description="학생이 제안한 프로젝트를 검토하고 공개 여부를 결정합니다." />
-          <ProjectApprovalFilters key={`${selectedProgramId ?? "all"}:${selectedStatus ?? "all"}`} programs={adminPrograms.map(({ id, name, category }) => ({ id, name, category }))} programId={selectedProgramId} status={selectedStatus} />
-          {requests.length === 0 ? (
-            <EmptyState title={emptyTitle} description={emptyDescription} />
-          ) : <ProjectApprovalLedger requests={requests} student={false} adminSurface query={currentQuery} total={requestPage.total} title="승인 요청" />}
-          {pagination}
-        </main>
-      </AppShell>
-    );
+  if ((requestedProgramId && !selectedProgramId) || (requestedStatus && !selectedStatus)) {
+    redirect(approvalsHref({ programId: selectedProgramId, status: selectedStatus }));
   }
 
-  if (actor.role === "PROFESSOR") {
-    return (
-      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals">
-        <ProfessorWorkspace currentPath="/project-approvals" role={actor.role} title="학생 제안 검토" description="학생이 제안한 프로젝트를 검토하고 공개 여부를 결정합니다.">
-          {content}
-          {pagination}
-        </ProfessorWorkspace>
-      </AppShell>
-    );
-  }
+  const requests = await approvalService.list(actor, requestedPage, 20, {
+    programId: selectedProgramId,
+    status: selectedStatus,
+    programEndsAfter: now,
+  });
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals">
-      <main className="content-shell page-enter space-y-8">
-        <PageHeader
-          eyebrow={student ? "내 프로젝트 제안" : "프로젝트 검토"}
-          title="프로젝트 승인 요청"
-          description={student ? "교수 또는 관리자에게 보낸 요청과 처리 결과를 확인합니다." : "학생이 제안한 프로젝트를 검토하고 공개 여부를 결정합니다."}
-          actions={requests.length > 0 && canCreateStudentProject ? <Link className="button-primary gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"새 프로젝트 제안"}</UiText></Link> : undefined}
+      <main className="content-shell page-enter space-y-6">
+        <PageHeader eyebrow="관리자 작업함" title="프로젝트 승인" description="학생이 등록한 프로젝트를 검토하고 공개 여부를 결정합니다." />
+        <ProjectApprovalLedger
+          adminSurface
+          wideLayout
+          requests={requests.items}
+          total={requests.total}
+          student={false}
+          title="승인 요청"
+          toolbar={<ProjectApprovalFilters programs={activePrograms.map(({ id, name, category }) => ({ id, name, category }))} programId={selectedProgramId} status={selectedStatus} pendingCountByProgram={pendingCountByProgram} />}
+          emptyState={<EmptyState variant="section" title="승인 요청이 없습니다" description={selectedProgramId || selectedStatus ? "조건에 맞는 승인 요청이 없습니다." : "새 승인 요청이 도착하면 이 목록에 표시됩니다."} />}
         />
-        {content}
-        {pagination}
+        <ProjectPagination page={requests.page} totalPages={requests.totalPages} ariaLabel="프로젝트 승인 요청 페이지" href={(page) => approvalsHref({ page, programId: selectedProgramId, status: selectedStatus })} />
       </main>
     </AppShell>
   );

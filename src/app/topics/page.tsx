@@ -9,9 +9,10 @@ import { AdminProjectOperationsSummary } from "@/app/topics/_components/admin-pr
 import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
 import { ProjectExplorerView } from "@/app/topics/_components/project-explorer-view";
 import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announcement-rail";
+import { ProgramApprovalLink } from "@/app/topics/_components/program-approval-link";
 import { ProjectSearchForm } from "@/app/topics/_components/project-search-form";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
-import { ProjectProposalModal } from "@/app/topics/_components/project-proposal-modal";
+import { ProjectRegistrationModal } from "@/app/topics/_components/project-registration-modal";
 import { StudentProjectRegistrationLink } from "@/app/topics/_components/student-project-registration-link";
 import { topicsHref, type ProjectView } from "@/app/topics/_lib/topics-query";
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
@@ -40,7 +41,7 @@ import { ListArchivedProjectsService } from "@/modules/team/application/archive-
 import { ListAdminProjectCardDataService } from "@/modules/team/application/list-admin-project-card-data";
 import {
   ListAdminProgramProjectOperationsService,
-  parseAdminProjectOperationFilter,
+  parseAdminProjectOperationFilters,
 } from "@/modules/team/application/list-admin-program-project-operations";
 import { PrismaAdminProjectCardDataReader } from "@/modules/team/infrastructure/prisma-admin-project-card-data-reader";
 import { PrismaAdminProgramProjectOperationsReader } from "@/modules/team/infrastructure/prisma-admin-program-project-operations-reader";
@@ -66,6 +67,8 @@ type TopicsSearchParams = {
   modal?: SearchParamValue;
   mode?: SearchParamValue;
   tab?: SearchParamValue;
+  teamStatus?: SearchParamValue;
+  reportStatus?: SearchParamValue;
   operation?: SearchParamValue;
 };
 
@@ -84,20 +87,47 @@ function ProgramManageLink({ programId, programName }: {
   );
 }
 
+function ProgramAdminTitleActions({ programId, programName, pendingApprovalCount }: {
+  programId: string;
+  programName: string;
+  pendingApprovalCount: number;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <ProgramManageLink programId={programId} programName={programName} />
+      {pendingApprovalCount > 0 ? <ProgramApprovalLink programId={programId} count={pendingApprovalCount} /> : null}
+    </div>
+  );
+}
+
 export default async function TopicsPage({ searchParams }: { searchParams: Promise<TopicsSearchParams> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
 
   const params = await searchParams;
+  if (actor.role === "STUDENT" && firstSearchParam(params.modal) === "project-proposal") {
+    const canonicalParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      const item = firstSearchParam(value);
+      if (item) canonicalParams.set(key, key === "modal" ? "project-registration" : item);
+    }
+    redirect(`/topics?${canonicalParams.toString()}`);
+  }
   const view: ProjectView = firstSearchParam(params.view) === "past" ? "past" : "active";
   const requestedMode = firstSearchParam(params.mode);
   const now = new Date();
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
-  const operation = actor.role === "ADMIN"
-    ? parseAdminProjectOperationFilter(firstSearchParam(params.operation))
+  const requestedTeamStatus = firstSearchParam(params.teamStatus);
+  const legacyOperation = firstSearchParam(params.operation);
+  const operationFilters = actor.role === "ADMIN"
+    ? parseAdminProjectOperationFilters({
+      teamStatus: requestedTeamStatus,
+      reportStatus: firstSearchParam(params.reportStatus),
+      operation: legacyOperation,
+    })
     : undefined;
-  const proposalRequested = actor.role === "STUDENT" && firstSearchParam(params.modal) === "project-proposal";
+  const registrationRequested = actor.role === "STUDENT" && firstSearchParam(params.modal) === "project-registration";
   const topicAudience = actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT";
   const topicRepository = new PrismaTopicQueryRepository(prisma, topicAudience);
   const topicService = new ListPublishedTopicsService(topicRepository);
@@ -190,10 +220,10 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? await adminProjectCardDataService.execute(actor, archive.projects.map(({ topicId }) => topicId))
       : undefined;
     const sidebarItems = actor.role === "ADMIN"
-      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", "settings", now, pendingApprovalCounts)
+      ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
-      ? <ProgramManageLink programId={programId} programName={selectedProgram.name} />
+      ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
@@ -230,18 +260,28 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const programId = resolveProgramSelection(requestedProgramId, programs);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
-      redirect(topicsHref({ programId, q: query, operation, page: requestedPage }));
+      redirect(topicsHref({ programId, q: query, teamStatus: operationFilters?.team, reportStatus: operationFilters?.report, page: requestedPage }));
     }
     const selectedProgram = programs.find((program) => program.id === programId);
     const divisionId = selectedProgram?.divisions?.some((division) => division.id === requestedDivisionId)
       ? requestedDivisionId
       : requestedDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
-    if (requestedDivisionId && divisionId !== requestedDivisionId) redirect(topicsHref({ programId, q: query, operation, page: requestedPage }));
-    const closeProposalHref = topicsHref({ programId, divisionId, q: query, operation, page: requestedPage });
+    if (requestedDivisionId && divisionId !== requestedDivisionId) redirect(topicsHref({ programId, q: query, teamStatus: operationFilters?.team, reportStatus: operationFilters?.report, page: requestedPage }));
+    const projectFilters = {
+      team: selectedProgram?.studentProjectCreationEnabled ? "all" as const : operationFilters?.team ?? "all",
+      report: operationFilters?.report ?? "all",
+    };
+    const hasTeamFilterToNormalize = requestedTeamStatus !== undefined
+      || legacyOperation === "operating"
+      || legacyOperation === "unassigned";
+    if (selectedProgram?.studentProjectCreationEnabled && hasTeamFilterToNormalize) {
+      redirect(topicsHref({ programId, divisionId, q: query, reportStatus: projectFilters.report, page: requestedPage }));
+    }
+    const closeRegistrationHref = topicsHref({ programId, divisionId, q: query, teamStatus: projectFilters.team, reportStatus: projectFilters.report, page: requestedPage });
     const operations = actor.role === "ADMIN" && programId
-      ? await adminProgramProjectOperationsService.execute(actor, programId, operation ?? "all")
+      ? await adminProgramProjectOperationsService.execute(actor, programId, projectFilters, divisionId)
       : undefined;
-    const [topics, archivedProgramsRaw, leaderTeams, ballot, votingResults, programAnnouncements, announcementCreateHref, proposalPrograms, proposalProfessors] = await Promise.all([
+    const [topics, archivedProgramsRaw, leaderTeams, ballot, votingResults, programAnnouncements, announcementCreateHref, registrationPrograms, registrationProfessors] = await Promise.all([
       actor.role === "ADMIN"
         ? new ListAdminTopicPreviewService(topicRepository).execute(actor, { programId, divisionId, query, page: requestedPage, now, topicIds: operations?.matchingTopicIds })
         : topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, page: requestedPage, now }),
@@ -252,9 +292,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
       loadVotingResults(programId),
       listProgramAnnouncements(programId),
-      programAnnouncementCreateHref(programId, closeProposalHref),
-      proposalRequested ? programService.listStudentCreatableOpen() : Promise.resolve([]),
-      proposalRequested
+      programAnnouncementCreateHref(programId, closeRegistrationHref),
+      registrationRequested ? programService.listStudentCreatableOpen() : Promise.resolve([]),
+      registrationRequested
         ? approvalService.listProfessors()
         : Promise.resolve([]),
     ]);
@@ -264,27 +304,27 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const hasUnassigned = programId && selectedProgram?.divisions?.length
       ? Boolean(await prisma.topic.findFirst({ where: { programId, divisionId: null, status: "ACTIVE" }, select: { id: true } }))
       : false;
-    if (proposalRequested && proposalPrograms.length && !proposalPrograms.some(({ id }) => id === programId)) {
-      const proposalProgramHref = topicsHref({ programId: proposalPrograms[0].id, q: query });
-      redirect(`${proposalProgramHref}${proposalProgramHref.includes("?") ? "&" : "?"}modal=project-proposal`);
+    if (registrationRequested && registrationPrograms.length && !registrationPrograms.some(({ id }) => id === programId)) {
+      const registrationProgramHref = topicsHref({ programId: registrationPrograms[0].id, q: query });
+      redirect(`${registrationProgramHref}${registrationProgramHref.includes("?") ? "&" : "?"}modal=project-registration`);
     }
     if (divisionId === "UNASSIGNED" && !hasUnassigned) {
-      redirect(topicsHref({ programId, q: query, operation, page: requestedPage }));
+      redirect(topicsHref({ programId, q: query, teamStatus: projectFilters.team, reportStatus: projectFilters.report, page: requestedPage }));
     }
     const archivedPrograms = hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role);
     const sidebarItems = actor.role === "ADMIN"
-      ? buildAdminProgramSidebarItems(adminPrograms ?? [], "projects", "settings", now, pendingApprovalCounts)
+      ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
-    const openProposalHref = `${closeProposalHref}${closeProposalHref.includes("?") ? "&" : "?"}modal=project-proposal`;
+    const openRegistrationHref = `${closeRegistrationHref}${closeRegistrationHref.includes("?") ? "&" : "?"}modal=project-registration`;
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
-      ? <ProgramManageLink programId={programId} programName={selectedProgram.name} />
+      ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
     content = (
       <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
         <ProjectExplorerView
           view="active"
           program={selectedProgram}
-          search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} operation={operation} />}
+          search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} teamStatus={projectFilters.team} reportStatus={projectFilters.report} />}
           titleAction={manageAction}
           privatePreview={actor.role === "ADMIN" && selectedProgram?.isPublic === false}
           announcementRail={(
@@ -292,21 +332,21 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               announcements={programAnnouncements}
               createHref={announcementCreateHref}
               manageableAnnouncementIds={programAnnouncements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id)}
-              returnHref={closeProposalHref}
+              returnHref={closeRegistrationHref}
             />
           )}
           overlays={(
             <>
-              {proposalRequested && proposalPrograms.length ? (
-                <ProjectProposalModal
-                  programs={proposalPrograms.filter(({ id }) => id === programId)}
+              {registrationRequested && registrationPrograms.length ? (
+                <ProjectRegistrationModal
+                  programs={registrationPrograms.filter(({ id }) => id === programId)}
                   defaultProgramId={programId}
-                  professors={proposalProfessors}
+                  professors={registrationProfessors}
                   studentTeams={leaderTeams}
-                  closeHref={closeProposalHref}
+                  closeHref={closeRegistrationHref}
                 />
               ) : null}
-              {firstSearchParam(params.modal) === "announcement-new" && announcementCreateHref && programId && selectedProgram ? <ProgramAnnouncementCreateModal programId={programId} programName={selectedProgram.name} closeHref={closeProposalHref} createAction={createProgramAnnouncementAction} /> : null}
+              {firstSearchParam(params.modal) === "announcement-new" && announcementCreateHref && programId && selectedProgram ? <ProgramAnnouncementCreateModal programId={programId} programName={selectedProgram.name} closeHref={closeRegistrationHref} createAction={createProgramAnnouncementAction} /> : null}
             </>
           )}
         >
@@ -314,12 +354,14 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           <AdminProjectOperationsSummary
             programId={programId}
             operations={operations}
-            selectedFilter={operation ?? "all"}
+            selectedTeamFilter={projectFilters.team}
+            selectedReportFilter={projectFilters.report}
+            showTeamFilter={!selectedProgram?.studentProjectCreationEnabled}
             divisionId={divisionId}
             query={query}
           />
         ) : null}
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT" && !selectedProgram?.studentProjectCreationEnabled} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} operation={operation} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} href={openProposalHref} />} />
+        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT" && !selectedProgram?.studentProjectCreationEnabled} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} teamStatus={projectFilters.team} reportStatus={projectFilters.report} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} href={openRegistrationHref} />} />
         </ProjectExplorerView>
       </ExplorerLayout>
     );

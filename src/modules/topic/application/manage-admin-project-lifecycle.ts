@@ -6,7 +6,8 @@ export type AdminProjectLifecycleOutcome =
   | "NOT_FOUND"
   | "INVALID_TRANSITION"
   | "PROGRAM_ENDED"
-  | "NO_APPROVAL_HISTORY";
+  | "NO_APPROVAL_HISTORY"
+  | "TEAM_SNAPSHOT_REQUIRED";
 
 export interface AdminProjectLifecycleWriter {
   transition(input: {
@@ -49,7 +50,9 @@ export class ManageAdminProjectLifecycleService {
         : outcome === "PROGRAM_ENDED"
           ? "종료일이 지난 프로그램은 먼저 종료일을 연장해야 합니다."
           : outcome === "NO_APPROVAL_HISTORY"
-            ? "재사용할 승인 요청 이력이 없습니다."
+          ? "재사용할 승인 요청 이력이 없습니다."
+          : outcome === "TEAM_SNAPSHOT_REQUIRED"
+            ? "반려된 학생 등록은 프로젝트팀을 다시 구성해 새 등록으로 제출해야 합니다."
             : "현재 상태에서는 이 변경을 수행할 수 없습니다.",
     );
   }
