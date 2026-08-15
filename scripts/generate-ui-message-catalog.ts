@@ -10,7 +10,7 @@ const outputPath = path.join(
   sourceRoot,
   "shared/i18n/ui-messages.en.json",
 );
-const batchSize = 8;
+const batchSize = 4;
 
 async function collectSourceFiles(directory: string): Promise<string[]> {
   const { readdir } = await import("node:fs/promises");
@@ -96,7 +96,7 @@ async function translateBatch(
           },
           required: ["translations"],
         },
-        options: { temperature: 0, num_predict: 4_096 },
+        options: { temperature: 0, num_predict: 384 },
         messages: [
           {
             role: "system",
@@ -219,6 +219,18 @@ async function main() {
   for (let offset = 0; offset < pending.length; offset += batchSize) {
     const batch = pending.slice(offset, offset + batchSize);
     Object.assign(catalog, await translateBatch(batch));
+    await writeFile(
+      outputPath,
+      `${JSON.stringify(
+        Object.fromEntries(
+          Object.entries(catalog).sort(([left], [right]) =>
+            left.localeCompare(right, "ko"),
+          ),
+        ),
+        null,
+        2,
+      )}\n`,
+    );
     console.log(
       JSON.stringify({
         translated: Math.min(offset + batch.length, pending.length),

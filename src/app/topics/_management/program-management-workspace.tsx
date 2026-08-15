@@ -22,6 +22,7 @@ import { ProjectVotingService } from "@/modules/project-voting/application/manag
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
 import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
@@ -87,7 +88,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
           </Link>
         </div>
       </header>
-      <nav aria-label="프로그램 관리 탭" className={`mt-5 ${navStyles.root} ${navStyles.management}`}>
+      <UiNav aria-label="프로그램 관리 탭" className={`mt-5 ${navStyles.root} ${navStyles.management}`}>
         {TABS.map((entry) => (
           <Link
             key={entry.key}
@@ -95,10 +96,10 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
             aria-current={entry.key === tab ? "page" : undefined}
             className={`${navStyles.item} ${entry.key === tab ? navStyles.itemActive : ""} ${entry.key === "advisors" ? navStyles.admin : ""}`}
           >
-            <ManagementTabIcon tab={entry.key} /><UiText>{entry.label}</UiText>{entry.key === "advisors" ? <small>관리 전용</small> : null}
+            <ManagementTabIcon tab={entry.key} /><UiText>{entry.label}</UiText>{entry.key === "advisors" ? <small><UiText>{"관리 전용"}</UiText></small> : null}
           </Link>
         ))}
-      </nav>
+      </UiNav>
     </>
   );
 }
@@ -172,7 +173,7 @@ export async function ProgramManagementWorkspace({
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section></div>;
   } else if (tab === "advisors") {
     if (!program.advisorEnabled) {
-      content = <div className={styles.panel}><EmptyState title="지도교수 운영이 꺼져 있습니다" description="자문위원을 배정하려면 운영 설정에서 지도교수 있음을 선택해 주세요." action={<Link href={programManagementHref(program.id, "operation")} className="button-primary">운영 설정으로 이동</Link>} /></div>;
+      content = <div className={styles.panel}><EmptyState title="지도교수 운영이 꺼져 있습니다" description="자문위원을 배정하려면 운영 설정에서 지도교수 있음을 선택해 주세요." action={<Link href={programManagementHref(program.id, "operation")} className="button-primary"><UiText>{"운영 설정으로 이동"}</UiText></Link>} /></div>;
       return <div className="page-enter"><ProgramManagementHeader program={program} tab={tab} pendingApprovalCount={pendingApprovalCount} /><div className="pt-7">{content}</div></div>;
     }
     const [advisors, topics, matrix] = await Promise.all([

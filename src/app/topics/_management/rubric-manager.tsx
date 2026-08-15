@@ -297,7 +297,7 @@ function PersistedCriterionRow({ programId, rubric, criterion, index, editable }
         <CriterionDelete programId={programId} rubric={rubric} criterion={criterion} />
       </div>
       <ActionMessage state={state} />
-    </div> : <div className={styles.criterionRow}><strong>{criterion.label}</strong><span>{criterion.maxPoints}점</span></div>}
+    </div> : <div className={styles.criterionRow}><strong>{criterion.label}</strong><span><UiText>{`${criterion.maxPoints}점`}</UiText></span></div>}
   </li>;
 }
 
