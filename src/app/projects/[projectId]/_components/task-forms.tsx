@@ -59,6 +59,7 @@ function TaskFields({
         <UiText>{"담당자"}</UiText>
         <CustomMultiSelect
           name="assigneeIds"
+          ariaLabel="담당자"
           defaultValues={assigneeIds}
           options={members.map((member) => ({ value: member.id, label: member.name }))}
           disabled={pending}

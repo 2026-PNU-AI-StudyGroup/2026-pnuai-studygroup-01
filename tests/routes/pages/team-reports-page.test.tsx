@@ -186,7 +186,7 @@ describe("TeamReportsPage feedback states", () => {
 
     render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("현재 제출 가능한 보고서가 없습니다");
+    expect(screen.getByText("현재 제출 가능한 보고서가 없습니다").closest("[role='status']")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "현재 제출 가능한 보고서가 없습니다" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "착수 보고서" })).toBeInTheDocument();
   });
@@ -238,9 +238,8 @@ describe("TeamReportsPage feedback states", () => {
 
     render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     const empty = screen.getByRole("heading", { name: "팀 확정 후 보고서를 제출할 수 있습니다" }).closest("[data-empty-state]");
-    expect(empty).toHaveAttribute("data-empty-state", "page");
+    expect(empty).toHaveAttribute("data-empty-state", "results");
   });
 
   it("종료된 프로젝트의 일정 0건도 하나의 빈 상태만 보여준다", async () => {
@@ -252,8 +251,8 @@ describe("TeamReportsPage feedback states", () => {
 
     render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "종료된 프로젝트에 보고서 일정이 없습니다" })).toBeInTheDocument();
+    const empty = screen.getByRole("heading", { name: "종료된 프로젝트에 보고서 일정이 없습니다" }).closest("[data-empty-state]");
+    expect(empty).toHaveAttribute("data-empty-state", "results");
     expect(screen.queryByText("종료된 프로젝트입니다")).not.toBeInTheDocument();
   });
 

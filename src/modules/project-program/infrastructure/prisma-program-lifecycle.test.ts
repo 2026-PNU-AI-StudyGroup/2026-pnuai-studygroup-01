@@ -48,6 +48,14 @@ describe("프로그램 종료 후처리", () => {
       },
       projectProgram: { update: updateProgram },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: {
+        findMany: vi.fn(async () => [
+          { id: "student-1", email: "student1@pusan.ac.kr", emailVerified: true, accountStatus: "ACTIVE", preferredLocale: "ko", emailPreference: null },
+          { id: "student-2", email: "student2@pusan.ac.kr", emailVerified: true, accountStatus: "ACTIVE", preferredLocale: "ko", emailPreference: null },
+          { id: "student-3", email: "student3@pusan.ac.kr", emailVerified: true, accountStatus: "ACTIVE", preferredLocale: "ko", emailPreference: null },
+        ]),
+      },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 3 })) },
       auditLog: { create: createAudit },
     };
 

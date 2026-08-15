@@ -173,6 +173,17 @@ describe("Prisma 지원 결정 저장소", () => {
       recruitmentPost: { updateMany: vi.fn(async () => ({ count: 0 })) },
       recruitmentApplication: { updateMany: vi.fn(async () => ({ count: 1 })) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: {
+        findMany: vi.fn(async () => [{
+          id: "student-1",
+          email: "student@pusan.ac.kr",
+          emailVerified: true,
+          accountStatus: "ACTIVE",
+          preferredLocale: "ko",
+          emailPreference: null,
+        }]),
+      },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = {
       $transaction: vi.fn(async (operation: (tx: typeof transaction) => unknown) => operation(transaction)),
@@ -316,6 +327,17 @@ describe("Prisma 지원 결정 저장소", () => {
       },
       projectAssistant: { findUnique: vi.fn(async () => null) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: {
+        findMany: vi.fn(async () => [{
+          id: "student-1",
+          email: "student@pusan.ac.kr",
+          emailVerified: true,
+          accountStatus: "ACTIVE",
+          preferredLocale: "ko",
+          emailPreference: null,
+        }]),
+      },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 1 })) },
     };
     const client = { $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient;
 

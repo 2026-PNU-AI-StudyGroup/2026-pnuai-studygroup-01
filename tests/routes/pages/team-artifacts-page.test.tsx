@@ -19,7 +19,11 @@ vi.mock("@/app/projects/[projectId]/_components/artifact-registration-form", () 
   ArtifactRegistrationForm: () => <button type="button">결과물 등록</button>,
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/showcase-manager", () => ({
+vi.mock("@/app/projects/[projectId]/_components/artifact-management-form", () => ({
+  ArtifactManagementForm: () => null,
+}));
+
+vi.mock("@/app/projects/[projectId]/_components/showcase-manager", () => ({
   ShowcaseManager: () => null,
 }));
 

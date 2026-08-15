@@ -64,7 +64,7 @@ describe("할 일 대화상자", () => {
     const dialog = screen.getByRole("dialog", { name: "할 일 수정" });
     fireEvent.click(withinDialog(dialog, "combobox", "상태"));
     fireEvent.click(screen.getByRole("option", { name: "진행 중" }));
-    fireEvent.click(dialog.querySelector(".custom-select button")!);
+    fireEvent.click(withinDialog(dialog, "combobox", "담당자"));
     fireEvent.click(screen.getByRole("option", { name: "윤서준" }));
 
     expect(updateTask).not.toHaveBeenCalled();
