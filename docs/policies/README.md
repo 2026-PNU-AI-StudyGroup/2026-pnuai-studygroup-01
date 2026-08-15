@@ -24,7 +24,7 @@
 | --- | --- |
 | [계정과 접근 권한](identity-and-access.md) | 가입, 역할, 온보딩, 계정 상태, 프로필 |
 | [프로그램과 프로젝트 운영](programs-and-projects.md) | 프로그램, 분과, 프로젝트, 투표, 종료·아카이브 |
-| [프로젝트 참여](project-participation.md) | 학생 팀, 직접 지원, 학생 프로젝트 제안 |
+| [프로젝트 참여](project-participation.md) | 학생 팀, 직접 지원, 학생 프로젝트 등록 |
 | [팀과 프로젝트 공간](teams-and-workspaces.md) | 학생 팀 모집, 실행 팀, 할 일, 대화, 지도 요청, 조교 |
 | [보고서·결과물·평가](deliverables-and-evaluation.md) | 보고서 정의, 제출·승인, 파일, 결과물, 채점표 |
 | [공지·알림·번역·피드백](communication-and-operations.md) | 공지 공개 범위, 알림, 번역, 운영 피드백, 감사 기록 |
