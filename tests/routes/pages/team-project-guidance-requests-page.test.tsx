@@ -3,16 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProjectGuidanceRequestsPage from "@/app/projects/[projectId]/requests/page";
 
-const { findPage, loadTeamWorkspace, notFound } = vi.hoisted(() => ({
+const { findPage, loadActiveTeamWorkspace, notFound } = vi.hoisted(() => ({
   findPage: vi.fn(),
-  loadTeamWorkspace: vi.fn(),
+  loadActiveTeamWorkspace: vi.fn(),
   notFound: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ notFound }));
 
 vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
-  loadTeamWorkspace,
+  loadActiveTeamWorkspace,
 }));
 
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
@@ -89,12 +89,12 @@ const routeProps = {
 describe("ProjectGuidanceRequestsPage", () => {
   beforeEach(() => {
     findPage.mockReset();
-    loadTeamWorkspace.mockReset();
+    loadActiveTeamWorkspace.mockReset();
     notFound.mockReset();
   });
 
   it("운영 중인 학생 팀원에게 요청 작성 버튼과 명시적 0건 상태를 보여준다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ actor: student, workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor: student, workspace });
     findPage.mockResolvedValue({
       items: [],
       page: 1,
@@ -115,7 +115,7 @@ describe("ProjectGuidanceRequestsPage", () => {
   });
 
   it("지도교수에게 학생의 대기 요청과 답변 양식을 보여준다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor: { ...student, id: "professor-1", role: "PROFESSOR" },
       workspace: {
         ...workspace,
@@ -171,7 +171,7 @@ describe("ProjectGuidanceRequestsPage", () => {
   });
 
   it("답변 완료 요청은 확정 상태와 지도 답변을 성공 색면의 카드로 구분한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ actor: student, workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor: student, workspace });
     findPage.mockResolvedValue({
       items: [{
         id: "71000000-0000-4000-8000-000000000002",
@@ -209,7 +209,7 @@ describe("ProjectGuidanceRequestsPage", () => {
   });
 
   it("종료된 프로젝트에는 새 요청 대신 읽기 전용 안내를 보여준다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor: student,
       workspace: { ...workspace, status: "COMPLETED" },
     });
@@ -228,7 +228,7 @@ describe("ProjectGuidanceRequestsPage", () => {
   });
 
   it("지도교수가 없는 프로젝트의 직접 검토 요청을 조회 전에 차단한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor: student,
       workspace: { ...workspace, advisorEnabled: false },
     });

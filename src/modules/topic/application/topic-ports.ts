@@ -102,6 +102,9 @@ export interface TopicStateRepository {
 export type PublicTopicSummary = TopicSummary & {
   authorName: string;
   professorName: string | null;
+  sourceUrl?: string | null;
+  thumbnailPath?: string | null;
+  posterPath?: string | null;
   startYear: number;
   memberCount: number;
   teamMembers?: Array<{ name: string; role: "LEADER" | "MEMBER" }>;

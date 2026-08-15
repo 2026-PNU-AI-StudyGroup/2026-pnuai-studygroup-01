@@ -26,7 +26,7 @@ import { TopicApprovalService } from "@/modules/topic-approval/application/manag
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiLink, UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { AccountIcon } from "@/shared/ui/workspace-icons";
@@ -69,7 +69,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
       <header className="border-b border-[var(--line)] pb-6">
         <div className={styles.headerRow}>
           <div className={styles.headerTitle}>
-            <Link
+            <UiLink
               href={topicsHref({ programId: program.id })}
               aria-label={`${program.name} 프로젝트 목록으로 돌아가기`}
               title="프로젝트 목록으로 돌아가기"
@@ -78,7 +78,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
               <svg aria-hidden="true" viewBox="0 0 20 20">
                 <path d="m9 4-6 6 6 6M3.5 10H16" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Link>
+            </UiLink>
             <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
               <UiText>{program.name}</UiText>
             </h1>

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useId, useState } from "react";
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiSection } from "@/modules/translation/ui/localized-elements";
+import { UiButton, UiSection } from "@/modules/translation/ui/localized-elements";
 
 export type ProjectMediaItem =
   | { kind: "image"; src: string; alt: string }
@@ -38,7 +38,7 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
             sizes="(min-width: 1024px) 48rem, 100vw"
             className="object-contain"
           />
-        ) : (
+        ) : current ? (
           <iframe
             key={current.embedUrl}
             className="size-full"
@@ -48,7 +48,7 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
-        )}
+        ) : null}
 
         {items.length > 1 || isEmpty ? (
           <>
@@ -78,7 +78,7 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
 
       {items.length > 1 || isEmpty ? (
         <div className="flex items-center justify-center gap-1.5">
-          {isEmpty ? <button type="button" disabled aria-label="프로젝트 이미지 없음" className="h-2 w-5 rounded-full bg-[var(--line-strong)] opacity-35" /> : items.map((item, dotIndex) => {
+          {isEmpty ? <UiButton type="button" disabled aria-label="프로젝트 이미지 없음" className="h-2 w-5 rounded-full bg-[var(--line-strong)] opacity-35" /> : items.map((item, dotIndex) => {
             const active = dotIndex === Math.min(index, items.length - 1);
             const label = item.kind === "video" ? item.title : item.alt;
             return (

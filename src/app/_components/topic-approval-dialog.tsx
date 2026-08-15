@@ -5,6 +5,7 @@ import { useId, useRef } from "react";
 import { TopicApprovalDecisionForm } from "@/app/_components/topic-approval-decision-form";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { CloseIcon } from "@/shared/ui/workspace-icons";
 
@@ -61,14 +62,14 @@ export function TopicApprovalDialog({
           <h2 id={titleId} className="mt-3 text-2xl font-bold tracking-[-0.035em]">
             <UiText>{request.topicTitle}</UiText>
           </h2>
-          <button
+          <UiButton
             type="button"
             onClick={close}
             aria-label="등록 내용 닫기"
             className="absolute right-4 top-4 grid size-10 place-items-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] sm:right-5 sm:top-5"
           >
             <CloseIcon className="size-5" />
-          </button>
+          </UiButton>
         </header>
 
         <div className="max-h-[calc(100dvh-12rem)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">

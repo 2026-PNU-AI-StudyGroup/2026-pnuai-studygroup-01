@@ -12,6 +12,17 @@ import { loadTeamReportWorkspace } from "@/app/projects/[projectId]/_lib/team-wo
 import { ARTIFACT_TYPE_LABELS, ArtifactMedia } from "@/shared/ui/artifact-media";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
+type EditableArtifact = {
+  id: string;
+  type: "SOURCE_CODE" | "POSTER" | "IMAGE" | "OTHER";
+  title: string;
+  fileId?: string;
+};
+
+function isEditableArtifact(artifact: { type: string }): artifact is EditableArtifact {
+  return artifact.type !== "PRESENTATION_VIDEO";
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 결과물");
 }
@@ -53,7 +64,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
     }));
   const showcaseVideo = reportWorkspace.artifacts.find((artifact) => artifact.type === "PRESENTATION_VIDEO");
   const visibleArtifacts = canRegisterArtifact
-    ? reportWorkspace.artifacts.filter((artifact) => artifact.type !== "IMAGE" && artifact.type !== "PRESENTATION_VIDEO")
+    ? reportWorkspace.artifacts.filter((artifact): artifact is typeof artifact & { type: "SOURCE_CODE" | "POSTER" | "OTHER" } => artifact.type !== "IMAGE" && artifact.type !== "PRESENTATION_VIDEO")
     : reportWorkspace.artifacts.filter((artifact) => artifact.type !== "PRESENTATION_VIDEO");
 
   return (
@@ -100,7 +111,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
                 </div>
                 <div className="mt-4">
                   <ArtifactMedia type={artifact.type} title={artifact.title} fileId={artifact.fileId} externalUrl={artifact.externalUrl} />
-                  {canRegisterArtifact ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
+                  {canRegisterArtifact && isEditableArtifact(artifact) ? <ArtifactManagementForm teamId={workspace.id} artifact={artifact} /> : null}
                 </div>
               </li>
             );

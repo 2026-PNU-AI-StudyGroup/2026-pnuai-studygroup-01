@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import type { TopicApprovalStatus } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { CustomSelect } from "@/shared/ui/custom-select";
 
 const statusOptions: Array<{ value: TopicApprovalStatus | ""; label: string }> = [
@@ -40,7 +41,7 @@ export function ProjectApprovalFilters({
   };
 
   return (
-    <div aria-label="승인 요청 필터" className="flex flex-wrap items-center gap-2">
+    <UiDiv aria-label="승인 요청 필터" className="flex flex-wrap items-center gap-2">
       <CustomSelect
         ariaLabel="프로그램"
         density="compact"
@@ -66,6 +67,6 @@ export function ProjectApprovalFilters({
           ? { ...option, description: `현재 ${totalPending}건` }
           : option)}
       />
-    </div>
+    </UiDiv>
   );
 }

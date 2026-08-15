@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { toggleProjectVoteAction } from "@/app/_actions/project-vote-actions";
 import type { ProgramVoteBallot, ProjectVoteCandidate } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiSection } from "@/modules/translation/ui/localized-elements";
 import { BallotBoxIcon } from "@/shared/ui/workspace-icons";
 
 export type ProjectVoteSelection = {
@@ -97,12 +98,12 @@ export function ArchivedProjectVoteAction({
   if (!candidate) return null;
 
   return (
-    <section aria-label="프로젝트 투표">
+    <UiSection aria-label="프로젝트 투표">
       <ProjectVoteStatusPill selection={selection} />
       <div className="mt-3">
         <ProjectVoteButton candidate={candidate} selection={selection} />
       </div>
-    </section>
+    </UiSection>
   );
 }
 
