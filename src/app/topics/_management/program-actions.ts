@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError, ProjectProgramService, type ProgramVoteResetImpact } from "@/modules/project-program/application/manage-project-programs";
+import { ProgramDivisionSyncConfirmationRequiredError, ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError, ProjectProgramService, type ProgramDivisionSyncImpact, type ProgramVoteResetImpact } from "@/modules/project-program/application/manage-project-programs";
 import { InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
 import { PROGRAM_ICON_KEYS } from "@/modules/project-program/domain/program-icon";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -11,7 +11,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export type ProgramActionState = { status: "idle" | "error" | "success" | "confirm"; message: string; voteResetImpact?: ProgramVoteResetImpact };
+export type ProgramActionState = { status: "idle" | "error" | "success" | "confirm"; message: string; voteResetImpact?: ProgramVoteResetImpact; divisionSyncImpact?: ProgramDivisionSyncImpact; savedAdvisorEnabled?: boolean };
 async function actor() { const value = await getCurrentActor(); if (!value) redirect("/sign-in"); return value; }
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
@@ -65,6 +65,57 @@ const programSettingsSchema = z.object({
   }
 });
 
+const programIdSchema = z.string().uuid();
+const programBasicInfoSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  category: z.string().trim().min(1).max(100),
+  description: z.string().trim().min(1).max(5000),
+  visibility: programVisibilitySchema,
+  divisionNames: z.string(),
+  confirmedDivisionIds: z.string().optional(),
+  confirmedDivisionProjectCount: z.coerce.number().int().min(0).optional(),
+  confirmedDivisionVoteCount: z.coerce.number().int().min(0).optional(),
+  confirmedDivisionSwitchesVotingScope: z.enum(["true", "false"]).transform((value) => value === "true").optional(),
+});
+const programOperationSchema = z.object({
+  advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"),
+  enabled: z.enum(["true", "false"]).transform((value) => value === "true"),
+  projectTeamMinSize: z.coerce.number().int().min(1).max(100),
+  projectTeamMaxSize: z.coerce.number().int().min(1).max(100),
+  operationIntent: z.enum(["FULL", "ADVISOR_ONLY"]).default("FULL"),
+});
+const programScheduleSchema = z.object({
+  startsAt: koreanLocalDateTime,
+  endsAt: koreanLocalDateTime,
+  projectRegistrationStartsAt: koreanLocalDateTime,
+  projectRegistrationEndsAt: koreanLocalDateTime,
+  recruitmentStartsAt: koreanLocalDateTime.optional(),
+  recruitmentEndsAt: koreanLocalDateTime.optional(),
+  executionStartsAt: koreanLocalDateTime,
+  executionEndsAt: koreanLocalDateTime,
+  targetMode: z.enum(["CURRENT", "DIRECT"]).default("CURRENT"),
+});
+const programVotingSchema = z.object({
+  votingEnabled: z.boolean(),
+  votingStartsAt: koreanLocalDateTime.optional(),
+  votingEndsAt: koreanLocalDateTime.optional(),
+  voteLimit: z.coerce.number().int().min(1).optional(),
+  staffVoteLimit: z.coerce.number().int().min(1).default(5),
+  voteLimitScope: voteLimitScopeSchema.optional(),
+  selfVotingAllowed: z.boolean(),
+  resultsVisibleDuringVoting: z.boolean(),
+  resultsVisibleAfterVoting: z.boolean(),
+  confirmedVoteCount: z.coerce.number().int().min(1).optional(),
+  confirmedVoteFromLimit: z.coerce.number().int().min(1).optional(),
+  confirmedVoteFromScope: voteLimitScopeSchema.optional(),
+  confirmedVoteLimit: z.coerce.number().int().min(1).optional(),
+  confirmedVoteLimitScope: voteLimitScopeSchema.optional(),
+}).superRefine((value, context) => {
+  if (value.votingEnabled && (!value.votingStartsAt || !value.votingEndsAt || !value.voteLimit || !value.voteLimitScope)) {
+    context.addIssue({ code: "custom", message: "투표 설정을 모두 입력해 주세요." });
+  }
+});
+
 function parseProgramSettings(formData: FormData, options?: { useExecutionPeriodAsSubmissionPeriod?: boolean }) {
   const entries = Object.fromEntries(formData);
   return programSettingsSchema.safeParse({
@@ -85,6 +136,139 @@ function parseExplicitBoolean(value: FormDataEntryValue | null, fallback: boolea
   if (value === "true") return true;
   if (value === "false") return false;
   return value;
+}
+
+function refreshManagement(programId: string, tab: Parameters<typeof programManagementHref>[1] = "settings") {
+  revalidatePath("/topics");
+  revalidatePath(programManagementHref(programId, tab));
+  revalidatePath(programManagementHref(programId));
+}
+
+function managementFormData(formData: FormData) {
+  return {
+    ...Object.fromEntries(formData),
+    votingEnabled: formData.get("votingEnabled") === "true",
+    selfVotingAllowed: formData.get("selfVotingAllowed") === "true",
+    resultsVisibleDuringVoting: parseExplicitBoolean(formData.get("resultsVisibleDuringVoting"), false),
+    resultsVisibleAfterVoting: parseExplicitBoolean(formData.get("resultsVisibleAfterVoting"), true),
+  };
+}
+
+export async function updateProgramBasicInfoAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  const input = programBasicInfoSchema.safeParse(Object.fromEntries(formData));
+  if (!programId.success || !input.success) return { status: "error", message: "프로그램 기본 정보를 다시 확인해 주세요." };
+  try {
+    await service().updateBasicInfo(await actor(), programId.data, {
+      name: input.data.name,
+      category: input.data.category,
+      description: input.data.description,
+      isPublic: input.data.visibility === "PUBLIC",
+      divisionNames: input.data.divisionNames.split(",").map((name) => name.trim()).filter(Boolean),
+      confirmDivisionSync: input.data.confirmedDivisionIds !== undefined &&
+        input.data.confirmedDivisionProjectCount !== undefined &&
+        input.data.confirmedDivisionVoteCount !== undefined &&
+        input.data.confirmedDivisionSwitchesVotingScope !== undefined
+        ? {
+            divisionIds: input.data.confirmedDivisionIds.split(",").filter(Boolean),
+            divisionNames: [],
+            projectCount: input.data.confirmedDivisionProjectCount,
+            voteCount: input.data.confirmedDivisionVoteCount,
+            switchesVotingScope: input.data.confirmedDivisionSwitchesVotingScope,
+          }
+        : undefined,
+    });
+  } catch (error) {
+    if (error instanceof ProgramDivisionSyncConfirmationRequiredError) {
+      return { status: "confirm", message: error.message, divisionSyncImpact: error.impact };
+    }
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data);
+  return { status: "success", message: "기본 정보를 저장했습니다." };
+}
+
+export async function updateProgramOperationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  const input = programOperationSchema.safeParse(Object.fromEntries(formData));
+  if (!programId.success || !input.success) return { status: "error", message: "운영 설정과 팀 인원을 다시 확인해 주세요." };
+  try {
+    const currentActor = await actor();
+    if (input.data.operationIntent === "ADVISOR_ONLY") {
+      await service().updateAdvisorEnabled(currentActor, programId.data, input.data.advisorEnabled);
+    } else {
+      await service().updateOperation(currentActor, programId.data, {
+        advisorEnabled: input.data.advisorEnabled,
+        enabled: input.data.enabled,
+        minSize: input.data.projectTeamMinSize,
+        maxSize: input.data.projectTeamMaxSize,
+      });
+    }
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data, "operation");
+  return input.data.operationIntent === "ADVISOR_ONLY"
+    ? { status: "success", message: "지도교수 설정을 저장했습니다.", savedAdvisorEnabled: input.data.advisorEnabled }
+    : { status: "success", message: "운영 설정을 저장했습니다." };
+}
+
+export async function updateProgramScheduleAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  const input = programScheduleSchema.safeParse(Object.fromEntries(formData));
+  if (!programId.success || !input.success) return { status: "error", message: "운영·등록·수행 기간을 다시 확인해 주세요." };
+  try {
+    const currentActor = await actor();
+    await service().updateSchedule(currentActor, programId.data, {
+      startsAt: input.data.startsAt,
+      endsAt: input.data.endsAt,
+      projectRegistrationStartsAt: input.data.projectRegistrationStartsAt,
+      projectRegistrationEndsAt: input.data.projectRegistrationEndsAt,
+      recruitmentStartsAt: input.data.recruitmentStartsAt ?? null,
+      recruitmentEndsAt: input.data.recruitmentEndsAt ?? null,
+      executionStartsAt: input.data.executionStartsAt,
+      executionEndsAt: input.data.executionEndsAt,
+      transitionToDirect: input.data.targetMode === "DIRECT",
+    });
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data, "schedule");
+  return { status: "success", message: "일정을 저장했습니다." };
+}
+
+export async function updateProgramVotingPolicyAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  const input = programVotingSchema.safeParse(managementFormData(formData));
+  if (!programId.success || !input.success) return { status: "error", message: "투표 기간과 정책을 다시 확인해 주세요." };
+  try {
+    await service().updateVotingPolicy(await actor(), programId.data, {
+      votingPolicy: input.data.votingEnabled ? {
+        startsAt: input.data.votingStartsAt!,
+        endsAt: input.data.votingEndsAt!,
+        voteLimit: input.data.voteLimit!,
+        staffVoteLimit: input.data.staffVoteLimit,
+        voteLimitScope: input.data.voteLimitScope!,
+        selfVotingAllowed: input.data.selfVotingAllowed,
+        resultsVisibleDuringVoting: input.data.resultsVisibleDuringVoting,
+        resultsVisibleAfterVoting: input.data.resultsVisibleAfterVoting,
+      } : null,
+      confirmVoteReset: input.data.confirmedVoteCount && input.data.confirmedVoteFromLimit && input.data.confirmedVoteFromScope && input.data.confirmedVoteLimit && input.data.confirmedVoteLimitScope ? {
+        voteCount: input.data.confirmedVoteCount,
+        from: { voteLimit: input.data.confirmedVoteFromLimit, voteLimitScope: input.data.confirmedVoteFromScope },
+        to: { voteLimit: input.data.confirmedVoteLimit, voteLimitScope: input.data.confirmedVoteLimitScope },
+      } : undefined,
+    });
+  } catch (error) {
+    if (error instanceof ProgramVoteResetConfirmationRequiredError) return { status: "confirm", message: error.message, voteResetImpact: error.impact };
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data, "votes");
+  return { status: "success", message: "투표 정책을 저장했습니다." };
 }
 
 function parseJsonArray(value: FormDataEntryValue | null) {
@@ -143,83 +327,6 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
   revalidatePath("/topics");
   revalidatePath(programManagementHref(programId));
   redirect(programManagementHref(programId));
-}
-
-export async function updateProgramSettingsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const programId = z.string().uuid().safeParse(formData.get("programId"));
-  const settings = parseProgramSettings(formData);
-  if (!programId.success || !settings.success) return { status: "error", message: "등록·공통 일정·투표 기간과 투표 정책을 확인해 주세요." };
-  try {
-    await service().updateSettings(await actor(), programId.data, {
-      name: settings.data.name,
-      category: settings.data.category,
-      description: settings.data.description,
-      startsAt: settings.data.startsAt,
-      endsAt: settings.data.endsAt,
-      advisorEnabled: settings.data.advisorEnabled,
-      projectRegistrationStartsAt: settings.data.projectRegistrationStartsAt,
-      projectRegistrationEndsAt: settings.data.projectRegistrationEndsAt,
-      recruitmentStartsAt: settings.data.recruitmentStartsAt ?? null,
-      recruitmentEndsAt: settings.data.recruitmentEndsAt ?? null,
-      executionStartsAt: settings.data.executionStartsAt,
-      executionEndsAt: settings.data.executionEndsAt,
-      submissionStartsAt: settings.data.submissionStartsAt,
-      submissionEndsAt: settings.data.submissionEndsAt,
-      votingPolicy: settings.data.votingEnabled ? {
-        startsAt: settings.data.votingStartsAt!,
-        endsAt: settings.data.votingEndsAt!,
-        voteLimit: settings.data.voteLimit!,
-        staffVoteLimit: settings.data.staffVoteLimit,
-        voteLimitScope: settings.data.voteLimitScope!,
-        selfVotingAllowed: settings.data.selfVotingAllowed,
-        resultsVisibleDuringVoting: settings.data.resultsVisibleDuringVoting,
-        resultsVisibleAfterVoting: settings.data.resultsVisibleAfterVoting,
-      } : null,
-      confirmVoteReset: settings.data.confirmedVoteCount && settings.data.confirmedVoteFromLimit && settings.data.confirmedVoteFromScope && settings.data.confirmedVoteLimit && settings.data.confirmedVoteLimitScope ? {
-        voteCount: settings.data.confirmedVoteCount,
-        from: { voteLimit: settings.data.confirmedVoteFromLimit, voteLimitScope: settings.data.confirmedVoteFromScope },
-        to: { voteLimit: settings.data.confirmedVoteLimit, voteLimitScope: settings.data.confirmedVoteLimitScope },
-      } : undefined,
-    });
-  } catch (error) {
-    if (error instanceof ProgramVoteResetConfirmationRequiredError) return { status: "confirm", message: error.message, voteResetImpact: error.impact };
-    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
-    throw error;
-  }
-  revalidatePath("/topics");
-  revalidatePath(programManagementHref(programId.data));
-  revalidatePath("/professor/topics/new");
-  revalidatePath("/project-approvals");
-  return { status: "success", message: "프로그램 정보와 운영 설정을 저장했습니다." };
-}
-
-export async function changeProgramIconAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ programId: z.string().uuid(), icon: programIconSchema }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "프로그램 아이콘을 다시 선택해 주세요." };
-  try { await service().changeIcon(await actor(), parsed.data.programId, parsed.data.icon); }
-  catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/topics");
-  revalidatePath(programManagementHref(parsed.data.programId));
-  revalidatePath("/dashboard");
-  return { status: "success", message: "프로그램 아이콘을 변경했습니다." };
-}
-
-export async function changeStudentProjectCreationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ programId: z.string().min(1).max(200), enabled: z.enum(["true", "false"]), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int(), recruitmentStartsAt: koreanLocalDateTime.optional(), recruitmentEndsAt: koreanLocalDateTime.optional() }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "프로젝트 참여 방식과 팀 인원을 다시 확인해 주세요." };
-  try {
-    await service().changeStudentProjectPolicy(await actor(), parsed.data.programId, {
-      enabled: parsed.data.enabled === "true",
-      minSize: parsed.data.projectTeamMinSize,
-      maxSize: parsed.data.projectTeamMaxSize,
-      recruitmentStartsAt: parsed.data.recruitmentStartsAt,
-      recruitmentEndsAt: parsed.data.recruitmentEndsAt,
-    });
-  }
-  catch (error) { if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/topics");
-  revalidatePath(programManagementHref(parsed.data.programId));
-  return { status: "success", message: "프로젝트 참여 방식을 저장했습니다." };
 }
 
 export async function changeProgramStatusAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {

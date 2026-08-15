@@ -4,11 +4,16 @@ import type {
   ProjectProgramRecord,
   ProjectProgramRepository,
   ProjectProgramCreateSetup,
+  ProjectProgramBasicInfoUpdate,
   ProjectProgramSettings,
+  ProjectProgramScheduleUpdate,
+  ProgramDivisionSyncImpact,
   ChangeStudentProjectPolicyOutcome,
+  UpdateProjectProgramBasicInfoOutcome,
+  UpdateProjectProgramScheduleOutcome,
   UpdateProjectProgramSettingsOutcome,
 } from "@/modules/project-program/application/manage-project-programs";
-import { getProgramStartYear, type ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
+import { getProgramStartYear, normalizeProjectProgram, type ProjectProgramDetails } from "@/modules/project-program/domain/project-program-policy";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 
@@ -101,6 +106,112 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     }));
   }
 
+  async updateBasicInfo(id: string, input: ProjectProgramBasicInfoUpdate, actorId: string): Promise<UpdateProjectProgramBasicInfoOutcome> {
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ id: string; isPublic: boolean; firstPublishedAt: Date | null }>>(Prisma.sql`
+        SELECT "id", "isPublic", "firstPublishedAt"
+        FROM "project_program"
+        WHERE "id" = ${id}
+        FOR UPDATE
+      `);
+      const program = rows[0];
+      if (!program) return "NOT_FOUND";
+
+      const divisions = await transaction.programDivision.findMany({
+        where: { programId: id },
+        orderBy: { position: "asc" },
+        select: { id: true, name: true, position: true, _count: { select: { topics: true } } },
+      });
+      const desiredByKey = new Map(input.divisionNames.map((name) => [divisionKey(name), name]));
+      const retainedByKey = new Map(divisions.filter((division) => desiredByKey.has(divisionKey(division.name))).map((division) => [divisionKey(division.name), division]));
+      const removed = divisions.filter((division) => !desiredByKey.has(divisionKey(division.name)));
+      const removedIds = removed.map((division) => division.id);
+      const policy = removedIds.length
+        ? await transaction.programVotingPolicy.findUnique({ where: { programId: id }, select: { voteLimitScope: true } })
+        : null;
+      const projectCount = removed.reduce((total, division) => total + division._count.topics, 0);
+      const voteCount = removedIds.length ? await transaction.projectVote.count({ where: { programId: id } }) : 0;
+      const switchesVotingScope = removedIds.length > 0 && input.divisionNames.length === 0 && policy?.voteLimitScope === "DIVISION";
+      const impact: ProgramDivisionSyncImpact = {
+        divisionIds: removedIds,
+        divisionNames: removed.map((division) => division.name),
+        projectCount,
+        voteCount,
+        switchesVotingScope,
+      };
+
+      if (removedIds.length) {
+        const projectTeamIds = (await transaction.projectTeam.findMany({
+          where: { project: { programId: id, divisionId: { in: removedIds } } },
+          select: { id: true },
+        })).map((team) => team.id);
+        if (projectTeamIds.length && await transaction.rubricScore.findFirst({
+          where: { evaluation: { projectTeamId: { in: projectTeamIds } } },
+          select: { id: true },
+        })) return "SCORED_RUBRIC";
+        if ((projectCount > 0 || voteCount > 0 || switchesVotingScope) && !sameDivisionSyncImpact(input.confirmDivisionSync, impact)) {
+          return { status: "DIVISION_SYNC_CONFIRMATION_REQUIRED", impact };
+        }
+
+        const customRubricIds = (await transaction.rubricDefinition.findMany({
+          where: { programId: id, divisionId: { in: removedIds } },
+          select: { id: true },
+        })).map((rubric) => rubric.id);
+        if (customRubricIds.length) {
+          await transaction.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: customRubricIds } } });
+          await transaction.rubricDefinition.deleteMany({ where: { id: { in: customRubricIds } } });
+        }
+        await transaction.topic.updateMany({ where: { programId: id, divisionId: { in: removedIds } }, data: { divisionId: null } });
+        const commonRubricIds = (await transaction.rubricDefinition.findMany({
+          where: { programId: id, divisionId: null, archivedAt: null, legacy: false },
+          select: { id: true },
+        })).map((rubric) => rubric.id);
+        if (projectTeamIds.length && commonRubricIds.length) {
+          await transaction.projectTeamRubricEvaluation.createMany({
+            data: projectTeamIds.flatMap((projectTeamId) => commonRubricIds.map((rubricId) => ({ projectTeamId, rubricId }))),
+            skipDuplicates: true,
+          });
+        }
+        if (voteCount) {
+          await transaction.projectVote.deleteMany({ where: { programId: id } });
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "DIVISION_DELETED", voteCount } } });
+        }
+        if (switchesVotingScope) await transaction.programVotingPolicy.update({ where: { programId: id }, data: { voteLimitScope: "PROGRAM" } });
+        await transaction.programDivision.deleteMany({ where: { id: { in: removedIds } } });
+        for (const division of removed) {
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_DIVISION_DELETED", targetType: "PROGRAM_DIVISION", targetId: division.id, metadata: { name: division.name, projectCount: division._count.topics, voteCount } } });
+        }
+      }
+
+      const positionOffset = divisions.length + input.divisionNames.length + 1;
+      if (divisions.length) await transaction.programDivision.updateMany({ where: { programId: id }, data: { position: { increment: positionOffset } } });
+      for (const [position, name] of input.divisionNames.entries()) {
+        const retained = retainedByKey.get(divisionKey(name));
+        if (retained) {
+          await transaction.programDivision.update({ where: { id: retained.id }, data: { name, position } });
+          if (retained.name !== name || retained.position !== position) {
+            await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_DIVISION_UPDATED", targetType: "PROGRAM_DIVISION", targetId: retained.id, metadata: { name, position } } });
+          }
+        } else {
+          const division = await transaction.programDivision.create({ data: { programId: id, name, position } });
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_DIVISION_CREATED", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { divisionId: division.id, name, position } } });
+        }
+      }
+
+      await transaction.projectProgram.update({
+        where: { id },
+        data: {
+          name: input.name,
+          category: input.category,
+          description: input.description,
+          isPublic: input.isPublic,
+          firstPublishedAt: input.isPublic && !program.isPublic && program.firstPublishedAt === null ? new Date() : undefined,
+        },
+      });
+      return "UPDATED";
+    });
+  }
+
   async updateSettings(id: string, input: ProjectProgramSettings, actorId: string): Promise<UpdateProjectProgramSettingsOutcome> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string; endsAt: Date }>>(Prisma.sql`
@@ -108,17 +219,18 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       `);
       if (!programs[0]) return "NOT_FOUND";
 
-      const currentPolicy = await transaction.programVotingPolicy.findUnique({ where: { programId: id } });
-      const voteCount = currentPolicy
-        ? await transaction.projectVote.count({ where: { programId: id } })
-        : 0;
-      const divisionCount = await transaction.programDivision.count({ where: { programId: id } });
-      if (input.votingPolicy?.voteLimitScope === "DIVISION" && divisionCount === 0) return "DIVISIONS_REQUIRED";
+      if (input.votingPolicy !== undefined) {
+        const currentPolicy = await transaction.programVotingPolicy.findUnique({ where: { programId: id } });
+        const voteCount = currentPolicy
+          ? await transaction.projectVote.count({ where: { programId: id } })
+          : 0;
+        const divisionCount = await transaction.programDivision.count({ where: { programId: id } });
+        if (input.votingPolicy?.voteLimitScope === "DIVISION" && divisionCount === 0) return "DIVISIONS_REQUIRED";
 
-      if (!input.votingPolicy) {
+        if (!input.votingPolicy) {
         if (currentPolicy && voteCount > 0) return "VOTING_POLICY_HAS_VOTES";
         if (currentPolicy) await transaction.programVotingPolicy.delete({ where: { programId: id } });
-      } else if (currentPolicy) {
+        } else if (currentPolicy) {
         const requestedScope = input.votingPolicy.voteLimitScope ?? "PROGRAM";
         const policyChanged = currentPolicy.voteLimit !== input.votingPolicy.voteLimit || currentPolicy.voteLimitScope !== requestedScope;
         const periodChanged = currentPolicy.startsAt.getTime() !== input.votingPolicy.startsAt.getTime() ||
@@ -168,8 +280,9 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "POLICY_CHANGED", voteCount, from: { voteLimit: currentPolicy.voteLimit, voteLimitScope: currentPolicy.voteLimitScope }, to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope } } } });
         }
         await transaction.programVotingPolicy.update({ where: { programId: id }, data: input.votingPolicy });
-      } else {
-        await transaction.programVotingPolicy.create({ data: { programId: id, ...input.votingPolicy } });
+        } else {
+          await transaction.programVotingPolicy.create({ data: { programId: id, ...input.votingPolicy } });
+        }
       }
 
       await transaction.projectProgram.update({
@@ -178,6 +291,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           name: input.name,
           category: input.category,
           description: input.description,
+          isPublic: input.isPublic,
           startsAt: input.startsAt,
           endsAt: input.endsAt,
           advisorEnabled: input.advisorEnabled,
@@ -192,6 +306,52 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           endProcessedAt: input.endsAt && input.endsAt > new Date() && input.endsAt.getTime() !== programs[0].endsAt.getTime()
             ? null
             : undefined,
+        },
+      });
+      return "UPDATED";
+    });
+  }
+
+  async updateSchedule(id: string, input: ProjectProgramScheduleUpdate): Promise<UpdateProjectProgramScheduleOutcome> {
+    return this.client.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "project_program" WHERE "id" = ${id} FOR UPDATE
+      `);
+      if (!rows[0]) return "NOT_FOUND";
+
+      const current = await transaction.projectProgram.findUnique({ where: { id } });
+      if (!current) return "NOT_FOUND";
+      const transitionToDirect = input.transitionToDirect === true && current.studentProjectCreationEnabled;
+      if (transitionToDirect) {
+        const topic = await transaction.topic.findFirst({ where: { programId: id }, select: { id: true } });
+        if (topic) return "TOPICS_EXIST";
+      }
+
+      const normalized = normalizeProjectProgram({
+        ...current,
+        ...input,
+        studentProjectCreationEnabled: transitionToDirect ? false : current.studentProjectCreationEnabled,
+        projectTeamMinSize: transitionToDirect ? 1 : current.projectTeamMinSize,
+        submissionStartsAt: input.executionStartsAt,
+        submissionEndsAt: input.executionEndsAt,
+      });
+      await transaction.projectProgram.update({
+        where: { id },
+        data: {
+          startsAt: normalized.startsAt,
+          endsAt: normalized.endsAt,
+          projectRegistrationStartsAt: normalized.projectRegistrationStartsAt,
+          projectRegistrationEndsAt: normalized.projectRegistrationEndsAt,
+          recruitmentStartsAt: normalized.recruitmentStartsAt,
+          recruitmentEndsAt: normalized.recruitmentEndsAt,
+          executionStartsAt: normalized.executionStartsAt,
+          executionEndsAt: normalized.executionEndsAt,
+          submissionStartsAt: normalized.submissionStartsAt,
+          submissionEndsAt: normalized.submissionEndsAt,
+          studentProjectCreationEnabled: normalized.studentProjectCreationEnabled,
+          projectTeamMinSize: normalized.projectTeamMinSize,
+          projectTeamMaxSize: normalized.projectTeamMaxSize,
+          endProcessedAt: normalized.endsAt > new Date() && normalized.endsAt.getTime() !== current.endsAt.getTime() ? null : undefined,
         },
       });
       return "UPDATED";
@@ -229,7 +389,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     return status === "OPEN" ? this.setVisibility(id, true, changedAt) : this.close(id, changedById, changedAt);
   }
 
-  async changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }): Promise<ChangeStudentProjectPolicyOutcome> {
+  async changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null; advisorEnabled?: boolean }): Promise<ChangeStudentProjectPolicyOutcome> {
     return this.client.$transaction(async (transaction) => {
       const programs = await transaction.$queryRaw<Array<{ id: string; studentProjectCreationEnabled: boolean }>>(Prisma.sql`
         SELECT "id", "studentProjectCreationEnabled"
@@ -251,6 +411,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           projectTeamMaxSize: input.maxSize,
           recruitmentStartsAt: input.recruitmentStartsAt,
           recruitmentEndsAt: input.recruitmentEndsAt,
+          advisorEnabled: input.advisorEnabled,
         },
       });
       return "UPDATED";
@@ -331,6 +492,16 @@ async function findSelfVote(transaction: Prisma.TransactionClient, programId: st
     LIMIT 1
   `);
   return Boolean(votes[0]);
+}
+
+function divisionKey(name: string) {
+  return name.trim().toLocaleLowerCase("ko-KR");
+}
+
+function sameDivisionSyncImpact(expected: ProgramDivisionSyncImpact | undefined, actual: ProgramDivisionSyncImpact) {
+  if (!expected || expected.projectCount !== actual.projectCount || expected.voteCount !== actual.voteCount || expected.switchesVotingScope !== actual.switchesVotingScope) return false;
+  if (expected.divisionIds.length !== actual.divisionIds.length) return false;
+  return expected.divisionIds.every((id) => actual.divisionIds.includes(id));
 }
 
 function isProgramIdentityConflict(target: unknown): boolean {

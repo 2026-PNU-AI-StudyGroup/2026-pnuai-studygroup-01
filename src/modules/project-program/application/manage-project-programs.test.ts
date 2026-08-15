@@ -26,7 +26,9 @@ function repository(overrides: Partial<ProjectProgramRepository> = {}): ProjectP
     listOpen: vi.fn(),
     listSidebarVisible: vi.fn(),
     findById: vi.fn(),
+    updateBasicInfo: vi.fn(async () => "UPDATED" as const),
     updateSettings: vi.fn(async () => "UPDATED" as const),
+    updateSchedule: vi.fn(async () => "UPDATED" as const),
     changeStatus: vi.fn(),
     changeStudentProjectPolicy: vi.fn(),
     changeIcon: vi.fn(),
@@ -264,6 +266,67 @@ describe("프로젝트 프로그램 관리", () => {
       "program-1",
       { enabled: true, minSize: 2, maxSize: 6 },
     )).rejects.toThrow("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
+  });
+
+  it("기본 정보 저장은 일정과 투표 정책을 다시 쓰지 않는다", async () => {
+    const current = {
+      ...programInput,
+      id: "program-1",
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+    };
+    const value = repository({ findById: vi.fn(async () => current) });
+
+    await new ProjectProgramService(value).updateBasicInfo({ id: "admin", role: "ADMIN" }, "program-1", {
+      name: "새 프로그램명",
+      category: "대회",
+      description: "새 설명",
+      isPublic: true,
+      divisionNames: [],
+    });
+
+    expect(value.updateBasicInfo).toHaveBeenCalledWith("program-1", {
+      name: "새 프로그램명",
+      category: "대회",
+      description: "새 설명",
+      isPublic: true,
+      divisionNames: [],
+      confirmDivisionSync: undefined,
+    }, "admin");
+  });
+
+  it("일정 저장은 제출 기간을 수행 기간으로 함께 파생한다", async () => {
+    const current = {
+      ...programInput,
+      id: "program-1",
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+    };
+    const value = repository({ updateSchedule: vi.fn(async () => "UPDATED" as const) });
+    const executionStartsAt = new Date("2026-04-01T00:00:00Z");
+    const executionEndsAt = new Date("2026-11-01T00:00:00Z");
+
+    await new ProjectProgramService(value).updateSchedule({ id: "admin", role: "ADMIN" }, "program-1", {
+      startsAt: current.startsAt,
+      endsAt: current.endsAt,
+      projectRegistrationStartsAt: current.projectRegistrationStartsAt,
+      projectRegistrationEndsAt: current.projectRegistrationEndsAt,
+      recruitmentStartsAt: current.recruitmentStartsAt,
+      recruitmentEndsAt: current.recruitmentEndsAt,
+      executionStartsAt,
+      executionEndsAt,
+    });
+
+    expect(value.updateSchedule).toHaveBeenCalledWith("program-1", expect.objectContaining({
+      executionStartsAt,
+      executionEndsAt,
+    }));
   });
 
   it("관리자가 프로그램 아이콘을 변경한다", async () => {

@@ -108,10 +108,24 @@ describe("ProgramManagementRoutePage", () => {
     }));
   });
 
+  it("직접 지원 전환을 위한 일정 탭 상태를 관리 화면에 전달한다", async () => {
+    render(await ProgramManagementRoutePage({
+      requestedProgramId: "program-1",
+      tabSegments: ["schedule"],
+      targetMode: "DIRECT",
+    }));
+
+    expect(programManagementWorkspace).toHaveBeenCalledWith(expect.objectContaining({
+      tab: "schedule",
+      targetMode: "DIRECT",
+    }));
+  });
+
   it.each([
     { programId: "program-1", tabSegments: ["settings"], href: "/topics/manage/program-1" },
     { programId: "program-1", tabSegments: ["unknown"], href: "/topics/manage/program-1" },
     { programId: "missing", tabSegments: ["votes"], href: "/topics/manage/program-1/votes" },
+    { programId: "program-1", tabSegments: ["tracks"], href: "/topics/manage/program-1#divisions" },
   ])("비정식 주소를 $href로 정규화한다", async ({ programId, tabSegments, href }) => {
     redirect.mockImplementationOnce((target: string) => {
       throw new Error(`REDIRECT:${target}`);

@@ -18,6 +18,10 @@ const rubricInput = z.object({
   gradingDueAt: koreanLocalDateTime,
   audience: z.enum(["STAFF_ONLY", "TEAM_MEMBERS"]),
 });
+const criterionInput = z.object({
+  label: z.string().trim().min(1).max(60),
+  maxPoints: z.coerce.number().int().min(1).max(100),
+});
 
 async function requireAdmin() {
   const actor = await getCurrentOperationalActor();
@@ -59,13 +63,25 @@ function activeTeamWhere(programId: string, divisionId: string | null): PrismaTy
 
 export async function createRubricAction(
   programId: string,
-  divisionId: string | null,
   _state: RubricActionState,
   formData: FormData,
 ): Promise<RubricActionState> {
   const actor = await requireAdmin();
   if (!actor) return failure("채점표는 관리자만 관리할 수 있습니다.");
   const parsed = rubricInput.safeParse(Object.fromEntries(formData));
+  const divisionValue = formData.get("divisionId");
+  const divisionId = typeof divisionValue === "string" && divisionValue ? divisionValue : null;
+  const criteriaValue = formData.get("criteriaJson");
+  let criteria: Array<z.infer<typeof criterionInput>> | null = null;
+  if (typeof criteriaValue === "string" && criteriaValue) {
+    try {
+      const criteriaParsed = z.array(criterionInput).min(1).max(20).safeParse(JSON.parse(criteriaValue));
+      if (!criteriaParsed.success) return failure("평가 항목과 배점을 확인해 주세요.");
+      criteria = criteriaParsed.data;
+    } catch {
+      return failure("평가 항목과 배점을 확인해 주세요.");
+    }
+  }
   if (!uuid.safeParse(programId).success || (divisionId && !uuid.safeParse(divisionId).success) || !parsed.success) return failure("채점표 제목, 마감, 공개 대상을 확인해 주세요.");
   const outcome = await prisma.$transaction(async (tx) => {
     const program = await lockProgram(tx, programId);
@@ -81,10 +97,18 @@ export async function createRubricAction(
     });
     if (duplicate) return "DUPLICATE" as const;
     const last = await tx.rubricDefinition.findFirst({ where: { programId, divisionId, archivedAt: null, legacy: false }, orderBy: { position: "desc" }, select: { position: true } });
-    const rubric = await tx.rubricDefinition.create({ data: { programId, divisionId, ...parsed.data, position: (last?.position ?? -1) + 1 } });
+    const rubric = await tx.rubricDefinition.create({
+      data: {
+        programId,
+        divisionId,
+        ...parsed.data,
+        position: (last?.position ?? -1) + 1,
+        ...(criteria ? { criteria: { create: criteria.map((criterion, position) => ({ ...criterion, position })) } } : {}),
+      },
+    });
     const teams = await tx.projectTeam.findMany({ where: activeTeamWhere(programId, divisionId), select: { id: true } });
     if (teams.length) await tx.projectTeamRubricEvaluation.createMany({ data: teams.map((team) => ({ projectTeamId: team.id, rubricId: rubric.id })), skipDuplicates: true });
-    await tx.auditLog.create({ data: { actorId: actor.id, action: "PROGRAM_RUBRIC_CREATED", targetType: "PROJECT_PROGRAM", targetId: programId, metadata: { rubricId: rubric.id, divisionId, ...parsed.data, gradingDueAt: parsed.data.gradingDueAt.toISOString() } } });
+    await tx.auditLog.create({ data: { actorId: actor.id, action: "PROGRAM_RUBRIC_CREATED", targetType: "PROJECT_PROGRAM", targetId: programId, metadata: { rubricId: rubric.id, divisionId, ...parsed.data, gradingDueAt: parsed.data.gradingDueAt.toISOString(), criteria } } });
     return "OK" as const;
   });
   if (outcome === "DEADLINE") return failure("채점 마감은 프로그램 운영 기간 안이어야 합니다.");

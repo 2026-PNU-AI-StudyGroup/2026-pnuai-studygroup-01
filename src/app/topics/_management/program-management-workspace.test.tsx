@@ -30,4 +30,12 @@ describe("ProgramManagementHeader", () => {
 
     expect(screen.queryByText("검토하기")).not.toBeInTheDocument();
   });
+
+  it("숫자 없이 여섯 설정 탭과 관리 전용 자문위원 탭을 표시한다", () => {
+    render(<ProgramManagementHeader program={program} tab="operation" pendingApprovalCount={0} />);
+
+    expect(screen.getByRole("link", { name: "기본 정보" })).toHaveAttribute("href", "/topics/manage/program-1");
+    expect(screen.getByRole("link", { name: "운영 설정" })).toHaveAttribute("href", "/topics/manage/program-1/operation");
+    expect(screen.getByRole("link", { name: "자문위원관리 전용" })).toHaveAttribute("href", "/topics/manage/program-1/advisors");
+  });
 });

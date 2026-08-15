@@ -1,10 +1,11 @@
 export const programManagementTabs = [
   "settings",
+  "operation",
+  "schedule",
+  "votes",
   "rubric",
-  "tracks",
   "reports",
   "advisors",
-  "votes",
 ] as const;
 
 export type ProgramManagementTab = typeof programManagementTabs[number];
@@ -13,6 +14,14 @@ export function parseProgramManagementTab(value: string | undefined): ProgramMan
   return programManagementTabs.includes(value as ProgramManagementTab)
     ? value as ProgramManagementTab
     : "settings";
+}
+
+export function resolveProgramManagementTab(value: string | undefined): {
+  tab: ProgramManagementTab;
+  legacy: "tracks" | null;
+} {
+  if (value === "tracks") return { tab: "settings", legacy: "tracks" };
+  return { tab: parseProgramManagementTab(value), legacy: null };
 }
 
 export function programManagementHref(

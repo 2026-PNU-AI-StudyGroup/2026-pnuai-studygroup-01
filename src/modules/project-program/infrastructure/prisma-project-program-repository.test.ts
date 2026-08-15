@@ -137,6 +137,76 @@ describe("Prisma 프로그램 저장소", () => {
     expect(transaction.projectProgram.update).toHaveBeenCalled();
   });
 
+  it("직접 지원 전환과 일정을 같은 잠금 트랜잭션에서 저장한다", async () => {
+    const current = {
+      ...input,
+      id: "program-1",
+      projectTeamMinSize: 2,
+      projectTeamMaxSize: 6,
+      isPublic: false,
+      firstPublishedAt: null,
+      endProcessedAt: null,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    };
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1" }]),
+      topic: { findFirst: vi.fn().mockResolvedValue(null) },
+      projectProgram: {
+        findUnique: vi.fn().mockResolvedValue({ ...current, studentProjectCreationEnabled: true, recruitmentStartsAt: null, recruitmentEndsAt: null }),
+        update: vi.fn().mockResolvedValue({ id: "program-1" }),
+      },
+    };
+    const repository = new PrismaProjectProgramRepository({
+      $transaction: vi.fn(async (operation) => operation(transaction)),
+    } as unknown as PrismaClient);
+
+    await expect(repository.updateSchedule("program-1", {
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      projectRegistrationStartsAt: input.projectRegistrationStartsAt,
+      projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+      recruitmentStartsAt: input.recruitmentStartsAt,
+      recruitmentEndsAt: input.recruitmentEndsAt,
+      executionStartsAt: input.executionStartsAt,
+      executionEndsAt: input.executionEndsAt,
+      transitionToDirect: true,
+    })).resolves.toBe("UPDATED");
+
+    expect(transaction.projectProgram.findUnique).toHaveBeenCalledWith({ where: { id: "program-1" } });
+    expect(transaction.topic.findFirst).toHaveBeenCalledWith({ where: { programId: "program-1" }, select: { id: true } });
+    expect(transaction.projectProgram.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        studentProjectCreationEnabled: false,
+        recruitmentStartsAt: input.recruitmentStartsAt,
+        recruitmentEndsAt: input.recruitmentEndsAt,
+        submissionStartsAt: input.executionStartsAt,
+        submissionEndsAt: input.executionEndsAt,
+      }),
+    }));
+  });
+
+  it("직접 지원 전환을 막는 프로젝트가 있으면 일정도 저장하지 않는다", async () => {
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1" }]),
+      topic: { findFirst: vi.fn().mockResolvedValue({ id: "topic-1" }) },
+      projectProgram: {
+        findUnique: vi.fn().mockResolvedValue({ ...input, id: "program-1", projectTeamMinSize: 2, projectTeamMaxSize: 6, studentProjectCreationEnabled: true, recruitmentStartsAt: null, recruitmentEndsAt: null }),
+        update: vi.fn(),
+      },
+    };
+    const repository = new PrismaProjectProgramRepository({ $transaction: vi.fn(async (operation) => operation(transaction)) } as unknown as PrismaClient);
+
+    await expect(repository.updateSchedule("program-1", {
+      startsAt: input.startsAt, endsAt: input.endsAt,
+      projectRegistrationStartsAt: input.projectRegistrationStartsAt, projectRegistrationEndsAt: input.projectRegistrationEndsAt,
+      recruitmentStartsAt: input.recruitmentStartsAt, recruitmentEndsAt: input.recruitmentEndsAt,
+      executionStartsAt: input.executionStartsAt, executionEndsAt: input.executionEndsAt,
+      transitionToDirect: true,
+    })).resolves.toBe("TOPICS_EXIST");
+    expect(transaction.projectProgram.update).not.toHaveBeenCalled();
+  });
+
   it("결과 공개 설정만 변경하면 기존 표를 삭제하거나 초기화 확인을 요구하지 않는다", async () => {
     const currentPolicy = {
       programId: "program-1",

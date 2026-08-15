@@ -14,7 +14,7 @@ const service = () => new ProgramDivisionService(new PrismaProgramDivisionReposi
 async function actor() { const value = await getCurrentActor(); if (!value) redirect("/sign-in"); return value; }
 function refresh(programId: string) {
   revalidatePath("/topics");
-  revalidatePath(programManagementHref(programId, "tracks"));
+  revalidatePath(programManagementHref(programId));
   revalidatePath("/professor/topics/new");
 }
 const confirmedImpactSchema = z.object({

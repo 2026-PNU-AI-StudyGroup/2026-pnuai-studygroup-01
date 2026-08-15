@@ -11,7 +11,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import {
-  parseProgramManagementTab,
+  resolveProgramManagementTab,
   programCreateHref,
   programManagementHref,
   programManagementTabs,
@@ -51,23 +51,27 @@ function defaultProgramId(
 function canonicalManagementTab(tabSegments: string[] | undefined): {
   tab: ProgramManagementTab;
   canonical: boolean;
+  legacy: "tracks" | null;
 } {
-  if (!tabSegments?.length) return { tab: "settings", canonical: true };
-  if (tabSegments.length !== 1) return { tab: "settings", canonical: false };
+  if (!tabSegments?.length) return { tab: "settings", canonical: true, legacy: null };
+  if (tabSegments.length !== 1) return { tab: "settings", canonical: false, legacy: null };
   const [rawTab] = tabSegments;
-  const tab = parseProgramManagementTab(rawTab);
+  const { tab, legacy } = resolveProgramManagementTab(rawTab);
   return {
     tab,
-    canonical: rawTab === tab && rawTab !== "settings" && programManagementTabs.includes(tab),
+    canonical: legacy === null && rawTab === tab && rawTab !== "settings" && programManagementTabs.includes(tab),
+    legacy,
   };
 }
 
 export async function ProgramManagementRoutePage({
   requestedProgramId,
   tabSegments,
+  targetMode,
 }: {
   requestedProgramId?: string;
   tabSegments?: string[];
+  targetMode?: string;
 }) {
   const { actor, programs, pendingApprovalCounts } = await loadProgramManagementContext();
   const now = new Date();
@@ -77,9 +81,9 @@ export async function ProgramManagementRoutePage({
   const selectedProgramId = programs.some(({ id }) => id === requestedProgramId)
     ? requestedProgramId!
     : fallbackProgramId;
-  const { tab, canonical } = canonicalManagementTab(tabSegments);
+  const { tab, canonical, legacy } = canonicalManagementTab(tabSegments);
   if (selectedProgramId !== requestedProgramId || !canonical) {
-    redirect(programManagementHref(selectedProgramId, tab));
+    redirect(`${programManagementHref(selectedProgramId, tab)}${legacy === "tracks" ? "#divisions" : ""}`);
   }
 
   const sidebarItems = buildAdminProgramSidebarItems(
@@ -96,6 +100,7 @@ export async function ProgramManagementRoutePage({
           actor={actor}
           programId={selectedProgramId}
           tab={tab}
+          targetMode={targetMode === "DIRECT" ? "DIRECT" : "CURRENT"}
           pendingApprovalCount={pendingApprovalCounts.get(selectedProgramId) ?? 0}
         />
       </ExplorerLayout>

@@ -1,0 +1,236 @@
+.manager {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.toolbar,
+.scopeHeader,
+.itemSummary,
+.dialogHeader,
+.dialogFooter,
+.criteriaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toolbar {
+  min-height: 2.75rem;
+  justify-content: flex-end;
+}
+
+.toolbar p,
+.scopeHeader p,
+.itemMeta span,
+.hint,
+.empty {
+  color: var(--muted);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+.scope {
+  display: grid;
+  gap: .75rem;
+}
+
+.scope + .scope {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+}
+
+.scopeHeader h3,
+.criteriaHeader h3 {
+  color: var(--ink);
+  font-size: .9375rem;
+  font-weight: 800;
+  letter-spacing: -.015em;
+}
+
+.scopeHeaderActions,
+.rowActions,
+.summaryActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .375rem;
+}
+
+.definitionList {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.definitionItem {
+  border-bottom: 1px solid var(--line);
+}
+
+.itemSummary {
+  min-height: 4.5rem;
+  padding-block: .625rem;
+}
+
+.itemMeta {
+  display: grid;
+  min-width: 0;
+  gap: .1875rem;
+}
+
+.itemMeta strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: .9375rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settingsButton {
+  min-height: 2.5rem;
+  padding-inline: .75rem;
+  font-size: .8125rem;
+}
+
+.status {
+  margin-top: -.25rem;
+  font-size: .8125rem;
+  font-weight: 650;
+}
+
+.statusError { color: var(--danger); }
+.statusSuccess { color: var(--success); }
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: min(46rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: min(46rem, calc(100dvh - 2rem));
+  margin: auto;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0;
+  box-shadow: 0 1.5rem 4rem rgb(23 32 51 / .2);
+}
+
+.dialog::backdrop {
+  background: rgb(23 32 51 / .38);
+}
+
+.dialogSurface {
+  display: grid;
+  max-height: min(46rem, calc(100dvh - 2rem));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.dialogHeader,
+.dialogFooter {
+  padding: 1rem 1.25rem;
+}
+
+.dialogHeader { border-bottom: 1px solid var(--line); }
+.dialogHeader h2 { font-size: 1rem; font-weight: 800; letter-spacing: -.015em; }
+.dialogFooter { justify-content: flex-end; border-top: 1px solid var(--line); }
+
+.dialogBody {
+  display: grid;
+  min-height: 0;
+  gap: 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.25rem;
+}
+
+.formGrid {
+  display: grid;
+  gap: .875rem;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: .375rem;
+}
+
+.field > span {
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.criteria {
+  display: grid;
+  gap: .875rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.125rem;
+}
+
+.criteriaHeader > span {
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 650;
+}
+
+.criteriaAdd,
+.criterionRow {
+  display: grid;
+  align-items: end;
+  gap: .625rem;
+}
+
+.criterionEdit {
+  display: grid;
+  min-width: 0;
+  gap: .625rem;
+}
+
+.scoreField { max-width: 6rem; }
+
+.criteriaList {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.criterionItem {
+  border-bottom: 1px solid var(--line);
+  padding-block: .625rem;
+}
+
+.criterionLocked {
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  background: var(--surface-subtle);
+  padding: .75rem;
+}
+
+@media (min-width: 40rem) {
+  .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .criteriaAdd { grid-template-columns: minmax(0, 1fr) 5rem auto; }
+  .criterionRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .criterionEdit { grid-template-columns: minmax(0, 1fr) 5rem auto; }
+}
+
+@media (max-width: 39.99rem) {
+  .toolbar,
+  .scopeHeader,
+  .itemSummary { align-items: flex-start; }
+  .scopeHeader,
+  .itemSummary { flex-direction: column; }
+  .scopeHeaderActions,
+  .summaryActions { width: 100%; justify-content: flex-end; }
+  .itemMeta span { white-space: normal; }
+  .dialogHeader,
+  .dialogFooter { padding-inline: 1rem; }
+  .dialogBody { padding: 1rem; }
+}

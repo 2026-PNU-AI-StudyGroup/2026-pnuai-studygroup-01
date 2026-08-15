@@ -45,14 +45,29 @@ export type ProjectProgramCreateSetup = {
   reportDefinitions?: ProgramCreateReportDefinitionInput[];
 };
 
-export type ProjectProgramSettings = Pick<ProjectProgramDetails,
+export type ProjectProgramSettings = Partial<Pick<ProjectProgramDetails,
   "projectRegistrationStartsAt" | "projectRegistrationEndsAt" |
   "recruitmentStartsAt" | "recruitmentEndsAt" |
   "executionStartsAt" | "executionEndsAt" |
-  "submissionStartsAt" | "submissionEndsAt"
-> & Partial<Pick<ProjectProgramDetails, "name" | "category" | "description" | "startsAt" | "endsAt" | "advisorEnabled">> & {
-  votingPolicy: ProgramVotingPolicyDetails | null;
+  "submissionStartsAt" | "submissionEndsAt" |
+  "name" | "category" | "description" | "startsAt" | "endsAt" | "advisorEnabled"
+>> & Pick<ProjectProgramRecord, "isPublic"> & {
+  votingPolicy?: ProgramVotingPolicyDetails | null;
   confirmVoteReset?: ProgramVoteResetImpact;
+};
+
+export type ProgramDivisionSyncImpact = {
+  divisionIds: string[];
+  divisionNames: string[];
+  projectCount: number;
+  voteCount: number;
+  switchesVotingScope: boolean;
+};
+
+export type ProjectProgramBasicInfoUpdate = Pick<ProjectProgramDetails, "name" | "category" | "description"> & {
+  isPublic: boolean;
+  divisionNames: string[];
+  confirmDivisionSync?: ProgramDivisionSyncImpact;
 };
 
 export type ProgramVoteResetImpact = {
@@ -71,7 +86,20 @@ export type UpdateProjectProgramSettingsOutcome =
   | { status: "VOTE_RESET_CONFIRMATION_REQUIRED"; impact: ProgramVoteResetImpact }
   | "DIVISIONS_REQUIRED";
 
+export type UpdateProjectProgramBasicInfoOutcome =
+  | "UPDATED"
+  | "NOT_FOUND"
+  | "SCORED_RUBRIC"
+  | { status: "DIVISION_SYNC_CONFIRMATION_REQUIRED"; impact: ProgramDivisionSyncImpact };
+
 export type ChangeStudentProjectPolicyOutcome = "UPDATED" | "NOT_FOUND" | "TOPICS_EXIST";
+export type UpdateProjectProgramScheduleOutcome = "UPDATED" | "NOT_FOUND" | "TOPICS_EXIST";
+export type ProjectProgramScheduleUpdate = Pick<ProjectProgramDetails,
+  "startsAt" | "endsAt" | "projectRegistrationStartsAt" | "projectRegistrationEndsAt" |
+  "recruitmentStartsAt" | "recruitmentEndsAt" | "executionStartsAt" | "executionEndsAt"
+> & {
+  transitionToDirect?: boolean;
+};
 
 export interface ProjectProgramRepository {
   create(input: ProjectProgramDetails & ProjectProgramCreateSetup & { createdById: string }): Promise<string | "DUPLICATE">;
@@ -80,11 +108,13 @@ export interface ProjectProgramRepository {
   listOpen(): Promise<ProjectProgramRecord[]>;
   listSidebarVisible(now: Date): Promise<ProjectProgramRecord[]>;
   findById(id: string): Promise<ProjectProgramRecord | null>;
+  updateBasicInfo(id: string, input: ProjectProgramBasicInfoUpdate, actorId: string): Promise<UpdateProjectProgramBasicInfoOutcome>;
   updateSettings(id: string, input: ProjectProgramSettings, actorId: string): Promise<UpdateProjectProgramSettingsOutcome>;
+  updateSchedule(id: string, input: ProjectProgramScheduleUpdate): Promise<UpdateProjectProgramScheduleOutcome>;
   setVisibility?(id: string, visible: boolean, changedAt: Date): Promise<boolean>;
   close?(id: string, changedById: string, changedAt: Date): Promise<boolean>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
-  changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null }): Promise<ChangeStudentProjectPolicyOutcome>;
+  changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null; advisorEnabled?: boolean }): Promise<ChangeStudentProjectPolicyOutcome>;
   changeIcon(id: string, icon: ProgramIconKey): Promise<boolean>;
   findPublicActive?(id: string): Promise<{
     id: string;
@@ -126,6 +156,11 @@ export class ProjectProgramOperationError extends Error {}
 export class ProgramVoteResetConfirmationRequiredError extends ProjectProgramOperationError {
   constructor(readonly impact: ProgramVoteResetImpact) {
     super("투표 범위 또는 한도를 바꾸려면 기존 표 초기화를 확인해 주세요.");
+  }
+}
+export class ProgramDivisionSyncConfirmationRequiredError extends ProjectProgramOperationError {
+  constructor(readonly impact: ProgramDivisionSyncImpact) {
+    super("분과를 삭제하면 연결 프로젝트가 미분과로 이동하고 기존 투표가 초기화됩니다. 계속하려면 확인해 주세요.");
   }
 }
 
@@ -197,7 +232,7 @@ export class ProjectProgramService {
     if (status === "OPEN") return this.setPublic(actor, id, true, now);
     return this.close(actor, id, now);
   }
-  async changeStudentProjectPolicy(actor: CurrentActor, id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt?: Date | null; recruitmentEndsAt?: Date | null }) {
+  async changeStudentProjectPolicy(actor: CurrentActor, id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt?: Date | null; recruitmentEndsAt?: Date | null; advisorEnabled?: boolean }) {
     assertProgramAdmin(actor);
     const program = await this.repository.findById(id);
     if (!program) throw new ProjectProgramOperationError("프로젝트 참여 방식을 변경할 프로그램이 없습니다.");
@@ -229,10 +264,66 @@ export class ProjectProgramService {
       maxSize: validProgram.projectTeamMaxSize!,
       recruitmentStartsAt: validProgram.recruitmentStartsAt,
       recruitmentEndsAt: validProgram.recruitmentEndsAt,
+      advisorEnabled: input.advisorEnabled,
     });
     if (outcome === "UPDATED") return;
     if (outcome === "TOPICS_EXIST") throw new ProjectProgramOperationError("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
     throw new ProjectProgramOperationError("프로젝트 참여 방식을 변경할 프로그램이 없습니다.");
+  }
+  async updateBasicInfo(actor: CurrentActor, id: string, input: ProjectProgramBasicInfoUpdate) {
+    assertProgramAdmin(actor);
+    const program = await this.repository.findById(id);
+    if (!program) throw new ProjectProgramOperationError("설정할 프로그램이 없습니다.");
+    const normalized = normalizeProjectProgram({
+      ...program,
+      ...input,
+      projectRegistrationStartsAt: program.projectRegistrationStartsAt ?? program.startsAt,
+      projectRegistrationEndsAt: program.projectRegistrationEndsAt ?? program.endsAt,
+    });
+    const outcome = await this.repository.updateBasicInfo(id, {
+      name: normalized.name,
+      category: normalized.category,
+      description: normalized.description,
+      isPublic: input.isPublic,
+      divisionNames: normalizeDivisionNames(input.divisionNames),
+      confirmDivisionSync: input.confirmDivisionSync,
+    }, actor.id);
+    if (outcome === "UPDATED") return;
+    if (typeof outcome === "object") throw new ProgramDivisionSyncConfirmationRequiredError(outcome.impact);
+    if (outcome === "SCORED_RUBRIC") throw new ProjectProgramOperationError("이 분과 팀에 저장된 평가 점수가 있어 분과를 삭제할 수 없습니다.");
+    throw new ProjectProgramOperationError("설정할 프로그램이 없습니다.");
+  }
+  async updateOperation(actor: CurrentActor, id: string, input: { advisorEnabled: boolean; enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt?: Date | null; recruitmentEndsAt?: Date | null }) {
+    return this.changeStudentProjectPolicy(actor, id, input);
+  }
+  async updateAdvisorEnabled(actor: CurrentActor, id: string, advisorEnabled: boolean) {
+    assertProgramAdmin(actor);
+    const outcome = await this.repository.updateSettings(id, { advisorEnabled }, actor.id);
+    if (outcome !== "UPDATED") throw new ProjectProgramOperationError("지도교수 설정을 변경할 프로그램이 없습니다.");
+  }
+  async updateSchedule(actor: CurrentActor, id: string, input: ProjectProgramScheduleUpdate) {
+    assertProgramAdmin(actor);
+    const outcome = await this.repository.updateSchedule(id, input);
+    if (outcome === "UPDATED") return;
+    if (outcome === "TOPICS_EXIST") throw new ProjectProgramOperationError("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
+    throw new ProjectProgramOperationError("일정을 변경할 프로그램이 없습니다.");
+  }
+  async updateVotingPolicy(actor: CurrentActor, id: string, input: { votingPolicy: ProgramVotingPolicyDetails | null; confirmVoteReset?: ProgramVoteResetImpact }) {
+    assertProgramAdmin(actor);
+    const outcome = await this.repository.updateSettings(id, {
+      votingPolicy: input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
+      confirmVoteReset: input.confirmVoteReset,
+    }, actor.id);
+    if (outcome === "UPDATED") return;
+    if (typeof outcome === "object") throw new ProgramVoteResetConfirmationRequiredError(outcome.impact);
+    const messages: Record<Exclude<Extract<UpdateProjectProgramSettingsOutcome, string>, "UPDATED" | "NOT_FOUND">, string> = {
+      VOTING_POLICY_HAS_VOTES: "표가 저장된 투표 설정은 해제할 수 없습니다. 종료 시각을 조정해 마감해 주세요.",
+      VOTE_LIMIT_CONFLICT: "기존 투표자가 선택한 프로젝트 수보다 적게 줄일 수 없습니다.",
+      SELF_VOTE_CONFLICT: "기존 자기 프로젝트 표가 있어 자기 프로젝트 투표를 금지할 수 없습니다.",
+      VOTE_PERIOD_CONFLICT: "기존 투표 시각을 제외하는 기간으로 변경할 수 없습니다.",
+      DIVISIONS_REQUIRED: "분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.",
+    };
+    throw new ProjectProgramOperationError(outcome === "NOT_FOUND" ? "투표 정책을 변경할 프로그램이 없습니다." : messages[outcome]);
   }
   async changeIcon(actor: CurrentActor, id: string, icon: ProgramIconKey) {
     assertProgramAdmin(actor);
@@ -257,15 +348,15 @@ export class ProjectProgramService {
       startsAt: input.startsAt ?? program.startsAt,
       endsAt: input.endsAt ?? program.endsAt,
       advisorEnabled: input.advisorEnabled ?? program.advisorEnabled,
-      projectRegistrationStartsAt: input.projectRegistrationStartsAt,
-      projectRegistrationEndsAt: input.projectRegistrationEndsAt,
-      recruitmentStartsAt: input.recruitmentStartsAt,
-      recruitmentEndsAt: input.recruitmentEndsAt,
-      executionStartsAt: input.executionStartsAt,
-      executionEndsAt: input.executionEndsAt,
-      submissionStartsAt: input.submissionStartsAt,
-      submissionEndsAt: input.submissionEndsAt,
-      votingPolicy: input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
+      projectRegistrationStartsAt: input.projectRegistrationStartsAt ?? program.projectRegistrationStartsAt ?? program.startsAt,
+      projectRegistrationEndsAt: input.projectRegistrationEndsAt ?? program.projectRegistrationEndsAt ?? program.endsAt,
+      recruitmentStartsAt: input.recruitmentStartsAt ?? program.recruitmentStartsAt,
+      recruitmentEndsAt: input.recruitmentEndsAt ?? program.recruitmentEndsAt,
+      executionStartsAt: input.executionStartsAt ?? program.executionStartsAt,
+      executionEndsAt: input.executionEndsAt ?? program.executionEndsAt,
+      submissionStartsAt: input.submissionStartsAt ?? program.submissionStartsAt,
+      submissionEndsAt: input.submissionEndsAt ?? program.submissionEndsAt,
+      votingPolicy: input.votingPolicy === undefined ? program.votingPolicy ?? null : input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
       confirmVoteReset: input.confirmVoteReset,
     };
     const normalized = normalizeProjectProgram({
@@ -274,14 +365,14 @@ export class ProjectProgramService {
       description: settings.description!,
       startsAt: settings.startsAt!,
       endsAt: settings.endsAt!,
-      projectRegistrationStartsAt: settings.projectRegistrationStartsAt,
-      projectRegistrationEndsAt: settings.projectRegistrationEndsAt,
-      recruitmentStartsAt: settings.recruitmentStartsAt,
-      recruitmentEndsAt: settings.recruitmentEndsAt,
-      executionStartsAt: settings.executionStartsAt,
-      executionEndsAt: settings.executionEndsAt,
-      submissionStartsAt: settings.submissionStartsAt,
-      submissionEndsAt: settings.submissionEndsAt,
+      projectRegistrationStartsAt: settings.projectRegistrationStartsAt!,
+      projectRegistrationEndsAt: settings.projectRegistrationEndsAt!,
+      recruitmentStartsAt: settings.recruitmentStartsAt ?? null,
+      recruitmentEndsAt: settings.recruitmentEndsAt ?? null,
+      executionStartsAt: settings.executionStartsAt!,
+      executionEndsAt: settings.executionEndsAt!,
+      submissionStartsAt: settings.submissionStartsAt!,
+      submissionEndsAt: settings.submissionEndsAt!,
       advisorEnabled: settings.advisorEnabled!,
       studentProjectCreationEnabled: program.studentProjectCreationEnabled,
       projectTeamMinSize: program.projectTeamMinSize,

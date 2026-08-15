@@ -9,9 +9,10 @@ import {
   revokeAdvisorTokenAction,
   type AdvisorActionState,
 } from "@/app/topics/_management/advisor-actions";
+import styles from "@/app/topics/_management/program-management.module.css";
 import type { AdvisorScoreMatrixRow, ProgramAdvisorRow, ProgramTopicForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, TextInput } from "@/shared/ui/form-system";
 
 const idleState: AdvisorActionState = { status: "idle", message: "" };
 
@@ -24,9 +25,10 @@ type ProgramAdvisorPanelProps = {
 
 export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: ProgramAdvisorPanelProps) {
   return (
-    <div className="grid gap-4">
+    <div className={styles.form}>
       <RegisterSection programId={programId} />
-      <FormSection title="자문위원 목록" description="발급한 초대 링크의 만료 상태를 확인하고 재발급하거나 회수합니다.">
+      <section className={styles.section}>
+        <SectionHeader title="자문위원 목록" />
         {advisors.length === 0 ? (
           <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-white p-6 text-center text-sm text-[var(--muted)]"><UiText>{"등록된 자문위원이 없습니다."}</UiText></p>
         ) : (
@@ -34,8 +36,9 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
             {advisors.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
           </ul>
         )}
-      </FormSection>
-      <FormSection title="팀 할당" description="자문위원별로 이 프로그램에서 담당할 프로젝트를 선택합니다. 팀이 없는 프로젝트는 선택할 수 없습니다.">
+      </section>
+      <section className={styles.section}>
+        <SectionHeader title="팀 할당" description="팀이 있는 프로젝트만 담당자로 배정할 수 있습니다." />
         {advisors.length === 0 ? (
           <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"자문위원을 먼저 등록해 주세요."}</UiText></p>
         ) : topics.length === 0 ? (
@@ -45,12 +48,17 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
             {advisors.map((advisor) => <AssignmentForm key={advisor.userId} programId={programId} advisor={advisor} topics={topics} />)}
           </div>
         )}
-      </FormSection>
-      <FormSection title="점수 집계" description="자문위원이 채점한 팀별 총점과 평균을 확인합니다.">
+      </section>
+      <section className={styles.section}>
+        <SectionHeader title="점수 집계" />
         <ScoreMatrix matrix={matrix} />
-      </FormSection>
+      </section>
     </div>
   );
+}
+
+function SectionHeader({ title, description }: { title: string; description?: string }) {
+  return <header className={styles.sectionHeader}><h2><UiText>{title}</UiText></h2>{description ? <p><UiText>{description}</UiText></p> : null}</header>;
 }
 
 function ActionResult({ state }: { state: AdvisorActionState }) {
@@ -99,7 +107,8 @@ function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
 function RegisterSection({ programId }: { programId: string }) {
   const [state, action, pending] = useActionState(registerAdvisorAction, idleState);
   return (
-    <FormSection title="자문위원 등록" description="이름과 이메일을 등록하면 초대 링크가 발급됩니다. 링크를 복사해 자문위원에게 전달하세요.">
+    <section className={styles.section}>
+      <SectionHeader title="자문위원 등록" description="등록 후 초대 링크를 발급해 전달합니다." />
       <form action={action} aria-busy={pending} className="grid gap-4">
         <input type="hidden" name="programId" value={programId} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -115,7 +124,7 @@ function RegisterSection({ programId }: { programId: string }) {
         </div>
         <ActionResult state={state} />
       </form>
-    </FormSection>
+    </section>
   );
 }
 
