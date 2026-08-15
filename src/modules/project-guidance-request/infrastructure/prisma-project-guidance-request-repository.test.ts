@@ -11,7 +11,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
     const findFirst = vi.fn(async () => ({ id: "team-1" }));
     const findMany = vi.fn(async () => [{
       id: "request-1",
-      teamId: "team-1",
+      projectTeamId: "team-1",
       requesterId: student.id,
       kind: "REVIEW",
       title: "설계 검토",
@@ -28,7 +28,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       responder: null,
     }]);
     const client = {
-      team: { findFirst },
+      projectTeam: { findFirst },
       projectGuidanceRequest: {
         count: vi.fn()
           .mockResolvedValueOnce(1)
@@ -41,7 +41,7 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       .findPage("team-1", student, 1, 20);
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ id: "team-1", OR: expect.any(Array) }),
+      where: expect.objectContaining({ id: "team-1", AND: expect.any(Array) }),
     }));
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       orderBy: [
@@ -67,8 +67,8 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       $queryRaw: vi.fn(async () => [{
         id: "team-1",
         name: "모두의 길",
-        professorId: professor.id,
-        topicId: "topic-1",
+        managerId: professor.id,
+        projectId: "topic-1",
         requesterName: "정하늘",
       }]),
       projectGuidanceRequest: {
@@ -81,6 +81,8 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       translationSource: { createMany: vi.fn(async () => ({ count: 2 })) },
       translationJob: { createMany: vi.fn(async () => ({ count: 2 })) },
       notification: { createMany: notificationCreateMany },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (operation) => operation(transaction)),
@@ -137,10 +139,29 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
     expect(lockSql[1]).toContain('FOR UPDATE OF "project_guidance_request"');
   });
 
-  it("요청자 본인의 대기 요청만 취소한다", async () => {
-    const updateMany = vi.fn(async () => ({ count: 1 }));
+  it("요청자 본인의 대기 요청을 잠근 뒤 지도 인력 통지와 함께 취소한다", async () => {
+    const update = vi.fn(async () => ({ id: "request-1" }));
+    const notificationCreateMany = vi.fn(async () => ({ count: 2 }));
+    const queryRaw = vi.fn()
+      .mockResolvedValueOnce([{ id: "program-1" }])
+      .mockResolvedValueOnce([{
+        id: "request-1",
+        kind: "MEETING",
+        projectId: "topic-1",
+        managerId: professor.id,
+        teamName: "모두의 길",
+        requesterName: "정하늘",
+      }]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      projectGuidanceRequest: { update },
+      projectAssistant: { findMany: vi.fn(async () => [{ userId: "assistant-1" }]) },
+      notification: { createMany: notificationCreateMany },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
+    };
     const client = {
-      projectGuidanceRequest: { updateMany },
+      $transaction: vi.fn(async (operation) => operation(transaction)),
     } as unknown as PrismaClient;
     const canceledAt = new Date("2026-08-03T00:00:00Z");
 
@@ -149,14 +170,20 @@ describe("PrismaProjectGuidanceRequestRepository", () => {
       actor: student,
       canceledAt,
     })).resolves.toBe(true);
-    expect(updateMany).toHaveBeenCalledWith({
-      where: {
-        id: "request-1",
-        requesterId: student.id,
-        status: "PENDING",
-        team: { status: "CONFIRMED" },
-      },
+    expect(update).toHaveBeenCalledWith({
+      where: { id: "request-1" },
       data: { status: "CANCELED", canceledAt, updatedAt: canceledAt },
     });
+    expect(notificationCreateMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({ recipientId: professor.id, type: "PROJECT_REQUEST" }),
+        expect.objectContaining({ recipientId: "assistant-1", type: "PROJECT_REQUEST" }),
+      ]),
+      skipDuplicates: true,
+    });
+    const lockSql = queryRaw.mock.calls.map(([query]) =>
+      (query as { strings: readonly string[] }).strings.join("?"));
+    expect(lockSql[0]).toContain('FOR UPDATE OF "project_program"');
+    expect(lockSql[1]).toContain('FOR UPDATE OF "project_guidance_request"');
   });
 });

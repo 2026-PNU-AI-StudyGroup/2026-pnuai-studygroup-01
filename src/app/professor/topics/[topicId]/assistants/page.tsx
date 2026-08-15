@@ -16,6 +16,7 @@ import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prism
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { ChevronIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("조교 관리");
@@ -61,9 +62,9 @@ export default async function ProjectAssistantManagementPage({
           <>
             <Link
               href={`/professor/topics/${topic.id}`}
-              className="button-secondary"
+              className="button-secondary gap-2"
             >
-              <UiText>{"프로젝트 상세"}</UiText>
+              <ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"프로젝트 상세"}</UiText>
             </Link>
           </>
         )}

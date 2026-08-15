@@ -9,16 +9,16 @@ describe("teamFileAccessWhere", () => {
 
   it("ADVISOR는 배정된 topic의 팀만 접근한다", () => {
     expect(teamFileAccessWhere({ id: "adv-1", role: "ADVISOR" })).toEqual({
-      topic: { advisors: { some: { userId: "adv-1" } } },
+      project: { advisors: { some: { userId: "adv-1" } } },
     });
   });
 
-  it("PROFESSOR/STUDENT는 담당·소속 팀 OR 조건을 사용한다", () => {
+  it("PROFESSOR/STUDENT는 기존 프로젝트 작업공간 권한 조건을 유지한다", () => {
     const where = teamFileAccessWhere({ id: "u1", role: "PROFESSOR" });
-    expect(where).toEqual({
-      OR: [
-        { OR: [{ professorId: "u1" }, { topic: { assistants: { some: { userId: "u1" } } } }] },
-        { members: { some: { studentId: "u1" } } },
+    expect(where).toMatchObject({
+      AND: [
+        { OR: [{ project: { program: { endsAt: { gt: expect.any(Date) } } } }, { confirmedAt: { not: null } }] },
+        { OR: [{ OR: [{ project: { managerId: "u1" } }, { project: { assistants: { some: { userId: "u1" } } } }] }, { memberships: { some: { userId: "u1", endedAt: null } } }] },
       ],
     });
   });

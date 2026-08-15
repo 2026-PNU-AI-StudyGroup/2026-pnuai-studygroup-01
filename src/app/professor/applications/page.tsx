@@ -41,7 +41,7 @@ export default async function ProfessorApplicationsPage({ searchParams }: {
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications">
       <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원 검토" description="대기 중인 지원부터 확인하고, 지원서와 팀 구성을 근거로 프로젝트 참여 여부를 결정합니다.">
         {applications.total === 0 && !status && !query.trim()
-          ? <EmptyState title="아직 받은 지원서가 없습니다" />
+          ? <EmptyState title="아직 받은 지원서가 없습니다" description="학생이 프로젝트에 지원하면 이 목록에 표시됩니다." />
           : <ReceivedApplicationList page={applications} status={status} query={query.trim().slice(0, 100)} />}
       </ProfessorWorkspace>
     </AppShell>

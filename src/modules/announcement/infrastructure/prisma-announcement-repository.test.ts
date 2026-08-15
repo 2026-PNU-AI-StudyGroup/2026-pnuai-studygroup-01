@@ -18,12 +18,30 @@ describe("공지 대상 스코프 where", () => {
   it("비관리자는 전체·본인 소속·작성분만 조회한다", () => {
     expect(announcementScopeWhere(student)).toEqual({
       OR: [
-        { teamId: null, programId: null, visibility: "AUTHENTICATED" },
-        { teamId: null, programId: { not: null }, visibility: "AUTHENTICATED" },
-        { teamId: null, programId: { in: ["program-1"] } },
-        { teamId: { in: ["team-1"] } },
+        { projectTeamId: null, programId: null, visibility: "AUTHENTICATED" },
+        { projectTeamId: null, programId: { not: null }, visibility: "AUTHENTICATED" },
+        { projectTeamId: null, programId: { in: ["program-1"] } },
+        { projectTeamId: { in: ["team-1"] } },
         { authorId: "student-1" },
       ],
+    });
+  });
+
+  it("시스템 공지 목록은 프로그램·프로젝트 공지를 제외한다", async () => {
+    const findMany = vi.fn(async () => []);
+    const count = vi.fn(async () => 0);
+    const repository = new PrismaAnnouncementRepository({
+      announcement: { findMany, count },
+      $transaction: vi.fn(async (queries: Array<Promise<unknown>>) => Promise.all(queries)),
+    } as unknown as PrismaClient);
+
+    await repository.listSystem(admin, 1, 20);
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ projectTeamId: null, programId: null }),
+    }));
+    expect(count).toHaveBeenCalledWith({
+      where: expect.objectContaining({ projectTeamId: null, programId: null }),
     });
   });
 
@@ -34,16 +52,16 @@ describe("공지 대상 스코프 where", () => {
       authorId: "professor-1",
       title: "일정 안내",
       content: "내용",
-      category: "GENERAL" as const,
       visibility: "AUTHENTICATED" as const,
       pinned: true,
-      teamId: null,
+      projectTeamId: null,
       programId: "program-2",
       createdAt,
       updatedAt: createdAt,
       author: { name: "김교수", role: "PROFESSOR" as const },
-      team: null,
+      projectTeam: null,
       program: { name: "프로그램 2" },
+      attachments: [],
     }]);
     const repository = new PrismaAnnouncementRepository({
       announcement: { findMany },
@@ -54,8 +72,7 @@ describe("공지 대상 스코프 where", () => {
     expect(findMany).toHaveBeenCalledWith({
       where: {
         programId: "program-2",
-        teamId: null,
-        category: { not: "GRADUATION_PROJECT" },
+        projectTeamId: null,
         ...announcementScopeWhere(student),
       },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
@@ -75,7 +92,7 @@ describe("공지 대상 스코프 where", () => {
 
     expect(findMany).toHaveBeenCalledWith({
       where: {
-        teamId: "team-1",
+        projectTeamId: "team-1",
         programId: null,
         ...announcementScopeWhere(student),
       },
@@ -97,8 +114,8 @@ describe("공지 대상 스코프 where", () => {
         AND: [
           {
             OR: [
-              { teamId: "team-1", programId: null },
-              { teamId: null, programId: null },
+              { projectTeamId: "team-1", programId: null },
+              { projectTeamId: null, programId: null },
             ],
           },
           announcementScopeWhere(student),

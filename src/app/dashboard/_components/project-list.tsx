@@ -39,7 +39,7 @@ function ProjectCard({
   const reportScheduleAvailable = hasReportSchedule(team.reportCount);
   const actionLabel = role === "PROFESSOR"
     ? "프로젝트 열기"
-    : team.status === "CLOSED"
+    : team.status === "COMPLETED"
       ? "완료 프로젝트 열기"
       : "프로젝트 열기";
 
@@ -81,7 +81,7 @@ function ProjectCard({
       </div>
 
       <div className={styles.nextTask}>
-        <span><UiText>{team.status === "CLOSED" ? "마지막 현황" : "다가오는 할 일"}</UiText></span>
+        <span><UiText>{team.status === "COMPLETED" ? "마지막 현황" : "다가오는 할 일"}</UiText></span>
         {task ? (
           <>
             <strong><UiText>{task.title}</UiText></strong>
@@ -96,7 +96,7 @@ function ProjectCard({
       </div>
 
       <Link
-        href={`/teams/${team.id}`}
+        href={`/projects/${team.id}`}
         aria-labelledby={`${titleId} ${actionId}`}
         className={styles.cardLink}
       >
@@ -116,8 +116,8 @@ export function ProjectList({
   view?: "all" | "active" | "completed";
 }) {
   const visibleTeams = teams.filter((team) => {
-    if (view === "active") return team.status !== "CLOSED";
-    if (view === "completed") return team.status === "CLOSED";
+    if (view === "active") return team.status !== "COMPLETED";
+    if (view === "completed") return team.status === "COMPLETED";
     return true;
   });
 

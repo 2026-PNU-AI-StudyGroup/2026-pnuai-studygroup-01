@@ -1,5 +1,8 @@
-export type FilePurpose = "REPORT" | "ARTIFACT";
-export type UploadConsumer = "REPORT" | "ARTIFACT";
+export type FilePurpose = "REPORT" | "ARTIFACT" | "ANNOUNCEMENT";
+export type UploadConsumer = "REPORT" | "ARTIFACT" | "ANNOUNCEMENT";
+
+export const ANNOUNCEMENT_ATTACHMENT_MAX_BYTES = 500 * 1024 * 1024;
+export const ANNOUNCEMENT_ATTACHMENT_MAX_COUNT = 5;
 
 const REPORT_TYPES = new Set([
   "application/pdf",
@@ -33,14 +36,24 @@ export function validateUpload(input: {
 }) {
   const originalName = input.originalName.trim();
   const consumer = input.consumer ?? input.purpose;
-  const allowedTypes = consumer === "REPORT" ? REPORT_TYPES : ARTIFACT_TYPES;
-  const maxSize = consumer === "REPORT" ? 25 * 1024 * 1024 : 1024 ** 3;
-  const expectedPurpose: FilePurpose = consumer === "REPORT" ? "REPORT" : "ARTIFACT";
+  const contentType = input.contentType.trim() || "application/octet-stream";
+  const allowedTypes = consumer === "REPORT"
+    ? REPORT_TYPES
+    : consumer === "ARTIFACT"
+      ? ARTIFACT_TYPES
+      : null;
+  const maxSize = consumer === "REPORT"
+    ? 25 * 1024 * 1024
+    : consumer === "ARTIFACT"
+      ? 1024 ** 3
+      : ANNOUNCEMENT_ATTACHMENT_MAX_BYTES;
+  const expectedPurpose: FilePurpose = consumer;
   if (
     originalName.length < 1 ||
     originalName.length > 255 ||
     input.purpose !== expectedPurpose ||
-    !allowedTypes.has(input.contentType) ||
+    contentType.length > 255 ||
+    (allowedTypes !== null && !allowedTypes.has(contentType)) ||
     !Number.isSafeInteger(input.size) ||
     input.size < 1 ||
     input.size > maxSize ||
@@ -48,5 +61,5 @@ export function validateUpload(input: {
   ) {
     throw new InvalidUploadError();
   }
-  return { ...input, consumer, originalName };
+  return { ...input, consumer, originalName, contentType };
 }

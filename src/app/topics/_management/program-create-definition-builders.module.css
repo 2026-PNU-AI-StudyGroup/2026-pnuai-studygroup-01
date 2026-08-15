@@ -1,0 +1,311 @@
+.builder {
+  display: grid;
+  gap: 1rem;
+}
+
+.quickAddRow,
+.rubricSettings,
+.reportSettings,
+.criteriaRow {
+  display: grid;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.quickAddRow,
+.rubricSettings,
+.reportSettings {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 0.375rem;
+}
+
+.field > span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.addButton {
+  min-height: 3rem;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.definitionList {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.definitionItem {
+  border-bottom: 1px solid var(--line);
+}
+
+.itemSummary {
+  display: flex;
+  min-height: 4.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.625rem;
+}
+
+.itemMeta {
+  display: grid;
+  min-width: 0;
+  gap: 0.1875rem;
+}
+
+.itemMeta strong {
+  overflow: visible;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.summaryActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settingsButton {
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.rubricDialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(42rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: min(44rem, calc(100dvh - 2rem));
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0;
+  box-shadow: 0 1.5rem 4rem rgb(23 32 51 / 0.2);
+}
+
+.dialogSurface {
+  display: grid;
+  max-height: min(44rem, calc(100dvh - 2rem));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.dialogHeader,
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.dialogHeader {
+  border-bottom: 1px solid var(--line);
+}
+
+.dialogHeader h3 {
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.dialogBody {
+  display: grid;
+  min-height: 0;
+  gap: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.25rem;
+}
+
+.dialogFooter {
+  justify-content: flex-end;
+  border-top: 1px solid var(--line);
+}
+
+.rubricSettingsModal {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.detail {
+  border-top: 1px solid var(--line);
+}
+
+.detail summary {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.detail summary::before {
+  color: var(--muted);
+  content: "+";
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.detail[open] summary::before {
+  content: "−";
+}
+
+.detailBody {
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.criteria {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.criteriaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.criteriaHeader h4 {
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.criteriaHeader span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.criteriaBody {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.criteriaRequirement {
+  margin-top: -0.5rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.scoreField {
+  max-width: 6rem;
+}
+
+.criteriaList {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.criterionItem {
+  border-bottom: 1px solid var(--line);
+  padding-block: 0.75rem;
+}
+
+.emptyState {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 40rem) {
+  .reportQuickAdd {
+    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr) auto;
+  }
+
+  .rubricQuickAdd {
+    grid-template-columns: minmax(8.5rem, 0.7fr) minmax(0, 1fr) minmax(13rem, 0.75fr) auto;
+  }
+
+  .reportSettings {
+    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr);
+  }
+
+  .rubricSettingsModal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .criteriaRow {
+    grid-template-columns: minmax(0, 1fr) 5rem auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  .rubricSettings {
+    grid-template-columns: minmax(8.5rem, 0.7fr) minmax(10rem, 1fr) minmax(12rem, 0.95fr) minmax(9rem, 0.75fr);
+  }
+}
+
+@media (max-width: 39.99rem) {
+  .itemSummary {
+    align-items: flex-start;
+  }
+
+  .itemActions {
+    padding-top: 0.125rem;
+  }
+
+  .summaryActions {
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+
+  .settingsButton {
+    padding-inline: 0.5rem;
+  }
+
+  .dialogHeader,
+  .dialogFooter {
+    padding-inline: 1rem;
+  }
+
+  .dialogBody {
+    padding: 1rem;
+  }
+}

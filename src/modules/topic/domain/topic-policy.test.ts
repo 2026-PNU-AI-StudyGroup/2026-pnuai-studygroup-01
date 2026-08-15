@@ -71,17 +71,15 @@ describe("주제 공개 상태 정책", () => {
   it.each([
     { status: "PENDING_APPROVAL", publishedAt: null },
     { status: "REJECTED", publishedAt: null },
-    { status: "PUBLISHED", publishedAt: new Date("2026-03-01T00:00:00Z") },
-    { status: "CLOSED", publishedAt: new Date("2026-03-01T00:00:00Z") },
+    { status: "ACTIVE", publishedAt: new Date("2026-03-01T00:00:00Z") },
   ] as const)("$status 상태와 공개 시각의 일관성을 허용한다", (publication) => {
     expect(() => assertValidTopicPublication(publication)).not.toThrow();
   });
 
   it.each([
     { status: "PENDING_APPROVAL", publishedAt: new Date("2026-03-01T00:00:00Z") },
-    { status: "PUBLISHED", publishedAt: null },
-    { status: "CLOSED", publishedAt: null },
-    { status: "PUBLISHED", publishedAt: new Date("invalid") },
+    { status: "ACTIVE", publishedAt: null },
+    { status: "ACTIVE", publishedAt: new Date("invalid") },
     { status: "REJECTED", publishedAt: new Date("invalid") },
   ] as const)("$status 상태와 모순된 공개 시각을 거절한다", (publication) => {
     expect(() => assertValidTopicPublication(publication)).toThrow();

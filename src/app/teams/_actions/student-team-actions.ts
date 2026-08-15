@@ -8,7 +8,7 @@ import { StudentTeamCommandService, StudentTeamOperationError } from "@/modules/
 import { PrismaStudentTeamCommandRepository } from "@/modules/student-team/infrastructure/prisma-student-team-command-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export type StudentTeamActionState = { status: "idle" | "success" | "error"; message: string };
+export type StudentTeamActionState = { status: "idle" | "success" | "error"; message: string; teamId?: string };
 
 async function serviceAndActor() {
   const actor = await getCurrentOperationalActor();
@@ -37,7 +37,15 @@ export async function createStudentTeamAction(_state: StudentTeamActionState, fo
   const parsed = z.object({ name: z.string(), description: z.string() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "팀 정보를 확인해 주세요." };
   const { actor, service } = await serviceAndActor();
-  return run(async () => { await service.create(actor, parsed.data); }, "팀을 만들었습니다.");
+  try {
+    const teamId = await service.create(actor, parsed.data);
+    revalidatePath("/teams");
+    revalidatePath("/recruitments");
+    return { status: "success", message: "팀을 만들었습니다.", teamId };
+  } catch (error) {
+    if (error instanceof StudentTeamOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
 }
 
 export async function inviteStudentTeamMemberAction(_state: StudentTeamActionState, formData: FormData): Promise<StudentTeamActionState> {
@@ -66,6 +74,21 @@ export async function removeStudentTeamMemberAction(_state: StudentTeamActionSta
   if (!parsed.success) return { status: "error", message: "팀원을 확인해 주세요." };
   const { actor, service } = await serviceAndActor();
   return run(async () => { await service.removeMember(actor, parsed.data.teamId, parsed.data.studentId); }, "팀원을 내보냈습니다.");
+}
+
+export async function leaveStudentTeamAction(_state: StudentTeamActionState, formData: FormData): Promise<StudentTeamActionState> {
+  const parsed = z.object({ teamId: z.string().uuid() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "팀을 확인해 주세요." };
+  const { actor, service } = await serviceAndActor();
+  try {
+    await service.leave(actor, parsed.data.teamId);
+  } catch (error) {
+    if (error instanceof StudentTeamOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  revalidatePath("/teams");
+  revalidatePath("/recruitments");
+  redirect("/teams");
 }
 
 export async function deleteStudentTeamAction(_state: StudentTeamActionState, formData: FormData): Promise<StudentTeamActionState> {

@@ -9,6 +9,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import type { NotificationType } from "@/modules/notification/domain/notification";
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 export type NotificationPreviewItem = {
   id: string;
@@ -188,8 +189,8 @@ export function NotificationPopover({
                 ))}
               </ol>
             ) : (
-              <div className="px-5 py-10 text-center">
-                <p className="text-sm font-bold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
+              <div className="px-5">
+                <EmptyState variant="compact" title="새로운 알림이 없습니다" />
               </div>
             )}
 

@@ -34,9 +34,9 @@ describe("PrismaProfileImageRepository", () => {
         userId: "student-2",
         user: {
           OR: expect.arrayContaining([
-            { teamMemberships: { some: expect.objectContaining({ team: expect.any(Object) }) } },
-            { topicsManaged: { some: { team: { is: expect.any(Object) } } } },
-            { projectAssistantMemberships: { some: { topic: { team: { is: expect.any(Object) } } } } },
+            { projectTeamMemberships: { some: expect.objectContaining({ projectTeam: expect.any(Object) }) } },
+            { topicsManaged: { some: { projectTeam: { is: expect.any(Object) } } } },
+            { projectAssistantMemberships: { some: { topic: { projectTeam: { is: expect.any(Object) } } } } },
           ]),
         },
       }),

@@ -26,6 +26,7 @@ const statusPresentation = {
   ACCEPTED: { label: "수락", tone: "success" },
   REJECTED: { label: "거절", tone: "danger" },
   CLOSED: { label: "모집 종료", tone: "neutral" },
+  WITHDRAWN: { label: "철회", tone: "neutral" },
 } as const;
 
 export default async function RecruitmentApplicationsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
@@ -51,7 +52,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             />
 
             {data.applications.length === 0 ? (
-              <EmptyState title="지원 내역이 없습니다" action={<Link className="button-primary" href="/recruitments"><UiText>{"팀원 모집"}</UiText></Link>} />
+              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"팀원 모집"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
                 <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">

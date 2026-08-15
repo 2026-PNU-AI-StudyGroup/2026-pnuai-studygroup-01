@@ -24,8 +24,17 @@ describe("PrismaReportFeedbackRepository", () => {
       where: {
         id: "report-1",
         team: {
-          OR: [
-            { topic: { assistants: { some: { userId: "student-1" } } } },
+          AND: [
+            {
+              project: {
+                status: "ACTIVE",
+              },
+            },
+            {
+              OR: [
+                { project: { assistants: { some: { userId: "student-1" } } } },
+              ],
+            },
           ],
         },
       },
@@ -34,7 +43,7 @@ describe("PrismaReportFeedbackRepository", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it("담당 교수의 보고서 피드백을 저장한다", async () => {
+  it("프로그램 종료 후에도 담당 교수의 보충 피드백을 저장한다", async () => {
     const findFirst = vi.fn().mockResolvedValue({ id: "report-1" });
     const create = vi.fn().mockResolvedValue({ id: "feedback-1" });
     const repository = new PrismaReportFeedbackRepository({
@@ -55,9 +64,18 @@ describe("PrismaReportFeedbackRepository", () => {
       where: {
         id: "report-1",
         team: {
-          OR: [
-            { professorId: "professor-1" },
-            { topic: { assistants: { some: { userId: "professor-1" } } } },
+          AND: [
+            {
+              project: {
+                status: "ACTIVE",
+              },
+            },
+            {
+              OR: [
+                { project: { managerId: "professor-1" } },
+                { project: { assistants: { some: { userId: "professor-1" } } } },
+              ],
+            },
           ],
         },
       },

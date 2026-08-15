@@ -197,19 +197,19 @@ export class PrismaProfileImageRepository implements ProfileImageRepository {
         user: {
           OR: [
             {
-              teamMemberships: {
-                some: { team: teamActorWhere(actor) },
+              projectTeamMemberships: {
+                some: { projectTeam: teamActorWhere(actor) },
               },
             },
             {
               topicsManaged: {
-                some: { team: { is: teamActorWhere(actor) } },
+                some: { projectTeam: { is: teamActorWhere(actor) } },
               },
             },
             {
               projectAssistantMemberships: {
                 some: {
-                  topic: { team: { is: teamActorWhere(actor) } },
+                  topic: { projectTeam: { is: teamActorWhere(actor) } },
                 },
               },
             },

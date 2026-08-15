@@ -9,11 +9,6 @@ import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashbo
 import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-dashboard-sidebar";
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
 import { ProjectList } from "@/app/dashboard/_components/project-list";
-import { AdminProjectOverview } from "@/app/dashboard/_components/admin-project-overview";
-import {
-  parseAdminProjectPage,
-  parseAdminProjectProgressFilter,
-} from "@/app/dashboard/_lib/admin-project-overview-query";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
@@ -23,8 +18,6 @@ import {
 } from "@/app/dashboard/_lib/project-dashboard-view";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
-import { ListAdminProjectOverviewService } from "@/modules/team/application/list-admin-project-overview";
-import { PrismaAdminProjectOverviewReader } from "@/modules/team/infrastructure/prisma-admin-project-overview-reader";
 import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
 import { ListOwnTopicApplicationsService } from "@/modules/topic-application/application/list-own-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
@@ -40,6 +33,7 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
+import { SettingsIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -66,7 +60,6 @@ export default async function DashboardPage({
     view?: SearchParamValue;
     page?: SearchParamValue;
     programId?: SearchParamValue;
-    progress?: SearchParamValue;
   }>;
 }) {
   const actor = await getCurrentActor();
@@ -81,23 +74,8 @@ export default async function DashboardPage({
     : requestedView;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   if (actor.role === "ADMIN") {
-    const programs = await new ListAdminProjectOverviewService(
-      new PrismaAdminProjectOverviewReader(prisma),
-    ).execute(actor);
     const selectedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200);
-    const selectedProgress = parseAdminProjectProgressFilter(firstSearchParam(params.progress));
-    const adminPage = parseAdminProjectPage(firstSearchParam(params.page));
-
-    return (
-      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-        <AdminProjectOverview
-          programs={programs}
-          selectedProgramId={selectedProgramId}
-          selectedProgress={selectedProgress}
-          requestedPage={adminPage}
-        />
-      </AppShell>
-    );
+    redirect(selectedProgramId ? `/topics?programId=${encodeURIComponent(selectedProgramId)}` : "/topics");
   }
 
   const teamStatus = view === "active" ? "ACTIVE" : view === "completed" ? "COMPLETED" : undefined;
@@ -164,9 +142,9 @@ export default async function DashboardPage({
     completed: completedCount,
   });
   const visibleTeams = view === "active"
-    ? teams.filter((team) => team.status !== "CLOSED")
+    ? teams.filter((team) => team.status !== "COMPLETED")
     : view === "completed"
-      ? teams.filter((team) => team.status === "CLOSED")
+      ? teams.filter((team) => team.status === "COMPLETED")
       : teams;
   const hasAnyProject = counts.all > 0;
   if (student && !hasAnyProject) {
@@ -206,9 +184,9 @@ export default async function DashboardPage({
                   <li key={topic.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <div>
                       <strong><UiText>{topic.title}</UiText></strong>
-                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "PENDING_APPROVAL" ? "승인 대기" : topic.status === "PUBLISHED" ? "공개" : topic.status === "REJECTED" ? "반려됨" : "마감"}</UiText></p>
+                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "PENDING_APPROVAL" ? "승인 대기" : topic.status === "ACTIVE" ? "공개" : topic.status === "REJECTED" ? "반려됨" : "마감"}</UiText></p>
                     </div>
-                    <Link href={`/professor/topics/${topic.id}`} className="button-secondary"><UiText>{"프로젝트 관리"}</UiText></Link>
+                    <Link href={`/professor/topics/${topic.id}`} className="button-secondary gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"프로젝트 관리"}</UiText></Link>
                   </li>
                 ))}
               </ul>
@@ -217,14 +195,12 @@ export default async function DashboardPage({
           {actor.role === "PROFESSOR" && pendingApprovals.length > 0 ? (
             <ProjectApprovalLedger requests={pendingApprovals} student={false} />
           ) : actor.role === "PROFESSOR" && view === "all" ? (
-            <section aria-labelledby="approval-empty-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 sm:px-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 id="approval-empty-title" className="text-lg font-bold tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
-                  <h3 className="mt-3 text-sm font-bold text-[var(--ink)]"><UiText>{"검토할 승인 요청이 없습니다"}</UiText></h3>
-                </div>
+            <section aria-labelledby="approval-empty-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+              <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-6">
+                <h2 id="approval-empty-title" className="text-lg font-bold tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
                 <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>
-              </div>
+              </header>
+              <div className="px-5 sm:px-6"><EmptyState variant="section" title="검토할 승인 요청이 없습니다" description="새 승인 요청이 도착하면 이곳에 표시됩니다." /></div>
             </section>
           ) : null}
 
@@ -235,7 +211,7 @@ export default async function DashboardPage({
           {view === "all" && activeCount > 0 ? (
             <ProjectList
               role={actor.role}
-              teams={teams.filter((team) => team.status !== "CLOSED")}
+              teams={teams.filter((team) => team.status !== "COMPLETED")}
               view="active"
             />
           ) : null}
@@ -245,7 +221,7 @@ export default async function DashboardPage({
           {view === "all" && completedCount > 0 ? (
             <ProjectList
               role={actor.role}
-              teams={teams.filter((team) => team.status === "CLOSED")}
+              teams={teams.filter((team) => team.status === "COMPLETED")}
               view="completed"
             />
           ) : null}

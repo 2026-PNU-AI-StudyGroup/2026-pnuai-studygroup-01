@@ -20,6 +20,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 모집");
@@ -54,11 +55,11 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
             <StudentTeamPageIntro
               title="내 모집"
               meta={<span><UiText>{"등록한 모집"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
-              action={data.posts.length ? <Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"모집 공고 작성"}</UiText></Link> : undefined}
+              action={data.posts.length ? <Link className="button-primary gap-2" href="/recruitments/mine?modal=new"><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link> : undefined}
             />
 
             {data.posts.length === 0 ? (
-              <EmptyState title="등록한 모집이 없습니다" description="필요한 역할과 활동 조건을 입력해 팀원 모집을 등록하세요." action={<Link className="button-primary" href="/recruitments/mine?modal=new"><UiText>{"모집 공고 작성"}</UiText></Link>} />
+              <EmptyState title="등록한 모집이 없습니다" description="필요한 역할과 활동 조건을 입력해 팀원 모집을 등록하세요." action={<Link className="button-primary gap-2" href="/recruitments/mine?modal=new"><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
                 <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_7rem_8.5rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">
@@ -112,7 +113,7 @@ export default async function MyRecruitmentPostsPage({ searchParams }: { searchP
                 />
               ) : (
                 <EmptyState
-                  variant="embedded"
+                  variant="section"
                   title="팀장으로 관리 중인 팀이 없습니다"
                   description="내 팀에서 팀을 만든 뒤 필요한 역할을 공개 모집할 수 있습니다."
                   action={<Link className="button-primary" href="/teams?modal=create"><UiText>{"팀 만들기"}</UiText></Link>}

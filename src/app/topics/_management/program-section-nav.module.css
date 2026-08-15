@@ -1,0 +1,68 @@
+.root {
+  position: sticky;
+  top: 4.5rem;
+  z-index: 19;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(max-content, 1fr));
+  min-width: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--workspace) 94%, white);
+  backdrop-filter: blur(14px);
+  scrollbar-width: none;
+}
+
+.root::-webkit-scrollbar { display: none; }
+
+.item {
+  position: relative;
+  display: inline-flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 750;
+  white-space: nowrap;
+  transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
+}
+
+.item::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: transparent;
+  content: "";
+}
+
+.item svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.item:hover,
+.item:focus-visible {
+  background: color-mix(in srgb, var(--primary-subtle) 45%, transparent);
+  color: var(--primary);
+}
+
+.itemActive { color: var(--primary); }
+.itemActive::after { background: var(--primary); }
+
+.management { grid-template-columns: repeat(7, minmax(max-content, 1fr)); }
+
+.admin { flex: 0 0 auto; border-left: 1px solid var(--line); margin-left: .25rem; }
+.admin small { color: var(--muted); font-size: .625rem; font-weight: 700; }
+
+@media (max-width: 48rem) {
+  .root { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; }
+}

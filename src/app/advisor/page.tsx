@@ -13,11 +13,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("담당 프로젝트");
 }
 
-const TEAM_STATUS_LABELS: Record<string, string> = {
-  FORMING: "팀 구성 중",
-  CONFIRMED: "팀 확정",
-  CLOSED: "팀 종료",
-};
 
 export default async function AdvisorAssignmentsPage() {
   const actor = await getCurrentActor();
@@ -52,7 +47,7 @@ export default async function AdvisorAssignmentsPage() {
                     <>
                       <span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]"><UiText>{topic.team.name}</UiText></span>
                       <span className="inline-flex items-center rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-                        <UiText>{TEAM_STATUS_LABELS[topic.team.status] ?? topic.team.status}</UiText>
+                        <UiText>{topic.team.confirmedAt ? "팀 확정" : "팀 구성 중"}</UiText>
                       </span>
                     </>
                   ) : (

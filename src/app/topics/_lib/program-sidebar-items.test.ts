@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
+import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 
 describe("buildProgramSidebarItems", () => {
   const archivedProgramPeriod = {
@@ -17,20 +17,21 @@ describe("buildProgramSidebarItems", () => {
     category: "교육",
     startYear: 2026,
     status: "OPEN" as const,
-    openedAt: new Date(),
+    openedAt: new Date("2026-01-01T00:00:00+09:00"),
     topicCount: 1,
     teamCount: 0,
     description: "",
-    startsAt: new Date(),
-    endsAt: new Date(),
-    recruitmentStartsAt: new Date(),
-    recruitmentEndsAt: new Date(),
-    executionStartsAt: new Date(),
-    executionEndsAt: new Date(),
-    submissionStartsAt: new Date(),
-    submissionEndsAt: new Date(),
+    startsAt: new Date("2026-01-01T00:00:00+09:00"),
+    endsAt: new Date("2099-12-31T23:59:59+09:00"),
+    recruitmentStartsAt: new Date("2026-01-01T00:00:00+09:00"),
+    recruitmentEndsAt: new Date("2026-12-01T00:00:00+09:00"),
+    executionStartsAt: new Date("2026-01-01T00:00:00+09:00"),
+    executionEndsAt: new Date("2026-12-01T00:00:00+09:00"),
+    submissionStartsAt: new Date("2026-01-01T00:00:00+09:00"),
+    submissionEndsAt: new Date("2026-12-01T00:00:00+09:00"),
     advisorEnabled: true,
     studentProjectCreationEnabled: false,
+    isPublic: true,
   };
 
   it("진행 중 화면에서는 진행 중 프로그램을 우선한다", () => {
@@ -66,7 +67,8 @@ describe("buildProgramSidebarItems", () => {
         voteLimit: 3,
         staffVoteLimit: 5,
         selfVotingAllowed: false,
-        identityVisibility: "ANONYMOUS" as const,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     };
     const archiveEntry = { id: "open-2026", name: "AI 부스터 2026", category: "교육", startYear: 2026, icon: "FOLDER" as const, ...archivedProgramPeriod };
@@ -78,7 +80,7 @@ describe("buildProgramSidebarItems", () => {
       votingEndsAt,
     }));
 
-    const archivedVotingProgram = { ...votingProgram, status: "CLOSED" as const };
+    const archivedVotingProgram = { ...votingProgram, endsAt: new Date("2026-08-07T11:59:59+09:00") };
     expect(buildProgramSidebarItems([archivedVotingProgram], [], "active", {}, now)[0]).toEqual(expect.objectContaining({
       status: "past",
       href: "/topics?view=past&programId=open-2026",
@@ -100,5 +102,22 @@ describe("buildProgramSidebarItems", () => {
       "/topics?view=past&programId=past-2025&q=%EA%B8%B8+%EC%B0%BE%EA%B8%B0",
     );
     expect(items.every(({ href }) => !href.includes("page="))).toBe(true);
+  });
+
+  it("관리자 사이드바는 팀 수가 아니라 전체 프로젝트 수와 비공개 상태를 사용한다", () => {
+    const items = buildAdminProgramSidebarItems([{
+      ...openProgram,
+      isPublic: false,
+      topicCount: 4,
+      teamCount: 1,
+    }], "manage", "settings", new Date(), new Map([["open-2026", 3]]));
+
+    expect(items[0]).toEqual(expect.objectContaining({
+      status: "draft",
+      visibility: "private",
+      projectCount: 4,
+      pendingApprovalCount: 3,
+      href: "/topics/manage/open-2026",
+    }));
   });
 });

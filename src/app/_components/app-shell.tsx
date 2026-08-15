@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { openNotificationAction } from "@/app/_actions/notification-actions";
 import { updateLanguageAction } from "@/app/_actions/language-actions";
 import { NotificationIndicatorContainer } from "@/app/_components/notification-indicator-container";
+import styles from "@/app/_components/app-shell.module.css";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import { AccountPopover } from "@/modules/identity/ui/account-popover";
 import { requireCompletedStudentOnboarding } from "@/modules/identity/infrastructure/student-onboarding-guard";
@@ -21,8 +22,9 @@ import { Brand } from "@/shared/ui/brand";
 
 type NavigationItem = {
   href: string;
+  activePath?: string;
   label: string;
-  icon: "home" | "search" | "users" | "notice" | "settings";
+  icon: "home" | "search" | "users" | "notice" | "approval" | "settings";
 };
 
 function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
@@ -32,9 +34,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         myProjects: "내 프로젝트",
         teamRecruit: "팀 모집",
         announcements: "공지사항",
-        allProjects: "전체 현황",
         mentoredProjects: "지도 현황",
         manageTopics: "주제 관리",
+        projectApprovals: "프로젝트 승인",
         manageOps: "운영 관리",
       }
     : {
@@ -42,9 +44,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
         myProjects: "My projects",
         teamRecruit: "Recruit",
         announcements: "Notices",
-        allProjects: "Overview",
         mentoredProjects: "Advising",
         manageTopics: "Topic management",
+        projectApprovals: "Project approvals",
         manageOps: "Operations",
       };
   if (role === "STUDENT") {
@@ -58,9 +60,9 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   if (role === "ADMIN") {
     return [
       { href: "/topics", label: label.explore, icon: "search" },
-      { href: "/dashboard", label: label.allProjects, icon: "home" },
+      { href: "/project-approvals", label: label.projectApprovals, icon: "approval" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
-      { href: "/admin/programs", label: label.manageOps, icon: "settings" },
+      { href: "/admin/professors", activePath: "/admin", label: label.manageOps, icon: "settings" },
     ];
   }
   if (role === "ADVISOR") {
@@ -78,8 +80,12 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 }
 
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
+  const activePath = item.activePath ?? item.href;
+  if (role === "ADMIN" && item.href === "/topics") {
+    return isSectionActive("/topics", currentPath) && !isSectionActive("/topics/manage", currentPath);
+  }
   if (role === "STUDENT" && item.href === "/topics") {
-    return isSectionActive("/topics", currentPath) || currentPath === "/projects/new";
+    return isSectionActive("/topics", currentPath);
   }
   if (role === "STUDENT" && item.href === "/dashboard") {
     return isSectionActive("/dashboard", currentPath) ||
@@ -89,11 +95,13 @@ function isNavigationActive(item: NavigationItem, currentPath: string, role: Use
     return isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
-  if (item.href !== "/admin/programs" && item.href !== "/professor/topics") return isSectionActive(item.href, currentPath);
-  if (currentPath.startsWith("/project-approvals")) return true;
-  return role === "ADMIN"
-    ? currentPath.startsWith("/admin/") || currentPath.startsWith("/professor/")
-    : currentPath.startsWith("/professor/");
+  if (role === "ADMIN" && activePath === "/admin") {
+    return currentPath.startsWith("/admin/") ||
+      currentPath.startsWith("/professor/") ||
+      isSectionActive("/topics/manage", currentPath);
+  }
+  if (activePath !== "/professor/topics") return isSectionActive(activePath, currentPath);
+  return currentPath.startsWith("/professor/");
 }
 
 function isSectionActive(href: string, currentPath: string) {
@@ -106,6 +114,7 @@ function NavIcon({ name, active = false }: { name: NavigationItem["icon"]; activ
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-4 2-6 6-6s6 2 6 6M16 5c3 0 4 2 4 4s-1 3-3 3M17 14c3 0 4 2 4 5" /></>,
     notice: <><path d="M6 4h12v16H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
+    approval: <><path d="M6 3.5h9l3 3V20.5H6z" /><path d="M15 3.5v3h3M9 12l2 2 4-4" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 15 6l-.3-2.6h-4L10.4 6A8 8 0 0 0 8.8 7L6.4 6 4.5 9.5 6.6 11a7 7 0 0 0 0 2L4.5 14.5 6.4 18l2.4-1a8 8 0 0 0 1.6 1l.3 2.6h4L15 18a8 8 0 0 0 1.6-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z" /></>,
   };
   const filledPaths = {
@@ -113,6 +122,7 @@ function NavIcon({ name, active = false }: { name: NavigationItem["icon"]; activ
     search: <path fillRule="evenodd" d="M10.5 2.5a8 8 0 1 0 4.9 14.3l4.5 4.5 1.4-1.4-4.5-4.5a8 8 0 0 0-6.3-12.9Zm0 2.2a5.8 5.8 0 1 1 0 11.6 5.8 5.8 0 0 1 0-11.6Z" />,
     users: <path d="M9 3.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM1.8 21c.2-5.1 2.6-7.6 7.2-7.6s7 2.5 7.2 7.6H1.8Zm14-9.2c2.8-.4 5.2-2.1 5.2-5 0-2.3-1.6-3.8-4.1-3.8-.5 0-1 .1-1.4.2a5.6 5.6 0 0 1 .1 7.5l.2 1.1Zm1.8 1.7c3.1.8 4.6 3.3 4.6 7.5h-4.1a9.8 9.8 0 0 0-2.2-6.4c.5-.5 1.1-.8 1.7-1.1Z" />,
     notice: <path d="M5 3h14v18H5V3Zm3 4v2h8V7H8Zm0 4v2h8v-2H8Zm0 4v2h5v-2H8Z" />,
+    approval: <path fillRule="evenodd" d="M6 2.5h9.4L19.5 6v15.5H6V2.5Zm8.5 2.2V7h2.3l-2.3-2.3ZM9.2 13.4l1.8 1.8 4-4 1.6 1.6-5.6 5.6-3.4-3.4 1.6-1.6Z" />,
     settings: <path d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6-2-3.5-2.6 1a7.4 7.4 0 0 0-1.7-1L14.8 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.6-1-2 3.5L6.2 11a7.7 7.7 0 0 0-.1 1 7.7 7.7 0 0 0 .1 1l-2.1 1.6 2 3.5 2.6-1a7.4 7.4 0 0 0 1.7 1l.4 2.9h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.6 1 2-3.5-2.1-1.6ZM12.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" />,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-5 shrink-0 ${active ? "fill-current" : "fill-none stroke-current stroke-[1.75]"}`}>{active ? filledPaths[name] : outlinePaths[name]}</svg>;
@@ -149,7 +159,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
-      <div className="app-shell min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]">
+      <div className={`${styles.root} min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]`}>
         <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-[var(--sidebar)] px-2 py-6 lg:flex">
           <Brand href="/topics" variant="sidebar" />
           <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-1">
@@ -189,7 +199,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
               </div>
             </div>
           </header>
-          <div id="main-content" tabIndex={-1}><UiText>{children}</UiText></div>
+          <div id="main-content" tabIndex={-1} className={styles.mainContent}><UiText>{children}</UiText></div>
         </div>
         <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white/94 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
           {navigation.map((item) => {

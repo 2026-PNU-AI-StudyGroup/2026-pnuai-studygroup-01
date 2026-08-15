@@ -80,9 +80,11 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         .mockResolvedValueOnce([{
           id: "program-1",
           isPublic: true,
-          lifecycleStatus: "ACTIVE",
+          endsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
+          projectTeamMinSize: 2,
+          projectTeamMaxSize: 6,
           projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
           projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
         }])
@@ -93,13 +95,17 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
           id: "student-team-1",
           compositionVersion: 1,
           members: [
-            { studentId: "student-1", student: { role: "STUDENT", isActive: true } },
-            { studentId: "student-2", student: { role: "STUDENT", isActive: true } },
+            { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+            { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
           ],
+          _count: { invitations: 0 },
         })),
       },
-      teamMember: { count: vi.fn(async () => 0) },
+      projectTeamMembership: { count: vi.fn(async () => 0) },
       topic: { create: createTopic },
+      user: { findMany: vi.fn(async () => []) },
+      notification: { createMany: vi.fn(async () => ({ count: 0 })) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -116,7 +122,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         applicationMode: "TEAM_ONLY",
         recruitmentEnabled: false,
         capacity: 2,
-        approvalRequest: {
+        approvalRequests: {
           create: expect.objectContaining({ studentTeamId: "student-team-1" }),
         },
       }),
@@ -130,14 +136,54 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     expect(lockSql[2]).toContain("FOR UPDATE");
   });
 
-  it("기존 팀을 선택하지 않으면 기존 모집 설정을 그대로 유지한다", async () => {
+  it("프로그램의 최소 팀 인원을 충족하지 못한 팀 제안을 저장하지 않는다", async () => {
+    const createTopic = vi.fn();
+    const transaction = {
+      $queryRaw: vi.fn()
+        .mockResolvedValueOnce([{
+          id: "program-1",
+          isPublic: true,
+          endsAt: new Date("2026-12-31T00:00:00Z"),
+          advisorEnabled: false,
+          studentProjectCreationEnabled: true,
+          projectTeamMinSize: 2,
+          projectTeamMaxSize: 6,
+          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+        }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
+      studentTeam: {
+        findFirst: vi.fn(async () => ({
+          id: "student-team-1",
+          compositionVersion: 1,
+          members: [{ studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } }],
+          _count: { invitations: 0 },
+        })),
+      },
+      projectTeamMembership: { count: vi.fn() },
+      topic: { create: createTopic },
+    };
+    const client = {
+      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).create({
+      ...proposal,
+      studentTeamId: "student-team-1",
+    })).resolves.toBeNull();
+    expect(transaction.projectTeamMembership.count).not.toHaveBeenCalled();
+    expect(createTopic).not.toHaveBeenCalled();
+  });
+
+  it("학생 제안에 팀을 선택하지 않으면 저장하지 않는다", async () => {
     const createTopic = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{
           id: "program-1",
           isPublic: true,
-          lifecycleStatus: "ACTIVE",
+          endsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
           projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
@@ -145,7 +191,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         }])
         .mockResolvedValueOnce([]),
       studentTeam: { findFirst: vi.fn() },
-      teamMember: { count: vi.fn() },
+      projectTeamMembership: { count: vi.fn() },
       topic: { create: createTopic },
     };
     const client = {
@@ -155,28 +201,57 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     await new PrismaTopicApprovalRepository(client).create(proposal);
 
     expect(transaction.studentTeam.findFirst).not.toHaveBeenCalled();
-    expect(transaction.$queryRaw).toHaveBeenCalledTimes(2);
-    expect(createTopic).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        managerId: null,
-        applicationMode: "INDIVIDUAL_OR_TEAM",
-        recruitmentEnabled: true,
-        capacity: 4,
-        approvalRequest: {
-          create: expect.objectContaining({ studentTeamId: undefined }),
-        },
-      }),
-    });
+    expect(transaction.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(createTopic).not.toHaveBeenCalled();
   });
 
-  it("기존 팀 없이도 지원을 받지 않는 프로젝트 제안을 저장한다", async () => {
+  it("응답 대기 중인 초대가 있는 팀은 제안에 연결하지 않는다", async () => {
     const createTopic = vi.fn(async () => ({ id: "topic-1" }));
     const transaction = {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{
           id: "program-1",
           isPublic: true,
-          lifecycleStatus: "ACTIVE",
+          endsAt: new Date("2026-12-31T00:00:00Z"),
+          advisorEnabled: true,
+          studentProjectCreationEnabled: true,
+          projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+          projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+        }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: "student-team-1", compositionVersion: 1 }]),
+      studentTeam: {
+        findFirst: vi.fn(async () => ({
+          id: "student-team-1",
+          compositionVersion: 1,
+          members: [{ studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } }],
+          _count: { invitations: 1 },
+        })),
+      },
+      projectTeamMembership: { count: vi.fn() },
+      topic: { create: createTopic },
+    };
+    const client = {
+      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    } as unknown as PrismaClient;
+
+    await new PrismaTopicApprovalRepository(client).create({
+      ...proposal,
+      studentTeamId: "student-team-1",
+    });
+
+    expect(transaction.projectTeamMembership.count).not.toHaveBeenCalled();
+    expect(createTopic).not.toHaveBeenCalled();
+  });
+
+  it("지원 비활성화 여부와 무관하게 팀 없는 학생 제안을 거부한다", async () => {
+    const createTopic = vi.fn(async () => ({ id: "topic-1" }));
+    const transaction = {
+      $queryRaw: vi.fn()
+        .mockResolvedValueOnce([{
+          id: "program-1",
+          isPublic: true,
+          endsAt: new Date("2026-12-31T00:00:00Z"),
           advisorEnabled: true,
           studentProjectCreationEnabled: true,
           projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
@@ -184,7 +259,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         }])
         .mockResolvedValueOnce([]),
       studentTeam: { findFirst: vi.fn() },
-      teamMember: { count: vi.fn() },
+      projectTeamMembership: { count: vi.fn() },
       topic: { create: createTopic },
     };
     const client = {
@@ -193,12 +268,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
 
     await new PrismaTopicApprovalRepository(client).create({ ...proposal, recruitmentEnabled: false });
 
-    expect(createTopic).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        recruitmentEnabled: false,
-        approvalRequest: { create: expect.objectContaining({ studentTeamId: undefined }) },
-      }),
-    });
+    expect(createTopic).not.toHaveBeenCalled();
   });
 
   it("교수 승인자를 학생 제안의 담당자로 지정한다", async () => {
@@ -215,7 +285,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     };
     const queryRaw = vi.fn()
       .mockResolvedValueOnce([{
-        lifecycleStatus: "ACTIVE",
+        endsAt: new Date("2026-12-31T00:00:00Z"),
+        studentProjectCreationEnabled: true,
         projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
         projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
         recruitmentEndsAt,
@@ -241,6 +312,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         update: vi.fn(async () => ({ id: "request-1" })),
       },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -259,7 +332,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       where: { id: "topic-1" },
       data: {
         managerId: "professor-1",
-        status: "PUBLISHED",
+        status: "ACTIVE",
         publishedAt: requestedAt,
       },
     });
@@ -289,7 +362,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     };
     const queryRaw = vi.fn()
       .mockResolvedValueOnce([{
-        lifecycleStatus: "ACTIVE",
+        endsAt: new Date("2026-12-31T00:00:00Z"),
+        studentProjectCreationEnabled: true,
         projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
         projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
         recruitmentEndsAt,
@@ -312,6 +386,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         update: vi.fn(async () => ({ id: "request-1" })),
       },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -328,7 +404,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
 
     expect(updateTopic).toHaveBeenCalledWith({
       where: { id: "topic-1" },
-      data: { managerId: "admin-1", status: "PUBLISHED", publishedAt: decidedAt },
+      data: { managerId: "admin-1", status: "ACTIVE", publishedAt: decidedAt },
     });
   });
 
@@ -345,7 +421,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       studentTeamId: null,
       status: "PENDING" as const,
     };
-    const queryRaw = vi.fn().mockResolvedValueOnce([{ lifecycleStatus: "CLOSED" }]);
+    const queryRaw = vi.fn().mockResolvedValueOnce([{ endsAt: requestedAt }]);
     const transaction = {
       $queryRaw: queryRaw,
       topic: { update: updateTopic, updateMany: vi.fn(async () => ({ count: 0 })) },
@@ -354,6 +430,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         update: updateRequest,
       },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -370,6 +448,42 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
 
     expect(updateTopic).not.toHaveBeenCalled();
     expect(updateRequest).not.toHaveBeenCalled();
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it("직접 지원형으로 전환된 프로그램의 기존 학생 제안을 승인하지 않는다", async () => {
+    const request = {
+      id: "request-1",
+      topicId: "topic-1",
+      requesterId: "student-1",
+      topic: { title: "학생 제안" },
+      route: "ADMIN" as const,
+      requestedProfessorId: null,
+      studentTeamId: "student-team-1",
+      status: "PENDING" as const,
+    };
+    const queryRaw = vi.fn().mockResolvedValueOnce([{
+      endsAt: new Date("2026-12-31T00:00:00Z"),
+      studentProjectCreationEnabled: false,
+      projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
+      projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
+    }]);
+    const transaction = {
+      $queryRaw: queryRaw,
+      topicApprovalRequest: { findUnique: vi.fn(async () => request), update: vi.fn() },
+    };
+    const client = {
+      $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    } as unknown as PrismaClient;
+
+    await expect(new PrismaTopicApprovalRepository(client).decide({
+      requestId: "request-1",
+      actorId: "admin-1",
+      actorRole: "ADMIN",
+      decision: "APPROVE",
+      reviewComment: "승인",
+      decidedAt: requestedAt,
+    })).resolves.toBe("UNAVAILABLE");
     expect(queryRaw).toHaveBeenCalledTimes(1);
   });
 
@@ -394,6 +508,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         update: updateRequest,
       },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = {
       $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)),
@@ -422,8 +538,8 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     expect(sql).toContain("FOR UPDATE");
   });
 
-  it("프로그램별 학생 소속 고유키 충돌은 승인 불가로 처리한다", async () => {
-    const conflict = uniqueConflict(["programId", "studentId"]);
+  it("같은 프로젝트의 활성 멤버십 고유키 충돌은 승인 불가로 처리한다", async () => {
+    const conflict = uniqueConflict(["projectTeamId", "userId"]);
     const repository = new PrismaTopicApprovalRepository({
       $transaction: vi.fn().mockRejectedValue(conflict),
     } as unknown as PrismaClient);
@@ -492,16 +608,35 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       image: null,
     };
 
-    await new PrismaTopicApprovalRepository(client).listVisiblePage(professor, 1, 20, "PENDING");
+    await new PrismaTopicApprovalRepository(client).listVisiblePage(professor, 1, 20, { programId: "program-1", status: "PENDING" });
 
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         AND: [
           { route: "PROFESSOR", requestedProfessorId: "professor-1" },
           { status: "PENDING" },
+          { topic: { programId: "program-1" } },
         ],
       },
     }));
+  });
+
+  it("관리자 경로의 대기 요청만 프로그램별 한 번의 쿼리로 집계한다", async () => {
+    const queryRaw = vi.fn<(query: unknown) => Promise<Array<{ programId: string; count: number | bigint }>>>().mockResolvedValue([
+      { programId: "program-1", count: 2 },
+      { programId: "program-2", count: BigInt(1) },
+    ]);
+    const repository = new PrismaTopicApprovalRepository({ $queryRaw: queryRaw } as unknown as PrismaClient);
+
+    await expect(repository.listAdminPendingCountsByProgram()).resolves.toEqual([
+      { programId: "program-1", count: 2 },
+      { programId: "program-2", count: 1 },
+    ]);
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    const sql = (queryRaw.mock.calls[0][0] as { strings: readonly string[] }).strings.join("?");
+    expect(sql).toContain('request."status" = \'PENDING\'');
+    expect(sql).toContain('request."route" = \'ADMIN\'');
+    expect(sql).toContain('GROUP BY topic."programId"');
   });
 
   it("승인 상세는 지정된 교수에게만 전체 제안 정보를 반환한다", async () => {
@@ -535,7 +670,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
         executionEndsAt: proposal.executionEndsAt,
         submissionStartsAt: proposal.submissionStartsAt,
         submissionEndsAt: proposal.submissionEndsAt,
-        program: { name: "캡스톤", category: "교과" },
+        program: { id: "program-1", name: "캡스톤", category: "교과" },
         applicationQuestions: [{ id: "question-1", label: "지원 동기", maxLength: 500, required: true }],
       },
     }));
@@ -554,6 +689,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       requestedProfessorName: "박교수",
       description: "상세 설명",
       programName: "캡스톤",
+      programId: "program-1",
       applicationQuestions: [{ label: "지원 동기" }],
     });
   });
@@ -562,13 +698,7 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     const createApplications = vi.fn(async () => ({ count: 2 }));
     const createExecutionTeam = vi.fn(async () => ({ id: "execution-team-1" }));
     const createMembers = vi.fn(async () => ({ count: 2 }));
-    const findApplications = vi.fn()
-      .mockResolvedValueOnce([{ id: "other-application-1", groupId: null }])
-      .mockResolvedValueOnce([{
-        id: "other-application-1",
-        studentId: "student-1",
-        topic: { title: "다른 주제" },
-      }]);
+    const findApplications = vi.fn();
     const rejectApplications = vi.fn(async () => ({ count: 1 }));
     const rejectRecruitmentApplications = vi.fn(async () => ({ count: 1 }));
     const createNotifications = vi.fn(async () => ({ count: 1 }));
@@ -586,7 +716,10 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
     };
     const queryRaw = vi.fn()
       .mockResolvedValueOnce([{
-        lifecycleStatus: "ACTIVE",
+        endsAt: new Date("2026-12-31T00:00:00Z"),
+        studentProjectCreationEnabled: true,
+        projectTeamMinSize: 2,
+        projectTeamMaxSize: 6,
         projectRegistrationStartsAt: new Date("2026-07-01T00:00:00Z"),
         projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"),
         recruitmentEndsAt,
@@ -610,11 +743,11 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       },
       studentTeamMember: {
         findMany: vi.fn(async () => [
-          { studentId: "student-1", student: { role: "STUDENT", isActive: true } },
-          { studentId: "student-2", student: { role: "STUDENT", isActive: true } },
+          { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+          { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
         ]),
       },
-      teamMember: { count: vi.fn(async () => 0), createMany: createMembers },
+      projectTeamMembership: { count: vi.fn(async () => 0), createMany: createMembers },
       topicApplicationGroup: { create: vi.fn(async () => ({ id: "group-1" })) },
       topicApplication: {
         createMany: createApplications,
@@ -623,17 +756,18 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       },
       recruitmentApplication: { updateMany: rejectRecruitmentApplications },
       notification: { createMany: createNotifications },
-      team: {
+      user: { findMany: vi.fn(async () => []) },
+      emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
+      projectTeam: {
         create: createExecutionTeam,
         findUnique: vi.fn(async () => ({
-          id: "execution-team-1",
-          programId: "program-1",
-          status: "CONFIRMED",
-          topic: { divisionId: null, division: null },
+          project: { programId: "program-1", divisionId: null },
         })),
       },
       programReportDefinition: { findMany: vi.fn(async () => []) },
       rubricDefinition: { findMany: vi.fn(async () => []) },
+      report: { createMany: vi.fn(async () => ({ count: 0 })) },
+      projectTeamRubricEvaluation: { createMany: vi.fn(async () => ({ count: 0 })) },
       topicApprovalRequest: {
         findUnique: vi.fn(async () => request),
         update: vi.fn(async () => ({ id: "request-1" })),
@@ -662,46 +796,23 @@ describe("학생 제안 프로젝트의 기존 팀 연결", () => {
       ]),
     });
     expect(createExecutionTeam).toHaveBeenCalledWith({
-      data: expect.objectContaining({ programId: "program-1", professorId: "admin-1", status: "CONFIRMED", name: "기존 팀" }),
+      data: expect.objectContaining({ projectId: "topic-1", name: "기존 팀", confirmedAt: requestedAt }),
       select: { id: true },
     });
     expect(createMembers).toHaveBeenCalledWith({
       data: expect.arrayContaining([
-        expect.objectContaining({ programId: "program-1", studentId: "student-1" }),
-        expect.objectContaining({ programId: "program-1", studentId: "student-2" }),
+        expect.objectContaining({ userId: "student-1", role: "MEMBER" }),
+        expect.objectContaining({ userId: "student-2", role: "LEADER" }),
       ]),
     });
-    expect(findApplications).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      where: expect.objectContaining({
-        studentId: { in: ["student-1", "student-2"] },
-        status: "PENDING",
-        topic: { programId: "program-1" },
-      }),
-    }));
-    expect(rejectApplications).toHaveBeenCalledWith({
-      where: { id: { in: ["other-application-1"] }, status: "PENDING" },
-      data: {
-        status: "REJECTED",
-        decidedAt: requestedAt,
-        decidedById: "admin-1",
-        reviewComment: "같은 프로그램의 다른 프로젝트 참여가 확정되어 자동 미선정되었습니다.",
-      },
-    });
-    expect(rejectRecruitmentApplications).toHaveBeenCalledWith({
-      where: { topicApplicationId: { in: ["other-application-1"] }, status: "PENDING" },
-      data: { status: "REJECTED", decidedAt: requestedAt },
-    });
-    expect(createNotifications).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.arrayContaining([expect.objectContaining({
-        recipientId: "student-1",
-        dedupeKey: "application:other-application-1:REJECTED",
-      })]),
-    }));
+    expect(findApplications).not.toHaveBeenCalled();
+    expect(rejectApplications).not.toHaveBeenCalled();
+    expect(rejectRecruitmentApplications).not.toHaveBeenCalled();
     expect(updateTopic).toHaveBeenCalledWith({
       where: { id: "topic-1" },
       data: {
         managerId: "admin-1",
-        status: "PUBLISHED",
+        status: "ACTIVE",
         publishedAt: requestedAt,
         capacity: 2,
       },

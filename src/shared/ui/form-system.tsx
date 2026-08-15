@@ -1,7 +1,12 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 
 import { UiText } from "@/shared/i18n/i18n-provider";
+import styles from "@/shared/ui/form-system.module.css";
 export { DateTimeInput } from "@/shared/ui/date-time-input";
+
+function classNames(...classNames: Array<string | false | undefined>) {
+  return classNames.filter(Boolean).join(" ");
+}
 
 type FormFieldProps = {
   id?: string;
@@ -18,19 +23,19 @@ export function FormField({ id, label, description, error, required, optional, c
   const labelContent = (
     <>
       <span><UiText>{label}</UiText></span>
-      {required ? <span className="form-field__required"><UiText>{"필수"}</UiText></span> : null}
-      {optional ? <span className="form-field__optional"><UiText>{"선택"}</UiText></span> : null}
+      {required ? <span className={styles.required}><UiText>{"필수"}</UiText></span> : null}
+      {optional ? <span className={styles.optional}><UiText>{"선택"}</UiText></span> : null}
     </>
   );
 
   return (
-    <div className={`form-field ${className}`}>
-      <div className="form-field__heading">
-        {id ? <label className="form-field__label" htmlFor={id}>{labelContent}</label> : <span className="form-field__label">{labelContent}</span>}
-        {description ? <p className="form-field__description"><UiText>{description}</UiText></p> : null}
+    <div className={classNames(styles.field, className)}>
+      <div className={styles.heading}>
+        {id ? <label className={styles.label} htmlFor={id}>{labelContent}</label> : <span className={styles.label}>{labelContent}</span>}
+        {description ? <p className={styles.description}><UiText>{description}</UiText></p> : null}
       </div>
       {children}
-      {error ? <p role="alert" className="form-field__error"><UiText>{error}</UiText></p> : null}
+      {error ? <p role="alert" className={styles.error}><UiText>{error}</UiText></p> : null}
     </div>
   );
 }
@@ -43,21 +48,33 @@ type FormSectionProps = {
   className?: string;
   contentClassName?: string;
   id?: string;
+  appearance?: "card" | "plain" | "embedded";
+  density?: "default" | "compact";
+  sectionMarker?: string;
+  hidden?: boolean;
 };
 
-export function FormSection({ number, title, description, children, className = "", contentClassName = "", id }: FormSectionProps) {
+export function FormSection({ number, title, description, children, className = "", contentClassName = "", id, appearance = "card", density = "default", sectionMarker, hidden }: FormSectionProps) {
   return (
-    <section id={id} className={`form-section ${className}`}>
-      <header className="form-section__header">
-        {number ? <span className="form-section__number">{number}</span> : null}
+    <section id={id} hidden={hidden} data-form-section={sectionMarker} data-form-section-appearance={appearance} data-form-section-density={density} className={classNames(styles.section, appearance === "plain" && styles.sectionPlain, appearance === "embedded" && styles.sectionEmbedded, density === "compact" && styles.sectionCompact, className)}>
+      <header className={styles.header}>
+        {number ? <span className={styles.number}>{number}</span> : null}
         <div>
-          <h2 className="form-section__title"><UiText>{title}</UiText></h2>
-          {description ? <p className="form-section__description"><UiText>{description}</UiText></p> : null}
+          <h2 className={styles.title}><UiText>{title}</UiText></h2>
+          {description ? <p className={styles.sectionDescription}><UiText>{description}</UiText></p> : null}
         </div>
       </header>
-      <div className={`form-section__content ${contentClassName}`}>{children}</div>
+      <div className={classNames(styles.content, contentClassName)}>{children}</div>
     </section>
   );
+}
+
+export function FormLegend({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <legend className={classNames(styles.label, className)}>{children}</legend>;
+}
+
+export function FormStaticValue({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <span className={classNames(styles.staticValue, className)}>{children}</span>;
 }
 
 type ChoiceCardProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "children"> & {
@@ -65,16 +82,18 @@ type ChoiceCardProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className" |
   description?: string;
   visual?: ReactNode;
   className?: string;
+  variant?: "default" | "icon" | "inline";
+  density?: "default" | "compact";
 };
 
-export function ChoiceCard({ label, description, visual, className = "", type = "radio", ...inputProps }: ChoiceCardProps) {
+export function ChoiceCard({ label, description, visual, className = "", variant = "default", density = "default", type = "radio", ...inputProps }: ChoiceCardProps) {
   return (
-    <label className={`choice-card ${className}`}>
+    <label className={classNames(styles.choice, variant === "icon" && styles.choiceIcon, variant === "inline" && styles.choiceInline, density === "compact" && styles.choiceCompact, className)}>
       <input type={type} {...inputProps} />
-      {visual ? <span className="choice-card__visual" aria-hidden="true">{visual}</span> : <span className="choice-card__indicator" aria-hidden="true" />}
+      {visual ? <span className={styles.visual} aria-hidden="true">{visual}</span> : <span className={styles.indicator} aria-hidden="true" />}
       <span className="min-w-0">
-        <strong className="choice-card__label"><UiText>{label}</UiText></strong>
-        {description ? <span className="choice-card__description"><UiText>{description}</UiText></span> : null}
+        <strong className={styles.choiceLabel}><UiText>{label}</UiText></strong>
+        {description ? <span className={styles.choiceDescription}><UiText>{description}</UiText></span> : null}
       </span>
     </label>
   );
@@ -106,12 +125,12 @@ type ToggleProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "classNa
 
 export function Toggle({ label, description, className = "", ...inputProps }: ToggleProps) {
   return (
-    <label className={`form-toggle ${className}`}>
-      <input className="form-toggle__input" type="checkbox" {...inputProps} />
-      <span className="form-toggle__track" aria-hidden="true"><span className="form-toggle__thumb" /></span>
+    <label className={classNames(styles.toggle, className)}>
+      <input className={styles.toggleInput} type="checkbox" {...inputProps} />
+      <span className={styles.toggleTrack} aria-hidden="true"><span className={styles.toggleThumb} /></span>
       <span className="min-w-0">
-        <strong className="form-toggle__label"><UiText>{label}</UiText></strong>
-        {description ? <span className="form-toggle__description"><UiText>{description}</UiText></span> : null}
+        <strong className={styles.toggleLabel}><UiText>{label}</UiText></strong>
+        {description ? <span className={styles.toggleDescription}><UiText>{description}</UiText></span> : null}
       </span>
     </label>
   );

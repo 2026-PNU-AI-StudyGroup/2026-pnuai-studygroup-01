@@ -9,25 +9,26 @@ import { getProgramStartYear } from "@/modules/project-program/domain/project-pr
 const archivedProjectSelect = {
   id: true,
   name: true,
-  sourceUrl: true,
-  thumbnailPath: true,
-  posterPath: true,
   showcaseIntro: true,
-  topic: { select: {
+  project: { select: {
     id: true,
     title: true,
     description: true,
     advisorRole: true,
     requiredSkills: true,
     preferredSkills: true,
+    sourceUrl: true,
+    thumbnailPath: true,
+    posterPath: true,
     divisionId: true,
     division: { select: { name: true } },
     program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true } },
     manager: { select: { name: true } },
   } },
-  members: {
+  memberships: {
+    where: { endedAt: null },
     orderBy: { joinedAt: "asc" as const },
-    select: { student: { select: { name: true } } },
+    select: { user: { select: { name: true } } },
   },
   artifacts: {
     orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
@@ -41,20 +42,27 @@ const archivedProjectSelect = {
       file: { select: { originalName: true } },
     },
   },
-} satisfies Prisma.TeamSelect;
+} satisfies Prisma.ProjectTeamSelect;
 
-type ArchivedProjectRow = Prisma.TeamGetPayload<{
+type ArchivedProjectRow = Prisma.ProjectTeamGetPayload<{
   select: typeof archivedProjectSelect;
 }>;
 
 export class PrismaTeamArchiveQueryRepository
   implements ArchivedProjectReader
 {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(
+    private readonly client: PrismaClient,
+    private readonly audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
+  ) {}
 
   async listProgramCategories(): Promise<string[]> {
     const programs = await this.client.projectProgram.findMany({
-      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
+      where: {
+        ...programVisibilityWhere(this.audience),
+        endsAt: { lte: new Date() },
+        topics: { some: { projectTeam: { confirmedAt: { not: null } } } },
+      },
       distinct: ["category"],
       orderBy: { category: "asc" },
       select: { category: true },
@@ -64,7 +72,11 @@ export class PrismaTeamArchiveQueryRepository
 
   async listPrograms() {
     const programs = await this.client.projectProgram.findMany({
-      where: { topics: { some: { team: { is: { status: "CLOSED" } } } } },
+      where: {
+        ...programVisibilityWhere(this.audience),
+        endsAt: { lte: new Date() },
+        topics: { some: { projectTeam: { confirmedAt: { not: null } } } },
+      },
       orderBy: [
         { startsAt: "desc" },
         { name: "asc" },
@@ -92,8 +104,8 @@ export class PrismaTeamArchiveQueryRepository
     const skillTeamIds = filters.query
       ? await this.findSkillMatchingTeamIds(filters.query)
       : undefined;
-    return this.client.team.count({
-      where: closedProjectWhere(filters, skillTeamIds),
+    return this.client.projectTeam.count({
+      where: closedProjectWhere(filters, skillTeamIds, this.audience),
     });
   }
 
@@ -105,10 +117,10 @@ export class PrismaTeamArchiveQueryRepository
     const skillTeamIds = input.filters.query
       ? await this.findSkillMatchingTeamIds(input.filters.query)
       : undefined;
-    const teams = await this.client.team.findMany({
-      where: closedProjectWhere(input.filters, skillTeamIds),
+    const teams = await this.client.projectTeam.findMany({
+      where: closedProjectWhere(input.filters, skillTeamIds, this.audience),
       orderBy: [
-        { topic: { program: { startsAt: "desc" } } },
+        { project: { program: { startsAt: "desc" } } },
         { name: "asc" },
         { id: "asc" },
       ],
@@ -120,8 +132,12 @@ export class PrismaTeamArchiveQueryRepository
   }
 
   async findClosed(id: string): Promise<ArchivedProject | null> {
-    const team = await this.client.team.findFirst({
-      where: { id, status: "CLOSED" },
+    const team = await this.client.projectTeam.findFirst({
+      where: {
+        projectId: id,
+        confirmedAt: { not: null },
+        project: { program: { ...programVisibilityWhere(this.audience), endsAt: { lte: new Date() } } },
+      },
       select: archivedProjectSelect,
     });
     return team ? toArchivedProject(team) : null;
@@ -129,11 +145,13 @@ export class PrismaTeamArchiveQueryRepository
 
   private async findSkillMatchingTeamIds(query: string): Promise<string[]> {
     const rows = await this.client.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      SELECT DISTINCT "team"."id"
-      FROM "team"
-      JOIN "topic" ON "topic"."id" = "team"."topicId"
+      SELECT DISTINCT "project_team"."id"
+      FROM "project_team"
+      JOIN "topic" ON "topic"."id" = "project_team"."projectId"
       CROSS JOIN LATERAL unnest("topic"."requiredSkills" || "topic"."preferredSkills") AS "skill"("value")
-      WHERE "team"."status" = 'CLOSED'
+      JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+      WHERE "project_team"."confirmedAt" IS NOT NULL
+        AND "project_program"."endsAt" <= NOW()
         AND strpos(lower("skill"."value"), lower(${query})) > 0
     `);
     return rows.map(({ id }) => id);
@@ -142,26 +160,26 @@ export class PrismaTeamArchiveQueryRepository
 
 function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
   return {
-    id: team.id,
-    topicId: team.topic.id,
-    startYear: getProgramStartYear(team.topic.program.startsAt),
+    id: team.project.id,
+    topicId: team.project.id,
+    startYear: getProgramStartYear(team.project.program.startsAt),
     teamName: team.name,
-    programId: team.topic.program.id,
-    programName: team.topic.program.name,
-    programCategory: team.topic.program.category,
-    divisionId: team.topic.divisionId,
-    divisionName: team.topic.division?.name ?? null,
-    topicTitle: team.topic.title,
-    topicDescription: team.topic.description,
-    requiredSkills: team.topic.requiredSkills,
-    preferredSkills: team.topic.preferredSkills,
-    professorName: team.topic.manager!.name,
-    advisorRole: team.topic.advisorRole,
-    advisorEnabled: team.topic.program.advisorEnabled,
-    memberNames: team.members.map(({ student }) => student.name),
-    sourceUrl: team.sourceUrl ?? undefined,
-    thumbnailPath: team.thumbnailPath ?? undefined,
-    posterPath: team.posterPath ?? undefined,
+    programId: team.project.program.id,
+    programName: team.project.program.name,
+    programCategory: team.project.program.category,
+    divisionId: team.project.divisionId,
+    divisionName: team.project.division?.name ?? null,
+    topicTitle: team.project.title,
+    topicDescription: team.project.description,
+    requiredSkills: team.project.requiredSkills,
+    preferredSkills: team.project.preferredSkills,
+    professorName: team.project.manager!.name,
+    advisorRole: team.project.advisorRole,
+    advisorEnabled: team.project.program.advisorEnabled,
+    memberNames: team.memberships.map(({ user }) => user.name),
+    sourceUrl: team.project.sourceUrl ?? undefined,
+    thumbnailPath: team.project.thumbnailPath ?? undefined,
+    posterPath: team.project.posterPath ?? undefined,
     showcaseIntro: team.showcaseIntro ?? undefined,
     artifacts: team.artifacts.map(({ file, ...artifact }) => ({
       id: artifact.id,
@@ -178,36 +196,46 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
 function closedProjectWhere(
   filters: ArchiveFilters,
   skillTeamIds?: string[],
-): Prisma.TeamWhereInput {
-  const conditions: Prisma.TeamWhereInput[] = [];
+  audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
+): Prisma.ProjectTeamWhereInput {
+  const conditions: Prisma.ProjectTeamWhereInput[] = [];
   if (filters.programId) {
-    conditions.push({ topic: { programId: filters.programId } });
+    conditions.push({ project: { programId: filters.programId } });
   }
   if (filters.programCategory) {
     conditions.push({
-      topic: { program: { category: filters.programCategory } },
+      project: { program: { category: filters.programCategory } },
     });
   }
   if (filters.divisionId === "UNASSIGNED") {
-    conditions.push({ topic: { divisionId: null } });
+    conditions.push({ project: { divisionId: null } });
   } else if (filters.divisionId) {
-    conditions.push({ topic: { divisionId: filters.divisionId } });
+    conditions.push({ project: { divisionId: filters.divisionId } });
   }
   if (filters.query) {
     const query = filters.query;
     conditions.push({ OR: [
       { name: { contains: query, mode: "insensitive" } },
       {
-        topic: {
+        project: {
           author: { name: { contains: query, mode: "insensitive" } },
           program: { advisorEnabled: true },
         },
       },
-      { topic: { title: { contains: query, mode: "insensitive" } } },
-      { topic: { description: { contains: query, mode: "insensitive" } } },
+      { project: { title: { contains: query, mode: "insensitive" } } },
+      { project: { description: { contains: query, mode: "insensitive" } } },
       { id: { in: skillTeamIds ?? [] } },
       { artifacts: { some: { title: { contains: query, mode: "insensitive" } } } },
     ] });
   }
-  return { status: "CLOSED", AND: conditions };
+  return {
+    confirmedAt: { not: null },
+    project: { program: { ...programVisibilityWhere(audience), endsAt: { lte: new Date() } } },
+    AND: conditions,
+  };
+}
+
+function programVisibilityWhere(audience: "STUDENT" | "FACULTY" | "ADMIN") {
+  if (audience === "ADMIN") return {};
+  return { isPublic: true };
 }

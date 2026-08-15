@@ -3,10 +3,9 @@ import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 const adminNavigationItems = [
-  { href: "/project-approvals", label: "프로젝트 승인", hint: "학생 제안 검토", icon: "approval" },
-  { href: "/admin/programs", label: "프로그램", hint: "개설과 공개 상태", icon: "program" },
   { href: "/admin/professors", label: "교수 권한", icon: "professor" },
   { href: "/admin/users", label: "사용자", icon: "users" },
+  { href: "/admin/emails", label: "이메일 전송", hint: "대기열과 실패 작업", icon: "email" },
   { href: "/admin/audit", label: "관리 이력", hint: "주요 변경 기록", icon: "audit" },
 ] as const;
 
@@ -16,10 +15,9 @@ function isAdminNavigationActive(href: string, currentPath: string) {
 
 function AdminNavigationIcon({ name }: { name: (typeof adminNavigationItems)[number]["icon"] }) {
   const paths = {
-    approval: <><path d="M5 3h10v14H5z" /><path d="m8 10 2 2 4-5" /></>,
-    program: <><rect x="3" y="3" width="6" height="6" /><rect x="11" y="3" width="6" height="6" /><rect x="3" y="11" width="6" height="6" /><rect x="11" y="11" width="6" height="6" /></>,
     professor: <><circle cx="10" cy="7" r="3" /><path d="M4 17c.4-4 2.4-6 6-6s5.6 2 6 6m-2-8 2 2 3-4" /></>,
     users: <><circle cx="7" cy="7" r="3" /><path d="M2 17c.3-4 2-6 5-6s4.7 2 5 6m2-10c2 0 3 1.3 3 3s-1 2.7-2.5 3M15 13c2.2.3 3.3 1.6 3.5 4" /></>,
+    email: <><rect x="2.5" y="4" width="15" height="12" rx="1.5" /><path d="m3.5 5 6.5 5 6.5-5" /></>,
     audit: <><circle cx="10" cy="10" r="7" /><path d="M10 6v4l3 2M15.5 15.5 18 18" /></>,
   };
   return (

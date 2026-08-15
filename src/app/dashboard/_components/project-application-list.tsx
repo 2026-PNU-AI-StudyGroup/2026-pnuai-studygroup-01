@@ -8,24 +8,24 @@ import type {
   TopicApplicationSummary,
 } from "@/modules/topic-application/application/topic-application-ports";
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
-import { StatusBadge } from "@/shared/ui/page-primitives";
+import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 
 const presentation = {
   PENDING: {
     title: "검토 중",
     description: "프로젝트 담당자가 검토 중인 지원입니다.",
-    empty: "승인을 기다리는 프로젝트가 없습니다.",
+    empty: "승인을 기다리는 프로젝트가 없습니다",
   },
   REJECTED: {
     title: "미선정",
     description: "선정되지 않은 지원과 검토 의견입니다.",
-    empty: "미선정된 프로젝트가 없습니다.",
+    empty: "미선정된 프로젝트가 없습니다",
   },
 } as const;
 
 function isApplicationPublic(application: TopicApplicationSummary) {
-  return application.topicStatus === "PUBLISHED" &&
+  return application.topicStatus === "ACTIVE" &&
     application.programStatus === "OPEN";
 }
 
@@ -129,13 +129,13 @@ export function ProjectApplicationList({
           <ApplicationRow key={application.id} application={application} status={status} />
         ))}</div>
       ) : (
-        <div className="px-6 py-8 sm:px-7">
-          <p className="font-semibold"><UiText>{copy.empty}</UiText></p>
-          {status === "PENDING" ? (
-            <Link href="/topics" className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
-              <UiText>{"프로젝트 목록"}</UiText>
-            </Link>
-          ) : null}
+        <div className="px-6 sm:px-7">
+          <EmptyState
+            variant="section"
+            title={copy.empty}
+            description={status === "PENDING" ? "참여할 프로젝트를 확인하고 새 지원서를 제출해 보세요." : "미선정된 지원이 생기면 검토 의견과 함께 표시됩니다."}
+            action={status === "PENDING" ? <Link href="/topics" className="button-secondary"><UiText>{"프로젝트 목록"}</UiText></Link> : undefined}
+          />
         </div>
       )}
 

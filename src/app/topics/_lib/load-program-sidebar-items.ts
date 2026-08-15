@@ -9,11 +9,14 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 export async function loadProgramSidebarItems(
   view: "active" | "past" = "active",
   query: ProgramSidebarQuery = {},
+  audience: "STUDENT" | "FACULTY" | "ADMIN" = "STUDENT",
 ): Promise<ProgramSidebarItem[]> {
   const now = new Date();
   const [sidebarPrograms, archivedPrograms] = await Promise.all([
-    new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listSidebarVisible(now),
-    new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma)).listPrograms(),
+    audience === "ADMIN"
+      ? new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll({ id: "sidebar", role: "ADMIN" })
+      : new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listSidebarVisible(now),
+    new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma, audience)).listPrograms(),
   ]);
   return buildProgramSidebarItems(sidebarPrograms, archivedPrograms, view, query, now);
 }

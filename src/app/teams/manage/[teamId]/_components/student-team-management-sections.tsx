@@ -5,11 +5,13 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import {
   DeleteStudentTeamForm,
   InviteStudentTeamMemberForm,
+  LeaveStudentTeamForm,
   TeamMemberActions,
 } from "@/app/teams/_components/student-team-controls";
 import { MemberContactDialogButton } from "@/app/teams/_components/member-contact-dialog-button";
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
 import { StatusBadge } from "@/shared/ui/page-primitives";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export function StudentTeamManagementSections({
   team,
@@ -37,7 +39,7 @@ export function StudentTeamManagementSections({
           <h1 className="mt-3 text-[clamp(2rem,3.25vw,2.85rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--ink)]">{team.name}</h1>
           {team.description ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)] sm:text-base"><UiText>{team.description}</UiText></p> : null}
         </div>
-        {isLeader ? <Link className="button-secondary shrink-0" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><UiText>{"모집 공고 작성"}</UiText></Link> : null}
+        {isLeader ? <Link className="button-secondary shrink-0 gap-2" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link> : null}
       </header>
 
       <div className={`grid gap-6 ${isLeader ? "xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)] xl:items-start" : ""}`}>
@@ -107,7 +109,15 @@ export function StudentTeamManagementSections({
           </div>
           <div className="shrink-0"><DeleteStudentTeamForm teamId={team.id} teamName={team.name} /></div>
         </section>
-      ) : null}
+      ) : (
+        <section aria-labelledby="leave-title" className="flex flex-col gap-5 border-t border-[#e9b6ae] pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="leave-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 탈퇴"}</UiText></h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"사전 팀에서 나가도 이미 승인된 프로젝트 팀 구성은 바뀌지 않습니다."}</UiText></p>
+          </div>
+          <LeaveStudentTeamForm teamId={team.id} teamName={team.name} />
+        </section>
+      )}
     </div>
   );
 }

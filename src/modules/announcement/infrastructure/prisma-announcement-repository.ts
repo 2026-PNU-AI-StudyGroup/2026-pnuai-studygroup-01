@@ -1,7 +1,7 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
   AnnouncementAudience,
-  AnnouncementCategory,
+  AnnouncementCreateOutcome,
   AnnouncementMutationOutcome,
   AnnouncementPage,
   AnnouncementRecord,
@@ -9,6 +9,8 @@ import type {
   AnnouncementWriteInput,
 } from "@/modules/announcement/application/announcement-ports";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { ANNOUNCEMENT_ATTACHMENT_MAX_COUNT } from "@/modules/file/domain/upload-policy";
+import { isAnnouncementAttachmentSetAllowed } from "@/modules/announcement/domain/announcement-attachment-policy";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
 const selectAnnouncement = {
@@ -16,16 +18,23 @@ const selectAnnouncement = {
   authorId: true,
   title: true,
   content: true,
-  category: true,
   visibility: true,
   pinned: true,
-  teamId: true,
+  projectTeamId: true,
   programId: true,
   createdAt: true,
   updatedAt: true,
   author: { select: { name: true, role: true } },
-  team: { select: { name: true } },
+  projectTeam: { select: { name: true, projectId: true } },
   program: { select: { name: true } },
+  attachments: {
+    orderBy: { position: "asc" as const },
+    select: {
+      fileId: true,
+      position: true,
+      file: { select: { originalName: true, contentType: true, size: true } },
+    },
+  },
 } as const;
 
 type SelectedAnnouncement = {
@@ -33,16 +42,20 @@ type SelectedAnnouncement = {
   authorId: string;
   title: string;
   content: string;
-  category: AnnouncementCategory;
   visibility: "AUTHENTICATED" | "TARGET_MEMBERS";
   pinned: boolean;
-  teamId: string | null;
+  projectTeamId: string | null;
   programId: string | null;
   createdAt: Date;
   updatedAt: Date;
   author: { name: string; role: UserRole };
-  team: { name: string } | null;
+  projectTeam: { name: string; projectId: string } | null;
   program: { name: string } | null;
+  attachments: Array<{
+    fileId: string;
+    position: number;
+    file: { originalName: string; contentType: string; size: number };
+  }>;
 };
 
 function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
@@ -53,15 +66,22 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     authorRole: value.author.role,
     title: value.title,
     content: value.content,
-    category: value.category,
     visibility: value.visibility,
     pinned: value.pinned,
-    teamId: value.teamId,
-    teamName: value.team?.name ?? null,
+    teamId: value.projectTeamId,
+    teamName: value.projectTeam?.name ?? null,
+    projectId: value.projectTeam?.projectId ?? null,
     programId: value.programId,
     programName: value.program?.name ?? null,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    attachments: value.attachments.map((attachment) => ({
+      fileId: attachment.fileId,
+      position: attachment.position,
+      originalName: attachment.file.originalName,
+      contentType: attachment.file.contentType,
+      size: attachment.file.size,
+    })),
   };
 }
 
@@ -71,10 +91,10 @@ export function announcementScopeWhere(audience: AnnouncementAudience) {
   if (audience.role === "ADMIN") return {};
   return {
     OR: [
-      { teamId: null, programId: null, visibility: "AUTHENTICATED" as const },
-      { teamId: null, programId: { not: null }, visibility: "AUTHENTICATED" as const },
-      { teamId: null, programId: { in: audience.programIds } },
-      { teamId: { in: audience.teamIds } },
+      { projectTeamId: null, programId: null, visibility: "AUTHENTICATED" as const },
+      { projectTeamId: null, programId: { not: null }, visibility: "AUTHENTICATED" as const },
+      { projectTeamId: null, programId: { in: audience.programIds } },
+      { projectTeamId: { in: audience.teamIds } },
       { authorId: audience.actorId },
     ],
   };
@@ -83,10 +103,10 @@ export function announcementScopeWhere(audience: AnnouncementAudience) {
 export class PrismaAnnouncementRepository implements AnnouncementRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(audience: AnnouncementAudience, page: number, pageSize: number, category?: AnnouncementCategory): Promise<AnnouncementPage> {
+  async listSystem(audience: AnnouncementAudience, page: number, pageSize: number): Promise<AnnouncementPage> {
     const where = {
-      // 졸업과제는 다른 사이트로 이관 — 학생 목록에서는 숨김(특정 카테고리 필터 시엔 그 값 우선).
-      ...(category ? { category } : audience.role === "STUDENT" ? { category: { not: "GRADUATION_PROJECT" as const } } : {}),
+      projectTeamId: null,
+      programId: null,
       ...announcementScopeWhere(audience),
     };
     const [items, total] = await this.client.$transaction([
@@ -102,7 +122,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, totalPages);
-    if (currentPage !== page) return this.list(audience, currentPage, pageSize, category);
+    if (currentPage !== page) return this.listSystem(audience, currentPage, pageSize);
 
     return {
       items: items.map(toRecord),
@@ -116,9 +136,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     const items = await this.client.announcement.findMany({
       where: {
         programId,
-        teamId: null,
-        // 졸업과제는 다른 사이트로 이관 — 학생에게는 프로그램 공지에서도 숨김.
-        ...(audience.role === "STUDENT" ? { category: { not: "GRADUATION_PROJECT" as const } } : {}),
+        projectTeamId: null,
         ...announcementScopeWhere(audience),
       },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
@@ -130,7 +148,7 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
   async listForTeam(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]> {
     const items = await this.client.announcement.findMany({
       where: {
-        teamId,
+        projectTeamId: teamId,
         programId: null,
         ...announcementScopeWhere(audience),
       },
@@ -146,8 +164,8 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
         AND: [
           {
             OR: [
-              { teamId, programId: null },
-              { teamId: null, programId: null },
+              { projectTeamId: teamId, programId: null },
+              { projectTeamId: null, programId: null },
             ],
           },
           announcementScopeWhere(audience),
@@ -168,13 +186,45 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
   }
 
   async create(
-    authorId: string,
+    actor: CurrentActor,
     input: AnnouncementWriteInput,
-  ): Promise<AnnouncementRecord> {
-    return toRecord(await this.client.announcement.create({
-      data: { authorId, ...input },
-      select: selectAnnouncement,
-    }));
+  ): Promise<AnnouncementCreateOutcome> {
+    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...announcementInput } = input;
+    if (retainedAttachmentIds.length > 0) return "INVALID_ATTACHMENTS";
+    return this.client.$transaction(async (transaction) => {
+      const files = await transaction.storedFile.findMany({
+        where: {
+          id: { in: newAttachmentUploadIds },
+          projectTeamId: null,
+          ownerId: actor.id,
+          purpose: "ANNOUNCEMENT",
+          consumer: "ANNOUNCEMENT",
+          status: "READY",
+        },
+        select: { id: true, size: true },
+      });
+      if (!validNewFiles(newAttachmentUploadIds, files)) return "INVALID_ATTACHMENTS";
+
+      const created = await transaction.announcement.create({
+        data: { authorId: actor.id, projectTeamId: teamId, ...announcementInput },
+        select: { id: true },
+      });
+      if (files.length > 0) {
+        await transaction.announcementAttachment.createMany({
+          data: newAttachmentUploadIds.map((fileId, position) => ({
+            fileId,
+            announcementId: created.id,
+            uploadedById: actor.id,
+            position,
+          })),
+        });
+      }
+      const record = await transaction.announcement.findUniqueOrThrow({
+        where: { id: created.id },
+        select: selectAnnouncement,
+      });
+      return toRecord(record);
+    });
   }
 
   async update(
@@ -182,15 +232,60 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     id: string,
     input: AnnouncementWriteInput,
   ): Promise<AnnouncementMutationOutcome> {
-    const result = await this.client.announcement.updateMany({
-      where: {
-        id,
-        ...(actor.role === "ADMIN" ? {} : { authorId: actor.id }),
-      },
-      data: input,
+    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...announcementInput } = input;
+    return this.client.$transaction(async (transaction) => {
+      const locked = await transaction.$queryRaw<Array<{ authorId: string }>>(Prisma.sql`
+        SELECT "authorId" FROM "announcement" WHERE "id" = ${id} FOR UPDATE
+      `);
+      if (locked.length === 0) return "NOT_FOUND";
+      if (actor.role !== "ADMIN" && locked[0]!.authorId !== actor.id) return "FORBIDDEN";
+      const existing = await transaction.announcement.findUniqueOrThrow({
+        where: { id },
+        select: {
+          attachments: {
+            select: { fileId: true, position: true, file: { select: { size: true } } },
+          },
+        },
+      });
+
+      const retained = existing.attachments.filter((attachment) => retainedAttachmentIds.includes(attachment.fileId));
+      if (retained.length !== retainedAttachmentIds.length) return "INVALID_ATTACHMENTS";
+      const newFiles = await transaction.storedFile.findMany({
+        where: {
+          id: { in: newAttachmentUploadIds },
+          projectTeamId: null,
+          ownerId: actor.id,
+          purpose: "ANNOUNCEMENT",
+          consumer: "ANNOUNCEMENT",
+          status: "READY",
+        },
+        select: { id: true, size: true },
+      });
+      if (!validNewFiles(newAttachmentUploadIds, newFiles)) return "INVALID_ATTACHMENTS";
+      if (!isAnnouncementAttachmentSetAllowed([
+        ...retained.map((attachment) => attachment.file),
+        ...newFiles,
+      ])) {
+        return "INVALID_ATTACHMENTS";
+      }
+
+      await transaction.announcementAttachment.deleteMany({
+        where: { announcementId: id, fileId: { notIn: retainedAttachmentIds } },
+      });
+      await transaction.announcement.update({ where: { id }, data: { projectTeamId: teamId, ...announcementInput } });
+      if (newAttachmentUploadIds.length > 0) {
+        const nextPosition = retained.reduce((maximum, attachment) => Math.max(maximum, attachment.position), -1) + 1;
+        await transaction.announcementAttachment.createMany({
+          data: newAttachmentUploadIds.map((fileId, index) => ({
+            fileId,
+            announcementId: id,
+            uploadedById: actor.id,
+            position: nextPosition + index,
+          })),
+        });
+      }
+      return "UPDATED";
     });
-    if (result.count > 0) return "UPDATED";
-    return await this.exists(id) ? "FORBIDDEN" : "NOT_FOUND";
   }
 
   async delete(
@@ -213,4 +308,14 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
       select: { id: true },
     }) !== null;
   }
+}
+
+function validNewFiles(
+  requestedIds: string[],
+  files: Array<{ id: string; size: number }>,
+): boolean {
+  return requestedIds.length === files.length &&
+    new Set(requestedIds).size === requestedIds.length &&
+    requestedIds.length <= ANNOUNCEMENT_ATTACHMENT_MAX_COUNT &&
+    isAnnouncementAttachmentSetAllowed(files);
 }

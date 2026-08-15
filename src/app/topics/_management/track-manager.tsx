@@ -1,0 +1,27 @@
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
+import { createTrackAction, deleteTrackAction, moveTrackAction, renameTrackAction, type TrackActionState } from "@/app/topics/_management/track-actions";
+import { UiInput } from "@/modules/translation/ui/localized-elements";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { IconButton } from "@/shared/ui/icon-button";
+import { EmptyState } from "@/shared/ui/page-primitives";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, EditIcon, TrashIcon } from "@/shared/ui/workspace-icons";
+
+const trackInitialState: TrackActionState = { status: "idle", message: "" };
+
+export type TrackRow = { id: string; name: string; projectCount: number };
+export function TrackManager({ programId, tracks }: { programId: string; tracks: TrackRow[] }) {
+  const [state, create, pending] = useActionState(createTrackAction.bind(null, programId), trackInitialState);
+  const [editing, setEditing] = useState<string | null>(null);
+  return <div className="grid gap-5">
+    <form action={create} className="flex flex-wrap items-end gap-3"><label className="grid gap-2"><span className="text-sm font-semibold"><UiText>{"분과 이름"}</UiText></span><UiInput className="form-control bg-white" name="name" maxLength={40} required placeholder="예: 창업 트랙" /></label><button className="button-primary gap-2" disabled={pending}><AddIcon className="size-4 shrink-0" /><UiText>{pending ? "추가 중" : "분과 추가"}</UiText></button></form>
+    {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}><UiText>{state.message}</UiText></p> : null}
+    {tracks.length ? <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">{tracks.map((track, index) => <li key={track.id} className="py-3">
+      {editing === track.id ? <RenameRow track={track} programId={programId} onDone={() => setEditing(null)} /> : <div className="flex flex-wrap items-center justify-between gap-3"><div><strong>{track.name}</strong><span className="muted ml-2 text-xs"><UiText>{"프로젝트"}</UiText>{` ${track.projectCount}개`}</span></div><div className="flex gap-1"><Move track={track} programId={programId} direction="up" disabled={index === 0} /><Move track={track} programId={programId} direction="down" disabled={index === tracks.length - 1} /><IconButton type="button" onClick={() => setEditing(track.id)} aria-label={`${track.name} 이름 수정`} title="이름 수정"><EditIcon className="size-5" /></IconButton><DeleteRow track={track} programId={programId} /></div></div>}
+    </li>)}</ul> : <EmptyState variant="compact" title="아직 분과가 없습니다" description="창업·융합 등 프로그램 안에서 사용할 분과를 추가해 주세요." />}
+  </div>;
+}
+function Move({ track, programId, direction, disabled }: { track: TrackRow; programId: string; direction: "up" | "down"; disabled: boolean }) { const [state, action, pending] = useActionState(moveTrackAction.bind(null, track.id, programId, direction), trackInitialState); const label = `${track.name} ${direction === "up" ? "위로" : "아래로"} 이동`; return <form action={action}><IconButton type="submit" disabled={disabled || pending} aria-label={label} title={label}>{direction === "up" ? <ArrowUpIcon className="size-5" /> : <ArrowDownIcon className="size-5" />}</IconButton>{state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}</form>; }
+function RenameRow({ track, programId, onDone }: { track: TrackRow; programId: string; onDone: () => void }) { const [state, action, pending] = useActionState(renameTrackAction.bind(null, track.id, programId), trackInitialState); useEffect(() => { if (state.status === "success") onDone(); }, [onDone, state.status]); return <form action={action} className="flex flex-wrap gap-2"><UiInput name="name" defaultValue={track.name} className="form-control max-w-xs" maxLength={40} required /><button className="button-primary text-sm" disabled={pending}><UiText>{"저장"}</UiText></button><button type="button" className="button-quiet text-sm" onClick={onDone}><UiText>{"취소"}</UiText></button>{state.message ? <span role="status" className="text-sm"><UiText>{state.message}</UiText></span> : null}</form>; }
+function DeleteRow({ track, programId }: { track: TrackRow; programId: string }) { const [state, action, pending] = useActionState(deleteTrackAction.bind(null, track.id, programId), trackInitialState); return <form action={action} className="inline-flex items-center gap-2">{state.status === "confirm" ? <><input type="hidden" name="confirmed" value="true" /><input type="hidden" name="expectedProjectCount" value={state.projectCount ?? 0} /><input type="hidden" name="expectedVoteCount" value={state.voteCount ?? 0} /><input type="hidden" name="expectedSwitchesVotingScope" value={String(state.switchesVotingScope ?? false)} /><span className="text-xs text-[var(--danger)]"><UiText>{`${state.projectCount ?? 0}개 프로젝트를 미분과로 옮기고 ${state.voteCount ?? 0}표를 초기화합니다.${state.switchesVotingScope ? " 마지막 분과 삭제로 프로그램 전체 투표로 전환합니다." : ""}`}</UiText></span><button className="button-danger text-xs" disabled={pending}><UiText>{"삭제 확인"}</UiText></button></> : <IconButton type="submit" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={pending} aria-label={`${track.name} 삭제`} title="분과 삭제"><TrashIcon className="size-5" /></IconButton>}{state.status === "error" ? <span role="alert" className="text-xs text-[var(--danger)]"><UiText>{state.message}</UiText></span> : null}</form>; }

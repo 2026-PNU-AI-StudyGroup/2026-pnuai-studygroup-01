@@ -5,10 +5,6 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/app/_components/app-shell";
 import { DeleteAnnouncementForm } from "@/app/announcements/_components/delete-announcement-form";
 import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
-import {
-  ANNOUNCEMENT_CATEGORY_BADGE,
-  ANNOUNCEMENT_CATEGORY_LABELS,
-} from "@/app/announcements/_lib/announcement-categories";
 import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import {
   AnnouncementNotFoundError,
@@ -23,7 +19,8 @@ import {
 } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { IconLink } from "@/shared/ui/icon-button";
-import { EditIcon } from "@/shared/ui/workspace-icons";
+import { ChevronIcon, EditIcon } from "@/shared/ui/workspace-icons";
+import { AnnouncementAttachmentList } from "@/modules/announcement/ui/announcement-attachment-list";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항 상세");
@@ -50,10 +47,13 @@ export default async function AnnouncementDetailPage({
   const audience = await resolveAnnouncementAudience(actor);
   if (!service.canView(audience, announcement)) notFound();
   const canManage = service.canManage(actor, announcement);
+  const isSystemAnnouncement = !announcement.teamId && !announcement.programId;
   const wasUpdated = announcement.updatedAt.getTime() !== announcement.createdAt.getTime();
   const listHref = announcement.teamId
-    ? `/teams/${announcement.teamId}/announcements`
-    : "/announcements";
+    ? `/projects/${announcement.projectId}/announcements`
+    : announcement.programId
+      ? `/topics?programId=${encodeURIComponent(announcement.programId)}`
+      : "/announcements";
 
   return (
     <AppShell
@@ -65,20 +65,17 @@ export default async function AnnouncementDetailPage({
       <main className="content-shell page-enter pb-28 lg:pb-16">
         <div className="mx-auto max-w-4xl">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Link className="button-quiet" href={listHref}><UiText>{"공지 목록"}</UiText></Link>
+            <Link className="button-quiet gap-2" href={listHref}><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"공지 목록"}</UiText></Link>
             {canManage ? (
               <div className="flex items-start gap-2">
                 <IconLink href={`/announcements/${announcement.id}/edit`} aria-label="공지 수정" title="공지 수정"><EditIcon className="size-5" /></IconLink>
-                <DeleteAnnouncementForm announcementId={announcement.id} />
+                <DeleteAnnouncementForm announcementId={announcement.id} iconOnly={isSystemAnnouncement} />
               </div>
             ) : null}
           </div>
           <article className="panel overflow-hidden">
             <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                  <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-                </span>
                 <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
               </div>
               <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
@@ -99,6 +96,7 @@ export default async function AnnouncementDetailPage({
             <div className="min-h-72 whitespace-pre-wrap px-5 py-8 text-base leading-8 text-[var(--ink)] sm:px-8 sm:py-10">
               <UiText>{announcement.content}</UiText>
             </div>
+            <AnnouncementAttachmentList attachments={announcement.attachments} />
           </article>
         </div>
       </main>

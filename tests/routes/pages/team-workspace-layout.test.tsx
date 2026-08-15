@@ -2,27 +2,31 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import TeamWorkspaceLayout from "@/app/teams/[teamId]/layout";
+import TeamWorkspaceLayout from "@/app/projects/[projectId]/layout";
 
 const { loadTeamWorkspace } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamWorkspace,
 }));
-vi.mock("@/app/teams/[teamId]/_actions/team-workspace-actions", () => ({
+vi.mock("@/app/projects/[projectId]/_actions/team-workspace-actions", () => ({
   confirmTeamAction: vi.fn(),
 }));
+vi.mock("@/app/projects/[projectId]/_actions/project-team-membership-actions", () => ({
+  projectTeamMembershipAction: vi.fn(),
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/app/_components/app-shell", () => ({
   AppShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
-vi.mock("@/app/teams/[teamId]/_components/team-workspace-navigation", () => ({
+vi.mock("@/app/projects/[projectId]/_components/team-workspace-navigation", () => ({
   TeamWorkspaceNavigation: ({ advisorEnabled }: { advisorEnabled: boolean }) => (
     <nav aria-label="프로젝트 메뉴" data-advisor-enabled={String(advisorEnabled)} />
   ),
 }));
-vi.mock("@/app/teams/[teamId]/_components/close-team-form", () => ({
+vi.mock("@/app/projects/[projectId]/_components/close-team-form", () => ({
   CloseTeamForm: () => null,
 }));
 vi.mock("@/shared/ui/confirm-submit-button", () => ({
@@ -46,7 +50,7 @@ const workspace = {
   topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
   completedTaskCount: 0,
@@ -65,6 +69,7 @@ const workspace = {
     isPrimaryAdvisor: false,
     isAssistant: false,
     isTeamMember: true,
+    isTeamLeader: false,
     canSupervise: false,
     canContribute: true,
   },
@@ -110,7 +115,7 @@ describe("TeamWorkspaceLayout", () => {
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
     }));
 
     expect(screen.getByText("보고서 일정이 없습니다")).toBeInTheDocument();
@@ -127,7 +132,7 @@ describe("TeamWorkspaceLayout", () => {
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
     }));
 
     expect(screen.getByText("보고서 제출 1/2")).toBeInTheDocument();
@@ -139,7 +144,7 @@ describe("TeamWorkspaceLayout", () => {
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
     }));
 
     expect(screen.getAllByText("김도윤").length).toBeGreaterThan(0);
@@ -158,7 +163,7 @@ describe("TeamWorkspaceLayout", () => {
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
     }));
 
     fireEvent.click(screen.getAllByRole("button", { name: "정하늘 상세 정보" })[0]);

@@ -16,7 +16,7 @@ describe("advisorScoreMatrix", () => {
         ],
       },
     ]);
-    const client = { team: { findMany } } as unknown as PrismaClient;
+    const client = { projectTeam: { findMany } } as unknown as PrismaClient;
 
     const [row] = await advisorScoreMatrix(client, "program-1");
 

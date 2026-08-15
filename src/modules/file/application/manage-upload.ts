@@ -27,7 +27,7 @@ export type UploadIntent = {
 
 export interface UploadIntentRepository {
   createForActor(input: UploadIntent & {
-    teamId: string;
+    teamId: string | null;
     actor: CurrentActor;
     purpose: FilePurpose;
     consumer: UploadConsumer;
@@ -35,7 +35,7 @@ export interface UploadIntentRepository {
   }): Promise<boolean>;
   findPendingForOwner(id: string, ownerId: string): Promise<UploadIntent | null>;
   isCompletedForOwner(id: string, ownerId: string): Promise<boolean>;
-  finalizeWithTeamLock(
+  finalizeWithScopeLock(
     id: string,
     ownerId: string,
     readyAt: Date,
@@ -69,7 +69,7 @@ export class UploadService {
   async create(
     actor: CurrentActor,
     input: {
-      teamId: string;
+      teamId?: string;
       purpose: FilePurpose;
       consumer?: UploadConsumer;
       originalName: string;
@@ -80,11 +80,25 @@ export class UploadService {
     now = new Date(),
   ) {
     const validated = validateUpload(input);
+    const announcementUpload = validated.consumer === "ANNOUNCEMENT";
+    if (announcementUpload) {
+      if (actor.role === "STUDENT" || input.teamId !== undefined) {
+        throw new UploadNotFoundError();
+      }
+    } else if (!input.teamId) {
+      throw new UploadNotFoundError();
+    }
     const id = randomUUID();
+    const objectScopePath = announcementUpload
+      ? `announcements/${actor.id}`
+      : `teams/${input.teamId}`;
+    const stagingScopePath = announcementUpload
+      ? `announcements/${actor.id}`
+      : input.teamId!;
     const intent: UploadIntent = {
       id,
-      objectKey: `teams/${input.teamId}/files/${id}`,
-      uploadObjectKey: `staging/${input.teamId}/${id}`,
+      objectKey: `${objectScopePath}/files/${id}`,
+      uploadObjectKey: `staging/${stagingScopePath}/${id}`,
       contentType: validated.contentType,
       size: validated.size,
       sha256: validated.sha256,
@@ -96,7 +110,7 @@ export class UploadService {
     intent.cleanupAfter = new Date(signed.expiresAt.getTime() + 26 * 60 * 60_000);
     const created = await this.repository.createForActor({
       ...intent,
-      teamId: input.teamId,
+      teamId: input.teamId ?? null,
       actor,
       purpose: input.purpose,
       consumer: validated.consumer,
@@ -125,7 +139,7 @@ export class UploadService {
     ) {
       throw new UploadNotFoundError();
     }
-    const completed = await this.repository.finalizeWithTeamLock(
+    const completed = await this.repository.finalizeWithScopeLock(
       uploadId,
       actor.id,
       now,

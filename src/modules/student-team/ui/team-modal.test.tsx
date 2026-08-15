@@ -19,17 +19,17 @@ describe("TeamModal", () => {
   it("모달 내부 빈 상태가 별도 카드 표면을 중첩하지 않는다", () => {
     render(
       <TeamModal title="받은 팀 초대">
-        <EmptyState variant="embedded" title="응답할 초대가 없습니다" description="새 초대가 오면 표시됩니다." />
+        <EmptyState variant="section" title="응답할 초대가 없습니다" description="새 초대가 오면 표시됩니다." />
       </TeamModal>,
     );
 
     const state = screen.getByRole("heading", { name: "응답할 초대가 없습니다" }).closest("[data-empty-state]");
-    expect(state).toHaveAttribute("data-empty-state", "embedded");
+    expect(state).toHaveAttribute("data-empty-state", "section");
     expect(state).not.toHaveClass("border");
     expect(state).not.toHaveClass("bg-white");
   });
 
-  it("키보드 포커스를 모달 안에 가두고 닫힌 뒤 원래 위치로 돌린다", () => {
+  it("네이티브 모달로 열고 닫힌 뒤 원래 위치로 포커스를 돌린다", () => {
     const previous = document.createElement("button");
     previous.textContent = "모달 열기";
     document.body.append(previous);
@@ -44,14 +44,9 @@ describe("TeamModal", () => {
     );
 
     const close = screen.getByRole("button", { name: "닫기" });
-    const save = screen.getByRole("button", { name: "저장" });
+    const dialog = screen.getByRole("dialog", { name: "새 팀 만들기" });
+    expect(dialog).toHaveAttribute("open");
     expect(close).toHaveFocus();
-
-    save.focus();
-    fireEvent.keyDown(save, { key: "Tab" });
-    expect(close).toHaveFocus();
-    fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
-    expect(save).toHaveFocus();
 
     unmount();
     expect(previous).toHaveFocus();
@@ -66,7 +61,7 @@ describe("TeamModal", () => {
     );
 
     fireEvent.change(screen.getByRole("textbox", { name: "팀 이름" }), { target: { value: "코드웨이브" } });
-    fireEvent.click(screen.getByRole("button", { name: "모달 닫기" }));
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(screen.getByRole("alertdialog", { name: "작성 중인 내용 삭제" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();

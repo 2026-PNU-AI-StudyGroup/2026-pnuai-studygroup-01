@@ -11,17 +11,16 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
     return this.client.$transaction(async (tx): Promise<ProgramReportDefinitionOutcome> => {
       const program = await lockProgram(tx, input.programId);
       if (!program) return "NOT_FOUND";
-      if (program.lifecycleStatus !== "ACTIVE") return "PROGRAM_CLOSED";
       if (!validDeadline(input.dueAt, input.now, program.submissionStartsAt, program.submissionEndsAt)) return "INVALID_DEADLINE";
       if (await duplicateTitle(tx, input.programId, input.title)) return "DUPLICATE";
       const last = await tx.programReportDefinition.findFirst({ where: { programId: input.programId, archivedAt: null }, orderBy: { position: "desc" }, select: { position: true } });
       const definition = await tx.programReportDefinition.create({
         data: { programId: input.programId, title: input.title, dueAt: input.dueAt, position: (last?.position ?? -1) + 1 },
       });
-      const teams = await tx.team.findMany({ where: { programId: input.programId, status: { not: "CLOSED" } }, select: { id: true } });
+      const teams = await tx.projectTeam.findMany({ where: { project: { programId: input.programId, status: "ACTIVE" } }, select: { id: true } });
       if (teams.length) {
         await tx.report.createMany({
-          data: teams.map(({ id: teamId }) => ({ teamId, definitionId: definition.id, titleSnapshot: input.title, dueAt: input.dueAt, required: true })),
+          data: teams.map(({ id: projectTeamId }) => ({ projectTeamId, definitionId: definition.id, titleSnapshot: input.title, dueAt: input.dueAt, required: true })),
         });
       }
       await tx.auditLog.create({ data: { actorId: input.actorId, action: "PROGRAM_REPORT_DEFINITION_CREATED", targetType: "PROJECT_PROGRAM", targetId: input.programId, metadata: { definitionId: definition.id, title: input.title, dueAt: input.dueAt.toISOString() } } });
@@ -35,7 +34,6 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
       if (!reference) return "NOT_FOUND";
       const program = await lockProgram(tx, reference.programId);
       if (!program) return "NOT_FOUND";
-      if (program.lifecycleStatus !== "ACTIVE") return "PROGRAM_CLOSED";
       const current = await tx.programReportDefinition.findUnique({ where: { id: input.definitionId }, select: { id: true, title: true, dueAt: true, archivedAt: true } });
       if (!current || current.archivedAt) return "NOT_FOUND";
       if (!validDeadline(input.dueAt, input.now, program.submissionStartsAt, program.submissionEndsAt)) return "INVALID_DEADLINE";
@@ -45,7 +43,7 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
       if (latestSubmission && input.dueAt < latestSubmission.submittedAt) return "SUBMISSION_CONFLICT";
       await tx.programReportDefinition.update({ where: { id: current.id }, data: { title: input.title, dueAt: input.dueAt } });
       await tx.report.updateMany({
-        where: { definitionId: current.id, required: true, team: { status: { not: "CLOSED" } } },
+        where: { definitionId: current.id, required: true, projectTeam: { project: { status: "ACTIVE" } } },
         data: { titleSnapshot: input.title, dueAt: input.dueAt },
       });
       await tx.auditLog.create({ data: { actorId: input.actorId, action: "PROGRAM_REPORT_DEFINITION_UPDATED", targetType: "PROJECT_PROGRAM", targetId: reference.programId, metadata: { definitionId: current.id, from: { title: current.title, dueAt: current.dueAt.toISOString() }, to: { title: input.title, dueAt: input.dueAt.toISOString() } } } });
@@ -59,7 +57,6 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
       if (!reference) return "NOT_FOUND";
       const program = await lockProgram(tx, reference.programId);
       if (!program) return "NOT_FOUND";
-      if (program.lifecycleStatus !== "ACTIVE") return "PROGRAM_CLOSED";
       const current = await tx.programReportDefinition.findUnique({ where: { id: input.definitionId }, select: { id: true, position: true, archivedAt: true } });
       if (!current || current.archivedAt) return "NOT_FOUND";
       const neighbor = await tx.programReportDefinition.findFirst({
@@ -84,7 +81,6 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
       if (!reference) return "NOT_FOUND";
       const program = await lockProgram(tx, reference.programId);
       if (!program) return "NOT_FOUND";
-      if (program.lifecycleStatus !== "ACTIVE") return "PROGRAM_CLOSED";
       const current = await tx.programReportDefinition.findUnique({ where: { id: input.definitionId }, select: { id: true, title: true, archivedAt: true } });
       if (!current || current.archivedAt) return "NOT_FOUND";
       const versionCount = await tx.reportVersion.count({ where: { report: { definitionId: current.id } } });
@@ -93,7 +89,7 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
         await tx.programReportDefinition.delete({ where: { id: current.id } });
       } else {
         await tx.programReportDefinition.update({ where: { id: current.id }, data: { archivedAt: input.now } });
-        await tx.report.updateMany({ where: { definitionId: current.id, team: { status: { not: "CLOSED" } } }, data: { required: false } });
+        await tx.report.updateMany({ where: { definitionId: current.id, projectTeam: { project: { status: "ACTIVE" } } }, data: { required: false } });
       }
       await tx.auditLog.create({ data: { actorId: input.actorId, action: "PROGRAM_REPORT_DEFINITION_ARCHIVED", targetType: "PROJECT_PROGRAM", targetId: reference.programId, metadata: { definitionId: current.id, title: current.title, retainedHistory: versionCount > 0 } } });
       return "ARCHIVED";
@@ -102,15 +98,15 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
 }
 
 async function lockProgram(tx: Prisma.TransactionClient, programId: string) {
-  const rows = await tx.$queryRaw<Array<{ id: string; lifecycleStatus: "ACTIVE" | "CLOSED"; submissionStartsAt: Date; submissionEndsAt: Date }>>(Prisma.sql`
-    SELECT "id", "lifecycleStatus", "submissionStartsAt", "submissionEndsAt"
+  const rows = await tx.$queryRaw<Array<{ id: string; submissionStartsAt: Date; submissionEndsAt: Date }>>(Prisma.sql`
+    SELECT "id", "submissionStartsAt", "submissionEndsAt"
     FROM "project_program" WHERE "id" = ${programId} FOR UPDATE
   `);
   return rows[0] ?? null;
 }
 
-function validDeadline(dueAt: Date, now: Date, startsAt: Date, endsAt: Date) {
-  return dueAt > now && dueAt >= startsAt && dueAt <= endsAt;
+function validDeadline(dueAt: Date, _now: Date, startsAt: Date, endsAt: Date) {
+  return dueAt >= startsAt && dueAt <= endsAt;
 }
 
 function duplicateTitle(tx: Prisma.TransactionClient, programId: string, title: string, excludingId?: string) {

@@ -11,7 +11,7 @@ export class TopicNotFoundError extends Error {
 
 export class TopicManagementForbiddenError extends Error {
   constructor() {
-    super("프로젝트 작성자 또는 관리자만 상태를 변경할 수 있습니다.");
+    super("프로젝트 상태를 변경할 권한이 없습니다.");
     this.name = "TopicManagementForbiddenError";
   }
 }
@@ -26,28 +26,14 @@ export class InvalidTopicStatusTransitionError extends Error {
 export class ChangeTopicStatusService {
   constructor(private readonly repository: TopicStateRepository, private readonly now: () => Date = () => new Date()) {}
 
-  async close(actor: CurrentActor, topicId: string): Promise<void> {
-    const topic = await this.requireManageableTopic(actor, topicId);
-    if (
-      topic.status !== "PUBLISHED" ||
-      !(actor.role === "ADMIN" || (actor.role === "PROFESSOR" && actor.id === topic.managerId))
-    ) {
-      throw new InvalidTopicStatusTransitionError("담당 교수 또는 관리자만 공개된 프로젝트를 마감할 수 있습니다.");
-    }
-
-    if (!(await this.repository.closePublished(topic.id, actor))) {
-      throw new InvalidTopicStatusTransitionError();
-    }
-  }
-
   async closeRecruitment(actor: CurrentActor, topicId: string): Promise<void> {
     const topic = await this.requireManageableTopic(actor, topicId);
     if (
-      topic.status !== "PUBLISHED" ||
+      topic.status !== "ACTIVE" ||
       !topic.recruitmentEnabled ||
       !(actor.role === "ADMIN" || (actor.role === "PROFESSOR" && actor.id === topic.managerId))
     ) {
-      throw new InvalidTopicStatusTransitionError("담당 교수 또는 관리자만 공개된 프로젝트 모집을 마감할 수 있습니다.");
+      throw new InvalidTopicStatusTransitionError("현재 프로젝트 모집을 마감할 수 없습니다.");
     }
     if (!(await this.repository.closeRecruitment(topic.id, actor, this.now()))) {
       throw new InvalidTopicStatusTransitionError();

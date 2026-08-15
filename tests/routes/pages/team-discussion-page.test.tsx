@@ -1,13 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamDiscussionPage from "@/app/teams/[teamId]/discussion/page";
+import TeamDiscussionPage from "@/app/projects/[projectId]/discussion/page";
 
 const { loadTeamWorkspace } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamWorkspace,
 }));
 
@@ -19,7 +19,7 @@ vi.mock("@/app/_components/translated-text", () => ({
   TranslatedText: ({ text, className }: { text: string; className?: string }) => <span className={className}>{text}</span>,
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/discussion-post-form", () => ({
+vi.mock("@/app/projects/[projectId]/_components/discussion-post-form", () => ({
   DiscussionPostForm: ({
     scrollContainerId,
     latestPostId,
@@ -47,7 +47,7 @@ const actor = {
 
 const workspace = {
   id: "team-1",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   advisorEnabled: true,
   professorName: "김도윤",
   members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
@@ -80,7 +80,7 @@ describe("TeamDiscussionPage", () => {
 
   it("대화 계약을 유지하면서 메시지와 작성기를 하나의 흰색 패널로 묶는다", async () => {
     const { container } = render(await TeamDiscussionPage({
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
       searchParams: Promise.resolve({ page: "2" }),
     }));
 
@@ -116,8 +116,8 @@ describe("TeamDiscussionPage", () => {
       "bg-[var(--primary-subtle)]",
     );
 
-    expect(screen.getByRole("link", { name: "최근 대화" })).toHaveAttribute("href", "/teams/team-1/discussion?page=1");
-    expect(screen.getByRole("link", { name: "이전 대화" })).toHaveAttribute("href", "/teams/team-1/discussion?page=3");
+    expect(screen.getByRole("link", { name: "최근 대화" })).toHaveAttribute("href", "/projects/team-1/discussion?page=1");
+    expect(screen.getByRole("link", { name: "이전 대화" })).toHaveAttribute("href", "/projects/team-1/discussion?page=3");
     expect(screen.getByLabelText("메시지 작성")).toHaveAttribute("data-scroll-container-id", "team-discussion-messages");
     expect(screen.getByLabelText("메시지 작성")).toHaveAttribute("data-latest-post-id", "post-2");
     expect(screen.getByLabelText("메시지 작성")).toHaveAttribute("data-auto-scroll-to-latest", "false");
@@ -126,11 +126,11 @@ describe("TeamDiscussionPage", () => {
   it("종료된 프로젝트에서는 패널 안에 작성기 대신 종료 안내를 표시한다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       actor,
-      workspace: { ...workspace, status: "CLOSED", discussionPosts: [], discussionTotal: 0 },
+      workspace: { ...workspace, status: "COMPLETED", discussionPosts: [], discussionTotal: 0 },
     });
 
     render(await TeamDiscussionPage({
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
       searchParams: Promise.resolve({}),
     }));
 
@@ -147,7 +147,7 @@ describe("TeamDiscussionPage", () => {
     });
 
     render(await TeamDiscussionPage({
-      params: Promise.resolve({ teamId: "team-1" }),
+      params: Promise.resolve({ projectId: "team-1" }),
       searchParams: Promise.resolve({}),
     }));
 

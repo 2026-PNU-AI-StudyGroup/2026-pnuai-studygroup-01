@@ -48,6 +48,9 @@ describe("개발용 역할 로그인", () => {
     expect(response.headers.get("location")).toBe("http://localhost:3000/topics");
     expect(response.headers.get("set-cookie")).toContain("better-auth.session_token=signed-token");
     expect(login).toHaveBeenCalledWith({ userId: "20000000-0000-4000-8000-000000000001" });
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ accountStatus: "ACTIVE" }),
+    }));
   });
 
   it("운영 환경에서는 경로 자체를 노출하지 않는다", async () => {

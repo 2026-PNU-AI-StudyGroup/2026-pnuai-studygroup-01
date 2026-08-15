@@ -5,12 +5,15 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { StudentProfileForbiddenError, StudentProfileService } from "@/modules/identity/application/manage-student-profile";
+import { AccountWithdrawalError, WithdrawAccountService } from "@/modules/identity/application/withdraw-account";
 import { InvalidStudentProfileError } from "@/modules/identity/domain/student-profile";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
+import { PrismaAccountWithdrawalRepository } from "@/modules/identity/infrastructure/prisma-account-withdrawal-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type StudentProfileActionState = { status: "idle" | "error" | "success"; message: string };
+export type AccountWithdrawalActionState = { status: "idle" | "error"; message: string };
 
 const schema = z.object({
   phone: z.string().max(40),
@@ -43,6 +46,35 @@ const academicSchema = z.object({
   contactEmail: z.string().max(300),
 });
 
+const emailPreferenceSchema = z.object({
+  reportActivityEnabled: z.enum(["on", "off"]).default("off"),
+  discussionEnabled: z.enum(["on", "off"]).default("off"),
+});
+
+export async function saveEmailPreferenceAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = emailPreferenceSchema.safeParse({
+    reportActivityEnabled: formData.get("reportActivityEnabled") === "on" ? "on" : "off",
+    discussionEnabled: formData.get("discussionEnabled") === "on" ? "on" : "off",
+  });
+  if (!parsed.success) return { status: "error", message: "이메일 수신 설정을 확인해 주세요." };
+  await prisma.emailPreference.upsert({
+    where: { userId: actor.id },
+    create: {
+      userId: actor.id,
+      reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
+      discussionEnabled: parsed.data.discussionEnabled === "on",
+    },
+    update: {
+      reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
+      discussionEnabled: parsed.data.discussionEnabled === "on",
+    },
+  });
+  revalidatePath("/account");
+  return { status: "success", message: "이메일 수신 설정을 저장했습니다." };
+}
+
 export async function saveStudentAccountAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
   const actor = await getCurrentOperationalActor();
   if (!actor) redirect("/sign-in");
@@ -67,4 +99,19 @@ export async function saveStudentAccountAction(_state: StudentProfileActionState
   revalidatePath("/account");
   revalidatePath("/teams");
   return { status: "success", message: "학사 정보를 저장했습니다." };
+}
+
+export async function withdrawAccountAction(
+  _state: AccountWithdrawalActionState,
+): Promise<AccountWithdrawalActionState> {
+  void _state;
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  try {
+    await new WithdrawAccountService(new PrismaAccountWithdrawalRepository(prisma)).execute(actor);
+  } catch (error) {
+    if (error instanceof AccountWithdrawalError) return { status: "error", message: error.message };
+    throw error;
+  }
+  redirect("/sign-in?account=withdrawn");
 }

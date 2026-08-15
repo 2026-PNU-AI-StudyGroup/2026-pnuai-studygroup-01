@@ -23,14 +23,14 @@ let crossProgramId: string | null = null;
 async function cleanup() {
   const programIds = [createdProgramId, crossProgramId].filter((id): id is string => id !== null);
   if (programIds.length) {
-    await prisma.teamMember.deleteMany({
-      where: { programId: { in: programIds } },
+    await prisma.projectTeamMembership.deleteMany({
+      where: { projectTeam: { project: { programId: { in: programIds } } } },
     });
     await prisma.topicApplication.deleteMany({
       where: { topic: { programId: { in: programIds } } },
     });
-    await prisma.team.deleteMany({
-      where: { programId: { in: programIds } },
+    await prisma.projectTeam.deleteMany({
+      where: { project: { programId: { in: programIds } } },
     });
     await prisma.topic.deleteMany({
       where: { programId: { in: programIds } },
@@ -59,7 +59,7 @@ async function createTopic(title: string, capacity: number, programId = createdP
       description: "동시성 검증용 주제",
       applicationMode: "INDIVIDUAL_ONLY",
       capacity,
-      status: "PUBLISHED",
+      status: "ACTIVE",
       publishedAt: new Date("2026-01-01T00:00:00Z"),
       applicationQuestions: { create: { label: "지원 동기", maxLength: 500, required: true, position: 0 } },
     },
@@ -104,7 +104,7 @@ async function main() {
   });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `동시성 검증 프로그램 ${professorId}`, category: "검증", description: "동시성 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   createdProgramId = program.id;
   const decisionRepository = new PrismaTopicApplicationDecisionRepository(prisma);
@@ -129,8 +129,8 @@ async function main() {
   const capacityPending = await prisma.topicApplication.count({
     where: { topicId: capacityTopic.id, status: "PENDING" },
   });
-  const capacityMembers = await prisma.teamMember.count({
-    where: { team: { topicId: capacityTopic.id } },
+  const capacityMembers = await prisma.projectTeamMembership.count({
+    where: { projectTeam: { projectId: capacityTopic.id } },
   });
   if (
     capacityAccepted !== 1 ||
@@ -164,8 +164,8 @@ async function main() {
       decisionRepository.accept(id, actor, new Date()),
     ),
   );
-  const studentMemberships = await prisma.teamMember.count({
-    where: { programId: program.id, studentId: studentIds[2] },
+  const studentMemberships = await prisma.projectTeamMembership.count({
+    where: { projectTeam: { project: { programId: program.id } }, userId: studentIds[2], endedAt: null },
   });
   const acceptedForStudent = await prisma.topicApplication.count({
     where: { studentId: studentIds[2], status: "ACCEPTED" },
@@ -174,28 +174,29 @@ async function main() {
     where: { studentId: studentIds[2], status: "PENDING" },
   });
   if (
-    studentMemberships !== 1 ||
-    acceptedForStudent !== 1 ||
+    studentMemberships !== 2 ||
+    acceptedForStudent !== 2 ||
     pendingForStudent !== 0
   ) {
-    throw new Error("동일 프로그램 단일 팀 소속 불변식이 깨졌습니다.");
+    throw new Error("동일 프로그램 복수 프로젝트 참여 계약이 깨졌습니다.");
   }
 
   const crossProgram = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `교차 프로그램 검증 ${professorId}`, category: "검증", description: "교차 프로그램 참여 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), studentProjectCreationEnabled: true, isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   crossProgramId = crossProgram.id;
   const crossProgramTopic = await createTopic("교차 프로그램 참여", 2, crossProgram.id);
   const crossProgramApplication = await createApplication(crossProgramTopic.id, studentIds[2]);
   const crossProgramOutcome = await decisionRepository.accept(crossProgramApplication.id, actor, new Date());
-  const crossProgramMemberships = await prisma.teamMember.count({
+  const crossProgramMemberships = await prisma.projectTeamMembership.count({
     where: {
-      studentId: studentIds[2],
-      programId: { in: [program.id, crossProgram.id] },
+      userId: studentIds[2],
+      endedAt: null,
+      projectTeam: { project: { programId: { in: [program.id, crossProgram.id] } } },
     },
   });
-  if (crossProgramOutcome !== "ACCEPTED" || crossProgramMemberships !== 2) {
+  if (crossProgramOutcome !== "ACCEPTED" || crossProgramMemberships !== 3) {
     throw new Error(
       `서로 다른 프로그램 참여 계약이 깨졌습니다: outcome=${crossProgramOutcome}, memberships=${crossProgramMemberships}`,
     );
@@ -221,13 +222,13 @@ async function main() {
       });
     }),
   ]);
-  const decisionRaceMemberships = await prisma.teamMember.count({
-    where: { programId: program.id, studentId: studentIds[3] },
+  const decisionRaceMemberships = await prisma.projectTeamMembership.count({
+    where: { projectTeam: { project: { programId: program.id } }, userId: studentIds[3], endedAt: null },
   });
   const decisionRacePending = await prisma.topicApplication.count({
     where: { studentId: studentIds[3], status: "PENDING" },
   });
-  if (decisionRaceMemberships !== 1 || decisionRacePending !== 0) {
+  if (decisionRaceMemberships !== 1 || decisionRacePending !== 1) {
     throw new Error(
       `수락과 신규 지원 경합 불변식이 깨졌습니다: memberships=${decisionRaceMemberships}, pending=${decisionRacePending}`,
     );
@@ -243,7 +244,7 @@ async function main() {
     where: { id: oppositeDecisionApplication.id },
     select: { status: true },
   });
-  const oppositeDecisionMembers = await prisma.teamMember.count({ where: { topicId: oppositeDecisionTopic.id } });
+  const oppositeDecisionMembers = await prisma.projectTeamMembership.count({ where: { projectTeam: { projectId: oppositeDecisionTopic.id } } });
   if (
     oppositeDecisionState.status === "PENDING" ||
     (oppositeDecisionState.status === "ACCEPTED" && oppositeDecisionMembers !== 1) ||
@@ -276,8 +277,8 @@ async function main() {
     requestedAt: new Date("2026-07-01T00:00:00Z"),
   });
   if (!proposalTopicId) throw new Error("기존 팀 승인 삭제 경합용 제안을 만들지 못했습니다.");
-  const proposalRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({
-    where: { topicId: proposalTopicId },
+  const proposalRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
+    where: { topicId: proposalTopicId, status: "PENDING" },
   });
   const approvalDeleteRace = await Promise.allSettled([
     approvalRepository.decide({
@@ -299,7 +300,7 @@ async function main() {
   const [proposalTopicState, proposalRequestState, proposalMemberships] = await Promise.all([
     prisma.topic.findUniqueOrThrow({ where: { id: proposalTopicId } }),
     prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: proposalRequest.id } }),
-    prisma.teamMember.count({ where: { programId: program.id, studentId: proposalStudentId } }),
+    prisma.projectTeamMembership.count({ where: { projectTeam: { project: { programId: program.id } }, userId: proposalStudentId, endedAt: null } }),
   ]);
   const approvalDeleteOutcome = approvalDeleteRace[0].value;
   const approvalWon = approvalDeleteOutcome === "APPROVED";
@@ -307,7 +308,7 @@ async function main() {
     approvalDeleteRace[1].value !== true ||
     !["APPROVED", "UNAVAILABLE"].includes(approvalDeleteOutcome) ||
     proposalRequestState.status === "PENDING" ||
-    (approvalWon && (proposalTopicState.status !== "PUBLISHED" || proposalRequestState.status !== "APPROVED" || proposalMemberships !== 1)) ||
+    (approvalWon && (proposalTopicState.status !== "ACTIVE" || proposalRequestState.status !== "APPROVED" || proposalMemberships !== 1)) ||
     (!approvalWon && (proposalTopicState.status !== "REJECTED" || proposalRequestState.status !== "REJECTED" || proposalMemberships !== 0))
   ) {
     throw new Error(
@@ -347,8 +348,8 @@ async function main() {
     requestedAt: new Date("2026-07-03T00:00:00Z"),
   });
   if (!memberRemovalTopicId) throw new Error("기존 팀 승인 팀원 제거 경합용 제안을 만들지 못했습니다.");
-  const memberRemovalRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({
-    where: { topicId: memberRemovalTopicId },
+  const memberRemovalRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
+    where: { topicId: memberRemovalTopicId, status: "PENDING" },
   });
   const approvalMemberRemovalRace = await Promise.allSettled([
     approvalRepository.decide({
@@ -363,6 +364,7 @@ async function main() {
       teamId: memberRemovalTeamId,
       leaderId: studentIds[3],
       studentId: studentIds[4],
+      changedAt: new Date("2026-07-04T00:00:00Z"),
     }),
   ]);
   if (approvalMemberRemovalRace[0].status !== "fulfilled") throw approvalMemberRemovalRace[0].reason;
@@ -370,14 +372,14 @@ async function main() {
   const [memberRemovalTopicState, memberRemovalRequestState, memberRemovalMemberships] = await Promise.all([
     prisma.topic.findUniqueOrThrow({ where: { id: memberRemovalTopicId } }),
     prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: memberRemovalRequest.id } }),
-    prisma.teamMember.count({ where: { topicId: memberRemovalTopicId } }),
+    prisma.projectTeamMembership.count({ where: { projectTeam: { projectId: memberRemovalTopicId } } }),
   ]);
   const memberRemovalApprovalOutcome = approvalMemberRemovalRace[0].value;
   const memberRemovalApprovalWon = memberRemovalApprovalOutcome === "APPROVED";
   if (
     approvalMemberRemovalRace[1].value !== true ||
     !["APPROVED", "UNAVAILABLE"].includes(memberRemovalApprovalOutcome) ||
-    (memberRemovalApprovalWon && (memberRemovalTopicState.status !== "PUBLISHED" || memberRemovalRequestState.status !== "APPROVED" || memberRemovalMemberships !== 2)) ||
+    (memberRemovalApprovalWon && (memberRemovalTopicState.status !== "ACTIVE" || memberRemovalRequestState.status !== "APPROVED" || memberRemovalMemberships !== 2)) ||
     (!memberRemovalApprovalWon && (memberRemovalTopicState.status !== "PENDING_APPROVAL" || memberRemovalRequestState.status !== "PENDING" || memberRemovalMemberships !== 0))
   ) {
     throw new Error(

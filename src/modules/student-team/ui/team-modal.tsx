@@ -4,17 +4,8 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 import { useRouter } from "next/navigation";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const focusableSelector = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled]):not([type='hidden'])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
-].join(",");
 
 function formSnapshot(form: HTMLFormElement): string {
   return JSON.stringify(Array.from(new FormData(form).entries()).map(([name, value]) => [
@@ -40,7 +31,7 @@ export function TeamModal({
 }) {
   const router = useRouter();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const initialFormSnapshotsRef = useRef(new Map<HTMLFormElement, string>());
   const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
@@ -66,68 +57,29 @@ export function TeamModal({
     previousFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const dialog = dialogRef.current;
-    initialFormSnapshotsRef.current = new Map(
-      Array.from(dialog?.querySelectorAll("form") ?? []).map((form) => [form, formSnapshot(form)]),
-    );
-    closeButtonRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      event.preventDefault();
-      requestClose();
-    };
-    const keepFocusInside = (event: FocusEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node) || !dialog || dialog.contains(target)) return;
-      if (target instanceof Element && (target.closest("[role='listbox']") || target.closest(".date-time-input__calendar"))) return;
-      closeButtonRef.current?.focus();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("focusin", keepFocusInside);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("focusin", keepFocusInside);
-      previousFocusRef.current?.focus({ preventScroll: true });
-    };
-  }, [requestClose]);
-
-  function trapFocus(event: ReactKeyboardEvent<HTMLElement>) {
-    if (event.target instanceof Element && event.target.closest("[data-confirmation-dialog]")) return;
-    if (event.key !== "Tab") return;
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
-      .filter((element) => element.getAttribute("aria-hidden") !== "true");
-    if (!focusable.length) {
-      event.preventDefault();
-      dialog.focus();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable.at(-1)!;
-    if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
+    if (!dialog.open) dialog.showModal();
+    initialFormSnapshotsRef.current = new Map(
+      Array.from(dialog.querySelectorAll("form")).map((form) => [form, formSnapshot(form)]),
+    );
+    closeButtonRef.current?.focus();
+    return () => {
+      if (dialog.open) dialog.close();
+      previousFocusRef.current?.focus({ preventScroll: true });
+    };
+  }, []);
 
   return (
-    <div className={`fixed inset-0 z-[65] grid place-items-center overflow-y-auto bg-[var(--ink)]/35 ${size === "wizard" ? "p-0 sm:p-6" : "p-4 sm:p-6"}`}>
-      <UiButton type="button" tabIndex={-1} aria-label="모달 닫기" className="absolute inset-0 cursor-default" onClick={requestClose} />
-      <section
+    <>
+      <dialog
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="team-modal-title"
-        tabIndex={-1}
-        onKeyDown={trapFocus}
-        className={`relative my-auto w-full overflow-y-auto bg-white shadow-[0_24px_70px_rgba(31,35,48,.18)] ${size === "wizard" ? "min-h-dvh max-w-5xl rounded-none p-4 sm:min-h-0 sm:max-h-[calc(100dvh-3rem)] sm:rounded-[var(--radius-panel)] sm:p-8" : `rounded-[var(--radius-panel)] p-6 sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}`}
+        onCancel={(event) => {
+          event.preventDefault();
+          requestClose();
+        }}
+        className={`fixed inset-0 m-auto w-[calc(100%-2rem)] overflow-y-auto border border-[var(--line-strong)] bg-white text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)] ${size === "wizard" ? "max-h-[calc(100dvh-2rem)] max-w-5xl rounded-[var(--radius-panel)] p-4 sm:p-8" : `max-h-[calc(100dvh-2rem)] rounded-[var(--radius-panel)] p-6 sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}`}
       >
         <div className="flex items-start justify-between gap-6">
           <div>
@@ -145,7 +97,7 @@ export function TeamModal({
           </UiButton>
         </div>
         <div className="mt-6"><UiText>{children}</UiText></div>
-      </section>
+      </dialog>
       <ConfirmationDialog
         open={discardConfirmationOpen}
         title="작성 중인 내용 삭제"
@@ -155,6 +107,6 @@ export function TeamModal({
         onCancel={() => setDiscardConfirmationOpen(false)}
         returnFocusRef={closeButtonRef}
       />
-    </div>
+    </>
   );
 }

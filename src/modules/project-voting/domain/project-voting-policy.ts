@@ -8,9 +8,15 @@ export function getProgramVotingPhase(policy: ProgramVotingPolicyDetails, now: D
   return "OPEN";
 }
 
+export function canViewPublicVotingResults(policy: ProgramVotingPolicyDetails, now: Date): boolean {
+  const phase = getProgramVotingPhase(policy, now);
+  if (phase === "UPCOMING") return false;
+  return phase === "OPEN" ? policy.resultsVisibleDuringVoting : policy.resultsVisibleAfterVoting;
+}
+
 // 자문위원·관리자는 심사 목적이라 학생과 다른 한도(staffVoteLimit)를 적용한다.
 export function withEffectiveVoteLimit<T extends ProgramVotingPolicyDetails>(policy: T, role: string): T {
-  return role === "ADMIN" || role === "ADVISOR" ? { ...policy, voteLimit: policy.staffVoteLimit } : policy;
+  return role === "ADMIN" || role === "ADVISOR" ? { ...policy, voteLimit: policy.staffVoteLimit ?? 5 } : policy;
 }
 
 export function normalizeVoteSelection(topicIds: readonly string[], policy: ProgramVotingPolicyDetails, candidates: ReadonlyArray<{ id: string; divisionId?: string | null }>): string[] {

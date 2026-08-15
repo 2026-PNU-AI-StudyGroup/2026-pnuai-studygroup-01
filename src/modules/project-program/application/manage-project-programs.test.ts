@@ -26,9 +26,11 @@ function repository(overrides: Partial<ProjectProgramRepository> = {}): ProjectP
     listOpen: vi.fn(),
     listSidebarVisible: vi.fn(),
     findById: vi.fn(),
+    updateBasicInfo: vi.fn(async () => "UPDATED" as const),
     updateSettings: vi.fn(async () => "UPDATED" as const),
+    updateSchedule: vi.fn(async () => "UPDATED" as const),
     changeStatus: vi.fn(),
-    changeStudentProjectCreation: vi.fn(),
+    changeStudentProjectPolicy: vi.fn(),
     changeIcon: vi.fn(),
     findOpen: vi.fn(),
     ...overrides,
@@ -45,12 +47,14 @@ describe("프로젝트 프로그램 관리", () => {
       description: " 설명 ",
       projectRegistrationStartsAt: new Date("2026-04-01"),
       projectRegistrationEndsAt: new Date("2026-09-01"),
+      isPublic: true,
       votingPolicy: null,
     });
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       name: "PNU 창의융합 해커톤",
       projectRegistrationStartsAt: new Date("2026-04-01"),
       createdById: "admin",
+      isPublic: true,
     }));
     expect(programId).toBe("program-1");
   });
@@ -61,6 +65,7 @@ describe("프로젝트 프로그램 관리", () => {
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
+      isPublic: false,
     }));
   });
 
@@ -78,6 +83,25 @@ describe("프로젝트 프로그램 관리", () => {
       projectRegistrationEndsAt: programInput.endsAt,
       submissionEndsAt: new Date("2027-01-01T00:00:00Z"),
     })).toThrow("제출 기간은 프로그램 운영 기간 안에 있어야 합니다.");
+  });
+
+  it("학생 팀 프로젝트 제안형은 모집 기간을 저장하지 않는다", () => {
+    const normalized = normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      studentProjectCreationEnabled: true,
+    });
+    expect(normalized.recruitmentStartsAt).toBeNull();
+    expect(normalized.recruitmentEndsAt).toBeNull();
+
+    expect(() => normalizeProjectProgram({
+      ...programInput,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+      recruitmentStartsAt: null,
+      recruitmentEndsAt: null,
+    })).toThrow("등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요.");
   });
 
   it("운영이 종료됐어도 진행 중인 투표 프로그램은 사이드바 목록에 포함한다", async () => {
@@ -105,9 +129,81 @@ describe("프로젝트 프로그램 관리", () => {
         staffVoteLimit: 5,
         voteLimitScope: "DIVISION",
         selfVotingAllowed: false,
-        identityVisibility: "ANONYMOUS",
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     })).rejects.toThrow("분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.");
+    expect(value.create).not.toHaveBeenCalled();
+  });
+
+  it("투표 결과 공개 설정을 정규화 과정에서 그대로 보존한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+    await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      votingPolicy: {
+        startsAt: new Date("2026-08-01T00:00:00Z"),
+        endsAt: new Date("2026-08-31T00:00:00Z"),
+        voteLimit: 3,
+        voteLimitScope: "PROGRAM",
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: false,
+      },
+    });
+
+    expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
+      votingPolicy: expect.objectContaining({
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: false,
+      }),
+    }));
+  });
+
+  it("프로그램 생성 시 분과 채점표와 보고서 정의를 검증해 함께 전달한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+    await new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      divisionNames: [" 창업 "],
+      rubricDefinitions: [{
+        divisionName: "창업",
+        title: " 공식 평가 ",
+        gradingDueAt: new Date("2026-10-01T00:00:00Z"),
+        audience: "STAFF_ONLY",
+        criteria: [{ label: " 완성도 ", maxPoints: 40 }],
+      }],
+      reportDefinitions: [{ title: " 최종 보고서 ", dueAt: new Date("2026-11-01T00:00:00Z") }],
+    });
+
+    expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
+      divisionNames: ["창업"],
+      rubricDefinitions: [expect.objectContaining({ title: "공식 평가", divisionName: "창업", criteria: [{ label: "완성도", maxPoints: 40 }] })],
+      reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z") }],
+    }));
+  });
+
+  it("평가 항목이 없는 채점표가 포함되면 프로그램 생성을 거부한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+
+    await expect(new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      rubricDefinitions: [{
+        divisionName: null,
+        title: "공식 평가",
+        gradingDueAt: new Date("2026-10-01T00:00:00Z"),
+        audience: "STAFF_ONLY",
+        criteria: [],
+      }],
+    })).rejects.toThrow("채점표에는 평가 항목을 하나 이상 추가해 주세요.");
+
+    expect(value.create).not.toHaveBeenCalled();
+  });
+
+  it("보고서 마감이 수행 기간 밖이면 프로그램 생성을 거부한다", async () => {
+    const value = repository({ create: vi.fn(async () => "program-1") });
+    await expect(new ProjectProgramService(value).create({ id: "admin", role: "ADMIN" }, {
+      ...programInput,
+      reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-30T00:00:00Z") }],
+    })).rejects.toThrow("보고서 제출 마감은 수행 기간 안이어야 합니다.");
     expect(value.create).not.toHaveBeenCalled();
   });
 
@@ -119,10 +215,118 @@ describe("프로젝트 프로그램 관리", () => {
     expect(getProgramStartYear(new Date("2025-12-31T15:00:00.000Z"))).toBe(2026);
   });
 
-  it("관리자가 프로그램의 학생 프로젝트 제안 허용 여부를 변경한다", async () => {
-    const value = repository({ changeStudentProjectCreation: vi.fn(async () => true) });
-    await new ProjectProgramService(value).changeStudentProjectCreation({ id: "admin", role: "ADMIN" }, "program-1", true);
-    expect(value.changeStudentProjectCreation).toHaveBeenCalledWith("program-1", true);
+  it("관리자가 프로젝트 참여 방식과 팀 인원 정책을 변경한다", async () => {
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
+    await new ProjectProgramService(value).changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: true, minSize: 2, maxSize: 6 });
+    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: true, minSize: 2, maxSize: 6, recruitmentStartsAt: null, recruitmentEndsAt: null });
+  });
+
+  it("팀 최대 인원이 최소 인원보다 작으면 정책 변경을 거부한다", async () => {
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
+    await expect(new ProjectProgramService(value).changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: true, minSize: 7, maxSize: 6 })).rejects.toThrow("프로젝트 팀 최대 인원은 최소 인원 이상 100명 이하여야 합니다.");
+    expect(value.changeStudentProjectPolicy).not.toHaveBeenCalled();
+  });
+
+  it("직접 지원형은 사용하지 않는 최소 인원을 1명으로 정규화한다", async () => {
+    const value = repository({ findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0 })), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
+    await new ProjectProgramService(value).changeStudentProjectPolicy(
+      { id: "admin", role: "ADMIN" },
+      "program-1",
+      { enabled: false, minSize: 6, maxSize: 4 },
+    );
+    expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: false, minSize: 1, maxSize: 4, recruitmentStartsAt: programInput.recruitmentStartsAt, recruitmentEndsAt: programInput.recruitmentEndsAt });
+  });
+
+  it("학생 제안형에서 직접 지원형으로 바꿀 때 새 모집 기간을 요구한다", async () => {
+    const current = { ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0, studentProjectCreationEnabled: true, recruitmentStartsAt: null, recruitmentEndsAt: null };
+    const value = repository({ findById: vi.fn(async () => current), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
+    const service = new ProjectProgramService(value);
+
+    await expect(service.changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", { enabled: false, minSize: 1, maxSize: 6 })).rejects.toThrow("등록 프로젝트 직접 지원 방식에서는 프로젝트 모집 기간을 입력해 주세요.");
+    await service.changeStudentProjectPolicy({ id: "admin", role: "ADMIN" }, "program-1", {
+      enabled: false, minSize: 1, maxSize: 6,
+      recruitmentStartsAt: new Date("2026-04-01T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+    });
+    expect(value.changeStudentProjectPolicy).toHaveBeenLastCalledWith("program-1", expect.objectContaining({
+      enabled: false,
+      recruitmentStartsAt: new Date("2026-04-01T00:00:00Z"),
+      recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
+    }));
+  });
+
+  it("프로젝트가 하나라도 있으면 참여 방식을 전환하지 않는다", async () => {
+    const value = repository({
+      findById: vi.fn(async () => ({ ...programInput, id: "program-1", startYear: 2026, topicCount: 1, teamCount: 0 })),
+      changeStudentProjectPolicy: vi.fn(async () => "TOPICS_EXIST" as const),
+    });
+
+    await expect(new ProjectProgramService(value).changeStudentProjectPolicy(
+      { id: "admin", role: "ADMIN" },
+      "program-1",
+      { enabled: true, minSize: 2, maxSize: 6 },
+    )).rejects.toThrow("프로젝트가 하나 이상 등록된 프로그램은 참여 방식을 변경할 수 없습니다.");
+  });
+
+  it("기본 정보 저장은 일정과 투표 정책을 다시 쓰지 않는다", async () => {
+    const current = {
+      ...programInput,
+      id: "program-1",
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+    };
+    const value = repository({ findById: vi.fn(async () => current) });
+
+    await new ProjectProgramService(value).updateBasicInfo({ id: "admin", role: "ADMIN" }, "program-1", {
+      name: "새 프로그램명",
+      category: "대회",
+      description: "새 설명",
+      isPublic: true,
+      divisionNames: [],
+    });
+
+    expect(value.updateBasicInfo).toHaveBeenCalledWith("program-1", {
+      name: "새 프로그램명",
+      category: "대회",
+      description: "새 설명",
+      isPublic: true,
+      divisionNames: [],
+      confirmDivisionSync: undefined,
+    }, "admin");
+  });
+
+  it("일정 저장은 제출 기간을 수행 기간으로 함께 파생한다", async () => {
+    const current = {
+      ...programInput,
+      id: "program-1",
+      startYear: 2026,
+      topicCount: 0,
+      teamCount: 0,
+      projectRegistrationStartsAt: programInput.startsAt,
+      projectRegistrationEndsAt: programInput.endsAt,
+    };
+    const value = repository({ updateSchedule: vi.fn(async () => "UPDATED" as const) });
+    const executionStartsAt = new Date("2026-04-01T00:00:00Z");
+    const executionEndsAt = new Date("2026-11-01T00:00:00Z");
+
+    await new ProjectProgramService(value).updateSchedule({ id: "admin", role: "ADMIN" }, "program-1", {
+      startsAt: current.startsAt,
+      endsAt: current.endsAt,
+      projectRegistrationStartsAt: current.projectRegistrationStartsAt,
+      projectRegistrationEndsAt: current.projectRegistrationEndsAt,
+      recruitmentStartsAt: current.recruitmentStartsAt,
+      recruitmentEndsAt: current.recruitmentEndsAt,
+      executionStartsAt,
+      executionEndsAt,
+    });
+
+    expect(value.updateSchedule).toHaveBeenCalledWith("program-1", expect.objectContaining({
+      executionStartsAt,
+      executionEndsAt,
+    }));
   });
 
   it("관리자가 프로그램 아이콘을 변경한다", async () => {
@@ -157,7 +361,8 @@ describe("프로젝트 프로그램 관리", () => {
         staffVoteLimit: 5,
         voteLimitScope: "DIVISION",
         selfVotingAllowed: false,
-        identityVisibility: "ANONYMOUS",
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
       },
     });
     await expect(result).rejects.toMatchObject({ impact } satisfies Partial<ProgramVoteResetConfirmationRequiredError>);

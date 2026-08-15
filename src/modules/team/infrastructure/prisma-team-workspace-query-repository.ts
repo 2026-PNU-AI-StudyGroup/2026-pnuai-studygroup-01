@@ -7,10 +7,11 @@ import type {
   TeamWorkspaceReader,
 } from "@/modules/team/application/team-workspace-ports";
 import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
+import { effectiveProjectStatus } from "@/modules/topic/domain/project-lifecycle";
 
 const teamListInclude = {
-  topic: { select: { title: true, program: { select: { name: true } } } },
-  members: { select: { id: true } },
+  project: { select: { title: true, status: true, program: { select: { name: true, endsAt: true } } } },
+  memberships: { where: { endedAt: null }, select: { id: true } },
   tasks: {
     orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
     select: {
@@ -34,9 +35,9 @@ const teamListInclude = {
       },
     },
   },
-} satisfies Prisma.TeamInclude;
+} satisfies Prisma.ProjectTeamInclude;
 const DISCUSSION_PAGE_SIZE = 50;
-type TeamListRow = Prisma.TeamGetPayload<{ include: typeof teamListInclude }>;
+type TeamListRow = Prisma.ProjectTeamGetPayload<{ include: typeof teamListInclude }>;
 
 export class PrismaTeamWorkspaceQueryRepository
   implements TeamWorkspaceReader
@@ -49,13 +50,16 @@ export class PrismaTeamWorkspaceQueryRepository
     discussionPage = 1,
   ): Promise<TeamWorkspace | null> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
-    const team = await this.client.team.findFirst({
-      where: { id: teamId, ...teamActorWhere(actor) },
+    const team = await this.client.projectTeam.findFirst({
+      where: { projectId: teamId, ...teamActorWhere(actor) },
       include: {
-        topic: { select: {
+        project: { select: {
           id: true,
           title: true,
-          program: { select: { name: true, advisorEnabled: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+          status: true,
+          description: true,
+          managerId: true,
+          program: { select: { name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -78,10 +82,12 @@ export class PrismaTeamWorkspaceQueryRepository
             },
           },
         } },
-        members: {
+        memberships: {
+          where: { endedAt: null },
           orderBy: { joinedAt: "asc" },
           select: {
-            student: {
+            role: true,
+            user: {
               select: {
                 id: true,
                 name: true,
@@ -155,7 +161,7 @@ export class PrismaTeamWorkspaceQueryRepository
     const discussionPosts = resolvedDiscussionPage === normalizedDiscussionPage
       ? team.discussionPosts
       : await this.client.discussionPost.findMany({
-        where: { teamId: team.id },
+        where: { projectTeamId: team.id },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: (resolvedDiscussionPage - 1) * DISCUSSION_PAGE_SIZE,
         take: DISCUSSION_PAGE_SIZE,
@@ -167,48 +173,50 @@ export class PrismaTeamWorkspaceQueryRepository
           author: { select: { name: true, role: true } },
         },
       });
-    const assistantIds = new Set(team.topic.assistants.map(({ userId }) => userId));
+    const assistantIds = new Set(team.project.assistants.map(({ userId }) => userId));
     return {
       id: team.id,
-      topicId: team.topic.id,
+      topicId: team.project.id,
+      topicDescription: team.project.description,
       name: team.name,
-      programName: team.topic.program.name,
-      topicTitle: team.topic.title,
-      status: team.status,
-      professorName: team.topic.manager!.name,
-      professor: team.topic.manager!,
-      advisorEnabled: team.topic.program.advisorEnabled,
+      programName: team.project.program.name,
+      topicTitle: team.project.title,
+      status: projectTeamPhase(team),
+      professorName: team.project.manager!.name,
+      professor: team.project.manager!,
+      advisorEnabled: team.project.program.advisorEnabled,
       access: {
-        isPrimaryAdvisor: team.professorId === actor.id,
-        isAssistant: team.topic.assistants.some(({ userId }) => userId === actor.id),
-        isTeamMember: team.members.some(({ student }) => student.id === actor.id),
+        isPrimaryAdvisor: team.project.managerId === actor.id,
+        isAssistant: team.project.assistants.some(({ userId }) => userId === actor.id),
+        isTeamMember: team.memberships.some(({ user }) => user.id === actor.id),
+        isTeamLeader: team.memberships.some(({ role, user }) =>
+          user.id === actor.id && role === "LEADER"
+        ),
         canSupervise: actor.role === "ADMIN" ||
-          team.professorId === actor.id ||
-          team.topic.assistants.some(({ userId }) => userId === actor.id),
-        canContribute: actor.role === "ADMIN" ||
-          team.members.some(({ student }) => student.id === actor.id),
+          team.project.managerId === actor.id ||
+          team.project.assistants.some(({ userId }) => userId === actor.id),
+        canContribute: team.project.program.endsAt > new Date() && (actor.role === "ADMIN" ||
+          (team.project.status === "ACTIVE" && team.memberships.some(({ user }) => user.id === actor.id))),
       },
       schedule: {
-        recruitmentStartsAt: team.topic.program.recruitmentStartsAt,
-        programRecruitmentEndsAt: team.topic.program.recruitmentEndsAt,
-        executionStartsAt: team.topic.program.executionStartsAt,
-        executionEndsAt: team.topic.program.executionEndsAt,
-        submissionStartsAt: team.topic.program.submissionStartsAt,
-        submissionEndsAt: team.topic.program.submissionEndsAt,
+        recruitmentStartsAt: team.project.program.recruitmentStartsAt,
+        programRecruitmentEndsAt: team.project.program.recruitmentEndsAt,
+        executionStartsAt: team.project.program.executionStartsAt,
+        executionEndsAt: team.project.program.executionEndsAt,
+        submissionStartsAt: team.project.program.submissionStartsAt,
+        submissionEndsAt: team.project.program.submissionEndsAt,
       },
-      canClose: team.status === "CONFIRMED" && team.reports.length > 0 && team.reports.every(
-        (report) => report.versions[0]?.decision?.decision === "APPROVED",
-      ),
-      memberCount: team.members.length,
+      memberCount: team.memberships.length,
       taskCount: team.tasks.length,
       completedTaskCount,
       reportCount: team.reports.length,
       submittedReportCount: team.reports.filter(
         (report) => report.versions.length > 0,
       ).length,
-      assistants: team.topic.assistants.map(({ user }) => user),
-      members: team.members.map(({ student: { studentProfile, profileImage, ...student } }) => ({
-        ...student,
+      assistants: team.project.assistants.map(({ user }) => user),
+      members: team.memberships.map(({ role, user: { studentProfile, profileImage, ...user } }) => ({
+        ...user,
+        role,
         profileImage,
         profile: studentProfile,
       })),
@@ -221,7 +229,7 @@ export class PrismaTeamWorkspaceQueryRepository
         authorName: author.name,
         authorRole: assistantIds.has(post.authorId)
           ? "ASSISTANT" as const
-          : post.authorId === team.professorId || author.role === "PROFESSOR"
+          : post.authorId === team.project.managerId || author.role === "PROFESSOR"
             ? "PROFESSOR" as const
             : author.role === "ADMIN"
               ? "ADMIN" as const
@@ -234,11 +242,11 @@ export class PrismaTeamWorkspaceQueryRepository
   }
 
   listForStudent(studentId: string): Promise<TeamListItem[]> {
-    return this.list({ members: { some: { studentId } } });
+    return this.list({ memberships: { some: { userId: studentId, endedAt: null } } });
   }
 
   listForProfessor(professorId: string): Promise<TeamListItem[]> {
-    return this.list({ professorId });
+    return this.list({ project: { managerId: professorId } });
   }
 
   listAll(): Promise<TeamListItem[]> {
@@ -256,21 +264,22 @@ export class PrismaTeamWorkspaceQueryRepository
     status?: "ACTIVE" | "COMPLETED",
   ): Promise<TeamListPage> {
     const visibility = teamActorWhere(actor);
-    const statusWhere: Prisma.TeamWhereInput = status === "ACTIVE"
-      ? { status: { in: ["FORMING", "CONFIRMED"] } }
+    const now = new Date();
+    const statusWhere: Prisma.ProjectTeamWhereInput = status === "ACTIVE"
+      ? { project: { program: { endsAt: { gt: now } } } }
       : status === "COMPLETED"
-        ? { status: "CLOSED" }
+        ? { confirmedAt: { not: null }, project: { program: { endsAt: { lte: now } } } }
         : {};
-    const where: Prisma.TeamWhereInput = { AND: [visibility, statusWhere] };
+    const where: Prisma.ProjectTeamWhereInput = { AND: [visibility, statusWhere] };
     const [total, all, active, completed] = await Promise.all([
-      this.client.team.count({ where }),
-      this.client.team.count({ where: visibility }),
-      this.client.team.count({ where: { AND: [visibility, { status: { in: ["FORMING", "CONFIRMED"] } }] } }),
-      this.client.team.count({ where: { AND: [visibility, { status: "CLOSED" }] } }),
+      this.client.projectTeam.count({ where }),
+      this.client.projectTeam.count({ where: visibility }),
+      this.client.projectTeam.count({ where: { AND: [visibility, { project: { program: { endsAt: { gt: now } } } }] } }),
+      this.client.projectTeam.count({ where: { AND: [visibility, { confirmedAt: { not: null }, project: { program: { endsAt: { lte: now } } } }] } }),
     ]);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, totalPages);
-    const teams = await this.client.team.findMany({
+    const teams = await this.client.projectTeam.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * pageSize,
@@ -286,8 +295,8 @@ export class PrismaTeamWorkspaceQueryRepository
     };
   }
 
-  private async list(where: Prisma.TeamWhereInput): Promise<TeamListItem[]> {
-    const teams = await this.client.team.findMany({
+  private async list(where: Prisma.ProjectTeamWhereInput): Promise<TeamListItem[]> {
+    const teams = await this.client.projectTeam.findMany({
       where,
       orderBy: { createdAt: "desc" },
       include: teamListInclude,
@@ -298,12 +307,12 @@ export class PrismaTeamWorkspaceQueryRepository
 
 function toTeamListItem(team: TeamListRow): TeamListItem {
   return {
-      id: team.id,
+      id: team.projectId,
       name: team.name,
-      programName: team.topic.program.name,
-      topicTitle: team.topic.title,
-      status: team.status,
-      memberCount: team.members.length,
+      programName: team.project.program.name,
+      topicTitle: team.project.title,
+      status: projectTeamPhase(team),
+      memberCount: team.memberships.length,
       taskCount: team.tasks.length,
       completedTaskCount: team.tasks.filter(
         ({ status }) => status === "DONE",
@@ -317,4 +326,13 @@ function toTeamListItem(team: TeamListRow): TeamListItem {
         assignees: task.assignees.map(({ user }) => user),
       })),
     };
+}
+
+function projectTeamPhase(team: Pick<TeamListRow, "confirmedAt" | "project">): TeamListItem["status"] {
+  const status = effectiveProjectStatus({
+    status: team.project.status,
+    programEndsAt: team.project.program.endsAt,
+    confirmedAt: team.confirmedAt,
+  });
+  return status === "PENDING_APPROVAL" || status === "REJECTED" ? "FORMING" : status;
 }

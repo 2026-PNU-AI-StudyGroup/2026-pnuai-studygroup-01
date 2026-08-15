@@ -59,16 +59,15 @@ export class PrismaProgramDivisionRepository implements ProgramDivisionRepositor
     return this.client.$transaction(async (tx) => {
       const reference = await tx.programDivision.findUnique({ where: { id }, select: { programId: true } });
       if (!reference) return "NOT_FOUND" as const;
-      const programs = await tx.$queryRaw<Array<{ id: string; lifecycleStatus: "ACTIVE" | "CLOSED" }>>(Prisma.sql`
-        SELECT "id", "lifecycleStatus" FROM "project_program"
+      const programs = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "project_program"
         WHERE "id" = ${reference.programId} FOR UPDATE
       `);
       if (!programs[0]) return "NOT_FOUND" as const;
-      if (programs[0].lifecycleStatus !== "ACTIVE") return "PROGRAM_CLOSED" as const;
       const division = await tx.programDivision.findUnique({ where: { id }, select: { id: true, programId: true, name: true, position: true, _count: { select: { topics: true } } } });
       if (!division) return "NOT_FOUND" as const;
-      const teamIds = (await tx.team.findMany({ where: { programId: division.programId, topic: { divisionId: id } }, select: { id: true } })).map((team) => team.id);
-      if (teamIds.length && await tx.rubricScore.findFirst({ where: { evaluation: { teamId: { in: teamIds } } }, select: { id: true } })) {
+      const teamIds = (await tx.projectTeam.findMany({ where: { project: { programId: division.programId, divisionId: id } }, select: { id: true } })).map((team) => team.id);
+      if (teamIds.length && await tx.rubricScore.findFirst({ where: { evaluation: { projectTeamId: { in: teamIds } } }, select: { id: true } })) {
         return "SCORED_RUBRIC" as const;
       }
       const [voteCount, divisionCount, policy] = await Promise.all([tx.projectVote.count({ where: { programId: division.programId } }), tx.programDivision.count({ where: { programId: division.programId } }), tx.programVotingPolicy.findUnique({ where: { programId: division.programId } })]);
@@ -78,13 +77,13 @@ export class PrismaProgramDivisionRepository implements ProgramDivisionRepositor
       if (requiresConfirmation && (!confirmed || !isConfirmedImpact(confirmedImpact, impact))) return "CONFIRMATION_REQUIRED" as const;
       const customRubricIds = (await tx.rubricDefinition.findMany({ where: { programId: division.programId, divisionId: id }, select: { id: true } })).map((rubric) => rubric.id);
       if (customRubricIds.length) {
-        await tx.teamRubricEvaluation.deleteMany({ where: { rubricId: { in: customRubricIds } } });
+        await tx.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: customRubricIds } } });
         await tx.rubricDefinition.deleteMany({ where: { id: { in: customRubricIds } } });
       }
       await tx.topic.updateMany({ where: { programId: division.programId, divisionId: id }, data: { divisionId: null } });
       const commonRubricIds = (await tx.rubricDefinition.findMany({ where: { programId: division.programId, divisionId: null, archivedAt: null, legacy: false }, select: { id: true } })).map((rubric) => rubric.id);
       if (teamIds.length && commonRubricIds.length) {
-        await tx.teamRubricEvaluation.createMany({ data: teamIds.flatMap((teamId) => commonRubricIds.map((rubricId) => ({ teamId, rubricId }))), skipDuplicates: true });
+        await tx.projectTeamRubricEvaluation.createMany({ data: teamIds.flatMap((projectTeamId) => commonRubricIds.map((rubricId) => ({ projectTeamId, rubricId }))), skipDuplicates: true });
       }
       if (voteCount) { await tx.projectVote.deleteMany({ where: { programId: division.programId } }); await tx.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: division.programId, metadata: { reason: "DIVISION_DELETED", voteCount } } }); }
       if (switchesVotingScope) await tx.programVotingPolicy.update({ where: { programId: division.programId }, data: { voteLimitScope: "PROGRAM" } });

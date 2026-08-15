@@ -74,9 +74,12 @@ export class PrismaTopicApplicationRejection {
 
       const teamRows = await transaction.$queryRaw<Array<{
         id: string;
-        status: "FORMING" | "CONFIRMED" | "CLOSED";
+        confirmedAt: Date | null;
       }>>(Prisma.sql`
-        SELECT "id", "status" FROM "team" WHERE "topicId" = ${initial.topicId} FOR UPDATE
+        SELECT "id", "confirmedAt"
+        FROM "project_team"
+        WHERE "projectId" = ${initial.topicId}
+        FOR UPDATE
       `);
       const team = teamRows[0];
 
@@ -90,9 +93,12 @@ export class PrismaTopicApplicationRejection {
         ? await transaction.$queryRaw<Array<{
             authorId: string;
             status: "OPEN" | "CLOSED";
-            teamId: string;
+            projectTeamId: string;
           }>>(Prisma.sql`
-            SELECT "authorId", "status", "teamId" FROM "recruitment_post" WHERE "id" = ${recruitment.postId} FOR UPDATE
+            SELECT "authorId", "status", "projectTeamId"
+            FROM "recruitment_post"
+            WHERE "id" = ${recruitment.postId}
+            FOR UPDATE
           `)
         : [];
 
@@ -116,8 +122,8 @@ export class PrismaTopicApplicationRejection {
       const recruiterAllowed =
         post?.authorId === actor.id &&
         post.status === "OPEN" &&
-        post.teamId === team?.id &&
-        team.status === "FORMING";
+        post.projectTeamId === team?.id &&
+        team.confirmedAt === null;
       if (!actor.isAdmin && topic.managerId !== actor.id && !assistantAllowed && !recruiterAllowed) {
         return "FORBIDDEN";
       }

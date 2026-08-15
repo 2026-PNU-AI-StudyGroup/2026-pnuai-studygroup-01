@@ -59,6 +59,42 @@ describe("ProgramSidebar", () => {
     expect(container.querySelector("summary")).toHaveTextContent("프로그램캡스톤 2025종료");
   });
 
+  it("관리자에게 각 프로그램의 설정 링크를 별도 동작으로 제공한다", () => {
+    render(<ProgramSidebar items={items} selectedId="capstone-2025" showSettings />);
+    const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
+
+    expect(screen.getAllByRole("link", { name: "새 프로그램 추가" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "새 프로그램 추가" })[0]).toHaveAttribute(
+      "href",
+      "/topics/manage/new",
+    );
+    expect(within(navigation).getByRole("link", { name: "캡스톤 2025 설정" })).toHaveAttribute(
+      "href",
+      "/topics/manage/capstone-2025",
+    );
+    expect(within(navigation).getByRole("link", { name: "창의융합 해커톤 2026 설정", hidden: true })).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
+  });
+
+  it("비공개 프로그램은 진행·투표 점 대신 같은 위치에 자물쇠를 표시한다", () => {
+    const { container } = render(<ProgramSidebar items={[{ ...items[0], visibility: "private", votingEndsAt: "2026-08-10T09:00:00+09:00" }]} />);
+    expect(container.querySelector('[data-program-status="private"]')).toBeInTheDocument();
+    expect(screen.getAllByText("비공개").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("region", { name: "투표 진행 프로그램" })).not.toBeInTheDocument();
+  });
+
+  it("승인 대기가 있는 프로그램에만 경고 색상의 건수를 표시한다", () => {
+    const { rerender } = render(<ProgramSidebar items={[{ ...items[0], pendingApprovalCount: 2 }]} />);
+
+    expect(screen.getAllByText(/승인 대기/)).toHaveLength(2);
+    expect(screen.getAllByText(/승인 대기/)[0]).toHaveTextContent("승인 대기 2건");
+
+    rerender(<ProgramSidebar items={[{ ...items[0], pendingApprovalCount: 0 }]} />);
+    expect(screen.queryByText(/승인 대기/)).not.toBeInTheDocument();
+  });
+
   it("투표 중인 프로그램들을 최상단 카드로 강조하면서 각 대분류 목록에도 유지한다", () => {
     vi.useFakeTimers();
     try {

@@ -21,7 +21,7 @@ export class PrismaTopicCommandRepository
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "project_program"
         WHERE "id" = ${topic.programId}
-          AND "lifecycleStatus" = 'ACTIVE'::"ProgramLifecycleStatus"
+          AND "endsAt" > ${registeredAt}
           AND "projectRegistrationStartsAt" <= ${registeredAt}
           AND "projectRegistrationEndsAt" > ${registeredAt}
         FOR SHARE
@@ -43,7 +43,7 @@ export class PrismaTopicCommandRepository
               position,
             })),
           },
-          status: "PUBLISHED",
+          status: "ACTIVE",
           publishedAt: registeredAt,
         },
         select: { id: true },
@@ -79,14 +79,13 @@ export class PrismaTopicCommandRepository
             select: { label: true, maxLength: true, required: true },
           },
           _count: { select: { applications: true } },
-          team: { select: { _count: { select: { members: true } } } },
+          projectTeam: { select: { _count: { select: { memberships: { where: { endedAt: null } } } } } },
         },
       });
       if (!current) return "NOT_FOUND" as const;
-      if (current.status === "CLOSED") return "CLOSED" as const;
       if (current.programId !== topic.programId) return "PROGRAM_UNAVAILABLE" as const;
       const program = await transaction.projectProgram.findFirst({
-        where: { id: current.programId, lifecycleStatus: "ACTIVE" },
+        where: { id: current.programId, endsAt: { gt: new Date() } },
         select: { id: true },
       });
       if (!program) {
@@ -95,7 +94,7 @@ export class PrismaTopicCommandRepository
       const formChanged = current.applicationMode !== topic.applicationMode ||
         JSON.stringify(current.applicationQuestions) !== JSON.stringify(topic.applicationQuestions);
       if (current._count.applications > 0 && formChanged) return "APPLICATION_FORM_LOCKED" as const;
-      if ((current.team?._count.members ?? 0) > topic.capacity) return "CAPACITY_TOO_SMALL" as const;
+      if ((current.projectTeam?._count.memberships ?? 0) > topic.capacity) return "CAPACITY_TOO_SMALL" as const;
 
       const { applicationQuestions, ...data } = topic;
       await transaction.topic.update({
@@ -141,72 +140,12 @@ export class PrismaTopicCommandRepository
     } : null);
   }
 
-  async closePublished(id: string, actor: CurrentActor): Promise<boolean> {
-    return this.client.$transaction(async (transaction) => {
-      const decidedAt = new Date();
-      const result = await transaction.topic.updateMany({
-        where: { id, status: "PUBLISHED", ...topicSupervisorWhere(actor) },
-        data: { status: "CLOSED" },
-      });
-      if (result.count !== 1) return false;
-      const applications = await transaction.topicApplication.findMany({
-        where: { topicId: id, status: "PENDING" },
-        select: {
-          id: true,
-          studentId: true,
-          topic: { select: { title: true } },
-        },
-      });
-      const rejectedApplications = await transaction.topicApplication.updateMany({
-        where: { topicId: id, status: "PENDING" },
-        data: {
-          status: "REJECTED",
-          decidedAt,
-          decidedById: actor.id,
-          reviewComment: "프로젝트 모집이 마감되어 자동 미선정되었습니다.",
-        },
-      });
-      const closedRecruitmentPosts = await transaction.recruitmentPost.updateMany({
-        where: { team: { topicId: id }, status: "OPEN" },
-        data: { status: "CLOSED" },
-      });
-      await transaction.recruitmentApplication.updateMany({
-        where: { post: { team: { topicId: id } }, status: "PENDING" },
-        data: { status: "REJECTED", decidedAt },
-      });
-      await createApplicationResultNotifications(
-        transaction,
-        applications.map((application) => ({
-          applicationId: application.id,
-          recipientId: application.studentId,
-          topicTitle: application.topic.title,
-          outcome: "REJECTED",
-          createdAt: decidedAt,
-        })),
-      );
-      await transaction.auditLog.create({
-        data: {
-          actorId: actor.id,
-          action: "TOPIC_CLOSED",
-          targetType: "TOPIC",
-          targetId: id,
-          metadata: {
-            rejectedApplicationCount: rejectedApplications.count,
-            closedRecruitmentPostCount: closedRecruitmentPosts.count,
-          },
-          createdAt: decidedAt,
-        },
-      });
-      return true;
-    });
-  }
-
   async closeRecruitment(id: string, actor: CurrentActor, closedAt: Date): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
       const result = await transaction.topic.updateMany({
         where: {
           id,
-          status: "PUBLISHED",
+          status: "ACTIVE",
           recruitmentEnabled: true,
           ...topicSupervisorWhere(actor),
         },
@@ -232,11 +171,11 @@ export class PrismaTopicCommandRepository
         },
       });
       const closedRecruitmentPosts = await transaction.recruitmentPost.updateMany({
-        where: { team: { topicId: id }, status: "OPEN" },
+        where: { projectTeam: { projectId: id }, status: "OPEN" },
         data: { status: "CLOSED" },
       });
       await transaction.recruitmentApplication.updateMany({
-        where: { post: { team: { topicId: id } }, status: "PENDING" },
+        where: { post: { projectTeam: { projectId: id } }, status: "PENDING" },
         data: { status: "REJECTED", decidedAt: closedAt },
       });
       await createApplicationResultNotifications(

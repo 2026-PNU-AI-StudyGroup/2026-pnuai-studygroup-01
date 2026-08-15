@@ -6,6 +6,8 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { teamFileAccessWhere } from "@/modules/advisor/infrastructure/advisor-file-access";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
+import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
+import { announcementScopeWhere } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
 
 export async function GET(
   _request: Request,
@@ -14,13 +16,24 @@ export async function GET(
   const actor = await getCurrentActor();
   if (!actor) return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
   const { fileId } = await params;
+  const announcementAudience = await resolveAnnouncementAudience(actor);
+  const completedProgramWhere = actor.role === "ADMIN"
+    ? { endsAt: { lte: new Date() } }
+    : { isPublic: true, endsAt: { lte: new Date() } };
   const file = await prisma.storedFile.findFirst({
     where: {
       id: fileId,
       status: "ATTACHED",
       OR: [
-        { team: teamFileAccessWhere(actor) },
-        { purpose: "ARTIFACT", team: { status: "CLOSED" } },
+        { projectTeam: teamFileAccessWhere(actor) },
+        {
+          purpose: "ARTIFACT",
+          projectTeam: {
+            confirmedAt: { not: null },
+            project: { program: completedProgramWhere },
+          },
+        },
+        { announcementAttachment: { announcement: announcementScopeWhere(announcementAudience) } },
       ],
     },
     select: { objectKey: true, originalName: true },

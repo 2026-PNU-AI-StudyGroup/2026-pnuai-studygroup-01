@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { MemberContacts, type MemberContactInfo } from "@/modules/identity/ui/member-contacts";
 

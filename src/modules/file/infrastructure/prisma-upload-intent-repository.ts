@@ -11,7 +11,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
   constructor(private readonly client: PrismaClient) {}
 
   createForActor(input: UploadIntent & {
-    teamId: string;
+    teamId: string | null;
     actor: CurrentActor;
     purpose: FilePurpose;
     consumer: UploadConsumer;
@@ -21,20 +21,46 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       await transaction.$executeRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${input.actor.id}, 1))
       `);
+      if (input.purpose === "ANNOUNCEMENT") {
+        if (input.teamId !== null || input.actor.role === "STUDENT") return false;
+        const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+          INSERT INTO "stored_file" (
+            "id", "projectTeamId", "ownerId", "purpose", "consumer", "status", "objectKey",
+            "uploadObjectKey", "originalName", "contentType", "size", "sha256",
+            "expiresAt", "cleanupAfter", "createdAt"
+          )
+          SELECT ${input.id}, NULL, ${input.actor.id},
+            'ANNOUNCEMENT'::"FilePurpose", 'ANNOUNCEMENT'::"UploadConsumer", 'PENDING'::"StoredFileStatus",
+            ${input.objectKey}, ${input.uploadObjectKey}, ${input.originalName},
+            ${input.contentType}, ${input.size}, ${input.sha256}, ${input.expiresAt},
+            ${input.cleanupAfter}, ${new Date()}
+          WHERE (
+            SELECT count(*) FROM "stored_file"
+            WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
+          ) < 5
+          RETURNING "id"
+        `);
+        return rows.length === 1;
+      }
+      if (input.teamId === null) return false;
       await transaction.$executeRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${input.teamId}, 0))
       `);
       const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-        SELECT "team"."id"
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
+        SELECT "project_team"."id"
+        FROM "project_team"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_program"."endsAt" > NOW()
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN' OR
             (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
-              SELECT 1 FROM "team_member"
-              WHERE "team_member"."teamId" = "team"."id"
-                AND "team_member"."studentId" = ${input.actor.id}
+              SELECT 1 FROM "project_team_membership"
+              WHERE "project_team_membership"."projectTeamId" = "project_team"."id"
+                AND "project_team_membership"."userId" = ${input.actor.id}
+                AND "project_team_membership"."endedAt" IS NULL
             ))
           )
         FOR UPDATE
@@ -42,25 +68,28 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       if (teams.length !== 1) return false;
       const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         INSERT INTO "stored_file" (
-          "id", "teamId", "ownerId", "purpose", "consumer", "status", "objectKey",
+          "id", "projectTeamId", "ownerId", "purpose", "consumer", "status", "objectKey",
           "uploadObjectKey", "originalName", "contentType", "size", "sha256",
           "expiresAt", "cleanupAfter", "createdAt"
         )
-        SELECT ${input.id}, "team"."id", ${input.actor.id},
+        SELECT ${input.id}, "project_team"."id", ${input.actor.id},
           ${input.purpose}::"FilePurpose", ${input.consumer}::"UploadConsumer", 'PENDING'::"StoredFileStatus",
           ${input.objectKey}, ${input.uploadObjectKey}, ${input.originalName},
           ${input.contentType}, ${input.size}, ${input.sha256}, ${input.expiresAt},
           ${input.cleanupAfter}, ${new Date()}
-        FROM "team"
-        WHERE "team"."id" = ${input.teamId}
-          AND "team"."status" <> 'CLOSED'
+        FROM "project_team"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+        WHERE "project_team"."id" = ${input.teamId}
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_program"."endsAt" > NOW()
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
           ) < 3
           AND COALESCE((
             SELECT sum("size") FROM "stored_file"
-            WHERE "teamId" = "team"."id"
+            WHERE "projectTeamId" = "project_team"."id"
           ), 0) + ${input.size} <= 5368709120
         RETURNING "id"
       `);
@@ -90,25 +119,43 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
     }).then((count) => count === 1);
   }
 
-  finalizeWithTeamLock(
+  finalizeWithScopeLock(
     id: string,
     ownerId: string,
     readyAt: Date,
     promote: (intent: UploadIntent) => Promise<void>,
   ): Promise<boolean> {
     return this.client.$transaction(async (transaction) => {
-      const files = await transaction.$queryRaw<Array<UploadIntent>>(Prisma.sql`
+      const scope = await transaction.storedFile.findFirst({
+        where: { id, ownerId, status: "PENDING" },
+        select: { projectTeamId: true },
+      });
+      if (!scope) return false;
+      if (scope.projectTeamId !== null) {
+        const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+          SELECT "project_team"."id"
+          FROM "project_team"
+          JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+          JOIN "project_program" ON "project_program"."id" = "topic"."programId"
+          WHERE "project_team"."id" = ${scope.projectTeamId}
+            AND "topic"."status" = 'ACTIVE'
+            AND "project_program"."endsAt" > NOW()
+          FOR UPDATE
+        `);
+        if (teams.length !== 1) return false;
+      }
+      const files = await transaction.$queryRaw<Array<UploadIntent & { projectTeamId: string | null }>>(Prisma.sql`
         SELECT "stored_file"."id", "stored_file"."objectKey",
           "stored_file"."uploadObjectKey", "stored_file"."contentType",
           "stored_file"."size", "stored_file"."sha256",
-          "stored_file"."expiresAt", "stored_file"."cleanupAfter"
+          "stored_file"."expiresAt", "stored_file"."cleanupAfter",
+          "stored_file"."projectTeamId"
         FROM "stored_file"
-        JOIN "team" ON "team"."id" = "stored_file"."teamId"
         WHERE "stored_file"."id" = ${id}
           AND "stored_file"."ownerId" = ${ownerId}
           AND "stored_file"."status" = 'PENDING'
-          AND "team"."status" <> 'CLOSED'
-        FOR UPDATE OF "team", "stored_file"
+          AND "stored_file"."projectTeamId" IS NOT DISTINCT FROM ${scope.projectTeamId}
+        FOR UPDATE OF "stored_file"
       `);
       const file = files[0];
       if (!file) return false;

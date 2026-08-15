@@ -1,6 +1,7 @@
 import type { ProgramSidebarItem } from "@/modules/project-program/ui/program-sidebar";
 import { programLifecycleStatus, type ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
+import { type ProgramManagementTab, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
 
 export type ProgramSidebarQuery = {
@@ -76,4 +77,41 @@ export function buildProgramSidebarItems(
         href: programHref(program.id, "past", query),
       })),
   ];
+}
+
+export function buildAdminProgramSidebarItems(
+  programs: ProjectProgramRecord[],
+  mode: "projects" | "manage" | "create",
+  tab: ProgramManagementTab,
+  now = new Date(),
+  pendingApprovalCounts: ReadonlyMap<string, number> = new Map(),
+): ProgramSidebarItem[] {
+  return programs.map((program) => {
+    const status = programLifecycleStatus(program) === "CLOSED"
+      ? "past"
+      : program.isPublic
+        ? "active"
+        : "draft";
+    const projectHref = status === "past"
+      ? `/topics?view=past&programId=${encodeURIComponent(program.id)}`
+      : `/topics?programId=${encodeURIComponent(program.id)}`;
+    return {
+      id: program.id,
+      name: program.name,
+      category: program.category,
+      icon: program.icon,
+      startYear: program.startYear,
+      status,
+      href: mode === "manage"
+        ? programManagementHref(program.id, tab)
+        : mode === "create"
+          ? programManagementHref(program.id)
+          : projectHref,
+      votingEndsAt: activeVotingEndsAt(program, now),
+      votingHref: projectHref,
+      projectCount: program.topicCount,
+      visibility: program.isPublic ? "public" : "private",
+      pendingApprovalCount: pendingApprovalCounts.get(program.id) || undefined,
+    };
+  });
 }

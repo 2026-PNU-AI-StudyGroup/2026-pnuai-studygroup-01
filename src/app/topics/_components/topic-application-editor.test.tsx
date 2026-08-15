@@ -79,6 +79,25 @@ describe("TopicApplicationEditor", () => {
     expect(screen.getByRole("button", { name: "선택한 팀으로 지원" })).toBeDisabled();
   });
 
+  it("팀 지원 가능 인원은 전체 정원이 아니라 실제 남은 정원으로 계산한다", () => {
+    render(
+      <TopicApplicationEditor
+        topicId="50000000-0000-4000-8000-000000000001"
+        topicTitle="캠퍼스 이동약자를 위한 실내 길찾기"
+        applicationMode="TEAM_ONLY"
+        applicationQuestions={[]}
+        capacity={4}
+        memberCount={3}
+        leaderTeams={[{ id: "70000000-0000-4000-8000-000000000001", name: "2인 팀", memberCount: 2 }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "이 프로젝트에 지원" }));
+
+    expect(screen.getByText("정원 안에 들어오는 팀이 없습니다")).toBeInTheDocument();
+    expect(screen.getByText(/1명 이하로 팀 구성을 조정/)).toBeInTheDocument();
+  });
+
   it("개인·팀 지원이 모두 가능하면 방식을 선택한 뒤 지원서 화면으로 이동한다", () => {
     render(
       <TopicApplicationEditor

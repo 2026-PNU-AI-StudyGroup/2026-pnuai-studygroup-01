@@ -1,11 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AdvisorAssignmentContext, AdvisorReviewRepository } from "@/modules/advisor/application/advisor-review";
 
-// 팀에 이미 배정된 채점표(TeamRubricEvaluation)를 그대로 사용한다.
+// 프로젝트 팀에 이미 배정된 채점표(ProjectTeamRubricEvaluation)를 그대로 사용한다.
 // 분과별(CUSTOM)/공통(INHERIT_COMMON) 선택은 배정 시점에 끝나 있으므로 여기서 다시 계산하지 않는다.
 export async function findTeamRubrics(client: PrismaClient, teamId: string) {
-  const assigned = await client.teamRubricEvaluation.findMany({
-    where: { teamId, rubric: { archivedAt: null, legacy: false } },
+  const assigned = await client.projectTeamRubricEvaluation.findMany({
+    where: { projectTeamId: teamId, rubric: { archivedAt: null, legacy: false } },
     orderBy: [{ rubric: { position: "asc" } }, { createdAt: "asc" }],
     select: {
       rubric: {
@@ -27,22 +27,22 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
   async findAssignment(advisorId: string, topicId: string): Promise<AdvisorAssignmentContext | null> {
     const assignment = await this.client.projectAdvisor.findUnique({
       where: { topicId_userId: { topicId, userId: advisorId } },
-      select: { topic: { select: { program: { select: { endsAt: true } }, team: { select: { id: true } } } } },
+      select: { topic: { select: { program: { select: { endsAt: true } }, projectTeam: { select: { id: true } } } } },
     });
     const topic = assignment?.topic;
-    if (!topic?.team) return null;
+    if (!topic?.projectTeam) return null;
     return {
-      teamId: topic.team.id,
+      teamId: topic.projectTeam.id,
       programEndsAt: topic.program.endsAt,
-      rubrics: await findTeamRubrics(this.client, topic.team.id),
+      rubrics: await findTeamRubrics(this.client, topic.projectTeam.id),
     };
   }
 
   async saveScores(input: { teamId: string; advisorId: string; rubricId: string; scores: Array<{ criterionId: string; points: number }> }) {
     await this.client.$transaction(async (transaction) => {
       const evaluation = await transaction.advisorEvaluation.upsert({
-        where: { teamId_advisorId_rubricId: { teamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId } },
-        create: { teamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId },
+        where: { projectTeamId_advisorId_rubricId: { projectTeamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId } },
+        create: { projectTeamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId },
         update: {},
         select: { id: true },
       });
@@ -58,7 +58,8 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
   }
 
   async addFeedback(input: { teamId: string; advisorId: string; body: string; createdAt: Date }) {
-    await this.client.advisorFeedback.create({ data: input });
+    const { teamId, ...feedback } = input;
+    await this.client.advisorFeedback.create({ data: { ...feedback, projectTeamId: teamId } });
     return true;
   }
 }

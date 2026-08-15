@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -10,18 +11,22 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
-import {
-  ANNOUNCEMENT_CATEGORY_BADGE,
-  ANNOUNCEMENT_CATEGORY_LABELS,
-} from "@/modules/announcement/ui/announcement-presentation";
 import type { AnnouncementRecord } from "@/modules/announcement/application/announcement-ports";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiButton } from "@/modules/translation/ui/localized-elements";
-import { CloseIcon, PinIcon } from "@/shared/ui/workspace-icons";
+import { UiButton, UiDiv } from "@/modules/translation/ui/localized-elements";
+import { AddIcon, CloseIcon, EditIcon, PinIcon } from "@/shared/ui/workspace-icons";
+import { AnnouncementAttachmentList } from "@/modules/announcement/ui/announcement-attachment-list";
+import { IconButton, IconLink } from "@/shared/ui/icon-button";
+import { EmptyState } from "@/shared/ui/page-primitives";
 
 const MOUSE_DRAG_THRESHOLD_PX = 8;
 
-export function ProgramAnnouncementRail({ announcements }: { announcements: AnnouncementRecord[] }) {
+export function ProgramAnnouncementRail({ announcements, createHref, manageableAnnouncementIds = [], returnHref }: {
+  announcements: AnnouncementRecord[];
+  createHref?: string;
+  manageableAnnouncementIds?: string[];
+  returnHref?: string;
+}) {
   const railRef = useRef<HTMLOListElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -137,16 +142,28 @@ export function ProgramAnnouncementRail({ announcements }: { announcements: Anno
   };
 
   const closeAnnouncement = () => dialogRef.current?.close();
+  const canManageSelected = selectedAnnouncement
+    ? manageableAnnouncementIds.includes(selectedAnnouncement.id)
+    : false;
+  const selectedEditHref = selectedAnnouncement
+    ? `/announcements/${selectedAnnouncement.id}/edit${returnHref ? `?returnTo=${encodeURIComponent(returnHref)}` : ""}`
+    : "";
 
   return (
     <section aria-labelledby="program-announcements-title" className="border-b border-[var(--line)] py-5">
-      <h2 id="program-announcements-title" className="mb-3 text-sm font-bold tracking-[-0.02em] text-[var(--ink)]">
-        <UiText>{"프로그램 공지"}</UiText>
-      </h2>
+      <div className="mb-3 flex min-h-9 items-center justify-between gap-3">
+        <h2 id="program-announcements-title" className="text-sm font-bold tracking-[-0.02em] text-[var(--ink)]">
+          <UiText>{"프로그램 공지"}</UiText>
+        </h2>
+        {createHref ? (
+          <Link href={createHref} className="button-secondary min-h-9 gap-2 px-3 text-xs">
+            <AddIcon className="size-3.5 shrink-0" />
+            <UiText>{"새 공지 작성"}</UiText>
+          </Link>
+        ) : null}
+      </div>
       {announcements.length === 0 ? (
-        <div className="grid min-h-32 place-items-center rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-subtle)] px-5 text-sm font-semibold text-[var(--muted)]">
-          <UiText>{"등록된 공지가 없습니다"}</UiText>
-        </div>
+        <EmptyState variant="section" title="등록된 공지가 없습니다" description="프로그램 공지가 등록되면 이곳에 표시됩니다." />
       ) : (
         <div className="relative">
           <ol
@@ -174,9 +191,6 @@ export function ProgramAnnouncementRail({ announcements }: { announcements: Anno
                         <span className="sr-only"><UiText>{"고정"}</UiText></span>
                       </span>
                     ) : null}
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                      <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-                    </span>
                     <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
                       <UiText>{announcement.visibility === "AUTHENTICATED" ? "전체 공개" : "구성원 전용"}</UiText>
                     </span>
@@ -229,20 +243,31 @@ export function ProgramAnnouncementRail({ announcements }: { announcements: Anno
       >
         {selectedAnnouncement ? (
           <article>
-            <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-7 pr-16 sm:px-8 sm:py-8 sm:pr-20">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {selectedAnnouncement.pinned ? (
-                  <span className="inline-flex items-center leading-none text-[var(--primary)]">
-                    <PinIcon className="size-3.5" />
-                    <span className="sr-only"><UiText>{"고정"}</UiText></span>
+            <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-7 sm:px-8 sm:py-8">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-h-11 flex-wrap items-center gap-1.5">
+                  {selectedAnnouncement.pinned ? (
+                    <span className="inline-flex items-center leading-none text-[var(--primary)]">
+                      <PinIcon className="size-3.5" />
+                      <span className="sr-only"><UiText>{"고정"}</UiText></span>
+                    </span>
+                  ) : null}
+                  <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
+                    <UiText>{selectedAnnouncement.visibility === "AUTHENTICATED" ? "전체 공개" : "구성원 전용"}</UiText>
                   </span>
-                ) : null}
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[selectedAnnouncement.category]}`}>
-                  <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[selectedAnnouncement.category]}</UiText>
-                </span>
-                <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
-                  <UiText>{selectedAnnouncement.visibility === "AUTHENTICATED" ? "전체 공개" : "구성원 전용"}</UiText>
-                </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {canManageSelected ? (
+                    <UiDiv className="flex items-center gap-1" role="group" aria-label="공지 관리">
+                      <IconLink href={selectedEditHref} aria-label="공지 수정" title="공지 수정">
+                        <EditIcon className="size-5" />
+                      </IconLink>
+                    </UiDiv>
+                  ) : null}
+                  <IconButton type="button" aria-label="공지 닫기" title="공지 닫기" onClick={closeAnnouncement}>
+                    <CloseIcon className="size-5" />
+                  </IconButton>
+                </div>
               </div>
               <h2 id={dialogTitleId} className="mt-4 text-2xl font-bold leading-tight tracking-[-0.035em] sm:text-3xl">
                 <UiText>{selectedAnnouncement.title}</UiText>
@@ -254,18 +279,11 @@ export function ProgramAnnouncementRail({ announcements }: { announcements: Anno
                   <UiDate value={selectedAnnouncement.createdAt} mode="dateTime" />
                 </time>
               </div>
-              <UiButton
-                type="button"
-                aria-label="공지 닫기"
-                onClick={closeAnnouncement}
-                className="absolute right-4 top-4 grid size-10 place-items-center rounded-full text-[var(--muted)] transition-colors hover:bg-white hover:text-[var(--ink)] sm:right-5 sm:top-5"
-              >
-                <CloseIcon className="size-5" />
-              </UiButton>
             </header>
             <div className="whitespace-pre-wrap px-6 py-7 text-sm leading-7 sm:px-8 sm:py-8 sm:text-base">
               <UiText>{selectedAnnouncement.content}</UiText>
             </div>
+            <AnnouncementAttachmentList attachments={selectedAnnouncement.attachments} compact />
           </article>
         ) : null}
       </dialog>

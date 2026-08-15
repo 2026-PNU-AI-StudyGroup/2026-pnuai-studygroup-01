@@ -3,6 +3,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
+import { DocumentIcon, ProjectIcon } from "@/shared/ui/workspace-icons";
 
 type ProjectDashboardRole = Exclude<UserRole, "ADMIN">;
 
@@ -10,10 +11,10 @@ function DashboardActions({ role }: { role: ProjectDashboardRole }) {
   if (role === "PROFESSOR") {
     return (
       <div className="flex flex-wrap gap-2">
-        <Link href="/professor/applications" className="button-secondary">
-          <UiText>{"지원 검토"}</UiText></Link>
-        <Link href="/professor/topics" className="button-primary">
-          <UiText>{"프로젝트 관리"}</UiText></Link>
+        <Link href="/professor/applications" className="button-secondary gap-2">
+          <DocumentIcon className="size-4 shrink-0" /><UiText>{"지원 검토"}</UiText></Link>
+        <Link href="/professor/topics" className="button-primary gap-2">
+          <ProjectIcon className="size-4 shrink-0" /><UiText>{"프로젝트 관리"}</UiText></Link>
       </div>
     );
   }

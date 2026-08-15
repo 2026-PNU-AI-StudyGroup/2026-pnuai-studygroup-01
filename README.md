@@ -42,8 +42,8 @@ AI는 한국어·영어 번역에만 사용합니다. 주제 추천, 팀원 추�
 | 학생 팀 | 지속되는 학생 팀 구성과 관리, 팀원 모집, 기존 팀 기반 주제 제안, 승인 시 추가 모집 자동 비활성화 |
 | 프로젝트 공간 | 할 일과 담당자, 팀·지도교수 대화, 프로젝트 진행 현황 |
 | 보고서와 결과물 | 보고서 요구사항과 기한, 버전 제출, 교수 승인·수정 요청, SHA-256 검증 업로드, 공개 결과물 등록 |
-| 종료와 아카이브 | 모든 필수 보고서의 최신 버전 승인 확인, 팀 종료, 연도별 완료 프로젝트와 공개 결과물 보존 |
-| 알림과 감사 | 지원·보고서 결과 및 마감 알림, 권한·팀 확정·보고서 승인 등 중요 운영 행위 기록 |
+| 종료와 아카이브 | 프로그램 종료일에 따른 완료·취소 판정, 연도별 완료 프로젝트와 공개 결과물 보존 |
+| 알림과 감사 | 앱 내·이메일 알림, 권한·팀 확정·보고서 승인 등 중요 운영 행위 기록 |
 | 다국어 | PostgreSQL 번역 큐, 로컬 Ollama 사전 한영 번역, 계정별 언어 설정과 원문 확인 |
 
 ## 시스템 구조
@@ -61,13 +61,16 @@ flowchart LR
     App --> DB[("PostgreSQL")]
     App --> Storage["MinIO Object Storage"]
 
-    App --> Queue["PostgreSQL 번역 큐"]
-    Scheduler["Cron / Worker"] --> Queue
-    Queue --> Ollama["로컬 Ollama · qwen3.5:2b"]
+    App --> TranslationQueue["PostgreSQL 번역 큐"]
+    Scheduler["Cron / Worker"] --> TranslationQueue
+    TranslationQueue --> Ollama["로컬 Ollama · qwen3.5:2b"]
     Ollama --> DB
+    App --> EmailQueue["PostgreSQL 이메일 대기열"]
+    Scheduler --> EmailQueue
+    EmailQueue --> Gmail["Gmail SMTP"]
 ```
 
-웹 화면, Server Action과 Route Handler는 하나의 Next.js 애플리케이션에서 운영합니다. PostgreSQL은 업무 데이터와 번역 작업 큐를 저장하고, MinIO는 업로드 파일을 보관합니다. 번역 워커만 로컬 Ollama를 호출하며 외부 AI API는 사용하지 않습니다.
+웹 화면, Server Action과 Route Handler는 하나의 Next.js 애플리케이션에서 운영합니다. PostgreSQL은 업무 데이터와 번역·이메일 대기열을 저장하고, MinIO는 업로드 파일을 보관합니다. 번역 워커만 로컬 Ollama를 호출하며 외부 AI API는 사용하지 않습니다. 이메일 워커는 Gmail SMTP로 발송합니다.
 
 ### 모듈 의존 구조
 
@@ -92,7 +95,7 @@ flowchart TB
     Application --> Domain
 ```
 
-의존 방향은 바깥 계층에서 안쪽 계층으로만 향합니다. `domain`은 Next.js, React, Prisma를 알지 못하며, 라우트 파일은 인증과 구현체 조립 후 애플리케이션 유스케이스에 업무 처리를 위임합니다. 폴더 배치와 자동 검증 규칙은 [프로덕션 폴더 구조](docs/architecture/folder-structure.md)에 정리되어 있습니다.
+의존 방향은 바깥 계층에서 안쪽 계층으로만 향합니다. `domain`은 Next.js, React, Prisma를 알지 못하며, 라우트 파일은 인증과 구현체 조립 후 애플리케이션 유스케이스에 업무 처리를 위임합니다. 폴더 배치와 자동 검증 규칙은 [프로덕션 폴더 구조](docs/architecture/folder-structure.md)에, 현재 업무 규칙과 확인이 필요한 충돌은 [정책 인덱스](docs/policies/README.md)에 정리되어 있습니다.
 
 ## 주요 업무 흐름
 
@@ -103,10 +106,12 @@ flowchart LR
     Apply --> Confirm["교수<br/>검토와 팀 확정"]
     Confirm --> Work["팀<br/>할 일과 대화"]
     Work --> Submit["학생<br/>보고서·결과물 제출"]
-    Submit --> Review["교수<br/>승인 또는 수정 요청"]
-    Review --> Close{"필수 보고서<br/>최신본 승인"}
-    Close -->|완료| Archive["연도별 프로젝트 아카이브"]
-    Close -->|미완료| Submit
+    Submit --> Review["운영진<br/>검토 또는 수정 요청"]
+    Review -->|수정 요청| Submit
+    Program --> End["프로그램 운영 종료일"]
+    End --> Closed{"확정 팀 존재"}
+    Closed -->|있음| Archive["완료 프로젝트 아카이브"]
+    Closed -->|없음| Canceled["취소 프로젝트<br/>관리자만 조회"]
 ```
 
 ## 역할별 기능
@@ -126,7 +131,7 @@ flowchart LR
 - 모집·수행·제출 기간과 보고서 요구사항 설정
 - 학생 지원과 기존 팀 제안 검토
 - 지도 팀의 진행 상황과 보고서 버전 검토
-- 모든 필수 보고서 승인 후 프로젝트 종료
+- 프로그램 종료 전 보고서 검토와 수정 요청
 
 ### 관리자
 
@@ -179,7 +184,10 @@ ollama pull qwen3.5:2b
 | `BETTER_AUTH_SECRET` | 32바이트 이상의 애플리케이션 인증 비밀 값 |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth Web Client 자격 증명 |
 | `INITIAL_ADMIN_EMAIL` | 최초 관리자 승격 대상 부산대학교 이메일 |
-| `CRON_SECRET` | 마감 알림과 번역 큐 Cron 호출 인증 값 |
+| `CRON_SECRET` | 마감 알림·번역 큐·이메일 Cron 호출 인증 값 |
+| `EMAIL_DELIVERY_ENABLED` | Gmail SMTP 이메일 워커 활성화 여부. 초기 배포값은 `false` |
+| `GMAIL_SMTP_USER` | Gmail OAuth 동의를 완료한 전용 발송 계정 |
+| `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN` | Gmail OAuth2 SMTP 발송 자격 증명. refresh token은 비밀 환경변수에만 보관 |
 
 Google OAuth Redirect URI:
 
@@ -275,7 +283,7 @@ npm run cleanup:uploads
 
 ## 문서
 
-- [설계·구현 계획](DESIGN_IMPLEMENTATION_PLAN.md)
+- [과거 설계·구현 계획](DESIGN_IMPLEMENTATION_PLAN.md) — 현재 구현 기준 아님
 - [로컬 개발 환경](docs/LOCAL_DEVELOPMENT.md)
 - [프로덕션 운영](docs/PRODUCTION.md)
 - [프로덕션 폴더 구조](docs/architecture/folder-structure.md)

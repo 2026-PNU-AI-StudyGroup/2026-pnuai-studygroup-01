@@ -16,27 +16,32 @@ export class PrismaTeamConfirmationRepository
       const programs = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "project_program"."id"
         FROM "project_program"
-        JOIN "team" ON "team"."programId" = "project_program"."id"
-        WHERE "team"."id" = ${teamId}
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        JOIN "project_team" ON "project_team"."projectId" = "topic"."id"
+        WHERE "project_team"."id" = ${teamId}
+          AND "project_program"."endsAt" > ${decidedAt}
         FOR UPDATE OF "project_program"
       `);
       if (programs.length !== 1) return false;
       const rows = await transaction.$queryRaw<Array<{
         id: string;
-        topicId: string;
+        projectId: string;
       }>>(Prisma.sql`
-        UPDATE "team" SET "status" = 'CONFIRMED', "updatedAt" = ${decidedAt}
-        WHERE "id" = ${teamId} AND "status" = 'FORMING'
-          AND EXISTS (SELECT 1 FROM "team_member" WHERE "teamId" = "team"."id")
+        UPDATE "project_team" SET "confirmedAt" = ${decidedAt}, "updatedAt" = ${decidedAt}
+        WHERE "id" = ${teamId} AND "confirmedAt" IS NULL
+          AND EXISTS (
+            SELECT 1 FROM "project_team_membership"
+            WHERE "projectTeamId" = "project_team"."id" AND "endedAt" IS NULL
+          )
           AND ${teamSupervisorSql(actor)}
-        RETURNING "id", "topicId"
+        RETURNING "id", "projectId"
       `);
       const team = rows[0];
       if (!team) return false;
       await assignProgramDeliverablesToTeam(transaction, team.id, decidedAt);
 
       const applications = await transaction.topicApplication.findMany({
-        where: { topicId: team.topicId, status: "PENDING" },
+        where: { topicId: team.projectId, status: "PENDING" },
         select: {
           id: true,
           studentId: true,
@@ -44,11 +49,11 @@ export class PrismaTeamConfirmationRepository
         },
       });
       await transaction.recruitmentPost.updateMany({
-        where: { teamId, status: "OPEN" },
+        where: { projectTeamId: teamId, status: "OPEN" },
         data: { status: "CLOSED" },
       });
       await transaction.topicApplication.updateMany({
-        where: { topicId: team.topicId, status: "PENDING" },
+        where: { topicId: team.projectId, status: "PENDING" },
         data: {
           status: "REJECTED",
           decidedAt,
@@ -57,7 +62,7 @@ export class PrismaTeamConfirmationRepository
         },
       });
       await transaction.recruitmentApplication.updateMany({
-        where: { post: { teamId }, status: "PENDING" },
+        where: { post: { projectTeamId: teamId }, status: "PENDING" },
         data: { status: "REJECTED", decidedAt },
       });
       await createApplicationResultNotifications(
@@ -73,10 +78,10 @@ export class PrismaTeamConfirmationRepository
       await transaction.auditLog.create({
         data: {
           actorId: actor.id,
-          action: "TEAM_CONFIRMED",
-          targetType: "TEAM",
+          action: "PROJECT_TEAM_CONFIRMED",
+          targetType: "PROJECT_TEAM",
           targetId: team.id,
-          metadata: { topicId: team.topicId },
+          metadata: { projectId: team.projectId },
           createdAt: decidedAt,
         },
       });

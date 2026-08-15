@@ -5,6 +5,8 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import styles from "@/shared/ui/custom-select.module.css";
+import { useTopLayerPopover } from "@/shared/ui/use-top-layer-popover";
 
 type SelectOption = {
   value: string;
@@ -14,7 +16,7 @@ type SelectOption = {
 
 type CustomSelectProps = {
   id?: string;
-  name: string;
+  name?: string;
   ariaLabel: string;
   ariaDescribedBy?: string;
   options: SelectOption[];
@@ -25,6 +27,7 @@ type CustomSelectProps = {
   required?: boolean;
   disabled?: boolean;
   searchable?: boolean;
+  hideSelectedOption?: boolean;
   density?: "default" | "compact";
   className?: string;
   onValueChange?: (value: string) => void;
@@ -43,6 +46,7 @@ export function CustomSelect({
   required,
   disabled,
   searchable,
+  hideSelectedOption = false,
   density = "default",
   className = "",
   onValueChange,
@@ -63,10 +67,14 @@ export function CustomSelect({
   const value = controlledValue ?? uncontrolledValue;
   const controlled = controlledValue !== undefined;
   const showSearch = searchable ?? options.length > 7;
-  const filteredOptions = filterOptions(options, query);
+  const visibleOptions = hideSelectedOption && value
+    ? options.filter((option) => option.value !== value)
+    : options;
+  const filteredOptions = filterOptions(visibleOptions, query);
   const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selected = options.find((option) => option.value === value);
-  const floatingStyle = useFloatingMenu(rootRef, open);
+  const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
+  const floatingStyle = useFloatingMenu(rootRef, open, topLayer);
   const showInvalid = invalid && Boolean(required && !disabled && !value);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
@@ -85,8 +93,8 @@ export function CustomSelect({
   }, [open, resolvedActiveIndex, showSearch]);
 
   function openMenu(direction: "first" | "last" = "first") {
-    const selectedIndex = options.findIndex((option) => option.value === value);
-    const fallbackIndex = direction === "last" ? options.length - 1 : 0;
+    const selectedIndex = visibleOptions.findIndex((option) => option.value === value);
+    const fallbackIndex = direction === "last" ? visibleOptions.length - 1 : 0;
     setQuery("");
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : fallbackIndex);
     setPortalHost(getPortalHost(triggerRef.current));
@@ -116,14 +124,14 @@ export function CustomSelect({
   }
 
   return (
-    <div ref={rootRef} className={`custom-select ${className}`} data-density={density}>
-      <input type="hidden" name={name} value={value} />
+    <div ref={rootRef} className={`${styles.root} ${className}`} data-custom-select data-density={density}>
+      {name ? <input type="hidden" name={name} value={value} /> : null}
       <button
         id={id}
         ref={triggerRef}
         type="button"
         role="combobox"
-        className="custom-select__trigger"
+        className={styles.trigger}
         aria-haspopup="listbox"
         aria-label={t(ariaLabel)}
         aria-describedby={ariaDescribedBy}
@@ -155,7 +163,8 @@ export function CustomSelect({
         disabled={disabled}
         tabIndex={-1}
         aria-hidden="true"
-        className="custom-select__validation-proxy pointer-events-none absolute left-0 top-0 size-px overflow-hidden whitespace-nowrap border-0 p-0 opacity-0 [clip-path:inset(50%)]"
+        className={styles.validationProxy}
+        data-validation-proxy="custom-select"
         onChange={() => undefined}
         onInvalid={(event) => {
           event.preventDefault();
@@ -168,9 +177,11 @@ export function CustomSelect({
       {open && portalHost ? createPortal(
         <div
           ref={menuRef}
+          popover={popoverSupported ? "manual" : undefined}
           id={showSearch ? undefined : listboxId}
           role={showSearch ? undefined : "listbox"}
-          className="custom-select__menu"
+          className={styles.menu}
+          data-custom-select-menu
           style={floatingStyle}
         >
           {showSearch ? <SelectSearch
@@ -201,7 +212,7 @@ export function CustomSelect({
               role="option"
               tabIndex={resolvedActiveIndex === index ? 0 : -1}
               aria-selected={value === option.value}
-              className="custom-select__option"
+              className={styles.option}
               onFocus={() => setActiveIndex(index)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -231,7 +242,7 @@ export function CustomSelect({
               {value === option.value ? <Check /> : null}
             </button>
           ))}
-          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t("검색 결과가 없습니다.")}</p> : null}
+          {filteredOptions.length === 0 ? <p className={styles.empty} role="status">{t("검색 결과가 없습니다")}</p> : null}
           </div>
         </div>,
         portalHost,
@@ -287,7 +298,8 @@ export function CustomMultiSelect({
   const filteredOptions = filterOptions(options, query);
   const resolvedActiveIndex = normalizeActiveIndex(activeIndex, filteredOptions.length);
   const selectedOptions = options.filter((option) => values.includes(option.value));
-  const floatingStyle = useFloatingMenu(rootRef, open);
+  const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
+  const floatingStyle = useFloatingMenu(rootRef, open, topLayer);
 
   useDismiss([rootRef, menuRef], open, (restoreFocus) => {
     setOpen(false);
@@ -334,14 +346,14 @@ export function CustomMultiSelect({
   }
 
   return (
-    <div ref={rootRef} className={`custom-select custom-multi-select ${className}`} data-density={density}>
+    <div ref={rootRef} className={`${styles.root} ${className}`} data-custom-select data-density={density}>
       {values.map((value) => <input key={value} type="hidden" name={name} value={value} />)}
       <button
         id={id}
         ref={triggerRef}
         type="button"
         role={ariaLabel ? "combobox" : undefined}
-        className="custom-select__trigger"
+        className={styles.trigger}
         aria-haspopup="listbox"
         aria-label={ariaLabel ? t(ariaLabel) : undefined}
         aria-expanded={open}
@@ -358,13 +370,13 @@ export function CustomMultiSelect({
           }
         }}
       >
-        <span className={selectedOptions.length ? "custom-multi-select__summary" : "text-[var(--muted)]"}>
+        <span className={selectedOptions.length ? styles.summary : "text-[var(--muted)]"}>
           {selectedOptions.length ? (
             <>
               {selectedOptions.slice(0, 2).map((option) => (
-                <span key={option.value} className="custom-multi-select__chip">{t(option.label)}</span>
+                <span key={option.value} className={styles.chip}>{t(option.label)}</span>
               ))}
-              {selectedOptions.length > 2 ? <span className="custom-multi-select__count">+{selectedOptions.length - 2}</span> : null}
+              {selectedOptions.length > 2 ? <span className={styles.count}>+{selectedOptions.length - 2}</span> : null}
             </>
           ) : t(placeholder)}
         </span>
@@ -373,13 +385,15 @@ export function CustomMultiSelect({
       {open && portalHost ? createPortal(
         <div
           ref={menuRef}
+          popover={popoverSupported ? "manual" : undefined}
           id={showSearch ? undefined : listboxId}
           role={showSearch ? undefined : "listbox"}
           aria-multiselectable={showSearch ? undefined : "true"}
-          className="custom-select__menu"
+          className={styles.menu}
+          data-custom-select-menu
           style={floatingStyle}
         >
-          <div className="custom-select__menu-heading">
+          <div className={styles.menuHeading}>
             <span>{t("담당자 선택")}</span>
             <span>{values.length}<UiText>{"명"}</UiText></span>
           </div>
@@ -413,7 +427,7 @@ export function CustomMultiSelect({
                 role="option"
                 tabIndex={resolvedActiveIndex === index ? 0 : -1}
                 aria-selected={checked}
-                className="custom-select__option"
+                className={styles.option}
                 onFocus={() => setActiveIndex(index)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -440,11 +454,11 @@ export function CustomMultiSelect({
                   <strong>{t(option.label)}</strong>
                   {option.description ? <small>{t(option.description)}</small> : null}
                 </span>
-                <span className="custom-multi-select__checkbox" aria-hidden="true">{checked ? <Check /> : null}</span>
+                <span className={styles.checkbox} aria-hidden="true">{checked ? <Check /> : null}</span>
               </button>
             );
           })}
-          {filteredOptions.length === 0 ? <p className="custom-select__empty">{t(query ? "검색 결과가 없습니다." : "선택할 수 있는 팀원이 없습니다.")}</p> : null}
+          {filteredOptions.length === 0 ? <p className={styles.empty} role="status">{t(query ? "검색 결과가 없습니다" : "선택할 수 있는 팀원이 없습니다")}</p> : null}
           </div>
         </div>,
         portalHost,
@@ -494,7 +508,7 @@ function SelectSearch({
 }) {
   const { t } = useI18n();
   return (
-    <label className="custom-select__search">
+    <label className={styles.search}>
       <SearchIcon />
       <input
         ref={inputRef}
@@ -599,7 +613,7 @@ function getTabbableElements(scope: Document | HTMLDialogElement) {
 }
 
 function isActuallyTabbable(element: HTMLElement, scope: Document | HTMLDialogElement) {
-  if (element.tabIndex < 0 || element.matches(":disabled") || element.closest(".custom-select__menu")) return false;
+  if (element.tabIndex < 0 || element.matches(":disabled") || element.closest("[data-custom-select-menu]")) return false;
   if (element instanceof HTMLInputElement && element.type === "hidden") return false;
   const boundary = scope instanceof HTMLDialogElement ? scope : null;
   for (let current: HTMLElement | null = element; current; current = current.parentElement) {
@@ -614,6 +628,7 @@ function isActuallyTabbable(element: HTMLElement, scope: Document | HTMLDialogEl
 function useFloatingMenu(
   rootRef: React.RefObject<HTMLDivElement | null>,
   open: boolean,
+  topLayer: boolean,
 ): React.CSSProperties {
   const [style, setStyle] = useState<React.CSSProperties>({});
 
@@ -624,8 +639,12 @@ function useFloatingMenu(
       if (!rect) return;
       const dialog = rootRef.current?.closest("dialog");
       const dialogRect = dialog?.getBoundingClientRect();
+      const dialogLeft = topLayer ? 0 : (dialogRect?.left ?? 0);
+      const dialogTop = topLayer ? 0 : (dialogRect?.top ?? 0);
+      const dialogScrollLeft = topLayer ? 0 : (dialog?.scrollLeft ?? 0);
+      const dialogScrollTop = topLayer ? 0 : (dialog?.scrollTop ?? 0);
       const gutter = 8;
-      const width = Math.max(rect.width, 224);
+      const width = Math.min(window.innerWidth - gutter * 2, Math.max(rect.width, 224));
       const left = Math.min(rect.left, window.innerWidth - width - gutter);
       const spaceBelow = window.innerHeight - rect.bottom - gutter;
       const spaceAbove = rect.top - gutter;
@@ -635,8 +654,8 @@ function useFloatingMenu(
       setStyle({
         // Modal dialogs establish a top-layer containing block in Chromium.
         // Convert viewport coordinates before rendering into the dialog portal.
-        left: Math.max(gutter, left) - (dialogRect?.left ?? 0) + (dialog?.scrollLeft ?? 0),
-        top: top - (dialogRect?.top ?? 0) + (dialog?.scrollTop ?? 0),
+        left: Math.max(gutter, left) - dialogLeft + dialogScrollLeft,
+        top: top - dialogTop + dialogScrollTop,
         width,
         maxHeight,
       });
@@ -648,14 +667,14 @@ function useFloatingMenu(
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, rootRef]);
+  }, [open, rootRef, topLayer]);
 
   return style;
 }
 
 function Chevron({ open }: { open: boolean }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className={`custom-select__chevron ${open ? "rotate-180" : ""}`}>
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={`${styles.chevron} ${open ? "rotate-180" : ""}`}>
       <path d="m6 8 4 4 4-4" />
     </svg>
   );
@@ -672,7 +691,7 @@ function SearchIcon() {
 
 function Check() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="custom-select__check">
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={styles.check}>
       <path d="m4.5 10.5 3.4 3.4 7.6-7.8" />
     </svg>
   );

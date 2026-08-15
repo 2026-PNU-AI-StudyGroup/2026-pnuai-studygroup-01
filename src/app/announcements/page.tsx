@@ -3,16 +3,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import {
-  ANNOUNCEMENT_CATEGORIES,
-  ANNOUNCEMENT_CATEGORY_BADGE,
-  ANNOUNCEMENT_CATEGORY_LABELS,
-  isAnnouncementCategory,
-} from "@/app/announcements/_lib/announcement-categories";
 import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
 import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
-import { canCreateAnnouncement } from "@/modules/announcement/domain/announcement-policy";
+import { canCreateSystemAnnouncement } from "@/modules/announcement/domain/announcement-policy";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
@@ -25,7 +19,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { PinIcon } from "@/shared/ui/workspace-icons";
+import { AddIcon, PinIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지사항");
@@ -40,22 +34,19 @@ function isRecentAnnouncement(createdAt: Date): boolean {
 export default async function AnnouncementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: SearchParamValue; category?: SearchParamValue }>;
+  searchParams: Promise<{ page?: SearchParamValue }>;
 }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const categoryParam = firstSearchParam(params.category);
-  const activeCategory = isAnnouncementCategory(categoryParam) ? categoryParam : undefined;
   const audience = await resolveAnnouncementAudience(actor);
   const data = await new AnnouncementService(
     new PrismaAnnouncementRepository(prisma),
-  ).list(audience, requestedPage, activeCategory);
+  ).listSystem(audience, requestedPage);
   const pageHref = (page: number) => {
     const query = new URLSearchParams();
     if (page > 1) query.set("page", String(page));
-    if (activeCategory) query.set("category", activeCategory);
     const suffix = query.toString();
     return suffix ? `/announcements?${suffix}` : "/announcements";
   };
@@ -71,28 +62,10 @@ export default async function AnnouncementsPage({
           <PageHeader
             compact
             title="공지사항"
-            actions={canCreateAnnouncement(actor.role) && data.total > 0
-              ? <Link className="button-primary" href="/announcements/new"><UiText>{"새 공지 작성"}</UiText></Link>
+            actions={canCreateSystemAnnouncement(actor.role) && data.total > 0
+              ? <Link className="button-primary gap-2" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"새 공지 작성"}</UiText></Link>
               : undefined}
           />
-
-          <UiNav aria-label="공지 분류 필터" className="flex flex-wrap gap-2">
-            <Link
-              href="/announcements"
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${activeCategory === undefined ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-subtle)] text-[var(--muted)] hover:text-[var(--ink)]"}`}
-            >
-              <UiText>{"전체"}</UiText>
-            </Link>
-            {ANNOUNCEMENT_CATEGORIES.map((category) => (
-              <Link
-                key={category}
-                href={`/announcements?category=${category}`}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${activeCategory === category ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-subtle)] text-[var(--muted)] hover:text-[var(--ink)]"}`}
-              >
-                <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[category]}</UiText>
-              </Link>
-            ))}
-          </UiNav>
 
           <section aria-labelledby="announcement-list-title" className="panel overflow-hidden">
             <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-7">
@@ -107,10 +80,11 @@ export default async function AnnouncementsPage({
             {data.items.length === 0 ? (
               <div className="px-5 sm:px-7">
                 <EmptyState
-                  variant="embedded"
+                  variant="section"
                   title="등록된 공지가 없습니다"
-                  action={canCreateAnnouncement(actor.role)
-                    ? <Link className="button-primary max-sm:w-full" href="/announcements/new"><UiText>{"첫 공지 작성"}</UiText></Link>
+                  description={canCreateSystemAnnouncement(actor.role) ? "첫 공지를 작성하면 모든 사용자가 이곳에서 확인할 수 있습니다." : "새 공지가 등록되면 이 목록에 표시됩니다."}
+                  action={canCreateSystemAnnouncement(actor.role)
+                    ? <Link className="button-primary gap-2 max-sm:w-full" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"첫 공지 작성"}</UiText></Link>
                     : undefined}
                 />
               </div>
@@ -132,9 +106,6 @@ export default async function AnnouncementsPage({
                           {isRecentAnnouncement(announcement.createdAt) ? (
                             <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--danger)]">NEW</span>
                           ) : null}
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${ANNOUNCEMENT_CATEGORY_BADGE[announcement.category]}`}>
-                            <UiText>{ANNOUNCEMENT_CATEGORY_LABELS[announcement.category]}</UiText>
-                          </span>
                           <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
                         </div>
                         <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">

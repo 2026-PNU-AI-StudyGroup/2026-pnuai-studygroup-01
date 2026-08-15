@@ -7,7 +7,7 @@ import { auth } from "@/modules/identity/infrastructure/auth";
 export const getCurrentActor = cache(async (): Promise<CurrentUser | null> => {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session || session.user.isActive === false) {
+  if (!session || session.user.accountStatus !== "ACTIVE") {
     return null;
   }
 

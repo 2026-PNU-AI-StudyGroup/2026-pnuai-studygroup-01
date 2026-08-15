@@ -13,23 +13,24 @@ export class PrismaArtifactRepository implements ArtifactWriter {
     input: { teamId: string; actor: CurrentActor; at: Date },
   ) {
     return transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-      SELECT "team"."id"
-      FROM "team"
-      JOIN "topic" ON "topic"."id" = "team"."topicId"
+      SELECT "project_team"."id"
+      FROM "project_team"
+      JOIN "topic" ON "topic"."id" = "project_team"."projectId"
       JOIN "project_program" ON "project_program"."id" = "topic"."programId"
-      WHERE "team"."id" = ${input.teamId}
-        AND "team"."status" = 'CONFIRMED'
+      WHERE "project_team"."id" = ${input.teamId}
+        AND "topic"."status" = 'ACTIVE'
+        AND "project_team"."confirmedAt" IS NOT NULL
         AND (
           ${input.actor.role}::"UserRole" = 'ADMIN'
           OR (
             EXISTS (
-              SELECT 1 FROM "team_member"
-              WHERE "teamId" = "team"."id" AND "studentId" = ${input.actor.id}
+              SELECT 1 FROM "project_team_membership"
+              WHERE "projectTeamId" = "project_team"."id" AND "userId" = ${input.actor.id} AND "endedAt" IS NULL
             )
             AND ${input.at} BETWEEN "project_program"."submissionStartsAt" AND "project_program"."submissionEndsAt"
           )
         )
-      FOR UPDATE OF "team"
+      FOR UPDATE OF "project_team"
     `);
   }
 
@@ -53,7 +54,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
         const files = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
           SELECT "id" FROM "stored_file"
           WHERE "id" = ${input.fileId}
-            AND "teamId" = ${input.teamId}
+            AND "projectTeamId" = ${input.teamId}
             AND "ownerId" = ${input.actor.id}
             AND "purpose" = 'ARTIFACT'
             AND "consumer" = 'ARTIFACT'
@@ -65,7 +66,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       return transaction.artifact.create({
         data: {
           id: randomUUID(),
-          teamId: input.teamId,
+          projectTeamId: input.teamId,
           registeredById: input.actor.id,
           type: input.type,
           title: input.title,
@@ -94,7 +95,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       });
       if (authorized.length !== 1) return false;
       const result = await transaction.artifact.updateMany({
-        where: { id: input.artifactId, teamId: input.teamId },
+        where: { id: input.artifactId, projectTeamId: input.teamId },
         data: { type: input.type, title: input.title },
       });
       return result.count === 1;
@@ -118,7 +119,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       const artifacts = await transaction.$queryRaw<Array<{ fileId: string | null }>>(Prisma.sql`
         SELECT "fileId"
         FROM "artifact"
-        WHERE "id" = ${input.artifactId} AND "teamId" = ${input.teamId}
+        WHERE "id" = ${input.artifactId} AND "projectTeamId" = ${input.teamId}
         FOR UPDATE
       `);
       const artifact = artifacts[0];
@@ -131,7 +132,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
           await transaction.storedFile.deleteMany({
             where: {
               id: artifact.fileId,
-              teamId: input.teamId,
+              projectTeamId: input.teamId,
               consumer: "ARTIFACT",
             },
           });
@@ -162,7 +163,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
           UPDATE "stored_file"
           SET "status" = 'ATTACHED'
           WHERE "id" = ${input.fileId}
-            AND "teamId" = ${input.teamId}
+            AND "projectTeamId" = ${input.teamId}
             AND "ownerId" = ${input.actor.id}
             AND "purpose" = 'ARTIFACT'
             AND "consumer" = 'ARTIFACT'
@@ -170,9 +171,9 @@ export class PrismaArtifactRepository implements ArtifactWriter {
         `);
         if (attached !== 1) return false;
       }
-      await transaction.team.update({
+      await transaction.projectTeam.update({
         where: { id: input.teamId },
-        data: { thumbnailPath: input.fileId ? `/api/files/${input.fileId}` : null },
+        data: { project: { update: { thumbnailPath: input.fileId ? `/api/files/${input.fileId}` : null } } },
       });
       return true;
     });
@@ -196,7 +197,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       // 추린 뒤, 빠진 것은 기존 순서대로 뒤에 붙여 position을 0..n으로 다시 매긴다.
       const images = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "id" FROM "artifact"
-        WHERE "teamId" = ${input.teamId} AND "type" = 'IMAGE'
+        WHERE "projectTeamId" = ${input.teamId} AND "type" = 'IMAGE'
         ORDER BY "position" ASC, "createdAt" ASC
         FOR UPDATE
       `);

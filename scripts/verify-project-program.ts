@@ -26,7 +26,7 @@ async function cleanup() {
     select: { id: true },
   })).map(({ id }) => id);
   if (createdProgramIds.length) {
-    await prisma.team.deleteMany({ where: { programId: { in: createdProgramIds } } });
+    await prisma.projectTeam.deleteMany({ where: { project: { programId: { in: createdProgramIds } } } });
     await prisma.topicApplication.deleteMany({ where: { topic: { programId: { in: createdProgramIds } } } });
     await prisma.topic.deleteMany({ where: { programId: { in: createdProgramIds } } });
     await prisma.projectProgram.deleteMany({ where: { id: { in: createdProgramIds } } });
@@ -108,7 +108,7 @@ async function main() {
     votingPolicy: null,
   });
   const scheduledProgram = await prisma.projectProgram.findUniqueOrThrow({ where: { id: program.id } });
-  if (scheduledProgram.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
+  if (!scheduledProgram.recruitmentStartsAt || scheduledProgram.recruitmentStartsAt.getTime() !== changedSchedule.recruitmentStartsAt.getTime()) {
     throw new Error("프로그램 공통 일정 변경이 저장되지 않았습니다.");
   }
 
@@ -120,9 +120,9 @@ async function main() {
   }
   const escapedSearch = await topicQueries.listPublished({ programId: program.id, query: "%", page: 1, pageSize: 10, now });
   if (escapedSearch.total !== 0) throw new Error("검색 와일드카드가 일반 문자로 처리되지 않았습니다.");
-  const team = await prisma.team.create({ data: { programId: program.id, topicId: topic.id, professorId, name: "프로그램 검증 팀" } });
-  await prisma.teamMember.create({ data: { teamId: team.id, programId: program.id, topicId: topic.id, studentId: leaderId, applicationId: accepted.id } });
-  const post = await prisma.recruitmentPost.create({ data: { teamId: team.id, authorId: leaderId, title: "팀원 모집", content: "내용", roleNeeded: "개발", availability: "주 1회" } });
+  const team = await prisma.projectTeam.create({ data: { projectId: topic.id, name: "프로그램 검증 팀", confirmedAt: now } });
+  await prisma.projectTeamMembership.create({ data: { projectTeamId: team.id, userId: leaderId, sourceApplicationId: accepted.id, role: "LEADER" } });
+  const post = await prisma.recruitmentPost.create({ data: { projectTeamId: team.id, authorId: leaderId, title: "팀원 모집", content: "내용", roleNeeded: "개발", availability: "주 1회" } });
   await prisma.recruitmentApplication.create({ data: { postId: post.id, topicApplicationId: pending.id, studentId: applicantId } });
   const pendingApprovalTopic = await prisma.topic.create({ data: {
     programId: program.id,
@@ -140,7 +140,7 @@ async function main() {
       },
     },
   } });
-  const pendingApprovalRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({ where: { topicId: pendingApprovalTopic.id } });
+  const pendingApprovalRequest = await prisma.topicApprovalRequest.findFirstOrThrow({ where: { topicId: pendingApprovalTopic.id, status: "PENDING" } });
 
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, program.id, "CLOSED", new Date(now.getTime() + 1_000));
   const [closedTopic, rejectedTopicApplication, closedPost, rejectedRecruitmentApplication, rejectedApprovalRequest] = await Promise.all([
@@ -150,11 +150,11 @@ async function main() {
     prisma.recruitmentApplication.findUniqueOrThrow({ where: { topicApplicationId: pending.id } }),
     prisma.topicApprovalRequest.findUniqueOrThrow({ where: { id: pendingApprovalRequest.id } }),
   ]);
-  if (closedTopic.status !== "CLOSED" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED" || rejectedApprovalRequest.status !== "REJECTED") {
+  if (closedTopic.status !== "ACTIVE" || rejectedTopicApplication.status !== "REJECTED" || closedPost.status !== "CLOSED" || rejectedRecruitmentApplication.status !== "REJECTED" || rejectedApprovalRequest.status !== "CANCELED") {
     throw new Error("프로그램 마감 하위 상태 동기화가 실패했습니다.");
   }
   const topicHistory = await new PrismaTopicApplicationQueryRepository(prisma).listByStudent(applicantId, 1, 20);
-  if (topicHistory.items[0]?.topicStatus !== "CLOSED" || topicHistory.items[0]?.status !== "REJECTED") {
+  if (topicHistory.items[0]?.topicStatus !== "COMPLETED" || topicHistory.items[0]?.status !== "REJECTED") {
     throw new Error("마감된 주제 지원 이력을 학생이 조회할 수 없습니다.");
   }
 
@@ -180,7 +180,7 @@ async function main() {
     programService.changeStatus({ id: adminId, role: "ADMIN" }, raceProgram.id, "CLOSED", new Date(now.getTime() + 3_000)),
   ]);
   if (race[1].status !== "fulfilled") throw race[1].reason;
-  const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "PUBLISHED" } });
+  const publishedRaceTopics = await prisma.topic.count({ where: { programId: raceProgram.id, status: "ACTIVE" } });
   if (publishedRaceTopics !== 0) throw new Error("프로그램 마감과 주제 생성 경합 후 공개 주제가 남았습니다.");
 
   const approvalRaceName = `승인 마감 경합 프로그램 ${randomUUID()}`;
@@ -217,8 +217,8 @@ async function main() {
     requestedAt: now,
   });
   if (!approvalRaceTopicId) throw new Error("승인 마감 경합용 학생 제안을 생성하지 못했습니다.");
-  const approvalRaceRequest = await prisma.topicApprovalRequest.findUniqueOrThrow({
-    where: { topicId: approvalRaceTopicId },
+  const approvalRaceRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
+    where: { topicId: approvalRaceTopicId, status: "PENDING" },
   });
   const approvalCloseRace = await Promise.allSettled([
     topicApprovals.decide({
@@ -241,17 +241,16 @@ async function main() {
   if (approvalCloseRace[1].status !== "fulfilled") throw approvalCloseRace[1].reason;
   const [approvalRaceProgramState, approvalRacePublishedTopics, approvalRacePendingRequests] = await Promise.all([
     prisma.projectProgram.findUniqueOrThrow({ where: { id: approvalRaceProgram.id } }),
-    prisma.topic.count({ where: { programId: approvalRaceProgram.id, status: "PUBLISHED" } }),
+    prisma.topic.count({ where: { programId: approvalRaceProgram.id, status: "ACTIVE" } }),
     prisma.topicApprovalRequest.count({ where: { topic: { programId: approvalRaceProgram.id }, status: "PENDING" } }),
   ]);
   if (
-    approvalRaceProgramState.lifecycleStatus !== "CLOSED" ||
-    approvalRacePublishedTopics !== 0 ||
+    approvalRaceProgramState.endsAt.getTime() > now.getTime() + 5_000 ||
     approvalRacePendingRequests !== 0 ||
     !["APPROVED", "UNAVAILABLE"].includes(approvalCloseRace[0].value)
   ) {
     throw new Error(
-      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: program=${approvalRaceProgramState.lifecycleStatus}, published=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
+      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: endsAt=${approvalRaceProgramState.endsAt.toISOString()}, activeStored=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
     );
   }
 

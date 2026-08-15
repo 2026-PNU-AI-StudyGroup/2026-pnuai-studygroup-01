@@ -1,4 +1,5 @@
 import type { CurrentActor, CurrentUser } from "@/modules/identity/domain/current-actor";
+import type { UserRole } from "@/modules/identity/domain/user-role";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import {
   getProgramVotingPhase,
@@ -16,7 +17,7 @@ export type ProjectVoteCandidate = {
   divisionName?: string | null;
   divisionPosition?: number | null;
   isSelfProject: boolean;
-  voteCount: number;
+  voteCount: number | null;
 };
 
 export type ProgramVoteBallot = {
@@ -32,12 +33,18 @@ export type ProgramVoteResult = {
   topicId: string;
   title: string;
   description: string;
+  teamName: string | null;
   divisionId: string | null;
   divisionName: string | null;
   divisionPosition?: number | null;
   voteCount: number;
   rank: number;
-  voters: Array<{ id: string; name: string; email: string }>;
+  voters: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR";
+  }>;
 };
 
 export type ProgramVotingResults = {
@@ -50,6 +57,21 @@ export type ProgramVotingResults = {
   results: ProgramVoteResult[];
 };
 
+export type PublicProgramVoteResult = Omit<ProgramVoteResult, "description" | "voters">;
+
+export type PublicProgramVotingResults = {
+  programId: string;
+  programName: string;
+  phase: Exclude<ProgramVotingPhase, "UPCOMING">;
+  voteLimitScope: "PROGRAM" | "DIVISION";
+  totalVotes: number;
+  results: PublicProgramVoteResult[];
+};
+
+export type VotingResultsView =
+  | { mode: "ADMIN"; results: ProgramVotingResults }
+  | { mode: "PUBLIC"; results: PublicProgramVotingResults };
+
 export type ReplaceProgramVotesOutcome =
   | "SAVED"
   | "NOT_FOUND"
@@ -59,9 +81,10 @@ export type ReplaceProgramVotesOutcome =
   | "SELF_VOTE_FORBIDDEN";
 
 export interface ProjectVotingRepository {
-  findBallot(programId: string, voterId: string, now: Date): Promise<ProgramVoteBallot | null>;
-  replaceVotes(input: { programId: string; voterId: string; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome>;
+  findBallot(programId: string, voterId: string, voterRole: UserRole, now: Date): Promise<ProgramVoteBallot | null>;
+  replaceVotes(input: { programId: string; voterId: string; voterRole?: UserRole; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome>;
   findResults(programId: string, now: Date): Promise<ProgramVotingResults | null>;
+  findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR" | "ADVISOR", now: Date): Promise<PublicProgramVotingResults | null>;
 }
 
 export class ProjectVotingOperationError extends Error {}
@@ -73,7 +96,7 @@ export class ProjectVotingService {
   ) {}
 
   async getBallot(actor: CurrentUser, programId: string) {
-    const ballot = await this.repository.findBallot(programId, actor.id, this.now());
+    const ballot = await this.repository.findBallot(programId, actor.id, actor.role, this.now());
     return ballot ? { ...ballot, policy: withEffectiveVoteLimit(ballot.policy, actor.role) } : null;
   }
 
@@ -84,6 +107,7 @@ export class ProjectVotingService {
     const outcome = await this.repository.replaceVotes({
       programId,
       voterId: actor.id,
+      voterRole: actor.role,
       topicIds: selectedTopicIds,
       votedAt: this.now(),
     });
@@ -101,6 +125,11 @@ export class ProjectVotingService {
   async getResults(actor: CurrentActor, programId: string) {
     if (actor.role !== "ADMIN") throw new ProjectVotingOperationError("관리자만 득표현황을 볼 수 있습니다.");
     return this.repository.findResults(programId, this.now());
+  }
+
+  async getPublicResults(actor: CurrentUser, programId: string) {
+    if (actor.role === "ADMIN") throw new ProjectVotingOperationError("관리자는 상세 득표현황을 조회해 주세요.");
+    return this.repository.findPublicResults(programId, actor.role, this.now());
   }
 }
 

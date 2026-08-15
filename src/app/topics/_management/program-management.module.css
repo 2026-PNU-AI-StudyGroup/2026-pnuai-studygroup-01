@@ -1,0 +1,27 @@
+.panel { display: grid; gap: 0; overflow: clip; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-card); }
+.form { display: grid; }
+.section { display: grid; gap: 1.5rem; padding: 1.25rem; }
+.section + .section, .panel > .form + .section, .panel > section + .form { border-top: 1px solid var(--line); }
+.sectionHeader h2 { font-size: 1.125rem; font-weight: 800; letter-spacing: -.025em; }
+.sectionHeader p { margin-top: .375rem; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
+.operationGrid { display: grid; gap: 1.5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.radioGroup { display: grid; align-content: start; gap: .5rem; }
+.teamPolicy { display: grid; align-content: start; gap: 1rem; }
+.periodRow { display: grid; grid-template-columns: minmax(7rem, .42fr) minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: .75rem; }
+.periodRow > strong { padding-bottom: .875rem; font-size: .9375rem; }
+.periodSeparator { padding-bottom: .875rem; color: var(--muted); font-weight: 700; }
+.scheduleGroup, .votingGrid { display: grid; gap: 1.25rem; }
+.votingGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.votingGrid > :first-child, .votingGrid > fieldset, .votingGrid > label { grid-column: 1 / -1; }
+.actionBar { position: sticky; bottom: 0; z-index: 2; display: flex; min-height: 4.75rem; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); padding: .875rem clamp(1.25rem, 3vw, 2rem); backdrop-filter: blur(14px); }
+.transitionNotice, .confirm { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); padding: 1rem clamp(1.25rem, 3vw, 2rem); color: var(--muted); font-size: .875rem; }
+.confirm { color: var(--danger); background: var(--danger-subtle); }
+
+@media (max-width: 800px) {
+  .operationGrid, .votingGrid { grid-template-columns: 1fr; }
+  .periodRow { grid-template-columns: 1fr; gap: .5rem; }
+  .periodRow > strong, .periodSeparator { padding-bottom: 0; }
+  .periodSeparator { display: none; }
+  .actionBar, .transitionNotice { align-items: stretch; flex-direction: column; }
+  .actionBar button, .transitionNotice a { width: 100%; justify-content: center; }
+}

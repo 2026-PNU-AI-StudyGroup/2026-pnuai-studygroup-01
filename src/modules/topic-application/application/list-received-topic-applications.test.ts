@@ -26,7 +26,7 @@ describe("ListReceivedTopicApplicationsService", () => {
       page: 1,
       totalPages: 1,
       total: 0,
-      counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 0 },
+      counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 0, WITHDRAWN: 0 },
     }));
 
     await new ListReceivedTopicApplicationsService(repository(listForActor)).execute(

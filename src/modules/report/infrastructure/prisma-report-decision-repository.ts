@@ -26,15 +26,20 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
       const teams = await transaction.$queryRaw<Array<{
         id: string;
         name: string;
+        projectId: string;
       }>>(Prisma.sql`
-        SELECT "team"."id", "team"."name"
+        SELECT "project_team"."id", "project_team"."name", "project_team"."projectId"
         FROM "report_version"
         JOIN "report" ON "report"."id" = "report_version"."reportId"
-        JOIN "team" ON "team"."id" = "report"."teamId"
+        JOIN "project_team" ON "project_team"."id" = "report"."projectTeamId"
+        JOIN "topic" ON "topic"."id" = "project_team"."projectId"
+        JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         WHERE "report_version"."id" = ${input.reportVersionId}
-          AND "team"."status" = 'CONFIRMED'
+          AND "topic"."status" = 'ACTIVE'
+          AND "project_team"."confirmedAt" IS NOT NULL
+          AND (${input.actor.role}::"UserRole" = 'ADMIN' OR "project_program"."endsAt" > ${input.decidedAt})
           AND ${teamSupervisorSql(input.actor)}
-        FOR UPDATE OF "team"
+        FOR UPDATE OF "project_team"
       `);
       if (teams.length !== 1) return false;
       const authorized = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
@@ -67,24 +72,28 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
         where: { id: input.reportVersionId },
         select: { version: true, report: { select: { titleSnapshot: true } } },
       });
-      const members = await transaction.teamMember.findMany({
-        where: { teamId: teams[0].id },
-        select: { studentId: true },
+      const members = await transaction.projectTeamMembership.findMany({
+        where: { projectTeamId: teams[0].id, endedAt: null },
+        select: { userId: true },
       });
       if (reportVersion) {
         const approved = input.decision === "APPROVED";
         await createReportActivityNotifications(
           transaction,
-          members.map(({ studentId }) => ({
-            dedupeKey: `report-decision:${input.reportVersionId}:${input.decision}:${studentId}`,
-            recipientId: studentId,
+          members.map(({ userId }) => ({
+            dedupeKey: `report-decision:${input.reportVersionId}:${input.decision}:${userId}`,
+            recipientId: userId,
             title: approved
               ? `${reportVersion.report.titleSnapshot}가 승인되었습니다`
               : `${reportVersion.report.titleSnapshot}에 수정 요청이 있습니다`,
             body: approved
               ? `${teams[0].name}의 버전 ${reportVersion.version} 보고서가 승인되었습니다.`
               : input.comment,
-            href: `/teams/${teams[0].id}/reports`,
+            titleEn: approved ? "Report approved" : "Report revision requested",
+            bodyEn: approved
+              ? `Version ${reportVersion.version} of the ${teams[0].name} report was approved.`
+              : "A revision was requested for the report. Open PMS to read the review comment.",
+            href: `/projects/${teams[0].projectId}/reports`,
             createdAt: input.decidedAt,
           })),
         );

@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/app/announcements/_actions/announcement-actions", () => ({
+  deleteAnnouncementAction: vi.fn(),
+}));
+
 import { ProgramAnnouncementRail } from "@/app/topics/_components/program-announcement-rail";
 import type { AnnouncementRecord } from "@/modules/announcement/application/announcement-ports";
 
@@ -11,15 +15,16 @@ const base: AnnouncementRecord = {
   authorRole: "PROFESSOR",
   title: "발표 일정 안내",
   content: "발표 순서와 시간을 확인해 주세요.",
-  category: "GENERAL",
   visibility: "AUTHENTICATED",
   pinned: false,
   teamId: null,
   teamName: null,
+  projectId: null,
   programId: "program-1",
   programName: "졸업과제",
   createdAt: new Date("2026-08-11T00:00:00.000Z"),
   updatedAt: new Date("2026-08-11T00:00:00.000Z"),
+  attachments: [],
 };
 
 describe("프로그램 공지 카드 레일", () => {
@@ -103,5 +108,37 @@ describe("프로그램 공지 카드 레일", () => {
     expect(screen.getByRole("region", { name: "프로그램 공지" })).toBeInTheDocument();
     expect(screen.getByText("등록된 공지가 없습니다")).toBeInTheDocument();
     expect(screen.queryByText(/총\s*0건/)).not.toBeInTheDocument();
+  });
+
+  it("작성 권한이 전달되면 프로그램 공지 제목 옆에 신규 작성 링크를 표시한다", () => {
+    render(
+      <ProgramAnnouncementRail
+        announcements={[]}
+        createHref="/announcements/new?target=program:program-1"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "새 공지 작성" })).toHaveAttribute(
+      "href",
+      "/announcements/new?target=program:program-1",
+    );
+  });
+
+  it("관리 가능한 공지 모달에 수정 액션과 복귀 경로를 표시한다", () => {
+    render(
+      <ProgramAnnouncementRail
+        announcements={[base]}
+        manageableAnnouncementIds={[base.id]}
+        returnHref="/topics?programId=program-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /발표 일정 안내/ }));
+
+    expect(screen.getByRole("link", { name: "공지 수정" })).toHaveAttribute(
+      "href",
+      "/announcements/notice-1/edit?returnTo=%2Ftopics%3FprogramId%3Dprogram-1",
+    );
+    expect(screen.queryByRole("button", { name: "공지 삭제" })).not.toBeInTheDocument();
   });
 });

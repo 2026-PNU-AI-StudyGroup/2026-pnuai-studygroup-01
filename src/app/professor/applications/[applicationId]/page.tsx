@@ -14,6 +14,7 @@ import {
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
+import { ChevronIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("지원서 상세");
@@ -45,8 +46,8 @@ export default async function ProfessorApplicationDetailPage({
       currentPath="/professor/applications"
     >
       <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원서 상세" actions={
-            <Link href="/professor/applications" className="button-secondary">
-              <UiText>{"목록으로"}</UiText></Link>
+            <Link href="/professor/applications" className="button-secondary gap-2">
+              <ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>
           }>
         <ReceivedApplicationDetail application={application} />
       </ProfessorWorkspace>

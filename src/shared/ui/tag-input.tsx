@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useI18n } from "@/shared/i18n/i18n-provider";
+import styles from "@/shared/ui/tag-input.module.css";
 
 type TagInputProps = {
   id?: string;
@@ -32,6 +33,7 @@ export function TagInput({
   const { t } = useI18n();
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const composingRef = useRef(false);
   const [uncontrolledTags, setUncontrolledTags] = useState(() => normalizeTags(defaultValue));
   const [draft, setDraft] = useState("");
   const controlled = controlledValue !== undefined;
@@ -57,10 +59,10 @@ export function TagInput({
   }
 
   return (
-    <div className="tag-input" onClick={(event) => event.currentTarget.querySelector<HTMLInputElement>("input[type='text']")?.focus()}>
+    <div className={styles.root} onClick={(event) => event.currentTarget.querySelector<HTMLInputElement>("input[type='text']")?.focus()}>
       <input type="hidden" name={name} value={submittedValue} />
       {tags.map((tag) => (
-        <span key={tag.toLocaleLowerCase()} className="tag-input__chip">
+        <span key={tag.toLocaleLowerCase()} className={styles.chip}>
           {tag}
           <button
             type="button"
@@ -78,11 +80,13 @@ export function TagInput({
         id={inputId}
         type="text"
         aria-label={t(ariaLabel)}
-        className="tag-input__draft"
+        className={styles.draft}
         value={draft}
         placeholder={tags.length ? "" : t(placeholder)}
         required={required && tags.length === 0}
         maxLength={maxLength}
+        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionEnd={() => { composingRef.current = false; }}
         onChange={(event) => {
           const next = event.target.value;
           if (/[,;\n]/.test(next)) addTags(splitTags(next));
@@ -90,6 +94,7 @@ export function TagInput({
         }}
         onBlur={commitDraft}
         onKeyDown={(event) => {
+          if (composingRef.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
           if (event.key === "Enter" || event.key === "," || event.key === ";") {
             event.preventDefault();
             commitDraft();

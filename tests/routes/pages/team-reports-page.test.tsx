@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamReportsPage from "@/app/teams/[teamId]/reports/page";
+import TeamReportsPage from "@/app/projects/[projectId]/reports/page";
 
 const { loadTeamReportWorkspace } = vi.hoisted(() => ({
   loadTeamReportWorkspace: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamReportWorkspace,
 }));
 
@@ -24,15 +24,15 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/report-decision-form", () => ({
+vi.mock("@/app/projects/[projectId]/_components/report-decision-form", () => ({
   ReportDecisionForm: () => <button type="button">보고서 검토</button>,
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/report-score-feedback-forms", () => ({
+vi.mock("@/app/projects/[projectId]/_components/report-score-feedback-forms", () => ({
   ReportFeedbackForm: () => <button type="button">피드백 남기기</button>,
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/report-submission-form", () => ({
+vi.mock("@/app/projects/[projectId]/_components/report-submission-form", () => ({
   ReportSubmissionForm: ({ triggerLabel = "보고서 제출" }: { triggerLabel?: string }) => <button type="button">{triggerLabel}</button>,
 }));
 
@@ -48,7 +48,7 @@ const workspace = {
   topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
   completedTaskCount: 0,
@@ -154,7 +154,7 @@ describe("TeamReportsPage feedback states", () => {
       },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.getByRole("heading", { name: "수정 요청 사항" })).toBeInTheDocument();
     expect(screen.getByText("근거 자료를 보완해 주세요.")).toBeInTheDocument();
@@ -184,9 +184,9 @@ describe("TeamReportsPage feedback states", () => {
       },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("현재 제출 가능한 보고서가 없습니다");
+    expect(screen.getByText("현재 제출 가능한 보고서가 없습니다").closest("[role='status']")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "현재 제출 가능한 보고서가 없습니다" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "착수 보고서" })).toBeInTheDocument();
   });
@@ -223,7 +223,7 @@ describe("TeamReportsPage feedback states", () => {
       },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.getByText("제출 기한이 지났습니다. 새 버전 제출 일정은 프로젝트 관리자에게 확인해 주세요.")).toBeInTheDocument();
     expect(screen.queryByText(/지도교수에게 확인/)).not.toBeInTheDocument();
@@ -236,24 +236,23 @@ describe("TeamReportsPage feedback states", () => {
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     const empty = screen.getByRole("heading", { name: "팀 확정 후 보고서를 제출할 수 있습니다" }).closest("[data-empty-state]");
-    expect(empty).toHaveAttribute("data-empty-state", "page");
+    expect(empty).toHaveAttribute("data-empty-state", "results");
   });
 
   it("종료된 프로젝트의 일정 0건도 하나의 빈 상태만 보여준다", async () => {
     loadTeamReportWorkspace.mockResolvedValue({
       actor,
-      workspace: { ...workspace, status: "CLOSED" },
+      workspace: { ...workspace, status: "COMPLETED" },
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "종료된 프로젝트에 보고서 일정이 없습니다" })).toBeInTheDocument();
+    const empty = screen.getByRole("heading", { name: "종료된 프로젝트에 보고서 일정이 없습니다" }).closest("[data-empty-state]");
+    expect(empty).toHaveAttribute("data-empty-state", "results");
     expect(screen.queryByText("종료된 프로젝트입니다")).not.toBeInTheDocument();
   });
 
@@ -284,7 +283,7 @@ describe("TeamReportsPage feedback states", () => {
       },
     });
 
-    render(await TeamReportsPage({ params: Promise.resolve({ teamId: "team-1" }) }));
+    render(await TeamReportsPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
     expect(screen.queryByRole("button", { name: "보고서 일정 설정" })).not.toBeInTheDocument();
     expect(screen.queryByText("보고서 일정 관리")).not.toBeInTheDocument();

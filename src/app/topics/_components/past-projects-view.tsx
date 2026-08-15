@@ -1,30 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { UiSection } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
-import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
-import { ProjectPagination } from "@/app/topics/_components/project-pagination";
-import { ProjectVoteButton, ProjectVoteStatusPill, useProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
-import styles from "@/app/topics/_components/project-gallery.module.css";
+import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
+import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
+import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
+import { ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
+import { ProjectVoteButton, ProjectVoteCountBadge } from "@/app/topics/_components/project-vote-control";
+import { hasTopicsFilters, topicsHref } from "@/app/topics/_lib/topics-query";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
-import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
-import { EmptyState } from "@/shared/ui/page-primitives";
+import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
+import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
 
-function pastHref({ query, programId, page }: {
-  query?: string;
-  programId?: string;
-  page?: number;
-}) {
-  const target = new URLSearchParams({ view: "past" });
-  if (query) target.set("q", query);
-  if (programId) target.set("programId", programId);
-  if (page && page > 1) target.set("page", String(page));
-  return `/topics?${target.toString()}`;
-}
-
-export function PastProjectsView({ projects, total, page, totalPages, query, programId, ballot }: {
+export function PastProjectsView({ projects, total, page, totalPages, query, programId, ballot, votingResults, adminProjectData }: {
   projects: ArchivedProject[];
   total: number;
   page: number;
@@ -32,77 +20,64 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
   query: string;
   programId?: string;
   ballot?: ProgramVoteBallot;
+  votingResults?: VotingResultsView;
+  adminProjectData?: AdminProjectCardData[];
 }) {
-  const hasFilters = Boolean(query);
-  const voteSelection = useProjectVoteSelection(ballot);
+  const hasFilters = hasTopicsFilters({ q: query });
+  const adminDataByTopicId = new Map(adminProjectData?.map((data) => [data.topicId, data]));
   return (
-    <div className="min-w-0">
-      {hasFilters ? <UiSection aria-label="지난 프로젝트 검색" className="pt-5">
-        <div className="mb-2 flex justify-end"><Link className="text-xs font-bold text-[var(--primary)]" href={pastHref({ programId })}><UiText>{"조건 초기화"}</UiText></Link></div>
-      </UiSection> : null}
-
-      <section aria-labelledby="past-list-title" className="pt-5">
-        <div className="mb-4 flex min-h-8 items-center gap-3">
-          <ProjectVoteStatusPill selection={voteSelection} />
-          <h2 id="past-list-title" className="sr-only"><UiText>{"지난 프로젝트 목록"}</UiText></h2>
-          <p className="ml-auto text-xs font-semibold text-[var(--muted)]"><UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText></p>
-        </div>
-        {projects.length === 0 ? (
-          <EmptyState
-            title={hasFilters ? "조건에 맞는 프로젝트가 없습니다" : "아직 지난 프로젝트가 없습니다"}
-            description={hasFilters ? "검색어나 프로그램을 변경해 다시 확인하세요." : undefined}
+    <ProjectResultsLayout
+      items={projects}
+      itemKey={(project) => project.id}
+      total={total}
+      page={page}
+      totalPages={totalPages}
+      hasFilters={hasFilters}
+      resetHref={topicsHref({ view: "past", programId })}
+      emptyState={{
+        unfilteredTitle: "아직 지난 프로젝트가 없습니다",
+        unfilteredDescription: "완료된 프로젝트가 생기면 이 목록에서 확인할 수 있습니다.",
+        filteredDescription: "검색어를 바꿔 다시 확인해 주세요.",
+      }}
+      listLabel="지난 프로젝트 목록"
+      paginationLabel="지난 프로젝트 페이지"
+      hrefForPage={(targetPage) => topicsHref({ view: "past", programId, q: query, page: targetPage })}
+      ballot={ballot}
+      votingResults={votingResults}
+      renderItem={(project, voteSelection) => {
+        const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === project.topicId);
+        const cardData = adminDataByTopicId.get(project.topicId);
+        const hasActions = adminProjectData !== undefined || Boolean(voteCandidate);
+        return (
+          <ProjectGalleryCardShell
+            id={`past-project-${project.id}`}
+            title={project.topicTitle}
+            href={`/topics/archive/${project.id}`}
+            programName={project.programName}
+            divisionName={project.divisionName}
+            description={project.topicDescription}
+            imagePath={project.thumbnailPath}
+            coverStatus={<ProjectGalleryStatusBadge label="완료" tone="neutral" />}
+            coverOverlay={typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : undefined}
+            details={(
+              <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">
+                <span className="text-[var(--ink)]">{project.teamName} <UiText>{"팀"}</UiText></span>
+                {project.advisorEnabled ? <>{" · "}{project.professorName} <UiText>{project.advisorRole}</UiText></> : null}
+              </p>
+            )}
+            actions={hasActions ? (
+              <>
+                {adminProjectData !== undefined ? <AdminProjectCardActions projectTitle={project.topicTitle} data={cardData} /> : null}
+                {voteCandidate ? (
+                  <div className={adminProjectData !== undefined ? "mt-2" : ""}>
+                    <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
+                  </div>
+                ) : null}
+              </>
+            ) : undefined}
           />
-        ) : (
-          <>
-            <ol className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-              {projects.map((project) => {
-                const href = `/topics/archive/${project.id}`;
-                const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === project.topicId);
-
-                return (
-                  <li key={project.id} className="min-w-0">
-                    <article aria-labelledby={`past-project-${project.id}`} className={styles.card}>
-                      <ProjectGalleryCover imagePath={project.thumbnailPath} programName={project.programName} title={project.topicTitle} />
-                      <div className={styles.body}>
-                        <h3 id={`past-project-${project.id}`} className="min-w-0 text-xl font-bold leading-7 tracking-[-0.03em]">
-                          <Link href={href} className={styles.titleLink}><UiText>{project.topicTitle}</UiText></Link>
-                        </h3>
-                        <p className="mt-2 text-xs font-semibold text-[var(--primary)]"><UiText>{`${project.programName} · ${project.divisionName ?? "미분과"}`}</UiText></p>
-                        {project.advisorEnabled ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{project.professorName}</p> : null}
-                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{project.topicDescription}</UiText></p>
-
-                        <dl className="mt-auto grid grid-cols-2 gap-3 border-y border-[var(--line)] py-4 text-sm">
-                          <div>
-                            <dt className="text-[0.7rem] font-semibold text-[var(--muted)]"><UiText>{"프로젝트 팀"}</UiText></dt>
-                            <dd className="mt-1 truncate font-bold"><UiText>{project.teamName}</UiText></dd>
-                          </div>
-                          <div>
-                            <dt className="text-[0.7rem] font-semibold text-[var(--muted)]"><UiText>{"참여 · 결과물"}</UiText></dt>
-                            <dd className="mt-1 font-bold">{project.memberNames.length}<UiText>{"명 ·"}</UiText>{" "}{project.artifacts.length}<UiText>{"개"}</UiText></dd>
-                          </div>
-                        </dl>
-                        {voteCandidate ? (
-                          <div className={`mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 ${styles.actionLayer}`}>
-                            <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
-                            <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"득표"}</UiText>{" "}<strong className="tabular-nums text-[var(--ink)]">{voteCandidate.voteCount}</strong></span>
-                          </div>
-                        ) : null}
-
-                      </div>
-                    </article>
-                  </li>
-                );
-              })}
-            </ol>
-            <ProjectPagination
-              page={page}
-              totalPages={totalPages}
-              ariaLabel="지난 프로젝트 페이지"
-              href={(targetPage) => pastHref({ query, programId, page: targetPage })}
-            />
-          </>
-        )}
-      </section>
-    </div>
+        );
+      }}
+    />
   );
 }

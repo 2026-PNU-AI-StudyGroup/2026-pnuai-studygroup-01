@@ -21,18 +21,18 @@ export function advisorTokenAuth(): BetterAuthPlugin {
             select: {
               expiresAt: true,
               revokedAt: true,
-              user: { select: { id: true, role: true, isActive: true } },
+              user: { select: { id: true, role: true, accountStatus: true } },
             },
           });
           if (
             !record ||
             !isTokenUsable(record) ||
             record.user.role !== "ADVISOR" ||
-            !record.user.isActive
+            record.user.accountStatus !== "ACTIVE"
           ) {
             throw new APIError("UNAUTHORIZED", { status: "invalid" });
           }
-          // createSession은 databaseHooks.session.create.before(isActive 검사)를 그대로 탄다.
+          // createSession은 databaseHooks.session.create.before(accountStatus 검사)를 그대로 탄다.
           const session = await ctx.context.internalAdapter.createSession(record.user.id);
           const user = await ctx.context.internalAdapter.findUserById(record.user.id);
           if (!user) {

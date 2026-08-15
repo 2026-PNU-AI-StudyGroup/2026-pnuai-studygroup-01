@@ -11,6 +11,7 @@ import {
   ProfileIcon,
 } from "@/shared/ui/workspace-icons";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
+import { EmptyState } from "@/shared/ui/page-primitives";
 const typeLabel: Record<NotificationType, string> = {
   APPLICATION_RESULT: "지원 결과",
   REPORT_ACTIVITY: "보고서",
@@ -55,19 +56,14 @@ export function NotificationCenter({
             </div>
             {data.unreadCount ? (
               <form action={markAllRead}>
-                <button className="button-secondary"><UiText>{"모두 읽음으로 표시"}</UiText></button>
+                <button className="button-secondary gap-2"><CheckIcon className="size-4 shrink-0" /><UiText>{"모두 읽음으로 표시"}</UiText></button>
               </form>
             ) : null}
           </div>
 
           {data.items.length === 0 ? (
-            <div className="flex items-center gap-4 border-b border-[var(--line)] py-14">
-              <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-[var(--surface-subtle)] text-[var(--muted)]">
-                <BellIcon className="size-5" />
-              </span>
-              <div>
-                <p className="text-sm font-bold"><UiText>{"새로운 알림이 없습니다"}</UiText></p>
-              </div>
+            <div className="border-b border-[var(--line)]">
+              <EmptyState variant="section" title="새로운 알림이 없습니다" description="새 활동이 생기면 이 목록에 표시됩니다." />
             </div>
           ) : (
             <ol className="relative before:absolute before:bottom-7 before:left-[11px] before:top-7 before:w-px before:bg-[var(--line)]">

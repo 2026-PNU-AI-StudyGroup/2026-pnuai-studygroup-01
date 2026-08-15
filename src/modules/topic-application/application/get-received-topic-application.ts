@@ -6,7 +6,7 @@ import type {
 
 export class ReceivedTopicApplicationReadingForbiddenError extends Error {
   constructor() {
-    super("교수 또는 관리자만 받은 지원서를 조회할 수 있습니다.");
+    super("받은 지원서를 조회할 권한이 없습니다.");
     this.name = "ReceivedTopicApplicationReadingForbiddenError";
   }
 }

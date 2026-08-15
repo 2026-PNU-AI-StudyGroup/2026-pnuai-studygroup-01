@@ -8,6 +8,7 @@ vi.mock("@/app/teams/_components/student-team-controls", () => ({
   InviteStudentTeamMemberForm: () => <button>초대 보내기</button>,
   TeamMemberActions: ({ studentName }: { studentName: string }) => <button>{studentName} 관리</button>,
   DeleteStudentTeamForm: () => <button>팀 삭제 실행</button>,
+  LeaveStudentTeamForm: () => <button>팀 탈퇴</button>,
 }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor: vi.fn() }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));

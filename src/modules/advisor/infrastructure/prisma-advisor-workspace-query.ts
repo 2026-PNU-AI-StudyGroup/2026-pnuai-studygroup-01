@@ -12,12 +12,12 @@ export async function listAssignedProjects(client: PrismaClient, advisorId: stri
           id: true,
           title: true,
           program: { select: { id: true, name: true } },
-          team: { select: { id: true, name: true, status: true } },
+          projectTeam: { select: { id: true, name: true, confirmedAt: true } },
         },
       },
     },
   });
-  return rows.map(({ topic }) => topic);
+  return rows.map(({ topic: { projectTeam, ...topic } }) => ({ ...topic, team: projectTeam }));
 }
 
 // 상세: 할당 검증 포함(비할당이면 null → notFound).
@@ -31,7 +31,7 @@ export async function findAssignedProject(client: PrismaClient, advisorId: strin
           title: true,
           description: true,
           program: { select: { id: true, name: true, endsAt: true } },
-          team: {
+          projectTeam: {
             select: {
               id: true,
               name: true,
@@ -58,7 +58,9 @@ export async function findAssignedProject(client: PrismaClient, advisorId: strin
       },
     },
   });
-  return assignment?.topic ?? null;
+  if (!assignment) return null;
+  const { projectTeam, ...topic } = assignment.topic;
+  return { ...topic, team: projectTeam };
 }
 
 // 상세 화면 폼용: 팀에 배정된 채점표별 항목 + 이 위원이 이미 남긴 점수·피드백.
@@ -66,11 +68,11 @@ export async function findAdvisorReview(client: PrismaClient, advisorId: string,
   const rubrics = await findTeamRubrics(client, teamId);
   const [evaluations, feedback] = await Promise.all([
     client.advisorEvaluation.findMany({
-      where: { teamId, advisorId },
+      where: { projectTeamId: teamId, advisorId },
       select: { rubricId: true, scores: { select: { criterionId: true, points: true } } },
     }),
     client.advisorFeedback.findMany({
-      where: { teamId, advisorId },
+      where: { projectTeamId: teamId, advisorId },
       orderBy: { createdAt: "desc" },
       select: { id: true, body: true, createdAt: true },
     }),

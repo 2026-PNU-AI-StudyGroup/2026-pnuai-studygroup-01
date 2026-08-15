@@ -13,32 +13,43 @@ describe("PageHeader", () => {
 });
 
 describe("EmptyState", () => {
-  it("패널 내부에서는 외부 카드 장식을 다시 만들지 않는다", () => {
-    render(<EmptyState variant="embedded" title="항목이 없습니다" description="새 항목이 생기면 표시됩니다." />);
+  it("결과 빈 상태는 외곽 카드 없이 충분한 여백을 둔다", () => {
+    render(<EmptyState title="항목이 없습니다" description="새 항목이 생기면 표시됩니다." />);
 
     const state = screen.getByText("항목이 없습니다").closest("[data-empty-state]");
-    expect(state).toHaveAttribute("data-empty-state", "embedded");
-    expect(state).not.toHaveClass("rounded-[var(--radius-panel)]");
-    expect(state).not.toHaveClass("border");
-    expect(state).not.toHaveClass("bg-[var(--surface)]");
+    expect(state).toHaveAttribute("data-empty-state", "results");
+    expect(state).toHaveAttribute("role", "status");
+    expect(state).toHaveClass("min-h-44", "text-center");
+    expect(screen.getByText("항목이 없습니다").tagName).toBe("H2");
+    expect(state?.className).not.toContain("border");
+    expect(state?.className).not.toContain("bg-");
   });
 
-  it("페이지 빈 상태는 독립된 표면을 유지한다", () => {
-    render(<EmptyState title="항목이 없습니다" description="첫 항목을 추가해 주세요." />);
+  it("패널 내부 빈 상태는 부모 표면을 다시 만들지 않는다", () => {
+    render(<EmptyState variant="section" title="항목이 없습니다" description="첫 항목을 추가해 주세요." />);
 
     const state = screen.getByText("항목이 없습니다").closest("[data-empty-state]");
-    expect(state).toHaveAttribute("data-empty-state", "page");
-    expect(state).toHaveClass("border");
-    expect(state).toHaveClass("bg-[var(--surface)]");
+    expect(state).toHaveAttribute("data-empty-state", "section");
+    expect(state).toHaveClass("min-h-28", "text-center");
+    expect(screen.getByText("항목이 없습니다").tagName).toBe("H3");
+    expect(state?.className).not.toContain("border");
+    expect(state?.className).not.toContain("bg-");
   });
 
-  it("설명이 없으면 빈 문단과 설명용 여백을 만들지 않는다", () => {
-    const { container } = render(<EmptyState variant="embedded" title="등록된 공지가 없습니다" />);
+  it("작은 빈 상태는 문단 제목과 인접 액션을 사용한다", () => {
+    render(<EmptyState variant="compact" title="등록된 공지가 없습니다" action={<button>공지 작성</button>} />);
 
     const state = screen.getByText("등록된 공지가 없습니다").closest("[data-empty-state]");
-    expect(container.querySelector("p")).not.toBeInTheDocument();
-    expect(state).toHaveClass("min-h-20");
-    expect(state).not.toHaveClass("min-h-28", "gap-5");
+    expect(state).toHaveAttribute("data-empty-state", "compact");
+    expect(state).toHaveClass("min-h-16", "text-left");
+    expect(screen.getByText("등록된 공지가 없습니다").tagName).toBe("P");
+    expect(screen.getByRole("button", { name: "공지 작성" })).toBeInTheDocument();
+  });
+
+  it("설명이 없으면 빈 설명 문단을 만들지 않는다", () => {
+    const { container } = render(<EmptyState variant="section" title="등록된 공지가 없습니다" />);
+
+    expect(container.querySelectorAll("p")).toHaveLength(0);
   });
 });
 

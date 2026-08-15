@@ -53,7 +53,7 @@ export default async function ProfessorsPage({ searchParams }: { searchParams: P
           >
             {entries.length === 0 ? (
               <AdminSectionEmpty>
-                <EmptyState variant="embedded" title="아직 권한 변경 기록이 없습니다" description="권한을 바꾸면 기록이 자동으로 남습니다." />
+                <EmptyState variant="section" title="아직 권한 변경 기록이 없습니다" description="권한을 바꾸면 기록이 자동으로 남습니다." />
               </AdminSectionEmpty>
             ) : (
               <ol className={adminRecordListClassName}>
@@ -97,7 +97,7 @@ export default async function ProfessorsPage({ searchParams }: { searchParams: P
         >
           {entries.length === 0 ? (
             <AdminSectionEmpty>
-              <EmptyState variant="embedded" title="등록된 교수 이메일이 없습니다" description="교수 계정이 로그인하기 전에 이메일을 등록하세요." />
+              <EmptyState variant="section" title="등록된 교수 이메일이 없습니다" description="교수 계정이 로그인하기 전에 이메일을 등록하세요." />
             </AdminSectionEmpty>
           ) : (
             <ol className={adminRecordListClassName}>

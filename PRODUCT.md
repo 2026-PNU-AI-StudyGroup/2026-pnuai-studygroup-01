@@ -2,6 +2,9 @@
 
 <!-- impeccable:product-schema 1 -->
 
+> [!WARNING]
+> 이 문서는 초기 제품 구상 기록입니다. 현재 구현·정책의 기준이 아니며, 작업 전에는 [`docs/policies/README.md`](docs/policies/README.md)와 현재 코드를 확인합니다.
+
 ## Platform
 
 web

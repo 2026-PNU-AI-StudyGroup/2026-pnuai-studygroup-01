@@ -11,6 +11,9 @@ const request: TopicApprovalRequestSummary = {
   id: "request-1",
   topicId: "topic-1",
   topicTitle: "접근성 지도 프로젝트",
+  programId: "program-1",
+  programName: "2026 캡스톤",
+  programCategory: "캡스톤 디자인",
   requesterId: "student-1",
   requesterName: "김학생",
   route: "PROFESSOR",
@@ -28,6 +31,7 @@ describe("ProjectApprovalLedger", () => {
 
     expect(screen.getByRole("list", { name: "프로젝트 승인 요청 목록" })).toBeInTheDocument();
     expect(screen.getByText("접근성 지도 프로젝트")).toBeInTheDocument();
+    expect(screen.getByText("캡스톤 디자인 · 2026 캡스톤")).toBeInTheDocument();
     expect(screen.getByText("검토 대기")).toBeInTheDocument();
     expect(screen.getByText("김학생")).toBeInTheDocument();
     expect(screen.getByText("박교수 교수")).toBeInTheDocument();
@@ -41,6 +45,15 @@ describe("ProjectApprovalLedger", () => {
 
     expect(screen.getByRole("link", { name: "상세" })).toHaveAttribute("href", "/project-approvals/request-1");
     expect(screen.queryByText("공개 승인")).not.toBeInTheDocument();
+  });
+
+  it("필터와 페이지 문맥을 상세 링크에 유지한다", () => {
+    render(<ProjectApprovalLedger requests={[request]} student={false} query={{ programId: "program-1", status: "PENDING", page: 3 }} />);
+
+    expect(screen.getByRole("link", { name: "검토" })).toHaveAttribute(
+      "href",
+      "/project-approvals/request-1?programId=program-1&status=PENDING&page=3",
+    );
   });
 
   it("관리자 화면에서는 공통 관리 패널과 넓은 화면 전용 열 구조를 사용한다", () => {

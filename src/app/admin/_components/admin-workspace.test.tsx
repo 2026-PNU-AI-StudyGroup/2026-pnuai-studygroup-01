@@ -7,31 +7,32 @@ describe("AdminWorkspace", () => {
   it("관리자 업무를 2차 사이드바와 현재 메뉴 선택 상태로 제공한다", () => {
     const { container } = render(
       <AdminWorkspace
-        currentPath="/admin/programs/new"
-        eyebrow="프로그램 · 새로 만들기"
-        title="새 프로그램"
-        description="새 프로그램을 등록합니다."
+        currentPath="/admin/users"
+        eyebrow="사용자 · 계정 관리"
+        title="사용자"
+        description="가입 계정을 관리합니다."
       >
         <p>관리 화면 본문</p>
       </AdminWorkspace>,
     );
 
     expect(screen.getByRole("complementary")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "프로그램개설과 공개 상태" })[0]).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("프로그램 · 새로 만들기")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "사용자" })[0]).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "프로젝트 승인" })).not.toBeInTheDocument();
+    expect(screen.getByText("사용자 · 계정 관리")).toBeInTheDocument();
     expect(screen.getByText("관리 화면 본문")).toBeInTheDocument();
     expect(container.querySelector("main > div")).toHaveClass("xl:grid-cols-[17rem_minmax(0,1fr)]");
   });
 
   it("eyebrow와 설명 없이 제목만 제공할 수 있다", () => {
     const { container } = render(
-      <AdminWorkspace currentPath="/admin/programs/new" title="새 프로그램">
+      <AdminWorkspace currentPath="/admin/users" title="사용자">
         <p>관리 화면 본문</p>
       </AdminWorkspace>,
     );
 
     const header = container.querySelector("header");
-    expect(header).toHaveTextContent("새 프로그램");
+    expect(header).toHaveTextContent("사용자");
     expect(header?.querySelector("p")).not.toBeInTheDocument();
   });
 });

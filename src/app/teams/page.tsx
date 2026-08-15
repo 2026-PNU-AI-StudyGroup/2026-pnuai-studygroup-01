@@ -19,6 +19,7 @@ import { ProjectProgramService } from "@/modules/project-program/application/man
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
+import { AddIcon, SettingsIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 팀");
@@ -56,8 +57,8 @@ export default async function StudentTeamsPage({
                       <UiText>{"받은 초대"}</UiText>{" "}{invitations.length}
                     </Link>
                   ) : null}
-                  {teams.length > 0 ? <Link className="button-secondary" href="/recruitments/mine"><UiText>{"모집 공고 관리"}</UiText></Link> : null}
-                  {teams.length > 0 ? <Link className="button-primary" href="/teams?modal=create"><UiText>{"새 팀 만들기"}</UiText></Link> : null}
+                  {teams.length > 0 ? <Link className="button-secondary gap-2" href="/recruitments/mine"><SettingsIcon className="size-4 shrink-0" /><UiText>{"모집 공고 관리"}</UiText></Link> : null}
+                  {teams.length > 0 ? <Link className="button-primary gap-2" href="/teams?modal=create"><AddIcon className="size-4 shrink-0" /><UiText>{"새 팀 만들기"}</UiText></Link> : null}
                 </div>
               ) : undefined}
             />
@@ -74,7 +75,7 @@ export default async function StudentTeamsPage({
                 <EmptyState
                   title="아직 참여 중인 팀이 없습니다"
                   description="새 팀을 만들면 본인이 팀장이 됩니다."
-                  action={<Link className="button-primary" href="/teams?modal=create"><UiText>{"첫 팀 만들기"}</UiText></Link>}
+                  action={<Link className="button-primary gap-2" href="/teams?modal=create"><AddIcon className="size-4 shrink-0" /><UiText>{"첫 팀 만들기"}</UiText></Link>}
                 />
               ) : (
                 <StudentTeamLedger teams={teams} actorId={actor.id} />
@@ -86,7 +87,7 @@ export default async function StudentTeamsPage({
                 <strong className="text-sm text-[var(--ink)]"><UiText>{"학생 프로젝트를 제안할 수 있습니다."}</UiText></strong>
                 <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"프로그램 설정에 맞는 승인 요청을 보내세요."}</UiText></p>
               </div>
-              <Link className="button-quiet" href="/projects/new"><UiText>{"학생 프로젝트 제안"}</UiText></Link>
+              <Link className="button-quiet gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"학생 프로젝트 제안"}</UiText></Link>
             </aside> : null}
           </div>
 
@@ -94,15 +95,16 @@ export default async function StudentTeamsPage({
             <TeamModal
               title="새 팀 만들기"
               description="팀을 만들면 팀장으로 시작합니다. 구성원은 팀을 만든 뒤 초대할 수 있습니다."
+              closeHref="/teams"
             >
-              <CreateStudentTeamForm successHref="/teams" />
+              <CreateStudentTeamForm />
             </TeamModal>
           ) : null}
 
           {modal === "invitations" ? (
             <TeamModal title="받은 팀 초대" description="참여할 팀인지 확인한 뒤 응답하세요.">
               {invitations.length === 0 ? (
-                <EmptyState variant="embedded" title="응답할 초대가 없습니다" />
+                <EmptyState variant="section" title="응답할 초대가 없습니다" description="새 팀 초대를 받으면 이곳에 표시됩니다." />
               ) : (
                 <ul className="max-h-[60vh] divide-y divide-[var(--line)] overflow-y-auto border-y border-[var(--line)]">
                   {invitations.map((invitation) => (

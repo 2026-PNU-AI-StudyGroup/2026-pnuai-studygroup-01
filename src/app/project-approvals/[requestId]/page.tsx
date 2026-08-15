@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { TopicApprovalDecisionForm } from "@/app/_components/topic-approval-decision-form";
@@ -14,6 +13,9 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PageHeader, StatusBadge } from "@/shared/ui/page-primitives";
+import { ChevronIcon } from "@/shared/ui/workspace-icons";
+import { parseTopicApprovalStatus, projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
+import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 승인 요청 상세");
@@ -23,6 +25,8 @@ const statusView = {
   PENDING: ["검토 대기", "info"],
   APPROVED: ["승인", "success"],
   REJECTED: ["반려", "danger"],
+  WITHDRAWN: ["철회", "neutral"],
+  CANCELED: ["취소", "neutral"],
 } as const;
 
 const applicationModeLabel = {
@@ -95,7 +99,7 @@ function ApprovalDetail({ request, canDecide }: { request: TopicApprovalRequestD
       <aside className="space-y-6">
         <section aria-labelledby="approval-schedule-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">
           <h2 id="approval-schedule-title" className="text-lg font-bold"><UiText>{"프로그램 일정"}</UiText></h2>
-          <dl className="mt-4 grid gap-5"><Period label="프로그램 모집 기간" start={request.programRecruitmentStartsAt} end={request.programRecruitmentEndsAt} /><Period label="수행 기간" start={request.programExecutionStartsAt} end={request.programExecutionEndsAt} /><Period label="제출 기간" start={request.programSubmissionStartsAt} end={request.programSubmissionEndsAt} /></dl>
+          <dl className="mt-4 grid gap-5">{request.programRecruitmentStartsAt && request.programRecruitmentEndsAt ? <Period label="프로그램 모집 기간" start={request.programRecruitmentStartsAt} end={request.programRecruitmentEndsAt} /> : null}<Period label="수행 기간" start={request.programExecutionStartsAt} end={request.programExecutionEndsAt} /><Period label="제출 기간" start={request.programSubmissionStartsAt} end={request.programSubmissionEndsAt} /></dl>
         </section>
         {canDecide ? (
           <section aria-labelledby="approval-decision-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5">
@@ -115,7 +119,13 @@ function ApprovalDetail({ request, canDecide }: { request: TopicApprovalRequestD
   );
 }
 
-export default async function ProjectApprovalDetailPage({ params }: { params: Promise<{ requestId: string }> }) {
+export default async function ProjectApprovalDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ requestId: string }>;
+  searchParams?: Promise<{ programId?: SearchParamValue; status?: SearchParamValue; page?: SearchParamValue }>;
+}) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { requestId } = await params;
@@ -123,11 +133,20 @@ export default async function ProjectApprovalDetailPage({ params }: { params: Pr
   const request = await new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), programs).get(actor, requestId);
   if (!request) notFound();
   const canDecide = request.status === "PENDING" && (actor.role === "PROFESSOR" || actor.role === "ADMIN");
-  const backLink = <Link href="/project-approvals" className="button-secondary"><UiText>{"목록으로"}</UiText></Link>;
+  const query: { programId?: SearchParamValue; status?: SearchParamValue; page?: SearchParamValue } = searchParams
+    ? await searchParams
+    : {};
+  const page = Number(firstSearchParam(query.page) ?? "1");
+  const backHref = projectApprovalsHref({
+    programId: firstSearchParam(query.programId)?.trim().slice(0, 200) || undefined,
+    status: parseTopicApprovalStatus(firstSearchParam(query.status)),
+    page: Number.isSafeInteger(page) && page > 0 ? page : 1,
+  });
+  const backLink = <Link href={backHref} className="button-secondary gap-2"><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>;
   const detail = <ApprovalDetail request={request} canDecide={canDecide} />;
 
   if (actor.role === "ADMIN") {
-    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals"><AdminWorkspace currentPath="/project-approvals" eyebrow={request.programName} title="프로젝트 승인 요청 상세" description="제안 내용, 지원 조건과 전체 일정을 확인합니다." actions={backLink}>{detail}</AdminWorkspace></AppShell>;
+    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals"><main className="content-shell page-enter space-y-8"><PageHeader eyebrow={request.programName} title="프로젝트 승인 요청 상세" description="제안 내용, 지원 조건과 전체 일정을 확인합니다." actions={backLink} />{detail}</main></AppShell>;
   }
   if (actor.role === "PROFESSOR") {
     return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals"><ProfessorWorkspace currentPath="/project-approvals" role={actor.role} eyebrow={request.programName} title="프로젝트 승인 요청 상세" description="제안 내용, 지원 조건과 전체 일정을 확인합니다." actions={backLink}>{detail}</ProfessorWorkspace></AppShell>;

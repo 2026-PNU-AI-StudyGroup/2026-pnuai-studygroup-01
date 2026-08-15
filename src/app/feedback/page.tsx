@@ -93,7 +93,7 @@ export default async function FeedbackPage({
               <FeedbackPostCard key={post.id} post={post as FeedbackPostView} canModerate={canModerate} />
             ))
           ) : (
-            <EmptyState title="아직 등록된 피드백이 없습니다." />
+            <EmptyState title="아직 등록된 피드백이 없습니다" description="새 피드백이 등록되면 이 목록에 표시됩니다." />
           )}
           <ProjectPagination page={page} totalPages={totalPages} href={pageHref} ariaLabel="피드백 페이지" />
         </section>

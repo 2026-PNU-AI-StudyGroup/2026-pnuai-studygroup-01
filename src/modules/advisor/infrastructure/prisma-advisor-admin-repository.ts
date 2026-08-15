@@ -20,7 +20,7 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
             name: input.name.trim(),
             role: "ADVISOR",
             emailVerified: false,
-            isActive: true,
+            accountStatus: "ACTIVE",
             onboardingRequired: false,
             createdAt: new Date(),
             updatedAt: new Date(),

@@ -2,25 +2,19 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import ProgramsAdminPage from "@/app/admin/programs/page";
 import UsersAdminPage from "@/app/admin/users/page";
 
-const { getCurrentActor, listPrograms, listUsers } = vi.hoisted(() => ({
+const { getCurrentActor, listUsers } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
-  listPrograms: vi.fn(),
   listUsers: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({ getLocalizedMetadata: vi.fn() }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
-vi.mock("@/modules/project-program/application/manage-project-programs", () => ({
-  ProjectProgramService: class { listAll = listPrograms; },
-}));
 vi.mock("@/modules/identity/application/manage-users", () => ({
   UserAdministrationService: class { list = listUsers; },
 }));
-vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({ PrismaProjectProgramRepository: class {} }));
 vi.mock("@/modules/identity/infrastructure/prisma-user-administration-repository", () => ({ PrismaUserAdministrationRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
@@ -34,77 +28,11 @@ vi.mock("@/app/admin/users/_components/user-status-form", () => ({
 }));
 
 const admin = { id: "admin-1", name: "관리자", role: "ADMIN" as const };
-const program = {
-  id: "program-1",
-  name: "캡스톤",
-  category: "교과",
-  startYear: 2026,
-  description: "프로그램 설명",
-  startsAt: new Date("2026-03-01T00:00:00.000Z"),
-  endsAt: new Date("2026-06-30T00:00:00.000Z"),
-  recruitmentEndsAt: new Date("2026-04-30T00:00:00.000Z"),
-  status: "CLOSED" as const,
-  topicCount: 1,
-  teamCount: 1,
-  advisorEnabled: true,
-  studentProjectCreationEnabled: true,
-  icon: "FOLDER" as const,
-  isPublic: true,
-  lifecycleStatus: "CLOSED" as const,
-  votingPolicy: null,
-};
-
 describe("관리 화면의 중복·가짜 컨트롤", () => {
   beforeEach(() => {
     getCurrentActor.mockReset();
-    listPrograms.mockReset();
     listUsers.mockReset();
     getCurrentActor.mockResolvedValue(admin);
-  });
-
-  it("프로그램 목록이 비어 있으면 빈 상태에만 생성 CTA를 둔다", async () => {
-    listPrograms.mockResolvedValue([]);
-
-    render(await ProgramsAdminPage());
-
-    expect(screen.getAllByRole("link", { name: "새 프로그램" })).toHaveLength(1);
-  });
-
-  it("프로그램 목록은 상태를 보여주고 관리 버튼 하나로 모든 조작을 진입시킨다", async () => {
-    listPrograms.mockResolvedValue([program]);
-
-    render(await ProgramsAdminPage());
-
-    const manage = screen.getByRole("link", { name: "관리" });
-    expect(manage).toHaveAttribute("href", "/admin/programs/program-1");
-    expect(manage.parentElement?.parentElement).toHaveClass("2xl:col-start-4");
-    expect(screen.getByText("공개")).toBeInTheDocument();
-    expect(screen.getByText("운영 마감")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "설정" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "투표 현황" })).not.toBeInTheDocument();
-    expect(screen.queryByText("지도교수 있음")).not.toBeInTheDocument();
-  });
-
-  it("투표 정책이 있는 프로그램도 단계 배지와 단일 관리 진입점을 제공한다", async () => {
-    listPrograms.mockResolvedValue([{
-      ...program,
-      status: "OPEN",
-      lifecycleStatus: "ACTIVE",
-      votingPolicy: {
-        startsAt: new Date("2000-01-01T00:00:00.000Z"),
-        endsAt: new Date("2100-01-01T00:00:00.000Z"),
-        voteLimit: 3,
-        voteLimitScope: "PROGRAM",
-        selfVotingAllowed: false,
-        identityVisibility: "ANONYMOUS",
-      },
-    }]);
-
-    render(await ProgramsAdminPage());
-
-    expect(screen.getByText("투표 진행 중")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "관리" })).toHaveAttribute("href", "/admin/programs/program-1");
-    expect(screen.queryByRole("link", { name: "투표 현황" })).not.toBeInTheDocument();
   });
 
   it("현재 관리자는 비활성화 버튼 대신 내 계정 상태를 보여준다", async () => {

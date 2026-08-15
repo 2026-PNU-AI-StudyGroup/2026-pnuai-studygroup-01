@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { TopicUpdateError, UpdateTopicService } from "@/modules/topic/application/update-topic";
+import { UpdateTopicService } from "@/modules/topic/application/update-topic";
 import type { TopicEditor } from "@/modules/topic/application/topic-ports";
 
 const input = {

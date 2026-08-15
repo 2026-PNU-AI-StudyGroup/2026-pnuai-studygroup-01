@@ -12,12 +12,13 @@ const { getApproval, getCurrentActor } = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({ getLocalizedMetadata: vi.fn() }));
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
-vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({ TopicApprovalService: class { get = getApproval; } }));
+vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
+  TopicApprovalService: class { get = getApproval; },
+}));
 vi.mock("@/modules/topic-approval/infrastructure/prisma-topic-approval-repository", () => ({ PrismaTopicApprovalRepository: class {} }));
 vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({ PrismaProjectProgramRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
-vi.mock("@/app/_components/admin-workspace", () => ({ AdminWorkspace: ({ children }: { children: ReactNode }) => <>{children}</> }));
 vi.mock("@/app/_components/professor-workspace", () => ({ ProfessorWorkspace: ({ children }: { children: ReactNode }) => <>{children}</> }));
 vi.mock("@/app/_components/topic-approval-decision-form", () => ({ TopicApprovalDecisionForm: () => <form aria-label="승인 결정 폼" /> }));
 
@@ -25,6 +26,7 @@ const request = {
   id: "request-1",
   topicId: "topic-1",
   topicTitle: "접근성 지도 프로젝트",
+  programId: "program-1",
   requesterId: "student-1",
   requesterName: "김학생",
   route: "PROFESSOR" as const,
@@ -69,6 +71,20 @@ describe("프로젝트 승인 요청 상세", () => {
     expect(screen.getByText("지원 동기")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "프로그램 일정" })).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "승인 결정 폼" })).toBeInTheDocument();
+  });
+
+  it("상세 진입 시 전달된 필터와 페이지로 돌아간다", async () => {
+    getCurrentActor.mockResolvedValue({ id: "admin-1", name: "관리자", role: "ADMIN" });
+
+    render(await ProjectApprovalDetailPage({
+      params: Promise.resolve({ requestId: "request-1" }),
+      searchParams: Promise.resolve({ programId: "program-1", status: "PENDING", page: "3" }),
+    }));
+
+    expect(screen.getByRole("link", { name: "목록으로" })).toHaveAttribute(
+      "href",
+      "/project-approvals?programId=program-1&status=PENDING&page=3",
+    );
   });
 
   it("학생에게 처리 결과는 보여주되 결정 폼은 노출하지 않는다", async () => {

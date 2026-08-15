@@ -54,9 +54,8 @@ export class ProjectGuidanceRequestService {
     title: string;
     content: string;
     referenceUrl?: string;
-    preferredAt?: Date;
   }, now = new Date()) {
-    const normalized = normalizeProjectGuidanceRequest(input, now);
+    const normalized = normalizeProjectGuidanceRequest(input);
     const result = await this.writer.create({
       teamId: input.teamId,
       actor,

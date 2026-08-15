@@ -9,6 +9,7 @@ import {
   normalizeEmail,
   USER_ROLES,
 } from "@/modules/identity/domain/user-role";
+import { needsStudentOnboardingAfterRoleChange } from "@/modules/identity/domain/student-onboarding";
 import { parseAuthEnvironment } from "@/modules/identity/infrastructure/auth-environment";
 import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/development-mock-auth";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -23,7 +24,16 @@ async function reconcileProfessorRole(userId: string): Promise<void> {
   await prisma.$transaction(async (transaction) => {
     const user = await transaction.user.findUnique({
       where: { id: userId },
-      select: { email: true, role: true },
+      select: {
+        email: true,
+        role: true,
+        department: true,
+        studentNumber: true,
+        grade: true,
+        phoneNumber: true,
+        contactEmail: true,
+        onboardingCompletedAt: true,
+      },
     });
     // ADVISOR는 교수 허용목록 대상이 아니므로 재조정에서 제외한다. 제외하지 않으면
     // 자문위원이 토큰 로그인할 때마다 STUDENT로 강등된다.
@@ -42,7 +52,10 @@ async function reconcileProfessorRole(userId: string): Promise<void> {
       // 이후 관리자가 권한을 회수해 STUDENT로 강등할 때 온보딩 폼에 갇힌다.
       data: professorEntry
         ? { role: "PROFESSOR", onboardingRequired: false }
-        : { role: "STUDENT" },
+        : {
+          role: "STUDENT",
+          onboardingRequired: needsStudentOnboardingAfterRoleChange(user),
+        },
     });
   });
 }
@@ -89,10 +102,10 @@ export const auth = betterAuth({
         defaultValue: "STUDENT",
         input: false,
       },
-      isActive: {
-        type: "boolean",
+      accountStatus: {
+        type: ["ACTIVE", "DISABLED", "WITHDRAWN"],
         required: true,
-        defaultValue: true,
+        defaultValue: "ACTIVE",
         input: false,
       },
       department: {
@@ -172,8 +185,8 @@ export const auth = betterAuth({
       create: {
         before: async (session) => {
           await reconcileProfessorRole(session.userId);
-          const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { isActive: true } });
-          if (!user?.isActive) return false;
+          const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { accountStatus: true } });
+          if (user?.accountStatus !== "ACTIVE") return false;
         },
       },
     },

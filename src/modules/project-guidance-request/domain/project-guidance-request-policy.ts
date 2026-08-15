@@ -13,8 +13,7 @@ export function normalizeProjectGuidanceRequest(input: {
   title: string;
   content: string;
   referenceUrl?: string;
-  preferredAt?: Date;
-}, now: Date) {
+}) {
   const title = input.title.trim();
   const content = input.content.trim();
   if (title.length < 2 || title.length > 100) {
@@ -25,16 +24,7 @@ export function normalizeProjectGuidanceRequest(input: {
   }
 
   const referenceUrl = normalizeReferenceUrl(input.referenceUrl);
-  const preferredAt = input.preferredAt ?? null;
-  if (input.kind === "MEETING") {
-    if (!preferredAt || !isValidDate(preferredAt) || preferredAt <= now) {
-      throw new InvalidProjectGuidanceRequestError("현재 이후의 회의 희망 일시를 입력해 주세요.");
-    }
-  } else if (preferredAt !== null) {
-    throw new InvalidProjectGuidanceRequestError("검토 요청에는 회의 희망 일시를 입력할 수 없습니다.");
-  }
-
-  return { title, content, referenceUrl, preferredAt };
+  return { title, content, referenceUrl, preferredAt: null };
 }
 
 export function normalizeProjectGuidanceResponse(input: {

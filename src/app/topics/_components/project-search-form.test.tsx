@@ -21,4 +21,10 @@ describe("ProjectSearchForm", () => {
     expect(container.querySelector('input[name="programId"]')).toHaveValue("program-1");
     expect(container.querySelector('input[name="category"]')).not.toBeInTheDocument();
   });
+
+  it("관리자 운영 상태를 검색 후에도 보존한다", () => {
+    const { container } = render(<ProjectSearchForm view="active" programId="program-1" query="" operation="overdue" />);
+
+    expect(container.querySelector('input[name="operation"]')).toHaveValue("overdue");
+  });
 });

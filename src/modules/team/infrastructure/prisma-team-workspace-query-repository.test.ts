@@ -7,18 +7,20 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     const findFirst = vi.fn().mockResolvedValue({
       id: "team-1",
       name: "모두의 길",
-      status: "CONFIRMED",
-      professorId: "professor-1",
-      topic: {
+      confirmedAt: new Date("2026-03-01T00:00:00Z"),
+      project: {
         id: "topic-1",
         title: "실내 길찾기",
+        description: "접근 가능한 길을 안내합니다.",
         recruitmentStartsAt: new Date("2026-01-01T00:00:00Z"),
         recruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
         executionStartsAt: new Date("2026-03-01T00:00:00Z"),
         executionEndsAt: new Date("2026-10-01T00:00:00Z"),
         submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
         submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
-        program: { name: "2026 캡스톤디자인", advisorEnabled: true },
+        status: "ACTIVE",
+        managerId: "professor-1",
+        program: { name: "2026 캡스톤디자인", advisorEnabled: true, endsAt: new Date("2026-12-31T00:00:00Z") },
         manager: {
           id: "professor-1",
           name: "김교수",
@@ -34,8 +36,9 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
           },
         }],
       },
-      members: [{
-        student: {
+      memberships: [{
+        role: "LEADER",
+        user: {
           id: "student-1",
           name: "정하늘",
           email: "student@pusan.ac.kr",
@@ -62,15 +65,15 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       _count: { discussionPosts: 2 },
     });
     const repository = new PrismaTeamWorkspaceQueryRepository({
-      team: { findFirst },
+      projectTeam: { findFirst },
     } as never);
 
     const workspace = await repository.findWorkspaceForActor("team-1", { id: "admin-1", role: "ADMIN" });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "team-1" },
+      where: { projectId: "team-1" },
       include: expect.objectContaining({
-        topic: {
+        project: {
           select: expect.objectContaining({
             manager: {
               select: {
@@ -95,9 +98,10 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
             },
           }),
         },
-        members: expect.objectContaining({
+        memberships: expect.objectContaining({
           select: {
-            student: {
+            role: true,
+            user: {
               select: expect.objectContaining({
                 department: true,
                 studentNumber: true,
@@ -114,6 +118,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     }));
     expect(workspace?.members[0]).toEqual(expect.objectContaining({
       id: "student-1",
+      role: "LEADER",
       department: "정보컴퓨터공학부",
       phoneNumber: "010-1234-5678",
       profileImage: { updatedAt: new Date("2026-08-07T00:00:00Z") },
@@ -121,6 +126,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     }));
     expect(workspace?.members[0]).not.toHaveProperty("studentProfile");
     expect(workspace?.programName).toBe("2026 캡스톤디자인");
+    expect(workspace?.topicDescription).toBe("접근 가능한 길을 안내합니다.");
     expect(workspace?.discussionPosts.find((post) => post.id === "post-a")?.authorRole).toBe("ASSISTANT");
     expect(workspace?.discussionPosts.find((post) => post.id === "post-b")?.authorRole).toBe("PROFESSOR");
     expect(workspace?.professor).toEqual({
@@ -137,6 +143,10 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       },
     ]);
     expect(workspace?.access.isAssistant).toBe(false);
+    expect(workspace?.access.isTeamLeader).toBe(false);
+
+    const leaderWorkspace = await repository.findWorkspaceForActor("team-1", { id: "student-1", role: "STUDENT" });
+    expect(leaderWorkspace?.access.isTeamLeader).toBe(true);
 
     const assistantWorkspace = await repository.findWorkspaceForActor("team-1", { id: "assistant-1", role: "PROFESSOR" });
     expect(assistantWorkspace?.access.isAssistant).toBe(true);
@@ -148,9 +158,10 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       {
         id: "team-1",
         name: "모두의 길",
-        status: "CONFIRMED",
-        topic: { title: "실내 길찾기", program: { name: "2026 캡스톤디자인" } },
-        members: [{ id: "member-1" }],
+        confirmedAt: new Date("2026-03-01T00:00:00Z"),
+        projectId: "topic-1",
+        project: { title: "실내 길찾기", status: "ACTIVE", program: { name: "2026 캡스톤디자인", endsAt: new Date("2026-12-31T00:00:00Z") } },
+        memberships: [{ id: "member-1" }],
         tasks: [],
         reports: [
           { versions: [{ id: "version-1" }] },
@@ -160,7 +171,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       },
     ]);
     const repository = new PrismaTeamWorkspaceQueryRepository({
-      team: { findMany },
+      projectTeam: { findMany },
     } as never);
 
     const teams = await repository.listAll();

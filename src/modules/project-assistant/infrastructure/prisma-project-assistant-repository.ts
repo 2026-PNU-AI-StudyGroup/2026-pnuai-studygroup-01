@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type {
   InviteProjectAssistantResult,
@@ -121,10 +122,10 @@ export class PrismaProjectAssistantRepository
       if (!topic) return "FORBIDDEN";
       const invitee = await transaction.user.findUnique({
         where: { email: input.email },
-        select: { id: true, isActive: true },
+        select: { id: true, accountStatus: true },
       });
       if (!invitee) return "NOT_FOUND";
-      if (!invitee.isActive) return "INACTIVE";
+      if (invitee.accountStatus !== "ACTIVE") return "INACTIVE";
       if (invitee.id === topic.managerId) return "SELF";
       if (await transaction.projectAssistant.findUnique({
         where: { topicId_userId: { topicId: input.topicId, userId: invitee.id } },
@@ -157,6 +158,17 @@ export class PrismaProjectAssistantRepository
           createdAt: input.invitedAt,
         },
       });
+      await enqueueEmailEvents(transaction, [{
+        kind: "PROJECT_ASSISTANT_INVITATION",
+        recipientId: invitee.id,
+        title: "프로젝트 조교 초대가 도착했습니다",
+        body: `${topic.title} 프로젝트의 관리 권한을 요청했습니다.`,
+        titleEn: "Project assistant invitation",
+        bodyEn: `You have been invited to help manage ${topic.title}.`,
+        href: "/dashboard?assistantInvitations=open",
+        idempotencyKey: `email:project-assistant-invitation:${invitationId}`,
+        createdAt: input.invitedAt,
+      }]);
       await transaction.auditLog.create({
         data: {
           actorId: input.actor.id,
@@ -193,7 +205,7 @@ export class PrismaProjectAssistantRepository
       const invitation = invitations[0];
       if (!invitation) return "INVALID";
       const activeInvitee = await transaction.user.findFirst({
-        where: { id: input.actor.id, isActive: true },
+        where: { id: input.actor.id, accountStatus: "ACTIVE" },
         select: { id: true },
       });
       if (!activeInvitee) return "INVALID";

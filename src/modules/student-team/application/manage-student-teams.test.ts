@@ -11,6 +11,7 @@ function writer(): StudentTeamWriter {
     respond: vi.fn(async () => "ACCEPTED" as const),
     transferLeadership: vi.fn(async () => true),
     removeMember: vi.fn(async () => true),
+    leave: vi.fn(async () => "LEFT" as const),
     delete: vi.fn(async () => true),
   };
 }
@@ -27,6 +28,16 @@ describe("지속형 학생 팀 관리", () => {
     const service = new StudentTeamCommandService(writer());
     await expect(service.invite(actor, { teamId: "team-1", email: actor.email })).rejects.toBeInstanceOf(StudentTeamOperationError);
     await expect(service.invite(actor, { teamId: "team-1", email: "other@example.com" })).rejects.toBeInstanceOf(StudentTeamOperationError);
+  });
+
+  it("프로젝트 승인 대기 중인 팀에는 새 초대를 만들지 않는다", async () => {
+    const store = writer();
+    vi.mocked(store.invite).mockResolvedValue("LOCKED");
+
+    await expect(new StudentTeamCommandService(store).invite(actor, {
+      teamId: "team-1",
+      email: "teammate@pusan.ac.kr",
+    })).rejects.toThrow("프로젝트 승인 대기 중에는 팀원을 새로 초대할 수 없습니다.");
   });
 
   it("팀장 삭제는 저장소의 아카이브 보존 삭제 경계를 호출한다", async () => {

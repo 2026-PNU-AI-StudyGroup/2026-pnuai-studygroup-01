@@ -1,13 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import TeamArtifactsPage from "@/app/teams/[teamId]/artifacts/page";
+import TeamArtifactsPage from "@/app/projects/[projectId]/artifacts/page";
 
 const { loadTeamReportWorkspace } = vi.hoisted(() => ({
   loadTeamReportWorkspace: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_lib/team-workspace-data", () => ({
+vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
   loadTeamReportWorkspace,
 }));
 
@@ -15,11 +15,15 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
   getLocalizedMetadata: vi.fn(),
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/artifact-registration-form", () => ({
+vi.mock("@/app/projects/[projectId]/_components/artifact-registration-form", () => ({
   ArtifactRegistrationForm: () => <button type="button">결과물 등록</button>,
 }));
 
-vi.mock("@/app/teams/[teamId]/_components/showcase-manager", () => ({
+vi.mock("@/app/projects/[projectId]/_components/artifact-management-form", () => ({
+  ArtifactManagementForm: () => null,
+}));
+
+vi.mock("@/app/projects/[projectId]/_components/showcase-manager", () => ({
   ShowcaseManager: () => null,
 }));
 
@@ -35,7 +39,7 @@ const workspace = {
   topicId: "topic-1",
   name: "모두의 길",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
   completedTaskCount: 0,
@@ -103,7 +107,7 @@ describe("TeamArtifactsPage", () => {
       },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     const pageTitle = screen.getByRole("heading", { name: "프로젝트 결과물" });
     expect(pageTitle.closest("section")).toHaveClass("max-w-6xl");
@@ -133,7 +137,7 @@ describe("TeamArtifactsPage", () => {
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     expect(screen.queryByRole("button", { name: "결과물 등록" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "아직 공개할 결과물이 없습니다" })).toBeInTheDocument();
@@ -151,7 +155,7 @@ describe("TeamArtifactsPage", () => {
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     expect(screen.getByRole("button", { name: "결과물 등록" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: /결과물 등록 기간/ })).not.toBeInTheDocument();
@@ -165,7 +169,7 @@ describe("TeamArtifactsPage", () => {
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     expect(screen.queryByRole("button", { name: "결과물 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: /결과물 등록 기간/ })).not.toBeInTheDocument();
@@ -189,7 +193,7 @@ describe("TeamArtifactsPage", () => {
       },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     expect(screen.queryByRole("button", { name: "결과물 등록" })).not.toBeInTheDocument();
     const restriction = screen.getByRole("complementary", { name: "결과물 등록 기간 종료" });
@@ -215,7 +219,7 @@ describe("TeamArtifactsPage", () => {
       reportWorkspace: { reports: [], artifacts: [] },
     });
 
-    render(await TeamArtifactsPage({ params: Promise.resolve({ teamId: workspace.id }) }));
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
 
     expect(screen.getByRole("button", { name: "결과물 등록" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: /결과물 등록 기간/ })).not.toBeInTheDocument();

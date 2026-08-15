@@ -3,7 +3,6 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import {
-  AnnouncementCategory,
   AnnouncementVisibility,
   PrismaClient,
 } from "../src/generated/prisma/client";
@@ -35,9 +34,6 @@ const professorIds = Array.from(
   { length: 3 },
   (_, index) => `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
 );
-const capstoneCategory = "CSE 캡스톤 디자인";
-const hackathonCategory = "PNU 창의융합 해커톤";
-
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 async function seedDemoProgramAnnouncements() {
@@ -46,7 +42,6 @@ async function seedDemoProgramAnnouncements() {
     select: {
       id: true,
       name: true,
-      category: true,
       startsAt: true,
       endsAt: true,
       recruitmentStartsAt: true,
@@ -55,7 +50,6 @@ async function seedDemoProgramAnnouncements() {
       executionEndsAt: true,
       submissionStartsAt: true,
       submissionEndsAt: true,
-      lifecycleStatus: true,
     },
   });
   const programById = new Map(programs.map((program) => [program.id, program]));
@@ -65,19 +59,13 @@ async function seedDemoProgramAnnouncements() {
     return program;
   });
   const rows = orderedPrograms.flatMap((program, programIndex) => {
-    const category = program.category === capstoneCategory
-      ? AnnouncementCategory.GRADUATION_PROJECT
-      : program.category === hackathonCategory
-        ? AnnouncementCategory.HACKATHON
-        : AnnouncementCategory.GENERAL;
     return buildDemoProgramAnnouncements(program, programIndex).map((announcement, announcementIndex) => ({
       ...announcement,
       authorId: announcementIndex % 2 === 0
         ? adminId
         : professorIds[programIndex % professorIds.length],
       programId: program.id,
-      teamId: null,
-      category,
+      projectTeamId: null,
       visibility: announcement.visibility === "TARGET_MEMBERS"
         ? AnnouncementVisibility.TARGET_MEMBERS
         : AnnouncementVisibility.AUTHENTICATED,

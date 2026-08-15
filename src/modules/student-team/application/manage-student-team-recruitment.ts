@@ -5,7 +5,7 @@ type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
   memberCount: number; capacity: number; createdAt: Date; deadlineAt: Date; canApply: boolean; isMember: boolean;
-  ownApplication: { status: "PENDING" | "ACCEPTED" | "REJECTED" } | null;
+  ownApplication: { status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" } | null;
 };
 
 export type StudentTeamRecruitmentPostList = {
@@ -20,7 +20,7 @@ type StudentTeamAuthoredRecruitmentPost = {
 
 type StudentTeamRecruitmentApplication = {
   id: string; studentName: string; message: string; desiredRole: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
 };
 
 export type StudentTeamRecruitmentPostApplications = {
@@ -30,12 +30,12 @@ export type StudentTeamRecruitmentPostApplications = {
 
 type StudentTeamRecruitmentHistory = {
   id: string; postTitle: string; teamName: string; topicTitle: string; recruiterName: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | "CLOSED"; createdAt: Date; decidedAt: Date | null;
 };
 
 export interface StudentTeamRecruitmentReader {
   listPosts(actorId: string, page: number): Promise<StudentTeamRecruitmentPostList>;
-  listLeaderTeams(actorId: string): Promise<Array<{ id: string; name: string; memberCount: number }>>;
+  listLeaderTeams(actorId: string): Promise<Array<{ id: string; name: string; memberCount: number; pendingInvitationCount: number }>>;
   listAuthoredPosts(actorId: string, page: number): Promise<{ posts: StudentTeamAuthoredRecruitmentPost[]; page: number; totalPages: number; total: number }>;
   listApplicationHistory(actorId: string, page: number): Promise<{ applications: StudentTeamRecruitmentHistory[]; page: number; totalPages: number; total: number }>;
   findPostApplications(postId: string, actorId: string, isAdmin: boolean): Promise<StudentTeamRecruitmentPostApplications | null>;

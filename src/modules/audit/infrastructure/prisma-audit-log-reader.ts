@@ -30,7 +30,7 @@ export class PrismaAuditLogReader implements AuditLogReader {
     const programIds = entries.filter(({ targetType }) => targetType === "PROJECT_PROGRAM").map(({ targetId }) => targetId);
     const [users, teams, topics, divisions, programs] = await Promise.all([
       this.client.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } }),
-      this.client.team.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
+      this.client.projectTeam.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true } }),
       this.client.topic.findMany({ where: { id: { in: topicIds } }, select: { id: true, title: true } }),
       this.client.programDivision.findMany({ where: { id: { in: divisionIds } }, select: { id: true, name: true } }),
       this.client.projectProgram.findMany({ where: { id: { in: programIds } }, select: { id: true, name: true } }),
@@ -44,7 +44,7 @@ export class PrismaAuditLogReader implements AuditLogReader {
       items: entries.map((entry) => ({
         id: entry.id,
         action: entry.action,
-        actorName: entry.actor.name,
+        actorName: entry.actor?.name ?? "시스템",
         targetLabel: resolveTargetLabel(entry, userById, teamById, topicById, divisionById, programById),
         createdAt: entry.createdAt,
       })),

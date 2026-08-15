@@ -1,0 +1,74 @@
+.root {
+  display: flex;
+  min-height: 3rem;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-control);
+  background: var(--field-surface);
+  padding: 0.4375rem 0.625rem;
+  box-shadow: 0 1px 2px rgb(31 35 48 / 0.035);
+  cursor: text;
+  transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
+}
+
+.root:hover {
+  border-color: var(--field-border-hover);
+}
+
+.root:has(.draft:focus-visible) {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px rgb(31 35 48 / 0.035);
+}
+
+.chip {
+  display: inline-flex;
+  min-height: 1.875rem;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  background: var(--primary-subtle);
+  padding: 0.25rem 0.375rem 0.25rem 0.625rem;
+  color: var(--primary-hover);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chip button {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 50%;
+  color: currentColor;
+}
+
+.chip button:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.chip svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.75;
+}
+
+.draft {
+  min-width: 8rem;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 0.25rem;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  outline: 0;
+}
+
+.draft::placeholder {
+  color: #7a8493;
+}

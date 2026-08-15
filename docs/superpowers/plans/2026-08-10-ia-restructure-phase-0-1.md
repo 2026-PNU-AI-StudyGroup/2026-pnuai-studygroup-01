@@ -1,5 +1,8 @@
 # IA 재구조 Phase 0–1 구현 계획
 
+> [!WARNING]
+> 2026-08-10 시점의 역사 작업 계획입니다. 현재 경로·정책·구현 기준이 아니며, 작업 전에는 [`docs/policies/README.md`](../../policies/README.md)와 현재 코드를 확인합니다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans 로 태스크 단위 실행. 스텝은 체크박스(`- [ ]`).
 
 **Goal:** 죽은 별칭 라우트를 제거하고, 강제 분리됐던 계정·교수권한 화면을 각각 한 화면으로 통합한다.
@@ -24,15 +27,13 @@
 - `src/app/recruitments/new/page.tsx`
 - `src/app/teams/new/page.tsx`
 - `src/app/teams/invitations/page.tsx`
-- `src/app/admin/programs/[programId]/votes/page.tsx`
 
 (각 파일은 `redirect(...)` 한 줄짜리 별칭. UI에서 href로 링크되지 않음을 grep으로 확인함. `/sign-in`은 존치.)
 
-- [ ] **Step 1:** 위 8개 `page.tsx` 삭제. 빈 폴더도 함께 제거.
-- [ ] **Step 2:** 참조처 2곳 수정:
-  - `src/app/admin/programs/_actions/program-actions.ts:96` — `revalidatePath(\`/programs/${programId.data}/vote\`)` → `revalidatePath(\`/topics\`)` (없어질 경로 대신 실제 목록 갱신).
+- [ ] **Step 1:** 위 7개 `page.tsx` 삭제. 빈 폴더도 함께 제거.
+- [ ] **Step 2:** 참조처 수정:
   - `src/modules/student-team/ui/student-team-section-layout.tsx:45` — 활성 판정에서 `|| currentPath === "/recruitments/new"` 제거.
-- [ ] **Step 3:** 남은 참조 없음 확인. Run: `git grep -nE "/(programs|archive|teams/new|teams/invitations|recruitments/new|topics/applications)\"" src` → 결과 0줄(단, `/admin/programs`·`/recruitments/mine` 등 접두 유사 경로는 무시).
+- [ ] **Step 3:** 남은 참조 없음 확인. Run: `git grep -nE "/(programs|archive|teams/new|teams/invitations|recruitments/new|topics/applications)\"" src` → 결과 0줄(단, `/recruitments/mine` 등 접두 유사 경로는 무시).
 - [ ] **Step 4:** 타입 확인. Run: `npx tsc --noEmit` → 에러 0.
 
 ### Task 0.2: "화면당 책임 1개" 강제 테스트 삭제

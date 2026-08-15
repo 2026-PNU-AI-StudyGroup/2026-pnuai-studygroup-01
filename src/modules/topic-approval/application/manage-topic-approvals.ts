@@ -3,19 +3,30 @@ import type { ProjectProgramRepository } from "@/modules/project-program/applica
 import type { TopicDraft } from "@/modules/topic/application/topic-ports";
 import { assertValidTopicDetails } from "@/modules/topic/domain/topic-policy";
 import { isProjectRegistrationOpen } from "@/modules/project-program/domain/project-program-policy";
+import type { TopicApprovalStatus } from "@/modules/topic-approval/domain/topic-approval-status";
+
+export { topicApprovalStatuses, type TopicApprovalStatus } from "@/modules/topic-approval/domain/topic-approval-status";
 
 export type TopicApprovalRoute = "PROFESSOR" | "ADMIN";
+export type TopicApprovalListFilter = {
+  programId?: string;
+  status?: TopicApprovalStatus;
+};
+export type PendingApprovalCountByProgram = { programId: string; count: number };
 export type TopicApprovalRequestSummary = {
   id: string;
   topicId: string;
   topicTitle: string;
+  programId: string;
+  programName: string;
+  programCategory: string;
   requesterId: string;
   requesterName: string;
   route: TopicApprovalRoute;
   requestedProfessorId: string | null;
   requestedProfessorName: string | null;
   studentTeamVersion?: number | null;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: TopicApprovalStatus;
   reviewComment: string;
   createdAt: Date;
   decidedAt: Date | null;
@@ -29,8 +40,6 @@ export type TopicApprovalRequestPage = {
 };
 
 export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
-  programName: string;
-  programCategory: string;
   description: string;
   requiredSkills: string[];
   preferredSkills: string[];
@@ -38,8 +47,8 @@ export type TopicApprovalRequestDetail = TopicApprovalRequestSummary & {
   availabilityRequirement: string;
   applicationMode: "TEAM_ONLY" | "INDIVIDUAL_ONLY" | "INDIVIDUAL_OR_TEAM";
   capacity: number;
-  programRecruitmentStartsAt: Date;
-  programRecruitmentEndsAt: Date;
+  programRecruitmentStartsAt: Date | null;
+  programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
   programSubmissionStartsAt: Date;
@@ -58,8 +67,9 @@ export interface TopicApprovalRepository {
     actor: CurrentUser,
     page: number,
     pageSize: number,
-    status?: TopicApprovalRequestSummary["status"],
+    filter?: TopicApprovalListFilter,
   ): Promise<TopicApprovalRequestPage>;
+  listAdminPendingCountsByProgram(): Promise<PendingApprovalCountByProgram[]>;
   findVisible(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null>;
   decide(input: { requestId: string; actorId: string; actorRole: "PROFESSOR" | "ADMIN"; decision: "APPROVE" | "REJECT"; reviewComment: string; studentTeamVersion?: number; teamCompositionConfirmed?: boolean; decidedAt: Date }): Promise<"APPROVED" | "REJECTED" | "FORBIDDEN" | "TEAM_CHANGED" | "UNAVAILABLE">;
 }
@@ -80,16 +90,19 @@ export class TopicApprovalService {
     input: Omit<TopicDraft, "authorId"> & { route: TopicApprovalRoute; requestedProfessorId?: string; studentTeamId?: string },
   ) {
     if (actor.role !== "STUDENT") throw new TopicApprovalOperationError("학생만 학생 프로젝트 승인 요청을 만들 수 있습니다.");
+    const { route, requestedProfessorId, studentTeamId, ...topicInput } = input;
     const details = {
-      ...input,
+      ...topicInput,
       title: input.title.trim(),
       description: input.description.trim(),
-      requiredSkills: [...new Set(input.requiredSkills.map((skill) => skill.trim()).filter(Boolean))],
-      preferredSkills: [...new Set(input.preferredSkills.map((skill) => skill.trim()).filter(Boolean))],
-      roleExpectations: input.roleExpectations.trim(),
-      availabilityRequirement: input.availabilityRequirement.trim(),
-      recruitmentEnabled: input.recruitmentEnabled ?? true,
-      applicationQuestions: input.applicationQuestions.map((question) => ({ ...question, label: question.label.trim() })),
+      requiredSkills: [],
+      preferredSkills: [],
+      roleExpectations: "",
+      availabilityRequirement: "",
+      recruitmentEnabled: false,
+      applicationMode: "TEAM_ONLY" as const,
+      applicationQuestions: [],
+      capacity: 1,
     };
     assertValidTopicDetails(details);
     const program = await this.programs.findOpen(input.programId);
@@ -101,28 +114,35 @@ export class TopicApprovalService {
     if (!program.studentProjectCreationEnabled) {
       throw new TopicApprovalOperationError("이 프로그램은 학생 프로젝트 제안을 허용하지 않습니다.");
     }
-    if (!program.advisorEnabled && input.route !== "ADMIN") {
+    if (!studentTeamId) throw new TopicApprovalOperationError("프로젝트를 제안할 팀을 선택해 주세요.");
+    if (!program.advisorEnabled && route !== "ADMIN") {
       throw new TopicApprovalOperationError("지도교수가 없는 프로그램은 관리자에게만 승인을 요청할 수 있습니다.");
     }
-    if (input.route === "PROFESSOR" && !input.requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
-    if (input.route === "ADMIN" && input.requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
+    if (route === "PROFESSOR" && !requestedProfessorId) throw new TopicApprovalOperationError("승인을 요청할 교수를 지정해 주세요.");
+    if (route === "ADMIN" && requestedProfessorId) throw new TopicApprovalOperationError("관리자 승인 요청에는 특정 관리자를 지정하지 않습니다.");
     const id = await this.repository.create({
       ...details,
       authorId: actor.id,
-      route: input.route,
-      requestedProfessorId: input.route === "PROFESSOR" ? input.requestedProfessorId! : null,
+      route,
+      requestedProfessorId: route === "PROFESSOR" ? requestedProfessorId! : null,
+      studentTeamId,
       requestedAt,
     });
     if (!id) throw new TopicApprovalOperationError("승인 대상 교수 또는 프로그램 상태를 확인해 주세요.");
     return id;
   }
 
-  async list(actor: CurrentUser, requestedPage = 1, pageSize = 20): Promise<TopicApprovalRequestPage> {
+  async list(actor: CurrentUser, requestedPage = 1, pageSize = 20, filter: TopicApprovalListFilter = {}): Promise<TopicApprovalRequestPage> {
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     if (actor.role === "STUDENT" || actor.role === "PROFESSOR" || actor.role === "ADMIN") {
-      return this.repository.listVisiblePage(actor, page, pageSize);
+      return this.repository.listVisiblePage(actor, page, pageSize, filter);
     }
     return { items: [], page: 1, totalPages: 1, total: 0 };
+  }
+
+  async listAdminPendingCountsByProgram(actor: CurrentUser) {
+    if (actor.role !== "ADMIN") return [];
+    return this.repository.listAdminPendingCountsByProgram();
   }
 
   async get(actor: CurrentUser, requestId: string): Promise<TopicApprovalRequestDetail | null> {
@@ -131,7 +151,7 @@ export class TopicApprovalService {
 
   async listPendingForReview(actor: CurrentUser, pageSize = 5) {
     if (actor.role !== "PROFESSOR" && actor.role !== "ADMIN") return [];
-    return (await this.repository.listVisiblePage(actor, 1, pageSize, "PENDING")).items;
+    return (await this.repository.listVisiblePage(actor, 1, pageSize, { status: "PENDING" })).items;
   }
 
   async decide(actor: CurrentUser, input: { requestId: string; decision: "APPROVE" | "REJECT"; reviewComment: string; studentTeamVersion?: number; teamCompositionConfirmed?: boolean }) {

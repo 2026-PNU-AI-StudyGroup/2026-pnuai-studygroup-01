@@ -11,7 +11,7 @@ const team = {
   name: "모두의 길",
   programName: "2026 캡스톤디자인",
   topicTitle: "실내 길찾기",
-  status: "CONFIRMED" as const,
+  status: "IN_PROGRESS" as const,
   memberCount: 4,
   taskCount: 4,
   completedTaskCount: 2,
@@ -70,7 +70,7 @@ describe("내 프로젝트 통합 화면", () => {
     expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");
     expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "1 / 3 보고서 제출")).toBeInTheDocument();
     expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "모두의 길 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "모두의 길 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByText("팀 대화")).not.toBeInTheDocument();
     expect(screen.queryByText("보고서")).not.toBeInTheDocument();
@@ -87,18 +87,18 @@ describe("내 프로젝트 통합 화면", () => {
   it("교수와 완료 프로젝트에는 역할과 상태에 맞는 진입 문구를 제공한다", () => {
     const { rerender } = render(<ProjectList role="PROFESSOR" teams={[team]} view="active" />);
 
-    expect(screen.getByRole("link", { name: "모두의 길 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "모두의 길 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
 
-    rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "CLOSED" }]} view="completed" />);
+    rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "COMPLETED" }]} view="completed" />);
 
     expect(screen.getByRole("heading", { name: "완료한 프로젝트" })).toBeInTheDocument();
     expect(screen.getByText("완료")).toHaveClass("bg-[var(--surface-subtle)]");
-    expect(screen.getByRole("link", { name: "모두의 길 완료 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-1");
+    expect(screen.getByRole("link", { name: "모두의 길 완료 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByText("진행 중 프로젝트")).not.toBeInTheDocument();
   });
 
   it("선택한 프로젝트 상태만 렌더링한다", () => {
-    const closedTeam = { ...team, id: "team-closed", status: "CLOSED" as const };
+    const closedTeam = { ...team, id: "team-closed", status: "COMPLETED" as const };
     const { rerender } = render(<ProjectList role="STUDENT" teams={[team, closedTeam]} view="active" />);
 
     expect(screen.getByRole("heading", { name: "모두의 길" })).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("내 프로젝트 통합 화면", () => {
 
     rerender(<ProjectList role="STUDENT" teams={[team, closedTeam]} view="completed" />);
 
-    expect(screen.getByRole("link", { name: "모두의 길 완료 프로젝트 열기" })).toHaveAttribute("href", "/teams/team-closed");
+    expect(screen.getByRole("link", { name: "모두의 길 완료 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-closed");
     expect(screen.queryByRole("link", { name: /^모두의 길 프로젝트 열기$/ })).not.toBeInTheDocument();
   });
 
@@ -115,7 +115,7 @@ describe("내 프로젝트 통합 화면", () => {
       id: "application-1",
       topicId: "topic-1",
       topicTitle: "접근성 지도",
-      topicStatus: "PUBLISHED" as const,
+      topicStatus: "ACTIVE" as const,
       programName: "2026 캡스톤",
       programStatus: "OPEN" as const,
       status: "PENDING" as const,
@@ -135,7 +135,7 @@ describe("내 프로젝트 통합 화면", () => {
       page: 1,
       totalPages: 1,
       total: 1,
-      counts: { PENDING: 1, ACCEPTED: 0, REJECTED: 0 },
+      counts: { PENDING: 1, ACCEPTED: 0, REJECTED: 0, WITHDRAWN: 0 },
     };
     const { rerender } = render(<ProjectApplicationList page={page} status="PENDING" />);
 
@@ -151,7 +151,7 @@ describe("내 프로젝트 통합 화면", () => {
         page={{
           ...page,
           items: [{ ...pendingApplication, status: "REJECTED", reviewComment: "정원이 마감되었습니다.", decidedAt: new Date("2026-07-21T00:00:00Z") }],
-          counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 1 },
+          counts: { PENDING: 0, ACCEPTED: 0, REJECTED: 1, WITHDRAWN: 0 },
         }}
         status="REJECTED"
       />,

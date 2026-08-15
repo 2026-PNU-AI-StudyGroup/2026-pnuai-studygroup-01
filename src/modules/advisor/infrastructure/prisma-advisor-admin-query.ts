@@ -11,7 +11,7 @@ export type ProgramAdvisorRow = {
 // 프로그램 화면용: 전체 ADVISOR + 이 프로그램 topic 할당 현황.
 export async function listProgramAdvisors(client: PrismaClient, programId: string): Promise<ProgramAdvisorRow[]> {
   const advisors = await client.user.findMany({
-    where: { role: "ADVISOR", isActive: true },
+    where: { role: "ADVISOR", accountStatus: "ACTIVE" },
     orderBy: { createdAt: "asc" },
     select: {
       id: true, name: true, email: true,
@@ -41,8 +41,8 @@ export type AdvisorScoreMatrixRow = {
 // AdvisorEvaluation 유니크가 (teamId, advisorId, rubricId)라 한 위원이 팀당 루브릭 수만큼 행을 가진다.
 // 위원 단위로 합산하고 평균은 위원 수로 나눈다 — 루브릭을 더 많이 채점한 위원이 가중되지 않도록.
 export async function advisorScoreMatrix(client: PrismaClient, programId: string): Promise<AdvisorScoreMatrixRow[]> {
-  const teams = await client.team.findMany({
-    where: { programId },
+  const teams = await client.projectTeam.findMany({
+    where: { project: { programId } },
     orderBy: { name: "asc" },
     select: {
       id: true, name: true,
@@ -75,7 +75,7 @@ export async function advisorScoreMatrix(client: PrismaClient, programId: string
 export type ProgramTopicForAssignment = {
   id: string;
   title: string;
-  team: { name: string; status: "FORMING" | "CONFIRMED" | "CLOSED" } | null;
+  team: { name: string; confirmedAt: Date | null } | null;
 };
 
 // 할당 체크박스용: 프로그램의 topic(+팀명) 목록.
@@ -83,6 +83,6 @@ export async function listProgramTopicsForAssignment(client: PrismaClient, progr
   return client.topic.findMany({
     where: { programId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, title: true, team: { select: { name: true, status: true } } },
-  });
+    select: { id: true, title: true, projectTeam: { select: { name: true, confirmedAt: true } } },
+  }).then((topics) => topics.map(({ projectTeam, ...topic }) => ({ ...topic, team: projectTeam })));
 }

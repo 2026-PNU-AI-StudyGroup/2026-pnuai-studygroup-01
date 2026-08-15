@@ -15,13 +15,9 @@ import { PrismaArtifactRepository } from "../src/modules/report/infrastructure/p
 import { PrismaReportDecisionRepository } from "../src/modules/report/infrastructure/prisma-report-decision-repository";
 import { PrismaReportQueryRepository } from "../src/modules/report/infrastructure/prisma-report-query-repository";
 import { PrismaReportSubmissionRepository } from "../src/modules/report/infrastructure/prisma-report-submission-repository";
-import {
-  CloseTeamService,
-  ListArchivedProjectsService,
-  TeamCloseNotAllowedError,
-} from "../src/modules/team/application/archive-projects";
+import { ListArchivedProjectsService } from "../src/modules/team/application/archive-projects";
 import { PrismaTeamArchiveQueryRepository } from "../src/modules/team/infrastructure/prisma-team-archive-query-repository";
-import { PrismaTeamCloseRepository } from "../src/modules/team/infrastructure/prisma-team-close-repository";
+import { finalizeProgram } from "../src/modules/project-program/infrastructure/prisma-program-lifecycle";
 import { TeamDiscussionService, TeamNotFoundError } from "../src/modules/team/application/manage-team-workspace";
 import { PrismaTeamDiscussionRepository } from "../src/modules/team/infrastructure/prisma-team-discussion-repository";
 import { prisma } from "../src/shared/infrastructure/database/prisma";
@@ -41,7 +37,7 @@ const uploads = new UploadService(new PrismaUploadIntentRepository(prisma), stor
 
 async function cleanup() {
   if (programId) {
-    await prisma.team.deleteMany({ where: { programId } });
+    await prisma.projectTeam.deleteMany({ where: { project: { programId } } });
     await prisma.topicApplication.deleteMany({ where: { topic: { programId } } });
     await prisma.topic.deleteMany({ where: { programId } });
     await prisma.projectProgram.deleteMany({ where: { id: programId } });
@@ -84,12 +80,12 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `보고서 검증 프로그램 ${professorId}`, category: "검증", description: "보고서 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
     programId: program.id, authorId: professorId, managerId: professorId, title: "보고서 흐름 검증", description: "보고서 검증", capacity: 2,
-    status: "PUBLISHED", publishedAt: new Date("2026-01-01"),
+    status: "ACTIVE", publishedAt: new Date("2026-01-01"),
   } });
   const application = await prisma.topicApplication.create({ data: {
     topicId: topic.id, studentId, message: "보고서 검증", status: "ACCEPTED", decidedAt: new Date(),
@@ -97,11 +93,11 @@ async function main() {
   const pendingApplication = await prisma.topicApplication.create({ data: {
     topicId: topic.id, studentId: pendingStudentId, message: "종료 전 대기 지원", status: "PENDING",
   } });
-  const team = await prisma.team.create({ data: {
-    programId: program.id, topicId: topic.id, professorId, name: "보고서 검증 팀", status: "CONFIRMED",
+  const team = await prisma.projectTeam.create({ data: {
+    projectId: topic.id, name: "보고서 검증 팀", confirmedAt: new Date(),
   } });
-  await prisma.teamMember.create({ data: {
-    teamId: team.id, programId: program.id, topicId: topic.id, studentId, applicationId: application.id,
+  await prisma.projectTeamMembership.create({ data: {
+    projectTeamId: team.id, userId: studentId, sourceApplicationId: application.id, role: "LEADER",
   } });
 
   const reportQuery = new ReportQueryService(
@@ -122,7 +118,7 @@ async function main() {
     programId: program.id, title, position, dueAt: new Date("2026-12-31T14:59:00Z"),
   } })));
   const [startReport, midtermReport, finalReport] = await Promise.all(definitions.map((definition) => prisma.report.create({ data: {
-    teamId: team.id, definitionId: definition.id, titleSnapshot: definition.title, dueAt: definition.dueAt,
+    projectTeamId: team.id, definitionId: definition.id, titleSnapshot: definition.title, dueAt: definition.dueAt,
   } })));
   const reportV1File = await upload(team.id, "REPORT", "start-v1.pdf", "start report version one");
   const v1 = await reportSubmissions.submit(student, {
@@ -282,17 +278,13 @@ async function main() {
   if (!submissionPeriodDenied) throw new Error("제출 기간 밖 보고서가 접수되었습니다.");
 
   const archiveRepository = new PrismaTeamArchiveQueryRepository(prisma);
-  const closeTeam = new CloseTeamService(
-    new PrismaTeamCloseRepository(prisma),
-  );
-  let unrelatedProfessorCloseDenied = false;
-  try {
-    await closeTeam.close({ id: otherProfessorId, role: "PROFESSOR" }, team.id);
-  } catch (error) {
-    unrelatedProfessorCloseDenied = error instanceof TeamCloseNotAllowedError;
-  }
-  if (!unrelatedProfessorCloseDenied) throw new Error("다른 교수가 팀을 종료했습니다.");
-  await closeTeam.close(professor, team.id);
+  const programEndsAt = new Date("2026-07-16T23:59:59Z");
+  await finalizeProgram(prisma, {
+    programId: program.id,
+    actor: { kind: "SYSTEM" },
+    processedAt: programEndsAt,
+    endsAt: programEndsAt,
+  });
   const archivePage = await new ListArchivedProjectsService(archiveRepository).execute();
   const archivedTeam = archivePage.projects.find(({ id }) => id === team.id);
   if (archivedTeam?.artifacts.length !== 2) throw new Error("종료 팀 결과물이 아카이브에 보존되지 않았습니다.");
@@ -370,7 +362,6 @@ async function main() {
     attachedFileOwnerMutationDenied,
     attachedFileStatusMutationDenied,
     submissionPeriodDenied,
-    unrelatedProfessorCloseDenied,
     closedTeamSubmissionDenied,
     closedTeamDiscussionDenied,
     closedTeamDecisionDenied,

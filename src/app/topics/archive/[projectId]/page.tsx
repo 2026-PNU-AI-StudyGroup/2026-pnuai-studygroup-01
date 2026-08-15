@@ -55,9 +55,9 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const { projectId } = await params;
   const [project, sidebarItems] = await Promise.all([
     new ListArchivedProjectsService(
-      new PrismaTeamArchiveQueryRepository(prisma),
+      new PrismaTeamArchiveQueryRepository(prisma, actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT"),
     ).find(projectId),
-    loadProgramSidebarItems("past"),
+    loadProgramSidebarItems("past", {}, actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT"),
   ]);
   if (!project) notFound();
 
@@ -86,7 +86,7 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
   const hasResults = Boolean(github) || resourceArtifacts.length > 0;
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={project.programId} showSettings={actor.role === "ADMIN"} />}>
     <UiNav aria-label="이전 위치" className="mb-5">
       <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
         <ChevronIcon className="size-4 rotate-180" />
@@ -181,6 +181,20 @@ export default async function ArchivedProjectPage({ params }: { params: Promise<
               ) : null}
             </div>
           ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개된 결과물이 없습니다."}</UiText></p>}
+        </section>
+
+        <section aria-labelledby="archive-team">
+          <h2 id="archive-team" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"참여자"}</UiText></h2>
+          <dl className="mt-3 border-t border-[var(--line)]">
+            <div className="grid gap-1 py-4 sm:grid-cols-[7rem_minmax(0,1fr)]">
+              <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"참여자"}</UiText></dt>
+              <dd className="text-sm font-semibold leading-6 text-[var(--ink)]">{project.memberNames.join(", ")}</dd>
+            </div>
+            <div className="grid gap-1 border-t border-[var(--line)] py-4 sm:grid-cols-[7rem_minmax(0,1fr)]">
+              <dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{"사용 기술"}</UiText></dt>
+              <dd className="text-sm font-semibold leading-6 text-[var(--ink)]"><UiText>{[...new Set([...project.requiredSkills, ...project.preferredSkills])].join(", ") || "—"}</UiText></dd>
+            </div>
+          </dl>
         </section>
       </div>
     </ProjectDetailShell>
