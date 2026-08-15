@@ -19,8 +19,10 @@ const adminId = randomUUID();
 const professorId = randomUUID();
 const leaderId = randomUUID();
 const applicantId = randomUUID();
+const applicantTeamId = randomUUID();
 
 async function cleanup() {
+  await prisma.studentTeam.deleteMany({ where: { id: applicantTeamId } });
   const createdProgramIds = (await prisma.projectProgram.findMany({
     where: { createdById: adminId },
     select: { id: true },
@@ -42,6 +44,18 @@ async function main() {
     { id: leaderId, name: "Program Leader", email: `verification+${leaderId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
     { id: applicantId, name: "Program Applicant", email: `verification+${applicantId}@pusan.ac.kr`, emailVerified: true, role: "STUDENT" },
   ] });
+  await prisma.studentTeam.create({
+    data: {
+      id: applicantTeamId,
+      name: "승인 마감 검증 팀",
+      description: "학생 등록 승인 경합 검증용 팀",
+      leaderId: applicantId,
+      members: { create: [
+        { studentId: applicantId, role: "LEADER" },
+        { studentId: leaderId, role: "MEMBER" },
+      ] },
+    },
+  });
   const now = new Date();
   const day = 24 * 60 * 60_000;
   const commonSchedule = {
@@ -49,8 +63,6 @@ async function main() {
     recruitmentEndsAt: new Date(now.getTime() + 90 * day),
     executionStartsAt: new Date(now.getTime() - day),
     executionEndsAt: new Date(now.getTime() + 90 * day),
-    submissionStartsAt: new Date(now.getTime() - day),
-    submissionEndsAt: new Date(now.getTime() + 90 * day),
   };
   const programs = new PrismaProjectProgramRepository(prisma);
   const programService = new ProjectProgramService(programs);
@@ -58,7 +70,6 @@ async function main() {
   await programService.create({ id: adminId, role: "ADMIN" }, {
     name: programName,
     category: "사용자 정의 분류",
-    description: "하드코딩 없는 동적 프로그램 검증",
     startsAt: new Date(now.getTime() - day),
     endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day),
@@ -93,13 +104,10 @@ async function main() {
     recruitmentEndsAt: new Date(now.getTime() + 89 * day),
     executionStartsAt: new Date(now.getTime() + 10 * day),
     executionEndsAt: new Date(now.getTime() + 75 * day),
-    submissionStartsAt: new Date(now.getTime() + 65 * day),
-    submissionEndsAt: new Date(now.getTime() + 85 * day),
   };
   await programService.updateSettings({ id: adminId, role: "ADMIN" }, program.id, {
     name: program.name,
     category: program.category,
-    description: program.description,
     startsAt: program.startsAt,
     endsAt: program.endsAt,
     projectRegistrationStartsAt: program.projectRegistrationStartsAt,
@@ -160,7 +168,7 @@ async function main() {
 
   const raceName = `마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
-    name: raceName, category: "경합 검증", description: "주제 생성과 프로그램 마감 경합",
+    name: raceName, category: "경합 검증",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
     ...commonSchedule,
@@ -185,7 +193,7 @@ async function main() {
 
   const approvalRaceName = `승인 마감 경합 프로그램 ${randomUUID()}`;
   await programService.create({ id: adminId, role: "ADMIN" }, {
-    name: approvalRaceName, category: "경합 검증", description: "학생 제안 생성 및 승인과 프로그램 마감 경합",
+    name: approvalRaceName, category: "경합 검증",
     startsAt: new Date(now.getTime() - day), endsAt: new Date(now.getTime() + 90 * day),
     projectRegistrationStartsAt: new Date(now.getTime() - day), projectRegistrationEndsAt: new Date(now.getTime() + 90 * day),
     ...commonSchedule,
@@ -197,10 +205,10 @@ async function main() {
   const approvalRaceProgram = await prisma.projectProgram.findFirstOrThrow({ where: { name: approvalRaceName } });
   await programService.changeStatus({ id: adminId, role: "ADMIN" }, approvalRaceProgram.id, "OPEN", now);
   const topicApprovals = new PrismaTopicApprovalRepository(prisma);
-  const proposalInput = {
+  const registrationInput = {
     programId: approvalRaceProgram.id,
     authorId: applicantId,
-    description: "프로그램 마감과 학생 제안 처리의 원자성 검증",
+    description: "프로그램 마감과 학생 등록 처리의 원자성 검증",
     requiredSkills: ["TypeScript"],
     preferredSkills: [],
     roleExpectations: "구현",
@@ -210,13 +218,16 @@ async function main() {
     capacity: 2,
     route: "ADMIN" as const,
     requestedProfessorId: null,
+    sourceStudentTeamId: applicantTeamId,
+    projectRepresentativeId: applicantId,
+    projectTeamName: "승인 마감 경합 팀",
   };
   const approvalRaceTopicId = await topicApprovals.create({
-    ...proposalInput,
-    title: "승인 마감 경합 기존 제안",
+    ...registrationInput,
+    title: "승인 마감 경합 기존 등록",
     requestedAt: now,
   });
-  if (!approvalRaceTopicId) throw new Error("승인 마감 경합용 학생 제안을 생성하지 못했습니다.");
+  if (!approvalRaceTopicId) throw new Error("승인 마감 경합용 학생 등록을 생성하지 못했습니다.");
   const approvalRaceRequest = await prisma.topicApprovalRequest.findFirstOrThrow({
     where: { topicId: approvalRaceTopicId, status: "PENDING" },
   });
@@ -230,7 +241,7 @@ async function main() {
       decidedAt: new Date(now.getTime() + 4_000),
     }),
     topicApprovals.create({
-      ...proposalInput,
+      ...registrationInput,
       title: "승인 마감 경합 동시 생성",
       requestedAt: new Date(now.getTime() + 4_000),
     }),
@@ -250,7 +261,7 @@ async function main() {
     !["APPROVED", "UNAVAILABLE"].includes(approvalCloseRace[0].value)
   ) {
     throw new Error(
-      `학생 제안 처리와 프로그램 마감 경합 불변식이 깨졌습니다: endsAt=${approvalRaceProgramState.endsAt.toISOString()}, activeStored=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
+      `학생 등록 처리와 프로그램 마감 경합 불변식이 깨졌습니다: endsAt=${approvalRaceProgramState.endsAt.toISOString()}, activeStored=${approvalRacePublishedTopics}, pendingApprovals=${approvalRacePendingRequests}, approval=${approvalCloseRace[0].value}`,
     );
   }
 

@@ -51,3 +51,28 @@ export function normalizeArtifact(input: {
   }
   return { title, externalUrl: url.toString() };
 }
+
+export function normalizeYoutubeUrl(value: string): string {
+  const normalized = value.trim();
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new InvalidReportInputError();
+  }
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  const videoId = hostname === "youtu.be"
+    ? pathParts[0]
+    : hostname === "youtube.com"
+      ? url.pathname === "/watch"
+        ? url.searchParams.get("v")
+        : (pathParts[0] === "embed" || pathParts[0] === "shorts")
+          ? pathParts[1]
+          : null
+      : null;
+  if (url.protocol !== "https:" || !videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    throw new InvalidReportInputError();
+  }
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}

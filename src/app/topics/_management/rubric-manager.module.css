@@ -1,0 +1,52 @@
+.criterionEdit {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 5rem auto;
+  gap: .625rem;
+}
+
+.persistedCriterionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .625rem;
+}
+
+.persistedCriterionRow > p {
+  grid-column: 1 / -1;
+}
+
+.error,
+.success {
+  margin-top: .375rem;
+  font-size: .75rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.error { color: var(--danger); }
+.success { color: var(--success); }
+
+.locked {
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  background: var(--surface-subtle);
+  padding: .75rem;
+  color: var(--muted);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 39.99rem) {
+  .criterionEdit {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .criterionEdit > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .persistedCriterionRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

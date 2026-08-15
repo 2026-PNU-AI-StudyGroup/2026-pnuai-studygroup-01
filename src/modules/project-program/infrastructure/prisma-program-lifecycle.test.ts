@@ -12,16 +12,17 @@ function clientWith(transaction: Record<string, unknown>) {
 }
 
 describe("프로그램 종료 후처리", () => {
-  it("프로젝트 상태는 바꾸지 않고 대기 업무만 한 번 정리한다", async () => {
+  it("프로그램 종료 시 승인 대기 등록과 그 팀 스냅샷을 함께 정리한다", async () => {
     const updateProgram = vi.fn(async () => ({ id: "program-1" }));
     const createAudit = vi.fn(async () => ({ id: "audit-1" }));
     const transaction = {
       $queryRaw: vi.fn(async () => [{ id: "program-1", endsAt, endProcessedAt: null }]),
       topic: {
         findMany: vi.fn(async () => [
-          { id: "project-1", projectTeam: { confirmedAt: new Date("2026-03-01T00:00:00Z") } },
-          { id: "project-2", projectTeam: null },
+          { id: "project-1", status: "ACTIVE", projectTeam: { confirmedAt: new Date("2026-03-01T00:00:00Z") } },
+          { id: "project-2", status: "PENDING_APPROVAL", projectTeam: { confirmedAt: null } },
         ]),
+        updateMany: vi.fn(async () => ({ count: 1 })),
       },
       topicApplication: {
         findMany: vi.fn(async () => [{ id: "application-1", studentId: "student-1", topic: { title: "프로젝트" } }]),
@@ -32,7 +33,7 @@ describe("프로그램 종료 후처리", () => {
           id: "approval-1",
           topicId: "project-2",
           requesterId: "student-2",
-          topic: { title: "제안 프로젝트" },
+          topic: { title: "등록 프로젝트" },
         }]),
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
@@ -47,6 +48,7 @@ describe("프로그램 종료 후처리", () => {
         updateMany: vi.fn(async () => ({ count: 1 })),
       },
       projectProgram: { update: updateProgram },
+      projectTeam: { deleteMany: vi.fn(async () => ({ count: 1 })) },
       notification: { createMany: vi.fn(async () => ({ count: 1 })) },
       user: {
         findMany: vi.fn(async () => [
@@ -77,8 +79,13 @@ describe("프로그램 종료 후처리", () => {
         metadata: expect.objectContaining({ completedProjectCount: 1, canceledProjectCount: 1 }),
       }),
     });
-    expect(transaction.topic).not.toHaveProperty("update");
-    expect(transaction.topic).not.toHaveProperty("updateMany");
+    expect(transaction.topic.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["project-2"] }, status: "PENDING_APPROVAL" },
+      data: { status: "REJECTED" },
+    });
+    expect(transaction.projectTeam.deleteMany).toHaveBeenCalledWith({
+      where: { projectId: { in: ["project-2"] }, confirmedAt: null },
+    });
     expect(transaction.notification.createMany).toHaveBeenCalledWith({
       data: expect.arrayContaining([
         expect.objectContaining({

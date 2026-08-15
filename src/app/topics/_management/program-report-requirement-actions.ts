@@ -23,9 +23,10 @@ async function admin() {
 }
 
 function parseDefinition(formData: FormData) {
-  return z.object({ title: z.string().trim().min(1).max(100), dueAt: koreanLocalDateTime }).safeParse({
+  return z.object({ title: z.string().trim().min(1).max(100), dueAt: koreanLocalDateTime, required: z.enum(["true", "false"]).transform((value) => value === "true") }).safeParse({
     title: formData.get("title"),
     dueAt: formData.get("dueAt"),
+    required: formData.get("required"),
   });
 }
 
@@ -78,26 +79,25 @@ export async function moveProgramReportDefinitionAction(definitionId: string, pr
   }
 }
 
-export async function archiveProgramReportDefinitionAction(definitionId: string, programId: string, _state: ProgramReportActionState): Promise<ProgramReportActionState> {
+export async function deleteProgramReportDefinitionAction(definitionId: string, programId: string, _state: ProgramReportActionState): Promise<ProgramReportActionState> {
   void _state;
   if (!idSchema.safeParse(definitionId).success) return error("보고서를 확인해 주세요.");
   try {
-    const outcome = await service().archive(await admin(), definitionId);
+    const outcome = await service().delete(await admin(), definitionId);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
     refresh(programId);
-    return success("보고서를 보관했습니다.");
+    return success("보고서를 삭제했습니다.");
   } catch (cause) {
-    return error(cause instanceof Error ? cause.message : "보고서를 보관할 수 없습니다.");
+    return error(cause instanceof Error ? cause.message : "보고서를 삭제할 수 없습니다.");
   }
 }
 
 function outcomeMessage(outcome: ProgramReportDefinitionOutcome) {
   if (outcome === "DUPLICATE") return "같은 이름의 활성 보고서가 이미 있습니다.";
   if (outcome === "NOT_FOUND") return "보고서 또는 프로그램을 찾을 수 없습니다.";
-  if (outcome === "PROGRAM_CLOSED") return "운영 종료된 프로그램의 보고서 설정은 변경할 수 없습니다.";
-  if (outcome === "INVALID_DEADLINE") return "제출 마감은 프로그램 제출 기간 안의 미래 시각이어야 합니다.";
-  if (outcome === "TITLE_LOCKED") return "제출 이력이 있어 보고서 제목을 변경할 수 없습니다.";
+  if (outcome === "INVALID_DEADLINE") return "제출 마감은 프로그램 수행 기간 안이어야 합니다.";
+  if (outcome === "HAS_SUBMISSION_HISTORY") return "제출 이력이 1개 이상 있어 삭제할 수 없습니다.";
   if (outcome === "SUBMISSION_CONFLICT") return "새 마감보다 늦게 제출된 버전이 있어 변경할 수 없습니다.";
   return null;
 }

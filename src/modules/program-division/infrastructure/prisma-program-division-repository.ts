@@ -67,18 +67,22 @@ export class PrismaProgramDivisionRepository implements ProgramDivisionRepositor
       const division = await tx.programDivision.findUnique({ where: { id }, select: { id: true, programId: true, name: true, position: true, _count: { select: { topics: true } } } });
       if (!division) return "NOT_FOUND" as const;
       const teamIds = (await tx.projectTeam.findMany({ where: { project: { programId: division.programId, divisionId: id } }, select: { id: true } })).map((team) => team.id);
-      if (teamIds.length && await tx.rubricScore.findFirst({ where: { evaluation: { projectTeamId: { in: teamIds } } }, select: { id: true } })) {
-        return "SCORED_RUBRIC" as const;
+      const divisionRubricIds = (await tx.rubricDefinition.findMany({ where: { programId: division.programId, divisionId: id }, select: { id: true } })).map((rubric) => rubric.id);
+      if (divisionRubricIds.length) {
+        const [staffScore, advisorEvaluation] = await Promise.all([
+          tx.rubricScore.findFirst({ where: { evaluation: { rubricId: { in: divisionRubricIds } } }, select: { id: true } }),
+          tx.advisorEvaluation.findFirst({ where: { rubricId: { in: divisionRubricIds } }, select: { id: true } }),
+        ]);
+        if (staffScore || advisorEvaluation) return "SCORED_RUBRIC" as const;
       }
       const [voteCount, divisionCount, policy] = await Promise.all([tx.projectVote.count({ where: { programId: division.programId } }), tx.programDivision.count({ where: { programId: division.programId } }), tx.programVotingPolicy.findUnique({ where: { programId: division.programId } })]);
       const switchesVotingScope = divisionCount === 1 && policy?.voteLimitScope === "DIVISION";
       const impact = { projectCount: division._count.topics, voteCount, switchesVotingScope };
       const requiresConfirmation = Boolean(impact.projectCount || impact.voteCount || impact.switchesVotingScope);
       if (requiresConfirmation && (!confirmed || !isConfirmedImpact(confirmedImpact, impact))) return "CONFIRMATION_REQUIRED" as const;
-      const customRubricIds = (await tx.rubricDefinition.findMany({ where: { programId: division.programId, divisionId: id }, select: { id: true } })).map((rubric) => rubric.id);
-      if (customRubricIds.length) {
-        await tx.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: customRubricIds } } });
-        await tx.rubricDefinition.deleteMany({ where: { id: { in: customRubricIds } } });
+      if (divisionRubricIds.length) {
+        await tx.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: divisionRubricIds } } });
+        await tx.rubricDefinition.deleteMany({ where: { id: { in: divisionRubricIds } } });
       }
       await tx.topic.updateMany({ where: { programId: division.programId, divisionId: id }, data: { divisionId: null } });
       const commonRubricIds = (await tx.rubricDefinition.findMany({ where: { programId: division.programId, divisionId: null, archivedAt: null, legacy: false }, select: { id: true } })).map((rubric) => rubric.id);

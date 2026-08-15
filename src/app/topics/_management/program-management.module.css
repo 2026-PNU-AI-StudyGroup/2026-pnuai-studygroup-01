@@ -1,4 +1,17 @@
 .panel { display: grid; gap: 0; overflow: clip; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-card); }
+.headerRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.headerTitle { display: flex; align-items: center; gap: .625rem; }
+.headerTitle { min-width: 0; flex-wrap: wrap; }
+.programStatus { display: inline-flex; align-items: center; gap: .375rem; color: var(--muted); font-size: .8125rem; font-weight: 700; white-space: nowrap; }
+.programStatus::before { width: .4375rem; height: .4375rem; border-radius: 999px; background: var(--line-strong); content: ""; }
+.programStatus[data-tone="public"] { color: var(--success); }
+.programStatus[data-tone="public"]::before { background: var(--success); }
+.programStatus[data-tone="private"]::before { background: var(--muted); }
+.backLink { display: grid; width: 2.25rem; height: 2.25rem; flex: none; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); color: var(--muted); text-decoration: none; transition: border-color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease); }
+.backLink:hover, .backLink:focus-visible { border-color: var(--field-border-hover); background: var(--surface-subtle); color: var(--ink); }
+.backLink svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.votingResultsAction { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: 1rem; }
+.votingResultsAction > span { color: var(--muted); font-size: .8125rem; font-weight: 750; }
 .form { display: grid; }
 .section { display: grid; gap: 1.5rem; padding: 1.25rem; }
 .section + .section, .panel > .form + .section, .panel > section + .form { border-top: 1px solid var(--line); }
@@ -18,6 +31,7 @@
 .confirm { color: var(--danger); background: var(--danger-subtle); }
 
 @media (max-width: 800px) {
+  .headerRow { align-items: flex-start; }
   .operationGrid, .votingGrid { grid-template-columns: 1fr; }
   .periodRow { grid-template-columns: 1fr; gap: .5rem; }
   .periodRow > strong, .periodSeparator { padding-bottom: 0; }

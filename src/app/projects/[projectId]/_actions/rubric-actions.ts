@@ -36,17 +36,12 @@ export async function saveRubricScoresAction(
       JOIN "rubric_definition" AS rubric ON rubric."id" = evaluation."rubricId"
       JOIN "project_team" ON "project_team"."id" = evaluation."projectTeamId"
       JOIN "topic" ON "topic"."id" = "project_team"."projectId"
-      LEFT JOIN "program_track" AS division ON division."id" = "topic"."trackId"
       WHERE evaluation."id" = ${evaluationId}
         AND "project_team"."id" = ${teamId}
         AND "project_team"."confirmedAt" IS NOT NULL
         AND "topic"."status" = 'ACTIVE'
         AND rubric."programId" = "topic"."programId"
-        AND (
-          ("topic"."trackId" IS NULL AND rubric."divisionId" IS NULL)
-          OR (division."rubricMode" = 'INHERIT_COMMON' AND rubric."divisionId" IS NULL)
-          OR (division."rubricMode" = 'CUSTOM' AND rubric."divisionId" = division."id")
-        )
+        AND (rubric."divisionId" IS NULL OR rubric."divisionId" = "topic"."trackId")
         AND rubric."legacy" = false
         AND rubric."archivedAt" IS NULL
         AND ${now} <= rubric."gradingDueAt"

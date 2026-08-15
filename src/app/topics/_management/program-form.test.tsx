@@ -80,8 +80,6 @@ describe("ProgramForm", () => {
     expect(document.querySelector('input[name="projectRegistrationStartsAt"]')).toBeRequired();
     expect(document.querySelector('input[name="recruitmentStartsAt"]')).toBeRequired();
     expect(document.querySelector('input[name="executionStartsAt"]')).toBeRequired();
-    expect(document.querySelector('input[name="submissionStartsAt"]')).not.toBeInTheDocument();
-    expect(document.querySelector('input[name="submissionEndsAt"]')).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "다음" })).toBeEnabled();
   });
 
@@ -116,9 +114,15 @@ describe("ProgramForm", () => {
     expect(screen.queryByText("프로그램 심사·선정에 투표를 사용할지 설정하세요.")).not.toBeInTheDocument();
     expect(screen.queryByText("활성 사용자 전체가 공개 이력이 있는 프로젝트에 투표할 수 있습니다.")).not.toBeInTheDocument();
     expect(screen.queryByText("사용자가 한 번에 투표할 수 있는 최대 개수")).not.toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: "인당 가능 투표수" })).toHaveValue(3);
-    expect(screen.queryByRole("button", { name: /인당 가능 투표수 (줄이기|늘리기)/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: "투표 범위" })).toHaveTextContent("투표 범위");
+    expect(screen.getByRole("spinbutton", { name: "학생·교수 1인당 최대 투표 수" })).toHaveValue(3);
+    expect(screen.queryByRole("button", { name: /학생·교수 1인당 최대 투표 수 (줄이기|늘리기)/ })).not.toBeInTheDocument();
+    const scopeGroup = screen.getByRole("radiogroup", { name: "투표 한도 적용 기준" });
+    expect(scopeGroup).toHaveTextContent("프로그램 전체에서 합산");
+    expect(scopeGroup).toHaveTextContent("사용자 유형별 최대 투표 수를 각 분과마다 따로 적용");
+    fireEvent.change(screen.getByRole("spinbutton", { name: "학생·교수 1인당 최대 투표 수" }), { target: { value: "" } });
+    expect(screen.getByRole("spinbutton", { name: "학생·교수 1인당 최대 투표 수" })).toHaveValue(null);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "학생·교수 1인당 최대 투표 수" }), { target: { value: "7" } });
+    expect(screen.getByRole("spinbutton", { name: "학생·교수 1인당 최대 투표 수" })).toHaveValue(7);
     const duringVotingResultVisibility = screen.getByRole("button", { name: "투표 중 결과 공개: 비공개" });
     const afterVotingResultVisibility = screen.getByRole("button", { name: "투표 마감 후 결과 공개: 공개" });
     expect(duringVotingResultVisibility).toHaveAttribute("aria-pressed", "false");
@@ -128,20 +132,20 @@ describe("ProgramForm", () => {
     fireEvent.click(duringVotingResultVisibility);
     expect(screen.getByRole("button", { name: "투표 중 결과 공개: 공개" })).toHaveAttribute("aria-pressed", "true");
     expect(document.querySelector('input[name="resultsVisibleDuringVoting"]')).toHaveValue("true");
-    const divisionScope = screen.getByRole("radio", { name: /분과별/ });
+    const divisionScope = screen.getByRole("radio", { name: /분과마다 별도 적용/ });
     expect(divisionScope).toBeEnabled();
-    expect(screen.getByRole("checkbox", { name: "자기 프로젝트 투표 허용" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "본인 프로젝트 투표 허용" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "기본 정보" }));
     expect(screen.getByRole("button", { name: "창업 삭제" })).toBeInTheDocument();
     expect(document.querySelector('input[type="hidden"][name="divisionNames"]')).toHaveValue("창업");
     fireEvent.click(screen.getByRole("button", { name: "창업 삭제" }));
     expect(document.querySelector('input[type="hidden"][name="divisionNames"]')).toHaveValue("");
     fireEvent.click(screen.getByRole("button", { name: "투표" }));
-    expect(screen.getByRole("radio", { name: /분과별/ })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: /분과마다 별도 적용/ })).toBeDisabled();
     expect(screen.getByText("분과를 추가하면 분과별 투표를 선택할 수 있습니다.")).toBeInTheDocument();
   });
 
-  it("직접 지원을 기본값으로 두고 학생 제안형에서는 최소 2명, 최대 6명을 설정한다", () => {
+  it("직접 지원을 기본값으로 두고 학생 등록형에서는 최소 2명, 최대 6명을 설정한다", () => {
     renderForm();
     fireEvent.click(screen.getByRole("button", { name: "운영 설정" }));
 
@@ -150,7 +154,7 @@ describe("ProgramForm", () => {
     expect(screen.queryByRole("spinbutton", { name: "팀 최소 인원" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /팀 최대 인원 (줄이기|늘리기)/ })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("radio", { name: "학생 팀 프로젝트 제안" }));
+    fireEvent.click(screen.getByRole("radio", { name: "학생 팀 프로젝트 등록" }));
     expect(screen.getByRole("spinbutton", { name: "팀 최소 인원" })).toHaveValue(2);
     expect(screen.getByRole("spinbutton", { name: "팀 최대 인원" })).toHaveValue(6);
     expect(screen.getByRole("group", { name: "팀 인원" })).toHaveTextContent("~");

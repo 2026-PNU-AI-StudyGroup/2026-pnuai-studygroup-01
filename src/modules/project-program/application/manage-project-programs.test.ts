@@ -5,15 +5,12 @@ import { getProgramStartYear, InvalidProjectProgramError, normalizeProjectProgra
 const programInput = {
   name: "캡스톤",
   category: "교과",
-  description: "설명",
   startsAt: new Date("2026-03-01T00:00:00Z"),
   endsAt: new Date("2026-12-01T00:00:00Z"),
   recruitmentStartsAt: new Date("2026-03-01T00:00:00Z"),
   recruitmentEndsAt: new Date("2026-11-01T00:00:00Z"),
   executionStartsAt: new Date("2026-03-15T00:00:00Z"),
   executionEndsAt: new Date("2026-11-15T00:00:00Z"),
-  submissionStartsAt: new Date("2026-10-15T00:00:00Z"),
-  submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
   icon: "FOLDER" as const,
@@ -44,7 +41,6 @@ describe("프로젝트 프로그램 관리", () => {
       ...programInput,
       name: " PNU 창의융합 해커톤 ",
       category: " 교내 대회 ",
-      description: " 설명 ",
       projectRegistrationStartsAt: new Date("2026-04-01"),
       projectRegistrationEndsAt: new Date("2026-09-01"),
       isPublic: true,
@@ -69,7 +65,7 @@ describe("프로젝트 프로그램 관리", () => {
     }));
   });
 
-  it("모집·수행·제출 기간은 운영 기간 안에 있고 각각 시작이 종료보다 앞서야 한다", () => {
+  it("모집·수행 기간은 운영 기간 안에 있고 각각 시작이 종료보다 앞서야 한다", () => {
     expect(() => normalizeProjectProgram({
       ...programInput,
       projectRegistrationStartsAt: programInput.startsAt,
@@ -81,11 +77,11 @@ describe("프로젝트 프로그램 관리", () => {
       ...programInput,
       projectRegistrationStartsAt: programInput.startsAt,
       projectRegistrationEndsAt: programInput.endsAt,
-      submissionEndsAt: new Date("2027-01-01T00:00:00Z"),
-    })).toThrow("제출 기간은 프로그램 운영 기간 안에 있어야 합니다.");
+      executionEndsAt: new Date("2027-01-01T00:00:00Z"),
+    })).toThrow("수행 기간은 프로그램 운영 기간 안에 있어야 합니다.");
   });
 
-  it("학생 팀 프로젝트 제안형은 모집 기간을 저장하지 않는다", () => {
+  it("학생 팀 프로젝트 등록형은 모집 기간을 저장하지 않는다", () => {
     const normalized = normalizeProjectProgram({
       ...programInput,
       projectRegistrationStartsAt: programInput.startsAt,
@@ -177,7 +173,7 @@ describe("프로젝트 프로그램 관리", () => {
     expect(value.create).toHaveBeenCalledWith(expect.objectContaining({
       divisionNames: ["창업"],
       rubricDefinitions: [expect.objectContaining({ title: "공식 평가", divisionName: "창업", criteria: [{ label: "완성도", maxPoints: 40 }] })],
-      reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z") }],
+      reportDefinitions: [{ title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z"), required: true }],
     }));
   });
 
@@ -237,7 +233,7 @@ describe("프로젝트 프로그램 관리", () => {
     expect(value.changeStudentProjectPolicy).toHaveBeenCalledWith("program-1", { enabled: false, minSize: 1, maxSize: 4, recruitmentStartsAt: programInput.recruitmentStartsAt, recruitmentEndsAt: programInput.recruitmentEndsAt });
   });
 
-  it("학생 제안형에서 직접 지원형으로 바꿀 때 새 모집 기간을 요구한다", async () => {
+  it("학생 등록형에서 직접 지원형으로 바꿀 때 새 모집 기간을 요구한다", async () => {
     const current = { ...programInput, id: "program-1", startYear: 2026, topicCount: 0, teamCount: 0, studentProjectCreationEnabled: true, recruitmentStartsAt: null, recruitmentEndsAt: null };
     const value = repository({ findById: vi.fn(async () => current), changeStudentProjectPolicy: vi.fn(async () => "UPDATED" as const) });
     const service = new ProjectProgramService(value);
@@ -283,7 +279,6 @@ describe("프로젝트 프로그램 관리", () => {
     await new ProjectProgramService(value).updateBasicInfo({ id: "admin", role: "ADMIN" }, "program-1", {
       name: "새 프로그램명",
       category: "대회",
-      description: "새 설명",
       isPublic: true,
       divisionNames: [],
     });
@@ -291,14 +286,13 @@ describe("프로젝트 프로그램 관리", () => {
     expect(value.updateBasicInfo).toHaveBeenCalledWith("program-1", {
       name: "새 프로그램명",
       category: "대회",
-      description: "새 설명",
       isPublic: true,
       divisionNames: [],
       confirmDivisionSync: undefined,
     }, "admin");
   });
 
-  it("일정 저장은 제출 기간을 수행 기간으로 함께 파생한다", async () => {
+  it("일정 저장은 수행 기간만 저장한다", async () => {
     const current = {
       ...programInput,
       id: "program-1",
@@ -352,8 +346,6 @@ describe("프로젝트 프로그램 관리", () => {
       recruitmentEndsAt: programInput.recruitmentEndsAt,
       executionStartsAt: programInput.executionStartsAt,
       executionEndsAt: programInput.executionEndsAt,
-      submissionStartsAt: programInput.submissionStartsAt,
-      submissionEndsAt: programInput.submissionEndsAt,
       votingPolicy: {
         startsAt: new Date("2026-08-01T00:00:00Z"),
         endsAt: new Date("2026-08-31T00:00:00Z"),

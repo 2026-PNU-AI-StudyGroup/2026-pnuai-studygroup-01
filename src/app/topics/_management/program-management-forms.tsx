@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   updateProgramBasicInfoAction,
@@ -20,7 +21,7 @@ import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domai
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiDiv, UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, TextInput, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 type ProgramDates = {
@@ -38,14 +39,18 @@ function ActionBar({ state, pending, label }: { state: typeof initialProgramActi
 }
 
 export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
-  program: { id: string; name: string; category: string; description: string; isPublic: boolean; endsAt: Date };
+  program: { id: string; name: string; category: string; isPublic: boolean; endsAt: Date };
   categoryOptions: string[];
   tracks: Array<{ name: string }>;
 }) {
-  const [description, setDescription] = useState(program.description);
   const [visibility, setVisibility] = useState<ProgramVisibility>(program.isPublic ? "PUBLIC" : "PRIVATE");
   const [divisionNames, setDivisionNames] = useState(() => tracks.map((track) => track.name));
   const [state, action, pending] = useActionState(updateProgramBasicInfoAction, initialProgramActionState);
+  const router = useRouter();
+  useEffect(() => {
+    if (state.status !== "success" || !state.savedVisibility) return;
+    router.refresh();
+  }, [router, state.savedVisibility, state.status]);
   return <div className={styles.panel}>
     <form action={action} aria-busy={pending} className={styles.form}>
       <input type="hidden" name="programId" value={program.id} />
@@ -55,12 +60,6 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
           </FormField>
           <FormField id="management-program-name" label="프로그램명">
             <TextInput id="management-program-name" name="name" defaultValue={program.name} maxLength={200} required placeholder="예: 창의융합 해커톤" />
-          </FormField>
-          <FormField id="management-program-description" label="설명" className={formStyles.fullRow}>
-            <div className={formStyles.descriptionInput}>
-              <Textarea id="management-program-description" name="description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={5000} required rows={4} placeholder="프로그램에 대한 설명을 입력하세요." />
-              <span aria-hidden="true">{description.length.toLocaleString()} / 5,000</span>
-            </div>
           </FormField>
           <ProgramVisibilitySettings value={visibility} onValueChange={setVisibility} />
           <FormField id="management-program-division-names" label="분과 설정" description="이름을 입력하고 Enter를 누르면 여러 분과를 추가할 수 있습니다." className={formStyles.fullRow}>
@@ -83,12 +82,12 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
 }
 
 export function ProgramOperationPanel({ program }: { program: { id: string; advisorEnabled: boolean; studentProjectCreationEnabled: boolean; projectTeamMinSize: number; projectTeamMaxSize: number } }) {
-  const [proposalMode, setProposalMode] = useState(program.studentProjectCreationEnabled);
+  const [registrationMode, setRegistrationMode] = useState(program.studentProjectCreationEnabled);
   const [advisorEnabled, setAdvisorEnabled] = useState(program.advisorEnabled);
   const [teamMinSize, setTeamMinSize] = useState(program.projectTeamMinSize);
   const [teamMaxSize, setTeamMaxSize] = useState(program.projectTeamMaxSize);
   const [state, action, pending] = useActionState(updateProgramOperationAction, initialProgramActionState);
-  const requiresSchedule = program.studentProjectCreationEnabled && !proposalMode;
+  const requiresSchedule = program.studentProjectCreationEnabled && !registrationMode;
   const savedAdvisorEnabled = state.status === "success" && state.savedAdvisorEnabled !== undefined ? state.savedAdvisorEnabled : program.advisorEnabled;
   const hasUnsavedAdvisorChange = advisorEnabled !== savedAdvisorEnabled;
   return <div className={styles.panel}>
@@ -102,13 +101,13 @@ export function ProgramOperationPanel({ program }: { program: { id: string; advi
           </fieldset>
           <fieldset className={formStyles.radioGroup}>
             <legend><UiText>{"프로젝트 참여 방식"}</UiText></legend>
-            <ChoiceCard variant="inline" name="enabled" value="false" checked={!proposalMode} onChange={() => setProposalMode(false)} required label="등록 프로젝트 직접 지원" />
-            <ChoiceCard variant="inline" name="enabled" value="true" checked={proposalMode} onChange={() => setProposalMode(true)} required label="학생 팀 프로젝트 제안" />
+            <ChoiceCard variant="inline" name="enabled" value="false" checked={!registrationMode} onChange={() => setRegistrationMode(false)} required label="관계자가 등록, 학생이 지원 (졸업과제 등)" />
+            <ChoiceCard variant="inline" name="enabled" value="true" checked={registrationMode} onChange={() => setRegistrationMode(true)} required label="학생이 등록, 관계자가 승인 (해커톤 등)" />
           </fieldset>
           <div className={formStyles.teamPolicy}>
             <strong><UiText>{"팀 인원"}</UiText></strong>
-            <p><UiText>{proposalMode ? "프로젝트를 제안할 수 있는 팀의 인원 범위" : "한 팀이 구성할 수 있는 최대 인원"}</UiText></p>
-            <ProgramTeamSizeRange studentProjectCreationEnabled={proposalMode} teamMinSize={teamMinSize} teamMaxSize={teamMaxSize} onTeamMinSizeChange={setTeamMinSize} onTeamMaxSizeChange={(value) => { setTeamMaxSize(value); if (teamMinSize > value) setTeamMinSize(value); }} />
+            <p><UiText>{registrationMode ? "프로젝트를 등록할 수 있는 팀의 인원 범위" : "한 팀이 구성할 수 있는 최대 인원"}</UiText></p>
+            <ProgramTeamSizeRange studentProjectCreationEnabled={registrationMode} teamMinSize={teamMinSize} teamMaxSize={teamMaxSize} onTeamMinSizeChange={setTeamMinSize} onTeamMaxSizeChange={(value) => { setTeamMaxSize(value); if (teamMinSize > value) setTeamMinSize(value); }} />
           </div>
       </FormSection>
       {requiresSchedule ? <div className={styles.transitionNotice}>
@@ -130,7 +129,7 @@ export function ProgramSchedulePanel({ program, targetMode }: { program: Program
           <ProgramPeriodRow label="전체 운영 기간" fieldLabel="운영" emphasis startId="management-starts-at" startName="startsAt" endId="management-ends-at" endName="endsAt" startValue={program.startsAt} endValue={program.endsAt} />
           <div className={formStyles.detailPeriods}>
             <strong className={formStyles.detailPeriodsTitle}><UiText>{"세부 일정"}</UiText></strong>
-            <ProgramPeriodRow label="등록 기간" startId="management-registration-starts-at" startName="projectRegistrationStartsAt" endId="management-registration-ends-at" endName="projectRegistrationEndsAt" startValue={program.registrationStartsAt} endValue={program.registrationEndsAt} />
+            <ProgramPeriodRow label="프로젝트 등록 기간" startId="management-registration-starts-at" startName="projectRegistrationStartsAt" endId="management-registration-ends-at" endName="projectRegistrationEndsAt" startValue={program.registrationStartsAt} endValue={program.registrationEndsAt} />
             {directMode ? <ProgramPeriodRow label="모집 기간" startId="management-recruitment-starts-at" startName="recruitmentStartsAt" endId="management-recruitment-ends-at" endName="recruitmentEndsAt" startValue={program.recruitmentStartsAt ?? undefined} endValue={program.recruitmentEndsAt ?? undefined} /> : null}
             <ProgramPeriodRow label="수행 기간" startId="management-execution-starts-at" startName="executionStartsAt" endId="management-execution-ends-at" endName="executionEndsAt" startValue={program.executionStartsAt} endValue={program.executionEndsAt} />
           </div>
@@ -140,9 +139,9 @@ export function ProgramSchedulePanel({ program, targetMode }: { program: Program
   </div>;
 }
 
-export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, results }: { programId: string; votingPolicy: ProgramVotingPolicyDetails | null; divisionCount: number; results: React.ReactNode }) {
+export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, resultsAction }: { programId: string; votingPolicy: ProgramVotingPolicyDetails | null; divisionCount: number; resultsAction?: React.ReactNode }) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
-  const [voteLimit, setVoteLimit] = useState(votingPolicy?.voteLimit ?? 3);
+  const [voteLimit, setVoteLimit] = useState(String(votingPolicy?.voteLimit ?? 3));
   const [voteLimitScope, setVoteLimitScope] = useState<"PROGRAM" | "DIVISION">(votingPolicy?.voteLimitScope ?? "PROGRAM");
   const [state, action, pending] = useActionState(updateProgramVotingPolicyAction, initialProgramActionState);
   return <div className={styles.panel}>
@@ -154,39 +153,37 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
           <ProgramPeriodRow label="투표 기간" startId="management-voting-starts-at" startName="votingStartsAt" endId="management-voting-ends-at" endName="votingEndsAt" startValue={votingPolicy?.startsAt} endValue={votingPolicy?.endsAt} />
           <div className={formStyles.votePolicy}>
             <div className={formStyles.voteLimit}>
-              <strong><UiText>{"인당 가능 투표수"}</UiText></strong>
+              <strong><UiText>{"학생·교수 1인당 최대 투표 수"}</UiText></strong>
               <div className={formStyles.voteLimitControl}>
-                <UiInput id="management-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(Math.min(100, Math.max(1, Number(event.target.value))))} aria-label="인당 가능 투표수" required className={`form-control ${formStyles.voteLimitInput}`} />
+                <UiInput id="management-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(event.target.value)} aria-label="학생·교수 1인당 최대 투표 수" required className={`form-control ${formStyles.voteLimitInput}`} />
                 <span aria-hidden="true"><UiText>{"표"}</UiText></span>
               </div>
             </div>
             <div className={formStyles.voteLimit}>
-              <strong><UiText>{"관계자 가능 투표수"}</UiText></strong>
+              <strong><UiText>{"자문위원·관리자 1인당 최대 투표 수"}</UiText></strong>
               <div className={formStyles.voteLimitControl}>
-                <UiInput id="management-staff-vote-limit" name="staffVoteLimit" type="number" min={1} max={100} defaultValue={votingPolicy?.staffVoteLimit ?? 5} aria-label="관계자 가능 투표수" required className={`form-control ${formStyles.voteLimitInput}`} />
+                <UiInput id="management-staff-vote-limit" name="staffVoteLimit" type="number" min={1} max={100} defaultValue={votingPolicy?.staffVoteLimit ?? 5} aria-label="자문위원·관리자 1인당 최대 투표 수" required className={`form-control ${formStyles.voteLimitInput}`} />
                 <span aria-hidden="true"><UiText>{"표"}</UiText></span>
               </div>
             </div>
             <div className={formStyles.voteScopeGroup}>
-              <UiDiv role="radiogroup" aria-label="투표 범위" className={formStyles.voteScope}>
-                <strong><UiText>{"투표 범위"}</UiText></strong>
-                <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체" />
-                <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionCount === 0} label="분과별" />
+              <UiDiv role="radiogroup" aria-label="투표 한도 적용 기준" className={formStyles.voteScope}>
+                <strong><UiText>{"투표 한도 적용 기준"}</UiText></strong>
+                <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
+                <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionCount === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
               </UiDiv>
               {divisionCount === 0 ? <p className={formStyles.voteScopeHint}><UiText>{"분과를 추가하면 분과별 투표를 선택할 수 있습니다."}</UiText></p> : null}
             </div>
             <div className={formStyles.selfVoteOption}>
-              <ChoiceCard variant="inline" name="selfVotingAllowed" type="checkbox" value="true" defaultChecked={votingPolicy?.selfVotingAllowed} label="자기 프로젝트 투표 허용" />
+              <ChoiceCard variant="inline" name="selfVotingAllowed" type="checkbox" value="true" defaultChecked={votingPolicy?.selfVotingAllowed} label="본인 프로젝트 투표 허용" />
             </div>
           </div>
           <ProgramVotingResultVisibilityFields defaultDuringVoting={votingPolicy?.resultsVisibleDuringVoting ?? false} defaultAfterVoting={votingPolicy?.resultsVisibleAfterVoting ?? true} />
         </div> : null}
+        {enabled && resultsAction ? <div className={styles.votingResultsAction}><span><UiText>{"득표현황"}</UiText></span>{resultsAction}</div> : null}
         {state.status === "confirm" && state.voteResetImpact ? <div role="alert" className={styles.confirm}><input type="hidden" name="confirmedVoteCount" value={state.voteResetImpact.voteCount} /><input type="hidden" name="confirmedVoteFromLimit" value={state.voteResetImpact.from.voteLimit} /><input type="hidden" name="confirmedVoteFromScope" value={state.voteResetImpact.from.voteLimitScope} /><input type="hidden" name="confirmedVoteLimit" value={state.voteResetImpact.to.voteLimit} /><input type="hidden" name="confirmedVoteLimitScope" value={state.voteResetImpact.to.voteLimitScope} /><UiText>{`기존 표 ${state.voteResetImpact.voteCount}개를 초기화한 뒤 저장합니다.`}</UiText></div> : null}
       </FormSection>
       <ActionBar state={state} pending={pending} label={state.status === "confirm" ? "기존 표 초기화 후 저장" : "투표 정책 저장"} />
     </form>
-    <FormSection appearance="plain" title="득표현황" className={styles.section}>
-      {results}
-    </FormSection>
   </div>;
 }

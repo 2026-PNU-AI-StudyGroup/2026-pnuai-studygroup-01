@@ -19,16 +19,25 @@ describe("ProgramManagementHeader", () => {
   it("승인 대기가 있으면 해당 프로그램의 대기 요청으로 연결한다", () => {
     render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={2} />);
 
-    expect(screen.getByRole("link", { name: "승인 대기 2건 · 검토하기" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "승인 대기 2건 검토하기" })).toHaveAttribute(
       "href",
-      "/project-approvals?programId=program-1&status=PENDING",
+      "/topics/manage/program-1?approvals=pending",
     );
   });
 
   it("승인 대기가 없으면 검토 링크를 표시하지 않는다", () => {
     render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={0} />);
 
-    expect(screen.queryByText("검토하기")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /승인 대기/ })).not.toBeInTheDocument();
+  });
+
+  it("제목 왼쪽의 돌아가기 아이콘으로 탐색 화면으로 돌아갈 수 있다", () => {
+    render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={0} />);
+
+    expect(screen.getByRole("link", { name: "2026 캡스톤 프로젝트 목록으로 돌아가기" })).toHaveAttribute(
+      "href",
+      "/topics?programId=program-1",
+    );
   });
 
   it("숫자 없이 여섯 설정 탭과 관리 전용 자문위원 탭을 표시한다", () => {

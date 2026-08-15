@@ -11,7 +11,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-export type ProgramActionState = { status: "idle" | "error" | "success" | "confirm"; message: string; voteResetImpact?: ProgramVoteResetImpact; divisionSyncImpact?: ProgramDivisionSyncImpact; savedAdvisorEnabled?: boolean };
+export type ProgramActionState = { status: "idle" | "error" | "success" | "confirm"; message: string; voteResetImpact?: ProgramVoteResetImpact; divisionSyncImpact?: ProgramDivisionSyncImpact; savedVisibility?: "PRIVATE" | "PUBLIC"; savedAdvisorEnabled?: boolean };
 async function actor() { const value = await getCurrentActor(); if (!value) redirect("/sign-in"); return value; }
 const service = () => new ProjectProgramService(new PrismaProjectProgramRepository(prisma));
 
@@ -27,13 +27,12 @@ const programCreateRubricSchema = z.object({
 });
 const programCreateDefinitionsSchema = z.object({
   rubricDefinitions: z.array(programCreateRubricSchema).max(30),
-  reportDefinitions: z.array(z.object({ title: z.string().trim().min(1).max(100), dueAt: koreanLocalDateTime })).max(30),
+  reportDefinitions: z.array(z.object({ title: z.string().trim().min(1).max(100), dueAt: koreanLocalDateTime, required: z.boolean().default(true) })).max(30),
 });
 
 const programSettingsSchema = z.object({
   name: z.string(),
   category: z.string().trim().min(1),
-  description: z.string(),
   startsAt: koreanLocalDateTime,
   endsAt: koreanLocalDateTime,
   advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"),
@@ -43,8 +42,6 @@ const programSettingsSchema = z.object({
   recruitmentEndsAt: koreanLocalDateTime.optional(),
   executionStartsAt: koreanLocalDateTime,
   executionEndsAt: koreanLocalDateTime,
-  submissionStartsAt: koreanLocalDateTime,
-  submissionEndsAt: koreanLocalDateTime,
   votingEnabled: z.boolean(),
   votingStartsAt: koreanLocalDateTime.optional(),
   votingEndsAt: koreanLocalDateTime.optional(),
@@ -69,7 +66,6 @@ const programIdSchema = z.string().uuid();
 const programBasicInfoSchema = z.object({
   name: z.string().trim().min(1).max(200),
   category: z.string().trim().min(1).max(100),
-  description: z.string().trim().min(1).max(5000),
   visibility: programVisibilitySchema,
   divisionNames: z.string(),
   confirmedDivisionIds: z.string().optional(),
@@ -116,14 +112,10 @@ const programVotingSchema = z.object({
   }
 });
 
-function parseProgramSettings(formData: FormData, options?: { useExecutionPeriodAsSubmissionPeriod?: boolean }) {
+function parseProgramSettings(formData: FormData) {
   const entries = Object.fromEntries(formData);
   return programSettingsSchema.safeParse({
     ...entries,
-    ...(options?.useExecutionPeriodAsSubmissionPeriod ? {
-      submissionStartsAt: entries.executionStartsAt,
-      submissionEndsAt: entries.executionEndsAt,
-    } : {}),
     votingEnabled: formData.get("votingEnabled") === "true",
     selfVotingAllowed: formData.get("selfVotingAllowed") === "true",
     resultsVisibleDuringVoting: parseExplicitBoolean(formData.get("resultsVisibleDuringVoting"), false),
@@ -162,7 +154,6 @@ export async function updateProgramBasicInfoAction(_state: ProgramActionState, f
     await service().updateBasicInfo(await actor(), programId.data, {
       name: input.data.name,
       category: input.data.category,
-      description: input.data.description,
       isPublic: input.data.visibility === "PUBLIC",
       divisionNames: input.data.divisionNames.split(",").map((name) => name.trim()).filter(Boolean),
       confirmDivisionSync: input.data.confirmedDivisionIds !== undefined &&
@@ -186,7 +177,7 @@ export async function updateProgramBasicInfoAction(_state: ProgramActionState, f
     throw error;
   }
   refreshManagement(programId.data);
-  return { status: "success", message: "기본 정보를 저장했습니다." };
+  return { status: "success", message: "기본 정보를 저장했습니다.", savedVisibility: input.data.visibility };
 }
 
 export async function updateProgramOperationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
@@ -282,10 +273,10 @@ function parseJsonArray(value: FormDataEntryValue | null) {
 }
 
 export async function createProgramAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
-  const parsed = z.object({ name: z.string(), category: z.string(), description: z.string(), divisionNames: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, icon: programIconSchema, visibility: programVisibilitySchema, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int() }).safeParse({
+  const parsed = z.object({ name: z.string(), category: z.string(), divisionNames: z.string(), startsAt: koreanLocalDateTime, endsAt: koreanLocalDateTime, icon: programIconSchema, visibility: programVisibilitySchema, advisorEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), studentProjectCreationEnabled: z.enum(["true", "false"]).transform((value) => value === "true"), projectTeamMinSize: z.coerce.number().int(), projectTeamMaxSize: z.coerce.number().int() }).safeParse({
     ...Object.fromEntries(formData),
   });
-  const settings = parseProgramSettings(formData, { useExecutionPeriodAsSubmissionPeriod: true });
+  const settings = parseProgramSettings(formData);
   const definitions = programCreateDefinitionsSchema.safeParse({
     rubricDefinitions: parseJsonArray(formData.get("rubricDefinitions")),
     reportDefinitions: parseJsonArray(formData.get("reportDefinitions")),
@@ -306,8 +297,6 @@ export async function createProgramAction(_state: ProgramActionState, formData: 
       recruitmentEndsAt: parsed.data.studentProjectCreationEnabled ? null : settings.data.recruitmentEndsAt!,
       executionStartsAt: settings.data.executionStartsAt,
       executionEndsAt: settings.data.executionEndsAt,
-      submissionStartsAt: settings.data.submissionStartsAt,
-      submissionEndsAt: settings.data.submissionEndsAt,
       rubricDefinitions: definitions.data.rubricDefinitions,
       reportDefinitions: definitions.data.reportDefinitions,
       divisionNames: parsed.data.divisionNames.split(",").map((name) => name.trim()).filter(Boolean),

@@ -18,7 +18,6 @@ export async function assignProgramDeliverablesToTeam(
           programId: true,
           status: true,
           divisionId: true,
-          division: { select: { rubricMode: true } },
         },
       },
     },
@@ -27,7 +26,7 @@ export async function assignProgramDeliverablesToTeam(
 
   const reportDefinitions = await transaction.programReportDefinition.findMany({
     where: { programId: team.project.programId, archivedAt: null },
-    select: { id: true, title: true, dueAt: true },
+    select: { id: true, title: true, dueAt: true, required: true },
   });
   if (reportDefinitions.length) {
     await transaction.report.createMany({
@@ -36,7 +35,8 @@ export async function assignProgramDeliverablesToTeam(
         definitionId: definition.id,
         titleSnapshot: definition.title,
         dueAt: definition.dueAt,
-        required: true,
+        required: definition.required,
+        submissionEnabled: true,
         createdAt: assignedAt,
         updatedAt: assignedAt,
       })),
@@ -44,13 +44,15 @@ export async function assignProgramDeliverablesToTeam(
     });
   }
 
-  const custom = team.project.divisionId != null && team.project.division?.rubricMode === "CUSTOM";
   const rubrics = await transaction.rubricDefinition.findMany({
     where: {
       programId: team.project.programId,
       archivedAt: null,
       legacy: false,
-      divisionId: custom ? team.project.divisionId : null,
+      OR: [
+        { divisionId: null },
+        ...(team.project.divisionId ? [{ divisionId: team.project.divisionId }] : []),
+      ],
     },
     select: { id: true },
   });

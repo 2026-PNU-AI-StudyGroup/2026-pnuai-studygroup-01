@@ -1,7 +1,6 @@
 import type { ProgramSidebarItem } from "@/modules/project-program/ui/program-sidebar";
 import { programLifecycleStatus, type ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
-import { type ProgramManagementTab, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import type { ArchivedProgramOption } from "@/modules/team/application/archive-projects";
 
 export type ProgramSidebarQuery = {
@@ -81,8 +80,6 @@ export function buildProgramSidebarItems(
 
 export function buildAdminProgramSidebarItems(
   programs: ProjectProgramRecord[],
-  mode: "projects" | "manage" | "create",
-  tab: ProgramManagementTab,
   now = new Date(),
   pendingApprovalCounts: ReadonlyMap<string, number> = new Map(),
 ): ProgramSidebarItem[] {
@@ -102,11 +99,7 @@ export function buildAdminProgramSidebarItems(
       icon: program.icon,
       startYear: program.startYear,
       status,
-      href: mode === "manage"
-        ? programManagementHref(program.id, tab)
-        : mode === "create"
-          ? programManagementHref(program.id)
-          : projectHref,
+      href: projectHref,
       votingEndsAt: activeVotingEndsAt(program, now),
       votingHref: projectHref,
       projectCount: program.topicCount,

@@ -18,7 +18,7 @@ import {
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import { ProgramVotingResultVisibilityFields } from "@/app/topics/_management/program-voting-result-visibility";
 import { CategorySelect } from "@/app/topics/_management/category-select";
-import { ChoiceCard, FormField, FormSection, Textarea, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 const PROGRAM_FORM_SECTIONS = [
@@ -46,13 +46,12 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
   const [advisorEnabled, setAdvisorEnabled] = useState<boolean | null>(null);
   const [studentProjectCreationEnabled, setStudentProjectCreationEnabled] = useState(false);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [divisionNames, setDivisionNames] = useState<string[]>([]);
   const [rubrics, setRubrics] = useState<ProgramCreateRubricDraft[]>([]);
   const [reportDefinitions, setReportDefinitions] = useState<ProgramCreateReportDraft[]>([]);
   const [teamMinSize, setTeamMinSize] = useState(2);
   const [teamMaxSize, setTeamMaxSize] = useState(6);
-  const [voteLimit, setVoteLimit] = useState(3);
+  const [voteLimit, setVoteLimit] = useState("3");
   const [voteLimitScope, setVoteLimitScope] = useState<"PROGRAM" | "DIVISION">("PROGRAM");
   const [visibility, setVisibility] = useState<ProgramVisibility>("PRIVATE");
   const [activeSection, setActiveSection] = useState<ProgramFormSectionId>("program-basic");
@@ -68,7 +67,7 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
     audience: rubric.audience,
     criteria: rubric.criteria.map((criterion) => ({ label: criterion.label, maxPoints: criterion.maxPoints })),
   })));
-  const serializedReportDefinitions = JSON.stringify(reportDefinitions.map((definition) => ({ title: definition.title, dueAt: definition.dueAt })));
+  const serializedReportDefinitions = JSON.stringify(reportDefinitions.map((definition) => ({ title: definition.title, dueAt: definition.dueAt, required: definition.required })));
   function showSection(id: ProgramFormSectionId) {
     setActiveSection(id);
     window.requestAnimationFrame(() => {
@@ -137,12 +136,6 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
         <FormField id="program-name" label="프로그램명">
           <UiInput id="program-name" name="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required className="form-control" placeholder="예: 창의융합 해커톤" />
         </FormField>
-        <FormField id="program-description" label="설명" className={styles.fullRow}>
-          <div className={styles.descriptionInput}>
-            <Textarea id="program-description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} required rows={4} placeholder="프로그램에 대한 설명을 입력하세요." />
-            <span aria-hidden="true">{description.length.toLocaleString()} / 5,000</span>
-          </div>
-        </FormField>
         <ProgramVisibilitySettings value={visibility} onValueChange={setVisibility} />
         <FormField id="program-division-names" label="분과 설정" description="이름을 입력하고 Enter를 누르면 여러 분과를 추가할 수 있습니다." className={styles.fullRow}>
           <TagInput id="program-division-names" name="divisionNames" ariaLabel="분과 이름" value={divisionNames} onValuesChange={(names) => {
@@ -163,11 +156,11 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
         <fieldset className={styles.radioGroup}>
           <legend><UiText>{"프로젝트 참여 방식"}</UiText></legend>
           <ChoiceCard variant="inline" name="studentProjectCreationEnabled" value="false" checked={!studentProjectCreationEnabled} onChange={() => setStudentProjectCreationEnabled(false)} required label="등록 프로젝트 직접 지원" />
-          <ChoiceCard variant="inline" name="studentProjectCreationEnabled" value="true" checked={studentProjectCreationEnabled} onChange={() => setStudentProjectCreationEnabled(true)} required label="학생 팀 프로젝트 제안" />
+          <ChoiceCard variant="inline" name="studentProjectCreationEnabled" value="true" checked={studentProjectCreationEnabled} onChange={() => setStudentProjectCreationEnabled(true)} required label="학생 팀 프로젝트 등록" />
         </fieldset>
         <div className={styles.teamPolicy}>
           <strong><UiText>{"팀 인원"}</UiText></strong>
-          <p><UiText>{studentProjectCreationEnabled ? "프로젝트를 제안할 수 있는 팀의 인원 범위" : "한 팀이 구성할 수 있는 최대 인원"}</UiText></p>
+          <p><UiText>{studentProjectCreationEnabled ? "프로젝트를 등록할 수 있는 팀의 인원 범위" : "한 팀이 구성할 수 있는 최대 인원"}</UiText></p>
           <ProgramTeamSizeRange studentProjectCreationEnabled={studentProjectCreationEnabled} teamMinSize={teamMinSize} teamMaxSize={teamMaxSize} onTeamMinSizeChange={setTeamMinSize} onTeamMaxSizeChange={(value) => { setTeamMaxSize(value); if (teamMinSize > value) setTeamMinSize(value); }} />
         </div>
       </FormSection>
@@ -176,7 +169,7 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
         <ProgramPeriodRow label="전체 운영 기간" fieldLabel="운영" emphasis startId="program-starts-at" startName="startsAt" endId="program-ends-at" endName="endsAt" />
         <div className={styles.detailPeriods}>
           <strong className={styles.detailPeriodsTitle}><UiText>{"세부 일정"}</UiText></strong>
-          <ProgramPeriodRow label="등록 기간" startId="program-registration-starts-at" startName="projectRegistrationStartsAt" endId="program-registration-ends-at" endName="projectRegistrationEndsAt" />
+          <ProgramPeriodRow label="프로젝트 등록 기간" startId="program-registration-starts-at" startName="projectRegistrationStartsAt" endId="program-registration-ends-at" endName="projectRegistrationEndsAt" />
           {!studentProjectCreationEnabled ? <ProgramPeriodRow label="모집 기간" startId="program-recruitment-starts-at" startName="recruitmentStartsAt" endId="program-recruitment-ends-at" endName="recruitmentEndsAt" /> : null}
           <ProgramPeriodRow label="수행 기간" startId="program-execution-starts-at" startName="executionStartsAt" endId="program-execution-ends-at" endName="executionEndsAt" />
         </div>
@@ -195,22 +188,22 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
             <ProgramPeriodRow label="투표 기간" startId="program-voting-starts-at" startName="votingStartsAt" endId="program-voting-ends-at" endName="votingEndsAt" />
             <div className={styles.votePolicy}>
               <div className={styles.voteLimit}>
-                <strong><UiText>{"인당 가능 투표수"}</UiText></strong>
+                <strong><UiText>{"학생·교수 1인당 최대 투표 수"}</UiText></strong>
                 <div className={styles.voteLimitControl}>
-                  <UiInput id="program-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(Math.min(100, Math.max(1, Number(event.target.value))))} aria-label="인당 가능 투표수" required className={`form-control ${styles.voteLimitInput}`} />
+                  <UiInput id="program-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(event.target.value)} aria-label="학생·교수 1인당 최대 투표 수" required className={`form-control ${styles.voteLimitInput}`} />
                   <span aria-hidden="true"><UiText>{"표"}</UiText></span>
                 </div>
               </div>
               <div className={styles.voteScopeGroup}>
-                <UiDiv role="radiogroup" aria-label="투표 범위" className={styles.voteScope}>
-                  <strong><UiText>{"투표 범위"}</UiText></strong>
-                  <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체" />
-                  <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionNames.length === 0} label="분과별" />
+                <UiDiv role="radiogroup" aria-label="투표 한도 적용 기준" className={styles.voteScope}>
+                  <strong><UiText>{"투표 한도 적용 기준"}</UiText></strong>
+                  <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
+                  <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionNames.length === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
                 </UiDiv>
                 {divisionNames.length === 0 ? <p className={styles.voteScopeHint}><UiText>{"분과를 추가하면 분과별 투표를 선택할 수 있습니다."}</UiText></p> : null}
               </div>
               <div className={styles.selfVoteOption}>
-                <ChoiceCard variant="inline" name="selfVotingAllowed" type="checkbox" value="true" label="자기 프로젝트 투표 허용" />
+                <ChoiceCard variant="inline" name="selfVotingAllowed" type="checkbox" value="true" label="본인 프로젝트 투표 허용" />
               </div>
             </div>
             <ProgramVotingResultVisibilityFields />

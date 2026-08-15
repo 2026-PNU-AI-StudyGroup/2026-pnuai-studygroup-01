@@ -17,7 +17,6 @@ export type ProgramVotingPolicyDetails = {
 export type ProjectProgramDetails = {
   name: string;
   category: string;
-  description: string;
   startsAt: Date;
   endsAt: Date;
   projectRegistrationStartsAt: Date;
@@ -26,8 +25,6 @@ export type ProjectProgramDetails = {
   recruitmentEndsAt: Date | null;
   executionStartsAt: Date;
   executionEndsAt: Date;
-  submissionStartsAt: Date;
-  submissionEndsAt: Date;
   advisorEnabled: boolean;
   studentProjectCreationEnabled: boolean;
   projectTeamMinSize?: number;
@@ -40,8 +37,7 @@ export const DEFAULT_PROJECT_TEAM_MAX_SIZE = 6;
 
 export type ProgramSchedule = Pick<ProjectProgramDetails,
   "recruitmentStartsAt" | "recruitmentEndsAt" |
-  "executionStartsAt" | "executionEndsAt" |
-  "submissionStartsAt" | "submissionEndsAt"
+  "executionStartsAt" | "executionEndsAt"
 >;
 
 export class InvalidProjectProgramError extends Error {}
@@ -60,7 +56,6 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
     ...input,
     name: input.name.trim(),
     category: input.category.trim(),
-    description: input.description.trim(),
     projectTeamMinSize: input.studentProjectCreationEnabled
       ? input.projectTeamMinSize ?? DEFAULT_PROJECT_TEAM_MIN_SIZE
       : 1,
@@ -70,7 +65,6 @@ export function normalizeProjectProgram(input: ProjectProgramDetails): ProjectPr
   };
   if (!value.name || value.name.length > 200) throw new InvalidProjectProgramError("프로그램명은 1자 이상 200자 이하여야 합니다.");
   if (!value.category || value.category.length > 100) throw new InvalidProjectProgramError("분류는 1자 이상 100자 이하여야 합니다.");
-  if (!value.description || value.description.length > 5000) throw new InvalidProjectProgramError("설명은 1자 이상 5000자 이하여야 합니다.");
   if (!Number.isFinite(value.startsAt.getTime()) || !Number.isFinite(value.endsAt.getTime()) || value.startsAt >= value.endsAt) throw new InvalidProjectProgramError("프로그램 시작 시각은 종료 시각보다 앞서야 합니다.");
   assertProjectRegistrationPeriod(value.projectRegistrationStartsAt, value.projectRegistrationEndsAt);
   if (value.projectRegistrationStartsAt < value.startsAt || value.projectRegistrationEndsAt > value.endsAt) {
@@ -97,14 +91,14 @@ export function assertValidProjectTeamSizePolicy(minSize: number, maxSize: numbe
 export function normalizeProgramVotingPolicy(input: ProgramVotingPolicyDetails): ProgramVotingPolicyDetails {
   assertValidPeriod(input.startsAt, input.endsAt, "투표 시작 시각은 종료 시각보다 앞서야 합니다.");
   if (!Number.isSafeInteger(input.voteLimit) || input.voteLimit < 1) {
-    throw new InvalidProjectProgramError("인당 가능 투표수는 1 이상이어야 합니다.");
+    throw new InvalidProjectProgramError("학생·교수 1인당 최대 투표 수는 1 이상이어야 합니다.");
   }
   const staffVoteLimit = input.staffVoteLimit ?? 5;
   if (!Number.isSafeInteger(staffVoteLimit) || staffVoteLimit < 1) {
-    throw new InvalidProjectProgramError("자문위원·관리자 가능 투표수는 1 이상이어야 합니다.");
+    throw new InvalidProjectProgramError("자문위원·관리자 1인당 최대 투표 수는 1 이상이어야 합니다.");
   }
   if (input.voteLimitScope !== undefined && input.voteLimitScope !== "PROGRAM" && input.voteLimitScope !== "DIVISION") {
-    throw new InvalidProjectProgramError("투표 범위를 다시 선택해 주세요.");
+    throw new InvalidProjectProgramError("투표 한도 적용 범위를 다시 선택해 주세요.");
   }
   return { ...input, staffVoteLimit, voteLimitScope: input.voteLimitScope ?? "PROGRAM" };
 }
@@ -116,8 +110,7 @@ export function assertProjectRegistrationPeriod(startsAt: Date, endsAt: Date) {
 export function assertValidProgramSchedule(schedule: Pick<ProjectProgramDetails,
   "startsAt" | "endsAt" |
   "recruitmentStartsAt" | "recruitmentEndsAt" |
-  "executionStartsAt" | "executionEndsAt" |
-  "submissionStartsAt" | "submissionEndsAt"
+  "executionStartsAt" | "executionEndsAt"
 >) {
   const hasRecruitmentPeriod = schedule.recruitmentStartsAt !== null || schedule.recruitmentEndsAt !== null;
   if (hasRecruitmentPeriod && (!schedule.recruitmentStartsAt || !schedule.recruitmentEndsAt)) {
@@ -126,7 +119,6 @@ export function assertValidProgramSchedule(schedule: Pick<ProjectProgramDetails,
   const periods = [
     ...(schedule.recruitmentStartsAt && schedule.recruitmentEndsAt ? [["프로젝트 모집", schedule.recruitmentStartsAt, schedule.recruitmentEndsAt] as const] : []),
     ["수행", schedule.executionStartsAt, schedule.executionEndsAt],
-    ["제출", schedule.submissionStartsAt, schedule.submissionEndsAt],
   ] as const;
   for (const [name, startsAt, endsAt] of periods) {
     assertValidPeriod(startsAt, endsAt, `${name} 시작 시각은 종료 시각보다 앞서야 합니다.`);

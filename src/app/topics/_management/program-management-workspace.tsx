@@ -11,21 +11,24 @@ import {
 } from "@/modules/project-program/ui/program-management-route";
 import { topicsHref } from "@/app/topics/_lib/topics-query";
 import { ProgramReportRequirementForm } from "@/app/topics/_management/program-report-requirement-form";
-import { ProgramVoteResults } from "@/app/topics/_management/program-vote-results";
+import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
 import { ProgramAdvisorPanel } from "@/app/topics/_management/program-advisor-panel";
 import { RubricManager, type RubricDivisionRow, type RubricRow } from "@/app/topics/_management/rubric-manager";
 import { ProgramBasicInfoPanel, ProgramOperationPanel, ProgramSchedulePanel, ProgramVotingPanel } from "@/app/topics/_management/program-management-forms";
 import styles from "@/app/topics/_management/program-management.module.css";
 import navStyles from "@/app/topics/_management/program-section-nav.module.css";
 import { ProgramSectionNavIcon, type ProgramSectionNavIconName } from "@/app/topics/_management/program-section-nav";
+import { ProgramApprovalLink } from "@/app/topics/_components/program-approval-link";
+import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
+import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
-import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-query";
+import { EmptyState } from "@/shared/ui/page-primitives";
 import { AccountIcon } from "@/shared/ui/workspace-icons";
 
 const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
@@ -57,35 +60,31 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
   pendingApprovalCount: number;
 }) {
   const status = program.endsAt <= new Date()
-    ? { label: "종료", tone: "neutral" as const }
+    ? { label: "종료", tone: "closed" as const }
     : program.isPublic
-      ? { label: "공개", tone: "info" as const }
-      : { label: "비공개", tone: "neutral" as const };
+      ? { label: "공개", tone: "public" as const }
+      : { label: "비공개", tone: "private" as const };
   return (
     <>
       <header className="border-b border-[var(--line)] pb-6">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
-            <UiText>{program.name}</UiText>
-          </h1>
-          <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
-          {pendingApprovalCount > 0 ? (
+        <div className={styles.headerRow}>
+          <div className={styles.headerTitle}>
             <Link
-              href={projectApprovalsHref({ programId: program.id, status: "PENDING" })}
-              className="inline-flex min-h-8 items-center rounded-full border border-[var(--warning)] bg-[var(--warning-subtle)] px-3 text-xs font-bold text-[var(--warning-ink)] transition-colors hover:bg-white"
+              href={topicsHref({ programId: program.id })}
+              aria-label={`${program.name} 프로젝트 목록으로 돌아가기`}
+              title="프로젝트 목록으로 돌아가기"
+              className={styles.backLink}
             >
-              <UiText>{"승인 대기"}</UiText> {pendingApprovalCount}<UiText>{"건 · 검토하기"}</UiText>
+              <svg aria-hidden="true" viewBox="0 0 20 20">
+                <path d="m9 4-6 6 6 6M3.5 10H16" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Link>
-          ) : null}
-          <Link
-            href={topicsHref({ programId: program.id })}
-            aria-label={`${program.name} 프로젝트 보기`}
-            className="grid size-9 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
-          >
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="size-[1.1rem] fill-none stroke-current stroke-[1.7]">
-              <path d="M3.5 5.5h13v9h-13zM7 9h6M7 12h4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
+            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
+              <UiText>{program.name}</UiText>
+            </h1>
+            <span className={styles.programStatus} data-tone={status.tone}><UiText>{status.label}</UiText></span>
+            {pendingApprovalCount > 0 ? <ProgramApprovalLink programId={program.id} count={pendingApprovalCount} /> : null}
+          </div>
         </div>
       </header>
       <UiNav aria-label="프로그램 관리 탭" className={`mt-5 ${navStyles.root} ${navStyles.management}`}>
@@ -122,12 +121,14 @@ export async function ProgramManagementWorkspace({
   tab,
   targetMode = "CURRENT",
   pendingApprovalCount = 0,
+  showApprovals = false,
 }: {
   actor: CurrentActor;
   programId: string;
   tab: ProgramManagementTab;
   targetMode?: "CURRENT" | "DIRECT";
   pendingApprovalCount?: number;
+  showApprovals?: boolean;
 }) {
   let program;
   try {
@@ -141,13 +142,21 @@ export async function ProgramManagementWorkspace({
 
   let content: React.ReactNode;
 
-  if (tab === "settings") {
+  if (showApprovals) {
+    const requests = await new TopicApprovalService(
+      new PrismaTopicApprovalRepository(prisma),
+      new PrismaProjectProgramRepository(prisma),
+    ).list(actor, 1, 50, { programId: program.id, status: "PENDING" });
+    content = requests.items.length
+      ? <ProjectApprovalLedger adminSurface requests={requests.items} total={requests.total} student={false} title="승인 대기" />
+      : <EmptyState title="승인 대기 요청이 없습니다" description="새 학생 프로젝트 등록이 접수되면 여기에 표시됩니다." />;
+  } else if (tab === "settings") {
     const [categoryOptions, divisions] = await Promise.all([
       listProgramCategories(),
       prisma.programDivision.findMany({ where: { programId: program.id }, orderBy: { position: "asc" }, select: { id: true, name: true, _count: { select: { topics: true } } } }),
     ]);
     const tracks = divisions.map((division) => ({ name: division.name }));
-    content = <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, description: program.description, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />;
+    content = <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />;
   } else if (tab === "operation") {
     content = <ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, projectTeamMinSize: program.projectTeamMinSize ?? 2, projectTeamMaxSize: program.projectTeamMaxSize ?? 6 }} />;
   } else if (tab === "schedule") {
@@ -155,27 +164,23 @@ export async function ProgramManagementWorkspace({
   } else if (tab === "votes") {
     const refreshedAt = new Date();
     const votingResults = program.votingPolicy ? await new ProjectVotingService(new PrismaProjectVotingRepository(prisma), () => refreshedAt).getResults(actor, program.id) : null;
-    const results = votingResults
-      ? <ProgramVoteResults results={votingResults} refreshedAt={new Intl.DateTimeFormat("ko-KR", { dateStyle: "short", timeStyle: "medium", timeZone: "Asia/Seoul" }).format(refreshedAt)} policySettingsHref="#voting-policy" />
-      : <EmptyState title="투표 정책이 없습니다" description="투표를 사용으로 설정하면 득표현황을 확인할 수 있습니다." />;
-    content = <ProgramVotingPanel programId={program.id} votingPolicy={program.votingPolicy ?? null} divisionCount={program.divisions?.length ?? 0} results={results} />;
+    const resultsAction = votingResults
+      ? <ProjectVoteResultsDialog view={{ mode: "ADMIN", results: votingResults }} triggerLabel="득표현황" />
+      : undefined;
+    content = <ProgramVotingPanel programId={program.id} votingPolicy={program.votingPolicy ?? null} divisionCount={program.divisions?.length ?? 0} resultsAction={resultsAction} />;
   } else if (tab === "rubric") {
     const [divisionRecords, rubricRecords] = await Promise.all([
-      prisma.programDivision.findMany({ where: { programId: program.id }, orderBy: { position: "asc" }, select: { id: true, name: true, rubricMode: true } }),
-      prisma.rubricDefinition.findMany({ where: { programId: program.id, archivedAt: null, legacy: false }, orderBy: [{ divisionId: "asc" }, { position: "asc" }], select: { id: true, divisionId: true, title: true, gradingDueAt: true, audience: true, criteria: { orderBy: { position: "asc" }, select: { id: true, label: true, maxPoints: true } }, evaluations: { select: { _count: { select: { scores: true } } } } } }),
+      prisma.programDivision.findMany({ where: { programId: program.id }, orderBy: { position: "asc" }, select: { id: true, name: true } }),
+      prisma.rubricDefinition.findMany({ where: { programId: program.id, archivedAt: null, legacy: false }, orderBy: [{ divisionId: "asc" }, { position: "asc" }], select: { id: true, divisionId: true, title: true, gradingDueAt: true, audience: true, criteria: { orderBy: { position: "asc" }, select: { id: true, label: true, maxPoints: true } }, evaluations: { select: { _count: { select: { scores: true } } } }, advisorEvaluations: { select: { _count: { select: { scores: true } } } } } }),
     ]);
     const divisions: RubricDivisionRow[] = divisionRecords;
-    const rubrics: RubricRow[] = rubricRecords.map(({ evaluations, ...rubric }) => ({ ...rubric, scoreCount: evaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) }));
+    const rubrics: RubricRow[] = rubricRecords.map(({ evaluations, advisorEvaluations, ...rubric }) => ({ ...rubric, scoreCount: evaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) + advisorEvaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) }));
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"채점표"}</UiText></h2></header><RubricManager programId={program.id} divisions={divisions} rubrics={rubrics} /></section></div>;
   } else if (tab === "reports") {
-    const records = await prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, reports: { select: { _count: { select: { versions: true } } } } } });
+    const records = await prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } });
     const definitions = records.map(({ reports, ...definition }) => ({ ...definition, versionCount: reports.reduce((sum, report) => sum + report._count.versions, 0) }));
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section></div>;
   } else if (tab === "advisors") {
-    if (!program.advisorEnabled) {
-      content = <div className={styles.panel}><EmptyState title="지도교수 운영이 꺼져 있습니다" description="자문위원을 배정하려면 운영 설정에서 지도교수 있음을 선택해 주세요." action={<Link href={programManagementHref(program.id, "operation")} className="button-primary"><UiText>{"운영 설정으로 이동"}</UiText></Link>} /></div>;
-      return <div className="page-enter"><ProgramManagementHeader program={program} tab={tab} pendingApprovalCount={pendingApprovalCount} /><div className="pt-7">{content}</div></div>;
-    }
     const [advisors, topics, matrix] = await Promise.all([
       listProgramAdvisors(prisma, program.id),
       listProgramTopicsForAssignment(prisma, program.id),

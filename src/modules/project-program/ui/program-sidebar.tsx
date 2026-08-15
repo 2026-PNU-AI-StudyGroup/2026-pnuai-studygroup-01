@@ -133,6 +133,7 @@ function CategoryProgramGroup({
   programs,
   selectedId,
   showSettings,
+  selectedItemLinkable,
   open,
   onToggle,
 }: {
@@ -140,6 +141,7 @@ function CategoryProgramGroup({
   programs: ProgramSidebarItem[];
   selectedId?: string;
   showSettings: boolean;
+  selectedItemLinkable: boolean;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -213,10 +215,10 @@ function CategoryProgramGroup({
               );
               return (
                 <li key={`${program.status}-${program.id}`} className="relative">
-                  {selected ? (
+                  {selected && !selectedItemLinkable ? (
                     <div aria-current="page" className={rowClassName}>{rowContent}</div>
                   ) : (
-                    <UiLink href={program.href} tabIndex={open ? undefined : -1} className={rowClassName}>{rowContent}</UiLink>
+                    <UiLink href={program.href} aria-current={selected ? "page" : undefined} tabIndex={open ? undefined : -1} className={rowClassName}>{rowContent}</UiLink>
                   )}
                   {showSettings ? (
                     <UiLink
@@ -238,11 +240,12 @@ function CategoryProgramGroup({
   );
 }
 
-export function ProgramSidebar({ items, selectedId, title = "프로그램", showSettings = false }: {
+export function ProgramSidebar({ items, selectedId, title = "프로그램", showSettings = false, selectedItemLinkable = false }: {
   items: ProgramSidebarItem[];
   selectedId?: string;
   title?: ReactNode;
   showSettings?: boolean;
+  selectedItemLinkable?: boolean;
 }) {
   const votingPrograms = items.filter((item) => item.votingEndsAt && item.visibility !== "private");
   const votingProgramCount = votingPrograms.length;
@@ -300,6 +303,7 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
           programs={programs}
           selectedId={selectedId}
           showSettings={showSettings}
+          selectedItemLinkable={selectedItemLinkable}
           open={openCategory === category}
           onToggle={() => setOpenCategory((current) => current === category ? undefined : category)}
         />
