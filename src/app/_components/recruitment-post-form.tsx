@@ -5,8 +5,8 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
-import { createRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
-import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
+import { createRecruitmentPostAction } from "@/app/_actions/recruitment-actions";
+import { initialRecruitmentActionState } from "@/app/_lib/recruitment-form-state";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { DateTimeInput, FormField, FormSection, TextInput } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";

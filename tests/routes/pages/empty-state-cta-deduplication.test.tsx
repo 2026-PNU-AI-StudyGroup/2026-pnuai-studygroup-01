@@ -39,7 +39,7 @@ vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamPagination: () => null,
 }));
 vi.mock("@/modules/student-team/ui/team-modal", () => ({ TeamModal: ({ children }: { children: ReactNode }) => <>{children}</> }));
-vi.mock("@/app/recruitments/_components/recruitment-post-form", () => ({ RecruitmentPostForm: () => null }));
+vi.mock("@/app/_components/recruitment-post-form", () => ({ RecruitmentPostForm: () => null }));
 
 const student = { id: "student-1", name: "정하늘", role: "STUDENT" as const };
 

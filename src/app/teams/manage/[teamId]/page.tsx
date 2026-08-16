@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { StudentTeamManagementSections } from "@/app/teams/manage/[teamId]/_components/student-team-management-sections";
-import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
+import { RecruitmentPostForm } from "@/app/_components/recruitment-post-form";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";

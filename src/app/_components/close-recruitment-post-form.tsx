@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 
-import { closeRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
-import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
+import { closeRecruitmentPostAction } from "@/app/_actions/recruitment-actions";
+import { initialRecruitmentActionState } from "@/app/_lib/recruitment-form-state";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 

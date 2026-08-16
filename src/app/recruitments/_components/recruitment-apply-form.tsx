@@ -4,8 +4,8 @@ import { UiButton, UiInput, UiTextarea } from "@/modules/translation/ui/localize
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState, useId, useRef } from "react";
 
-import { applyRecruitmentAction } from "@/app/recruitments/_actions/recruitment-actions";
-import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
+import { applyRecruitmentAction } from "@/app/_actions/recruitment-actions";
+import { initialRecruitmentActionState } from "@/app/_lib/recruitment-form-state";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 import type { StudentProfile } from "@/modules/identity/domain/student-profile";

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { RecruitmentApplyForm } from "@/app/recruitments/_components/recruitment-apply-form";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }) }));
-vi.mock("@/app/recruitments/_actions/recruitment-actions", () => ({
+vi.mock("@/app/_actions/recruitment-actions", () => ({
   applyRecruitmentAction: vi.fn(),
   createRecruitmentPostAction: vi.fn(),
   decideRecruitmentAction: vi.fn(),

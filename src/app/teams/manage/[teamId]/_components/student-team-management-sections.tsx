@@ -9,7 +9,7 @@ import {
   TeamMemberActions,
 } from "@/app/teams/_components/student-team-controls";
 import { MemberContactDialogButton } from "@/app/teams/_components/member-contact-dialog-button";
-import { CloseRecruitmentPostForm } from "@/app/recruitments/_components/close-recruitment-post-form";
+import { CloseRecruitmentPostForm } from "@/app/_components/close-recruitment-post-form";
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
 import type { StudentTeamAuthoredRecruitmentPost } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { StatusBadge } from "@/shared/ui/page-primitives";

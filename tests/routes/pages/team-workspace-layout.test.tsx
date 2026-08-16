@@ -4,12 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import TeamWorkspaceLayout from "@/app/projects/[projectId]/layout";
 
-const { loadTeamWorkspace } = vi.hoisted(() => ({
-  loadTeamWorkspace: vi.fn(),
+const { loadActiveTeamWorkspace } = vi.hoisted(() => ({
+  loadActiveTeamWorkspace: vi.fn(),
 }));
 
 vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
-  loadTeamWorkspace,
+  loadActiveTeamWorkspace,
 }));
 vi.mock("@/app/projects/[projectId]/_actions/team-workspace-actions", () => ({
   confirmTeamAction: vi.fn(),
@@ -111,7 +111,7 @@ const workspace = {
 
 describe("TeamWorkspaceLayout", () => {
   it("보고서 일정이 없으면 0/0 진행률 대신 명시적 상태를 보여준다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ actor, workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
@@ -125,7 +125,7 @@ describe("TeamWorkspaceLayout", () => {
   });
 
   it("보고서 일정이 있으면 제출 진행률을 유지한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor,
       workspace: { ...workspace, reportCount: 2, submittedReportCount: 1 },
     });
@@ -140,7 +140,7 @@ describe("TeamWorkspaceLayout", () => {
   });
 
   it("사이드바에 지도교수, 배정된 조교와 팀원 목록을 표시한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ actor, workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
@@ -159,7 +159,7 @@ describe("TeamWorkspaceLayout", () => {
     ["교수", { ...actor, id: "professor-1", role: "PROFESSOR" as const }, { ...workspace.access, isPrimaryAdvisor: true, isTeamMember: false, canSupervise: true, canContribute: false }],
     ["관리자", { ...actor, id: "admin-1", role: "ADMIN" as const }, { ...workspace.access, isTeamMember: false, canSupervise: true, canContribute: true }],
   ])("%s가 사이드바에서 팀원 상세 정보를 연다", async (_viewer, viewer, access) => {
-    loadTeamWorkspace.mockResolvedValue({ actor: viewer, workspace: { ...workspace, access } });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor: viewer, workspace: { ...workspace, access } });
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
