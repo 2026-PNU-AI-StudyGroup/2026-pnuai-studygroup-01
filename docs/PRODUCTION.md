@@ -50,11 +50,23 @@ git clone <레포 주소> ~/aipms && cd ~/aipms
 cp .env.production.example .env.production   # 값 채우기(아래 전환 체크리스트 참고)
 ./deploy.sh                                  # 빌드 + 마이그레이션 + 기동
 # 여기서 INITIAL_ADMIN_EMAIL 계정으로 웹에서 Google 로그인을 먼저 1회 수행한다.
-npm run db:bootstrap-admin                   # 로그인해 둔 그 계정을 ADMIN 으로 승격
+# 그 계정을 ADMIN 으로 승격 (아래 "최초 관리자 승격" 참고)
 sudo ops/install-systemd.sh                  # 정기 작업·백업 타이머 + 부팅 자동 기동
 ```
 
-`db:bootstrap-admin`은 계정을 새로 만들지 않는다. 해당 이메일의 사용자가 이미 로그인해 `emailVerified` 상태여야 하며, 없으면 `계정이 없습니다` 오류로 중단된다.
+### 최초 관리자 승격
+
+승격은 계정을 새로 만들지 않는다. 해당 이메일의 사용자가 **먼저 웹에서 Google 로그인을 1회 수행해** `emailVerified` 상태여야 한다.
+
+`npm run db:bootstrap-admin`은 개발 환경 전용이다. Compose 운영 환경에서는 PostgreSQL이 호스트 포트로 노출되지 않고 `DATABASE_URL`의 `postgres` 호스트명도 도커 네트워크 안에서만 해석되므로, 호스트에서 실행하면 접속하지 못한다. 운영 서버에서는 컨테이너 안에서 직접 승격한다.
+
+```bash
+docker compose -f compose.production.yaml --env-file .env.production \
+  exec -T postgres psql -U pms -d pms \
+  -c "UPDATE \"user\" SET \"role\" = 'ADMIN' WHERE \"email\" = '<운영 담당자 이메일>' AND \"emailVerified\" = true;"
+```
+
+`UPDATE 1`이면 성공이다. `UPDATE 0`이면 해당 계정이 아직 로그인한 적이 없다.
 
 `ops/install-systemd.sh`는 다음을 설치한다. 경로와 실행 사용자는 실행 시점 값으로 채워진다.
 
@@ -87,7 +99,7 @@ journalctl -u aipms-backup.service -n 30 --no-pager
 - [ ] `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` 설정, Google OAuth Web Client에 Redirect URI 등록.
 - [ ] `APP_URL` · `BETTER_AUTH_URL`이 실제 HTTPS 도메인인지 확인(`http://` 로 남아 있으면 로그인 세션이 유지되지 않는다).
 - [ ] `BETTER_AUTH_SECRET` · `CRON_SECRET`을 운영 전용 값으로 새로 생성(개발 값 재사용 금지).
-- [ ] `INITIAL_ADMIN_EMAIL`을 실제 운영 담당자 주소로 두고 `npm run db:bootstrap-admin` 실행.
+- [ ] 운영 담당자 계정으로 Google 로그인 1회 수행 후 `최초 관리자 승격` 절차로 ADMIN 부여.
 - [ ] 데모 데이터를 넣지 않는다. `db:seed-demo`는 `ALLOW_LOCAL_DEMO_SEED` 없이는 실행되지 않는다.
 - [ ] Reverse Proxy HTTPS 인증서 발급 완료, `X-Forwarded-Proto=https` 전달 확인.
 - [ ] `sudo ops/install-systemd.sh`로 타이머 설치 후 `systemctl list-timers 'aipms-*'` 확인.
