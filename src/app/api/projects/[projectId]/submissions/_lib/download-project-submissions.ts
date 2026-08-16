@@ -1,7 +1,7 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 
-import { buildZip, uniqueZipName, type ZipEntry } from "@/app/api/teams/[teamId]/submissions/_lib/zip";
+import { buildZip, submissionEntryName, uniqueZipName, type ZipEntry } from "@/app/api/teams/[teamId]/submissions/_lib/zip";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -40,7 +40,7 @@ export async function downloadProjectSubmissions(projectId: string) {
     const object = await s3.send(new GetObjectCommand({ Bucket: objectStorageBucket, Key: file.objectKey }));
     const data = await object.Body?.transformToByteArray();
     if (!data) return;
-    entries.push({ name: uniqueZipName(taken, entryName(file)), data });
+    entries.push({ name: uniqueZipName(taken, submissionEntryName(file)), data });
   }));
   if (entries.length === 0) {
     return NextResponse.json({ message: "다운로드할 제출물이 없습니다." }, { status: 404 });
@@ -56,20 +56,4 @@ export async function downloadProjectSubmissions(projectId: string) {
       "Content-Disposition": `attachment; filename="submissions.zip"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
     },
   });
-}
-
-type SubmissionFile = {
-  originalName: string;
-  reportVersion: { version: number; report: { titleSnapshot: string } } | null;
-};
-
-function entryName(file: SubmissionFile): string {
-  if (file.reportVersion) {
-    return `reports/${safePathSegment(file.reportVersion.report.titleSnapshot)}_v${file.reportVersion.version}_${file.originalName}`;
-  }
-  return `artifacts/${file.originalName}`;
-}
-
-function safePathSegment(value: string) {
-  return value.normalize("NFC").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim() || "report";
 }
