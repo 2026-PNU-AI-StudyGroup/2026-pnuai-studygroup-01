@@ -141,14 +141,16 @@ export function ProgramSchedulePanel({ program, targetMode }: { program: Program
 
 export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, resultsAction }: { programId: string; votingPolicy: ProgramVotingPolicyDetails | null; divisionCount: number; resultsAction?: React.ReactNode }) {
   const [enabled, setEnabled] = useState(votingPolicy !== null);
+  const [prevVotingPolicy, setPrevVotingPolicy] = useState(votingPolicy);
   const [voteLimit, setVoteLimit] = useState(String(votingPolicy?.voteLimit ?? 3));
   const [voteLimitScope, setVoteLimitScope] = useState<"PROGRAM" | "DIVISION">(votingPolicy?.voteLimitScope ?? "PROGRAM");
   const [state, action, pending] = useActionState(updateProgramVotingPolicyAction, initialProgramActionState);
   const router = useRouter();
 
-  useEffect(() => {
+  if (prevVotingPolicy !== votingPolicy) {
+    setPrevVotingPolicy(votingPolicy);
     setEnabled(votingPolicy !== null);
-  }, [votingPolicy]);
+  }
 
   useEffect(() => {
     if (state.status !== "success") return;
