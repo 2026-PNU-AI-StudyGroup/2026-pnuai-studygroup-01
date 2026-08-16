@@ -34,6 +34,15 @@ describe("TeamWorkspaceNavigation", () => {
     expect(screen.getByRole("link", { name: "개요" })).not.toHaveAttribute("aria-current");
   });
 
+  it("개요 아이콘은 네 칸을 같은 크기로 그린다", () => {
+    render(<TeamWorkspaceNavigation projectId="team-1" advisorEnabled />);
+
+    expect(screen.getByRole("link", { name: "개요" }).querySelector("path")).toHaveAttribute(
+      "d",
+      "M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z",
+    );
+  });
+
   it("지도교수가 없는 프로젝트에서는 지도 요청 경로를 노출하지 않는다", () => {
     render(<TeamWorkspaceNavigation projectId="team-1" advisorEnabled={false} />);
 
