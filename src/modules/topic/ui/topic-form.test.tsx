@@ -7,12 +7,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
 }));
 
-import { TopicForm } from "@/modules/topic/ui/topic-form";
+import { TopicForm, type TopicFormActionState } from "@/modules/topic/ui/topic-form";
 
 describe("TopicForm", () => {
   it("학생 등록 모달은 팀 선택, 프로젝트 정보, 확인 단계로만 진행한다", async () => {
     const onStepChange = vi.fn();
-    const action = vi.fn(async () => ({ status: "idle" as const, message: "" }));
+    const action = vi.fn<(prev: TopicFormActionState, data: FormData) => Promise<TopicFormActionState>>(async () => ({ status: "idle", message: "" }));
     const { container } = render(
       <TopicForm
         action={action}
@@ -106,7 +106,7 @@ describe("TopicForm", () => {
     replace.mockReset();
     render(
       <TopicForm
-        action={vi.fn(async () => ({ status: "idle" as const, message: "" }))}
+        action={vi.fn<(prev: TopicFormActionState, data: FormData) => Promise<TopicFormActionState>>(async () => ({ status: "idle", message: "" }))}
         defaultProgramId="program-1"
         programs={[{
           id: "program-1",
