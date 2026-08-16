@@ -311,9 +311,13 @@ async function seed() {
     await tx.projectAdvisor.deleteMany({ where: { userId: ids.externalAdvisor } });
     await tx.artifact.deleteMany({ where: { id: { in: [...ids.artifacts, ...ids.activeArtifacts] } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: [...ids.approvalDecisions, ...ids.activeApprovalDecisions] } } });
-    await tx.reportVersion.deleteMany({ where: { id: { in: [...ids.reportVersions, ...ids.activeReportVersions] } } });
-    await tx.report.deleteMany({ where: { id: { in: [...ids.reports, ...ids.activeReports] } } });
-    await tx.programReportDefinition.deleteMany({ where: { id: { in: ids.reportDefinitions } } });
+    // 보고서 정의 통합 마이그레이션은 기존 정의 ID를 보존할 수 있다. 고정 fixture
+    // ID만 삭제하면 이전 시드의 같은 제목 정의가 남아 활성 제목 고유 인덱스와 충돌한다.
+    // 데모 프로그램에 연결된 보고서 그래프 전체를 먼저 비워, 시드를 반복해도 정의를
+    // 같은 프로그램·제목으로 다시 만들 수 있게 한다.
+    await tx.reportVersion.deleteMany({ where: { report: { definition: { programId: { in: ids.programs } } } } });
+    await tx.report.deleteMany({ where: { definition: { programId: { in: ids.programs } } } });
+    await tx.programReportDefinition.deleteMany({ where: { programId: { in: ids.programs } } });
     await tx.storedFile.deleteMany({ where: { id: { in: [...ids.storedFiles, ...ids.activeStoredFiles] } } });
     await tx.recruitmentApplication.deleteMany({ where: { postId: { in: ids.recruitments } } });
     await tx.recruitmentPost.deleteMany({ where: { id: { in: ids.recruitments } } });
