@@ -13,6 +13,7 @@ import { topicsHref } from "@/app/topics/_lib/topics-query";
 import { ProgramReportRequirementForm } from "@/app/topics/_management/program-report-requirement-form";
 import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
 import { ProgramAdvisorPanel } from "@/app/topics/_management/program-advisor-panel";
+import { ProgramSubmissionDownload } from "@/app/topics/_management/program-submission-download";
 import { RubricManager, type RubricDivisionRow, type RubricRow } from "@/app/topics/_management/rubric-manager";
 import { ProgramBasicInfoPanel, ProgramOperationPanel, ProgramSchedulePanel, ProgramVotingPanel } from "@/app/topics/_management/program-management-forms";
 import styles from "@/app/topics/_management/program-management.module.css";
@@ -177,9 +178,16 @@ export async function ProgramManagementWorkspace({
     const rubrics: RubricRow[] = rubricRecords.map(({ evaluations, advisorEvaluations, ...rubric }) => ({ ...rubric, scoreCount: evaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) + advisorEvaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) }));
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"채점표"}</UiText></h2></header><RubricManager programId={program.id} divisions={divisions} rubrics={rubrics} /></section></div>;
   } else if (tab === "reports") {
-    const records = await prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } });
+    const [records, teamRecords] = await Promise.all([
+      prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } }),
+      prisma.projectTeam.findMany({ where: { project: { programId: program.id } }, orderBy: { name: "asc" }, select: { id: true, name: true, project: { select: { title: true } }, _count: { select: { storedFiles: { where: { status: "ATTACHED", purpose: { not: "ANNOUNCEMENT" } } } } } } }),
+    ]);
     const definitions = records.map(({ reports, ...definition }) => ({ ...definition, versionCount: reports.reduce((sum, report) => sum + report._count.versions, 0) }));
-    content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section></div>;
+    const submissionTeams = teamRecords.map((team) => ({ id: team.id, name: team.name, projectTitle: team.project.title, fileCount: team._count.storedFiles }));
+    content = <div className={styles.panel}>
+      <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section>
+      <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"제출물 다운로드"}</UiText></h2><p><UiText>{"팀을 선택해 보고서와 결과물을 ZIP으로 내려받습니다. 관리자만 사용할 수 있습니다."}</UiText></p></header><ProgramSubmissionDownload programId={program.id} teams={submissionTeams} /></section>
+    </div>;
   } else if (tab === "advisors") {
     const [advisors, topics, matrix] = await Promise.all([
       listProgramAdvisors(prisma, program.id),
