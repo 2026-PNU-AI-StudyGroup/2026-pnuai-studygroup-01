@@ -157,6 +157,8 @@
 
 .content {
   display: grid;
+  /* 그리드 아이템 기본값 min-width: auto 는 내부 min-content 폭까지 부풀어 패널을 넘긴다. */
+  min-width: 0;
   gap: 1.125rem;
 }
 

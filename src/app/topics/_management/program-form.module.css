@@ -117,6 +117,9 @@
 
 .votePolicy {
   display: grid;
+  /* max-content 3열이 좁은 화면에서 패널을 넘기므로 이 블록 안에서만 가로로 스크롤한다. */
+  min-width: 0;
+  overflow-x: auto;
   gap: 0.875rem;
 }
 
