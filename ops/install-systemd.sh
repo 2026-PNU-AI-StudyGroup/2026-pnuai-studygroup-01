@@ -120,9 +120,23 @@ write_unit aipms-backup.timer \
 
 install -d -o "$RUN_USER" -g "$RUN_USER" "$BACKUP_DIR"
 
+# 메일 발송이 꺼져 있으면 /api/cron/emails 가 503 을 돌려줘 타이머가 1분마다 실패로 남는다.
+# 유닛은 써 두되 활성화는 EMAIL_DELIVERY_ENABLED=true 일 때만 한다.
+email_enabled=""
+if [ -f "$REPO_DIR/.env.production" ]; then
+  email_enabled="$(grep -E '^EMAIL_DELIVERY_ENABLED=' "$REPO_DIR/.env.production" | head -1 | cut -d= -f2- | tr -d '"'"'"' [:space:]')"
+fi
+
+timers="aipms-deadlines.timer aipms-translations.timer aipms-backup.timer"
+if [ "$email_enabled" = "true" ]; then
+  timers="$timers aipms-emails.timer"
+else
+  echo "  · aipms-emails.timer 는 EMAIL_DELIVERY_ENABLED=true 가 아니라 활성화하지 않는다(메일 설정 후 이 스크립트를 다시 실행)."
+fi
+
 echo "▶ 타이머 활성화"
 systemctl daemon-reload
-systemctl enable --now aipms-deadlines.timer aipms-translations.timer aipms-emails.timer aipms-backup.timer
+systemctl enable --now $timers
 
 echo "▶ 부팅 후 컨테이너 자동 기동"
 systemctl enable docker
