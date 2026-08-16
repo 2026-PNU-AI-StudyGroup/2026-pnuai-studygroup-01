@@ -21,4 +21,12 @@ describe("ActiveProjectFilters", () => {
 
     expect(push).toHaveBeenCalledWith("/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&teamStatus=formed&reportStatus=overdue", { scroll: false });
   });
+
+  it("지난 프로젝트에서도 분과를 고르면 지난 보기 문맥을 유지한다", () => {
+    render(<ActiveProjectFilters view="past" programId="program-1" query="길찾기" divisions={[{ id: "division-1", name: "AI" }]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+
+    expect(push).toHaveBeenCalledWith("/topics?view=past&programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0", { scroll: false });
+  });
 });

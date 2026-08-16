@@ -17,7 +17,7 @@ import type {
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { EmptyState } from "@/shared/ui/page-primitives";
-import { UndoIcon } from "@/shared/ui/workspace-icons";
+import { DocumentIcon, UndoIcon } from "@/shared/ui/workspace-icons";
 
 const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
 
@@ -44,6 +44,7 @@ export function ProjectResultsLayout<T>({
   headerAction,
   ballot,
   votingResults,
+  showSubmissionManagement,
 }: {
   items: T[];
   itemKey: (item: T) => string;
@@ -60,6 +61,7 @@ export function ProjectResultsLayout<T>({
   headerAction?: ReactNode;
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
+  showSubmissionManagement?: boolean;
 }) {
   const voteSelection = useProjectVoteSelection(ballot);
   return (
@@ -68,6 +70,7 @@ export function ProjectResultsLayout<T>({
         {headerAction}
         <ProjectVoteStatusPill selection={voteSelection} />
         {votingResults ? <ProjectVoteResultsDialog view={votingResults} /> : null}
+        {showSubmissionManagement ? <button type="button" className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs" disabled><DocumentIcon className="size-4 shrink-0" /><UiText>{"제출물 관리"}</UiText></button> : null}
         <h2 id="project-results-title" className="sr-only"><UiText>{listLabel}</UiText></h2>
         <p className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]">
           <UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText>
