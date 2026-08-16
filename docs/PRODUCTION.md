@@ -41,7 +41,68 @@ OAuth 동의를 수행한 계정과 `GMAIL_SMTP_USER`가 다르면 권한 발급
 
 애플리케이션 컨테이너는 PostgreSQL과 MinIO를 외부에 공개하지 않는다. 앱의 `3000` 포트도 기본 Compose에서 `127.0.0.1`에만 바인딩하며, 같은 호스트의 Reverse Proxy만 접근하게 한다. Reverse Proxy에서 TLS를 종료하고 `X-Forwarded-Proto=https`를 전달한다. 운영 도메인의 HTTPS 응답에는 프록시에서 `Strict-Transport-Security: max-age=31536000; includeSubDomains`를 추가한다. 전체 하위 도메인이 HTTPS로 운영된다는 확인 전에는 `includeSubDomains`를 사용하지 않는다.
 
+## 서버 1회 준비
+
+새 서버를 실서비스로 세울 때 한 번만 수행한다. 이후 배포는 `./deploy.sh` 하나로 끝난다.
+
+```bash
+git clone <레포 주소> ~/aipms && cd ~/aipms
+cp .env.production.example .env.production   # 값 채우기(아래 전환 체크리스트 참고)
+./deploy.sh                                  # 빌드 + 마이그레이션 + 기동
+# 여기서 INITIAL_ADMIN_EMAIL 계정으로 웹에서 Google 로그인을 먼저 1회 수행한다.
+npm run db:bootstrap-admin                   # 로그인해 둔 그 계정을 ADMIN 으로 승격
+sudo ops/install-systemd.sh                  # 정기 작업·백업 타이머 + 부팅 자동 기동
+```
+
+`db:bootstrap-admin`은 계정을 새로 만들지 않는다. 해당 이메일의 사용자가 이미 로그인해 `emailVerified` 상태여야 하며, 없으면 `계정이 없습니다` 오류로 중단된다.
+
+`ops/install-systemd.sh`는 다음을 설치한다. 경로와 실행 사용자는 실행 시점 값으로 채워진다.
+
+| 타이머 | 주기 | 내용 |
+|---|---|---|
+| `aipms-translations.timer` | 1분 | 번역 큐 처리 |
+| `aipms-emails.timer` | 1분 | 이메일 대기열 발송 |
+| `aipms-deadlines.timer` | 매일 09:00 | 마감 임박 알림 생성 |
+| `aipms-backup.timer` | 매일 03:30 | PostgreSQL 덤프 + MinIO 데이터 백업 |
+
+백업 위치와 보관기간은 환경변수로 바꾼다.
+
+```bash
+sudo BACKUP_DIR=/srv/aipms-backups KEEP_DAYS=14 ops/install-systemd.sh
+```
+
+상태 확인:
+
+```bash
+systemctl list-timers 'aipms-*'
+journalctl -u aipms-translations.service -n 30 --no-pager
+journalctl -u aipms-backup.service -n 30 --no-pager
+```
+
+## 개발 배포 → 실서비스 전환 체크리스트
+
+데모 로그인으로 시험 운영하던 서버를 실서비스로 돌릴 때 확인한다.
+
+- [ ] `ENABLE_DEVELOPMENT_MOCK_AUTH=false` (또는 삭제). `DEVELOPMENT_MOCK_AUTH_HOSTS`도 비운다.
+- [ ] `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` 설정, Google OAuth Web Client에 Redirect URI 등록.
+- [ ] `APP_URL` · `BETTER_AUTH_URL`이 실제 HTTPS 도메인인지 확인(`http://` 로 남아 있으면 로그인 세션이 유지되지 않는다).
+- [ ] `BETTER_AUTH_SECRET` · `CRON_SECRET`을 운영 전용 값으로 새로 생성(개발 값 재사용 금지).
+- [ ] `INITIAL_ADMIN_EMAIL`을 실제 운영 담당자 주소로 두고 `npm run db:bootstrap-admin` 실행.
+- [ ] 데모 데이터를 넣지 않는다. `db:seed-demo`는 `ALLOW_LOCAL_DEMO_SEED` 없이는 실행되지 않는다.
+- [ ] Reverse Proxy HTTPS 인증서 발급 완료, `X-Forwarded-Proto=https` 전달 확인.
+- [ ] `sudo ops/install-systemd.sh`로 타이머 설치 후 `systemctl list-timers 'aipms-*'` 확인.
+- [ ] 백업이 실제로 파일을 남기는지 1회 수동 확인: `ops/backup.sh` 실행 후 `BACKUP_DIR` 확인.
+- [ ] 개인정보 처리방침·수집 동의 화면을 게시했는지 확인(실사용자 데이터 수집 전 필수).
+
 ## 배포
+
+정기 배포는 스크립트 하나로 수행한다. 최신 코드를 받아 이미지를 다시 빌드하고, 마이그레이션을 적용한 뒤 헬스체크까지 확인한다.
+
+```bash
+cd ~/aipms && ./deploy.sh
+```
+
+수동으로 수행할 때는 다음과 같다.
 
 ```bash
 docker compose --env-file .env.production -f compose.production.yaml build
@@ -65,7 +126,7 @@ docker compose --env-file .env.production -f compose.production.yaml logs app
 
 ## 정기 작업
 
-배포 환경의 스케줄러에서 다음 작업을 실행한다.
+`ops/install-systemd.sh`로 설치한 타이머가 아래 엔드포인트를 자동 호출한다. 스케줄러를 직접 구성할 때만 다음 명령을 참고한다.
 
 ```bash
 curl -fsS -X POST \
