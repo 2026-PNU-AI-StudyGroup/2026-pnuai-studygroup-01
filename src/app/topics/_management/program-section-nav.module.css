@@ -1,6 +1,7 @@
 .root {
   position: sticky;
-  top: 4.5rem;
+  /* 상단 헤더는 lg 미만에서만 표시된다(4.5rem). 데스크톱에서 같은 값을 쓰면 그만큼 빈 틈으로 본문이 비쳐 보인다. */
+  top: 0;
   z-index: 19;
   display: grid;
   grid-template-columns: repeat(6, minmax(max-content, 1fr));
@@ -62,6 +63,10 @@
 
 .admin { flex: 0 0 auto; border-left: 1px solid var(--line); margin-left: .25rem; }
 .admin small { color: var(--muted); font-size: .625rem; font-weight: 700; }
+
+@media (max-width: 63.9375rem) {
+  .root { top: 4.5rem; }
+}
 
 @media (max-width: 48rem) {
   .root { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; }

@@ -13,7 +13,7 @@
 .votingResultsAction { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: 1rem; }
 .votingResultsAction > span { color: var(--muted); font-size: .8125rem; font-weight: 750; }
 .form { display: grid; }
-.section { display: grid; gap: 1.5rem; padding: 1.25rem; }
+.section { display: grid; gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }
 .section + .section, .panel > .form + .section, .panel > section + .form { border-top: 1px solid var(--line); }
 .sectionHeader h2 { font-size: 1.125rem; font-weight: 800; letter-spacing: -.025em; }
 .sectionHeader p { margin-top: .375rem; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
