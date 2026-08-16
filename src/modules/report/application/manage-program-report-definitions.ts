@@ -18,9 +18,9 @@ export type ProgramReportDefinitionOutcome =
 
 export interface ProgramReportDefinitionWriter {
   create(input: ProgramReportDefinitionInput & { programId: string; actorId: string; now: Date }): Promise<ProgramReportDefinitionOutcome>;
-  update(input: ProgramReportDefinitionInput & { definitionId: string; actorId: string; now: Date }): Promise<ProgramReportDefinitionOutcome>;
-  move(input: { definitionId: string; direction: "up" | "down"; actorId: string }): Promise<ProgramReportDefinitionOutcome>;
-  delete(input: { definitionId: string; actorId: string; now: Date }): Promise<ProgramReportDefinitionOutcome>;
+  update(input: ProgramReportDefinitionInput & { programId: string; definitionId: string; actorId: string; now: Date }): Promise<ProgramReportDefinitionOutcome>;
+  move(input: { programId: string; definitionId: string; direction: "up" | "down"; actorId: string }): Promise<ProgramReportDefinitionOutcome>;
+  delete(input: { programId: string; definitionId: string; actorId: string; now: Date }): Promise<ProgramReportDefinitionOutcome>;
 }
 
 export class ProgramReportDefinitionService {
@@ -31,19 +31,19 @@ export class ProgramReportDefinitionService {
     return this.writer.create({ programId, actorId: actor.id, ...normalize(input), now });
   }
 
-  update(actor: CurrentActor, definitionId: string, input: ProgramReportDefinitionInput, now = new Date()) {
+  update(actor: CurrentActor, programId: string, definitionId: string, input: ProgramReportDefinitionInput, now = new Date()) {
     requireAdmin(actor);
-    return this.writer.update({ definitionId, actorId: actor.id, ...normalize(input), now });
+    return this.writer.update({ programId, definitionId, actorId: actor.id, ...normalize(input), now });
   }
 
-  move(actor: CurrentActor, definitionId: string, direction: "up" | "down") {
+  move(actor: CurrentActor, programId: string, definitionId: string, direction: "up" | "down") {
     requireAdmin(actor);
-    return this.writer.move({ definitionId, direction, actorId: actor.id });
+    return this.writer.move({ programId, definitionId, direction, actorId: actor.id });
   }
 
-  delete(actor: CurrentActor, definitionId: string, now = new Date()) {
+  delete(actor: CurrentActor, programId: string, definitionId: string, now = new Date()) {
     requireAdmin(actor);
-    return this.writer.delete({ definitionId, actorId: actor.id, now });
+    return this.writer.delete({ programId, definitionId, actorId: actor.id, now });
   }
 }
 
