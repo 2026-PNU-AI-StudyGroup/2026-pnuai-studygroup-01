@@ -144,10 +144,21 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
   const [voteLimit, setVoteLimit] = useState(String(votingPolicy?.voteLimit ?? 3));
   const [voteLimitScope, setVoteLimitScope] = useState<"PROGRAM" | "DIVISION">(votingPolicy?.voteLimitScope ?? "PROGRAM");
   const [state, action, pending] = useActionState(updateProgramVotingPolicyAction, initialProgramActionState);
+  const router = useRouter();
+
+  useEffect(() => {
+    setEnabled(votingPolicy !== null);
+  }, [votingPolicy]);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+    router.refresh();
+  }, [router, state.status]);
+
   return <div className={styles.panel}>
     <form action={action} aria-busy={pending} className={styles.form}>
       <input type="hidden" name="programId" value={programId} />
-      <FormSection id="voting-policy" appearance="plain" title="투표" className={styles.section}>
+      <FormSection id="voting-policy" appearance="plain" title="투표" actions={resultsAction} className={styles.section}>
         <Toggle name="votingEnabled" value="true" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} label="프로젝트 투표 사용" />
         {enabled ? <div className={formStyles.votingOptions}>
           <ProgramPeriodRow label="투표 기간" startId="management-voting-starts-at" startName="votingStartsAt" endId="management-voting-ends-at" endName="votingEndsAt" startValue={votingPolicy?.startsAt} endValue={votingPolicy?.endsAt} />
@@ -169,8 +180,8 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
             <div className={formStyles.voteScopeGroup}>
               <UiDiv role="radiogroup" aria-label="투표 한도 적용 기준" className={formStyles.voteScope}>
                 <strong><UiText>{"투표 한도 적용 기준"}</UiText></strong>
-                <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
-                <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionCount === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
+                <ChoiceCard className={formStyles.voteScopeOption} variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
+                <ChoiceCard className={formStyles.voteScopeOption} variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionCount === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
               </UiDiv>
               {divisionCount === 0 ? <p className={formStyles.voteScopeHint}><UiText>{"분과를 추가하면 분과별 투표를 선택할 수 있습니다."}</UiText></p> : null}
             </div>
@@ -180,7 +191,6 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
           </div>
           <ProgramVotingResultVisibilityFields defaultDuringVoting={votingPolicy?.resultsVisibleDuringVoting ?? false} defaultAfterVoting={votingPolicy?.resultsVisibleAfterVoting ?? true} />
         </div> : null}
-        {enabled && resultsAction ? <div className={styles.votingResultsAction}><span><UiText>{"득표현황"}</UiText></span>{resultsAction}</div> : null}
         {state.status === "confirm" && state.voteResetImpact ? <div role="alert" className={styles.confirm}><input type="hidden" name="confirmedVoteCount" value={state.voteResetImpact.voteCount} /><input type="hidden" name="confirmedVoteFromLimit" value={state.voteResetImpact.from.voteLimit} /><input type="hidden" name="confirmedVoteFromScope" value={state.voteResetImpact.from.voteLimitScope} /><input type="hidden" name="confirmedVoteLimit" value={state.voteResetImpact.to.voteLimit} /><input type="hidden" name="confirmedVoteLimitScope" value={state.voteResetImpact.to.voteLimitScope} /><UiText>{`기존 표 ${state.voteResetImpact.voteCount}개를 초기화한 뒤 저장합니다.`}</UiText></div> : null}
       </FormSection>
       <ActionBar state={state} pending={pending} label={state.status === "confirm" ? "기존 표 초기화 후 저장" : "투표 정책 저장"} />

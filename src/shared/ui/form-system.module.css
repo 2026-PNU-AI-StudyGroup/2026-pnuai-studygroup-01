@@ -100,7 +100,18 @@
 .header {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 0.875rem;
+}
+
+.headerContent {
+  min-width: 0;
+}
+
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
 }
 
 .sectionEmbedded .header {
