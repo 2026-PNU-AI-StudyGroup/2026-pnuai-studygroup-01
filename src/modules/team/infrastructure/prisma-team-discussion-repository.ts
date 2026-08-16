@@ -40,7 +40,7 @@ export class PrismaTeamDiscussionRepository
 
       const team = await transaction.projectTeam.findUniqueOrThrow({
         where: { id: input.teamId },
-        select: { name: true, project: { select: { id: true, managerId: true } } },
+        select: { project: { select: { id: true, managerId: true } } },
       });
       const [members, assistants, author] = await Promise.all([
         transaction.projectTeamMembership.findMany({
@@ -61,14 +61,15 @@ export class PrismaTeamDiscussionRepository
         ...members.map(({ userId }) => userId),
         ...assistants.map(({ userId }) => userId),
       ])].filter((userId) => userId !== input.actor.id);
+      const messagePreview = input.content.replace(/\s+/g, " ").slice(0, 160);
       await createDiscussionNotifications(
         transaction,
         recipientIds.map((recipientId) => ({
           recipientId,
           title: "새 팀 대화 메시지가 도착했습니다",
-          body: `${author.name}님이 ${team.name} 팀 대화에 메시지를 보냈습니다.`,
+          body: `${author.name} · ${messagePreview}`,
           titleEn: "New team discussion message",
-          bodyEn: `${author.name} posted a message in the ${team.name} team discussion.`,
+          bodyEn: `${author.name} · ${messagePreview}`,
           href: `/projects/${team.project.id}/discussion`,
           dedupeKey: `discussion:${id}:${recipientId}`,
           createdAt,
