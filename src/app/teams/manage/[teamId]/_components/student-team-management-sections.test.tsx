@@ -33,7 +33,7 @@ const team: StudentTeamSummary = {
 
 describe("StudentTeamManagementSections", () => {
   it("팀장 화면을 절제된 팀 헤더, 구성원·초대 패널과 삭제 영역으로 구성한다", () => {
-    const { container } = render(<StudentTeamManagementSections team={team} actorId="student-1" />);
+    const { container } = render(<StudentTeamManagementSections team={team} actorId="student-1" recruitmentPosts={[]} />);
 
     expect(screen.getByRole("heading", { name: "코드웨이브" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "팀 구성원 목록" })).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe("StudentTeamManagementSections", () => {
   });
 
   it("팀원에게는 초대와 삭제 기능을 표시하지 않는다", () => {
-    render(<StudentTeamManagementSections team={team} actorId="student-2" />);
+    render(<StudentTeamManagementSections team={team} actorId="student-2" recruitmentPosts={[]} />);
 
     expect(screen.queryByRole("button", { name: "초대 보내기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "팀 삭제 실행" })).not.toBeInTheDocument();

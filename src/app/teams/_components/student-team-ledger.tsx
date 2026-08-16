@@ -50,11 +50,20 @@ export function StudentTeamLedger({ teams, actorId }: {
               </div>
 
               <div className="mt-auto border-t border-[var(--line)] px-5 py-4 sm:px-6">
-                <Link href={`/teams/manage/${team.id}`} className="button-primary w-full justify-center">
-                  <UiText>{"팀 관리"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
-                    <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
+                {isLeader && team.pendingApplicantCount > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Link href={`/recruitments/received?teamId=${team.id}`} className="button-primary justify-center">
+                      <UiText>{`지원자 검토 ${team.pendingApplicantCount}명`}</UiText>
+                    </Link>
+                    <Link href={`/teams/manage/${team.id}`} className="button-secondary justify-center"><UiText>{"팀 관리"}</UiText></Link>
+                  </div>
+                ) : (
+                  <Link href={`/teams/manage/${team.id}`} className="button-primary w-full justify-center">
+                    <UiText>{"팀 관리"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
+                      <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                )}
               </div>
             </article>
           </li>

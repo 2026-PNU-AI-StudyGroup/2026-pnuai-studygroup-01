@@ -1058,6 +1058,20 @@ async function seed() {
       },
     ] });
 
+    const pastReportDefinitionIdByProgramIndex = new Map(
+      [...new Set(closedTeamIndexes.map((teamIndex) => {
+        const topicIndex = teamRows[teamIndex][0];
+        return pastTopics[topicIndex - activeTopics.length][4];
+      }))].map((programIndex, index) => [programIndex, ids.reportDefinitions[index + 3]]),
+    );
+    await tx.programReportDefinition.createMany({ data: [...pastReportDefinitionIdByProgramIndex.entries()].map(([programIndex, id]) => ({
+      id,
+      programId: pastPrograms[programIndex].id,
+      title: "결과 보고서",
+      dueAt: pastPrograms[programIndex].endsAt,
+      position: 0,
+    })) });
+
     for (const [reportIndex, teamIndex] of closedTeamIndexes.entries()) {
       const topicIndex = teamRows[teamIndex][0];
       const programIndex = pastTopics[topicIndex - 6][4];
@@ -1071,8 +1085,8 @@ async function seed() {
         objectKey, uploadObjectKey: `staging/${objectKey}`, originalName: `${teamRows[teamIndex][3]}-결과보고서.pdf`, contentType: "application/pdf", size: reportPdf.byteLength,
         sha256: createHash("sha256").update(reportPdf).digest("hex"), expiresAt: submittedAt, cleanupAfter: new Date("2099-12-31T00:00:00+09:00"), readyAt: submittedAt, createdAt: submittedAt,
       } });
-      const definitionId = ids.reportDefinitions[reportIndex + 3];
-      await tx.programReportDefinition.create({ data: { id: definitionId, programId: pastPrograms[programIndex].id, title: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, position: reportIndex } });
+      const definitionId = pastReportDefinitionIdByProgramIndex.get(programIndex);
+      if (!definitionId) throw new Error(`과거 프로그램 보고서 정의를 찾을 수 없습니다: ${pastPrograms[programIndex].id}`);
       await tx.report.create({ data: { id: ids.reports[reportIndex], projectTeamId: ids.teams[teamIndex], definitionId, titleSnapshot: "결과 보고서", dueAt: pastPrograms[programIndex].endsAt, required: true, createdAt: submittedAt } });
       await tx.reportVersion.create({ data: {
         id: ids.reportVersions[reportIndex], reportId: ids.reports[reportIndex], version: 1, fileId: ids.storedFiles[reportIndex],

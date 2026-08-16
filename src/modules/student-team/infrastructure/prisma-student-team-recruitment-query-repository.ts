@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type {
+  SharedRecruitmentContacts,
   StudentTeamRecruitmentPostApplications,
   StudentTeamRecruitmentPostList,
   StudentTeamRecruitmentReader,
@@ -86,8 +87,8 @@ export class PrismaStudentTeamRecruitmentQueryRepository
     };
   }
 
-  async listAuthoredPosts(actorId: string, requested: number) {
-    const where = { team: { leaderId: actorId, deletedAt: null } };
+  async listAuthoredPosts(actorId: string, requested: number, teamId?: string) {
+    const where = { team: { leaderId: actorId, deletedAt: null, ...(teamId ? { id: teamId } : {}) } };
     const now = new Date();
     const total = await this.client.studentTeamRecruitmentPost.count({ where });
     const { page, totalPages } = pageOf(requested, total);
@@ -118,6 +119,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
         const status: "OPEN" | "CLOSED" = post.status === "OPEN" && post.deadlineAt > now ? "OPEN" : "CLOSED";
         return {
           ...post,
+          teamId: post.teamId,
           status,
           teamName: team.name,
           topicTitle: "프로젝트 미지정 팀",
@@ -127,6 +129,48 @@ export class PrismaStudentTeamRecruitmentQueryRepository
         };
       }),
     };
+  }
+
+  async listReceivedApplications(actorId: string, teamId?: string) {
+    const now = new Date();
+    const applications = await this.client.studentTeamRecruitmentApplication.findMany({
+      where: {
+        status: "PENDING",
+        post: {
+          status: "OPEN",
+          deadlineAt: { gt: now },
+          team: { leaderId: actorId, deletedAt: null, ...(teamId ? { id: teamId } : {}) },
+        },
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        message: true,
+        desiredRole: true,
+        sharedContacts: true,
+        createdAt: true,
+        student: { select: { name: true } },
+        post: {
+          select: {
+            id: true,
+            title: true,
+            capacity: true,
+            team: { select: { id: true, name: true, _count: { select: { members: true } } } },
+          },
+        },
+      },
+    });
+    return applications.map(({ student, post, sharedContacts, ...application }) => ({
+      ...application,
+      studentName: student.name,
+      postId: post.id,
+      postTitle: post.title,
+      teamId: post.team.id,
+      teamName: post.team.name,
+      memberCount: post.team._count.members,
+      capacity: post.capacity,
+      sharedContacts: sharedContacts as SharedRecruitmentContacts,
+    }));
   }
 
   async listApplicationHistory(actorId: string, requested: number) {
@@ -191,6 +235,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
             id: true,
             message: true,
             desiredRole: true,
+            sharedContacts: true,
             status: true,
             createdAt: true,
             decidedAt: true,
@@ -208,9 +253,10 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       status,
       teamName: post.team.name,
       topicTitle: "프로젝트 미지정 팀",
-      applications: post.applications.map(({ student, ...application }) => ({
+      applications: post.applications.map(({ student, sharedContacts, ...application }) => ({
         ...application,
         studentName: student.name,
+        sharedContacts: sharedContacts as SharedRecruitmentContacts,
       })),
     };
   }

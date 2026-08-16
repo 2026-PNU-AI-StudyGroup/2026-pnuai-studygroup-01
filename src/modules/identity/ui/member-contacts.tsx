@@ -12,11 +12,11 @@ const contactIcons = {
 
 const contactLabels = { phone: "전화번호", kakao: "카카오톡", github: "GitHub", instagram: "Instagram" } as const;
 
-export function MemberContacts({ phone, kakao, github, instagram }: MemberContactInfo) {
+export function MemberContacts({ phone, kakao, github, instagram, title = "연락처", emptyTitle = "등록된 연락처가 없습니다" }: MemberContactInfo & { title?: string; emptyTitle?: string }) {
   const entries = ([['phone', phone], ['kakao', kakao], ['github', github], ['instagram', instagram]] as const).filter(([, value]) => value);
   return (
     <div className="mt-6 border-t border-[var(--line)] pt-6">
-      <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{"연락처"}</UiText></h3>
+      <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{title}</UiText></h3>
       {entries.length ? (
         <ul className="mt-3 grid gap-2.5">
           {entries.map(([kind, value]) => (
@@ -33,7 +33,7 @@ export function MemberContacts({ phone, kakao, github, instagram }: MemberContac
           ))}
         </ul>
       ) : (
-        <EmptyState variant="compact" title="등록된 연락처가 없습니다" />
+        <EmptyState variant="compact" title={emptyTitle} />
       )}
     </div>
   );

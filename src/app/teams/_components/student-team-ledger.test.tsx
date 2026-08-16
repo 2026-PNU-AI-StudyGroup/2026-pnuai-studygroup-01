@@ -35,10 +35,13 @@ describe("StudentTeamLedger", () => {
     expect(screen.getByText("2명")).toBeInTheDocument();
     expect(screen.getByText("김학생, 이학생")).toBeInTheDocument();
     expect(screen.getByText("3명")).toBeInTheDocument();
+    const reviewLink = screen.getByRole("link", { name: "지원자 검토 3명" });
+    expect(reviewLink).toHaveAttribute("href", "/recruitments/received?teamId=team-1");
+    expect(reviewLink).toHaveClass("button-primary");
     const manageLink = screen.getByRole("link", { name: "팀 관리" });
     expect(manageLink).toHaveAttribute("href", "/teams/manage/team-1");
-    expect(manageLink).toHaveClass("button-primary");
-    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(manageLink).toHaveClass("button-secondary");
+    expect(screen.getAllByRole("link")).toHaveLength(2);
     expect(container.querySelector("article")).toHaveClass("rounded-[var(--radius-panel)]");
     expect(container.querySelector("article > div")?.className).not.toContain("bg-[#e8efff]");
     expect(container.querySelector("li")).not.toHaveClass("record-row");

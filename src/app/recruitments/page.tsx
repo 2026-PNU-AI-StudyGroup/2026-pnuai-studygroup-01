@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 
 import { RecruitmentPostList } from "@/app/recruitments/_components/recruitment-post-list";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { StudentProfileService } from "@/modules/identity/application/manage-student-profile";
+import { PrismaStudentProfileRepository } from "@/modules/identity/infrastructure/prisma-student-profile-repository";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import {
@@ -17,7 +19,7 @@ import {
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { SettingsIcon } from "@/shared/ui/workspace-icons";
+import { DocumentIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("팀원 모집");
@@ -29,9 +31,12 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
   if (actor.role !== "STUDENT") redirect("/topics");
   const params = await searchParams;
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
-  const data = await new StudentTeamRecruitmentQueryService(
-    new PrismaStudentTeamRecruitmentQueryRepository(prisma),
-  ).listPosts(actor, requestedPage);
+  const [data, contactOptions] = await Promise.all([
+    new StudentTeamRecruitmentQueryService(
+      new PrismaStudentTeamRecruitmentQueryRepository(prisma),
+    ).listPosts(actor, requestedPage),
+    new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor),
+  ]);
   const pageHref = (page: number) => page > 1 ? `/recruitments?page=${page}` : "/recruitments";
 
   return (
@@ -43,10 +48,10 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
               title="둘러보기"
               description="다른 팀이 올린 모집 공고를 보고 지원하세요."
               meta={<span><UiText>{"모집 중"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></span>}
-              action={<Link className="button-secondary gap-2" href="/recruitments/mine"><SettingsIcon className="size-4 shrink-0" /><UiText>{"모집 공고 관리"}</UiText></Link>}
+              action={<Link className="button-secondary gap-2" href="/teams"><DocumentIcon className="size-4 shrink-0" /><UiText>{"내 팀"}</UiText></Link>}
             />
             <UiSection aria-label="팀원 모집 목록" className="space-y-6">
-              <RecruitmentPostList actorId={actor.id} data={data} />
+              <RecruitmentPostList actorId={actor.id} data={data} contactOptions={contactOptions} />
               <StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />
             </UiSection>
           </div>

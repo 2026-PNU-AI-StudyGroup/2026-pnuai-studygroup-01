@@ -33,7 +33,7 @@ export function RecruitmentApplicationsView({
         title={post.title}
         meta={<><span><UiText>{post.topicTitle}</UiText></span><span aria-hidden="true">·</span><strong className="text-[var(--ink)]">{post.teamName}</strong></>}
         action={
-          <Link className="button-quiet gap-2" href={actorRole === "STUDENT" ? "/recruitments/mine" : "/dashboard"}>
+          <Link className="button-quiet gap-2" href={actorRole === "STUDENT" ? "/recruitments/received" : "/dashboard"}>
             <StudentTeamIcon name="chevron-left" className="size-4" />
             <UiText>{"목록"}</UiText></Link>
         }

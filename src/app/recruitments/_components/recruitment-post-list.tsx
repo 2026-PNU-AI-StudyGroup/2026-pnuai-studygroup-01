@@ -4,6 +4,7 @@ import { RecruitmentApplyForm } from "@/app/recruitments/_components/recruitment
 import type { StudentTeamRecruitmentPostList } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { TranslatedText } from "@/app/_components/translated-text";
+import type { StudentProfile } from "@/modules/identity/domain/student-profile";
 
 const historyStatus = {
   PENDING: { label: "검토 중", tone: "info" },
@@ -26,9 +27,10 @@ function CapacityIcon() {
   );
 }
 
-function RecruitmentCard({ post, actorId }: {
+function RecruitmentCard({ post, actorId, contactOptions }: {
   post: StudentTeamRecruitmentPostList["posts"][number];
   actorId: string;
+  contactOptions: StudentProfile | null;
 }) {
   const isMine = post.authorId === actorId;
   return (
@@ -67,7 +69,7 @@ function RecruitmentCard({ post, actorId }: {
           <div className="mt-auto flex items-end justify-end pt-6">
             <div className="min-w-36">
               {post.authorId !== actorId && post.canApply && !post.ownApplication && !post.isMember ? (
-                <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} />
+                <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} contactOptions={contactOptions} />
               ) : post.ownApplication ? (
                 <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
               ) : post.authorId === actorId ? (
@@ -91,9 +93,11 @@ function RecruitmentCard({ post, actorId }: {
 export function RecruitmentPostList({
   actorId,
   data,
+  contactOptions,
 }: {
   actorId: string;
   data: StudentTeamRecruitmentPostList;
+  contactOptions: StudentProfile | null;
 }) {
   // 둘러보기는 다른 팀 공고만. 내 팀 공고 관리는 '내 팀 → 모집 공고 관리'에서.
   const others = data.posts.filter((post) => post.authorId !== actorId);
@@ -105,7 +109,7 @@ export function RecruitmentPostList({
   return (
     <ol className="grid gap-x-6 gap-y-8 xl:grid-cols-2">
       {others.map((post) => (
-        <RecruitmentCard key={post.id} post={post} actorId={actorId} />
+        <RecruitmentCard key={post.id} post={post} actorId={actorId} contactOptions={contactOptions} />
       ))}
     </ol>
   );

@@ -1,6 +1,10 @@
 import type { CurrentUser } from "@/modules/identity/domain/current-actor";
 import { normalizeApplicationMessage } from "@/modules/topic-application/domain/topic-application-policy";
 
+export const recruitmentContactKinds = ["phone", "kakao", "github", "instagram"] as const;
+export type RecruitmentContactKind = typeof recruitmentContactKinds[number];
+export type SharedRecruitmentContacts = Partial<Record<RecruitmentContactKind, string>>;
+
 type StudentTeamRecruitmentPostView = {
   id: string; teamId: string; teamName: string; topicTitle: string; authorId: string; authorName: string;
   title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string;
@@ -13,8 +17,8 @@ export type StudentTeamRecruitmentPostList = {
   page: number; totalPages: number; total: number;
 };
 
-type StudentTeamAuthoredRecruitmentPost = {
-  id: string; teamName: string; topicTitle: string; title: string; status: "OPEN" | "CLOSED";
+export type StudentTeamAuthoredRecruitmentPost = {
+  id: string; teamId: string; teamName: string; topicTitle: string; title: string; status: "OPEN" | "CLOSED";
   memberCount: number; capacity: number; applicationCount: number; pendingApplicationCount: number; createdAt: Date; deadlineAt: Date;
 };
 
@@ -26,6 +30,12 @@ type StudentTeamRecruitmentApplication = {
 export type StudentTeamRecruitmentPostApplications = {
   id: string; teamName: string; topicTitle: string; title: string; content: string; status: "OPEN" | "CLOSED";
   applications: StudentTeamRecruitmentApplication[];
+};
+
+export type ReceivedStudentTeamRecruitmentApplication = {
+  id: string; studentName: string; message: string; desiredRole: string; createdAt: Date;
+  postId: string; postTitle: string; teamId: string; teamName: string;
+  memberCount: number; capacity: number; sharedContacts: SharedRecruitmentContacts;
 };
 
 type StudentTeamRecruitmentHistory = {
@@ -42,14 +52,15 @@ export interface StudentTeamRecruitmentReader {
     pendingInvitationCount: number;
     members: Array<{ id: string; name: string }>;
   }>>;
-  listAuthoredPosts(actorId: string, page: number): Promise<{ posts: StudentTeamAuthoredRecruitmentPost[]; page: number; totalPages: number; total: number }>;
+  listAuthoredPosts(actorId: string, page: number, teamId?: string): Promise<{ posts: StudentTeamAuthoredRecruitmentPost[]; page: number; totalPages: number; total: number }>;
+  listReceivedApplications(actorId: string, teamId?: string): Promise<ReceivedStudentTeamRecruitmentApplication[]>;
   listApplicationHistory(actorId: string, page: number): Promise<{ applications: StudentTeamRecruitmentHistory[]; page: number; totalPages: number; total: number }>;
   findPostApplications(postId: string, actorId: string, isAdmin: boolean): Promise<StudentTeamRecruitmentPostApplications | null>;
 }
 
 export interface StudentTeamRecruitmentWriter {
   createPost(input: { teamId: string; leaderId: string; title: string; content: string; requiredSkills: string[]; roleNeeded: string; availability: string; capacity: number; deadlineAt: Date; createdAt: Date }): Promise<boolean>;
-  apply(input: { postId: string; studentId: string; message: string; desiredRole: string; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
+  apply(input: { postId: string; studentId: string; message: string; desiredRole: string; sharedContactKinds: RecruitmentContactKind[]; appliedAt: Date }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER">;
   decide(input: { applicationId: string; actorId: string; isAdmin: boolean; decision: "ACCEPT" | "REJECT"; decidedAt: Date }): Promise<"ACCEPTED" | "REJECTED" | "UNAVAILABLE" | "FORBIDDEN">;
   closePost?(input: { postId: string; leaderId: string; closedAt: Date }): Promise<boolean>;
 }
@@ -71,7 +82,8 @@ export class StudentTeamRecruitmentQueryService {
 
   listPosts(actor: CurrentUser, page = 1) { assertStudent(actor); return this.reader.listPosts(actor.id, page); }
   listLeaderTeams(actor: CurrentUser) { assertStudent(actor); return this.reader.listLeaderTeams(actor.id); }
-  listAuthoredPosts(actor: CurrentUser, page = 1) { assertStudent(actor); return this.reader.listAuthoredPosts(actor.id, page); }
+  listAuthoredPosts(actor: CurrentUser, page = 1, teamId?: string) { assertStudent(actor); return this.reader.listAuthoredPosts(actor.id, page, teamId); }
+  listReceivedApplications(actor: CurrentUser, teamId?: string) { assertStudent(actor); return this.reader.listReceivedApplications(actor.id, teamId); }
   listApplicationHistory(actor: CurrentUser, page = 1) { assertStudent(actor); return this.reader.listApplicationHistory(actor.id, page); }
 
   getPostApplications(actor: CurrentUser, postId: string) {
@@ -103,13 +115,15 @@ export class StudentTeamRecruitmentCommandService {
     if (!created) throw new StudentTeamRecruitmentError("팀장만 현재 인원보다 큰 팀 정원을 설정해 모집할 수 있습니다.");
   }
 
-  async apply(actor: CurrentUser, input: { postId: string; message: string; desiredRole: string }) {
+  async apply(actor: CurrentUser, input: { postId: string; message: string; desiredRole: string; sharedContactKinds: RecruitmentContactKind[] }) {
     assertStudent(actor);
     let desiredRole: string;
     let message: string;
     try { desiredRole = text(input.desiredRole, 500, "희망 역할"); message = normalizeApplicationMessage(input.message); }
     catch { throw new StudentTeamRecruitmentError("입력값을 확인해 주세요."); }
-    const result = await this.writer.apply({ postId: input.postId, studentId: actor.id, message, desiredRole, appliedAt: this.now() });
+    const sharedContactKinds = [...new Set(input.sharedContactKinds)];
+    if (sharedContactKinds.some((kind) => !recruitmentContactKinds.includes(kind))) throw new StudentTeamRecruitmentError("공유할 연락처를 확인해 주세요.");
+    const result = await this.writer.apply({ postId: input.postId, studentId: actor.id, message, desiredRole, sharedContactKinds, appliedAt: this.now() });
     if (result !== "CREATED") throw new StudentTeamRecruitmentError(result === "ALREADY_MEMBER" ? "이미 이 팀의 팀원입니다." : result === "ALREADY_APPLIED" ? "이미 지원한 모집입니다." : "현재 지원할 수 없는 모집입니다.");
   }
 

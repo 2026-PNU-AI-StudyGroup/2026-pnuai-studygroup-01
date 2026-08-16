@@ -1185,6 +1185,7 @@ model StudentTeamRecruitmentApplication {
   studentId   String
   message     String
   desiredRole String
+  sharedContacts Json                       @default("{}")
   status      RecruitmentApplicationStatus @default(PENDING)
   decidedAt   DateTime?
   createdAt   DateTime                     @default(now())

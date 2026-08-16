@@ -17,7 +17,7 @@ import { StudentTeamQueryService } from "@/modules/student-team/application/mana
 import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
-import { AddIcon, SettingsIcon } from "@/shared/ui/workspace-icons";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("내 팀");
@@ -36,6 +36,9 @@ export default async function StudentTeamsPage({
   const { teams, invitations } = await new StudentTeamQueryService(
     new PrismaStudentTeamQueryRepository(prisma),
   ).listWorkspace(actor);
+  const pendingApplicantCount = teams
+    .filter((team) => team.leaderId === actor.id)
+    .reduce((total, team) => total + team.pendingApplicantCount, 0);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams">
@@ -52,7 +55,7 @@ export default async function StudentTeamsPage({
                       <UiText>{"받은 초대"}</UiText>{" "}{invitations.length}
                     </Link>
                   ) : null}
-                  {teams.length > 0 ? <Link className="button-secondary gap-2" href="/recruitments/mine"><SettingsIcon className="size-4 shrink-0" /><UiText>{"모집 공고 관리"}</UiText></Link> : null}
+                  {pendingApplicantCount > 0 ? <Link className="button-secondary" href="/recruitments/received"><UiText>{"받은 지원"}</UiText>{" "}{pendingApplicantCount}</Link> : null}
                   {teams.length > 0 ? <Link className="button-primary gap-2" href="/teams?modal=create"><AddIcon className="size-4 shrink-0" /><UiText>{"새 팀 만들기"}</UiText></Link> : null}
                 </div>
               ) : undefined}
