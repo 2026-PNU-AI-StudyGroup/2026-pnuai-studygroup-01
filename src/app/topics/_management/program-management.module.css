@@ -1,4 +1,5 @@
-.panel { display: grid; gap: 0; overflow: clip; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-card); }
+/* 트랙을 패널 폭으로 묶는다. auto 트랙이면 내부 min-content 폭만큼 늘어나 overflow: clip 에 잘린다. */
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; overflow: clip; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-card); }
 .headerRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .headerTitle { display: flex; align-items: center; gap: .625rem; }
 .headerTitle { min-width: 0; flex-wrap: wrap; }
@@ -12,8 +13,9 @@
 .backLink svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .votingResultsAction { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: 1rem; }
 .votingResultsAction > span { color: var(--muted); font-size: .8125rem; font-weight: 750; }
-.form { display: grid; }
-.section { display: grid; gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }
+.form { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+/* min-width: 0 이 없으면 그리드 아이템이 내부 min-content 폭으로 부풀어 패널 밖으로 잘려 나간다. */
+.section { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }
 .section + .section, .panel > .form + .section, .panel > section + .form { border-top: 1px solid var(--line); }
 .sectionHeader h2 { font-size: 1.125rem; font-weight: 800; letter-spacing: -.025em; }
 .sectionHeader p { margin-top: .375rem; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
