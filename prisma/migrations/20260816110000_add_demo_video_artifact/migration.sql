@@ -1,0 +1,3 @@
+-- The PRESENTATION_VIDEO artifact type already exists in the historical
+-- report-artifact schema. This migration records the feature introduction;
+-- the following migration adds its per-project uniqueness constraint.
