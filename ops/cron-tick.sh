@@ -2,13 +2,14 @@
 # 정기 작업 엔드포인트를 호출한다. systemd 타이머가 이 스크립트를 실행한다.
 # 사용: ops/cron-tick.sh deadlines
 #       ops/cron-tick.sh translations
+#       ops/cron-tick.sh emails
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 job="${1:-}"
 case "$job" in
-  deadlines|translations) ;;
-  *) echo "사용법: $0 deadlines|translations" >&2; exit 2 ;;
+  deadlines|translations|emails) ;;
+  *) echo "사용법: $0 deadlines|translations|emails" >&2; exit 2 ;;
 esac
 
 if [ ! -f .env.production ]; then

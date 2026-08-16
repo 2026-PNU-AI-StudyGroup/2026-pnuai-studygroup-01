@@ -71,6 +71,29 @@ write_unit aipms-translations.timer \
   '[Install]' \
   'WantedBy=timers.target'
 
+write_unit aipms-emails.service \
+  '[Unit]' \
+  'Description=aipms 이메일 대기열 발송' \
+  'After=docker.service' \
+  '' \
+  '[Service]' \
+  'Type=oneshot' \
+  "User=$RUN_USER" \
+  "WorkingDirectory=$REPO_DIR" \
+  "ExecStart=$REPO_DIR/ops/cron-tick.sh emails"
+
+write_unit aipms-emails.timer \
+  '[Unit]' \
+  'Description=aipms 이메일 대기열 (1분마다)' \
+  '' \
+  '[Timer]' \
+  'OnBootSec=2min' \
+  'OnUnitActiveSec=1min' \
+  'AccuracySec=10s' \
+  '' \
+  '[Install]' \
+  'WantedBy=timers.target'
+
 write_unit aipms-backup.service \
   '[Unit]' \
   'Description=aipms PostgreSQL·MinIO 백업' \
@@ -99,7 +122,7 @@ install -d -o "$RUN_USER" -g "$RUN_USER" "$BACKUP_DIR"
 
 echo "▶ 타이머 활성화"
 systemctl daemon-reload
-systemctl enable --now aipms-deadlines.timer aipms-translations.timer aipms-backup.timer
+systemctl enable --now aipms-deadlines.timer aipms-translations.timer aipms-emails.timer aipms-backup.timer
 
 echo "▶ 부팅 후 컨테이너 자동 기동"
 systemctl enable docker
