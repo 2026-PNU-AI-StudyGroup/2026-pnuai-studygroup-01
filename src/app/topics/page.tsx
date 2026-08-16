@@ -192,24 +192,34 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
 
   if (view === "past") {
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const [archive, sidebarProgramsRaw] = await Promise.all([
+    const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
+    const [initialArchive, sidebarProgramsRaw] = await Promise.all([
       archiveService.execute(requestedPage, 18, { query, programId: requestedArchiveProgramId }),
       actor.role === "ADMIN" ? Promise.resolve([]) : programService.listSidebarVisible(now),
     ]);
     // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
-    archive.programs = hideGraduationProgramsForStudent(archive.programs, actor.role);
+    initialArchive.programs = hideGraduationProgramsForStudent(initialArchive.programs, actor.role);
     const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
     // 종료된 프로그램은 사이드바(공개 프로그램)엔 있지만 아카이브 목록(닫힌 팀 보유 프로그램)엔
     // 없을 수 있다. 선택 후보를 둘의 합집합으로 넓혀야 클릭 시 다른 프로그램으로 튕기지 않는다.
     const adminClosedPrograms = adminPrograms?.filter((program) => program.endsAt <= now) ?? [];
-    const programId = resolveProgramSelection(requestedArchiveProgramId, actor.role === "ADMIN" ? adminClosedPrograms : [...archive.programs, ...sidebarPrograms]);
+    const programId = resolveProgramSelection(requestedArchiveProgramId, actor.role === "ADMIN" ? adminClosedPrograms : [...initialArchive.programs, ...sidebarPrograms]);
     if (programId && programId !== requestedArchiveProgramId) {
       redirect(topicsHref({ view: "past", programId, q: query, page: requestedPage }));
     }
     const selectedProgram = adminPrograms?.find((program) => program.id === programId)
-      ?? archive.programs.find((program) => program.id === programId)
+      ?? initialArchive.programs.find((program) => program.id === programId)
       ?? sidebarPrograms.find((program) => program.id === programId);
-    const closeAnnouncementHref = topicsHref({ view: "past", programId, q: query, page: requestedPage });
+    const divisionId = selectedProgram?.divisions?.some((division) => division.id === requestedDivisionId)
+      ? requestedDivisionId
+      : undefined;
+    if (requestedDivisionId && divisionId !== requestedDivisionId) {
+      redirect(topicsHref({ view: "past", programId, q: query, page: requestedPage }));
+    }
+    const archive = divisionId
+      ? await archiveService.execute(requestedPage, 18, { query, programId, divisionId })
+      : initialArchive;
+    const closeAnnouncementHref = topicsHref({ view: "past", programId, divisionId, q: query, page: requestedPage });
     const [ballot, votingResults, programAnnouncements, announcementCreateHref] = await Promise.all([
       programId ? votingService.getBallot(actor, programId) : Promise.resolve(undefined),
       loadVotingResults(programId),
@@ -221,7 +231,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       : undefined;
     const sidebarItems = actor.role === "ADMIN"
       ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
-      : buildProgramSidebarItems(sidebarPrograms, archive.programs, "past", { query }, now);
+      : buildProgramSidebarItems(sidebarPrograms, initialArchive.programs, "past", { query }, now);
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
@@ -230,7 +240,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
         <ProjectExplorerView
           view="past"
           program={selectedProgram}
-          search={<ProjectSearchForm view="past" programId={programId} query={query} />}
+          search={<ProjectSearchForm view="past" programId={programId} query={query} divisionId={divisionId} />}
           titleAction={manageAction}
           announcementRail={(
             <ProgramAnnouncementRail
@@ -242,7 +252,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           )}
           overlays={firstSearchParam(params.modal) === "announcement-new" && announcementCreateHref && programId && selectedProgram ? <ProgramAnnouncementCreateModal programId={programId} programName={selectedProgram.name} closeHref={closeAnnouncementHref} createAction={createProgramAnnouncementAction} /> : null}
         >
-          <PastProjectsView {...archive} query={query} programId={programId} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} />
+          <PastProjectsView {...archive} query={query} programId={programId} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} />
         </ProjectExplorerView>
       </ExplorerLayout>
     );

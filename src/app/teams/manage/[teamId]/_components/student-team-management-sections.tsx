@@ -9,16 +9,20 @@ import {
   TeamMemberActions,
 } from "@/app/teams/_components/student-team-controls";
 import { MemberContactDialogButton } from "@/app/teams/_components/member-contact-dialog-button";
+import { CloseRecruitmentPostForm } from "@/app/_components/close-recruitment-post-form";
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
+import type { StudentTeamAuthoredRecruitmentPost } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export function StudentTeamManagementSections({
   team,
   actorId,
+  recruitmentPosts,
 }: {
   team: StudentTeamSummary;
   actorId: string;
+  recruitmentPosts: StudentTeamAuthoredRecruitmentPost[];
 }) {
   const isLeader = team.leaderId === actorId;
 
@@ -39,8 +43,39 @@ export function StudentTeamManagementSections({
           <h1 className="mt-3 text-[clamp(2rem,3.25vw,2.85rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--ink)]">{team.name}</h1>
           {team.description ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)] sm:text-base"><UiText>{team.description}</UiText></p> : null}
         </div>
-        {isLeader ? <Link className="button-secondary shrink-0 gap-2" href={`/recruitments/mine?modal=new&teamId=${team.id}`}><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link> : null}
+        {isLeader ? <div className="flex flex-wrap gap-2"><Link className="button-secondary" href={`/recruitments/received?teamId=${team.id}`}><UiText>{"받은 지원"}</UiText>{" "}{team.pendingApplicantCount}</Link><Link className="button-primary shrink-0 gap-2" href={`/teams/manage/${team.id}?modal=recruitment`}><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link></div> : null}
       </header>
+
+      {isLeader ? (
+        <section aria-labelledby="recruitment-posts-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
+            <div>
+              <h2 id="recruitment-posts-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"모집 공고"}</UiText></h2>
+              <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"공고 이력과 지원 현황을 관리합니다."}</UiText></p>
+            </div>
+            {team.pendingApplicantCount > 0 ? <Link className="button-secondary" href={`/recruitments/received?teamId=${team.id}`}><UiText>{`지원자 검토 ${team.pendingApplicantCount}명`}</UiText></Link> : null}
+          </div>
+          {recruitmentPosts.length === 0 ? (
+            <p className="px-6 py-6 text-sm text-[var(--muted)]"><UiText>{"등록한 모집 공고가 없습니다."}</UiText></p>
+          ) : (
+            <ul className="divide-y divide-[var(--line)]">
+              {recruitmentPosts.map((post) => (
+                <li key={post.id} className="grid gap-4 px-6 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2"><StatusBadge tone={post.status === "OPEN" ? "success" : "neutral"}><UiText>{post.status === "OPEN" ? "모집 중" : "모집 종료"}</UiText></StatusBadge><span className="text-xs font-semibold text-[var(--muted)]"><UiText>{"지원"}</UiText>{" "}{post.applicationCount}<UiText>{"명 · 대기"}</UiText>{" "}{post.pendingApplicationCount}<UiText>{"명"}</UiText></span></div>
+                    <h3 className="mt-2 truncate text-base font-bold text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{post.memberCount}/{post.capacity}<UiText>{"명"}</UiText></p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <Link className={post.pendingApplicationCount ? "button-primary" : "button-secondary"} href={`/recruitments/${post.id}/applications`}><UiText>{post.pendingApplicationCount ? `${post.pendingApplicationCount}명 보기` : "지원자 이력"}</UiText></Link>
+                    {post.status === "OPEN" ? <CloseRecruitmentPostForm postId={post.id} /> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <div className={`grid gap-6 ${isLeader ? "xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)] xl:items-start" : ""}`}>
         <section aria-labelledby="members-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-7">

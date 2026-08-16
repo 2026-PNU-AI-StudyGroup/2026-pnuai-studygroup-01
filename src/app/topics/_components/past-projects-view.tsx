@@ -3,6 +3,7 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
+import { ActiveProjectFilters } from "@/app/topics/_components/active-project-filters";
 import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
 import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
 import { ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
@@ -12,21 +13,25 @@ import type { ArchivedProject } from "@/modules/team/application/archive-project
 import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
 import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
 
-export function PastProjectsView({ projects, total, page, totalPages, query, programId, ballot, votingResults, adminProjectData }: {
+export function PastProjectsView({ projects, total, page, totalPages, query, programId, divisionId, divisions = [], ballot, votingResults, adminProjectData }: {
   projects: ArchivedProject[];
   total: number;
   page: number;
   totalPages: number;
   query: string;
   programId?: string;
+  divisionId?: string | "UNASSIGNED";
+  divisions?: Array<{ id: string; name: string }>;
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
   adminProjectData?: AdminProjectCardData[];
 }) {
-  const hasFilters = hasTopicsFilters({ q: query });
+  const hasFilters = hasTopicsFilters({ q: query, divisionId });
   const adminDataByTopicId = new Map(adminProjectData?.map((data) => [data.topicId, data]));
   return (
-    <ProjectResultsLayout
+    <div className="min-w-0">
+      {divisions.length ? <ActiveProjectFilters view="past" programId={programId} query={query} divisionId={divisionId} divisions={divisions} /> : null}
+      <ProjectResultsLayout
       items={projects}
       itemKey={(project) => project.id}
       total={total}
@@ -41,9 +46,10 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
       }}
       listLabel="지난 프로젝트 목록"
       paginationLabel="지난 프로젝트 페이지"
-      hrefForPage={(targetPage) => topicsHref({ view: "past", programId, q: query, page: targetPage })}
+      hrefForPage={(targetPage) => topicsHref({ view: "past", programId, divisionId, q: query, page: targetPage })}
       ballot={ballot}
       votingResults={votingResults}
+      showSubmissionManagement={adminProjectData !== undefined}
       renderItem={(project, voteSelection) => {
         const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === project.topicId);
         const cardData = adminDataByTopicId.get(project.topicId);
@@ -78,6 +84,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
           />
         );
       }}
-    />
+      />
+    </div>
   );
 }

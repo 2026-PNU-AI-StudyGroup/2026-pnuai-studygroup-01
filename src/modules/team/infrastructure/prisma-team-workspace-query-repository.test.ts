@@ -72,10 +72,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       where: expect.objectContaining({
         AND: expect.arrayContaining([
           { projectId: "team-1" },
-          expect.objectContaining({ OR: expect.arrayContaining([
-            { project: { status: { not: "PENDING_APPROVAL" } } },
-            { memberships: { some: { userId: "admin-1", endedAt: null } } },
-          ]) }),
+          { project: { status: { not: "PENDING_APPROVAL" } } },
         ]),
       }),
       include: expect.objectContaining({

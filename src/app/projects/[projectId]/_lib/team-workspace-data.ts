@@ -23,9 +23,7 @@ export const loadTeamWorkspace = cache(async (projectId: string, discussionPage 
 });
 
 export const loadActiveTeamWorkspace = cache(async (projectId: string, discussionPage = 1) => {
-  const result = await loadTeamWorkspace(projectId, discussionPage);
-  if (result.workspace.approvalPending) notFound();
-  return result;
+  return loadTeamWorkspace(projectId, discussionPage);
 });
 
 export const loadTeamReportWorkspace = cache(async (projectId: string) => {

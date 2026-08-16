@@ -68,12 +68,10 @@ export async function ProgramManagementRoutePage({
   requestedProgramId,
   tabSegments,
   targetMode,
-  showApprovals,
 }: {
   requestedProgramId?: string;
   tabSegments?: string[];
   targetMode?: string;
-  showApprovals?: boolean;
 }) {
   const { actor, programs, pendingApprovalCounts } = await loadProgramManagementContext();
   const now = new Date();
@@ -102,7 +100,6 @@ export async function ProgramManagementRoutePage({
           tab={tab}
           targetMode={targetMode === "DIRECT" ? "DIRECT" : "CURRENT"}
           pendingApprovalCount={pendingApprovalCounts.get(selectedProgramId) ?? 0}
-          showApprovals={showApprovals}
         />
       </ExplorerLayout>
     </AppShell>

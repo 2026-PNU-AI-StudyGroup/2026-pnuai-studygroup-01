@@ -27,9 +27,9 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
   const content = <RecruitmentApplicationsView post={post} actorRole={actor.role} />;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={actor.role === "STUDENT" ? "/recruitments/mine" : "/dashboard"}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={actor.role === "STUDENT" ? "/recruitments/received" : "/dashboard"}>
       <main className={actor.role === "STUDENT" ? "pb-28 lg:min-h-screen lg:pb-0" : "content-shell"}>
-        {actor.role === "STUDENT" ? <StudentTeamSectionLayout currentPath="/recruitments/mine">{content}</StudentTeamSectionLayout> : content}
+        {actor.role === "STUDENT" ? <StudentTeamSectionLayout currentPath="/recruitments/received">{content}</StudentTeamSectionLayout> : content}
       </main>
     </AppShell>
   );

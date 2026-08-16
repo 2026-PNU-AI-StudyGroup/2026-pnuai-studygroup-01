@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { TeamProjectInfoEditDialog } from "@/app/projects/[projectId]/_components/team-project-info-form";
-import { ProjectPreparationPanel } from "@/app/projects/[projectId]/_components/project-preparation-panel";
 import { ProgramAnnouncementRail } from "@/modules/announcement/ui/program-announcement-rail";
 import {
   taskDeadlineState,
@@ -64,16 +63,6 @@ function buildScheduleTimeline(
 export default async function TeamOverviewPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(projectId);
-  if (workspace.approvalPending) {
-    return <ProjectPreparationPanel
-      projectId={workspace.topicId}
-      projectTeamName={workspace.name}
-      title={workspace.topicTitle}
-      description={workspace.topicDescription}
-      members={workspace.members.map(({ id, name, role }) => ({ id, name, role }))}
-      canManage={workspace.canManagePreparation}
-    />;
-  }
   const announcementService = new AnnouncementService(new PrismaAnnouncementRepository(prisma));
   const announcements = await announcementService.listForTeamOverview(await resolveAnnouncementAudience(actor), workspace.id);
   const now = new Date();

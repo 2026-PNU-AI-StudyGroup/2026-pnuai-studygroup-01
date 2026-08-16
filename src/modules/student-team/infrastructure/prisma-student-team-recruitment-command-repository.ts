@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import type { StudentTeamRecruitmentWriter } from "@/modules/student-team/application/manage-student-team-recruitment";
+import type { RecruitmentContactKind, SharedRecruitmentContacts, StudentTeamRecruitmentWriter } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { enqueueTranslations } from "@/modules/translation/application/translation-queue";
 import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
@@ -55,6 +55,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
     studentId: string;
     message: string;
     desiredRole: string;
+    sharedContactKinds: RecruitmentContactKind[];
     appliedAt: Date;
   }): Promise<"CREATED" | "UNAVAILABLE" | "ALREADY_APPLIED" | "ALREADY_MEMBER"> {
     return this.client.$transaction(async (transaction) => {
@@ -109,12 +110,22 @@ export class PrismaStudentTeamRecruitmentCommandRepository
       ) {
         return "ALREADY_APPLIED";
       }
-      const { appliedAt, ...applicationData } = input;
+      const { appliedAt, sharedContactKinds, ...applicationData } = input;
+      const profile = await transaction.studentProfile.findUnique({
+        where: { userId: input.studentId },
+        select: { phone: true, kakao: true, github: true, instagram: true },
+      });
+      const sharedContacts = Object.fromEntries(
+        sharedContactKinds
+          .map((kind) => [kind, profile?.[kind].trim() ?? ""] as const)
+          .filter(([, value]) => Boolean(value)),
+      ) as SharedRecruitmentContacts;
       const applicationId = randomUUID();
       await transaction.studentTeamRecruitmentApplication.create({
         data: {
           id: applicationId,
           ...applicationData,
+          sharedContacts,
           createdAt: appliedAt,
           updatedAt: appliedAt,
         },
@@ -130,7 +141,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
           body: `${post.title} 모집 지원서를 확인해 주세요.`,
           titleEn: "New team recruitment application",
           bodyEn: `Review the application for ${post.title} in PMS.`,
-          href: "/recruitments/applications",
+          href: `/recruitments/received#application-${applicationId}`,
           key: `student-team-recruitment-application:${applicationId}:${post.leaderId}`,
         },
         {
@@ -139,7 +150,7 @@ export class PrismaStudentTeamRecruitmentCommandRepository
           body: `${post.title} 모집 지원이 접수되었습니다. 결과는 PMS에서 안내합니다.`,
           titleEn: "Team recruitment application received",
           bodyEn: `Your application for ${post.title} was received. PMS will provide the result.`,
-          href: "/recruitments/mine",
+          href: "/recruitments/applications",
           key: `student-team-recruitment-receipt:${applicationId}:${input.studentId}`,
         },
       ];

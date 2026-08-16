@@ -9,16 +9,18 @@ import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navi
 const navigation = [
   { href: "/recruitments", label: "둘러보기", icon: "search" },
   { href: "/teams", label: "내 팀", icon: "document" },
+  { href: "/recruitments/received", label: "받은 지원", icon: "inbox" },
   { href: "/recruitments/applications", label: "지원 내역", icon: "send" },
 ] as const;
 
-type StudentTeamIconName = "search" | "send" | "document" | "plus" | "chevron-left" | "chevron-right";
+type StudentTeamIconName = "search" | "send" | "document" | "inbox" | "plus" | "chevron-left" | "chevron-right";
 
 export function StudentTeamIcon({ name, className = "size-5" }: { name: StudentTeamIconName; className?: string }) {
   const paths = {
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
     send: <><path d="m21 3-7.2 18-3.3-7.5L3 10.2 21 3Z" /><path d="m10.5 13.5 4.4-4.4" /></>,
     document: <><path d="M6 3.5h9l3 3V21H6Z" /><path d="M14.5 3.5V7H18M9 11h6M9 15h6" /></>,
+    inbox: <><path d="M4 4.5h16v14H4Z" /><path d="M4 14h4l1.5 2h5l1.5-2h4M8 8h8" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     "chevron-left": <path d="m14.5 5-7 7 7 7" />,
     "chevron-right": <path d="m9.5 5 7 7-7 7" />,
@@ -38,9 +40,10 @@ export function StudentTeamIcon({ name, className = "size-5" }: { name: StudentT
 }
 
 function isTeamNavigationActive(href: string, currentPath: string) {
-  // 내 팀(/teams)이 팀 관리 + 내 모집 관리(/recruitments/mine)를 모두 포함
+  // 내 팀(/teams)이 팀 관리 경로를 포함한다.
   if (href === "/teams") return currentPath === "/teams" || currentPath.startsWith("/teams/") || currentPath.startsWith("/recruitments/mine");
   if (href === "/recruitments") return currentPath === "/recruitments";
+  if (href === "/recruitments/received") return currentPath === "/recruitments/received";
   return currentPath === href;
 }
 
@@ -60,7 +63,7 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
             label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
           >
             <UiNav aria-label="팀 메뉴 모바일">
-              <ul className="grid grid-cols-3 gap-x-4">
+              <ul className="grid grid-cols-2 gap-x-4 sm:grid-cols-4">
                 {navigation.map((item) => {
                   const active = isTeamNavigationActive(item.href, currentPath);
                   return (

@@ -24,15 +24,15 @@ export async function createRecruitmentPostAction(_state: RecruitmentActionState
   if (!parsed.success) return { status: "error", message: "모집 정보를 확인해 주세요." };
   try { await service().createPost(await actor(), parsed.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/recruitments"); revalidatePath("/recruitments/mine"); return { status: "success", message: "모집 글을 등록했습니다." };
+  revalidatePath("/recruitments"); revalidatePath("/teams"); revalidatePath(`/teams/manage/${parsed.data.teamId}`); return { status: "success", message: "모집 글을 등록했습니다." };
 }
 
 export async function applyRecruitmentAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
-  const parsed = z.object({ postId: z.string().uuid(), message: z.string(), desiredRole: z.string() }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ postId: z.string().uuid(), message: z.string(), desiredRole: z.string(), sharedContactKinds: z.array(z.enum(["phone", "kakao", "github", "instagram"])).max(4) }).safeParse({ ...Object.fromEntries(formData), sharedContactKinds: formData.getAll("sharedContactKinds") });
   if (!parsed.success) return { status: "error", message: "입력값을 확인해 주세요." };
   try { await service().apply(await actor(), parsed.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
-  revalidatePath("/recruitments"); return { status: "success", message: "모집 글에 지원했습니다." };
+  revalidatePath("/recruitments"); revalidatePath("/recruitments/received"); revalidatePath("/teams"); return { status: "success", message: "모집 글에 지원했습니다." };
 }
 
 export async function decideRecruitmentAction(_state: RecruitmentActionState, formData: FormData): Promise<RecruitmentActionState> {
@@ -41,7 +41,8 @@ export async function decideRecruitmentAction(_state: RecruitmentActionState, fo
   try { await service().decide(await actor(), parsed.data.applicationId, parsed.data.decision); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
   revalidatePath(`/recruitments/${parsed.data.postId}/applications`);
-  revalidatePath("/recruitments/mine");
+  revalidatePath("/recruitments/received");
+  revalidatePath("/teams");
   return { status: "success", message: parsed.data.decision === "ACCEPT" ? "팀원 지원을 수락했습니다." : "팀원 지원을 거절했습니다." };
 }
 
@@ -51,7 +52,8 @@ export async function closeRecruitmentPostAction(_state: RecruitmentActionState,
   try { await service().closePost(await actor(), postId.data); }
   catch (error) { if (error instanceof StudentTeamRecruitmentError) return { status: "error", message: error.message }; throw error; }
   revalidatePath("/recruitments");
-  revalidatePath("/recruitments/mine");
+  revalidatePath("/recruitments/received");
+  revalidatePath("/teams");
   revalidatePath(`/recruitments/${postId.data}/applications`);
   return { status: "success", message: "모집 공고를 종료했습니다. 대기 중인 지원은 이력으로 보존됩니다." };
 }

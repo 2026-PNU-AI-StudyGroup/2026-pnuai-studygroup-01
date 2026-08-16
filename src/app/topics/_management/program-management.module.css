@@ -11,8 +11,6 @@
 .backLink { display: grid; width: 2.25rem; height: 2.25rem; flex: none; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); color: var(--muted); text-decoration: none; transition: border-color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease); }
 .backLink:hover, .backLink:focus-visible { border-color: var(--field-border-hover); background: var(--surface-subtle); color: var(--ink); }
 .backLink svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
-.votingResultsAction { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: 1rem; }
-.votingResultsAction > span { color: var(--muted); font-size: .8125rem; font-weight: 750; }
 .form { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); }
 /* min-width: 0 이 없으면 그리드 아이템이 내부 min-content 폭으로 부풀어 패널 밖으로 잘려 나간다. */
 .section { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }

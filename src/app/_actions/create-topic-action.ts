@@ -44,9 +44,8 @@ export async function createTopicAction(
     if (!approval.success) {
       return { status: "error", message: "승인 요청 방식을 확인해 주세요." };
     }
-    let projectId: string;
     try {
-      projectId = await new TopicApprovalService(
+      await new TopicApprovalService(
         new PrismaTopicApprovalRepository(prisma),
         new PrismaProjectProgramRepository(prisma),
       ).createStudentRegistration(actor, {
@@ -68,8 +67,7 @@ export async function createTopicAction(
     }
     revalidatePath("/dashboard");
     revalidatePath("/topics");
-    revalidatePath(`/projects/${projectId}`);
-    return { status: "success", message: "프로젝트 승인 요청을 보냈습니다.", projectId };
+    return { status: "success", message: "프로젝트 승인 요청을 보냈습니다." };
   }
 
   try {

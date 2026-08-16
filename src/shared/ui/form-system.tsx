@@ -44,6 +44,7 @@ type FormSectionProps = {
   number?: string;
   title: string;
   description?: string;
+  actions?: ReactNode;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -54,15 +55,16 @@ type FormSectionProps = {
   hidden?: boolean;
 };
 
-export function FormSection({ number, title, description, children, className = "", contentClassName = "", id, appearance = "card", density = "default", sectionMarker, hidden }: FormSectionProps) {
+export function FormSection({ number, title, description, actions, children, className = "", contentClassName = "", id, appearance = "card", density = "default", sectionMarker, hidden }: FormSectionProps) {
   return (
     <section id={id} hidden={hidden} data-form-section={sectionMarker} data-form-section-appearance={appearance} data-form-section-density={density} className={classNames(styles.section, appearance === "plain" && styles.sectionPlain, appearance === "embedded" && styles.sectionEmbedded, density === "compact" && styles.sectionCompact, className)}>
       <header className={styles.header}>
         {number ? <span className={styles.number}>{number}</span> : null}
-        <div>
+        <div className={styles.headerContent}>
           <h2 className={styles.title}><UiText>{title}</UiText></h2>
           {description ? <p className={styles.sectionDescription}><UiText>{description}</UiText></p> : null}
         </div>
+        {actions ? <div className={styles.headerActions}>{actions}</div> : null}
       </header>
       <div className={classNames(styles.content, contentClassName)}>{children}</div>
     </section>

@@ -18,7 +18,6 @@ import { AddIcon, TrashIcon } from "@/shared/ui/workspace-icons";
 export type TopicFormActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  projectId?: string;
 };
 
 type TopicFormAction = (
@@ -136,7 +135,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
           <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"검토 상태는 내 승인 요청에서 확인할 수 있습니다."}</UiText></p>
         </div>
         <div className="flex flex-wrap justify-center gap-3">
-          {state.projectId ? <button type="button" className="button-secondary" onClick={() => router.replace(`/projects/${state.projectId}`)}><UiText>{"프로젝트 준비 공간 열기"}</UiText></button> : null}
+          <button type="button" className="button-secondary" onClick={() => router.replace("/dashboard?view=pending")}><UiText>{"검토 중인 프로젝트 보기"}</UiText></button>
           <button type="button" className="button-primary" onClick={() => router.replace(wizard.closeHref)}><UiText>{"완료"}</UiText></button>
         </div>
       </div>

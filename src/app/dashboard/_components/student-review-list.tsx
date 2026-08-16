@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { TopicApprovalDialog } from "@/app/_components/topic-approval-dialog";
+import { StudentRegistrationWithdrawalForm } from "@/app/dashboard/_components/student-registration-withdrawal-form";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import type { TopicApplicationSummary } from "@/modules/topic-application/application/topic-application-ports";
 import type { TopicApprovalRequestSummary } from "@/modules/topic-approval/application/manage-topic-approvals";
@@ -108,7 +109,10 @@ export function StudentReviewList({
                 <div className="flex shrink-0 items-center gap-4 sm:flex-col sm:items-end">
                   <time className="text-sm font-medium text-[var(--muted)]" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="date" /></time>
                   {entry.type === "REGISTRATION" ? (
-                    <TopicApprovalDialog request={entry.request} canDecide={false} triggerLabel="등록 내용 보기" />
+                    <div className="flex items-center gap-2">
+                      <TopicApprovalDialog request={entry.request} canDecide={false} triggerLabel="보기" />
+                      <StudentRegistrationWithdrawalForm projectId={entry.request.topicId} />
+                    </div>
                   ) : entry.href ? (
                     <Link href={entry.href} aria-labelledby={`${titleId} ${actionId}`} className="button-secondary"><span id={actionId}><UiText>{entry.actionLabel}</UiText></span></Link>
                   ) : null}

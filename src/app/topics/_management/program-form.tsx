@@ -197,8 +197,8 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
               <div className={styles.voteScopeGroup}>
                 <UiDiv role="radiogroup" aria-label="투표 한도 적용 기준" className={styles.voteScope}>
                   <strong><UiText>{"투표 한도 적용 기준"}</UiText></strong>
-                  <ChoiceCard variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
-                  <ChoiceCard variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionNames.length === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
+                  <ChoiceCard className={styles.voteScopeOption} variant="inline" name="voteLimitScope" value="PROGRAM" checked={voteLimitScope === "PROGRAM"} onChange={() => setVoteLimitScope("PROGRAM")} required label="프로그램 전체에서 합산" description="사용자 유형별 최대 투표 수를 프로그램 전체에서 한 번 적용" />
+                  <ChoiceCard className={styles.voteScopeOption} variant="inline" name="voteLimitScope" value="DIVISION" checked={voteLimitScope === "DIVISION"} onChange={() => setVoteLimitScope("DIVISION")} required disabled={divisionNames.length === 0} label="분과마다 별도 적용" description="사용자 유형별 최대 투표 수를 각 분과마다 따로 적용" />
                 </UiDiv>
                 {divisionNames.length === 0 ? <p className={styles.voteScopeHint}><UiText>{"분과를 추가하면 분과별 투표를 선택할 수 있습니다."}</UiText></p> : null}
               </div>

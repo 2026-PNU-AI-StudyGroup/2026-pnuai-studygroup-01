@@ -55,7 +55,7 @@ export async function updateProgramReportDefinitionAction(definitionId: string, 
   const parsed = parseDefinition(formData);
   if (!idSchema.safeParse(definitionId).success || !parsed.success) return error("보고서 제목과 제출 마감을 확인해 주세요.");
   try {
-    const outcome = await service().update(await admin(), definitionId, parsed.data);
+    const outcome = await service().update(await admin(), programId, definitionId, parsed.data);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
     refresh(programId);
@@ -69,7 +69,7 @@ export async function moveProgramReportDefinitionAction(definitionId: string, pr
   void _state;
   if (!idSchema.safeParse(definitionId).success) return error("보고서를 확인해 주세요.");
   try {
-    const outcome = await service().move(await admin(), definitionId, direction);
+    const outcome = await service().move(await admin(), programId, definitionId, direction);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
     refresh(programId);
@@ -83,7 +83,7 @@ export async function deleteProgramReportDefinitionAction(definitionId: string, 
   void _state;
   if (!idSchema.safeParse(definitionId).success) return error("보고서를 확인해 주세요.");
   try {
-    const outcome = await service().delete(await admin(), definitionId);
+    const outcome = await service().delete(await admin(), programId, definitionId);
     const failure = outcomeMessage(outcome);
     if (failure) return error(failure);
     refresh(programId);

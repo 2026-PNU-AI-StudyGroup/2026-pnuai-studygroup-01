@@ -1,10 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
 import styles from "@/app/topics/_components/project-gallery.module.css";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
+
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const project: ArchivedProject = {
   id: "project-1",
@@ -44,6 +48,28 @@ const ballot: ProgramVoteBallot = {
 };
 
 describe("PastProjectsView", () => {
+  beforeEach(() => push.mockClear());
+
+  it("종료 프로그램에서도 분과 필터와 선택 조건을 유지한다", () => {
+    render(
+      <PastProjectsView
+        projects={[project]}
+        total={1}
+        page={1}
+        totalPages={1}
+        query="길찾기"
+        programId="program-1"
+        divisionId="division-1"
+        divisions={[{ id: "division-1", name: "융합" }]}
+      />,
+    );
+
+    expect(screen.getByRole("navigation", { name: "프로젝트 분과" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "융합" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "전체" }));
+    expect(push).toHaveBeenCalledWith("/topics?view=past&programId=program-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0", { scroll: false });
+  });
+
   it("투표 중인 과거 프로젝트 카드에서도 바로 투표할 수 있다", () => {
     render(
       <PastProjectsView

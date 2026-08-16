@@ -61,7 +61,7 @@ describe("form-system controls", () => {
 
   it("섹션과 선택 컨트롤의 화면 밀도를 명시적인 API로 정한다", () => {
     render(
-      <FormSection title="운영 설정" appearance="embedded" density="compact">
+      <FormSection title="운영 설정" appearance="embedded" density="compact" actions={<button type="button">득표현황</button>}>
         <ChoiceCard density="compact" name="advisorEnabled" value="true" label="지도교수 있음" />
       </FormSection>,
     );
@@ -69,6 +69,7 @@ describe("form-system controls", () => {
     const section = screen.getByRole("heading", { name: "운영 설정" }).closest("section");
     expect(section).toHaveAttribute("data-form-section-appearance", "embedded");
     expect(section).toHaveAttribute("data-form-section-density", "compact");
+    expect(screen.getByRole("heading", { name: "운영 설정" }).closest("header")).toContainElement(screen.getByRole("button", { name: "득표현황" }));
     expect(screen.getByRole("radio", { name: "지도교수 있음" })).toBeInTheDocument();
   });
 

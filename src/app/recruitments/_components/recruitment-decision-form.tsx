@@ -3,8 +3,8 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
-import { decideRecruitmentAction } from "@/app/recruitments/_actions/recruitment-actions";
-import { initialRecruitmentActionState } from "@/app/recruitments/_lib/recruitment-form-state";
+import { decideRecruitmentAction } from "@/app/_actions/recruitment-actions";
+import { initialRecruitmentActionState } from "@/app/_lib/recruitment-form-state";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 
 export function RecruitmentDecisionForm({

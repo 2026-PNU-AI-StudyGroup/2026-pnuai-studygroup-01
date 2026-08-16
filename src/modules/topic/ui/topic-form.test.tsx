@@ -7,12 +7,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
 }));
 
-import { TopicForm } from "@/modules/topic/ui/topic-form";
+import { TopicForm, type TopicFormActionState } from "@/modules/topic/ui/topic-form";
 
 describe("TopicForm", () => {
   it("학생 등록 모달은 팀 선택, 프로젝트 정보, 확인 단계로만 진행한다", async () => {
     const onStepChange = vi.fn();
-    const action = vi.fn(async () => ({ status: "idle" as const, message: "" }));
+    const action = vi.fn<(prev: TopicFormActionState, data: FormData) => Promise<TopicFormActionState>>(async () => ({ status: "idle", message: "" }));
     const { container } = render(
       <TopicForm
         action={action}
@@ -92,13 +92,21 @@ describe("TopicForm", () => {
     expect(review).toHaveTextContent("코드웨이브");
     expect(screen.queryByText("지원 방식")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 등록 제출" })).toBeInTheDocument();
+
+    action.mockResolvedValueOnce({ status: "success", message: "프로젝트 승인 요청을 보냈습니다." });
+    fireEvent.click(registrationSubmitButton);
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: "승인 요청을 보냈습니다" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "검토 중인 프로젝트 보기" }));
+    expect(replace).toHaveBeenCalledWith("/dashboard?view=pending");
+    expect(screen.queryByRole("button", { name: "프로젝트 준비 공간 열기" })).not.toBeInTheDocument();
   });
 
   it("참여 팀 드롭다운에서 새 팀 만들기를 선택하면 팀 생성 페이지로 이동한다", () => {
     replace.mockReset();
     render(
       <TopicForm
-        action={vi.fn(async () => ({ status: "idle" as const, message: "" }))}
+        action={vi.fn<(prev: TopicFormActionState, data: FormData) => Promise<TopicFormActionState>>(async () => ({ status: "idle", message: "" }))}
         defaultProgramId="program-1"
         programs={[{
           id: "program-1",

@@ -15,6 +15,7 @@ const {
   getVotingResults,
   getPublicVotingResults,
   activeProjectsView,
+  pastProjectsView,
   appShell,
   listAdminPendingApprovalCounts,
   parseProgramManagementTab,
@@ -30,6 +31,7 @@ const {
   getVotingResults: vi.fn(),
   getPublicVotingResults: vi.fn(),
   activeProjectsView: vi.fn(),
+  pastProjectsView: vi.fn(),
   appShell: vi.fn(),
   listAdminPendingApprovalCounts: vi.fn(),
   parseProgramManagementTab: vi.fn((value: string | undefined) =>
@@ -125,7 +127,12 @@ vi.mock("@/app/topics/_components/active-projects-view", () => ({
     return <p>진행 중 프로젝트 목록</p>;
   },
 }));
-vi.mock("@/app/topics/_components/past-projects-view", () => ({ PastProjectsView: () => <p>지난 프로젝트 목록</p> }));
+vi.mock("@/app/topics/_components/past-projects-view", () => ({
+  PastProjectsView: (props: unknown) => {
+    pastProjectsView(props);
+    return <p>지난 프로젝트 목록</p>;
+  },
+}));
 vi.mock("@/app/topics/_components/program-sidebar", () => ({ ProgramSidebar: () => null }));
 vi.mock("@/app/topics/_components/project-search-form", () => ({ ProjectSearchForm: () => null }));
 vi.mock("@/app/topics/_components/admin-project-operations-summary", () => ({ AdminProjectOperationsSummary: () => null }));
@@ -144,12 +151,14 @@ describe("TopicsPage", () => {
     listSidebarPrograms.mockResolvedValue([]);
     listPublished.mockResolvedValue(emptyPage);
     listArchived.mockResolvedValue(emptyArchive);
+    listArchived.mockClear();
     listArchivedPrograms.mockResolvedValue([]);
     getVotingBallot.mockResolvedValue(undefined);
     getVotingResults.mockResolvedValue(null);
     getPublicVotingResults.mockResolvedValue(null);
     listAdminPendingApprovalCounts.mockResolvedValue([]);
     appShell.mockReset();
+    pastProjectsView.mockReset();
     redirect.mockReset();
   });
 
@@ -193,6 +202,28 @@ describe("TopicsPage", () => {
     expect(getVotingResults).not.toHaveBeenCalled();
     expect(activeProjectsView).toHaveBeenCalledWith(expect.objectContaining({
       votingResults: { mode: "PUBLIC", results: publicResults },
+    }));
+  });
+
+  it("종료 프로그램의 분과 조건을 아카이브 조회와 목록에 전달한다", async () => {
+    const program = {
+      id: "program-1",
+      name: "지난 캡스톤",
+      endsAt: new Date("2026-01-01T00:00:00Z"),
+      divisions: [{ id: "division-1", name: "융합" }],
+    };
+    const archive = { ...emptyArchive, programs: [program] };
+    listArchived.mockResolvedValue(archive);
+    listSidebarPrograms.mockResolvedValue([program]);
+
+    render(await TopicsPage({ searchParams: Promise.resolve({ view: "past", programId: "program-1", divisionId: "division-1" }) }));
+
+    expect(listArchived).toHaveBeenNthCalledWith(1, 1, 18, { query: "", programId: "program-1" });
+    expect(listArchived).toHaveBeenNthCalledWith(2, 1, 18, { query: "", programId: "program-1", divisionId: "division-1" });
+    expect(pastProjectsView).toHaveBeenCalledWith(expect.objectContaining({
+      programId: "program-1",
+      divisionId: "division-1",
+      divisions: program.divisions,
     }));
   });
 

@@ -30,6 +30,7 @@ function reader(): StudentTeamRecruitmentReader {
       totalPages: 1,
       total: 0,
     })),
+    listReceivedApplications: vi.fn(async () => []),
     listApplicationHistory: vi.fn(async () => ({
       applications: [],
       page: 1,
@@ -55,6 +56,35 @@ describe("학생 팀 모집 경계", () => {
     await new StudentTeamRecruitmentQueryService(store).listPosts(actor, 2);
 
     expect(store.listPosts).toHaveBeenCalledWith(actor.id, 2);
+  });
+
+  it("받은 지원은 팀장인 팀으로만 좁혀 조회한다", async () => {
+    const store = reader();
+
+    await new StudentTeamRecruitmentQueryService(store).listReceivedApplications(actor, "team-1");
+
+    expect(store.listReceivedApplications).toHaveBeenCalledWith(actor.id, "team-1");
+  });
+
+  it("지원자가 고른 연락처 종류만 저장소에 전달한다", async () => {
+    const store = writer();
+    const now = new Date("2026-08-16T00:00:00Z");
+
+    await new StudentTeamRecruitmentCommandService(store, () => now).apply(actor, {
+      postId: "post-1",
+      desiredRole: "백엔드 개발",
+      message: "API 개발 경험이 있습니다.",
+      sharedContactKinds: ["kakao", "github", "kakao"],
+    });
+
+    expect(store.apply).toHaveBeenCalledWith({
+      postId: "post-1",
+      studentId: actor.id,
+      desiredRole: "백엔드 개발",
+      message: "API 개발 경험이 있습니다.",
+      sharedContactKinds: ["kakao", "github"],
+      appliedAt: now,
+    });
   });
 
   it("모집 글 입력을 정규화해 변경 포트로 전달한다", async () => {

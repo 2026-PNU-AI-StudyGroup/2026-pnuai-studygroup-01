@@ -2,7 +2,7 @@ import { UiAside, UiLink } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { TeamWorkspaceNavigation } from "@/app/projects/[projectId]/_components/team-workspace-navigation";
 import { TeamPeopleSidebar } from "@/app/projects/[projectId]/_components/team-people-sidebar";
 import { ConfirmTeamForm } from "@/app/projects/[projectId]/_components/confirm-team-form";
@@ -13,32 +13,13 @@ import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
 export default async function TeamWorkspaceLayout({ children, params }: { children: ReactNode; params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const { actor, workspace } = await loadTeamWorkspace(projectId);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId);
   const progress = calculateReportSubmissionRate(
     workspace.submittedReportCount,
     workspace.reportCount,
   );
   const reportScheduleAvailable = hasReportSchedule(workspace.reportCount);
   const status = teamStatusPresentation[workspace.status];
-
-  if (workspace.approvalPending) {
-    return (
-      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-        <main className="min-h-screen px-5 py-5 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-          <div className="mx-auto w-full max-w-3xl">
-            <div className="mb-6 flex items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
-              <UiLink href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                <UiText>{"프로젝트 목록"}</UiText>
-              </UiLink>
-              <StatusBadge tone="warning"><UiText>{"승인 대기"}</UiText></StatusBadge>
-            </div>
-            <UiText>{children}</UiText>
-          </div>
-        </main>
-      </AppShell>
-    );
-  }
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">

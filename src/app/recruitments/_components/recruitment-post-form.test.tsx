@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RecruitmentPostForm } from "@/app/recruitments/_components/recruitment-post-form";
-import { createRecruitmentPostAction } from "@/app/recruitments/_actions/recruitment-actions";
+import { RecruitmentPostForm } from "@/app/_components/recruitment-post-form";
+import { createRecruitmentPostAction } from "@/app/_actions/recruitment-actions";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -11,7 +11,7 @@ vi.mock("@/shared/infrastructure/database/prisma", () => ({
   prisma: {},
 }));
 
-vi.mock("@/app/recruitments/_actions/recruitment-actions", () => ({
+vi.mock("@/app/_actions/recruitment-actions", () => ({
   createRecruitmentPostAction: vi.fn(),
 }));
 

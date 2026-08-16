@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import RecruitmentApplicationsPage from "@/app/recruitments/applications/page";
-import MyRecruitmentPostsPage from "@/app/recruitments/mine/page";
 
 const {
   getCurrentActor,
@@ -40,7 +39,7 @@ vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamPagination: () => null,
 }));
 vi.mock("@/modules/student-team/ui/team-modal", () => ({ TeamModal: ({ children }: { children: ReactNode }) => <>{children}</> }));
-vi.mock("@/app/recruitments/_components/recruitment-post-form", () => ({ RecruitmentPostForm: () => null }));
+vi.mock("@/app/_components/recruitment-post-form", () => ({ RecruitmentPostForm: () => null }));
 
 const student = { id: "student-1", name: "정하늘", role: "STUDENT" as const };
 
@@ -61,16 +60,6 @@ describe("빈 목록 CTA", () => {
 
     expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(screen.getByRole("link", { name: "팀원 모집" })).toHaveAttribute("href", "/recruitments");
-  });
-
-  it("내 모집이 없으면 빈 상태의 모집 공고 작성 링크만 보여준다", async () => {
-    listAuthoredPosts.mockResolvedValue({ posts: [], total: 0, page: 1, totalPages: 1 });
-    listLeaderTeams.mockResolvedValue([]);
-
-    render(await MyRecruitmentPostsPage({ searchParams: Promise.resolve({}) }));
-
-    expect(screen.getAllByRole("link", { name: "모집 공고 작성" })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "모집 공고 작성" })).toHaveAttribute("href", "/recruitments/mine?modal=new");
   });
 
 });

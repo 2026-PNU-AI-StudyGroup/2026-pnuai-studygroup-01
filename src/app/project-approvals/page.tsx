@@ -9,6 +9,7 @@ import { ProjectProgramService } from "@/modules/project-program/application/man
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { TopicApprovalService, topicApprovalStatuses, type TopicApprovalStatus } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
+import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-route";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
@@ -24,15 +25,6 @@ type SearchParams = {
   programId?: SearchParamValue;
   status?: SearchParamValue;
 };
-
-function approvalsHref({ page, programId, status }: { page?: number; programId?: string; status?: TopicApprovalStatus }) {
-  const params = new URLSearchParams();
-  if (programId) params.set("programId", programId);
-  if (status) params.set("status", status);
-  if (page && page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/project-approvals?${query}` : "/project-approvals";
-}
 
 export default async function ProjectApprovalsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const actor = await getCurrentActor();
@@ -64,7 +56,7 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
   );
 
   if ((requestedProgramId && !selectedProgramId) || (requestedStatus && !selectedStatus)) {
-    redirect(approvalsHref({ programId: selectedProgramId, status: selectedStatus }));
+    redirect(projectApprovalsHref({ programId: selectedProgramId, status: selectedStatus }));
   }
 
   const requests = await approvalService.list(actor, requestedPage, 20, {
@@ -75,19 +67,21 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals">
-      <main className="content-shell page-enter space-y-6">
-        <PageHeader eyebrow="관리자 작업함" title="프로젝트 승인" description="학생이 등록한 프로젝트를 검토하고 공개 여부를 결정합니다." />
-        <ProjectApprovalLedger
-          adminSurface
-          wideLayout
-          requests={requests.items}
-          total={requests.total}
-          student={false}
-          title="승인 요청"
-          toolbar={<ProjectApprovalFilters programs={activePrograms.map(({ id, name, category }) => ({ id, name, category }))} programId={selectedProgramId} status={selectedStatus} pendingCountByProgram={pendingCountByProgram} />}
-          emptyState={<EmptyState variant="section" title="승인 요청이 없습니다" description={selectedProgramId || selectedStatus ? "조건에 맞는 승인 요청이 없습니다." : "새 승인 요청이 도착하면 이 목록에 표시됩니다."} />}
-        />
-        <ProjectPagination page={requests.page} totalPages={requests.totalPages} ariaLabel="프로젝트 승인 요청 페이지" href={(page) => approvalsHref({ page, programId: selectedProgramId, status: selectedStatus })} />
+      <main className="content-shell page-enter pb-28 lg:pb-16">
+        <div className="mx-auto max-w-6xl space-y-8">
+          <PageHeader eyebrow="관리자 작업함" title="프로젝트 승인" description="학생이 등록한 프로젝트를 검토하고 공개 여부를 결정합니다." />
+          <ProjectApprovalLedger
+            adminSurface
+            wideLayout
+            requests={requests.items}
+            total={requests.total}
+            student={false}
+            title="승인 요청"
+            toolbar={<ProjectApprovalFilters programs={activePrograms.map(({ id, name, category }) => ({ id, name, category }))} programId={selectedProgramId} status={selectedStatus} pendingCountByProgram={pendingCountByProgram} />}
+            emptyState={<EmptyState variant="section" title="승인 요청이 없습니다" description={selectedProgramId || selectedStatus ? "조건에 맞는 승인 요청이 없습니다." : "새 승인 요청이 도착하면 이 목록에 표시됩니다."} />}
+          />
+          <ProjectPagination page={requests.page} totalPages={requests.totalPages} ariaLabel="프로젝트 승인 요청 페이지" href={(page) => projectApprovalsHref({ page, programId: selectedProgramId, status: selectedStatus })} />
+        </div>
       </main>
     </AppShell>
   );

@@ -32,8 +32,6 @@ export type TeamListPage = {
 };
 
 export type TeamWorkspace = TeamListItem & {
-  approvalPending: boolean;
-  canManagePreparation: boolean;
   topicId: string;
   topicDescription: string;
   professorName: string;

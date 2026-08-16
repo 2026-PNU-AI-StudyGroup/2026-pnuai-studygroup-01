@@ -181,6 +181,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       headerAction={registrationAction}
       ballot={ballot}
       votingResults={votingResults}
+      showSubmissionManagement={adminProjectData !== undefined}
       renderItem={(topic, voteSelection) => (
         <ProjectCard
           topic={topic}
