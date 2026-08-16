@@ -137,6 +137,10 @@ fi
 echo "▶ 타이머 활성화"
 systemctl daemon-reload
 systemctl enable --now $timers
+# 이전 실행에서 켜 뒀다가 메일을 끈 경우까지 되돌린다.
+if [ "$email_enabled" != "true" ]; then
+  systemctl disable --now aipms-emails.timer >/dev/null 2>&1 || true
+fi
 
 echo "▶ 부팅 후 컨테이너 자동 기동"
 systemctl enable docker
