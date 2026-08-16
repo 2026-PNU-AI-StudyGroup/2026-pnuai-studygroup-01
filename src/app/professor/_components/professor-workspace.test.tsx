@@ -32,7 +32,7 @@ describe("ProfessorWorkspace", () => {
     expect(container.querySelector("main main")).not.toBeInTheDocument();
   });
 
-  it("학생 조교에게 교수 전용 학생 제안 메뉴를 노출하지 않는다", () => {
+  it("학생 조교에게 교수 전용 학생 등록 메뉴를 노출하지 않는다", () => {
     render(
       <ProfessorWorkspace
         currentPath="/professor/applications"
@@ -45,7 +45,7 @@ describe("ProfessorWorkspace", () => {
     );
 
     expect(screen.getByRole("navigation", { name: "조교 업무" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /학생 제안/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /학생 등록/ })).not.toBeInTheDocument();
   });
 
   it("eyebrow와 설명 없이 제목만 제공할 수 있다", () => {

@@ -37,7 +37,7 @@ function topics(memberCount = 1): PublicTopicPage {
       recruitmentEnabled: true,
       applicationQuestions: [{ id: "question-1", label: "동기", maxLength: 500, required: true }],
       capacity: 4,
-      authorName: "학생 제안자",
+      authorName: "학생 등록자",
       authorRole: "STUDENT",
       status: "ACTIVE",
       effectiveStatus: "FORMING",
@@ -51,8 +51,6 @@ function topics(memberCount = 1): PublicTopicPage {
       programRecruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
       programExecutionStartsAt: new Date("2026-08-01T00:00:00Z"),
       programExecutionEndsAt: new Date("2026-11-30T00:00:00Z"),
-      programSubmissionStartsAt: new Date("2026-11-01T00:00:00Z"),
-      programSubmissionEndsAt: new Date("2026-12-01T00:00:00Z"),
       professorName: "김교수",
       startYear: 2026,
       memberCount,
@@ -147,9 +145,9 @@ describe("ActiveProjectResults", () => {
   });
 
   it("학생 팀 프로젝트 운영 프로그램에서는 직접 지원을 숨긴다", () => {
-    const proposalModeTopics = topics();
-    proposalModeTopics.items[0].studentProjectCreationEnabled = true;
-    render(<ActiveProjectResults topics={proposalModeTopics} canApply leaderTeams={[]} query="" now={now} />);
+    const registrationModeTopics = topics();
+    registrationModeTopics.items[0].studentProjectCreationEnabled = true;
+    render(<ActiveProjectResults topics={registrationModeTopics} canApply leaderTeams={[]} query="" now={now} />);
 
     expect(screen.queryByRole("button", { name: "지원" })).not.toBeInTheDocument();
   });

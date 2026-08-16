@@ -10,6 +10,7 @@ export type ReportWorkspace = {
     title: string;
     position: number;
     required: boolean;
+    submissionEnabled: boolean;
     dueAt: Date;
     versions: Array<{
       id: string;
@@ -96,6 +97,14 @@ export interface ArtifactWriter {
     actor: CurrentActor;
     type: ArtifactType;
     title: string;
+    updatedAt: Date;
+  }): Promise<boolean>;
+  upsertShowcaseVideo(input: {
+    teamId: string;
+    actor: CurrentActor;
+    type: "PRESENTATION_VIDEO";
+    title: string;
+    externalUrl: string;
     updatedAt: Date;
   }): Promise<boolean>;
   removeArtifact(input: {

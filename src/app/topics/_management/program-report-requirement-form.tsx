@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 import styles from "@/app/topics/_management/program-definition-manager.module.css";
 import {
-  archiveProgramReportDefinitionAction,
+  deleteProgramReportDefinitionAction,
   createProgramReportDefinitionAction,
   moveProgramReportDefinitionAction,
   type ProgramReportActionState,
@@ -14,12 +14,13 @@ import {
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { koreanDateTimeInput } from "@/shared/ui/date-time-input-value";
 import { DateTimeInput, TextInput } from "@/shared/ui/form-system";
+import { CustomSelect } from "@/shared/ui/custom-select";
 import { IconButton } from "@/shared/ui/icon-button";
-import { AddIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CloseIcon, EditIcon, TrashIcon } from "@/shared/ui/workspace-icons";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, CloseIcon, EditIcon, TrashIcon } from "@/shared/ui/workspace-icons";
 
 const programReportInitialState: ProgramReportActionState = { status: "idle", message: "" };
 
-export type ProgramReportDefinitionRow = { id: string; title: string; dueAt: Date; versionCount: number };
+export type ProgramReportDefinitionRow = { id: string; title: string; dueAt: Date; required: boolean; versionCount: number };
 type Editor = { mode: "create" } | { mode: "edit"; definition: ProgramReportDefinitionRow };
 
 function formatDate(value: Date) {
@@ -43,21 +44,26 @@ export function ProgramReportRequirementForm({ programId, definitions }: { progr
 }
 
 function DefinitionRow({ definition, programId, index, count, onEdit }: { definition: ProgramReportDefinitionRow; programId: string; index: number; count: number; onEdit: (definition: ProgramReportDefinitionRow) => void }) {
-  const [archiveState, archiveAction, archiving] = useActionState(archiveProgramReportDefinitionAction.bind(null, definition.id, programId), programReportInitialState);
+  const [deleteState, deleteAction, deleting] = useActionState(deleteProgramReportDefinitionAction.bind(null, definition.id, programId), programReportInitialState);
+  const hasSubmissionHistory = definition.versionCount > 0;
+  const deleteTooltipId = `report-delete-restriction-${definition.id}`;
   return <li className={styles.definitionItem}>
     <div className={styles.itemSummary}>
       <div className={styles.itemMeta}>
         <strong>{definition.title}</strong>
-        <span>{`제출 마감 ${formatDate(definition.dueAt)} · 제출 버전 ${definition.versionCount}개`}</span>
+        <span>{`${definition.required ? "필수 제출" : "선택 제출"} · 제출 마감 ${formatDate(definition.dueAt)} · 제출 버전 ${definition.versionCount}개`}</span>
       </div>
       <div className={styles.summaryActions}>
-        <button type="button" className={`button-secondary ${styles.settingsButton}`} onClick={() => onEdit(definition)}><EditIcon className="size-4" /><UiText>{"세부 설정"}</UiText></button>
+        <button type="button" className={`button-secondary ${styles.settingsButton}`} onClick={() => onEdit(definition)}><EditIcon className="size-4" /><UiText>{"수정"}</UiText></button>
         <Move definition={definition} programId={programId} direction="up" disabled={index === 0} />
         <Move definition={definition} programId={programId} direction="down" disabled={index === count - 1} />
-        <form action={archiveAction}><IconButton type="submit" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={archiving} aria-label={`${definition.title} ${definition.versionCount ? "보관" : "삭제"}`} title={definition.versionCount ? "보고서 보관" : "보고서 삭제"}>{definition.versionCount ? <ArchiveIcon className="size-5" /> : <TrashIcon className="size-5" />}</IconButton></form>
+        <span className="group relative inline-flex" tabIndex={hasSubmissionHistory ? 0 : undefined} aria-describedby={hasSubmissionHistory ? deleteTooltipId : undefined}>
+          <form action={deleteAction}><IconButton type="submit" className={hasSubmissionHistory ? "cursor-not-allowed text-[var(--muted)]" : "text-[var(--danger)] hover:text-[var(--danger)]"} disabled={hasSubmissionHistory || deleting} aria-label={`${definition.title} 삭제`} title="보고서 삭제"><TrashIcon className="size-5" /></IconButton></form>
+          {hasSubmissionHistory ? <span id={deleteTooltipId} role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+0.45rem)] right-0 z-20 w-max max-w-56 rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-center text-xs font-semibold leading-5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"><UiText>{"제출 이력이 1개 이상 있어 삭제할 수 없습니다."}</UiText></span> : null}
+        </span>
       </div>
     </div>
-    <ActionMessage state={archiveState} />
+    <ActionMessage state={deleteState} />
   </li>;
 }
 
@@ -71,6 +77,7 @@ function ReportDefinitionDialog({ programId, editor, onRequestClose }: { program
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const titleId = useId();
   const definition = editor.mode === "edit" ? editor.definition : null;
+  const [required, setRequired] = useState(definition?.required ?? true);
   const [state, action, pending] = useActionState(
     editor.mode === "create"
       ? createProgramReportDefinitionAction.bind(null, programId)
@@ -94,15 +101,15 @@ function ReportDefinitionDialog({ programId, editor, onRequestClose }: { program
     <dialog ref={dialogRef} className={styles.dialog} aria-labelledby={titleId} onCancel={(event) => { event.preventDefault(); onRequestClose(); }}>
       <form action={action} className={styles.dialogSurface}>
         <header className={styles.dialogHeader}>
-          <h2 id={titleId}><UiText>{editor.mode === "create" ? "보고서 추가" : "보고서 세부 설정"}</UiText></h2>
+          <h2 id={titleId}><UiText>{editor.mode === "create" ? "보고서 추가" : "보고서 수정"}</UiText></h2>
           <IconButton type="button" onClick={onRequestClose} aria-label="보고서 설정 닫기" title="닫기"><CloseIcon className="size-5" /></IconButton>
         </header>
         <div className={styles.dialogBody}>
           <div className={styles.formGrid}>
-            <label className={styles.field}><span><UiText>{"보고서 제목"}</UiText></span><TextInput name="title" defaultValue={definition?.title ?? ""} maxLength={100} required readOnly={definition?.versionCount ? true : undefined} placeholder="예: 요구사항 분석 보고서" /></label>
+            <label className={styles.field}><span><UiText>{"보고서 제목"}</UiText></span><TextInput name="title" defaultValue={definition?.title ?? ""} maxLength={100} required placeholder="예: 요구사항 분석 보고서" /></label>
             <label className={styles.field}><span><UiText>{"제출 마감"}</UiText></span><DateTimeInput name="dueAt" defaultValue={definition ? koreanDateTimeInput(definition.dueAt) : ""} required aria-label="제출 마감" /></label>
+            <label className={styles.field}><span><UiText>{"제출 구분"}</UiText></span><CustomSelect name="required" ariaLabel="제출 구분" value={String(required)} onValueChange={(value) => setRequired(value === "true")} options={[{ value: "true", label: "필수 제출" }, { value: "false", label: "선택 제출" }]} /></label>
           </div>
-          {definition?.versionCount ? <p className={styles.hint}><UiText>{"제출 이력이 있어 보고서 제목은 변경할 수 없습니다."}</UiText></p> : null}
           <ActionMessage state={state} />
         </div>
         <footer className={styles.dialogFooter}>

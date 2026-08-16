@@ -11,7 +11,7 @@ import {
   presentTasks,
   type TaskPageItem,
 } from "@/app/projects/[projectId]/_lib/task-page-presentation";
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
@@ -110,7 +110,7 @@ function TaskCard({
 
 export default async function TeamTasksPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const { workspace } = await loadTeamWorkspace(projectId);
+  const { workspace } = await loadActiveTeamWorkspace(projectId);
   const canEditTasks = workspace.status !== "COMPLETED" && workspace.access.canContribute;
   const emptyDescription = workspace.status === "COMPLETED" ? "프로젝트 종료 전에 만든 할 일이 없습니다." : !workspace.access.canContribute ? "팀원이 첫 할 일을 만들면 작업 상태를 확인할 수 있습니다." : "첫 할 일과 완료 예정일, 담당자를 정해 주세요.";
   const now = new Date();

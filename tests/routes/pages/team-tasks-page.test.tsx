@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TeamTasksPage from "@/app/projects/[projectId]/tasks/page";
 
-const { loadTeamWorkspace } = vi.hoisted(() => ({
-  loadTeamWorkspace: vi.fn(),
+const { loadActiveTeamWorkspace } = vi.hoisted(() => ({
+  loadActiveTeamWorkspace: vi.fn(),
 }));
 
 vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
-  loadTeamWorkspace,
+  loadActiveTeamWorkspace,
 }));
 
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
@@ -75,7 +75,7 @@ describe("TeamTasksPage", () => {
   afterEach(() => vi.useRealTimers());
 
   it("기여자도 정적 상태와 담당자를 확인하고 별도 편집 컨트롤을 사용한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ workspace });
 
     render(await TeamTasksPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
@@ -86,7 +86,7 @@ describe("TeamTasksPage", () => {
   });
 
   it("읽기 전용 사용자는 정적 상태와 담당자를 확인한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
         access: { ...workspace.access, isTeamMember: false, canContribute: false },
@@ -101,7 +101,7 @@ describe("TeamTasksPage", () => {
   });
 
   it("기한이 지난 진행 중 항목을 먼저 보여주고 완료 항목은 접힌 후순위 영역에 둔다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
         taskCount: 4,
@@ -153,7 +153,7 @@ describe("TeamTasksPage", () => {
   });
 
   it("종료된 프로젝트에서는 생성과 편집 컨트롤을 숨긴다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
         status: "COMPLETED" as const,

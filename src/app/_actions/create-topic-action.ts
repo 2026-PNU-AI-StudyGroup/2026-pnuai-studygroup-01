@@ -31,24 +31,31 @@ export async function createTopicAction(
     const approval = z.object({
       approvalRoute: z.enum(["PROFESSOR", "ADMIN"]),
       requestedProfessorId: z.string().uuid().optional(),
-      studentTeamId: z.string().uuid().optional(),
+      sourceStudentTeamId: z.string().uuid().optional(),
+      projectRepresentativeId: z.string().uuid().optional(),
+      projectTeamName: z.string().trim().min(1).max(100),
     }).safeParse({
       approvalRoute: formData.get("approvalRoute"),
       requestedProfessorId: formData.get("requestedProfessorId") || undefined,
-      studentTeamId: formData.get("studentTeamId") || undefined,
+      sourceStudentTeamId: formData.get("sourceStudentTeamId") || undefined,
+      projectRepresentativeId: formData.get("projectRepresentativeId") || undefined,
+      projectTeamName: formData.get("projectTeamName"),
     });
     if (!approval.success) {
       return { status: "error", message: "승인 요청 방식을 확인해 주세요." };
     }
+    let projectId: string;
     try {
-      await new TopicApprovalService(
+      projectId = await new TopicApprovalService(
         new PrismaTopicApprovalRepository(prisma),
         new PrismaProjectProgramRepository(prisma),
-      ).createStudentProposal(actor, {
+      ).createStudentRegistration(actor, {
         ...parsed.data,
         route: approval.data.approvalRoute,
         requestedProfessorId: approval.data.requestedProfessorId,
-        studentTeamId: approval.data.studentTeamId,
+        sourceStudentTeamId: approval.data.sourceStudentTeamId,
+        projectRepresentativeId: approval.data.projectRepresentativeId,
+        projectTeamName: approval.data.projectTeamName,
       });
     } catch (error) {
       if (error instanceof TopicApprovalOperationError) {
@@ -59,9 +66,10 @@ export async function createTopicAction(
       if (message) return { status: "error", message };
       throw error;
     }
-    revalidatePath("/project-approvals");
+    revalidatePath("/dashboard");
     revalidatePath("/topics");
-    return { status: "success", message: "프로젝트 승인 요청을 보냈습니다." };
+    revalidatePath(`/projects/${projectId}`);
+    return { status: "success", message: "프로젝트 승인 요청을 보냈습니다.", projectId };
   }
 
   try {

@@ -18,22 +18,35 @@ export async function decideTopicApprovalAction(_state: TopicApprovalActionState
     requestId: z.string().uuid(),
     decision: z.enum(["APPROVE", "REJECT"]),
     reviewComment: z.string().max(1000),
-    studentTeamVersion: z.coerce.number().int().positive().optional(),
-    teamCompositionConfirmed: z.literal("on").optional(),
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "승인 결정을 확인해 주세요." };
   try {
     await new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), new PrismaProjectProgramRepository(prisma)).decide(actor, {
       ...parsed.data,
-      teamCompositionConfirmed: parsed.data.teamCompositionConfirmed === "on",
     });
   } catch (error) {
     if (error instanceof TopicApprovalOperationError) return { status: "error", message: error.message };
     throw error;
   }
-  revalidatePath("/project-approvals");
-  revalidatePath(`/project-approvals/${parsed.data.requestId}`);
   revalidatePath("/dashboard");
   revalidatePath("/topics");
   return { status: "success", message: parsed.data.decision === "APPROVE" ? "프로젝트를 승인하고 공개했습니다." : "프로젝트 요청을 반려했습니다." };
+}
+
+export async function withdrawTopicApprovalAction(_state: TopicApprovalActionState, formData: FormData): Promise<TopicApprovalActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = z.object({ projectId: z.string().uuid() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "철회할 프로젝트를 확인해 주세요." };
+  try {
+    await new TopicApprovalService(new PrismaTopicApprovalRepository(prisma), new PrismaProjectProgramRepository(prisma))
+      .withdrawStudentRegistration(actor, parsed.data.projectId);
+  } catch (error) {
+    if (error instanceof TopicApprovalOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/topics");
+  revalidatePath(`/projects/${parsed.data.projectId}`);
+  redirect("/dashboard");
 }

@@ -30,7 +30,12 @@ export async function uploadTeamFile(
   teamId: string,
   purpose: FilePurpose,
   file: File,
-  options: { signal?: AbortSignal; onProgress?: (progress: FileUploadProgress) => void } = {},
+  options: {
+    signal?: AbortSignal;
+    onProgress?: (progress: FileUploadProgress) => void;
+    maxBytes?: number;
+    maxBytesMessage?: string;
+  } = {},
 ): Promise<string> {
-  return uploadStoredFile({ teamId, purpose }, file, options);
+  return uploadStoredFile({ teamId, purpose, maxBytes: options.maxBytes, maxBytesMessage: options.maxBytesMessage }, file, options);
 }

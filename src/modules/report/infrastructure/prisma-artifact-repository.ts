@@ -4,6 +4,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import type { ArtifactWriter } from "@/modules/report/application/report-ports";
 import type { ArtifactType } from "@/modules/report/domain/report-policy";
+import { SHOWCASE_IMAGE_MAX_BYTES } from "@/modules/file/domain/upload-policy";
 
 export class PrismaArtifactRepository implements ArtifactWriter {
   constructor(private readonly client: PrismaClient) {}
@@ -27,7 +28,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
               SELECT 1 FROM "project_team_membership"
               WHERE "projectTeamId" = "project_team"."id" AND "userId" = ${input.actor.id} AND "endedAt" IS NULL
             )
-            AND ${input.at} BETWEEN "project_program"."submissionStartsAt" AND "project_program"."submissionEndsAt"
+            AND ${input.at} BETWEEN "project_program"."executionStartsAt" AND "project_program"."executionEndsAt"
           )
         )
       FOR UPDATE OF "project_team"
@@ -44,6 +45,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
     createdAt: Date;
   }): Promise<{ id: string } | null> {
     return this.client.$transaction(async (transaction) => {
+      if (input.type === "PRESENTATION_VIDEO") return null;
       const authorized = await this.authorizeTeam(transaction, {
         teamId: input.teamId,
         actor: input.actor,
@@ -51,8 +53,8 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       });
       if (authorized.length !== 1) return null;
       if (input.fileId) {
-        const files = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-          SELECT "id" FROM "stored_file"
+        const files = await transaction.$queryRaw<Array<{ id: string; size: number }>>(Prisma.sql`
+          SELECT "id", "size" FROM "stored_file"
           WHERE "id" = ${input.fileId}
             AND "projectTeamId" = ${input.teamId}
             AND "ownerId" = ${input.actor.id}
@@ -61,7 +63,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
             AND "status" = 'READY'
           FOR UPDATE
         `);
-        if (files.length !== 1) return null;
+        if (files.length !== 1 || (input.type === "IMAGE" && files[0].size > SHOWCASE_IMAGE_MAX_BYTES)) return null;
       }
       return transaction.artifact.create({
         data: {
@@ -94,11 +96,68 @@ export class PrismaArtifactRepository implements ArtifactWriter {
         at: input.updatedAt,
       });
       if (authorized.length !== 1) return false;
+      const current = await transaction.artifact.findFirst({
+        where: { id: input.artifactId, projectTeamId: input.teamId },
+        select: { type: true, file: { select: { size: true } } },
+      });
+      if (!current || current.type === "PRESENTATION_VIDEO" || input.type === "PRESENTATION_VIDEO") return false;
+      if (input.type === "IMAGE") {
+        if (current.file && current.file.size > SHOWCASE_IMAGE_MAX_BYTES) return false;
+      }
       const result = await transaction.artifact.updateMany({
         where: { id: input.artifactId, projectTeamId: input.teamId },
         data: { type: input.type, title: input.title },
       });
       return result.count === 1;
+    });
+  }
+
+  upsertShowcaseVideo(input: {
+    teamId: string;
+    actor: CurrentActor;
+    type: "PRESENTATION_VIDEO";
+    title: string;
+    externalUrl: string;
+    updatedAt: Date;
+  }): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const authorized = await this.authorizeTeam(transaction, {
+        teamId: input.teamId,
+        actor: input.actor,
+        at: input.updatedAt,
+      });
+      if (authorized.length !== 1) return false;
+      const existing = await transaction.artifact.findFirst({
+        where: { projectTeamId: input.teamId, type: input.type },
+        select: { id: true, fileId: true },
+      });
+      if (existing) {
+        await transaction.artifact.update({
+          where: { id: existing.id },
+          data: { title: input.title, externalUrl: input.externalUrl, fileId: null },
+        });
+        if (existing.fileId) {
+          const reportReferenceCount = await transaction.reportVersion.count({ where: { fileId: existing.fileId } });
+          if (reportReferenceCount === 0) {
+            await transaction.storedFile.deleteMany({
+              where: { id: existing.fileId, projectTeamId: input.teamId, consumer: "ARTIFACT" },
+            });
+          }
+        }
+        return true;
+      }
+      await transaction.artifact.create({
+        data: {
+          id: randomUUID(),
+          projectTeamId: input.teamId,
+          registeredById: input.actor.id,
+          type: input.type,
+          title: input.title,
+          externalUrl: input.externalUrl,
+          createdAt: input.updatedAt,
+        },
+      });
+      return true;
     });
   }
 
@@ -168,6 +227,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
             AND "purpose" = 'ARTIFACT'
             AND "consumer" = 'ARTIFACT'
             AND "status" = 'READY'
+            AND "size" <= ${SHOWCASE_IMAGE_MAX_BYTES}
         `);
         if (attached !== 1) return false;
       }

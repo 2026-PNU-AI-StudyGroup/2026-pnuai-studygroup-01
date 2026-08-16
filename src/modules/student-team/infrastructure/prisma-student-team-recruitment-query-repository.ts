@@ -26,11 +26,13 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       select: {
         id: true,
         name: true,
+        members: { orderBy: [{ role: "asc" }, { joinedAt: "asc" }], select: { studentId: true, student: { select: { name: true } } } },
         _count: { select: { members: true, invitations: { where: { status: "PENDING" } } } },
       },
     });
-    return teams.map(({ _count, ...team }) => ({
+    return teams.map(({ _count, members, ...team }) => ({
       ...team,
+      members: members.map(({ studentId, student }) => ({ id: studentId, name: student.name })),
       memberCount: _count.members,
       pendingInvitationCount: _count.invitations,
     }));

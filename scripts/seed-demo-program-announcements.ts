@@ -48,8 +48,6 @@ async function seedDemoProgramAnnouncements() {
       recruitmentEndsAt: true,
       executionStartsAt: true,
       executionEndsAt: true,
-      submissionStartsAt: true,
-      submissionEndsAt: true,
     },
   });
   const programById = new Map(programs.map((program) => [program.id, program]));

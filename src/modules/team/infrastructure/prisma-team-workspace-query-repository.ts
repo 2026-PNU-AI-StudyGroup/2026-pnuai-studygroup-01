@@ -27,7 +27,7 @@ const teamListInclude = {
     },
   },
   reports: {
-    where: { required: true },
+    where: { required: true, submissionEnabled: true },
     select: {
       versions: {
         take: 1,
@@ -51,15 +51,29 @@ export class PrismaTeamWorkspaceQueryRepository
   ): Promise<TeamWorkspace | null> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
     const team = await this.client.projectTeam.findFirst({
-      where: { projectId: teamId, ...teamActorWhere(actor) },
+      // 승인 대기 팀은 검토자용 프로젝트 작업 공간이 아니다. 실제 스냅샷
+      // 구성원만 준비 화면을 열 수 있고, 관리자는 승인 요청 화면으로 검토한다.
+      where: {
+        AND: [
+          { projectId: teamId },
+          teamActorWhere(actor),
+          {
+            OR: [
+              { project: { status: { not: "PENDING_APPROVAL" } } },
+              { memberships: { some: { userId: actor.id, endedAt: null } } },
+            ],
+          },
+        ],
+      },
       include: {
         project: { select: {
           id: true,
           title: true,
           status: true,
+          authorId: true,
           description: true,
           managerId: true,
-          program: { select: { name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+          program: { select: { name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -137,7 +151,7 @@ export class PrismaTeamWorkspaceQueryRepository
           },
         },
         reports: {
-          where: { required: true },
+          where: { required: true, submissionEnabled: true },
           select: {
             versions: {
               orderBy: { version: "desc" },
@@ -178,12 +192,14 @@ export class PrismaTeamWorkspaceQueryRepository
       id: team.id,
       topicId: team.project.id,
       topicDescription: team.project.description,
+      approvalPending: team.project.status === "PENDING_APPROVAL",
+      canManagePreparation: team.project.status === "PENDING_APPROVAL" && team.project.authorId === actor.id,
       name: team.name,
       programName: team.project.program.name,
       topicTitle: team.project.title,
       status: projectTeamPhase(team),
-      professorName: team.project.manager!.name,
-      professor: team.project.manager!,
+      professorName: team.project.manager?.name ?? "승인 대기",
+      professor: team.project.manager ?? { id: "", name: "승인 대기", profileImage: null },
       advisorEnabled: team.project.program.advisorEnabled,
       access: {
         isPrimaryAdvisor: team.project.managerId === actor.id,
@@ -203,8 +219,6 @@ export class PrismaTeamWorkspaceQueryRepository
         programRecruitmentEndsAt: team.project.program.recruitmentEndsAt,
         executionStartsAt: team.project.program.executionStartsAt,
         executionEndsAt: team.project.program.executionEndsAt,
-        submissionStartsAt: team.project.program.submissionStartsAt,
-        submissionEndsAt: team.project.program.submissionEndsAt,
       },
       memberCount: team.memberships.length,
       taskCount: team.tasks.length,
@@ -265,17 +279,23 @@ export class PrismaTeamWorkspaceQueryRepository
   ): Promise<TeamListPage> {
     const visibility = teamActorWhere(actor);
     const now = new Date();
+    // 승인 전 등록은 승인 요청으로만 다룬다. 프로젝트 대시보드에는
+    // 실제로 확정된 ACTIVE 프로젝트만 노출한다.
+    const approvedProject: Prisma.ProjectTeamWhereInput = {
+      confirmedAt: { not: null },
+      project: { status: "ACTIVE" },
+    };
     const statusWhere: Prisma.ProjectTeamWhereInput = status === "ACTIVE"
       ? { project: { program: { endsAt: { gt: now } } } }
       : status === "COMPLETED"
         ? { confirmedAt: { not: null }, project: { program: { endsAt: { lte: now } } } }
         : {};
-    const where: Prisma.ProjectTeamWhereInput = { AND: [visibility, statusWhere] };
+    const where: Prisma.ProjectTeamWhereInput = { AND: [visibility, approvedProject, statusWhere] };
     const [total, all, active, completed] = await Promise.all([
       this.client.projectTeam.count({ where }),
-      this.client.projectTeam.count({ where: visibility }),
-      this.client.projectTeam.count({ where: { AND: [visibility, { project: { program: { endsAt: { gt: now } } } }] } }),
-      this.client.projectTeam.count({ where: { AND: [visibility, { confirmedAt: { not: null }, project: { program: { endsAt: { lte: now } } } }] } }),
+      this.client.projectTeam.count({ where: { AND: [visibility, approvedProject] } }),
+      this.client.projectTeam.count({ where: { AND: [visibility, approvedProject, { project: { program: { endsAt: { gt: now } } } }] } }),
+      this.client.projectTeam.count({ where: { AND: [visibility, approvedProject, { project: { program: { endsAt: { lte: now } } } }] } }),
     ]);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, totalPages);

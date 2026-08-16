@@ -16,8 +16,6 @@ function program(index: number): DemoProgramAnnouncementProgram {
     recruitmentEndsAt: new Date(`${year}-04-01T23:59:59+09:00`),
     executionStartsAt: new Date(`${year}-04-02T00:00:00+09:00`),
     executionEndsAt: new Date(`${year}-11-30T23:59:59+09:00`),
-    submissionStartsAt: new Date(`${year}-12-01T00:00:00+09:00`),
-    submissionEndsAt: new Date(`${year}-12-20T23:59:59+09:00`),
   };
 }
 

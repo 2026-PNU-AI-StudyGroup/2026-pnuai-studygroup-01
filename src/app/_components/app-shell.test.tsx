@@ -112,14 +112,14 @@ describe("AppShell", () => {
     expect(links[0]).toHaveAttribute("aria-current", "page");
   });
 
-  it("학생 프로젝트 등록은 프로젝트 찾기 흐름으로 표시하고 승인 요청은 내 프로젝트로 표시한다", async () => {
+  it("학생 프로젝트 등록과 승인 요청을 내 프로젝트 흐름으로 표시한다", async () => {
     const firstRender = render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/topics", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "프로젝트 찾기" })[0]).toHaveAttribute("aria-current", "page");
     expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).not.toHaveAttribute("aria-current");
 
     firstRender.unmount();
-    render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/project-approvals", preferredLocale: "ko", children: <p>본문</p> }));
+    render(await AppShell({ role: "STUDENT", userId: "student-1", userName: "테스트", currentPath: "/dashboard", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "내 프로젝트" })[0]).toHaveAttribute("aria-current", "page");
   });
@@ -170,7 +170,7 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "프로그램" })).not.toBeInTheDocument();
   });
 
-  it("관리자에게 프로젝트 승인과 운영 관리를 각각 전역 메뉴로 제공한다", async () => {
+  it("관리자에게만 프로젝트 승인 전역 메뉴를 제공한다", async () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/project-approvals", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "프로젝트 승인" })).toHaveLength(2);
@@ -181,7 +181,7 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).not.toHaveAttribute("aria-current");
     expect(screen.getAllByRole("link", { name: "공지사항" })).toHaveLength(2);
     expect([...screen.getByRole("navigation", { name: "주요 메뉴" }).querySelectorAll("a")].map((link) => link.textContent)).toEqual([
-      "프로젝트 찾기",
+      "프로젝트 현황",
       "프로젝트 승인",
       "공지사항",
       "운영 관리",
@@ -194,20 +194,18 @@ describe("AppShell", () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/admin/users", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).toHaveAttribute("aria-current", "page");
-    expect(screen.getAllByRole("link", { name: "프로젝트 승인" })[0]).not.toHaveAttribute("aria-current");
   });
 
-  it("프로그램 관리 경로에서는 운영 관리만 현재 메뉴로 표시한다", async () => {
+  it("프로그램 관리 경로에서는 프로젝트 현황 문맥을 유지한다", async () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/topics/manage/program-1/reports", preferredLocale: "ko", children: <p>본문</p> }));
 
-    expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).toHaveAttribute("aria-current", "page");
-    expect(screen.getAllByRole("link", { name: "프로젝트 찾기" })[0]).not.toHaveAttribute("aria-current");
+    expect(screen.getAllByRole("link", { name: "프로젝트 현황" })[0]).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).not.toHaveAttribute("aria-current");
   });
 
   it("관리자가 교수 프로젝트 관리 화면을 열어도 운영 관리 문맥을 유지한다", async () => {
     render(await AppShell({ role: "ADMIN", userId: "admin-1", userName: "테스트", currentPath: "/professor/topics", preferredLocale: "ko", children: <p>본문</p> }));
 
     expect(screen.getAllByRole("link", { name: "운영 관리" })[0]).toHaveAttribute("aria-current", "page");
-    expect(screen.getAllByRole("link", { name: "프로젝트 승인" })[0]).not.toHaveAttribute("aria-current");
   });
 });

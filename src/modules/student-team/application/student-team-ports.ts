@@ -43,7 +43,7 @@ export interface StudentTeamReader {
 
 export interface StudentTeamWriter {
   create(input: { leaderId: string; name: string; description: string; createdAt: Date }): Promise<string>;
-  invite(input: { teamId: string; leaderId: string; email: string; invitedAt: Date }): Promise<"INVITED" | "NOT_FOUND" | "FORBIDDEN" | "ALREADY_MEMBER" | "LOCKED">;
+  invite(input: { teamId: string; leaderId: string; email: string; invitedAt: Date }): Promise<"INVITED" | "NOT_FOUND" | "FORBIDDEN" | "ALREADY_MEMBER">;
   respond(input: { invitationId: string; studentId: string; email: string; decision: "ACCEPT" | "DECLINE"; respondedAt: Date }): Promise<"ACCEPTED" | "DECLINED" | "NOT_FOUND" | "CONFLICT">;
   transferLeadership(input: { teamId: string; leaderId: string; nextLeaderId: string; changedAt: Date }): Promise<boolean>;
   removeMember(input: { teamId: string; leaderId: string; studentId: string; changedAt: Date }): Promise<boolean>;

@@ -44,8 +44,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           ? await transaction.programDivision.findMany({ where: { programId: created.id }, select: { id: true, name: true } })
           : [];
         const divisionByName = new Map(divisions.map((division) => [division.name.toLocaleLowerCase("ko-KR"), division.id]));
-        const customDivisionIds = [...new Set(rubricDefinitions.flatMap((rubric) => rubric.divisionName ? [divisionByName.get(rubric.divisionName.toLocaleLowerCase("ko-KR"))] : []).filter((id): id is string => Boolean(id)))];
-        if (customDivisionIds.length) await transaction.programDivision.updateMany({ where: { id: { in: customDivisionIds }, programId: created.id }, data: { rubricMode: "CUSTOM" } });
         for (const [position, rubric] of rubricDefinitions.entries()) {
           const divisionId = rubric.divisionName ? divisionByName.get(rubric.divisionName.toLocaleLowerCase("ko-KR")) : null;
           await transaction.rubricDefinition.create({
@@ -60,8 +58,8 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             },
           });
         }
-        if (reportDefinitions.length) await transaction.programReportDefinition.createMany({ data: reportDefinitions.map((definition, position) => ({ programId: created.id, ...definition, position })) });
-        await enqueueTranslations(transaction, [input.name, input.category, input.description, ...rubricDefinitions.flatMap((rubric) => [rubric.title, ...rubric.criteria.map((criterion) => criterion.label)]), ...reportDefinitions.map((definition) => definition.title)]);
+        if (reportDefinitions.length) await transaction.programReportDefinition.createMany({ data: reportDefinitions.map((definition, position) => ({ programId: created.id, ...definition, required: definition.required ?? true, position })) });
+        await enqueueTranslations(transaction, [input.name, input.category, ...rubricDefinitions.flatMap((rubric) => [rubric.title, ...rubric.criteria.map((criterion) => criterion.label)]), ...reportDefinitions.map((definition) => definition.title)]);
         return created.id;
       });
     } catch (error) {
@@ -145,21 +143,24 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           where: { project: { programId: id, divisionId: { in: removedIds } } },
           select: { id: true },
         })).map((team) => team.id);
-        if (projectTeamIds.length && await transaction.rubricScore.findFirst({
-          where: { evaluation: { projectTeamId: { in: projectTeamIds } } },
+        const divisionRubricIds = (await transaction.rubricDefinition.findMany({
+          where: { programId: id, divisionId: { in: removedIds } },
           select: { id: true },
-        })) return "SCORED_RUBRIC";
+        })).map((rubric) => rubric.id);
+        if (divisionRubricIds.length) {
+          const [staffScore, advisorEvaluation] = await Promise.all([
+            transaction.rubricScore.findFirst({ where: { evaluation: { rubricId: { in: divisionRubricIds } } }, select: { id: true } }),
+            transaction.advisorEvaluation.findFirst({ where: { rubricId: { in: divisionRubricIds } }, select: { id: true } }),
+          ]);
+          if (staffScore || advisorEvaluation) return "SCORED_RUBRIC";
+        }
         if ((projectCount > 0 || voteCount > 0 || switchesVotingScope) && !sameDivisionSyncImpact(input.confirmDivisionSync, impact)) {
           return { status: "DIVISION_SYNC_CONFIRMATION_REQUIRED", impact };
         }
 
-        const customRubricIds = (await transaction.rubricDefinition.findMany({
-          where: { programId: id, divisionId: { in: removedIds } },
-          select: { id: true },
-        })).map((rubric) => rubric.id);
-        if (customRubricIds.length) {
-          await transaction.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: customRubricIds } } });
-          await transaction.rubricDefinition.deleteMany({ where: { id: { in: customRubricIds } } });
+        if (divisionRubricIds.length) {
+          await transaction.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: divisionRubricIds } } });
+          await transaction.rubricDefinition.deleteMany({ where: { id: { in: divisionRubricIds } } });
         }
         await transaction.topic.updateMany({ where: { programId: id, divisionId: { in: removedIds } }, data: { divisionId: null } });
         const commonRubricIds = (await transaction.rubricDefinition.findMany({
@@ -203,7 +204,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         data: {
           name: input.name,
           category: input.category,
-          description: input.description,
           isPublic: input.isPublic,
           firstPublishedAt: input.isPublic && !program.isPublic && program.firstPublishedAt === null ? new Date() : undefined,
         },
@@ -290,7 +290,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         data: {
           name: input.name,
           category: input.category,
-          description: input.description,
           isPublic: input.isPublic,
           startsAt: input.startsAt,
           endsAt: input.endsAt,
@@ -301,8 +300,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           recruitmentEndsAt: input.recruitmentEndsAt,
           executionStartsAt: input.executionStartsAt,
           executionEndsAt: input.executionEndsAt,
-          submissionStartsAt: input.submissionStartsAt,
-          submissionEndsAt: input.submissionEndsAt,
           endProcessedAt: input.endsAt && input.endsAt > new Date() && input.endsAt.getTime() !== programs[0].endsAt.getTime()
             ? null
             : undefined,
@@ -332,8 +329,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         ...input,
         studentProjectCreationEnabled: transitionToDirect ? false : current.studentProjectCreationEnabled,
         projectTeamMinSize: transitionToDirect ? 1 : current.projectTeamMinSize,
-        submissionStartsAt: input.executionStartsAt,
-        submissionEndsAt: input.executionEndsAt,
       });
       await transaction.projectProgram.update({
         where: { id },
@@ -346,8 +341,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           recruitmentEndsAt: normalized.recruitmentEndsAt,
           executionStartsAt: normalized.executionStartsAt,
           executionEndsAt: normalized.executionEndsAt,
-          submissionStartsAt: normalized.submissionStartsAt,
-          submissionEndsAt: normalized.submissionEndsAt,
           studentProjectCreationEnabled: normalized.studentProjectCreationEnabled,
           projectTeamMinSize: normalized.projectTeamMinSize,
           projectTeamMaxSize: normalized.projectTeamMaxSize,
@@ -433,8 +426,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
-    submissionStartsAt: Date;
-    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
     projectTeamMinSize: number;
@@ -452,8 +443,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         recruitmentEndsAt: true,
         executionStartsAt: true,
         executionEndsAt: true,
-        submissionStartsAt: true,
-        submissionEndsAt: true,
         advisorEnabled: true,
         studentProjectCreationEnabled: true,
         projectTeamMinSize: true,

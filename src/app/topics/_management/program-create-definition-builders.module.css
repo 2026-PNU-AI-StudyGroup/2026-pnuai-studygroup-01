@@ -256,7 +256,7 @@
 
 @media (min-width: 40rem) {
   .reportQuickAdd {
-    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr) minmax(8rem, 0.5fr) auto;
   }
 
   .rubricQuickAdd {
@@ -264,7 +264,7 @@
   }
 
   .reportSettings {
-    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr);
+    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.75fr) minmax(8rem, 0.5fr);
   }
 
   .rubricSettingsModal {

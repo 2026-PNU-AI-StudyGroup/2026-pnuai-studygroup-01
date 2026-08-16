@@ -5,6 +5,7 @@ import {
   normalizeArtifact,
   normalizeDecisionComment,
   normalizeReportFeedback,
+  normalizeYoutubeUrl,
 } from "@/modules/report/domain/report-policy";
 
 describe("보고서 정책", () => {
@@ -25,5 +26,12 @@ describe("보고서 정책", () => {
     expect(normalizeReportFeedback("  좋은 진행입니다  ")).toBe("좋은 진행입니다");
     expect(() => normalizeReportFeedback("   ")).toThrow(InvalidReportInputError);
     expect(() => normalizeReportFeedback("a".repeat(2_001))).toThrow(InvalidReportInputError);
+  });
+
+  it("쇼케이스 영상은 HTTPS YouTube 링크만 정규화한다", () => {
+    expect(normalizeYoutubeUrl("https://youtu.be/Uou5iwWqTDA"))
+      .toBe("https://www.youtube.com/watch?v=Uou5iwWqTDA");
+    expect(() => normalizeYoutubeUrl("https://example.com/video")).toThrow(InvalidReportInputError);
+    expect(() => normalizeYoutubeUrl("https://notyoutube.com/watch?v=Uou5iwWqTDA")).toThrow(InvalidReportInputError);
   });
 });

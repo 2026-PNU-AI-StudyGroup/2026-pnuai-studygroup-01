@@ -132,7 +132,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
       "focus-within:bg-[var(--primary-subtle)]",
     );
     expect(screen.queryByRole("link", { name: "새 프로젝트 등록" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "학생 제안 검토" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "학생 등록 검토" })).not.toBeInTheDocument();
   });
 
   it("배정된 프로젝트의 지원서만 조교 문맥으로 조회한다", async () => {
@@ -176,7 +176,7 @@ describe("학생 조교 교수 작업공간 페이지", () => {
     render(await ProfessorTopicsPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getAllByRole("link", { name: "새 프로젝트 등록" })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "학생 제안 검토" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "학생 등록 검토" })).toBeInTheDocument();
   });
 
   it("공개 프로그램이 없으면 새 프로젝트 화면의 프로젝트 목록 링크를 빈 상태에만 둔다", async () => {

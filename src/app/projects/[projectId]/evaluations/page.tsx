@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { EvaluationScoreForm } from "@/app/projects/[projectId]/_components/evaluation-score-form";
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { canTeamMemberViewEvaluation, isEvaluationComplete } from "@/modules/rubric/domain/rubric-policy";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
@@ -24,7 +24,7 @@ function statusOf(input: { legacy: boolean; legacyMemberVisible: boolean | null;
 
 export default async function TeamEvaluationsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const { actor, workspace } = await loadTeamWorkspace(projectId);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId);
   const now = new Date();
   const isStaff = workspace.access.canSupervise || actor.role === "ADMIN";
   const records = await prisma.projectTeamRubricEvaluation.findMany({

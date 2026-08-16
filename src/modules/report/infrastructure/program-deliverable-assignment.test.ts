@@ -6,8 +6,7 @@ import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure
 function transactionFor(input: {
   status?: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
   divisionId?: string | null;
-  rubricMode?: "INHERIT_COMMON" | "CUSTOM" | null;
-  reports?: Array<{ id: string; title: string; dueAt: Date }>;
+  reports?: Array<{ id: string; title: string; dueAt: Date; required?: boolean }>;
   rubrics?: Array<{ id: string }>;
 }) {
   const reportCreateMany = vi.fn(async () => ({ count: input.reports?.length ?? 0 }));
@@ -20,9 +19,6 @@ function transactionFor(input: {
           programId: "program-1",
           status: input.status ?? "ACTIVE",
           divisionId: input.divisionId ?? null,
-          division: input.divisionId
-            ? { rubricMode: input.rubricMode ?? "INHERIT_COMMON" }
-            : null,
         },
       })),
     },
@@ -40,10 +36,9 @@ describe("프로그램 산출물 팀 할당", () => {
     const dueAt = new Date("2026-09-01T09:00:00Z");
     const setup = transactionFor({
       divisionId: "division-1",
-      rubricMode: "INHERIT_COMMON",
       reports: [
-        { id: "report-definition-1", title: "설계 검토", dueAt },
-        { id: "report-definition-2", title: "최종 산출물", dueAt },
+        { id: "report-definition-1", title: "설계 검토", dueAt, required: true },
+        { id: "report-definition-2", title: "최종 산출물", dueAt, required: false },
       ],
       rubrics: [{ id: "common-rubric-1" }, { id: "common-rubric-2" }],
     });
@@ -52,8 +47,8 @@ describe("프로그램 산출물 팀 할당", () => {
 
     expect(setup.reportCreateMany).toHaveBeenCalledWith({
       data: [
-        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-1", titleSnapshot: "설계 검토", required: true }),
-        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-2", titleSnapshot: "최종 산출물", required: true }),
+        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-1", titleSnapshot: "설계 검토", required: true, submissionEnabled: true }),
+        expect.objectContaining({ projectTeamId: "team-1", definitionId: "report-definition-2", titleSnapshot: "최종 산출물", required: false, submissionEnabled: true }),
       ],
       skipDuplicates: true,
     });
@@ -65,23 +60,31 @@ describe("프로그램 산출물 팀 할당", () => {
       skipDuplicates: true,
     });
     expect(setup.tx.rubricDefinition.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ programId: "program-1", divisionId: null }),
+      where: expect.objectContaining({ programId: "program-1", OR: [{ divisionId: null }, { divisionId: "division-1" }] }),
     }));
   });
 
-  it("전용 모드 분과에는 공통표 대신 해당 분과 채점표만 할당한다", async () => {
+  it("분과 팀에는 공통 채점표와 해당 분과 채점표를 함께 할당한다", async () => {
     const setup = transactionFor({
       divisionId: "division-1",
-      rubricMode: "CUSTOM",
-      rubrics: [{ id: "division-rubric-1" }],
+      rubrics: [{ id: "common-rubric-1" }, { id: "division-rubric-1" }],
     });
 
     await assignProgramDeliverablesToTeam(setup.tx, "team-1", new Date("2026-08-11T03:00:00Z"));
 
     expect(setup.tx.rubricDefinition.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ programId: "program-1", divisionId: "division-1" }),
+      where: expect.objectContaining({
+        programId: "program-1",
+        OR: [{ divisionId: null }, { divisionId: "division-1" }],
+      }),
     }));
-    expect(setup.evaluationCreateMany).toHaveBeenCalledTimes(1);
+    expect(setup.evaluationCreateMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({ rubricId: "common-rubric-1" }),
+        expect.objectContaining({ rubricId: "division-rubric-1" }),
+      ],
+      skipDuplicates: true,
+    });
   });
 
   it("활성 상태가 아닌 프로젝트에는 새 요구사항을 할당하지 않는다", async () => {

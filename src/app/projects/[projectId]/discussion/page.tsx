@@ -6,7 +6,7 @@ import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
-import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { DiscussionAutoRefresh } from "@/app/projects/[projectId]/_components/discussion-auto-refresh";
 import { DiscussionPostForm } from "@/app/projects/[projectId]/_components/discussion-post-form";
 import { EmptyState } from "@/shared/ui/page-primitives";
@@ -34,7 +34,7 @@ function PersonIcon({ own = false }: { own?: boolean }) {
 export default async function TeamDiscussionPage({ params, searchParams }: { params: Promise<{ projectId: string }>; searchParams: Promise<{ page?: SearchParamValue }> }) {
   const { projectId } = await params;
   const requestedPage = Number(firstSearchParam((await searchParams).page) ?? "1");
-  const { actor, workspace } = await loadTeamWorkspace(projectId, requestedPage);
+  const { actor, workspace } = await loadActiveTeamWorkspace(projectId, requestedPage);
   const emptyDescription = workspace.status === "COMPLETED" ? "프로젝트 종료 전에 나눈 대화가 없습니다." : "질문이나 의견을 작성해 대화를 시작하세요.";
   const participantCount = workspace.members.length + workspace.assistants.length + (workspace.advisorEnabled ? 1 : 0);
 

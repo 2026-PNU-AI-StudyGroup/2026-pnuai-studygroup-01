@@ -49,8 +49,8 @@ export class PrismaReportSubmissionRepository
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'
             OR (
-              ${input.submittedAt} >= "project_program"."submissionStartsAt"
-              AND ${input.submittedAt} <= "project_program"."submissionEndsAt"
+              ${input.submittedAt} >= "project_program"."executionStartsAt"
+              AND ${input.submittedAt} <= "project_program"."executionEndsAt"
               AND EXISTS (
                 SELECT 1 FROM "project_team_membership"
                 WHERE "projectTeamId" = "project_team"."id"
@@ -67,7 +67,7 @@ export class PrismaReportSubmissionRepository
         JOIN "program_report_definition" ON "program_report_definition"."id" = "report"."definitionId"
         WHERE "report"."id" = ${input.reportId}
           AND "report"."projectTeamId" = ${input.teamId}
-          AND "report"."required" = true
+          AND "report"."submissionEnabled" = true
           AND "program_report_definition"."archivedAt" IS NULL
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN'

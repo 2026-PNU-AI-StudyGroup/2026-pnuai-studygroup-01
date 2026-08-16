@@ -14,7 +14,10 @@ import { hasTopicsFilters, topicsHref } from "@/app/topics/_lib/topics-query";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
 import type { AdminProjectCardData } from "@/modules/team/application/list-admin-project-card-data";
-import type { AdminProjectOperationFilter } from "@/modules/team/application/list-admin-program-project-operations";
+import type {
+  AdminProjectReportFilter,
+  AdminProjectTeamFilter,
+} from "@/modules/team/application/list-admin-program-project-operations";
 import { calculateReportSubmissionRate } from "@/modules/team/domain/project-progress";
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
@@ -139,7 +142,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
   );
 }
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, votingResults, adminProjectData, operation, registrationAction }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, registrationAction }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -150,10 +153,11 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
   adminProjectData?: AdminProjectCardData[];
-  operation?: AdminProjectOperationFilter;
+  teamStatus?: AdminProjectTeamFilter;
+  reportStatus?: AdminProjectReportFilter;
   registrationAction?: ReactNode;
 }) {
-  const hasFilters = hasTopicsFilters({ q: query, divisionId, operation });
+  const hasFilters = hasTopicsFilters({ q: query, divisionId, teamStatus, reportStatus });
   const adminDataByTopicId = new Map(adminProjectData?.map((data) => [data.topicId, data]));
   return (
     <ProjectResultsLayout
@@ -167,13 +171,13 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       emptyState={{
         unfilteredTitle: "아직 공개된 프로젝트가 없습니다",
         unfilteredDescription: "공개된 프로젝트가 생기면 이 목록에서 확인할 수 있습니다.",
-        filteredDescription: operation && operation !== "all"
-          ? "분과, 검색어 또는 운영 조건을 바꿔 다시 확인해 주세요."
+        filteredDescription: teamStatus && teamStatus !== "all" || reportStatus && reportStatus !== "all"
+          ? "분과, 검색어 또는 프로젝트 조건을 바꿔 다시 확인해 주세요."
           : "분과 또는 검색어를 바꿔 다시 확인해 주세요.",
       }}
       listLabel="프로젝트 목록"
       paginationLabel="프로젝트 페이지"
-      hrefForPage={(page) => topicsHref({ programId, q: query, divisionId, operation, page })}
+      hrefForPage={(page) => topicsHref({ programId, q: query, divisionId, teamStatus, reportStatus, page })}
       headerAction={registrationAction}
       ballot={ballot}
       votingResults={votingResults}

@@ -58,9 +58,7 @@ export class StudentTeamCommandService {
       throw new StudentTeamOperationError(
         result === "ALREADY_MEMBER"
           ? "이미 팀에 참여 중인 사용자입니다."
-          : result === "LOCKED"
-            ? "프로젝트 승인 대기 중에는 팀원을 새로 초대할 수 없습니다."
-            : "팀장만 활성 팀에 초대할 수 있습니다.",
+          : "팀장만 활성 팀에 초대할 수 있습니다.",
       );
     }
   }

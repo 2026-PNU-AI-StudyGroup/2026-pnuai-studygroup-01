@@ -18,6 +18,7 @@ import { AddIcon, TrashIcon } from "@/shared/ui/workspace-icons";
 export type TopicFormActionState = {
   status: "idle" | "error" | "success";
   message: string;
+  projectId?: string;
 };
 
 type TopicFormAction = (
@@ -41,7 +42,7 @@ type TopicFormProps = {
   successHref?: string;
   studentApproval?: {
     professors: Array<{ id: string; name: string; email: string }>;
-    studentTeams: Array<{ id: string; name: string; memberCount: number; pendingInvitationCount?: number }>;
+    studentTeams: Array<{ id: string; name: string; memberCount: number; pendingInvitationCount?: number; members?: Array<{ id: string; name: string }> }>;
   };
   initialTopic?: TopicSummary;
   wizard?: {
@@ -60,7 +61,215 @@ type TopicFormQuestion = {
 
 type TopicWizardStep = "BASIC" | "REQUIREMENTS" | "APPLICATION" | "FINAL" | "REVIEW";
 
-export function TopicForm({ action: createTopic, programs, defaultProgramId, successHref, studentApproval, initialTopic, wizard }: TopicFormProps) {
+const STUDENT_REGISTRATION_STEPS = ["팀 선택", "프로젝트 정보", "확인 및 제출"] as const;
+
+export function TopicForm(props: TopicFormProps) {
+  if (props.studentApproval && !props.initialTopic) {
+    if (!props.wizard) throw new Error("학생 프로젝트 등록은 전용 단계형 폼으로만 렌더링해야 합니다.");
+    return <StudentProjectRegistrationWizard {...props} studentApproval={props.studentApproval} wizard={props.wizard} />;
+  }
+  return <TopicFormEditor {...props} />;
+}
+
+function StudentProjectRegistrationWizard({ action: createTopic, programs, defaultProgramId, studentApproval, wizard }: TopicFormProps & {
+  studentApproval: NonNullable<TopicFormProps["studentApproval"]>;
+  wizard: NonNullable<TopicFormProps["wizard"]>;
+}) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(createTopic, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [step, setStep] = useState(0);
+  const [selectedProgramId, setSelectedProgramId] = useState(defaultProgramId ?? "");
+  const [selectedDivisionId, setSelectedDivisionId] = useState("");
+  const [studentTeamId, setStudentTeamId] = useState("");
+  const [projectRepresentativeId, setProjectRepresentativeId] = useState("");
+  const [projectTeamName, setProjectTeamName] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
+  const [requestedProfessorId, setRequestedProfessorId] = useState("");
+  const submitIntent = useRef(false);
+  const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
+  const teamMinSize = selectedProgram?.projectTeamMinSize ?? 2;
+  const teamMaxSize = selectedProgram?.projectTeamMaxSize ?? 6;
+  const eligibleTeams = studentApproval.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => (
+    pendingInvitationCount === 0 && memberCount >= teamMinSize && memberCount <= teamMaxSize
+  ));
+  const pendingInvitationTeams = studentApproval.studentTeams.filter(({ pendingInvitationCount = 0 }) => pendingInvitationCount > 0);
+  const invalidSizeTeams = studentApproval.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => (
+    pendingInvitationCount === 0 && (memberCount < teamMinSize || memberCount > teamMaxSize)
+  ));
+  const advisorEnabled = selectedProgram?.advisorEnabled;
+  const selectedStudentTeam = studentApproval.studentTeams.find(({ id }) => id === studentTeamId);
+
+  useEffect(() => {
+    wizard.onStepChange?.({ index: step, labels: [...STUDENT_REGISTRATION_STEPS] });
+  }, [step, wizard]);
+
+  function validateStep(stepIndex: number) {
+    const sectionId = ["topic-team", "topic-project-info", "topic-registration-review"][stepIndex];
+    const controls = Array.from(formRef.current?.querySelectorAll<HTMLElement>(`#${sectionId} input, #${sectionId} textarea, #${sectionId} select`) ?? []);
+    const invalid = controls.find((control) => "checkValidity" in control && !(control as HTMLInputElement).checkValidity());
+    if (!invalid) return true;
+    (invalid as HTMLInputElement).reportValidity();
+    invalid.focus();
+    return false;
+  }
+
+  function next() {
+    if (!validateStep(step)) return;
+    setStep((current) => Math.min(current + 1, STUDENT_REGISTRATION_STEPS.length - 1));
+  }
+
+  function submit() {
+    if (!formRef.current || step !== STUDENT_REGISTRATION_STEPS.length - 1) return;
+    submitIntent.current = true;
+    formRef.current.requestSubmit();
+  }
+
+  if (state.status === "success") {
+    return (
+      <div className="grid min-h-72 place-content-center gap-5 text-center">
+        <div className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--success-subtle)] text-2xl font-bold text-[var(--success)]">✓</div>
+        <div>
+          <h3 className="text-xl font-bold"><UiText>{"승인 요청을 보냈습니다"}</UiText></h3>
+          <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"검토 상태는 내 승인 요청에서 확인할 수 있습니다."}</UiText></p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-3">
+          {state.projectId ? <button type="button" className="button-secondary" onClick={() => router.replace(`/projects/${state.projectId}`)}><UiText>{"프로젝트 준비 공간 열기"}</UiText></button> : null}
+          <button type="button" className="button-primary" onClick={() => router.replace(wizard.closeHref)}><UiText>{"완료"}</UiText></button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      ref={formRef}
+      action={action}
+      noValidate
+      aria-busy={pending}
+      className="mx-auto grid max-w-4xl gap-6"
+      onSubmit={(event) => {
+        const explicitlySubmitted = step === STUDENT_REGISTRATION_STEPS.length - 1 && submitIntent.current;
+        submitIntent.current = false;
+        if (explicitlySubmitted) return;
+        event.preventDefault();
+        if (step < STUDENT_REGISTRATION_STEPS.length - 1) next();
+      }}
+    >
+      <input type="hidden" name="recruitmentEnabled" value="false" />
+      <input type="hidden" name="applicationMode" value="TEAM_ONLY" />
+      <input type="hidden" name="capacity" value="1" />
+
+      <FormSection id="topic-team" title="팀 선택" appearance="plain" hidden={step !== 0}>
+        {eligibleTeams.length || wizard.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`확정 팀원 ${teamMinSize}–${teamMaxSize}명인 팀만 선택할 수 있습니다.`} required>
+          <CustomSelect
+            id="topic-student-team"
+            name="sourceStudentTeamId"
+            ariaLabel="참여 팀"
+            value={studentTeamId}
+            onValueChange={(value) => {
+              if (value === CREATE_TEAM_OPTION && wizard.createTeamHref) {
+                router.replace(wizard.createTeamHref);
+                return;
+              }
+              const nextTeam = studentApproval.studentTeams.find(({ id }) => id === value);
+              setStudentTeamId(value);
+              setProjectTeamName(nextTeam?.name ?? "");
+              setProjectRepresentativeId("");
+            }}
+            required
+            placeholder="팀을 선택하세요"
+            options={[
+              ...eligibleTeams.map((team) => ({ value: team.id, label: team.name, description: `${team.memberCount}명` })),
+              ...(wizard.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동" }] : []),
+            ]}
+          />
+        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{pendingInvitationTeams.length ? "초대 응답이 모두 끝난 팀만 프로젝트를 등록할 수 있습니다." : "프로젝트를 등록하려면 먼저 팀을 만들어야 합니다."}</UiText></p>}
+        {selectedStudentTeam ? <div className="grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4">
+          <div><p className="text-sm font-bold"><UiText>{"팀원"}</UiText></p><ul className="mt-2 flex flex-wrap gap-2">{(selectedStudentTeam.members ?? []).map((member) => <li key={member.id} className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-semibold"><UiText>{member.name}</UiText></li>)}</ul></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="topic-project-team-name" label="프로젝트 팀명" required><TextInput id="topic-project-team-name" name="projectTeamName" value={projectTeamName} onChange={(event) => setProjectTeamName(event.target.value)} maxLength={100} required /></FormField>
+            <FormField id="topic-project-representative" label="프로젝트 대표" required><CustomSelect id="topic-project-representative" name="projectRepresentativeId" ariaLabel="프로젝트 대표" value={projectRepresentativeId} onValueChange={setProjectRepresentativeId} required placeholder="대표를 선택하세요" options={(selectedStudentTeam.members ?? []).map((member) => ({ value: member.id, label: member.name }))} /></FormField>
+          </div>
+        </div> : null}
+        {pendingInvitationTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`초대 응답 대기 중인 팀 ${pendingInvitationTeams.length}개는 모든 초대가 처리된 뒤 선택할 수 있습니다.`}</UiText></p> : null}
+        {invalidSizeTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`팀 인원 기준(${teamMinSize}–${teamMaxSize}명)에 맞지 않는 팀 ${invalidSizeTeams.length}개는 선택할 수 없습니다.`}</UiText></p> : null}
+      </FormSection>
+
+      <FormSection id="topic-project-info" title="프로젝트 정보" appearance="plain" hidden={step !== 1}>
+        <div className={`grid gap-4 ${selectedProgram?.divisions?.length ? "sm:grid-cols-2" : ""}`}>
+          <FormField id="topic-program" label="프로그램" required>
+            <CustomSelect
+              id="topic-program"
+              name="programId"
+              ariaLabel="프로그램"
+              required
+              searchable
+              value={selectedProgramId}
+              placeholder="프로그램을 선택하세요"
+              onValueChange={(value) => {
+                setSelectedProgramId(value);
+                setSelectedDivisionId("");
+                const nextProgram = programs.find(({ id }) => id === value);
+                if (!nextProgram?.advisorEnabled) setApprovalRoute("ADMIN");
+                const nextMinSize = nextProgram?.projectTeamMinSize ?? 2;
+                const nextMaxSize = nextProgram?.projectTeamMaxSize ?? 6;
+                const selectedTeam = studentApproval.studentTeams.find(({ id }) => id === studentTeamId);
+                if (selectedTeam && (selectedTeam.memberCount < nextMinSize || selectedTeam.memberCount > nextMaxSize || (selectedTeam.pendingInvitationCount ?? 0) > 0)) setStudentTeamId("");
+              }}
+              options={programs.map((program) => ({ value: program.id, label: program.name, description: `${programDate.format(program.startsAt)} – ${programDate.format(program.endsAt)}` }))}
+            />
+          </FormField>
+          {selectedProgram?.divisions?.length ? <FormField id="topic-division" label="분과" required>
+            <CustomSelect id="topic-division" name="divisionId" ariaLabel="분과" required value={selectedDivisionId} onValueChange={setSelectedDivisionId} placeholder="분과를 선택하세요" options={selectedProgram.divisions.map((division) => ({ value: division.id, label: division.name }))} />
+          </FormField> : null}
+        </div>
+        <FormField id="topic-title" label="프로젝트명" required>
+          <TextInput id="topic-title" name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={200} required />
+        </FormField>
+        <FormField id="topic-description" label="설명" required>
+          <Textarea id="topic-description" name="description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={10_000} required rows={4} />
+        </FormField>
+        <section aria-labelledby="topic-approval-title" className="grid gap-4 border-t border-[var(--line)] pt-5">
+          <h3 id="topic-approval-title" className="text-sm font-bold"><UiText>{"검토 요청"}</UiText></h3>
+          {advisorEnabled === false ? <><input type="hidden" name="approvalRoute" value="ADMIN" /><p className="text-sm text-[var(--muted)]"><UiText>{"이 프로그램의 승인 요청은 관리자가 검토합니다."}</UiText></p></> : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ChoiceCard density="compact" name="approvalRoute" value="PROFESSOR" checked={approvalRoute === "PROFESSOR"} onChange={() => setApprovalRoute("PROFESSOR")} label="교수 검토" />
+                <ChoiceCard density="compact" name="approvalRoute" value="ADMIN" checked={approvalRoute === "ADMIN"} onChange={() => setApprovalRoute("ADMIN")} label="관리자 검토" />
+              </div>
+              {approvalRoute === "PROFESSOR" ? <FormField id="topic-professor" label="검토 요청 교수" required><CustomSelect id="topic-professor" name="requestedProfessorId" ariaLabel="검토 요청 교수" value={requestedProfessorId} onValueChange={setRequestedProfessorId} required searchable placeholder="교수를 검색하거나 선택하세요" options={studentApproval.professors.map((professor) => ({ value: professor.id, label: professor.name, description: professor.email }))} /></FormField> : null}
+            </>
+          )}
+        </section>
+      </FormSection>
+
+      <section id="topic-registration-review" hidden={step !== 2} aria-labelledby="topic-review-title" className="grid gap-5">
+        <div className="border-b border-[var(--line)] pb-4">
+          <h2 id="topic-review-title" className="text-lg font-bold"><UiText>{"입력 내용 확인"}</UiText></h2>
+        </div>
+        <dl className="grid gap-4 text-sm sm:grid-cols-2">
+          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트 팀"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{projectTeamName || "입력 안 됨"}</UiText></dd></div>
+          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트 대표"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedStudentTeam?.members?.find(({ id }) => id === projectRepresentativeId)?.name ?? "선택 안 됨"}</UiText></dd></div>
+          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"검토 요청 대상"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{advisorEnabled === false || approvalRoute === "ADMIN" ? "관리자" : studentApproval.professors.find(({ id }) => id === requestedProfessorId)?.name ?? "교수 선택 안 됨"}</UiText></dd></div>
+          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로그램"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedProgram?.name ?? "선택 안 됨"}</UiText>{selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId) ? <><span className="text-[var(--muted)]"> · </span><UiText>{selectedProgram.divisions.find(({ id }) => id === selectedDivisionId)?.name ?? ""}</UiText></> : null}</dd></div>
+          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트명"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{title}</UiText></dd></div>
+          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"설명"}</UiText></dt><dd className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap leading-6"><UiText>{description}</UiText></dd></div>
+        </dl>
+      </section>
+
+      <div className={`${styles.actions} flex flex-wrap items-center justify-end gap-3`}>
+        {state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-bold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
+        {step > 0 ? <button type="button" className="button-quiet" onClick={() => setStep((current) => current - 1)}><UiText>{"이전"}</UiText></button> : null}
+        {step < STUDENT_REGISTRATION_STEPS.length - 1 ? <button type="button" className="button-primary" onClick={next} disabled={step === 0 && (!studentTeamId || !projectTeamName || !projectRepresentativeId)}><UiText>{"다음"}</UiText></button> : <button type="button" className="button-primary max-sm:w-full" onClick={submit} disabled={pending}><UiText>{pending ? "제출 중" : "프로젝트 등록 제출"}</UiText></button>}
+      </div>
+    </form>
+  );
+}
+
+function TopicFormEditor({ action: createTopic, programs, defaultProgramId, successHref, studentApproval, initialTopic, wizard }: TopicFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createTopic, initialState);
   const initialQuestions: TopicFormQuestion[] = initialTopic?.applicationQuestions.map((question, index) => ({
@@ -90,9 +299,9 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   const [studentTeamId, setStudentTeamId] = useState("");
   const [capacity, setCapacity] = useState(initialTopic?.capacity ?? 4);
   const [wizardStep, setWizardStep] = useState(0);
-  const studentProposal = Boolean(studentApproval && !initialTopic);
-  const defaultRecruitmentEnabled = initialTopic?.recruitmentEnabled ?? !studentProposal;
-  const recruitmentEnabled = studentProposal ? false : defaultRecruitmentEnabled;
+  const studentRegistration = Boolean(studentApproval && !initialTopic);
+  const defaultRecruitmentEnabled = initialTopic?.recruitmentEnabled ?? !studentRegistration;
+  const recruitmentEnabled = studentRegistration ? false : defaultRecruitmentEnabled;
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const projectTeamMinSize = selectedProgram?.projectTeamMinSize ?? 2;
   const projectTeamMaxSize = selectedProgram?.projectTeamMaxSize ?? 6;
@@ -101,7 +310,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   const invalidSizeTeams = studentApproval?.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => pendingInvitationCount === 0 && (memberCount < projectTeamMinSize || memberCount > projectTeamMaxSize)) ?? [];
   const selectedDivision = selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId);
   const advisorEnabled = selectedProgram?.advisorEnabled;
-  const wizardSteps: Array<{ id: TopicWizardStep; label: string }> = useMemo(() => studentProposal
+  const wizardSteps: Array<{ id: TopicWizardStep; label: string }> = useMemo(() => studentRegistration
     ? [
         { id: "FINAL", label: "팀 선택" },
         { id: "BASIC", label: "프로젝트 정보" },
@@ -119,7 +328,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
         { id: "BASIC", label: "기본 정보" },
         { id: "FINAL", label: "팀 선택" },
         { id: "REVIEW", label: "확인 및 제출" },
-      ], [recruitmentEnabled, studentProposal]);
+      ], [recruitmentEnabled, studentRegistration]);
   const currentWizardStepIndex = Math.min(wizardStep, wizardSteps.length - 1);
   const currentWizardStep = wizardSteps[currentWizardStepIndex];
   const formSectionAppearance = wizard ? "plain" : "embedded";
@@ -136,10 +345,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
   function advanceWizard() {
     if (!currentWizardStep || !formRef.current) return;
     const sectionIds: Record<TopicWizardStep, string[]> = {
-      BASIC: studentProposal ? ["topic-basic", "topic-approval"] : ["topic-basic"],
+      BASIC: studentRegistration ? ["topic-basic", "topic-approval"] : ["topic-basic"],
       REQUIREMENTS: ["topic-requirements"],
       APPLICATION: ["topic-application"],
-      FINAL: studentProposal ? ["topic-team"] : ["topic-schedule", "topic-approval"],
+      FINAL: studentRegistration ? ["topic-team"] : ["topic-schedule", "topic-approval"],
       REVIEW: [],
     };
     const controls = sectionIds[currentWizardStep.id].flatMap((id) =>
@@ -191,7 +400,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
       className={wizard ? "mx-auto grid max-w-4xl gap-6" : `${styles.root} mx-auto grid max-w-4xl gap-4`}
     >
       {initialTopic ? <input type="hidden" name="topicId" value={initialTopic.id} /> : null}
-      <FormSection id="topic-basic" title={studentProposal ? "프로젝트 정보" : "기본 정보"} appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
+      <FormSection id="topic-basic" title={studentRegistration ? "프로젝트 정보" : "기본 정보"} appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>
         <div className={`grid gap-4 ${!initialTopic && selectedProgram?.divisions?.length ? "sm:grid-cols-2" : ""}`}>
         {initialTopic ? <FormField label="프로그램">
           <input type="hidden" name="programId" value={initialTopic.programId} />
@@ -234,9 +443,9 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           <Textarea id="topic-description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} required rows={4} />
         </FormField>
         <input type="hidden" name="recruitmentEnabled" value={String(recruitmentEnabled)} />
-        {studentProposal ? <><input type="hidden" name="applicationMode" value="TEAM_ONLY" /><input type="hidden" name="capacity" value="1" /></> : null}
+        {studentRegistration ? <><input type="hidden" name="applicationMode" value="TEAM_ONLY" /><input type="hidden" name="capacity" value="1" /></> : null}
       </FormSection>
-      {recruitmentEnabled && !studentProposal ? <>
+      {recruitmentEnabled && !studentRegistration ? <>
       <FormSection id="topic-requirements" title="지원 조건" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "REQUIREMENTS" ? "hidden" : ""} contentClassName="sm:grid-cols-2">
         <FormField id="topic-required-skills" label="필수 기술">
           <TagInput id="topic-required-skills" name="requiredSkills" ariaLabel="필수 기술" value={requiredSkills} onValuesChange={setRequiredSkills} maxLength={1000} required placeholder="TypeScript, Python" />
@@ -336,7 +545,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           </div>
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로그램"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedProgram?.name ?? "선택 안 됨"}</UiText>{selectedDivision ? <><span className="text-[var(--muted)]"> · </span><UiText>{selectedDivision.name}</UiText></> : null}</dd></div>
-            {!studentProposal ? <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"팀원 모집"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{recruitmentEnabled ? "지원 받기" : "지원 안 받기"}</UiText></dd></div> : null}
+            {!studentRegistration ? <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"팀원 모집"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{recruitmentEnabled ? "지원 받기" : "지원 안 받기"}</UiText></dd></div> : null}
             <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트명"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{title}</UiText></dd></div>
             <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"설명"}</UiText></dt><dd className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap leading-6"><UiText>{description}</UiText></dd></div>
             {recruitmentEnabled ? <>
@@ -354,11 +563,11 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           </dl>
         </section>
       ) : null}
-      {studentProposal && studentApproval ? <FormSection id="topic-team" title="팀 선택" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""}>
+      {studentRegistration && studentApproval ? <FormSection id="topic-team" title="팀 선택" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""}>
         {eligibleStudentTeams.length || wizard?.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`확정 팀원 ${projectTeamMinSize}–${projectTeamMaxSize}명인 팀만 선택할 수 있습니다.`} required>
           <CustomSelect
             id="topic-student-team"
-            name="studentTeamId"
+            name="sourceStudentTeamId"
             ariaLabel="참여 팀"
             value={studentTeamId}
             onValueChange={(value) => {
@@ -375,7 +584,7 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
               ...(wizard?.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동" }] : []),
             ]}
           />
-        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{pendingInvitationTeams.length ? "초대 응답이 모두 끝난 팀만 프로젝트를 제안할 수 있습니다." : "프로젝트를 제안하려면 먼저 팀을 만들어야 합니다."}</UiText></p>}
+        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{pendingInvitationTeams.length ? "초대 응답이 모두 끝난 팀만 프로젝트를 등록할 수 있습니다." : "프로젝트를 등록하려면 먼저 팀을 만들어야 합니다."}</UiText></p>}
         {pendingInvitationTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`초대 응답 대기 중인 팀 ${pendingInvitationTeams.length}개는 모든 초대가 처리된 뒤 선택할 수 있습니다.`}</UiText></p> : null}
         {invalidSizeTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`팀 인원 기준(${projectTeamMinSize}–${projectTeamMaxSize}명)에 맞지 않는 팀 ${invalidSizeTeams.length}개는 선택할 수 없습니다.`}</UiText></p> : null}
       </FormSection> : null}
@@ -402,10 +611,10 @@ export function TopicForm({ action: createTopic, programs, defaultProgramId, suc
           ) : null}
         {wizard && currentWizardStepIndex > 0 ? <button type="button" className="button-quiet" onClick={() => setWizardStep(Math.max(0, currentWizardStepIndex - 1))}><UiText>{"이전"}</UiText></button> : null}
         {wizard ? currentWizardStepIndex < wizardSteps.length - 1 ? (
-          <button type="button" className="button-primary" onClick={advanceWizard} disabled={studentProposal && currentWizardStep.id === "FINAL" && !studentTeamId}><UiText>{"다음"}</UiText></button>
+          <button type="button" className="button-primary" onClick={advanceWizard} disabled={studentRegistration && currentWizardStep.id === "FINAL" && !studentTeamId}><UiText>{"다음"}</UiText></button>
         ) : (
           <button type="button" onClick={submitWizard} disabled={pending || (!initialTopic && programs.length === 0)} className="button-primary max-sm:w-full">
-            <UiText>{pending ? "제출 중" : "프로젝트 제안 제출"}</UiText>
+            <UiText>{pending ? "제출 중" : "프로젝트 등록 제출"}</UiText>
           </button>
         ) : (
           <button type="submit" disabled={pending || (!initialTopic && programs.length === 0)} className="button-primary max-sm:w-full">

@@ -32,6 +32,8 @@ export type TeamListPage = {
 };
 
 export type TeamWorkspace = TeamListItem & {
+  approvalPending: boolean;
+  canManagePreparation: boolean;
   topicId: string;
   topicDescription: string;
   professorName: string;
@@ -54,8 +56,6 @@ export type TeamWorkspace = TeamListItem & {
     programRecruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
-    submissionStartsAt: Date;
-    submissionEndsAt: Date;
   };
   assistants: Array<{
     id: string;

@@ -66,12 +66,6 @@ export function ProjectResultsLayout<T>({
     <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
       <div className="mb-4 flex min-h-9 flex-wrap items-center gap-3">
         {headerAction}
-        {hasFilters && items.length > 0 ? (
-          <Link href={resetHref} className="inline-flex min-h-8 items-center gap-1.5 text-xs font-bold text-[var(--primary)]">
-            <UndoIcon className="size-4 shrink-0" />
-            <UiText>{"조건 초기화"}</UiText>
-          </Link>
-        ) : null}
         <ProjectVoteStatusPill selection={voteSelection} />
         {votingResults ? <ProjectVoteResultsDialog view={votingResults} /> : null}
         <h2 id="project-results-title" className="sr-only"><UiText>{listLabel}</UiText></h2>

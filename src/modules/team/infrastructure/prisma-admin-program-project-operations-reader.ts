@@ -7,15 +7,19 @@ import type {
 export class PrismaAdminProgramProjectOperationsReader implements AdminProgramProjectOperationsReader {
   constructor(private readonly client: PrismaClient) {}
 
-  async listByProgram(programId: string): Promise<AdminProgramProjectOperationRecord[]> {
+  async listByProgram(programId: string, divisionId?: string | "UNASSIGNED"): Promise<AdminProgramProjectOperationRecord[]> {
     const topics = await this.client.topic.findMany({
-      where: { programId, status: "ACTIVE" },
+      where: {
+        programId,
+        status: "ACTIVE",
+        ...(divisionId === "UNASSIGNED" ? { divisionId: null } : divisionId ? { divisionId } : {}),
+      },
       select: {
         id: true,
         projectTeam: {
           select: {
             reports: {
-              where: { required: true },
+              where: { required: true, submissionEnabled: true },
               select: {
                 dueAt: true,
                 versions: { take: 1, select: { id: true } },

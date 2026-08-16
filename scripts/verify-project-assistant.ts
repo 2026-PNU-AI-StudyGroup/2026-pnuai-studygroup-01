@@ -58,8 +58,6 @@ async function verify() {
       recruitmentEndsAt: endsAt,
       executionStartsAt: now,
       executionEndsAt: new Date(now.getTime() + 60 * 24 * 60 * 60_000),
-      submissionStartsAt: now,
-      submissionEndsAt: endsAt,
       isStudentPublic: true,
       isFacultyPublic: true,
     },

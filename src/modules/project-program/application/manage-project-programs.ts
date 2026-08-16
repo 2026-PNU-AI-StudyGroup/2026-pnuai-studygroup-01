@@ -35,7 +35,7 @@ export type ProgramCreateRubricDefinitionInput = {
   criteria: Array<{ label: string; maxPoints: number }>;
 };
 
-export type ProgramCreateReportDefinitionInput = { title: string; dueAt: Date };
+export type ProgramCreateReportDefinitionInput = { title: string; dueAt: Date; required?: boolean };
 
 export type ProjectProgramCreateSetup = {
   isPublic?: boolean;
@@ -49,8 +49,7 @@ export type ProjectProgramSettings = Partial<Pick<ProjectProgramDetails,
   "projectRegistrationStartsAt" | "projectRegistrationEndsAt" |
   "recruitmentStartsAt" | "recruitmentEndsAt" |
   "executionStartsAt" | "executionEndsAt" |
-  "submissionStartsAt" | "submissionEndsAt" |
-  "name" | "category" | "description" | "startsAt" | "endsAt" | "advisorEnabled"
+  "name" | "category" | "startsAt" | "endsAt" | "advisorEnabled"
 >> & Pick<ProjectProgramRecord, "isPublic"> & {
   votingPolicy?: ProgramVotingPolicyDetails | null;
   confirmVoteReset?: ProgramVoteResetImpact;
@@ -64,7 +63,7 @@ export type ProgramDivisionSyncImpact = {
   switchesVotingScope: boolean;
 };
 
-export type ProjectProgramBasicInfoUpdate = Pick<ProjectProgramDetails, "name" | "category" | "description"> & {
+export type ProjectProgramBasicInfoUpdate = Pick<ProjectProgramDetails, "name" | "category"> & {
   isPublic: boolean;
   divisionNames: string[];
   confirmDivisionSync?: ProgramDivisionSyncImpact;
@@ -126,8 +125,6 @@ export interface ProjectProgramRepository {
     recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
-    submissionStartsAt: Date;
-    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
     projectTeamMinSize: number;
@@ -143,8 +140,6 @@ export interface ProjectProgramRepository {
     recruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
-    submissionStartsAt: Date;
-    submissionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
     projectTeamMinSize: number;
@@ -283,7 +278,6 @@ export class ProjectProgramService {
     const outcome = await this.repository.updateBasicInfo(id, {
       name: normalized.name,
       category: normalized.category,
-      description: normalized.description,
       isPublic: input.isPublic,
       divisionNames: normalizeDivisionNames(input.divisionNames),
       confirmDivisionSync: input.confirmDivisionSync,
@@ -344,7 +338,6 @@ export class ProjectProgramService {
     const settings: ProjectProgramSettings = {
       name: input.name ?? program.name,
       category: input.category ?? program.category,
-      description: input.description ?? program.description,
       startsAt: input.startsAt ?? program.startsAt,
       endsAt: input.endsAt ?? program.endsAt,
       advisorEnabled: input.advisorEnabled ?? program.advisorEnabled,
@@ -354,15 +347,12 @@ export class ProjectProgramService {
       recruitmentEndsAt: input.recruitmentEndsAt ?? program.recruitmentEndsAt,
       executionStartsAt: input.executionStartsAt ?? program.executionStartsAt,
       executionEndsAt: input.executionEndsAt ?? program.executionEndsAt,
-      submissionStartsAt: input.submissionStartsAt ?? program.submissionStartsAt,
-      submissionEndsAt: input.submissionEndsAt ?? program.submissionEndsAt,
       votingPolicy: input.votingPolicy === undefined ? program.votingPolicy ?? null : input.votingPolicy ? normalizeProgramVotingPolicy(input.votingPolicy) : null,
       confirmVoteReset: input.confirmVoteReset,
     };
     const normalized = normalizeProjectProgram({
       name: settings.name!,
       category: settings.category!,
-      description: settings.description!,
       startsAt: settings.startsAt!,
       endsAt: settings.endsAt!,
       projectRegistrationStartsAt: settings.projectRegistrationStartsAt!,
@@ -371,8 +361,6 @@ export class ProjectProgramService {
       recruitmentEndsAt: settings.recruitmentEndsAt ?? null,
       executionStartsAt: settings.executionStartsAt!,
       executionEndsAt: settings.executionEndsAt!,
-      submissionStartsAt: settings.submissionStartsAt!,
-      submissionEndsAt: settings.submissionEndsAt!,
       advisorEnabled: settings.advisorEnabled!,
       studentProjectCreationEnabled: program.studentProjectCreationEnabled,
       projectTeamMinSize: program.projectTeamMinSize,
@@ -443,6 +431,6 @@ function normalizeCreateReports(definitions: ProgramCreateReportDefinitionInput[
     const key = title.toLocaleLowerCase("ko-KR");
     if (titles.has(key)) throw new ProjectProgramOperationError("같은 이름의 보고서를 중복 등록할 수 없습니다.");
     titles.add(key);
-    return { title, dueAt: definition.dueAt };
+    return { title, dueAt: definition.dueAt, required: definition.required ?? true };
   });
 }

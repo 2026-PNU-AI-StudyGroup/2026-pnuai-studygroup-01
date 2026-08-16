@@ -13,8 +13,9 @@ import { BarChartIcon, CloseIcon } from "@/shared/ui/workspace-icons";
 
 type ResultView = "overall" | "division";
 
-export function ProjectVoteResultsDialog({ view: resultsView }: {
+export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "투표 결과" }: {
   view: VotingResultsView;
+  triggerLabel?: string;
 }) {
   const results = resultsView.results;
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -39,7 +40,7 @@ export function ProjectVoteResultsDialog({ view: resultsView }: {
         className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs"
       >
         <BarChartIcon className="size-4 shrink-0" />
-        <UiText>{"투표 결과"}</UiText>
+        <UiText>{triggerLabel}</UiText>
       </button>
       <dialog
         ref={dialogRef}

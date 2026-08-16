@@ -8,16 +8,21 @@ vi.mock("@/modules/translation/application/translation-queue", () => ({
 
 const leader = { id: "student-1", role: "STUDENT" as const };
 
-function row(role: "LEADER" | "MEMBER", ended = false) {
+function row(
+  role: "LEADER" | "MEMBER",
+  ended = false,
+  status: "ACTIVE" | "PENDING_APPROVAL" = "ACTIVE",
+  confirmedAt: Date | null = new Date("2026-03-01T00:00:00Z"),
+) {
   return {
     id: "team-1",
     name: "기존 프로젝트",
-    confirmedAt: new Date("2026-03-01T00:00:00Z"),
+    confirmedAt,
     project: {
       id: "topic-1",
       title: "기존 프로젝트",
       description: "기존 설명",
-      status: "ACTIVE" as const,
+      status,
       managerId: "professor-1",
       program: { name: "캡스톤디자인", endsAt: ended ? new Date("2020-01-01T00:00:00Z") : new Date("2030-01-01T00:00:00Z") },
       assistants: [],
@@ -85,6 +90,18 @@ describe("PrismaTeamProjectInfoRepository", () => {
 
   it("종료된 프로젝트는 팀장도 수정할 수 없다", async () => {
     const db = client(row("LEADER", true));
+
+    await expect(new PrismaTeamProjectInfoRepository(db.value).update("team-1", leader, {
+      title: "새 프로젝트",
+      description: "새 설명",
+    })).resolves.toBe("NOT_IN_PROGRESS");
+
+    expect(db.updateTeam).not.toHaveBeenCalled();
+    expect(db.updateTopic).not.toHaveBeenCalled();
+  });
+
+  it("승인 대기 등록은 직접 수정 요청도 거부한다", async () => {
+    const db = client(row("LEADER", false, "PENDING_APPROVAL", null));
 
     await expect(new PrismaTeamProjectInfoRepository(db.value).update("team-1", leader, {
       title: "새 프로젝트",

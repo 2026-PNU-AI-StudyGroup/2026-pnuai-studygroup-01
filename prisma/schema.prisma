@@ -84,11 +84,6 @@ enum UploadConsumer {
   ANNOUNCEMENT
 }
 
-enum ProgramDivisionRubricMode {
-  INHERIT_COMMON
-  CUSTOM
-}
-
 enum RubricAudience {
   STAFF_ONLY
   TEAM_MEMBERS
@@ -201,6 +196,7 @@ enum AuditAction {
   PROGRAM_REPORT_DEFINITION_CREATED
   PROGRAM_REPORT_DEFINITION_UPDATED
   PROGRAM_REPORT_DEFINITION_ARCHIVED
+  PROGRAM_REPORT_DEFINITION_DELETED
   PROGRAM_RUBRIC_CREATED
   PROGRAM_RUBRIC_UPDATED
   PROGRAM_RUBRIC_ARCHIVED
@@ -612,7 +608,6 @@ model ProjectProgram {
   createdById                   String?
   name                          String
   category                      String
-  description                   String
   startsAt                      DateTime
   endsAt                        DateTime
   projectRegistrationStartsAt   DateTime
@@ -621,8 +616,6 @@ model ProjectProgram {
   recruitmentEndsAt             DateTime?
   executionStartsAt             DateTime
   executionEndsAt               DateTime
-  submissionStartsAt            DateTime
-  submissionEndsAt              DateTime
   advisorEnabled                Boolean                   @default(true)
   studentProjectCreationEnabled Boolean                   @default(false)
   projectTeamMinSize            Int                       @default(2)
@@ -653,7 +646,6 @@ model ProgramDivision {
   programId         String
   name              String
   position          Int                       @default(0)
-  rubricMode        ProgramDivisionRubricMode @default(INHERIT_COMMON)
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt
   program           ProjectProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
@@ -672,6 +664,7 @@ model ProgramReportDefinition {
   programId  String
   title      String
   dueAt      DateTime
+  required   Boolean        @default(true)
   position   Int            @default(0)
   archivedAt DateTime?
   createdAt  DateTime       @default(now())
@@ -1004,11 +997,11 @@ model TopicApplicationGroup {
   id            String                   @id @default(uuid())
   topicId       String
   leaderId      String
+  studentTeamId String?
   kind          TopicApplicationKind
   createdAt     DateTime                 @default(now())
   topic         Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
   leader        User                     @relation("TopicApplicationGroupLeader", fields: [leaderId], references: [id])
-  studentTeamId String?
   studentTeam   StudentTeam?             @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
   applications  TopicApplication[]
   answers       TopicApplicationAnswer[]
@@ -1025,8 +1018,6 @@ model TopicApprovalRequest {
   requesterId          String
   route                TopicApprovalRoute
   requestedProfessorId String?
-  studentTeamId        String?
-  studentTeamVersion   Int?
   status               TopicApprovalStatus @default(PENDING)
   reviewComment        String              @default("")
   decidedById          String?
@@ -1036,13 +1027,11 @@ model TopicApprovalRequest {
   topic                Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
   requester            User                @relation("TopicApprovalRequester", fields: [requesterId], references: [id])
   requestedProfessor   User?               @relation("TopicApprovalProfessor", fields: [requestedProfessorId], references: [id])
-  studentTeam          StudentTeam?        @relation(fields: [studentTeamId], references: [id], onDelete: SetNull)
   decidedBy            User?               @relation("TopicApprovalDecider", fields: [decidedById], references: [id])
 
   @@index([status, route, createdAt])
   @@index([requestedProfessorId, status])
   @@index([requesterId, createdAt])
-  @@index([studentTeamId])
   @@index([topicId, status, createdAt])
   @@map("topic_approval_request")
 }
@@ -1124,10 +1113,9 @@ model StudentTeam {
   updatedAt          DateTime                     @updatedAt
   leader             User                         @relation("StudentTeamLeader", fields: [leaderId], references: [id])
   members            StudentTeamMember[]
+  applicationGroups  TopicApplicationGroup[]
   invitations        StudentTeamInvitation[]
   recruitmentPosts   StudentTeamRecruitmentPost[]
-  applicationGroups  TopicApplicationGroup[]
-  proposalRequests   TopicApprovalRequest[]
 
   @@index([leaderId, deletedAt])
   @@index([deletedAt, updatedAt])
@@ -1405,6 +1393,7 @@ model Report {
   titleSnapshot String
   dueAt         DateTime
   required      Boolean                 @default(true)
+  submissionEnabled Boolean              @default(true)
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   projectTeam   ProjectTeam             @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)

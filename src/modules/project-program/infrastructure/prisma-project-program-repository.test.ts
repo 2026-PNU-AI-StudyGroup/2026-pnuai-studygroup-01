@@ -12,7 +12,6 @@ const input = {
   icon: "FOLDER" as const,
   name: "캡스톤",
   category: "교과",
-  description: "설명",
   startsAt: new Date("2026-03-01T00:00:00Z"),
   endsAt: new Date("2026-12-01T00:00:00Z"),
   projectRegistrationStartsAt: new Date("2026-03-01T00:00:00Z"),
@@ -21,8 +20,6 @@ const input = {
   recruitmentEndsAt: new Date("2026-10-01T00:00:00Z"),
   executionStartsAt: new Date("2026-03-15T00:00:00Z"),
   executionEndsAt: new Date("2026-11-15T00:00:00Z"),
-  submissionStartsAt: new Date("2026-10-15T00:00:00Z"),
-  submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
   advisorEnabled: true,
   studentProjectCreationEnabled: false,
   votingPolicy: null,
@@ -55,7 +52,6 @@ describe("Prisma 프로그램 저장소", () => {
       projectProgram: { create: vi.fn().mockResolvedValue({ id: "program-1" }) },
       programDivision: {
         findMany: vi.fn().mockResolvedValue([{ id: "division-1", name: "창업" }]),
-        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       rubricDefinition: { create: vi.fn().mockResolvedValue({ id: "rubric-1" }) },
       programReportDefinition: { createMany: vi.fn().mockResolvedValue({ count: 1 }) },
@@ -87,9 +83,9 @@ describe("Prisma 프로그램 저장소", () => {
         votingPolicy: { create: expect.objectContaining({ resultsVisibleDuringVoting: false, resultsVisibleAfterVoting: true }) },
       }),
     }));
-    expect(transaction.programDivision.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { rubricMode: "CUSTOM" } }));
+    expect("updateMany" in transaction.programDivision).toBe(false);
     expect(transaction.rubricDefinition.create).toHaveBeenCalledWith({ data: expect.objectContaining({ programId: "program-1", divisionId: "division-1", title: "공식 평가" }) });
-    expect(transaction.programReportDefinition.createMany).toHaveBeenCalledWith({ data: [{ programId: "program-1", title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z"), position: 0 }] });
+    expect(transaction.programReportDefinition.createMany).toHaveBeenCalledWith({ data: [{ programId: "program-1", title: "최종 보고서", dueAt: new Date("2026-11-01T00:00:00Z"), required: true, position: 0 }] });
   });
 
   it("최초 공개 시각은 처음 공개할 때만 기록하고 재공개에서는 보존한다", async () => {
@@ -180,8 +176,6 @@ describe("Prisma 프로그램 저장소", () => {
         studentProjectCreationEnabled: false,
         recruitmentStartsAt: input.recruitmentStartsAt,
         recruitmentEndsAt: input.recruitmentEndsAt,
-        submissionStartsAt: input.executionStartsAt,
-        submissionEndsAt: input.executionEndsAt,
       }),
     }));
   });

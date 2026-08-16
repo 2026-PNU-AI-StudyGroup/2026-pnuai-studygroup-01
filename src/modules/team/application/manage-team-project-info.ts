@@ -6,6 +6,7 @@ import {
 export type TeamProjectInfo = {
   teamId: string;
   programName: string;
+  teamName: string;
   title: string;
   description: string;
   status: "FORMING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";

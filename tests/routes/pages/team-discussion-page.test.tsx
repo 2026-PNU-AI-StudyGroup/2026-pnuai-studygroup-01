@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TeamDiscussionPage from "@/app/projects/[projectId]/discussion/page";
 
-const { loadTeamWorkspace } = vi.hoisted(() => ({
-  loadTeamWorkspace: vi.fn(),
+const { loadActiveTeamWorkspace } = vi.hoisted(() => ({
+  loadActiveTeamWorkspace: vi.fn(),
 }));
 
 vi.mock("@/app/projects/[projectId]/_lib/team-workspace-data", () => ({
-  loadTeamWorkspace,
+  loadActiveTeamWorkspace,
 }));
 
 vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({
@@ -75,7 +75,7 @@ const workspace = {
 
 describe("TeamDiscussionPage", () => {
   beforeEach(() => {
-    loadTeamWorkspace.mockResolvedValue({ actor, workspace });
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
   });
 
   it("대화 계약을 유지하면서 메시지와 작성기를 하나의 흰색 패널로 묶는다", async () => {
@@ -84,7 +84,7 @@ describe("TeamDiscussionPage", () => {
       searchParams: Promise.resolve({ page: "2" }),
     }));
 
-    expect(loadTeamWorkspace).toHaveBeenCalledWith("team-1", 2);
+    expect(loadActiveTeamWorkspace).toHaveBeenCalledWith("team-1", 2);
 
     const page = screen.getByRole("region", { name: "팀 대화" });
     expect(page).toHaveClass("mx-auto", "w-full", "max-w-6xl");
@@ -124,7 +124,7 @@ describe("TeamDiscussionPage", () => {
   });
 
   it("종료된 프로젝트에서는 패널 안에 작성기 대신 종료 안내를 표시한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor,
       workspace: { ...workspace, status: "COMPLETED", discussionPosts: [], discussionTotal: 0 },
     });
@@ -141,7 +141,7 @@ describe("TeamDiscussionPage", () => {
   });
 
   it("운영 중 빈 대화에서도 시작 안내와 작성기를 함께 유지한다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
+    loadActiveTeamWorkspace.mockResolvedValue({
       actor,
       workspace: { ...workspace, discussionPosts: [], discussionTotal: 0 },
     });

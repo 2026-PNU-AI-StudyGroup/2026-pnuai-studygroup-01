@@ -16,8 +16,6 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
         recruitmentEndsAt: new Date("2026-02-01T00:00:00Z"),
         executionStartsAt: new Date("2026-03-01T00:00:00Z"),
         executionEndsAt: new Date("2026-10-01T00:00:00Z"),
-        submissionStartsAt: new Date("2026-09-01T00:00:00Z"),
-        submissionEndsAt: new Date("2026-12-01T00:00:00Z"),
         status: "ACTIVE",
         managerId: "professor-1",
         program: { name: "2026 캡스톤디자인", advisorEnabled: true, endsAt: new Date("2026-12-31T00:00:00Z") },
@@ -71,7 +69,15 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     const workspace = await repository.findWorkspaceForActor("team-1", { id: "admin-1", role: "ADMIN" });
 
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { projectId: "team-1" },
+      where: expect.objectContaining({
+        AND: expect.arrayContaining([
+          { projectId: "team-1" },
+          expect.objectContaining({ OR: expect.arrayContaining([
+            { project: { status: { not: "PENDING_APPROVAL" } } },
+            { memberships: { some: { userId: "admin-1", endedAt: null } } },
+          ]) }),
+        ]),
+      }),
       include: expect.objectContaining({
         project: {
           select: expect.objectContaining({
@@ -179,7 +185,7 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       include: expect.objectContaining({
         reports: {
-          where: { required: true },
+          where: { required: true, submissionEnabled: true },
           select: {
             versions: {
               take: 1,
@@ -193,6 +199,36 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       programName: "2026 캡스톤디자인",
       reportCount: 3,
       submittedReportCount: 2,
+    }));
+  });
+
+  it("대시보드 진행 프로젝트 목록에서 승인 전 등록을 제외한다", async () => {
+    const count = vi.fn(async () => 0);
+    const findMany = vi.fn(async () => []);
+    const repository = new PrismaTeamWorkspaceQueryRepository({
+      projectTeam: { count, findMany },
+    } as never);
+
+    await repository.listPageForActor(
+      { id: "student-1", role: "STUDENT" },
+      1,
+      20,
+      "ACTIVE",
+    );
+
+    const approvedProject = expect.objectContaining({
+      confirmedAt: { not: null },
+      project: { status: "ACTIVE" },
+    });
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        AND: expect.arrayContaining([approvedProject]),
+      }),
+    }));
+    expect(count).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        AND: expect.arrayContaining([approvedProject]),
+      }),
     }));
   });
 });

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
+  ArchivedProjectVoteAction,
   ProjectVoteCountBadge,
   ProjectVoteStatusPill,
   type ProjectVoteSelection,
@@ -48,7 +49,7 @@ describe("프로그램 투표 상태 알약", () => {
 
     const status = screen.getByRole("status", { name: "투표 현황" });
     expect(status).toHaveTextContent("투표 가능 1/3");
-    expect(status).toHaveClass("rounded-full");
+    expect(status).toHaveClass("rounded-[var(--radius-control)]", "border", "bg-white");
   });
 
   it("분과별 투표는 전체 선택 수 대신 분과별 고정 한도를 표시한다", () => {
@@ -56,5 +57,23 @@ describe("프로그램 투표 상태 알약", () => {
 
     expect(screen.getByRole("status", { name: "투표 현황" }))
       .toHaveTextContent("투표 가능: 분과별 최대 3표");
+  });
+
+  it("아카이브 상세에서는 진행 중인 투표의 해당 후보만 바로 투표할 수 있다", () => {
+    const ballot = selection("PROGRAM").ballot!;
+    render(<ArchivedProjectVoteAction ballot={{ ...ballot, candidates: [{ id: "topic-1", title: "프로젝트", description: "", isSelfProject: false, voteCount: null }] }} topicId="topic-1" />);
+
+    expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
+    expect(screen.queryByText("투표 진행 중")).not.toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "투표 현황" })).toBeInTheDocument();
+  });
+
+  it("아카이브 상세에서는 진행 중이 아니거나 후보가 아닌 프로젝트의 투표 영역을 숨긴다", () => {
+    const ballot = selection("PROGRAM").ballot!;
+    const { rerender } = render(<ArchivedProjectVoteAction ballot={{ ...ballot, phase: "CLOSED", candidates: [{ id: "topic-1", title: "프로젝트", description: "", isSelfProject: false, voteCount: null }] }} topicId="topic-1" />);
+
+    expect(screen.queryByRole("button", { name: /투표/ })).not.toBeInTheDocument();
+    rerender(<ArchivedProjectVoteAction ballot={{ ...ballot, candidates: [] }} topicId="topic-1" />);
+    expect(screen.queryByRole("button", { name: /투표/ })).not.toBeInTheDocument();
   });
 });

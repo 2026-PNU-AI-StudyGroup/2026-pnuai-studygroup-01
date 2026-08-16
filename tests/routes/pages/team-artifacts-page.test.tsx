@@ -27,6 +27,10 @@ vi.mock("@/app/projects/[projectId]/_components/showcase-manager", () => ({
   ShowcaseManager: () => null,
 }));
 
+vi.mock("@/app/projects/[projectId]/_components/showcase-video-card", () => ({
+  ShowcaseVideoCard: () => null,
+}));
+
 const actor = {
   id: "student-1",
   name: "정하늘",
@@ -116,6 +120,7 @@ describe("TeamArtifactsPage", () => {
 
     const posterItem = screen.getByRole("heading", { name: "모두의 길 프로젝트 소개 포스터" }).closest("li");
     expect(posterItem).toHaveAttribute("data-artifact-type", "poster");
+    expect(posterItem).toHaveClass("rounded-[var(--radius-panel)]", "border", "bg-[var(--surface)]");
     const inlinePosterLabels = within(posterItem!).getAllByText("포스터", { selector: "span" })
       .filter((label) => !label.closest("dialog"));
     expect(inlinePosterLabels).toHaveLength(1);
@@ -145,8 +150,8 @@ describe("TeamArtifactsPage", () => {
   });
 
   it.each([
-    ["등록 시작 시각", workspace.schedule.submissionStartsAt],
-    ["등록 종료 시각", workspace.schedule.submissionEndsAt],
+    ["운영 시작 시각", workspace.schedule.executionStartsAt],
+    ["운영 종료 시각", workspace.schedule.executionEndsAt],
   ])("학생은 %s을 포함해 결과물을 등록할 수 있다", async (_label, now) => {
     vi.setSystemTime(now);
     loadTeamReportWorkspace.mockResolvedValue({
@@ -162,7 +167,7 @@ describe("TeamArtifactsPage", () => {
   });
 
   it("학생의 결과물 등록 기간 전에는 등록 행동을 숨기고 하나의 빈 상태로 안내한다", async () => {
-    vi.setSystemTime(new Date("2026-08-04T00:00:00Z"));
+    vi.setSystemTime(new Date("2026-02-28T00:00:00Z"));
     loadTeamReportWorkspace.mockResolvedValue({
       actor,
       workspace,
@@ -177,7 +182,7 @@ describe("TeamArtifactsPage", () => {
   });
 
   it("학생의 결과물 등록 기간 후에는 등록 행동을 숨기고 읽기 전용 상태를 안내한다", async () => {
-    vi.setSystemTime(new Date("2026-12-02T00:00:00Z"));
+    vi.setSystemTime(new Date("2026-10-02T00:00:00Z"));
     loadTeamReportWorkspace.mockResolvedValue({
       actor,
       workspace,

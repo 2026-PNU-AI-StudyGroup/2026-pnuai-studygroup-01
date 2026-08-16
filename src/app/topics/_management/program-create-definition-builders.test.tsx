@@ -1,7 +1,12 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProgramCreateRubricBuilder, type ProgramCreateRubricDraft } from "@/app/topics/_management/program-create-definition-builders";
+import {
+  ProgramCreateReportBuilder,
+  ProgramCreateRubricBuilder,
+  type ProgramCreateReportDraft,
+  type ProgramCreateRubricDraft,
+} from "@/app/topics/_management/program-create-definition-builders";
 
 const rubric: ProgramCreateRubricDraft = {
   id: "rubric-1",
@@ -10,6 +15,13 @@ const rubric: ProgramCreateRubricDraft = {
   gradingDueAt: "2026-08-20T18:00",
   audience: "STAFF_ONLY",
   criteria: [{ id: "criterion-1", label: "완성도", maxPoints: 10 }],
+};
+
+const report: ProgramCreateReportDraft = {
+  id: "report-1",
+  title: "중간 보고서",
+  dueAt: "2026-08-20T18:00",
+  required: true,
 };
 
 describe("ProgramCreateRubricBuilder", () => {
@@ -66,5 +78,33 @@ describe("ProgramCreateRubricBuilder", () => {
 
     expect(within(dialog).getByRole("button", { name: "저장" })).toBeDisabled();
     expect(within(dialog).getByRole("status")).toHaveTextContent("채점표를 저장하려면 평가 항목을 하나 이상 추가해 주세요.");
+  });
+});
+
+describe("ProgramCreateReportBuilder", () => {
+  it("추가된 보고서는 요약과 수정 버튼만 보여주고, 수정은 모달 초안으로 처리한다", () => {
+    const onChange = vi.fn();
+    render(<ProgramCreateReportBuilder reports={[report]} onChange={onChange} />);
+
+    expect(screen.getByText("필수 제출 · 제출 마감 2026. 08. 20. 18:00")).toBeInTheDocument();
+    expect(document.querySelector("details")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "수정" }));
+
+    const dialog = screen.getByRole("dialog", { name: "보고서 수정" });
+    expect(dialog).toHaveAttribute("open");
+    expect(within(dialog).getByRole("combobox", { name: "중간 보고서 제출 구분" })).toHaveTextContent("필수 제출");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "보고서 제목" }), { target: { value: "최종 보고서" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "취소" }));
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "수정" }));
+    const reopenedDialog = screen.getByRole("dialog", { name: "보고서 수정" });
+    expect(within(reopenedDialog).getByRole("textbox", { name: "보고서 제목" })).toHaveValue("중간 보고서");
+    fireEvent.change(within(reopenedDialog).getByRole("textbox", { name: "보고서 제목" }), { target: { value: "최종 보고서" } });
+    fireEvent.click(within(reopenedDialog).getByRole("combobox", { name: "최종 보고서 제출 구분" }));
+    fireEvent.click(screen.getByRole("option", { name: "선택 제출" }));
+    fireEvent.click(within(reopenedDialog).getByRole("button", { name: "저장" }));
+
+    expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ id: "report-1", title: "최종 보고서", required: false })]);
   });
 });

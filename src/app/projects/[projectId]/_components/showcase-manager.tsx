@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import {
-  registerArtifactAction,
+  registerShowcaseImageAction,
   removeArtifactAction,
   reorderArtifactsAction,
   setTeamThumbnailAction,
@@ -18,11 +18,14 @@ import {
   uploadTeamFile,
 } from "@/app/projects/[projectId]/_lib/report-form-shared";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { SHOWCASE_IMAGE_MAX_BYTES } from "@/modules/file/domain/upload-policy";
 import { UiButton, UiInput, UiSection } from "@/modules/translation/ui/localized-elements";
+import { optimizeShowcaseImage } from "@/app/projects/[projectId]/_lib/showcase-image-optimization";
 
 export type ShowcaseImage = { id: string; title: string; src: string };
 
-const IMAGE_ACCEPT = "image/png,image/jpeg";
+const IMAGE_ACCEPT = "image/png,image/jpeg,image/webp";
+const SHOWCASE_IMAGE_MAX_BYTES_MESSAGE = "쇼케이스 이미지는 최대 20MB까지 업로드할 수 있습니다.";
 
 function fileTitle(name: string): string {
   return name.replace(/\.[^./\\]+$/, "").trim().slice(0, 200) || "이미지";
@@ -67,7 +70,11 @@ export function ShowcaseManager({
     event.target.value = "";
     if (!file) return;
     run(async () => {
-      const uploadId = await uploadTeamFile(teamId, "ARTIFACT", file);
+      const optimizedFile = await optimizeShowcaseImage(file);
+      const uploadId = await uploadTeamFile(teamId, "ARTIFACT", optimizedFile, {
+        maxBytes: SHOWCASE_IMAGE_MAX_BYTES,
+        maxBytesMessage: SHOWCASE_IMAGE_MAX_BYTES_MESSAGE,
+      });
       const data = new FormData();
       data.set("teamId", teamId);
       data.set("uploadId", uploadId);
@@ -91,13 +98,17 @@ export function ShowcaseManager({
     run(async () => {
       let last = initialReportActionState;
       for (const file of files) {
-        const uploadId = await uploadTeamFile(teamId, "ARTIFACT", file);
+        const optimizedFile = await optimizeShowcaseImage(file);
+        const uploadId = await uploadTeamFile(teamId, "ARTIFACT", optimizedFile, {
+          maxBytes: SHOWCASE_IMAGE_MAX_BYTES,
+          maxBytesMessage: SHOWCASE_IMAGE_MAX_BYTES_MESSAGE,
+        });
         const data = new FormData();
         data.set("teamId", teamId);
         data.set("type", "IMAGE");
         data.set("title", fileTitle(file.name));
         data.set("uploadId", uploadId);
-        last = await registerArtifactAction(data);
+        last = await registerShowcaseImageAction(data);
         if (last.status === "error") return last;
       }
       return last;
@@ -144,7 +155,6 @@ export function ShowcaseManager({
     >
       <div className="space-y-1">
         <h2 className="text-base font-extrabold tracking-[-0.02em]"><UiText>{"쇼케이스 이미지"}</UiText></h2>
-        <p className="muted text-sm leading-6"><UiText>{"지난 프로젝트 상세에 노출되는 대표 이미지와 갤러리 사진을 관리합니다."}</UiText></p>
       </div>
 
       <div className="space-y-2">
@@ -162,11 +172,10 @@ export function ShowcaseManager({
           <div className="flex flex-col justify-center rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm leading-6">
             <p className="font-semibold"><UiText>{"권장 규격"}</UiText></p>
             <ul className="muted mt-1 list-disc space-y-0.5 pl-4">
-              <li><UiText>{"가로형 16:9 비율"}</UiText></li>
-              <li><UiText>{"권장 크기 1280×720 이상"}</UiText></li>
-              <li><UiText>{"JPG 또는 PNG · 최대 1GB"}</UiText></li>
+              <li><UiText>{"가로형 3:2 비율"}</UiText></li>
+              <li><UiText>{"권장 크기 600×400 이상"}</UiText></li>
+              <li><UiText>{"JPG, PNG 또는 WebP · 최대 20MB"}</UiText></li>
             </ul>
-            <p className="muted mt-2 text-xs"><UiText>{"목록 카드와 상세 상단에 대표로 사용됩니다."}</UiText></p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -187,10 +196,9 @@ export function ShowcaseManager({
         </div>
         <UiInput ref={galleryInputRef} type="file" accept={IMAGE_ACCEPT} multiple className="sr-only" tabIndex={-1} aria-hidden="true" onChange={addImages} />
         {order.length === 0 ? (
-          <p className="muted rounded-[var(--radius-control)] border border-dashed border-[var(--line)] px-4 py-6 text-center text-sm"><UiText>{"추가한 사진이 없습니다. 사진을 올리면 상세 갤러리에 순서대로 표시됩니다."}</UiText></p>
+          <p className="muted rounded-[var(--radius-control)] border border-dashed border-[var(--line)] px-4 py-6 text-center text-sm"><UiText>{"추가한 사진이 없습니다."}</UiText></p>
         ) : (
           <>
-            <p className="muted text-xs"><UiText>{"사진을 드래그해 순서를 바꿀 수 있습니다. 왼쪽부터 상세 갤러리에 표시됩니다."}</UiText></p>
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {order.map((image, index) => (
                 <li

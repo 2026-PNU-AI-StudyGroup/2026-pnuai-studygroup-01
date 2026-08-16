@@ -23,11 +23,7 @@ export class PrismaDeadlineNotificationGenerator
     const [teams, tasks, reports] = await Promise.all([
       this.client.projectTeam.findMany({
         where: {
-          project: { status: "ACTIVE" },
-          OR: [
-            { project: { program: { executionEndsAt: { gte: now, lte: endsAt } } } },
-            { project: { program: { submissionEndsAt: { gte: now, lte: endsAt } } } },
-          ],
+          project: { status: "ACTIVE", program: { executionEndsAt: { gte: now, lte: endsAt } } },
         },
         select: {
           id: true,
@@ -37,7 +33,7 @@ export class PrismaDeadlineNotificationGenerator
             select: {
               id: true,
               managerId: true,
-              program: { select: { executionEndsAt: true, submissionEndsAt: true } },
+              program: { select: { executionEndsAt: true } },
               assistants: { select: { userId: true } },
             },
           },
@@ -68,6 +64,7 @@ export class PrismaDeadlineNotificationGenerator
       this.client.report.findMany({
         where: {
           required: true,
+          submissionEnabled: true,
           dueAt: { gte: now, lte: endsAt },
           projectTeam: { confirmedAt: { not: null }, project: { status: "ACTIVE" } },
         },
@@ -102,8 +99,7 @@ export class PrismaDeadlineNotificationGenerator
         ...team.memberships.map(({ userId }) => userId),
       ]);
       const deadlines = [
-        ["수행 종료", team.project.program.executionEndsAt, "execution"],
-        ["결과물 제출", team.project.program.submissionEndsAt, "submission"],
+        ["수행·결과물 제출", team.project.program.executionEndsAt, "execution"],
       ] as const;
       for (const [label, dueAt, kind] of deadlines) {
         if (dueAt < now || dueAt > endsAt) continue;
@@ -113,11 +109,9 @@ export class PrismaDeadlineNotificationGenerator
             type: "DEADLINE",
             title: `${team.name} ${label} 마감 임박`,
             body: `${formatKoreanDate(dueAt)}까지입니다. 남은 작업과 제출 상태를 확인해 주세요.`,
-            titleEn: kind === "execution" ? "Execution deadline approaching" : "Submission deadline approaching",
+            titleEn: "Execution deadline approaching",
             bodyEn: `${team.name} has a deadline on ${formatEnglishDate(dueAt)}. Review remaining work and submission status in PMS.`,
-            href: kind === "execution"
-              ? `/projects/${team.project.id}`
-              : `/projects/${team.project.id}/artifacts`,
+            href: `/projects/${team.project.id}`,
             dedupeKey:
               `deadline:team:${team.id}:${kind}:${dueAt.toISOString()}:${recipientId}`,
             createdAt: now,

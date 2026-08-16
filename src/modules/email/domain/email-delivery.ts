@@ -42,7 +42,7 @@ export function englishEmailHeading(kind: EmailDeliveryKind): string {
     RECRUITMENT_RESULT: "Recruitment result",
     TOPIC_APPLICATION: "Project application",
     APPLICATION_RESULT: "Project application result",
-    TOPIC_APPROVAL: "Project proposal update",
+    TOPIC_APPROVAL: "Project registration update",
     PROJECT_REQUEST: "Project guidance request",
     TASK_ASSIGNMENT: "Task update",
     PROJECT_MEMBERSHIP: "Project membership update",

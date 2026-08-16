@@ -15,8 +15,6 @@ import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
 import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-query-repository";
-import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
-import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { AddIcon, SettingsIcon } from "@/shared/ui/workspace-icons";
@@ -35,12 +33,9 @@ export default async function StudentTeamsPage({
   if (actor.role !== "STUDENT") redirect("/dashboard");
   const { modal } = await searchParams;
 
-  const [{ teams, invitations }, studentCreatablePrograms] = await Promise.all([
-    new StudentTeamQueryService(
-      new PrismaStudentTeamQueryRepository(prisma),
-    ).listWorkspace(actor),
-    new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listStudentCreatableOpen(),
-  ]);
+  const { teams, invitations } = await new StudentTeamQueryService(
+    new PrismaStudentTeamQueryRepository(prisma),
+  ).listWorkspace(actor);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams">
@@ -81,14 +76,6 @@ export default async function StudentTeamsPage({
                 <StudentTeamLedger teams={teams} actorId={actor.id} />
               )}
             </section>
-
-            {studentCreatablePrograms.length ? <aside className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
-              <div>
-                <strong className="text-sm text-[var(--ink)]"><UiText>{"학생 프로젝트를 제안할 수 있습니다."}</UiText></strong>
-                <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"프로그램 설정에 맞는 승인 요청을 보내세요."}</UiText></p>
-              </div>
-              <Link className="button-quiet gap-2" href="/topics?modal=project-proposal"><AddIcon className="size-4 shrink-0" /><UiText>{"학생 프로젝트 제안"}</UiText></Link>
-            </aside> : null}
           </div>
 
           {modal === "create" ? (

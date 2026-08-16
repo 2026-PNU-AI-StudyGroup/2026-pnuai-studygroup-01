@@ -50,6 +50,22 @@ describe("report-form-shared upload pipeline", () => {
     expect(slice).not.toHaveBeenCalled();
   });
 
+  it("쇼케이스 이미지는 결과물 공통 제한보다 작은 20MB로 파일을 읽기 전에 거절한다", async () => {
+    const slice = vi.fn();
+    const file = {
+      name: "oversized-showcase.png",
+      type: "image/png",
+      size: 20 * 1024 * 1024 + 1,
+      slice,
+    } as unknown as File;
+
+    await expect(uploadTeamFile("team-1", "ARTIFACT", file, {
+      maxBytes: 20 * 1024 * 1024,
+      maxBytesMessage: "쇼케이스 이미지는 최대 20MB까지 업로드할 수 있습니다.",
+    })).rejects.toThrow("쇼케이스 이미지는 최대 20MB까지 업로드할 수 있습니다.");
+    expect(slice).not.toHaveBeenCalled();
+  });
+
   it("해시 계산 중 중단 신호를 받으면 다음 청크를 읽지 않는다", async () => {
     const bytes = new Uint8Array(2 * 1024 * 1024 + 1);
     const file = fileFromBytes(bytes);

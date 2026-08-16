@@ -95,8 +95,6 @@ describe("ProgramManagementRoutePage", () => {
 
     expect(buildAdminProgramSidebarItems).toHaveBeenCalledWith(
       programs,
-      "manage",
-      "reports",
       expect.any(Date),
       new Map([["program-1", 3]]),
     );
@@ -144,8 +142,6 @@ describe("ProgramManagementRoutePage", () => {
 
     expect(buildAdminProgramSidebarItems).toHaveBeenCalledWith(
       programs,
-      "create",
-      "settings",
       expect.any(Date),
       new Map([["program-1", 3]]),
     );

@@ -41,7 +41,7 @@ describe("PrismaAdminProjectCardDataReader", () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { projectId: { in: ["topic-1"] } },
       select: expect.objectContaining({
-        reports: expect.objectContaining({ where: { required: true } }),
+        reports: expect.objectContaining({ where: { required: true, submissionEnabled: true } }),
       }),
     }));
     expect(result).toEqual([{

@@ -7,7 +7,6 @@ import { UiNav } from "@/modules/translation/ui/localized-elements";
 const professorNavigationItems = [
   { href: "/professor/topics", label: "프로젝트 주제", hint: "등록·공개·일정", icon: "topic" },
   { href: "/professor/applications", label: "지원 검토", icon: "application" },
-  { href: "/project-approvals", label: "학생 제안", hint: "승인·반려", icon: "approval" },
 ] as const;
 
 function isProfessorNavigationActive(href: string, currentPath: string) {
@@ -18,7 +17,6 @@ function ProfessorNavigationIcon({ name }: { name: (typeof professorNavigationIt
   const paths = {
     topic: <><path d="M4 4h12v12H4z" /><path d="M7 8h6M7 11h4M13.5 2.5v3" /></>,
     application: <><path d="M5 3h10v14H5z" /><path d="M8 7h4M8 10h4M8 13h2" /></>,
-    approval: <><path d="M4 10.5 8 14l8-9" /><path d="M4 4h8M4 17h12" /></>,
   };
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]">
@@ -28,9 +26,7 @@ function ProfessorNavigationIcon({ name }: { name: (typeof professorNavigationIt
 }
 
 export function ProfessorSidebar({ currentPath, role }: { currentPath: string; role: UserRole }) {
-  const items = role === "STUDENT"
-    ? professorNavigationItems.filter(({ href }) => href !== "/project-approvals")
-    : professorNavigationItems;
+  const items = professorNavigationItems;
   const current = items.find((item) => isProfessorNavigationActive(item.href, currentPath)) ?? items[0];
 
   return (

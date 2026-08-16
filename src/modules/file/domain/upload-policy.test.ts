@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { InvalidUploadError, validateUpload } from "@/modules/file/domain/upload-policy";
+import { ARTIFACT_MAX_BYTES, InvalidUploadError, validateUpload } from "@/modules/file/domain/upload-policy";
 
 const valid = {
   purpose: "REPORT" as const,
@@ -44,5 +44,18 @@ describe("파일 업로드 정책", () => {
       size,
       sha256: "b".repeat(64),
     })).toThrow(InvalidUploadError);
+  });
+
+  it.each([ARTIFACT_MAX_BYTES, ARTIFACT_MAX_BYTES + 1])("일반 결과물은 최대 100MB로 제한한다", (size) => {
+    const validation = () => validateUpload({
+      purpose: "ARTIFACT",
+      consumer: "ARTIFACT",
+      originalName: "artifact.zip",
+      contentType: "application/zip",
+      size,
+      sha256: "c".repeat(64),
+    });
+    if (size === ARTIFACT_MAX_BYTES) expect(validation).not.toThrow();
+    else expect(validation).toThrow(InvalidUploadError);
   });
 });

@@ -229,7 +229,7 @@ describe("Prisma 지원 결정 저장소", () => {
             status: "PENDING",
             topic: {
               id: "topic-1",
-              title: "학생 제안",
+              title: "학생 등록",
               authorId: "student-1",
               managerId: null,
               assistants: [],
@@ -252,7 +252,7 @@ describe("Prisma 지원 결정 저장소", () => {
     )).resolves.toBe("CONFLICT");
   });
 
-  it("학생 제안형으로 전환된 프로그램의 기존 직접 지원을 승인하지 않는다", async () => {
+  it("학생 등록형으로 전환된 프로그램의 기존 직접 지원을 승인하지 않는다", async () => {
     const transaction = {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{ endsAt: new Date("2027-12-31T00:00:00Z"), studentProjectCreationEnabled: true }])

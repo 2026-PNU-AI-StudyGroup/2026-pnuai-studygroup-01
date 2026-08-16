@@ -73,9 +73,12 @@ async function finalizeProgramInTransaction(
   const actorId = input.actor.kind === "USER" ? input.actor.id : null;
   const projects = await transaction.topic.findMany({
     where: { programId: input.programId },
-    select: { id: true, projectTeam: { select: { confirmedAt: true } } },
+    select: { id: true, status: true, projectTeam: { select: { confirmedAt: true } } },
   });
   const topicIds = projects.map(({ id }) => id);
+  const pendingRegistrationTopicIds = projects
+    .filter(({ status, projectTeam }) => status === "PENDING_APPROVAL" && projectTeam?.confirmedAt === null)
+    .map(({ id }) => id);
   const pendingApplications = await transaction.topicApplication.findMany({
     where: { topicId: { in: topicIds }, status: "PENDING" },
     select: { id: true, studentId: true, topic: { select: { title: true } } },
@@ -102,6 +105,17 @@ async function finalizeProgramInTransaction(
       decidedAt: input.processedAt,
     },
   });
+  // 승인 대기 등록은 실행 프로젝트가 아니다. 프로그램 종료로 요청이 취소되면
+  // 등록 당시 만든 팀 스냅샷도 함께 제거해 대기 팀이 남지 않게 한다.
+  if (pendingRegistrationTopicIds.length) {
+    await transaction.topic.updateMany({
+      where: { id: { in: pendingRegistrationTopicIds }, status: "PENDING_APPROVAL" },
+      data: { status: "REJECTED" },
+    });
+    await transaction.projectTeam.deleteMany({
+      where: { projectId: { in: pendingRegistrationTopicIds }, confirmedAt: null },
+    });
+  }
   await transaction.topicApplication.updateMany({
     where: { topicId: { in: topicIds }, status: "PENDING" },
     data: {
@@ -142,10 +156,10 @@ async function finalizeProgramInTransaction(
       ...pendingApprovalRequests.map((request) => ({
         kind: "TOPIC_APPROVAL" as const,
         recipientId: request.requesterId,
-        title: "프로젝트 제안이 취소되었습니다",
-        body: `${request.topic.title} 제안이 프로그램 종료로 취소되었습니다.`,
-        titleEn: "Project proposal canceled",
-        bodyEn: `The proposal for ${request.topic.title} was canceled because the program has ended.`,
+        title: "프로젝트 등록이 취소되었습니다",
+        body: `${request.topic.title} 등록이 프로그램 종료로 취소되었습니다.`,
+        titleEn: "Project registration canceled",
+        bodyEn: `The registration for ${request.topic.title} was canceled because the program has ended.`,
         href: "/dashboard",
         idempotencyKey: `email:program-close:topic-approval:${request.id}`,
         createdAt: input.processedAt,
@@ -167,8 +181,8 @@ async function finalizeProgramInTransaction(
         ...pendingApprovalRequests.map((request) => ({
           recipientId: request.requesterId,
           type: "TOPIC_APPROVAL" as const,
-          title: "프로젝트 제안이 취소되었습니다",
-          body: `${request.topic.title} 제안이 프로그램 종료로 취소되었습니다.`,
+          title: "프로젝트 등록이 취소되었습니다",
+          body: `${request.topic.title} 등록이 프로그램 종료로 취소되었습니다.`,
           href: "/dashboard",
           dedupeKey: `program-close:topic-approval:${request.id}`,
           createdAt: input.processedAt,

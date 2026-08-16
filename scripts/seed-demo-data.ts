@@ -492,12 +492,10 @@ async function seed() {
         recruitmentEndsAt: new Date(startsAt.getTime() + duration * 0.25),
         executionStartsAt: new Date(startsAt.getTime() + duration * 0.1),
         executionEndsAt: new Date(endsAt.getTime() - duration * 0.1),
-        submissionStartsAt: new Date(endsAt.getTime() - duration * 0.2),
-        submissionEndsAt: endsAt,
       };
     }
     async function program(input: {
-      id: string; name: string; category: string; description: string;
+      id: string; name: string; category: string;
       startsAt: Date; endsAt: Date;
       advisorEnabled?: boolean;
       schedule?: ReturnType<typeof defaultProgramSchedule>;
@@ -519,7 +517,7 @@ async function seed() {
         : schedule;
       return tx.projectProgram.upsert({
         where: { id: input.id },
-        update: { name: input.name, category: input.category, description: input.description, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...effectiveSchedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isPublic: true, firstPublishedAt, endProcessedAt },
+        update: { name: input.name, category: input.category, startsAt: input.startsAt, endsAt: input.endsAt, projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, ...effectiveSchedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, isPublic: true, firstPublishedAt, endProcessedAt },
         create: { ...programInput, ...effectiveSchedule, advisorEnabled, studentProjectCreationEnabled, projectTeamMinSize: 2, projectTeamMaxSize: 6, createdById: ids.professors[0], projectRegistrationStartsAt: input.startsAt, projectRegistrationEndsAt: input.endsAt, isPublic: true, firstPublishedAt, endProcessedAt },
       });
     }
@@ -527,34 +525,31 @@ async function seed() {
       {
         recruitmentStartsAt: new Date("2026-03-02T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-12-15T23:59:59+09:00"),
         executionStartsAt: new Date("2026-03-23T00:00:00+09:00"), executionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
-        submissionStartsAt: new Date("2026-04-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-12-15T23:59:59+09:00"),
       },
       {
         recruitmentStartsAt: new Date("2026-06-15T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-10-31T23:59:59+09:00"),
         executionStartsAt: new Date("2026-07-20T00:00:00+09:00"), executionEndsAt: new Date("2026-10-15T23:59:59+09:00"),
-        submissionStartsAt: new Date("2026-10-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-10-31T23:59:59+09:00"),
       },
       {
         recruitmentStartsAt: new Date("2026-07-01T00:00:00+09:00"), recruitmentEndsAt: new Date("2026-11-30T23:59:59+09:00"),
         executionStartsAt: new Date("2026-07-15T00:00:00+09:00"), executionEndsAt: new Date("2026-11-10T23:59:59+09:00"),
-        submissionStartsAt: new Date("2026-11-01T00:00:00+09:00"), submissionEndsAt: new Date("2026-11-30T23:59:59+09:00"),
       },
     ] as const;
     const activePrograms = [
-      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, description: "졸업예정 학생이 지도교수와 문제를 정의하고, 두 학기에 걸쳐 설계·구현·사용자 검증·최종 발표까지 수행하는 컴퓨터공학전공 졸업과제", startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), schedule: activeProgramSchedules[0] }),
-      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, description: "서로 다른 전공의 학생이 AI를 활용해 캠퍼스와 지역사회의 문제를 정의하고 작동하는 프로토타입으로 검증하는 해커톤", startsAt: new Date("2026-02-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), advisorEnabled: false, schedule: activeProgramSchedules[1] }),
-      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, description: "AI 기초 학습부터 데이터 준비, 모델 활용, 서비스 구현까지 단계적으로 경험하는 프로젝트형 역량 강화 프로그램", startsAt: new Date("2026-01-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), advisorEnabled: false, schedule: activeProgramSchedules[2] }),
+      await program({ id: ids.programs[0], name: "2026학년도 CSE 졸업과제(캡스톤디자인)", category: opusProgramCategories.capstone, startsAt: new Date("2026-03-01T00:00:00+09:00"), endsAt: new Date("2026-12-20T23:59:59+09:00"), schedule: activeProgramSchedules[0] }),
+      await program({ id: ids.programs[1], name: "제7회 PNU 창의융합AI해커톤", category: opusProgramCategories.hackathon, startsAt: new Date("2026-02-01T00:00:00+09:00"), endsAt: new Date("2026-10-31T23:59:59+09:00"), advisorEnabled: false, schedule: activeProgramSchedules[1] }),
+      await program({ id: ids.programs[2], name: "PNU AI부스터 2기", category: opusProgramCategories.aiBooster, startsAt: new Date("2026-01-01T00:00:00+09:00"), endsAt: new Date("2026-11-30T23:59:59+09:00"), advisorEnabled: false, schedule: activeProgramSchedules[2] }),
     ];
     const pastPrograms = [
-      await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, description: "2025학년도 컴퓨터공학전공 캡스톤 프로젝트의 주제 제안, 팀 구성, 중간 점검과 최종 결과물을 관리한 프로그램", startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00") }),
-      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, description: "소프트웨어로 캠퍼스와 지역사회의 문제를 해결하기 위해 아이디어를 구체화하고 프로토타입을 제작한 창의융합 해커톤", startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), advisorEnabled: false }),
+      await program({ id: ids.programs[3], name: "CSE 캡스톤디자인 2025", category: opusProgramCategories.capstone, startsAt: new Date("2025-03-01T00:00:00+09:00"), endsAt: new Date("2025-12-20T23:59:59+09:00") }),
+      await program({ id: ids.programs[4], name: "제6회 PNU 창의융합SW해커톤", category: opusProgramCategories.hackathon, startsAt: new Date("2025-05-01T00:00:00+09:00"), endsAt: new Date("2025-10-31T23:59:59+09:00"), advisorEnabled: false }),
       // OPUS 공개 목록에 없는 연도·회차는 과거 프로젝트 탐색을 풍부하게 하기 위한 데모 항목이다.
-      await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, description: "2024학년도 캡스톤 프로젝트의 팀별 수행 과정과 최종 결과물을 모은 데모 프로그램", startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00") }),
-      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, description: "데이터와 AI 기술을 실제 문제에 적용하며 모델 평가와 서비스 구현 경험을 쌓은 프로젝트형 교육 프로그램", startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), advisorEnabled: false }),
-      await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, description: "2023학년도 캡스톤 프로젝트의 제안서부터 최종 발표 자료까지 연결한 데모 프로그램", startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00") }),
-      await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, description: "웹 서비스 기획, 개발, 협업과 배포를 한 흐름으로 경험한 산학 연계형 실무 프로젝트", startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00") }),
-      await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, description: "2022학년도 캡스톤 프로젝트 결과물을 검색하고 열람할 수 있도록 구성한 데모 프로그램", startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00") }),
-      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, description: "오픈소스 기반 제품 개발과 공개 기여 경험을 결과물로 남긴 교내 소프트웨어 경진 프로그램", startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), advisorEnabled: false }),
+      await program({ id: ids.programs[5], name: "CSE 캡스톤디자인 2024", category: opusProgramCategories.capstone, startsAt: new Date("2024-03-01T00:00:00+09:00"), endsAt: new Date("2024-12-20T23:59:59+09:00") }),
+      await program({ id: ids.programs[6], name: "PNU AI부스터 1기", category: opusProgramCategories.aiBooster, startsAt: new Date("2024-04-01T00:00:00+09:00"), endsAt: new Date("2024-11-30T23:59:59+09:00"), advisorEnabled: false }),
+      await program({ id: ids.programs[7], name: "CSE 캡스톤디자인 2023", category: opusProgramCategories.capstone, startsAt: new Date("2023-03-01T00:00:00+09:00"), endsAt: new Date("2023-12-20T23:59:59+09:00") }),
+      await program({ id: ids.programs[8], name: "카카오 테크 캠퍼스 1기", category: opusProgramCategories.kakaoTechCampus, startsAt: new Date("2023-04-01T00:00:00+09:00"), endsAt: new Date("2023-11-30T23:59:59+09:00") }),
+      await program({ id: ids.programs[9], name: "CSE 캡스톤디자인 2022", category: opusProgramCategories.capstone, startsAt: new Date("2022-03-01T00:00:00+09:00"), endsAt: new Date("2022-12-20T23:59:59+09:00") }),
+      await program({ id: ids.programs[10], name: "PNU 오픈소스 SW 경진대회 2022", category: opusProgramCategories.hackathon, startsAt: new Date("2022-05-01T00:00:00+09:00"), endsAt: new Date("2022-11-30T23:59:59+09:00"), advisorEnabled: false }),
     ];
 
     const allPrograms = [...activePrograms, ...pastPrograms];
@@ -623,13 +618,13 @@ async function seed() {
     }
     for (const [index, data] of activeTopics.entries()) {
       const [title, description, requiredSkills, preferredSkills, roleExpectations, availabilityRequirement, capacity, programIndex, professorIndex] = data;
-      const studentProposalMode = activePrograms[programIndex].studentProjectCreationEnabled;
-      const authorId = studentProposalMode ? ids.students[8] : ids.professors[professorIndex];
-      const managerId = studentProposalMode ? ids.admin : ids.professors[professorIndex];
+      const studentRegistrationMode = activePrograms[programIndex].studentProjectCreationEnabled;
+      const authorId = studentRegistrationMode ? ids.students[8] : ids.professors[professorIndex];
+      const managerId = studentRegistrationMode ? ids.admin : ids.professors[professorIndex];
       const publishedAt = index === 0
         ? new Date("2026-02-23T09:00:00+09:00")
         : new Date(`2026-06-${String(index + 10).padStart(2, "0")}T09:00:00+09:00`);
-      const applicationMode = studentProposalMode ? "TEAM_ONLY" : index % 3 === 0 ? "INDIVIDUAL_OR_TEAM" : index % 3 === 1 ? "INDIVIDUAL_ONLY" : "TEAM_ONLY";
+      const applicationMode = studentRegistrationMode ? "TEAM_ONLY" : index % 3 === 0 ? "INDIVIDUAL_OR_TEAM" : index % 3 === 1 ? "INDIVIDUAL_ONLY" : "TEAM_ONLY";
       const applicationQuestions = [
         { label: "이 주제에 지원한 이유와 기여하고 싶은 내용을 작성해 주세요.", maxLength: 800, required: true, position: 0 },
         { label: "관련 경험이나 수행한 프로젝트가 있다면 작성해 주세요.", maxLength: 1000, required: false, position: 1 },
@@ -638,17 +633,17 @@ async function seed() {
         where: { id: ids.topics[index] },
         update: {
           programId: activePrograms[programIndex].id, authorId, managerId,
-          title, description, requiredSkills: studentProposalMode ? [] : [...requiredSkills], preferredSkills: studentProposalMode ? [] : [...preferredSkills], roleExpectations: studentProposalMode ? "" : roleExpectations, availabilityRequirement: studentProposalMode ? "" : availabilityRequirement, capacity: studentProposalMode ? 2 : capacity, applicationMode, recruitmentEnabled: !studentProposalMode,
+          title, description, requiredSkills: studentRegistrationMode ? [] : [...requiredSkills], preferredSkills: studentRegistrationMode ? [] : [...preferredSkills], roleExpectations: studentRegistrationMode ? "" : roleExpectations, availabilityRequirement: studentRegistrationMode ? "" : availabilityRequirement, capacity: studentRegistrationMode ? 2 : capacity, applicationMode, recruitmentEnabled: !studentRegistrationMode,
           status: "ACTIVE", publishedAt,
         },
         create: {
           id: ids.topics[index], programId: activePrograms[programIndex].id, authorId, managerId,
-          title, description, requiredSkills: studentProposalMode ? [] : [...requiredSkills], preferredSkills: studentProposalMode ? [] : [...preferredSkills], roleExpectations: studentProposalMode ? "" : roleExpectations, availabilityRequirement: studentProposalMode ? "" : availabilityRequirement, capacity: studentProposalMode ? 2 : capacity, applicationMode, recruitmentEnabled: !studentProposalMode,
-          applicationQuestions: studentProposalMode ? undefined : { create: applicationQuestions },
+          title, description, requiredSkills: studentRegistrationMode ? [] : [...requiredSkills], preferredSkills: studentRegistrationMode ? [] : [...preferredSkills], roleExpectations: studentRegistrationMode ? "" : roleExpectations, availabilityRequirement: studentRegistrationMode ? "" : availabilityRequirement, capacity: studentRegistrationMode ? 2 : capacity, applicationMode, recruitmentEnabled: !studentRegistrationMode,
+          applicationQuestions: studentRegistrationMode ? undefined : { create: applicationQuestions },
           status: "ACTIVE", publishedAt,
         },
       });
-      if (studentProposalMode) await tx.topicApplicationQuestion.deleteMany({ where: { topicId: ids.topics[index] } });
+      if (studentRegistrationMode) await tx.topicApplicationQuestion.deleteMany({ where: { topicId: ids.topics[index] } });
     }
 
     const pastTopics = opusArchivedProjects.map((project) => {
@@ -1057,7 +1052,7 @@ async function seed() {
         projectTeamId: ids.teams[0],
         registeredById: ids.students[0],
         type: "PRESENTATION_VIDEO",
-        title: "최종 시연 영상",
+        title: "시연·발표 영상",
         externalUrl: "https://www.youtube.com/watch?v=Uou5iwWqTDA",
         createdAt: new Date("2026-08-05T19:20:00+09:00"),
       },
@@ -1303,7 +1298,7 @@ async function seed() {
       data: studentTeamRecruitmentApplicationRows,
     });
 
-    // 관리자 승인 대기함과 프로그램별 대기 건수 UI를 바로 검증할 수 있는 제안들이다.
+    // 관리자 승인 대기함과 프로그램별 대기 건수 UI를 바로 검증할 수 있는 등록들이다.
     // 교수 검토 경로는 관리자 집계에서 제외되는지 함께 확인한다.
     const pendingApprovalDraftGroups = [
       {
@@ -1368,7 +1363,7 @@ async function seed() {
       },
     ] as const;
     let pendingApprovalSeedIndex = 0;
-    const pendingApprovalSeeds = pendingApprovalDraftGroups.flatMap((group) => group.titles.map((title) => {
+    const pendingRegistrationSeeds = pendingApprovalDraftGroups.flatMap((group) => group.titles.map((title) => {
       const index = pendingApprovalSeedIndex++;
       const createdAt = new Date(`2026-08-${String(13 - Math.floor(index / 4)).padStart(2, "0")}T${String(18 - (index % 4)).padStart(2, "0")}:00:00+09:00`);
       return {
@@ -1381,20 +1376,20 @@ async function seed() {
         createdAt,
       };
     }));
-    if (pendingApprovalSeeds.length !== ids.approvalTopics.length || pendingApprovalSeeds.length !== ids.approvalRequests.length) {
-      throw new Error("승인 대기 데모 ID와 제안 수가 일치하지 않습니다.");
+    if (pendingRegistrationSeeds.length !== ids.approvalTopics.length || pendingRegistrationSeeds.length !== ids.approvalRequests.length) {
+      throw new Error("승인 대기 데모 ID와 등록 수가 일치하지 않습니다.");
     }
     await tx.topic.createMany({
-      data: pendingApprovalSeeds.map((proposal, index) => ({
+      data: pendingRegistrationSeeds.map((registration, index) => ({
         id: ids.approvalTopics[index],
-        programId: activePrograms[proposal.programIndex].id,
-        authorId: proposal.requesterId,
+        programId: activePrograms[registration.programIndex].id,
+        authorId: registration.requesterId,
         managerId: null,
-        title: proposal.title,
-        description: `${proposal.title}의 실제 사용 흐름을 인터뷰와 프로토타입으로 검증하고, 학기 말에 재현 가능한 결과물과 운영 문서를 남기는 제안입니다.`,
-        advisorRole: proposal.route === "PROFESSOR" ? "김도윤 교수" : "운영진 검토",
-        requiredSkills: [...proposal.requiredSkills],
-        preferredSkills: [...proposal.preferredSkills],
+        title: registration.title,
+        description: `${registration.title}의 실제 사용 흐름을 인터뷰와 프로토타입으로 검증하고, 학기 말에 재현 가능한 결과물과 운영 문서를 남기는 등록입니다.`,
+        advisorRole: registration.route === "PROFESSOR" ? "김도윤 교수" : "운영진 검토",
+        requiredSkills: [...registration.requiredSkills],
+        preferredSkills: [...registration.preferredSkills],
         roleExpectations: "문제 정의, 구현, 사용자 검증 중 한 역할을 맡아 주 1회 진행 상황을 공유",
         availabilityRequirement: "주 1회 정기 회의와 중간·최종 발표 참여",
         applicationMode: "TEAM_ONLY",
@@ -1402,21 +1397,21 @@ async function seed() {
         capacity: 4,
         status: "PENDING_APPROVAL",
         publishedAt: null,
-        createdAt: proposal.createdAt,
-        updatedAt: proposal.createdAt,
+        createdAt: registration.createdAt,
+        updatedAt: registration.createdAt,
       })),
     });
     await tx.topicApprovalRequest.createMany({
-      data: pendingApprovalSeeds.map((proposal, index) => ({
+      data: pendingRegistrationSeeds.map((registration, index) => ({
         id: ids.approvalRequests[index],
         topicId: ids.approvalTopics[index],
-        requesterId: proposal.requesterId,
-        route: proposal.route,
-        requestedProfessorId: proposal.route === "PROFESSOR" ? ids.professors[0] : null,
+        requesterId: registration.requesterId,
+        route: registration.route,
+        requestedProfessorId: registration.route === "PROFESSOR" ? ids.professors[0] : null,
         status: "PENDING",
         reviewComment: "",
-        createdAt: proposal.createdAt,
-        updatedAt: proposal.createdAt,
+        createdAt: registration.createdAt,
+        updatedAt: registration.createdAt,
       })),
     });
 
@@ -1556,8 +1551,7 @@ async function seed() {
             OR program."recruitmentEndsAt" > program."endsAt"
             OR program."executionStartsAt" < program."startsAt"
             OR program."executionEndsAt" > program."endsAt"
-            OR program."submissionStartsAt" < program."startsAt"
-            OR program."submissionEndsAt" > program."endsAt") AS "scheduleOutsideProgram",
+            ) AS "scheduleOutsideProgram",
         (SELECT count(*)::int FROM (
           SELECT "projectTeamId", "userId" FROM "project_team_membership"
           WHERE "endedAt" IS NULL
@@ -1578,7 +1572,7 @@ async function seed() {
     }
 
     // 데모 득표: 투표가 열린 두 프로그램에 표본 투표를 넣어 팀별 득표수를 바로 확인할 수 있게 한다.
-    // 투표자 = 교수·조교·관리자(과거 프로그램 팀원이 아니라 self-vote 충돌 없음), 자기 제안/담당 주제는 제외.
+    // 투표자 = 교수·조교·관리자(과거 프로그램 팀원이 아니라 self-vote 충돌 없음), 자기 등록/담당 주제는 제외.
     const votingProgramIds = pastPrograms.slice(0, 2).map((program) => program.id);
     const demoVoters = [...allProfessorIds, ids.admin];
     await tx.projectVote.deleteMany({ where: { programId: { in: votingProgramIds } } });
@@ -1659,8 +1653,8 @@ async function seed() {
       studentTeams: ids.studentTeams.length,
       studentTeamRecruitmentPosts: ids.studentTeamRecruitments.length,
       studentTeamRecruitmentApplications: ids.studentTeamRecruitmentApplications.length,
-      pendingAdminApprovals: pendingApprovalSeeds.filter((proposal) => proposal.route === "ADMIN").length,
-      pendingProfessorApprovals: pendingApprovalSeeds.filter((proposal) => proposal.route === "PROFESSOR").length,
+      pendingAdminApprovals: pendingRegistrationSeeds.filter((registration) => registration.route === "ADMIN").length,
+      pendingProfessorApprovals: pendingRegistrationSeeds.filter((registration) => registration.route === "PROFESSOR").length,
       activeReports: ids.activeReports.length,
       activeReportVersions: ids.activeReportVersions.length,
       activeArtifacts: ids.activeArtifacts.length,

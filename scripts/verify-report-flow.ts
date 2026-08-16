@@ -80,7 +80,7 @@ async function main() {
   ] });
   const program = await prisma.projectProgram.create({ data: {
     createdById: professorId, name: `보고서 검증 프로그램 ${professorId}`, category: "검증", description: "보고서 통합 검증",
-    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), submissionStartsAt: new Date("2025-01-01"), submissionEndsAt: new Date("2027-01-01"), isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
+    startsAt: new Date("2025-01-01"), endsAt: new Date("2027-01-01"), projectRegistrationStartsAt: new Date("2025-01-01"), projectRegistrationEndsAt: new Date("2027-01-01"), recruitmentStartsAt: new Date("2025-01-01"), recruitmentEndsAt: new Date("2027-01-01"), executionStartsAt: new Date("2025-01-01"), executionEndsAt: new Date("2027-01-01"), isStudentPublic: true, isFacultyPublic: true, firstPublishedAt: new Date("2025-01-01"),
   } });
   programId = program.id;
   const topic = await prisma.topic.create({ data: {
@@ -275,7 +275,7 @@ async function main() {
   } catch (error) {
     submissionPeriodDenied = error instanceof ReportOperationNotAllowedError;
   }
-  if (!submissionPeriodDenied) throw new Error("제출 기간 밖 보고서가 접수되었습니다.");
+  if (!submissionPeriodDenied) throw new Error("수행 기간 밖 보고서가 접수되었습니다.");
 
   const archiveRepository = new PrismaTeamArchiveQueryRepository(prisma);
   const programEndsAt = new Date("2026-07-16T23:59:59Z");

@@ -15,18 +15,23 @@ function report({
   dueAt,
   decision,
   submitted = decision !== undefined,
+  required = true,
+  submissionEnabled = true,
 }: {
   id: string;
   position?: number;
   dueAt: string;
   decision?: "APPROVED" | "REVISION_REQUESTED" | null;
   submitted?: boolean;
+  required?: boolean;
+  submissionEnabled?: boolean;
 }): ReportItem {
   return {
     id,
     title: id,
     position,
-    required: true,
+    required,
+    submissionEnabled,
     dueAt: new Date(dueAt),
     feedback: [],
     versions: submitted
@@ -79,5 +84,12 @@ describe("보고서 화면 표현 상태", () => {
     expect(isReportSubmissionOpen(unsubmitted, now)).toBe(true);
     expect(selectStudentReportFocus([unsubmitted], now)?.kind).toBe("SUBMIT");
     expect(selectStudentReportFocus([unsubmitted], new Date("2026-08-04T00:00:00.001Z"))?.kind).toBe("SUBMIT_BLOCKED");
+  });
+
+  it("선택 제출 보고서는 제출할 수 있지만 필수 보고서 우선순위에는 넣지 않는다", () => {
+    const optional = report({ id: "optional", dueAt: "2026-08-10T00:00:00Z", submitted: false, required: false });
+
+    expect(isReportSubmissionOpen(optional, now)).toBe(true);
+    expect(selectStudentReportFocus([optional], now)).toBeNull();
   });
 });

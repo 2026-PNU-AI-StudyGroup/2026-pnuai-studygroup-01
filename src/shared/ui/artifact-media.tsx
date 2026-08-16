@@ -23,8 +23,8 @@ export function toYoutubeEmbedUrl(url: string | null | undefined): string | null
 export function ArtifactMedia({ type, title, fileId, externalUrl }: {
   type: ArtifactType;
   title: string;
-  fileId: string | null | undefined;
-  externalUrl: string | null | undefined;
+  fileId?: string | null;
+  externalUrl?: string | null;
 }) {
   const embedUrl = type === "PRESENTATION_VIDEO" ? toYoutubeEmbedUrl(externalUrl) : null;
   if (embedUrl) {

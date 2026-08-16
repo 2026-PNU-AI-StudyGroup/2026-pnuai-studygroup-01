@@ -8,7 +8,6 @@ export function ProjectPortalHero({ view, program, search, titleAction }: {
     id?: string;
     name: string;
     category: string;
-    description?: string;
     startsAt?: Date | string;
     endsAt?: Date | string;
     projectRegistrationStartsAt?: Date | string;
@@ -17,15 +16,13 @@ export function ProjectPortalHero({ view, program, search, titleAction }: {
     recruitmentEndsAt?: Date | string | null;
     executionStartsAt?: Date | string;
     executionEndsAt?: Date | string;
-    submissionStartsAt?: Date | string;
-    submissionEndsAt?: Date | string;
     votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
   };
   search?: ReactNode;
   titleAction?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
-  const description = program?.description ?? (view === "past" ? "완료된 프로젝트와 결과물을 확인하세요." : "현재 참여할 수 있는 프로젝트를 확인하세요.");
+  const description = view === "past" ? "완료된 프로젝트와 결과물을 확인하세요." : "현재 참여할 수 있는 프로젝트를 확인하세요.";
 
   if (program && program.startsAt && program.endsAt) {
     const { startsAt, endsAt } = program;
@@ -49,8 +46,6 @@ export function ProjectPortalHero({ view, program, search, titleAction }: {
                 recruitmentEndsAt={program.recruitmentEndsAt}
                 executionStartsAt={program.executionStartsAt}
                 executionEndsAt={program.executionEndsAt}
-                submissionStartsAt={program.submissionStartsAt}
-                submissionEndsAt={program.submissionEndsAt}
                 votingPolicy={program.votingPolicy}
               />
             </div>
@@ -72,7 +67,7 @@ export function ProjectPortalHero({ view, program, search, titleAction }: {
   );
 }
 
-function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, submissionStartsAt, submissionEndsAt, votingPolicy }: {
+function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, votingPolicy }: {
   startsAt: Date | string;
   endsAt: Date | string;
   projectRegistrationStartsAt?: Date | string;
@@ -81,8 +76,6 @@ function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, project
   recruitmentEndsAt?: Date | string | null;
   executionStartsAt?: Date | string;
   executionEndsAt?: Date | string;
-  submissionStartsAt?: Date | string;
-  submissionEndsAt?: Date | string;
   votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
 }) {
   return (
@@ -95,7 +88,6 @@ function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, project
       />
       {recruitmentStartsAt && recruitmentEndsAt ? <ProgramPeriod label="프로젝트 모집 기간" startsAt={recruitmentStartsAt} endsAt={recruitmentEndsAt} /> : null}
       {executionStartsAt && executionEndsAt ? <ProgramPeriod label="수행 기간" startsAt={executionStartsAt} endsAt={executionEndsAt} /> : null}
-      {submissionStartsAt && submissionEndsAt ? <ProgramPeriod label="제출 기간" startsAt={submissionStartsAt} endsAt={submissionEndsAt} /> : null}
       {votingPolicy ? (
         <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
       ) : null}

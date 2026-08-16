@@ -15,6 +15,7 @@ function repository(overrides: Partial<TeamProjectInfoRepository> = {}): TeamPro
     findForActor: vi.fn(async () => ({
       teamId: "team-1",
       programName: "캡스톤디자인",
+      teamName: "프로젝트 팀",
       title: "기존 프로젝트",
       description: "기존 설명",
       status: "IN_PROGRESS" as const,
@@ -37,6 +38,7 @@ describe("TeamProjectInfoService", () => {
       findForActor: vi.fn(async () => ({
         teamId: "team-1",
         programName: "캡스톤디자인",
+        teamName: "프로젝트 팀",
         title: "기존 프로젝트",
         description: "기존 설명",
         status: "IN_PROGRESS" as const,

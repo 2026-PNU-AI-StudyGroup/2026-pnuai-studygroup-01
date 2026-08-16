@@ -58,8 +58,6 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
-  programSubmissionStartsAt: Date;
-  programSubmissionEndsAt: Date;
 };
 
 export type ManagedTopicSummary = TopicSummary & {
@@ -104,8 +102,12 @@ export interface TopicStateRepository {
 export type PublicTopicSummary = TopicSummary & {
   authorName: string;
   professorName: string | null;
+  sourceUrl?: string | null;
+  thumbnailPath?: string | null;
+  posterPath?: string | null;
   startYear: number;
   memberCount: number;
+  teamMembers?: Array<{ name: string; role: "LEADER" | "MEMBER" }>;
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | null;
 };
 

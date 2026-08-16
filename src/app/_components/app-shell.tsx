@@ -31,22 +31,24 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
+        projectOverview: "프로젝트 현황",
+        projectApprovals: "프로젝트 승인",
         myProjects: "내 프로젝트",
         teamRecruit: "팀 모집",
         announcements: "공지사항",
         mentoredProjects: "지도 현황",
         manageTopics: "주제 관리",
-        projectApprovals: "프로젝트 승인",
         manageOps: "운영 관리",
       }
     : {
         explore: "Explore",
+        projectOverview: "Project overview",
+        projectApprovals: "Project approvals",
         myProjects: "My projects",
         teamRecruit: "Recruit",
         announcements: "Notices",
         mentoredProjects: "Advising",
         manageTopics: "Topic management",
-        projectApprovals: "Project approvals",
         manageOps: "Operations",
       };
   if (role === "STUDENT") {
@@ -59,7 +61,7 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
   }
   if (role === "ADMIN") {
     return [
-      { href: "/topics", label: label.explore, icon: "search" },
+      { href: "/topics", label: label.projectOverview, icon: "search" },
       { href: "/project-approvals", label: label.projectApprovals, icon: "approval" },
       { href: "/announcements", label: label.announcements, icon: "notice" },
       { href: "/admin/professors", activePath: "/admin", label: label.manageOps, icon: "settings" },
@@ -82,23 +84,19 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
 function isNavigationActive(item: NavigationItem, currentPath: string, role: UserRole): boolean {
   const activePath = item.activePath ?? item.href;
   if (role === "ADMIN" && item.href === "/topics") {
-    return isSectionActive("/topics", currentPath) && !isSectionActive("/topics/manage", currentPath);
+    return isSectionActive("/topics", currentPath);
   }
   if (role === "STUDENT" && item.href === "/topics") {
     return isSectionActive("/topics", currentPath);
   }
-  if (role === "STUDENT" && item.href === "/dashboard") {
-    return isSectionActive("/dashboard", currentPath) ||
-      isSectionActive("/project-approvals", currentPath);
-  }
+  if (role === "STUDENT" && item.href === "/dashboard") return isSectionActive("/dashboard", currentPath);
   if (role === "STUDENT" && item.href === "/recruitments") {
     return isSectionActive("/recruitments", currentPath) ||
       isSectionActive("/teams", currentPath);
   }
   if (role === "ADMIN" && activePath === "/admin") {
     return currentPath.startsWith("/admin/") ||
-      currentPath.startsWith("/professor/") ||
-      isSectionActive("/topics/manage", currentPath);
+      currentPath.startsWith("/professor/");
   }
   if (activePath !== "/professor/topics") return isSectionActive(activePath, currentPath);
   return currentPath.startsWith("/professor/");

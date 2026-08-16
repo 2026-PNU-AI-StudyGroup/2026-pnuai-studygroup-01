@@ -68,10 +68,12 @@ export async function ProgramManagementRoutePage({
   requestedProgramId,
   tabSegments,
   targetMode,
+  showApprovals,
 }: {
   requestedProgramId?: string;
   tabSegments?: string[];
   targetMode?: string;
+  showApprovals?: boolean;
 }) {
   const { actor, programs, pendingApprovalCounts } = await loadProgramManagementContext();
   const now = new Date();
@@ -88,20 +90,19 @@ export async function ProgramManagementRoutePage({
 
   const sidebarItems = buildAdminProgramSidebarItems(
     programs,
-    "manage",
-    tab,
     now,
     pendingApprovalCounts,
   );
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programManagementHref(selectedProgramId, tab)}>
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings selectedItemLinkable />}>
         <ProgramManagementWorkspace
           actor={actor}
           programId={selectedProgramId}
           tab={tab}
           targetMode={targetMode === "DIRECT" ? "DIRECT" : "CURRENT"}
           pendingApprovalCount={pendingApprovalCounts.get(selectedProgramId) ?? 0}
+          showApprovals={showApprovals}
         />
       </ExplorerLayout>
     </AppShell>
@@ -114,8 +115,6 @@ export async function ProgramCreateRoutePage() {
   const fallbackProgramId = defaultProgramId(programs, now);
   const sidebarItems = buildAdminProgramSidebarItems(
     programs,
-    "create",
-    "settings",
     now,
     pendingApprovalCounts,
   );

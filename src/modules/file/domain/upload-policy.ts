@@ -3,6 +3,8 @@ export type UploadConsumer = "REPORT" | "ARTIFACT" | "ANNOUNCEMENT";
 
 export const ANNOUNCEMENT_ATTACHMENT_MAX_BYTES = 500 * 1024 * 1024;
 export const ANNOUNCEMENT_ATTACHMENT_MAX_COUNT = 5;
+export const ARTIFACT_MAX_BYTES = 100 * 1024 * 1024;
+export const SHOWCASE_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 
 const REPORT_TYPES = new Set([
   "application/pdf",
@@ -14,10 +16,9 @@ const ARTIFACT_TYPES = new Set([
   "application/zip",
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "video/mp4",
-  "video/webm",
   "image/png",
   "image/jpeg",
+  "image/webp",
 ]);
 export class InvalidUploadError extends Error {
   constructor(message = "허용되지 않은 파일입니다.") {
@@ -45,7 +46,7 @@ export function validateUpload(input: {
   const maxSize = consumer === "REPORT"
     ? 25 * 1024 * 1024
     : consumer === "ARTIFACT"
-      ? 1024 ** 3
+      ? ARTIFACT_MAX_BYTES
       : ANNOUNCEMENT_ATTACHMENT_MAX_BYTES;
   const expectedPurpose: FilePurpose = consumer;
   if (

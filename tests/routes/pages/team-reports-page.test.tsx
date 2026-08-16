@@ -99,6 +99,7 @@ describe("TeamReportsPage feedback states", () => {
             title: "착수 보고서",
             position: 0,
             required: true,
+            submissionEnabled: true,
             dueAt: new Date("2026-08-31T14:59:59Z"),
             versions: [{
               id: "version-approved",
@@ -122,6 +123,7 @@ describe("TeamReportsPage feedback states", () => {
             title: "중간 보고서",
             position: 1,
             required: true,
+            submissionEnabled: true,
             dueAt: new Date("2026-10-15T14:59:59Z"),
             versions: [{
               id: "version-1",
@@ -145,6 +147,7 @@ describe("TeamReportsPage feedback states", () => {
             title: "결과 보고서",
             position: 2,
             required: true,
+            submissionEnabled: true,
             dueAt: new Date("2026-12-15T14:59:59Z"),
             versions: [],
             feedback: [],
@@ -176,6 +179,7 @@ describe("TeamReportsPage feedback states", () => {
           title: "착수 보고서",
           position: 0,
           required: true,
+          submissionEnabled: true,
           dueAt: new Date("2020-01-01T00:00:00Z"),
           versions: [],
           feedback: [],
@@ -201,6 +205,7 @@ describe("TeamReportsPage feedback states", () => {
           title: "중간 보고서",
           position: 0,
           required: true,
+          submissionEnabled: true,
           dueAt: new Date("2020-01-01T00:00:00Z"),
           versions: [{
             id: "version-1",
@@ -275,6 +280,7 @@ describe("TeamReportsPage feedback states", () => {
           title: "결과 보고서",
           position: 0,
           required: true,
+          submissionEnabled: true,
           dueAt: new Date("2026-12-15T14:59:59Z"),
           versions: [],
           feedback: [],

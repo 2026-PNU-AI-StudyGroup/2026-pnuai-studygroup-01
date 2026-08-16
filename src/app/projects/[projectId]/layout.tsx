@@ -21,6 +21,25 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
   const reportScheduleAvailable = hasReportSchedule(workspace.reportCount);
   const status = teamStatusPresentation[workspace.status];
 
+  if (workspace.approvalPending) {
+    return (
+      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
+        <main className="min-h-screen px-5 py-5 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+          <div className="mx-auto w-full max-w-3xl">
+            <div className="mb-6 flex items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+              <UiLink href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <UiText>{"프로젝트 목록"}</UiText>
+              </UiLink>
+              <StatusBadge tone="warning"><UiText>{"승인 대기"}</UiText></StatusBadge>
+            </div>
+            <UiText>{children}</UiText>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
       <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)] lg:pb-0">

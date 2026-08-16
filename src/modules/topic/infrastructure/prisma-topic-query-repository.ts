@@ -20,8 +20,8 @@ const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
-  projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } } } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
+  projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
     select: {
@@ -78,7 +78,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, submissionStartsAt: true, submissionEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -283,8 +283,6 @@ function toTopicSummary(
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
-    programSubmissionStartsAt: program.submissionStartsAt,
-    programSubmissionEndsAt: program.submissionEndsAt,
     pendingApplicationCount: _count.applications,
     openRecruitmentPostCount: projectTeam?._count.recruitmentPosts ?? 0,
   };
@@ -315,9 +313,8 @@ function toPublicTopic(
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
-    programSubmissionStartsAt: program.submissionStartsAt,
-    programSubmissionEndsAt: program.submissionEndsAt,
     memberCount: projectTeam?._count.memberships ?? 0,
+    teamMembers: projectTeam?.memberships.map(({ role, user }) => ({ name: user.name, role })) ?? [],
     ownApplicationStatus,
   };
 }

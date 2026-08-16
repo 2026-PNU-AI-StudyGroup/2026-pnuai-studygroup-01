@@ -80,7 +80,7 @@ vi.mock("@/modules/announcement/infrastructure/announcement-audience", () => ({ 
 vi.mock("@/modules/team/application/list-admin-project-card-data", () => ({ ListAdminProjectCardDataService: class {} }));
 vi.mock("@/modules/team/application/list-admin-program-project-operations", () => ({
   ListAdminProgramProjectOperationsService: class {},
-  parseAdminProjectOperationFilter: vi.fn().mockReturnValue("all"),
+  parseAdminProjectOperationFilters: vi.fn().mockReturnValue({ team: "all", report: "all" }),
 }));
 vi.mock("@/modules/project-program/ui/program-management-route", () => ({
   parseProgramManagementTab,
@@ -129,7 +129,7 @@ vi.mock("@/app/topics/_components/past-projects-view", () => ({ PastProjectsView
 vi.mock("@/app/topics/_components/program-sidebar", () => ({ ProgramSidebar: () => null }));
 vi.mock("@/app/topics/_components/project-search-form", () => ({ ProjectSearchForm: () => null }));
 vi.mock("@/app/topics/_components/admin-project-operations-summary", () => ({ AdminProjectOperationsSummary: () => null }));
-vi.mock("@/app/topics/_components/project-proposal-modal", () => ({ ProjectProposalModal: () => null }));
+vi.mock("@/app/topics/_components/project-registration-modal", () => ({ ProjectRegistrationModal: () => null }));
 vi.mock("@/app/topics/_components/student-project-registration-link", () => ({ StudentProjectRegistrationLink: () => null }));
 vi.mock("@/modules/announcement/ui/program-announcement-create-modal", () => ({ ProgramAnnouncementCreateModal: () => null }));
 vi.mock("@/app/topics/_actions/create-program-announcement-action", () => ({ createProgramAnnouncementAction: vi.fn() }));
@@ -194,6 +194,15 @@ describe("TopicsPage", () => {
     expect(activeProjectsView).toHaveBeenCalledWith(expect.objectContaining({
       votingResults: { mode: "PUBLIC", results: publicResults },
     }));
+  });
+
+  it("기존 모달 URL을 프로젝트 등록 URL로 정규화한다", async () => {
+    redirect.mockImplementationOnce((target: string) => {
+      throw new Error(`REDIRECT:${target}`);
+    });
+
+    await expect(TopicsPage({ searchParams: Promise.resolve({ modal: "project-proposal", programId: "program-1" }) }))
+      .rejects.toThrow("REDIRECT:/topics?modal=project-registration&programId=program-1");
   });
 
   it.each([

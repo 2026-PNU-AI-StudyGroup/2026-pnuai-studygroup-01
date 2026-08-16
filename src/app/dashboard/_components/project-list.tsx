@@ -52,8 +52,8 @@ function ProjectCard({
 
       <div className={styles.projectIdentity}>
         <p className={styles.program}><UiText>{team.programName}</UiText></p>
-        <h3 id={titleId}><UiText>{team.name}</UiText></h3>
-        <p className={styles.topic}><UiText>{team.topicTitle}</UiText></p>
+        <h3 id={titleId}><UiText>{team.topicTitle}</UiText></h3>
+        <p className={styles.teamName}><UiText>{team.name}</UiText></p>
       </div>
 
       <div className={styles.progress}>
@@ -116,7 +116,7 @@ export function ProjectList({
   view?: "all" | "active" | "completed";
 }) {
   const visibleTeams = teams.filter((team) => {
-    if (view === "active") return team.status !== "COMPLETED";
+    if (view === "active") return team.status === "IN_PROGRESS";
     if (view === "completed") return team.status === "COMPLETED";
     return true;
   });

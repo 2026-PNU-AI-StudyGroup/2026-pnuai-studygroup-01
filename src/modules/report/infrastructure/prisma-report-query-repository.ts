@@ -16,13 +16,19 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
     const team = await this.client.projectTeam.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       select: {
+        project: {
+          select: {
+            thumbnailPath: true,
+          },
+        },
         reports: {
-          where: { OR: [{ required: true }, { versions: { some: {} } }] },
+          where: { OR: [{ submissionEnabled: true }, { versions: { some: {} } }] },
           orderBy: [{ definition: { position: "asc" } }, { dueAt: "asc" }],
           select: {
             id: true,
             titleSnapshot: true,
             required: true,
+            submissionEnabled: true,
             dueAt: true,
             definition: { select: { position: true } },
             feedback: {
@@ -56,7 +62,6 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
             },
           },
         },
-        thumbnailPath: true,
         artifacts: {
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           select: {
@@ -79,6 +84,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         title: report.titleSnapshot,
         position: report.definition.position,
         required: report.required,
+        submissionEnabled: report.submissionEnabled,
         dueAt: report.dueAt,
         feedback: report.feedback.map((item) => ({
           id: item.id,
@@ -109,7 +115,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         fileId: artifact.fileId ?? undefined,
         externalUrl: artifact.externalUrl ?? undefined,
       })),
-      thumbnailPath: team.thumbnailPath ?? undefined,
+      thumbnailPath: team.project.thumbnailPath ?? undefined,
     };
   }
 }

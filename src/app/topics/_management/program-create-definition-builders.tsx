@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import styles from "@/app/topics/_management/program-create-definition-builders.module.css";
@@ -20,7 +20,7 @@ export type ProgramCreateRubricDraft = {
   audience: "STAFF_ONLY" | "TEAM_MEMBERS";
   criteria: ProgramCreateCriterionDraft[];
 };
-export type ProgramCreateReportDraft = { id: string; title: string; dueAt: string };
+export type ProgramCreateReportDraft = { id: string; title: string; dueAt: string; required: boolean };
 
 const audienceOptions = [
   { value: "STAFF_ONLY", label: "관계자 전용", description: "관리자와 담당 교수·조교만 확인" },
@@ -63,15 +63,6 @@ function ItemActions({ title, index, length, onMove, onDelete, deleteLabel }: {
       <IconButton type="button" onClick={() => onMove("down")} disabled={index === length - 1} aria-label={`${title} 아래로 이동`} title="아래로 이동"><ArrowDownIcon className="size-5" /></IconButton>
       <IconButton type="button" onClick={onDelete} className="text-[var(--danger)] hover:text-[var(--danger)]" aria-label={`${title} ${deleteLabel}`} title={deleteLabel}><TrashIcon className="size-5" /></IconButton>
     </div>
-  );
-}
-
-function Detail({ open, onToggle, children }: { open: boolean; onToggle: (open: boolean) => void; children: ReactNode }) {
-  return (
-    <details className={styles.detail} open={open} onToggle={(event) => onToggle(event.currentTarget.open)}>
-      <summary><UiText>{"세부 설정"}</UiText></summary>
-      <div className={styles.detailBody}>{children}</div>
-    </details>
   );
 }
 
@@ -262,33 +253,117 @@ function CriterionDraftEditor({ rubric, onChange }: { rubric: ProgramCreateRubri
 export function ProgramCreateReportBuilder({ reports, onChange }: { reports: ProgramCreateReportDraft[]; onChange: (reports: ProgramCreateReportDraft[]) => void }) {
   const [title, setTitle] = useState("");
   const [dueAt, setDueAt] = useState("");
-  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+  const [required, setRequired] = useState(true);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const settingsTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const editingReport = reports.find((report) => report.id === editingReportId) ?? null;
+
   function add() {
     if (!title.trim() || !dueAt) return;
     const id = draftId("report");
-    onChange([...reports, { id, title: title.trim(), dueAt }]);
+    onChange([...reports, { id, title: title.trim(), dueAt, required }]);
     setTitle("");
     setDueAt("");
+    setRequired(true);
   }
+
+  function updateReport(id: string, patch: Partial<ProgramCreateReportDraft>) {
+    onChange(reports.map((report) => report.id === id ? { ...report, ...patch } : report));
+  }
+
+  function closeReportSettings() {
+    setEditingReportId(null);
+    window.requestAnimationFrame(() => settingsTriggerRef.current?.focus());
+  }
+
   return (
     <div className={styles.builder}>
       <div className={`${styles.quickAddRow} ${styles.reportQuickAdd}`}>
         <label className={styles.field}><span><UiText>{"보고서 제목"}</UiText></span><UiInput value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} className="form-control" placeholder="예: 요구사항 분석 보고서" /></label>
         <label className={styles.field}><span><UiText>{"제출 마감"}</UiText></span><DateTimeInput value={dueAt} onValueChange={setDueAt} aria-label="새 보고서 제출 마감" /></label>
+        <label className={styles.field}><span><UiText>{"제출 구분"}</UiText></span><CustomSelect name="_newReportRequired" ariaLabel="새 보고서 제출 구분" value={String(required)} onValueChange={(value) => setRequired(value === "true")} options={[{ value: "true", label: "필수 제출" }, { value: "false", label: "선택 제출" }]} /></label>
         <button type="button" className={`button-primary ${styles.addButton}`} onClick={add} disabled={!title.trim() || !dueAt}><AddIcon className="size-4" /><UiText>{"추가"}</UiText></button>
       </div>
       {reports.length ? <ol className={styles.definitionList}>{reports.map((report, index) => <li key={report.id} className={styles.definitionItem}>
         <div className={styles.itemSummary}>
-          <div className={styles.itemMeta}><strong><UiText>{report.title}</UiText></strong><span><UiText>{`제출 마감 · ${dateLabel(report.dueAt)}`}</UiText></span></div>
-          <ItemActions title={report.title} index={index} length={reports.length} onMove={(direction) => onChange(move(reports, index, direction))} onDelete={() => onChange(reports.filter(({ id }) => id !== report.id))} deleteLabel="보고서 삭제" />
-        </div>
-        <Detail open={expandedReportId === report.id} onToggle={(open) => setExpandedReportId(open ? report.id : null)}>
-          <div className={styles.reportSettings}>
-            <label className={styles.field}><span><UiText>{"보고서 제목"}</UiText></span><UiInput value={report.title} onChange={(event) => onChange(reports.map((item) => item.id === report.id ? { ...item, title: event.target.value } : item))} maxLength={100} required className="form-control" /></label>
-            <label className={styles.field}><span><UiText>{"제출 마감"}</UiText></span><DateTimeInput value={report.dueAt} onValueChange={(value) => onChange(reports.map((item) => item.id === report.id ? { ...item, dueAt: value } : item))} aria-label={`${report.title} 제출 마감`} required /></label>
+          <div className={styles.itemMeta}><strong><UiText>{report.title}</UiText></strong><span><UiText>{`${report.required ? "필수 제출" : "선택 제출"} · 제출 마감 ${dateLabel(report.dueAt)}`}</UiText></span></div>
+          <div className={styles.summaryActions}>
+            <button
+              type="button"
+              className={`button-secondary ${styles.settingsButton}`}
+              onClick={(event) => {
+                settingsTriggerRef.current = event.currentTarget;
+                setEditingReportId(report.id);
+              }}
+            >
+              <UiText>{"수정"}</UiText>
+            </button>
+            <ItemActions title={report.title} index={index} length={reports.length} onMove={(direction) => onChange(move(reports, index, direction))} onDelete={() => onChange(reports.filter(({ id }) => id !== report.id))} deleteLabel="보고서 삭제" />
           </div>
-        </Detail>
+        </div>
       </li>)}</ol> : <p className={styles.emptyState}><UiText>{"필요한 보고서만 추가할 수 있습니다."}</UiText></p>}
+      {editingReport ? <ReportSettingsDialog
+        key={editingReport.id}
+        report={editingReport}
+        onSave={(nextReport) => updateReport(nextReport.id, nextReport)}
+        onRequestClose={closeReportSettings}
+      /> : null}
     </div>
+  );
+}
+
+function ReportSettingsDialog({ report, onSave, onRequestClose }: {
+  report: ProgramCreateReportDraft;
+  onSave: (report: ProgramCreateReportDraft) => void;
+  onRequestClose: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const titleId = useId();
+  const [draft, setDraft] = useState<ProgramCreateReportDraft>(() => ({ ...report }));
+  const canSave = Boolean(draft.title.trim() && draft.dueAt);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (dialog?.open) dialog.close();
+    };
+  }, []);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className={styles.rubricDialog}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault();
+        onRequestClose();
+      }}
+    >
+      <div className={styles.dialogSurface}>
+        <header className={styles.dialogHeader}>
+          <h3 id={titleId}><UiText>{"보고서 수정"}</UiText></h3>
+          <IconButton type="button" onClick={onRequestClose} aria-label="보고서 수정 닫기" title="닫기"><CloseIcon className="size-5" /></IconButton>
+        </header>
+        <div className={styles.dialogBody}>
+          <div className={styles.reportSettings}>
+            <label className={styles.field}><span><UiText>{"보고서 제목"}</UiText></span><UiInput value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={100} className="form-control" /></label>
+            <label className={styles.field}><span><UiText>{"제출 마감"}</UiText></span><DateTimeInput value={draft.dueAt} onValueChange={(dueAt) => setDraft({ ...draft, dueAt })} aria-label={`${draft.title} 제출 마감`} /></label>
+            <label className={styles.field}><span><UiText>{"제출 구분"}</UiText></span><CustomSelect name={`_reportRequired_${draft.id}`} ariaLabel={`${draft.title} 제출 구분`} value={String(draft.required)} onValueChange={(value) => setDraft({ ...draft, required: value === "true" })} options={[{ value: "true", label: "필수 제출" }, { value: "false", label: "선택 제출" }]} /></label>
+          </div>
+        </div>
+        <footer className={styles.dialogFooter}>
+          <button type="button" className="button-secondary" onClick={onRequestClose}><UiText>{"취소"}</UiText></button>
+          <button type="button" className="button-primary" disabled={!canSave} onClick={() => {
+            if (!canSave) return;
+            onSave({ ...draft, title: draft.title.trim() });
+            onRequestClose();
+          }}><UiText>{"저장"}</UiText></button>
+        </footer>
+      </div>
+    </dialog>,
+    document.body,
   );
 }

@@ -5,9 +5,14 @@ export default async function ProgramManagementPage({
   searchParams,
 }: {
   params: Promise<{ programId: string; tab?: string[] }>;
-  searchParams: Promise<{ targetMode?: string }>;
+  searchParams: Promise<{ targetMode?: string; approvals?: string }>;
 }) {
   const { programId, tab } = await params;
-  const { targetMode } = await searchParams;
-  return <ProgramManagementRoutePage requestedProgramId={programId} tabSegments={tab} targetMode={targetMode} />;
+  const { targetMode, approvals } = await searchParams;
+  return <ProgramManagementRoutePage
+    requestedProgramId={programId}
+    tabSegments={tab}
+    targetMode={targetMode}
+    showApprovals={approvals === "pending"}
+  />;
 }
