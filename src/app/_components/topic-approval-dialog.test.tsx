@@ -25,10 +25,13 @@ const request = {
   decidedAt: null,
   description: "휠체어 사용자를 위한 실내 길찾기를 만듭니다.",
   projectTeam: {
+    id: "team-1",
     name: "길잡이",
+    confirmedAt: null,
+    createdAt: new Date("2026-08-13T00:00:00Z"),
     members: [
-      { id: "student-1", name: "김학생", role: "LEADER" as const },
-      { id: "student-2", name: "박팀원", role: "MEMBER" as const },
+      { id: "student-1", name: "김학생", role: "LEADER" as const, contact: { email: "student1@pusan.ac.kr", contactEmail: "student1@example.com", phone: "010-1111-2222", kakao: "student1", github: "https://github.com/student1", instagram: null } },
+      { id: "student-2", name: "박팀원", role: "MEMBER" as const, contact: { email: "student2@pusan.ac.kr", contactEmail: null, phone: null, kakao: null, github: null, instagram: "student2" } },
     ],
   },
 };
@@ -54,6 +57,9 @@ describe("TopicApprovalDialog", () => {
     expect(screen.getByText("휠체어 사용자를 위한 실내 길찾기를 만듭니다.")).toBeInTheDocument();
     expect(screen.getByText("길잡이")).toBeInTheDocument();
     expect(screen.getAllByText("김학생")).toHaveLength(2);
+    expect(screen.getByText("student1@pusan.ac.kr")).toBeInTheDocument();
+    expect(screen.getByText("010-1111-2222")).toBeInTheDocument();
+    expect(screen.getByText("student2")).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "승인 결정 폼" })).toBeInTheDocument();
     expect(screen.queryByText("필수 기술")).not.toBeInTheDocument();
   });

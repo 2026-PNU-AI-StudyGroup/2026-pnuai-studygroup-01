@@ -19,11 +19,8 @@ import styles from "@/app/topics/_management/program-management.module.css";
 import navStyles from "@/app/topics/_management/program-section-nav.module.css";
 import { ProgramSectionNavIcon, type ProgramSectionNavIconName } from "@/app/topics/_management/program-section-nav";
 import { ProgramApprovalLink } from "@/app/topics/_components/program-approval-link";
-import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
-import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
-import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
 import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiLink, UiNav } from "@/modules/translation/ui/localized-elements";
@@ -121,14 +118,12 @@ export async function ProgramManagementWorkspace({
   tab,
   targetMode = "CURRENT",
   pendingApprovalCount = 0,
-  showApprovals = false,
 }: {
   actor: CurrentActor;
   programId: string;
   tab: ProgramManagementTab;
   targetMode?: "CURRENT" | "DIRECT";
   pendingApprovalCount?: number;
-  showApprovals?: boolean;
 }) {
   let program;
   try {
@@ -142,15 +137,7 @@ export async function ProgramManagementWorkspace({
 
   let content: React.ReactNode;
 
-  if (showApprovals) {
-    const requests = await new TopicApprovalService(
-      new PrismaTopicApprovalRepository(prisma),
-      new PrismaProjectProgramRepository(prisma),
-    ).list(actor, 1, 50, { programId: program.id, status: "PENDING" });
-    content = requests.items.length
-      ? <ProjectApprovalLedger adminSurface requests={requests.items} total={requests.total} student={false} title="승인 대기" />
-      : <EmptyState title="승인 대기 요청이 없습니다" description="새 학생 프로젝트 등록이 접수되면 여기에 표시됩니다." />;
-  } else if (tab === "settings") {
+  if (tab === "settings") {
     const [categoryOptions, divisions] = await Promise.all([
       listProgramCategories(),
       prisma.programDivision.findMany({ where: { programId: program.id }, orderBy: { position: "asc" }, select: { id: true, name: true, _count: { select: { topics: true } } } }),

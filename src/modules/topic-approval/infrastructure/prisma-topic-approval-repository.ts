@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import type { TopicApprovalViewer } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-route";
 import { createTopicApprovalNotification } from "@/modules/notification/infrastructure/notification-events";
 import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 import type { PendingApprovalCountByProgram, TopicApprovalListFilter, TopicApprovalRepository, TopicApprovalRequestPage } from "@/modules/topic-approval/application/manage-topic-approvals";
@@ -142,7 +143,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           select: { id: true },
         })).map(({ id: userId }) => userId);
       const reviewerHref = route === "ADMIN"
-        ? `/topics/manage/${encodeURIComponent(topic.programId)}?approvals=pending`
+        ? projectApprovalsHref({ programId: topic.programId, status: "PENDING" })
         : "/dashboard?view=pending";
       const notifications = [
         ...reviewerIds.map((recipientId) => ({
@@ -222,7 +223,10 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           program: { select: { name: true, category: true } },
           projectTeam: {
             select: {
+              id: true,
               name: true,
+              confirmedAt: true,
+              createdAt: true,
               memberships: {
                 where: { endedAt: null },
                 orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
@@ -235,6 +239,39 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         requestedProfessor: { select: { name: true } },
       },
     });
+    const contactsByUserId = new Map<string, {
+      email: string;
+      contactEmail: string | null;
+      phone: string | null;
+      kakao: string | null;
+      github: string | null;
+      instagram: string | null;
+    }>();
+    if (actor.role === "ADMIN") {
+      const memberIds = [...new Set(requests.flatMap(({ topic }) => topic.projectTeam?.memberships.map(({ userId }) => userId) ?? []))];
+      if (memberIds.length) {
+        const members = await this.client.user.findMany({
+          where: { id: { in: memberIds } },
+          select: {
+            id: true,
+            email: true,
+            contactEmail: true,
+            phoneNumber: true,
+            studentProfile: { select: { phone: true, kakao: true, github: true, instagram: true } },
+          },
+        });
+        for (const member of members) {
+          contactsByUserId.set(member.id, {
+            email: member.email,
+            contactEmail: member.contactEmail,
+            phone: member.studentProfile?.phone || member.phoneNumber,
+            kakao: member.studentProfile?.kakao ?? null,
+            github: member.studentProfile?.github ?? null,
+            instagram: member.studentProfile?.instagram ?? null,
+          });
+        }
+      }
+    }
     return {
       items: requests.map(({ topic, requester, requestedProfessor, ...request }) => ({
         ...request,
@@ -246,8 +283,16 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         requestedProfessorName: requestedProfessor?.name ?? null,
         description: topic.description,
         projectTeam: topic.projectTeam ? {
+          id: topic.projectTeam.id,
           name: topic.projectTeam.name,
-          members: topic.projectTeam.memberships.map(({ userId, role, user }) => ({ id: userId, name: user.name, role })),
+          confirmedAt: topic.projectTeam.confirmedAt,
+          createdAt: topic.projectTeam.createdAt,
+          members: topic.projectTeam.memberships.map(({ userId, role, user }) => ({
+            id: userId,
+            name: user.name,
+            role,
+            contact: contactsByUserId.get(userId) ?? null,
+          })),
         } : null,
       })),
       page,

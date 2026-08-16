@@ -33,8 +33,23 @@ export type TopicApprovalRequestSummary = {
   decidedAt: Date | null;
   description: string;
   projectTeam: {
+    id: string;
     name: string;
-    members: Array<{ id: string; name: string; role: "LEADER" | "MEMBER" }>;
+    confirmedAt: Date | null;
+    createdAt: Date;
+    members: Array<{
+      id: string;
+      name: string;
+      role: "LEADER" | "MEMBER";
+      contact: null | {
+        email: string;
+        contactEmail: string | null;
+        phone: string | null;
+        kakao: string | null;
+        github: string | null;
+        instagram: string | null;
+      };
+    }>;
   } | null;
 };
 

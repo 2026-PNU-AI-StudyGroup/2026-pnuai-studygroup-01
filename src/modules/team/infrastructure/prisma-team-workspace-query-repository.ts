@@ -51,18 +51,13 @@ export class PrismaTeamWorkspaceQueryRepository
   ): Promise<TeamWorkspace | null> {
     const normalizedDiscussionPage = Number.isSafeInteger(discussionPage) && discussionPage > 0 ? discussionPage : 1;
     const team = await this.client.projectTeam.findFirst({
-      // 승인 대기 팀은 검토자용 프로젝트 작업 공간이 아니다. 실제 스냅샷
-      // 구성원만 준비 화면을 열 수 있고, 관리자는 승인 요청 화면으로 검토한다.
+      // 승인 대기 등록은 프로젝트 워크스페이스를 만들지 않는다. 검토와 철회는
+      // 대시보드의 승인 요청 목록에서만 처리한다.
       where: {
         AND: [
           { projectId: teamId },
           teamActorWhere(actor),
-          {
-            OR: [
-              { project: { status: { not: "PENDING_APPROVAL" } } },
-              { memberships: { some: { userId: actor.id, endedAt: null } } },
-            ],
-          },
+          { project: { status: { not: "PENDING_APPROVAL" } } },
         ],
       },
       include: {
@@ -70,7 +65,6 @@ export class PrismaTeamWorkspaceQueryRepository
           id: true,
           title: true,
           status: true,
-          authorId: true,
           description: true,
           managerId: true,
           program: { select: { name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
@@ -192,8 +186,6 @@ export class PrismaTeamWorkspaceQueryRepository
       id: team.id,
       topicId: team.project.id,
       topicDescription: team.project.description,
-      approvalPending: team.project.status === "PENDING_APPROVAL",
-      canManagePreparation: team.project.status === "PENDING_APPROVAL" && team.project.authorId === actor.id,
       name: team.name,
       programName: team.project.program.name,
       topicTitle: team.project.title,

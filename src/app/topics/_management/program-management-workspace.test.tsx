@@ -21,7 +21,7 @@ describe("ProgramManagementHeader", () => {
 
     expect(screen.getByRole("link", { name: "승인 대기 2건 검토하기" })).toHaveAttribute(
       "href",
-      "/topics/manage/program-1?approvals=pending",
+      "/project-approvals?programId=program-1&status=PENDING",
     );
   });
 

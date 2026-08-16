@@ -17,6 +17,36 @@ const status = {
   CANCELED: ["취소", "neutral"],
 } as const;
 
+function formatDateTime(value: Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Seoul",
+  }).format(value);
+}
+
+function ContactDetail({ label, value, kind }: {
+  label: string;
+  value: string | null;
+  kind?: "email" | "phone" | "url";
+}) {
+  const href = value && kind === "email"
+    ? `mailto:${value}`
+    : value && kind === "phone"
+      ? `tel:${value.replace(/[^+\d]/g, "")}`
+      : value && kind === "url" && /^https?:\/\//.test(value)
+        ? value
+        : undefined;
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className="mt-0.5 break-all font-semibold text-[var(--ink)]">
+        {href ? <a href={href} target={kind === "url" ? "_blank" : undefined} rel={kind === "url" ? "noopener noreferrer" : undefined} className="underline decoration-[var(--line-strong)] underline-offset-2 hover:text-[var(--primary)] hover:decoration-current">{value}</a> : value ?? <UiText>{"미등록"}</UiText>}
+      </dd>
+    </div>
+  );
+}
+
 export function TopicApprovalDialog({
   request,
   canDecide,
@@ -52,7 +82,7 @@ export function TopicApprovalDialog({
         ref={dialogRef}
         aria-labelledby={titleId}
         onClose={() => triggerRef.current?.focus({ preventScroll: true })}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[rgba(23,32,51,.48)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[rgba(23,32,51,.48)]"
       >
         <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-white px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
           <div className="flex items-center gap-2">
@@ -93,12 +123,29 @@ export function TopicApprovalDialog({
             <h3 className="text-sm font-bold"><UiText>{"프로젝트 팀"}</UiText></h3>
             {request.projectTeam ? (
               <>
-                <p className="mt-2 font-semibold"><UiText>{request.projectTeam.name}</UiText></p>
+                <dl className="mt-3 grid gap-x-6 gap-y-3 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4 text-sm sm:grid-cols-2">
+                  <ContactDetail label="팀명" value={request.projectTeam.name} />
+                  <ContactDetail label="팀 상태" value={request.projectTeam.confirmedAt ? "확정" : "승인 대기"} />
+                  <ContactDetail label="구성원" value={`${request.projectTeam.members.length}명`} />
+                  <ContactDetail label="팀 생성" value={formatDateTime(request.projectTeam.createdAt)} />
+                </dl>
                 <ul className="mt-3 divide-y divide-[var(--line)] overflow-hidden rounded-xl border border-[var(--line)]">
                   {request.projectTeam.members.map((member) => (
-                    <li key={member.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                      <span className="font-semibold"><UiText>{member.name}</UiText></span>
-                      <span className="text-xs font-bold text-[var(--muted)]"><UiText>{member.role === "LEADER" ? "팀장" : "팀원"}</UiText></span>
+                    <li key={member.id} className="grid gap-4 px-4 py-4 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:px-5 sm:py-5">
+                      <div className="flex items-center gap-2 sm:block">
+                        <strong><UiText>{member.name}</UiText></strong>
+                        <span className="rounded-md bg-[var(--primary-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--primary)] sm:mt-1.5 sm:inline-block"><UiText>{member.role === "LEADER" ? "팀장" : "팀원"}</UiText></span>
+                      </div>
+                      {member.contact ? (
+                        <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                          <ContactDetail label="이메일" value={member.contact.email} kind="email" />
+                          <ContactDetail label="연락 이메일" value={member.contact.contactEmail} kind="email" />
+                          <ContactDetail label="전화번호" value={member.contact.phone} kind="phone" />
+                          <ContactDetail label="카카오톡" value={member.contact.kakao} />
+                          <ContactDetail label="GitHub" value={member.contact.github} kind="url" />
+                          <ContactDetail label="Instagram" value={member.contact.instagram} kind="url" />
+                        </dl>
+                      ) : <p className="text-sm text-[var(--muted)]"><UiText>{"연락처는 관리자만 확인할 수 있습니다."}</UiText></p>}
                     </li>
                   ))}
                 </ul>

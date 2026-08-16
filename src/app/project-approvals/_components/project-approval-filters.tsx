@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import type { TopicApprovalStatus } from "@/modules/topic-approval/application/manage-topic-approvals";
+import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-route";
 import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { CustomSelect } from "@/shared/ui/custom-select";
 
@@ -14,14 +15,6 @@ const statusOptions: Array<{ value: TopicApprovalStatus | ""; label: string }> =
   { value: "WITHDRAWN", label: "철회" },
   { value: "CANCELED", label: "취소" },
 ];
-
-function approvalsHref({ programId, status }: { programId?: string; status?: TopicApprovalStatus }) {
-  const params = new URLSearchParams();
-  if (programId) params.set("programId", programId);
-  if (status) params.set("status", status);
-  const query = params.toString();
-  return query ? `/project-approvals?${query}` : "/project-approvals";
-}
 
 export function ProjectApprovalFilters({
   programs,
@@ -37,7 +30,7 @@ export function ProjectApprovalFilters({
   const router = useRouter();
   const totalPending = Object.values(pendingCountByProgram).reduce((total, count) => total + count, 0);
   const update = (next: { programId?: string; status?: TopicApprovalStatus }) => {
-    router.replace(approvalsHref(next));
+    router.replace(projectApprovalsHref(next));
   };
 
   return (

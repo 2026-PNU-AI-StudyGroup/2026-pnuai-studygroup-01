@@ -2,12 +2,12 @@ import Link from "next/link";
 
 import styles from "@/app/topics/_components/program-approval-link.module.css";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
+import { projectApprovalsHref } from "@/modules/topic-approval/ui/project-approval-route";
 
 export function ProgramApprovalLink({ programId, count }: { programId: string; count: number }) {
   return (
     <Link
-      href={`${programManagementHref(programId)}?approvals=pending`}
+      href={projectApprovalsHref({ programId, status: "PENDING" })}
       aria-label={`승인 대기 ${count}건 검토하기`}
       className={styles.link}
     >

@@ -1,5 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const { withdrawTopicApprovalAction } = vi.hoisted(() => ({
+  withdrawTopicApprovalAction: vi.fn(),
+}));
+
+vi.mock("@/app/_actions/topic-approval-actions", () => ({ withdrawTopicApprovalAction }));
 
 import { StudentReviewList } from "@/app/dashboard/_components/student-review-list";
 
@@ -41,8 +47,11 @@ const registration = {
   decidedAt: null,
   description: "학습 지원 프로젝트입니다.",
   projectTeam: {
+    id: "team-1",
     name: "AI 팀",
-    members: [{ id: "student-1", name: "김학생", role: "LEADER" as const }],
+    confirmedAt: null,
+    createdAt: new Date("2026-08-13T00:00:00Z"),
+    members: [{ id: "student-1", name: "김학생", role: "LEADER" as const, contact: null }],
   },
 };
 
@@ -57,7 +66,8 @@ describe("StudentReviewList", () => {
     ]);
     expect(screen.getByText("프로젝트 등록")).toBeInTheDocument();
     expect(screen.getByText("프로젝트 지원")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "등록 내용 보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "철회" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "캠퍼스 길찾기 프로젝트 보기" })).toHaveAttribute("href", "/topics/topic-1");
   });
 
