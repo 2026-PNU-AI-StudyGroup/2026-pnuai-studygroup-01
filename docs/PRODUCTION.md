@@ -49,9 +49,12 @@ OAuth 동의를 수행한 계정과 `GMAIL_SMTP_USER`가 다르면 권한 발급
 git clone <레포 주소> ~/aipms && cd ~/aipms
 cp .env.production.example .env.production   # 값 채우기(아래 전환 체크리스트 참고)
 ./deploy.sh                                  # 빌드 + 마이그레이션 + 기동
-npm run db:bootstrap-admin                   # INITIAL_ADMIN_EMAIL 로 최초 관리자 생성
+# 여기서 INITIAL_ADMIN_EMAIL 계정으로 웹에서 Google 로그인을 먼저 1회 수행한다.
+npm run db:bootstrap-admin                   # 로그인해 둔 그 계정을 ADMIN 으로 승격
 sudo ops/install-systemd.sh                  # 정기 작업·백업 타이머 + 부팅 자동 기동
 ```
+
+`db:bootstrap-admin`은 계정을 새로 만들지 않는다. 해당 이메일의 사용자가 이미 로그인해 `emailVerified` 상태여야 하며, 없으면 `계정이 없습니다` 오류로 중단된다.
 
 `ops/install-systemd.sh`는 다음을 설치한다. 경로와 실행 사용자는 실행 시점 값으로 채워진다.
 
