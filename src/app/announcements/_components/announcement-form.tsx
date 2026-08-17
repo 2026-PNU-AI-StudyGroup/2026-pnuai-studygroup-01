@@ -107,7 +107,8 @@ export function AnnouncementForm({
       }}
     >
       {returnHref ? <input type="hidden" name="returnTo" value={returnHref} /> : null}
-      <div className="grid gap-6 px-5 py-6 sm:px-8 sm:py-8">
+      {/* 트랙을 폼 폭으로 묶는다. auto 트랙이면 긴 파일명 같은 내용이 패널 밖으로 밀어낸다. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 px-5 py-6 sm:px-8 sm:py-8">
         <div className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"대상"}</UiText></span>
           {targetLocked ? (

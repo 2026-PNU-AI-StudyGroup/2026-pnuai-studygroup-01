@@ -77,7 +77,8 @@ export function AnnouncementAttachmentEditor({
   };
 
   return (
-    <section className="grid gap-3" aria-labelledby={`${inputId}-label`}>
+    // auto 트랙이면 긴 파일명의 min-content 폭만큼 늘어나 삭제 버튼이 화면 밖으로 밀린다.
+    <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3" aria-labelledby={`${inputId}-label`}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 id={`${inputId}-label`} className="text-sm font-semibold text-[var(--ink)]"><UiText>{"첨부파일"}</UiText></h2>
@@ -89,7 +90,7 @@ export function AnnouncementAttachmentEditor({
       </div>
 
       {existingAttachments.length > 0 || selectedFiles.length > 0 ? (
-        <ul className="grid gap-2">
+        <ul className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
           {existingAttachments.map((attachment) => {
             const retained = retainedAttachmentIds.includes(attachment.fileId);
             return (
@@ -100,7 +101,7 @@ export function AnnouncementAttachmentEditor({
                 </span>
                 <IconButton
                   type="button"
-                  className={retained ? "text-[var(--danger)] hover:text-[var(--danger)]" : ""}
+                  className={`shrink-0 ${retained ? "text-[var(--danger)] hover:text-[var(--danger)]" : ""}`}
                   disabled={disabled}
                   aria-label={retained ? `${attachment.originalName} 삭제` : `${attachment.originalName} 삭제 취소`}
                   title={retained ? "첨부파일 삭제" : "첨부파일 삭제 취소"}
@@ -118,7 +119,7 @@ export function AnnouncementAttachmentEditor({
                 <span className="block truncate font-semibold text-[var(--ink)]">{file.name}</span>
                 <span className="text-xs text-[var(--muted)]">{formatAttachmentSize(file.size)}</span>
               </span>
-              <IconButton type="button" className="text-[var(--danger)] hover:text-[var(--danger)]" disabled={disabled} aria-label={`${file.name} 삭제`} title="첨부파일 삭제" onClick={() => onSelectedFilesChange(selectedFiles.filter((candidate) => candidate !== file))}>
+              <IconButton type="button" className="shrink-0 text-[var(--danger)] hover:text-[var(--danger)]" disabled={disabled} aria-label={`${file.name} 삭제`} title="첨부파일 삭제" onClick={() => onSelectedFilesChange(selectedFiles.filter((candidate) => candidate !== file))}>
                 <TrashIcon className="size-5" />
               </IconButton>
             </li>
