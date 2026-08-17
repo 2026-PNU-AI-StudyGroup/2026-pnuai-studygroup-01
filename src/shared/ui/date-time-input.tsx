@@ -3,6 +3,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useLayoutEffect,
   useRef,
   useState,
@@ -78,9 +79,12 @@ export function DateTimeInput({
   const dayRefs = useRef(new Map<string, HTMLButtonElement>());
   const calendarId = useId();
   const timeHintId = `${calendarId}-time-hint`;
+  const timeInputId = `${calendarId}-time`;
   const value = controlledValue ?? uncontrolledValue;
   const selectedDate = parseDateValue(value, type);
-  const visibleDays = calendarDays(visibleMonth);
+  // 렌더마다 새 배열이면 아래 포커스 useEffect 의 의존성이 매번 바뀌어,
+  // 시간 입력 중에도 효과가 다시 돌며 캘린더 날짜 버튼으로 포커스를 빼앗는다.
+  const visibleDays = useMemo(() => calendarDays(visibleMonth), [visibleMonth]);
   const { popoverSupported, topLayer } = useTopLayerPopover(menuRef, open);
   const floatingStyle = useFloatingCalendar(rootRef, open, type, topLayer);
   const hasValue = Boolean(selectedDate);
@@ -321,9 +325,10 @@ export function DateTimeInput({
             ) : <span key={`empty-${index}`} aria-hidden="true" />)}
           </div>
           {type === "datetime-local" ? (
-            <label className={styles.timeField}>
-              <span>{t("시간")}</span>
+            <div className={styles.timeField}>
+              <label htmlFor={timeInputId}>{t("시간")}</label>
               <input
+                id={timeInputId}
                 type="text"
                 value={timeInputValue}
                 inputMode="numeric"
@@ -350,7 +355,7 @@ export function DateTimeInput({
                   </button>
                 ))}
               </span>
-            </label>
+            </div>
           ) : null}
           <footer className={styles.calendarFooter}>
             <IconButton type="button" onClick={confirmSelection} aria-label={t("확인")} title={t("확인")} disabled={!canConfirm}>✓</IconButton>
