@@ -4,6 +4,13 @@ const disabledSchema = z.object({
   EMAIL_DELIVERY_ENABLED: z.enum(["true", "false"]).optional().default("false"),
 });
 
+// .env 에서 값을 비워 둔 항목은 undefined 가 아니라 빈 문자열로 들어온다.
+// 선택 항목이 빈 문자열이면 미설정으로 본다.
+const blankAsUndefined = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().email().optional(),
+);
+
 const enabledSchema = z.object({
   EMAIL_DELIVERY_ENABLED: z.literal("true"),
   APP_URL: z.string().url(),
@@ -11,8 +18,11 @@ const enabledSchema = z.object({
   GMAIL_OAUTH_CLIENT_ID: z.string().trim().min(1),
   GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().min(1),
   GMAIL_OAUTH_REFRESH_TOKEN: z.string().trim().min(1),
-  EMAIL_FROM_NAME: z.string().trim().min(1).max(100).default("PNU 프로젝트 관리 시스템"),
-  EMAIL_REPLY_TO: z.string().trim().email().optional(),
+  EMAIL_FROM_NAME: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().min(1).max(100).default("PNU 프로젝트 관리 시스템"),
+  ),
+  EMAIL_REPLY_TO: blankAsUndefined,
 });
 
 export type EmailEnvironment =
