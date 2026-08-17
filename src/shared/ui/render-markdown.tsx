@@ -6,6 +6,8 @@ import { Fragment, type ReactNode } from "react";
 
 function safeUrl(raw: string): string | null {
   const url = raw.trim();
+  // 같은 서비스 내부 링크(/privacy 등)도 허용한다. //host 는 프로토콜 상대 주소라 제외한다.
+  if (/^\/(?!\/)/.test(url)) return url;
   return /^(https?:\/\/|mailto:)/i.test(url) ? url : null;
 }
 
@@ -32,7 +34,8 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
       const href = link ? safeUrl(link[2]) : null;
       nodes.push(
         link && href
-          ? <a key={key} href={href} target="_blank" rel="noreferrer noopener" className="text-[var(--primary)] underline">{link[1]}</a>
+          // 서비스 내부 경로는 같은 탭에서 이동하고, 외부 주소만 새 탭으로 연다.
+          ? <a key={key} href={href} {...(href.startsWith("/") ? {} : { target: "_blank", rel: "noreferrer noopener" })} className="text-[var(--primary)] underline">{link[1]}</a>
           : token,
       );
     }
@@ -90,7 +93,12 @@ export function renderMarkdown(source: string): ReactNode {
       flushParagraph();
       const level = heading[1].length;
       const content = renderInline(heading[2], `h${key}`);
-      const className = level === 1 ? "text-lg font-semibold" : level === 2 ? "text-base font-semibold" : "text-sm font-semibold";
+      // em 기준이라 카드(작은 본문)와 문서 페이지(큰 본문) 모두에서 위계가 유지된다.
+      const className = level === 1
+        ? "mt-6 text-[1.4em] font-bold leading-snug tracking-[-0.02em] first:mt-0"
+        : level === 2
+          ? "mt-6 text-[1.15em] font-bold leading-snug tracking-[-0.015em] first:mt-0"
+          : "mt-5 text-[1em] font-semibold leading-snug first:mt-0";
       blocks.push(
         level === 1
           ? <h3 key={`h${key++}`} className={className}>{content}</h3>
@@ -156,4 +164,19 @@ export function renderMarkdown(source: string): ReactNode {
 
   flushParagraph();
   return <Fragment>{blocks}</Fragment>;
+}
+
+/** 목록 미리보기처럼 서식 없이 한 줄로 보여줄 때 쓴다. 마크다운 기호만 걷어낸다. */
+export function markdownToPlainText(source: string): string {
+  return source
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s*(?:[-*]|\d+\.)\s+/gm, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
