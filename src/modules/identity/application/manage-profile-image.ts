@@ -51,7 +51,13 @@ export interface ProfileImageRepository {
 }
 
 export interface ProfileImageStorage {
-  createUploadUrl(intent: ProfileImageUploadIntent): Promise<{ url: string; expiresAt: Date }>;
+  write(input: {
+    objectKey: string;
+    body: ReadableStream<Uint8Array>;
+    contentType: string;
+    size: number;
+    sha256: string;
+  }): Promise<void>;
   inspect(objectKey: string): Promise<{ contentType?: string; size?: number; sha256?: string }>;
   readPrefix(objectKey: string, length: number): Promise<Uint8Array>;
   promote(uploadObjectKey: string, objectKey: string): Promise<void>;
@@ -80,13 +86,30 @@ export class ProfileImageService {
       expiresAt: new Date(now.getTime() + 15 * 60_000),
       cleanupAfter: new Date(now.getTime() + 26 * 60 * 60_000),
     };
-    const signed = await this.storage.createUploadUrl(intent);
-    intent.expiresAt = signed.expiresAt;
-    intent.cleanupAfter = new Date(signed.expiresAt.getTime() + 26 * 60 * 60_000);
     if (!(await this.repository.createUploadForOwner({ ...intent, ownerId: actor.id, originalName: validated.originalName }))) {
       throw new ProfileImageNotFoundError();
     }
-    return { uploadId: id, uploadUrl: signed.url };
+    // 오브젝트 스토리지는 내부 네트워크 전용이라 브라우저가 서명 URL 로 직접 올릴 수 없다.
+    return { uploadId: id, uploadUrl: `/api/profile-images/content/${id}` };
+  }
+
+  /** 브라우저가 PUT 한 본문을 스테이징 객체로 흘려보낸다. 무결성은 complete 에서 검증한다. */
+  async writeContent(
+    actor: CurrentActor,
+    uploadId: string,
+    body: ReadableStream<Uint8Array>,
+    now = new Date(),
+  ): Promise<{ uploadId: string }> {
+    const intent = await this.repository.findPendingForOwner(uploadId, actor.id);
+    if (!intent || intent.expiresAt <= now) throw new ProfileImageNotFoundError();
+    await this.storage.write({
+      objectKey: intent.uploadObjectKey,
+      body,
+      contentType: intent.contentType,
+      size: intent.size,
+      sha256: intent.sha256,
+    });
+    return { uploadId };
   }
 
   async complete(actor: CurrentActor, uploadId: string, now = new Date()): Promise<{ uploadId: string }> {

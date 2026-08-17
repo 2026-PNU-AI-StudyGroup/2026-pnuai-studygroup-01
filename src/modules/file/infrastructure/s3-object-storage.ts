@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+
 import {
   CopyObjectCommand,
   DeleteObjectCommand,
@@ -6,29 +8,37 @@ import {
   PutObjectCommand,
   type S3Client,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-import type { ObjectStorage, UploadIntent } from "@/modules/file/application/manage-upload";
+import type { ObjectStorage } from "@/modules/file/application/manage-upload";
+import { InvalidUploadError } from "@/modules/file/domain/upload-policy";
 
 export class S3ObjectStorage implements ObjectStorage {
   constructor(private readonly client: S3Client, private readonly bucket: string) {}
 
-  async createUploadUrl(input: UploadIntent): Promise<{ url: string; expiresAt: Date }> {
-    const checksum = Buffer.from(input.sha256, "hex").toString("base64");
-    const signedAt = new Date();
-    const url = await getSignedUrl(this.client, new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: input.uploadObjectKey,
-      ContentType: input.contentType,
-      ContentLength: input.size,
-      ChecksumSHA256: checksum,
-    }), {
-      expiresIn: 15 * 60,
-      signingDate: signedAt,
-      signableHeaders: new Set(["content-type"]),
-      unhoistableHeaders: new Set(["x-amz-checksum-sha256"]),
-    });
-    return { url, expiresAt: new Date(signedAt.getTime() + 15 * 60_000) };
+  async write(input: {
+    objectKey: string;
+    body: ReadableStream<Uint8Array>;
+    contentType: string;
+    size: number;
+    sha256: string;
+  }): Promise<void> {
+    try {
+      await this.client.send(new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: input.objectKey,
+        // ContentLength 를 넘겨야 SDK 가 본문을 버퍼링하지 않고 그대로 흘려보낸다.
+        Body: Readable.fromWeb(input.body as Parameters<typeof Readable.fromWeb>[0]),
+        ContentType: input.contentType,
+        ContentLength: input.size,
+        // 체크섬은 스토리지가 수신 본문으로 직접 검증한다. 길이나 내용이 다르면 여기서 거부된다.
+        ChecksumSHA256: Buffer.from(input.sha256, "hex").toString("base64"),
+      }));
+    } catch (error) {
+      if (isClientError(error)) {
+        throw new InvalidUploadError("업로드한 파일 내용이 등록한 정보와 다릅니다.");
+      }
+      throw error;
+    }
   }
 
   async inspect(objectKey: string) {
@@ -77,6 +87,13 @@ export class S3ObjectStorage implements ObjectStorage {
       MetadataDirective: "COPY",
     }));
   }
+}
+
+/** 스토리지가 4xx 로 거절한 요청은 보낸 쪽 잘못이다. 서버 오류로 올리면 로그만 더럽힌다. */
+function isClientError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+  return status !== undefined && status >= 400 && status < 500;
 }
 
 function isNotFound(error: unknown): boolean {

@@ -36,6 +36,7 @@ describe("운영 기능 사용자 온보딩 검사", () => {
 
   it("가입 정보가 필요한 학생의 운영 기능 사용을 온보딩으로 보낸다", async () => {
     findUnique.mockResolvedValue({
+      privacyNoticeAckAt: new Date(),
       onboardingRequired: true,
       onboardingCompletedAt: null,
     });
@@ -46,6 +47,7 @@ describe("운영 기능 사용자 온보딩 검사", () => {
 
   it("가입을 완료한 학생은 운영 기능을 사용할 수 있다", async () => {
     findUnique.mockResolvedValue({
+      privacyNoticeAckAt: new Date(),
       onboardingRequired: true,
       onboardingCompletedAt: new Date(),
     });
@@ -54,10 +56,27 @@ describe("운영 기능 사용자 온보딩 검사", () => {
     await expect(getCurrentOperationalActor()).resolves.toEqual(student);
   });
 
-  it("교수와 관리자는 학생 온보딩 검사를 받지 않는다", async () => {
+  it("교수와 관리자는 처리방침 고지만 확인하고 학생 가입 검사는 받지 않는다", async () => {
     const professor = { ...student, id: "professor-1", role: "PROFESSOR" as const };
+    findUnique.mockResolvedValue({
+      privacyNoticeAckAt: new Date(),
+      onboardingRequired: true,
+      onboardingCompletedAt: null,
+    });
 
     await expect(requireCompletedStudentOnboarding(professor)).resolves.toEqual(professor);
-    expect(findUnique).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("처리방침 고지를 확인하지 않았으면 역할과 무관하게 온보딩으로 보낸다", async () => {
+    const admin = { ...student, id: "admin-1", role: "ADMIN" as const };
+    findUnique.mockResolvedValue({
+      privacyNoticeAckAt: null,
+      onboardingRequired: false,
+      onboardingCompletedAt: null,
+    });
+
+    await expect(requireCompletedStudentOnboarding(admin)).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/onboarding");
   });
 });

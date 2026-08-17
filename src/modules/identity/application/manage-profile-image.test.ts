@@ -35,7 +35,7 @@ function dependencies() {
     deleteExpiredPending: vi.fn(async () => undefined),
   };
   const storage: ProfileImageStorage = {
-    createUploadUrl: vi.fn(async () => ({ url: "https://storage.invalid/upload", expiresAt: intent.expiresAt })),
+    write: vi.fn(async () => undefined),
     inspect: vi.fn(async () => ({ contentType: "image/png", size: 100, sha256: "a".repeat(64) })),
     readPrefix: vi.fn(async () => new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
     promote: vi.fn(async () => undefined),
@@ -53,7 +53,7 @@ describe("프로필 사진 관리", () => {
       sha256: "a".repeat(64),
     }, now);
 
-    expect(result.uploadUrl).toBe("https://storage.invalid/upload");
+    expect(result.uploadUrl).toBe(`/api/profile-images/content/${result.uploadId}`);
     expect(deps.repository.createUploadForOwner).toHaveBeenCalledWith(expect.objectContaining({
       ownerId: "student-1",
       objectKey: expect.stringMatching(/^profile-images\/student-1\//),

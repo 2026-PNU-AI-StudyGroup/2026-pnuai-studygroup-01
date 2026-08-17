@@ -265,7 +265,6 @@ export async function hashTeamFile(
 function uploadFileWithProgress(
   uploadUrl: string,
   file: File,
-  checksum: string,
   options: UploadTeamFileOptions,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -278,7 +277,6 @@ function uploadFileWithProgress(
     const cleanup = () => options.signal?.removeEventListener("abort", abort);
     request.open("PUT", uploadUrl);
     request.setRequestHeader("content-type", file.type || "application/octet-stream");
-    request.setRequestHeader("x-amz-checksum-sha256", checksum);
     request.upload.onprogress = (event) => {
       emitProgress(options.onProgress, "uploading", event.loaded, event.lengthComputable ? event.total : file.size);
     };
@@ -322,7 +320,6 @@ export async function uploadStoredFile(
   assertUploadActive(options.signal);
   const digest = await hashTeamFile(file, options);
   const sha256 = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  const checksum = btoa(String.fromCharCode(...digest));
   emitProgress(options.onProgress, "preparing", 0, 0);
   const presign = await fetch("/api/uploads/presign", {
     method: "POST",
@@ -341,7 +338,7 @@ export async function uploadStoredFile(
   if (!presign.ok) throw new Error(await uploadErrorMessage(presign));
 
   const { uploadId, uploadUrl } = await presign.json() as { uploadId: string; uploadUrl: string };
-  await uploadFileWithProgress(uploadUrl, file, checksum, options);
+  await uploadFileWithProgress(uploadUrl, file, options);
 
   emitProgress(options.onProgress, "completing", 0, 0);
   const completed = await fetch("/api/uploads/complete", {
