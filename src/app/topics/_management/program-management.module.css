@@ -13,7 +13,10 @@
 .backLink svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .form { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); }
 /* min-width: 0 이 없으면 그리드 아이템이 내부 min-content 폭으로 부풀어 패널 밖으로 잘려 나간다. */
-.section { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }
+/* 클래스를 두 번 겹쳐 우선순위를 올린다. FormSection 이 같은 요소에 form-system 의
+   .section/.sectionPlain 을 함께 붙이는데, 셋 다 클래스 하나짜리라 번들 순서가 바뀌면
+   .sectionPlain { padding: 0 } 이 이겨 여백이 사라진다(개발과 운영 빌드가 달라짐). */
+.section.section { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding: 1.75rem clamp(1.25rem, 3vw, 2rem); }
 .section + .section, .panel > .form + .section, .panel > section + .form { border-top: 1px solid var(--line); }
 .sectionHeader h2 { font-size: 1.125rem; font-weight: 800; letter-spacing: -.025em; }
 .sectionHeader p { margin-top: .375rem; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
