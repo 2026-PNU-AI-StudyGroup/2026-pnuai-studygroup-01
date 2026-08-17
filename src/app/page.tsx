@@ -72,7 +72,7 @@ export default async function Home({
                   <UiText>{"사용 매뉴얼"}</UiText>
                   <span className="sr-only"> <UiText>{"새 창"}</UiText></span>
                 </a>
-                <Link href="/feedback" className="button-primary w-full justify-center">
+                <Link href="/feedback" className="button-quiet w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
                 </Link>
               </div>

@@ -42,7 +42,7 @@ export function GoogleSignInButton({ disabled = false }: { disabled?: boolean })
           onMouseLeave={() => setShowDisabledHelp(false)}
           disabled={isPending}
           aria-disabled={disabled || undefined}
-          className={disabled ? "button-secondary w-full cursor-not-allowed gap-2 opacity-60" : "button-primary w-full gap-2"}
+          className={disabled ? "button-secondary w-full cursor-not-allowed gap-2 opacity-60" : "button-secondary w-full gap-2"}
           aria-describedby={disabled ? "google-sign-in-disabled-help" : undefined}
         >
           <GoogleMark className="size-5 shrink-0" />
