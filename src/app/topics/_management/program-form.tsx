@@ -18,7 +18,7 @@ import {
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import { ProgramVotingResultVisibilityFields } from "@/app/topics/_management/program-voting-result-visibility";
 import { CategorySelect } from "@/app/topics/_management/category-select";
-import { ChoiceCard, FormField, FormSection, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, NumberField, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 const PROGRAM_FORM_SECTIONS = [
@@ -190,7 +190,7 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
               <div className={styles.voteLimit}>
                 <strong><UiText>{"학생·교수 1인당 최대 투표 수"}</UiText></strong>
                 <div className={styles.voteLimitControl}>
-                  <UiInput id="program-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(event.target.value)} aria-label="학생·교수 1인당 최대 투표 수" required className={`form-control ${styles.voteLimitInput}`} />
+                  <NumberField id="program-vote-limit" name="voteLimit" min={1} max={100} value={voteLimit} onValueChange={(next) => setVoteLimit(String(next))} aria-label="학생·교수 1인당 최대 투표 수" required />
                   <span aria-hidden="true"><UiText>{"표"}</UiText></span>
                 </div>
               </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { UiDiv, UiInput } from "@/modules/translation/ui/localized-elements";
+import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import styles from "@/app/topics/_management/program-form.module.css";
 import { koreanDateTimeInput } from "@/shared/ui/date-time-input-value";
-import { ChoiceCard, DateTimeInput } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, NumberField } from "@/shared/ui/form-system";
 
 export type ProgramVisibility = "PRIVATE" | "PUBLIC";
 
@@ -33,10 +33,10 @@ export function ProgramTeamSizeRange({ studentProjectCreationEnabled, teamMinSiz
   return (
     <UiDiv className={styles.teamSizeRange} role="group" aria-label="팀 인원">
       {studentProjectCreationEnabled ? <>
-        <UiInput id="project-team-min-size" name="projectTeamMinSize" type="number" min={1} max={teamMaxSize} value={teamMinSize} onChange={(event) => updateMin(Number(event.target.value))} aria-label="팀 최소 인원" required className={`form-control ${styles.teamSizeInput}`} />
+        <NumberField id="project-team-min-size" name="projectTeamMinSize" min={1} max={teamMaxSize} value={teamMinSize} onValueChange={updateMin} aria-label="팀 최소 인원" required />
         <span aria-hidden="true">~</span>
       </> : <><input type="hidden" name="projectTeamMinSize" value="2" /><span className={styles.teamSizePrefix}><UiText>{"최대"}</UiText></span></>}
-      <UiInput id="project-team-max-size" name="projectTeamMaxSize" type="number" min={studentProjectCreationEnabled ? teamMinSize : 1} max={100} value={teamMaxSize} onChange={(event) => updateMax(Number(event.target.value))} aria-label="팀 최대 인원" required className={`form-control ${styles.teamSizeInput}`} />
+      <NumberField id="project-team-max-size" name="projectTeamMaxSize" min={studentProjectCreationEnabled ? teamMinSize : 1} max={100} value={teamMaxSize} onValueChange={updateMax} aria-label="팀 최대 인원" required />
       <span aria-hidden="true"><UiText>{"명"}</UiText></span>
     </UiDiv>
   );

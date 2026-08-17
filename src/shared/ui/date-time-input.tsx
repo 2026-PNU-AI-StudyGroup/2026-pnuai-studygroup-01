@@ -38,6 +38,8 @@ type CalendarDate = {
 };
 
 const DEFAULT_TIME = "09:00";
+// 일정 설정에서 실제로 반복되는 시각. 마감은 대부분 23:59 다.
+const TIME_PRESETS = ["09:00", "13:00", "18:00", "23:59"] as const;
 
 export function DateTimeInput({
   "aria-describedby": ariaDescribedBy,
@@ -75,6 +77,7 @@ export function DateTimeInput({
   const draftTimeRef = useRef(getTime(controlledValue ?? defaultValue) ?? DEFAULT_TIME);
   const dayRefs = useRef(new Map<string, HTMLButtonElement>());
   const calendarId = useId();
+  const timeHintId = `${calendarId}-time-hint`;
   const value = controlledValue ?? uncontrolledValue;
   const selectedDate = parseDateValue(value, type);
   const visibleDays = calendarDays(visibleMonth);
@@ -162,7 +165,11 @@ export function DateTimeInput({
     close();
   }
 
-  function changeTime(nextTime: string) {
+  // 숫자만 받아 HH:MM 으로 다시 조립한다. 콜론을 직접 지우거나 넣을 필요가 없고,
+  // 값이 꽉 찬 상태에서 입력이 조용히 무시되던 문제(maxLength)도 사라진다.
+  function changeTime(rawTime: string) {
+    const digits = rawTime.replace(/\D/g, "").slice(0, 4);
+    const nextTime = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
     setTimeInputValue(nextTime);
     if (!isValidTime(nextTime)) return;
     draftTimeRef.current = nextTime;
@@ -324,9 +331,25 @@ export function DateTimeInput({
                 pattern="[0-2][0-9]:[0-5][0-9]"
                 placeholder="09:00"
                 aria-invalid={!isValidTime(timeInputValue) || undefined}
+                aria-describedby={timeHintId}
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => changeTime(event.target.value)}
                 onBlur={() => setTimeInputValue(draftTimeRef.current)}
               />
+              <span id={timeHintId} className={styles.timeHint}>{t("숫자만 입력")}</span>
+              <span className={styles.timePresets}>
+                {TIME_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className={styles.timePreset}
+                    aria-pressed={timeInputValue === preset}
+                    onClick={() => changeTime(preset)}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </span>
             </label>
           ) : null}
           <footer className={styles.calendarFooter}>

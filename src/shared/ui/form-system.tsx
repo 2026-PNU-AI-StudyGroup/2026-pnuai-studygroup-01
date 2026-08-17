@@ -113,6 +113,62 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return <textarea {...props} className={withFormControl(className)} />;
 }
 
+type NumberFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange"> & {
+  value: number | string;
+  onValueChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  unit?: string;
+};
+
+/**
+ * 좁은 숫자 칸은 값을 바꾸려면 드래그로 범위를 잡아야 한다. `select()` 는
+ * `type="number"` 에서 동작하지 않으므로(선택 API 미지원) 증감 버튼을 붙인다.
+ */
+export function NumberField({ value, onValueChange, min, max, unit, className = "", ...props }: NumberFieldProps) {
+  const current = Number(value);
+  const lower = min ?? Number.NEGATIVE_INFINITY;
+  const upper = max ?? Number.POSITIVE_INFINITY;
+  const step = (amount: number) => {
+    const next = (Number.isFinite(current) ? current : lower) + amount;
+    if (next < lower || next > upper) return;
+    onValueChange(next);
+  };
+  return (
+    <span className={styles.numberField}>
+      <button
+        type="button"
+        className={styles.numberStep}
+        onClick={() => step(-1)}
+        disabled={props.disabled || current <= lower}
+        aria-label={`${props["aria-label"] ?? ""} 1 줄이기`.trim()}
+      >
+        −
+      </button>
+      <input
+        {...props}
+        type="number"
+        inputMode="numeric"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(event) => onValueChange(Number(event.target.value))}
+        className={withFormControl(`${styles.numberInput} ${className}`)}
+      />
+      <button
+        type="button"
+        className={styles.numberStep}
+        onClick={() => step(1)}
+        disabled={props.disabled || current >= upper}
+        aria-label={`${props["aria-label"] ?? ""} 1 늘리기`.trim()}
+      >
+        +
+      </button>
+      {unit ? <span className={styles.numberUnit}>{unit}</span> : null}
+    </span>
+  );
+}
+
 type FileInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(function FileInput({ className, ...props }, ref) {

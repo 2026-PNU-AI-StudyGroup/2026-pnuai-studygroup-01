@@ -889,6 +889,7 @@
   "승인을 요청할 교수를 지정해 주세요.": "Please specify a reviewer for requesting approval.",
   "승인하기": "Approve",
   "시간": "Time",
+  "숫자만 입력": "Digits only",
   "시도 {0}회": "Attempt {0}",
   "시스템": "System",
   "시스템 공지 작성": "Create System Notice",
