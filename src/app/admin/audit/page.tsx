@@ -30,6 +30,8 @@ const actionLabel: Record<AuditAction, string> = {
   PROFESSOR_ACCESS_REVOKED: "교수 권한 회수",
   USER_DEACTIVATED: "사용자 비활성화",
   USER_REACTIVATED: "사용자 재활성화",
+  ADMIN_ROLE_GRANTED: "관리자 권한 부여",
+  ADMIN_ROLE_REVOKED: "관리자 권한 해제",
   TEAM_CONFIRMED: "팀 확정",
   TEAM_CLOSED: "프로젝트 종료",
   USER_WITHDRAWN: "계정 탈퇴",
