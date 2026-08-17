@@ -28,8 +28,23 @@ export type SetAdminRoleOutcome =
   | "WITHDRAWN"
   | "EXTERNAL_ADVISOR";
 
+export const USER_LIST_ROLE_FILTERS = ["ALL", "STUDENT", "PROFESSOR", "ADMIN", "ADVISOR"] as const;
+export const USER_LIST_STATUS_FILTERS = ["ALL", "ACTIVE", "INACTIVE"] as const;
+
+export type UserListRoleFilter = (typeof USER_LIST_ROLE_FILTERS)[number];
+export type UserListStatusFilter = (typeof USER_LIST_STATUS_FILTERS)[number];
+export type UserListFilters = { role: UserListRoleFilter; status: UserListStatusFilter };
+
+export function resolveUserListRoleFilter(value: string | undefined): UserListRoleFilter {
+  return USER_LIST_ROLE_FILTERS.find((filter) => filter === value) ?? "ALL";
+}
+
+export function resolveUserListStatusFilter(value: string | undefined): UserListStatusFilter {
+  return USER_LIST_STATUS_FILTERS.find((filter) => filter === value) ?? "ALL";
+}
+
 export interface UserAdministrationRepository {
-  list(query: string, requestedPage: number, pageSize: number): Promise<ManagedUserPage>;
+  list(query: string, requestedPage: number, pageSize: number, filters: UserListFilters): Promise<ManagedUserPage>;
   setActive(input: { actorId: string; targetId: string; isActive: boolean; changedAt: Date }): Promise<"UPDATED" | "NOT_FOUND" | "UNCHANGED" | "SELF_DEACTIVATION" | "LAST_ADMIN" | "ACTIVE_PROJECTS">;
   setAdminRole(input: { actorId: string; targetId: string; isAdmin: boolean; changedAt: Date }): Promise<SetAdminRoleOutcome>;
 }
@@ -42,11 +57,14 @@ export class UserAdministrationService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  list(actor: CurrentActor, query = "", page = 1) {
+  list(actor: CurrentActor, query = "", page = 1, filters: Partial<UserListFilters> = {}) {
     assertAdmin(actor);
     const normalizedQuery = query.trim().slice(0, 100);
     const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
-    return this.repository.list(normalizedQuery, normalizedPage, 30);
+    return this.repository.list(normalizedQuery, normalizedPage, 30, {
+      role: resolveUserListRoleFilter(filters.role),
+      status: resolveUserListStatusFilter(filters.status),
+    });
   }
 
   async setActive(actor: CurrentActor, targetId: string, isActive: boolean) {
