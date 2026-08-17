@@ -1,5 +1,4 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -36,13 +35,29 @@ export async function GET(
         { announcementAttachment: { announcement: announcementScopeWhere(announcementAudience) } },
       ],
     },
-    select: { objectKey: true, originalName: true },
+    select: { objectKey: true, originalName: true, contentType: true, size: true },
   });
   if (!file) return NextResponse.json({ message: "파일을 찾을 수 없습니다." }, { status: 404 });
-  const url = await getSignedUrl(s3, new GetObjectCommand({
-    Bucket: objectStorageBucket,
-    Key: file.objectKey,
-    ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
-  }), { expiresIn: 5 * 60 });
-  return NextResponse.redirect(url);
+  // 서명 URL 로 넘기면 브라우저가 내부 전용 스토리지 주소로 이동하게 된다. 앱이 직접 내려준다.
+  let body: ReadableStream<Uint8Array>;
+  try {
+    const result = await s3.send(new GetObjectCommand({
+      Bucket: objectStorageBucket,
+      Key: file.objectKey,
+    }));
+    const stream = result.Body as { transformToWebStream?: () => ReadableStream<Uint8Array> } | undefined;
+    if (!stream?.transformToWebStream) throw new Error("객체 내용을 읽을 수 없습니다.");
+    body = stream.transformToWebStream();
+  } catch {
+    return NextResponse.json({ message: "파일을 불러올 수 없습니다." }, { status: 404 });
+  }
+  return new Response(body, {
+    headers: {
+      "Cache-Control": "private, no-store",
+      "Content-Type": file.contentType,
+      "Content-Length": String(file.size),
+      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }

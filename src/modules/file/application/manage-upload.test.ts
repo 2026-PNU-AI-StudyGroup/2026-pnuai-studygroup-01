@@ -33,10 +33,7 @@ function dependencies() {
     failDeletion: vi.fn(async () => undefined),
   };
   const storage: ObjectStorage = {
-    createUploadUrl: vi.fn(async () => ({
-      url: "http://minio/upload",
-      expiresAt: new Date("2026-01-01T00:15:00Z"),
-    })),
+    write: vi.fn(async () => undefined),
     inspect: vi.fn(),
     remove: vi.fn(async () => undefined),
     promote: vi.fn(async () => undefined),
@@ -60,7 +57,7 @@ describe("파일 업로드", () => {
       },
       new Date("2026-01-01T00:00:00Z"),
     );
-    expect(result.uploadUrl).toBe("http://minio/upload");
+    expect(result.uploadUrl).toBe(`/api/uploads/${result.uploadId}/content`);
     expect(deps.repository.createForActor).toHaveBeenCalledWith(
       expect.objectContaining({
         actor: { id: "student-1", role: "STUDENT" },
@@ -68,6 +65,43 @@ describe("파일 업로드", () => {
         uploadObjectKey: expect.stringMatching(/^staging\/team-1\//),
       }),
     );
+  });
+
+  it("본문 전송은 소유자의 유효한 의도에만 스테이징 객체를 쓴다", async () => {
+    const deps = dependencies();
+    const intent = {
+      id: "upload-1",
+      objectKey: "teams/team-1/files/upload-1",
+      uploadObjectKey: "staging/team-1/upload-1",
+      contentType: "application/pdf",
+      size: 100,
+      sha256: "a".repeat(64),
+      expiresAt: new Date("2026-01-01T00:15:00Z"),
+      cleanupAfter: new Date("2026-01-02T02:15:00Z"),
+    };
+    vi.mocked(deps.repository.findPendingForOwner).mockResolvedValue(intent);
+    const service = new UploadService(deps.repository, deps.storage);
+    const actor = { id: "student-1", role: "STUDENT" } as const;
+    const body = new ReadableStream<Uint8Array>();
+
+    await service.writeContent(actor, "upload-1", body, new Date("2026-01-01T00:05:00Z"));
+    expect(deps.storage.write).toHaveBeenCalledWith({
+      objectKey: "staging/team-1/upload-1",
+      body,
+      contentType: "application/pdf",
+      size: 100,
+      sha256: "a".repeat(64),
+    });
+
+    await expect(
+      service.writeContent(actor, "upload-1", body, new Date("2026-01-01T00:20:00Z")),
+    ).rejects.toBeInstanceOf(UploadNotFoundError);
+
+    vi.mocked(deps.repository.findPendingForOwner).mockResolvedValue(null);
+    await expect(
+      service.writeContent(actor, "upload-1", body, new Date("2026-01-01T00:05:00Z")),
+    ).rejects.toBeInstanceOf(UploadNotFoundError);
+    expect(deps.storage.write).toHaveBeenCalledTimes(1);
   });
 
   it("교수의 공지 첨부 업로드는 팀 없이 공지 전용 경로를 사용한다", async () => {

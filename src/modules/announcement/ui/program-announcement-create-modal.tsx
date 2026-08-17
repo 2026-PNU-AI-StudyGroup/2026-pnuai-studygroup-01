@@ -69,7 +69,7 @@ export function ProgramAnnouncementCreateModal({ programId, programName, closeHr
     >
       <form
         ref={formRef}
-        className="grid gap-6 px-6 py-7 sm:px-8 lg:px-10 lg:py-9"
+        className="grid grid-cols-[minmax(0,1fr)] gap-6 px-6 py-7 sm:px-8 lg:px-10 lg:py-9"
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);

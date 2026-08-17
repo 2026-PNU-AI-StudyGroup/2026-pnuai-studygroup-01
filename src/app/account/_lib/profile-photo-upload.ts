@@ -35,7 +35,7 @@ export async function uploadProfilePhoto(
       sha256,
     }),
   });
-  await putFile(presigned.uploadUrl, file, sha256, options);
+  await putFile(presigned.uploadUrl, file, options);
   throwIfAborted(options.signal);
   await requestJson("/api/profile-images/complete", {
     method: "POST",
@@ -61,7 +61,6 @@ async function requestJson<T = undefined>(url: string, init: RequestInit): Promi
 function putFile(
   url: string,
   file: File,
-  sha256: string,
   { signal, onProgress }: { signal: AbortSignal; onProgress: (percent: number) => void },
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -70,7 +69,6 @@ function putFile(
     signal.addEventListener("abort", abort, { once: true });
     request.open("PUT", url);
     request.setRequestHeader("Content-Type", file.type);
-    request.setRequestHeader("x-amz-checksum-sha256", hexToBase64(sha256));
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
     };
@@ -83,13 +81,6 @@ function putFile(
     request.onloadend = () => signal.removeEventListener("abort", abort);
     request.send(file);
   });
-}
-
-function hexToBase64(value: string): string {
-  const bytes = new Uint8Array(value.match(/.{2}/g)?.map((pair) => Number.parseInt(pair, 16)) ?? []);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary);
 }
 
 function throwIfAborted(signal: AbortSignal): void {

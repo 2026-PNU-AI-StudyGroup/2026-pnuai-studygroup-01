@@ -50,7 +50,13 @@ export interface UploadIntentRepository {
 }
 
 export interface ObjectStorage {
-  createUploadUrl(input: UploadIntent): Promise<{ url: string; expiresAt: Date }>;
+  write(input: {
+    objectKey: string;
+    body: ReadableStream<Uint8Array>;
+    contentType: string;
+    size: number;
+    sha256: string;
+  }): Promise<void>;
   inspect(objectKey: string): Promise<{
     contentType?: string;
     size?: number;
@@ -105,9 +111,6 @@ export class UploadService {
       expiresAt: new Date(now.getTime() + 15 * 60_000),
       cleanupAfter: new Date(now.getTime() + 26 * 60 * 60_000),
     };
-    const signed = await this.storage.createUploadUrl(intent);
-    intent.expiresAt = signed.expiresAt;
-    intent.cleanupAfter = new Date(signed.expiresAt.getTime() + 26 * 60 * 60_000);
     const created = await this.repository.createForActor({
       ...intent,
       teamId: input.teamId ?? null,
@@ -117,7 +120,28 @@ export class UploadService {
       originalName: validated.originalName,
     });
     if (!created) throw new UploadNotFoundError();
-    return { uploadId: id, uploadUrl: signed.url };
+    // 오브젝트 스토리지는 내부 네트워크에만 열려 있어 브라우저가 직접 닿지 못한다.
+    // 서명 URL 대신 같은 출처의 경로를 돌려주고 본문은 앱을 거쳐 흘려보낸다.
+    return { uploadId: id, uploadUrl: `/api/uploads/${id}/content` };
+  }
+
+  /** 브라우저가 PUT 한 본문을 스테이징 객체로 그대로 흘려보낸다. 무결성은 complete 에서 검증한다. */
+  async writeContent(
+    actor: CurrentActor,
+    uploadId: string,
+    body: ReadableStream<Uint8Array>,
+    now = new Date(),
+  ) {
+    const intent = await this.repository.findPendingForOwner(uploadId, actor.id);
+    if (!intent || intent.expiresAt <= now) throw new UploadNotFoundError();
+    await this.storage.write({
+      objectKey: intent.uploadObjectKey,
+      body,
+      contentType: intent.contentType,
+      size: intent.size,
+      sha256: intent.sha256,
+    });
+    return { uploadId };
   }
 
   async complete(actor: CurrentActor, uploadId: string, now = new Date()) {
