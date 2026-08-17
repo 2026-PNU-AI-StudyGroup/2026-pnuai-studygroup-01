@@ -19,7 +19,9 @@
   scroll-margin-top: 9.5rem;
 }
 
-.basicGrid {
+/* FormSection 의 contentClassName 으로 form-system 의 .content 와 같은 요소에 붙는다.
+   둘 다 클래스 하나짜리라 번들 순서에 따라 gap 이 뒤집힌다. 클래스를 겹쳐 우선순위를 올린다. */
+.basicGrid.basicGrid {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 1.25rem;
@@ -29,7 +31,9 @@
   min-width: 0;
 }
 
-.operationGrid {
+/* FormSection 의 contentClassName 으로 form-system 의 .content 와 같은 요소에 붙는다.
+   둘 다 클래스 하나짜리라 번들 순서에 따라 gap 이 뒤집힌다. 클래스를 겹쳐 우선순위를 올린다. */
+.operationGrid.operationGrid {
   display: grid;
   gap: 1.5rem;
 }
@@ -195,7 +199,9 @@
   stroke-linejoin: round;
 }
 
-.periodList {
+/* FormSection 의 contentClassName 으로 form-system 의 .content 와 같은 요소에 붙는다.
+   둘 다 클래스 하나짜리라 번들 순서에 따라 gap 이 뒤집힌다. 클래스를 겹쳐 우선순위를 올린다. */
+.periodList.periodList {
   display: grid;
   gap: 0.25rem;
 }
@@ -312,7 +318,7 @@
 }
 
 @media (min-width: 640px) {
-  .basicGrid {
+  .basicGrid.basicGrid {
     grid-template-columns: minmax(13rem, 0.75fr) minmax(0, 1.25fr);
   }
 
@@ -344,7 +350,7 @@
 }
 
 @media (min-width: 900px) {
-  .operationGrid {
+  .operationGrid.operationGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
