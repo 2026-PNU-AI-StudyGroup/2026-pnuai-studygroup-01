@@ -16,17 +16,22 @@ export default async function Home({
 }) {
   const actor = await getCurrentActor();
   if (actor) {
-    if (actor.role === "STUDENT") {
-      const registration = await prisma.user.findUnique({
-        where: { id: actor.id },
-        select: {
-          onboardingRequired: true,
-          onboardingCompletedAt: true,
-        },
-      });
-      if (registration?.onboardingRequired && !registration.onboardingCompletedAt) {
-        redirect("/onboarding");
-      }
+    const registration = await prisma.user.findUnique({
+      where: { id: actor.id },
+      select: {
+        privacyNoticeAckAt: true,
+        onboardingRequired: true,
+        onboardingCompletedAt: true,
+      },
+    });
+    // 처리방침 확인은 역할과 무관하게 1회 필요하다.
+    if (!registration?.privacyNoticeAckAt) redirect("/onboarding");
+    if (
+      actor.role === "STUDENT" &&
+      registration.onboardingRequired &&
+      !registration.onboardingCompletedAt
+    ) {
+      redirect("/onboarding");
     }
     // 자문위원은 배정된 프로젝트만 다루므로 담당 프로젝트 화면이 첫 화면이다.
     if (actor.role === "ADVISOR") redirect("/advisor");
@@ -74,6 +79,9 @@ export default async function Home({
                 </a>
                 <Link href="/feedback" className="button-quiet w-full justify-center">
                   <UiText>{"피드백 게시판"}</UiText>
+                </Link>
+                <Link href="/privacy" className="button-quiet w-full justify-center">
+                  <UiText>{"개인정보 처리방침"}</UiText>
                 </Link>
               </div>
             </section>
