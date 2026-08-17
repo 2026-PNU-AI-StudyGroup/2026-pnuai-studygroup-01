@@ -181,6 +181,31 @@ curl -fsS -X POST \
 - DB와 Object Storage는 동일 복구 시점 기준으로 보관하고 암호화된 저장소에 둔다.
 - 복구 후 `/api/health/ready`, 로그인, 보고서 다운로드, 종료 프로젝트 결과물 링크를 Smoke Test한다.
 
+### 백업 암호화
+
+백업 파일에는 전체 개인정보가 그대로 들어간다. `ops/backup.sh`는 암호 파일이 있으면
+AES256으로 암호화해 `.gpg`로 남긴다. 암호 파일을 만들지 않으면 평문으로 남기고 매 실행마다 경고한다.
+
+```bash
+sudo apt-get install -y gnupg
+mkdir -p ~/.config/aipms
+openssl rand -base64 48 > ~/.config/aipms/backup-passphrase
+chmod 600 ~/.config/aipms/backup-passphrase
+```
+
+**이 암호를 서버 밖에도 반드시 따로 보관한다.** 서버가 사라지면 암호도 함께 사라지고,
+그러면 백업을 복구할 수 없다. 암호 관리자나 학과 문서 금고에 보관한다.
+
+암호 파일 경로는 `BACKUP_PASSPHRASE_FILE`로 바꾼다. `ops/install-systemd.sh`가 이 값을
+백업 타이머에 전달하므로, 경로를 바꿨다면 설치 스크립트를 다시 실행한다.
+
+복구는 복호화한 뒤 평소 절차를 그대로 따른다.
+
+```bash
+gpg --batch --decrypt --passphrase-file ~/.config/aipms/backup-passphrase \
+  ~/aipms-backups/pg-<날짜>.dump.gpg > /tmp/pg.dump
+```
+
 ## 롤백
 
 애플리케이션 이미지는 커밋 SHA 태그로 보관한다. 코드 롤백은 이전 이미지로 수행하되, 이미 적용된 Prisma 마이그레이션을 임의로 되돌리지 않는다. 스키마 호환성이 없는 롤백은 검증된 DB 백업 복구 절차와 함께 수행한다.
