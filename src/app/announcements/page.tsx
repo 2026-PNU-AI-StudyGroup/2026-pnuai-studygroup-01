@@ -17,6 +17,7 @@ import {
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
+import { markdownToPlainText } from "@/shared/ui/render-markdown";
 import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { AddIcon, PinIcon } from "@/shared/ui/workspace-icons";
@@ -112,7 +113,7 @@ export default async function AnnouncementsPage({
                           <UiText>{announcement.title}</UiText>
                         </h3>
                         <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted)] sm:line-clamp-1">
-                          <UiText>{announcement.content.replace(/\s+/g, " ")}</UiText>
+                          <UiText>{markdownToPlainText(announcement.content)}</UiText>
                         </p>
                         <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-[var(--muted)] sm:hidden">
                           <span className="text-[var(--ink)]">{announcement.authorName}</span>

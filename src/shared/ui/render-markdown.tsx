@@ -157,3 +157,18 @@ export function renderMarkdown(source: string): ReactNode {
   flushParagraph();
   return <Fragment>{blocks}</Fragment>;
 }
+
+/** 목록 미리보기처럼 서식 없이 한 줄로 보여줄 때 쓴다. 마크다운 기호만 걷어낸다. */
+export function markdownToPlainText(source: string): string {
+  return source
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s*(?:[-*]|\d+\.)\s+/gm, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
