@@ -8,6 +8,7 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_USER="${SUDO_USER:-$USER}"
 BACKUP_DIR="${BACKUP_DIR:-/home/$RUN_USER/aipms-backups}"
 KEEP_DAYS="${KEEP_DAYS:-30}"
+BACKUP_PASSPHRASE_FILE="${BACKUP_PASSPHRASE_FILE:-/home/$RUN_USER/.config/aipms/backup-passphrase}"
 UNIT_DIR=/etc/systemd/system
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -105,6 +106,7 @@ write_unit aipms-backup.service \
   "WorkingDirectory=$REPO_DIR" \
   "Environment=BACKUP_DIR=$BACKUP_DIR" \
   "Environment=KEEP_DAYS=$KEEP_DAYS" \
+  "Environment=BACKUP_PASSPHRASE_FILE=$BACKUP_PASSPHRASE_FILE" \
   "ExecStart=$REPO_DIR/ops/backup.sh"
 
 write_unit aipms-backup.timer \
