@@ -19,9 +19,19 @@ export type ManagedUserPage = {
   total: number;
 };
 
+export type SetAdminRoleOutcome =
+  | "UPDATED"
+  | "NOT_FOUND"
+  | "UNCHANGED"
+  | "SELF_DEMOTION"
+  | "LAST_ADMIN"
+  | "WITHDRAWN"
+  | "EXTERNAL_ADVISOR";
+
 export interface UserAdministrationRepository {
   list(query: string, requestedPage: number, pageSize: number): Promise<ManagedUserPage>;
   setActive(input: { actorId: string; targetId: string; isActive: boolean; changedAt: Date }): Promise<"UPDATED" | "NOT_FOUND" | "UNCHANGED" | "SELF_DEACTIVATION" | "LAST_ADMIN" | "ACTIVE_PROJECTS">;
+  setAdminRole(input: { actorId: string; targetId: string; isAdmin: boolean; changedAt: Date }): Promise<SetAdminRoleOutcome>;
 }
 
 export class UserAdministrationError extends Error {}
@@ -47,6 +57,23 @@ export class UserAdministrationService {
     if (outcome === "SELF_DEACTIVATION") throw new UserAdministrationError("현재 로그인한 관리자 계정은 비활성화할 수 없습니다.");
     if (outcome === "LAST_ADMIN") throw new UserAdministrationError("마지막 활성 관리자 계정은 비활성화할 수 없습니다.");
     if (outcome === "ACTIVE_PROJECTS") throw new UserAdministrationError("담당 중인 프로젝트가 있는 교수 계정은 비활성화할 수 없습니다. 프로젝트를 다른 교수에게 인계하거나 마감해 주세요.");
+    return outcome;
+  }
+
+  /**
+   * 관리자 권한만 여기에서 부여·회수한다. 교수 역할은 허용목록(교수 권한 화면)이 기준이라
+   * 여기에서 바꿔도 다음 로그인에 되돌아가므로 다루지 않는다. 관리자를 해제하면 학생으로
+   * 내려가고, 허용목록에 있는 계정은 다음 로그인에 교수로 복구된다.
+   */
+  async setAdminRole(actor: CurrentActor, targetId: string, isAdmin: boolean) {
+    assertAdmin(actor);
+    if (!targetId || targetId.length > 200) throw new UserAdministrationError("사용자 정보를 확인해 주세요.");
+    const outcome = await this.repository.setAdminRole({ actorId: actor.id, targetId, isAdmin, changedAt: this.now() });
+    if (outcome === "NOT_FOUND") throw new UserAdministrationError("사용자를 찾을 수 없습니다.");
+    if (outcome === "SELF_DEMOTION") throw new UserAdministrationError("현재 로그인한 관리자 계정의 권한은 해제할 수 없습니다.");
+    if (outcome === "LAST_ADMIN") throw new UserAdministrationError("마지막 관리자 계정의 권한은 해제할 수 없습니다.");
+    if (outcome === "WITHDRAWN") throw new UserAdministrationError("탈퇴한 계정의 권한은 변경할 수 없습니다.");
+    if (outcome === "EXTERNAL_ADVISOR") throw new UserAdministrationError("외부 자문위원 계정은 관리자로 지정할 수 없습니다.");
     return outcome;
   }
 }

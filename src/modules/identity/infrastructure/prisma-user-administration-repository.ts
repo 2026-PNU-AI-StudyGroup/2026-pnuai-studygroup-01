@@ -1,6 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
-import type { ManagedUserPage, UserAdministrationRepository } from "@/modules/identity/application/manage-users";
+import type { ManagedUserPage, SetAdminRoleOutcome, UserAdministrationRepository } from "@/modules/identity/application/manage-users";
 
 export class PrismaUserAdministrationRepository implements UserAdministrationRepository {
   constructor(private readonly client: PrismaClient) {}
@@ -115,6 +115,76 @@ export class PrismaUserAdministrationRepository implements UserAdministrationRep
         targetType: "USER",
         targetId: target.id,
         metadata: { previousAccountStatus: target.accountStatus, nextAccountStatus: input.isActive ? "ACTIVE" : "DISABLED" },
+        createdAt: input.changedAt,
+      } });
+      return "UPDATED";
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  setAdminRole(input: { actorId: string; targetId: string; isAdmin: boolean; changedAt: Date }): Promise<SetAdminRoleOutcome> {
+    return this.client.$transaction(async (transaction) => {
+      // "마지막 관리자" 규칙은 관리자 집합 전체의 불변식이라 setActive 와 같은 잠금을 쓴다.
+      // 두 작업이 서로 다른 행을 잠그더라도 같은 순서로 직렬화된다.
+      await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(1947337051, 1)::text AS "lock"`);
+      const targets = await transaction.$queryRaw<Array<{ id: string; role: "STUDENT" | "PROFESSOR" | "ADMIN" | "ADVISOR"; accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN" }>>(Prisma.sql`
+        SELECT "id", "role", "accountStatus" FROM "user" WHERE "id" = ${input.targetId} FOR UPDATE
+      `);
+      const target = targets[0];
+      if (!target) return "NOT_FOUND";
+      if (target.accountStatus === "WITHDRAWN") return "WITHDRAWN";
+      // 외부 자문위원은 토큰으로만 접근하는 교외 인원이라 운영 권한 대상이 아니다.
+      if (input.isAdmin && target.role === "ADVISOR") return "EXTERNAL_ADVISOR";
+      if ((target.role === "ADMIN") === input.isAdmin) return "UNCHANGED";
+      if (!input.isAdmin) {
+        if (input.actorId === target.id) return "SELF_DEMOTION";
+        const admins = await transaction.user.count({ where: { role: "ADMIN", accountStatus: "ACTIVE" } });
+        if (admins <= 1) return "LAST_ADMIN";
+      }
+      // 관리자 해제는 학생으로 되돌린다. 교수 허용목록에 있으면 다음 로그인에 교수로 복구된다.
+      const nextRole = input.isAdmin ? "ADMIN" : "STUDENT";
+      const updated = await transaction.user.updateMany({
+        where: { id: target.id, role: target.role },
+        data: { role: nextRole },
+      });
+      if (updated.count !== 1) return "UNCHANGED";
+      // 권한이 바뀌면 기존 세션의 역할 표시가 어긋나므로 다시 로그인하게 한다.
+      await transaction.session.deleteMany({ where: { userId: target.id } });
+      const title = input.isAdmin ? "PMS 관리자 권한이 부여되었습니다" : "PMS 관리자 권한이 해제되었습니다";
+      const body = input.isAdmin
+        ? "다시 로그인하면 운영 관리 메뉴를 사용할 수 있습니다."
+        : "운영 관리 메뉴 사용 권한이 해제되었습니다. 문의가 있으면 운영진에게 연락해 주세요.";
+      const titleEn = input.isAdmin ? "PMS administrator access granted" : "PMS administrator access revoked";
+      const bodyEn = input.isAdmin
+        ? "Sign in again to use the operations menu."
+        : "Your access to the operations menu was revoked. Contact the PMS administrators if you need assistance.";
+      await transaction.notification.create({
+        data: {
+          recipientId: target.id,
+          type: "SYSTEM",
+          title,
+          body,
+          href: "/account",
+          dedupeKey: `user-admin-role:${target.id}:${nextRole}:${input.changedAt.getTime()}`,
+          createdAt: input.changedAt,
+        },
+      });
+      await enqueueEmailEvents(transaction, [{
+        kind: "ACCOUNT_STATUS",
+        recipientId: target.id,
+        title,
+        body,
+        titleEn,
+        bodyEn,
+        href: "/account",
+        idempotencyKey: `email:user-admin-role:${target.id}:${nextRole}:${input.changedAt.getTime()}`,
+        createdAt: input.changedAt,
+      }]);
+      await transaction.auditLog.create({ data: {
+        actorId: input.actorId,
+        action: input.isAdmin ? "ADMIN_ROLE_GRANTED" : "ADMIN_ROLE_REVOKED",
+        targetType: "USER",
+        targetId: target.id,
+        metadata: { previousRole: target.role, nextRole },
         createdAt: input.changedAt,
       } });
       return "UPDATED";

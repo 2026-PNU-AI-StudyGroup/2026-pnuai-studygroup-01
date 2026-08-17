@@ -12,6 +12,7 @@ import {
   adminRecordListClassName,
   adminRecordRowClassName,
 } from "@/app/_components/admin-section";
+import { UserRoleForm } from "@/app/admin/users/_components/user-role-form";
 import { UserStatusForm } from "@/app/admin/users/_components/user-status-form";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { UserAdministrationService } from "@/modules/identity/application/manage-users";
@@ -78,7 +79,10 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                     {user.id === actor.id ? (
                       <div className="sm:text-right"><StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge></div>
                     ) : (
-                      <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
+                      <div className="grid gap-2">
+                        <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
+                        {user.isActive ? <UserRoleForm userId={user.id} name={user.name} role={user.role} isSelf={false} /> : null}
+                      </div>
                     )}
                   </div>
                 </li>
