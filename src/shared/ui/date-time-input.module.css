@@ -223,6 +223,42 @@
   background: var(--danger-subtle);
 }
 
+.timeHint {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.timePresets {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.timePreset {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  padding: 0.25rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timePreset:hover {
+  border-color: var(--field-border-hover);
+  color: var(--ink);
+}
+
+.timePreset[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-subtle);
+  color: var(--primary);
+}
+
 .calendarFooter {
   display: flex;
   justify-content: flex-end;

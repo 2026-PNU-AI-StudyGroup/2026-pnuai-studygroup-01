@@ -21,7 +21,7 @@ import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domai
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiDiv, UiInput } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { ChoiceCard, FormField, FormSection, TextInput, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, FormField, FormSection, NumberField, TextInput, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
 
 type ProgramDates = {
@@ -144,6 +144,7 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
   const [prevVotingPolicy, setPrevVotingPolicy] = useState(votingPolicy);
   const [voteLimit, setVoteLimit] = useState(String(votingPolicy?.voteLimit ?? 3));
   const [voteLimitScope, setVoteLimitScope] = useState<"PROGRAM" | "DIVISION">(votingPolicy?.voteLimitScope ?? "PROGRAM");
+  const [staffVoteLimit, setStaffVoteLimit] = useState(String(votingPolicy?.staffVoteLimit ?? 5));
   const [state, action, pending] = useActionState(updateProgramVotingPolicyAction, initialProgramActionState);
   const router = useRouter();
 
@@ -168,14 +169,14 @@ export function ProgramVotingPanel({ programId, votingPolicy, divisionCount, res
             <div className={formStyles.voteLimit}>
               <strong><UiText>{"학생·교수 1인당 최대 투표 수"}</UiText></strong>
               <div className={formStyles.voteLimitControl}>
-                <UiInput id="management-vote-limit" name="voteLimit" type="number" min={1} max={100} value={voteLimit} onChange={(event) => setVoteLimit(event.target.value)} aria-label="학생·교수 1인당 최대 투표 수" required className={`form-control ${formStyles.voteLimitInput}`} />
+                <NumberField id="management-vote-limit" name="voteLimit" min={1} max={100} value={voteLimit} onValueChange={(next) => setVoteLimit(String(next))} aria-label="학생·교수 1인당 최대 투표 수" required />
                 <span aria-hidden="true"><UiText>{"표"}</UiText></span>
               </div>
             </div>
             <div className={formStyles.voteLimit}>
               <strong><UiText>{"자문위원·관리자 1인당 최대 투표 수"}</UiText></strong>
               <div className={formStyles.voteLimitControl}>
-                <UiInput id="management-staff-vote-limit" name="staffVoteLimit" type="number" min={1} max={100} defaultValue={votingPolicy?.staffVoteLimit ?? 5} aria-label="자문위원·관리자 1인당 최대 투표 수" required className={`form-control ${formStyles.voteLimitInput}`} />
+                <NumberField id="management-staff-vote-limit" name="staffVoteLimit" min={1} max={100} value={staffVoteLimit} onValueChange={(next) => setStaffVoteLimit(String(next))} aria-label="자문위원·관리자 1인당 최대 투표 수" required />
                 <span aria-hidden="true"><UiText>{"표"}</UiText></span>
               </div>
             </div>
