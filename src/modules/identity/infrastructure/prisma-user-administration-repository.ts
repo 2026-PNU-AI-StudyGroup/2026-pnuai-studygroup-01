@@ -1,15 +1,24 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
-import type { ManagedUserPage, SetAdminRoleOutcome, UserAdministrationRepository } from "@/modules/identity/application/manage-users";
+import type { ManagedUserPage, SetAdminRoleOutcome, UserAdministrationRepository, UserListFilters } from "@/modules/identity/application/manage-users";
 
 export class PrismaUserAdministrationRepository implements UserAdministrationRepository {
   constructor(private readonly client: PrismaClient) {}
 
-  async list(query: string, requestedPage: number, pageSize: number): Promise<ManagedUserPage> {
-    const where: Prisma.UserWhereInput = query ? { OR: [
-      { name: { contains: query, mode: "insensitive" } },
-      { email: { contains: query, mode: "insensitive" } },
-    ] } : {};
+  async list(query: string, requestedPage: number, pageSize: number, filters: UserListFilters): Promise<ManagedUserPage> {
+    const conditions: Prisma.UserWhereInput[] = [];
+    if (query) {
+      conditions.push({ OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
+      ] });
+    }
+    if (filters.role !== "ALL") conditions.push({ role: filters.role });
+    // 비활성은 정지(DISABLED)와 탈퇴(WITHDRAWN)를 함께 묶는다. 목록에서는 둘 다 로그인할 수 없는 계정이다.
+    if (filters.status !== "ALL") {
+      conditions.push(filters.status === "ACTIVE" ? { accountStatus: "ACTIVE" } : { accountStatus: { not: "ACTIVE" } });
+    }
+    const where: Prisma.UserWhereInput = conditions.length ? { AND: conditions } : {};
     const total = await this.client.user.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, totalPages);
