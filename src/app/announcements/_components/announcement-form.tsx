@@ -164,6 +164,9 @@ export function AnnouncementForm({
         </label>
         <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
           <span><UiText>{"본문"}</UiText></span>
+          <span className="text-xs font-medium text-[var(--muted)]">
+            <UiText>{"마크다운을 사용할 수 있습니다. 예: ## 제목, **굵게**, - 목록"}</UiText>
+          </span>
           <UiTextarea
             className="form-control min-h-80 bg-[var(--surface)] leading-7"
             name="content"

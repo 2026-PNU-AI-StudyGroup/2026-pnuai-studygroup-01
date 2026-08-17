@@ -558,6 +558,7 @@
   "마지막 현황": "Latest Status",
   "마지막 활성 관리자 계정은 비활성화할 수 없습니다.": "The last active administrator account cannot be deactivated.",
   "마지막 활성 관리자 계정은 탈퇴할 수 없습니다.": "The last active admin account cannot be deleted.",
+  "마크다운을 사용할 수 있습니다. 예: ## 제목, **굵게**, - 목록": "Markdown is supported. For example: ## Heading, **bold**, - list",
   "만드는 중": "In progress",
   "만료 ": "Expires ",
   "맡을 역할": "assigned role",
