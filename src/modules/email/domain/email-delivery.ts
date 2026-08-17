@@ -30,7 +30,10 @@ export function isDirectEmailDeliveryKind(kind: EmailDeliveryKind): kind is Dire
   return kind === "TEAM_INVITATION" || kind === "PROFESSOR_ACCESS";
 }
 
-export function normalizeEmailHref(href: string): string {
+// email_delivery.href 는 nullable 이고 발송·취소 후에는 본문과 함께 비워진다.
+// 읽는 쪽에서 null 을 만나도 기본 경로로 떨어뜨린다.
+export function normalizeEmailHref(href: string | null | undefined): string {
+  if (!href) return "/dashboard";
   return href.startsWith("/") && !href.startsWith("//") ? href : "/dashboard";
 }
 
