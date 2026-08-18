@@ -52,6 +52,10 @@ function canonicalTemplate(node: ts.TemplateExpression): string {
   ].join("");
 }
 
+function placeholders(value: string): string[] {
+  return value.match(/\{\d+\}|\[(?:VALUE_\d+|[A-Z_]+)\]/g)?.sort() ?? [];
+}
+
 describe("UI localization architecture", () => {
   it("keeps every fixed Korean source message in the pre-generated English catalog", () => {
     const missing: string[] = [];
@@ -83,6 +87,23 @@ describe("UI localization architecture", () => {
       visit(sourceFile);
     }
     expect(missing).toEqual([]);
+  });
+
+  it("keeps the English catalog human-authored and structurally complete", () => {
+    const invalid = Object.entries(englishMessages).flatMap(([source, translation]) => {
+      if (!translation.trim()) return [`empty: ${source}`];
+      if (translation === source) return [`untranslated: ${source}`];
+      if (/[가-힣]/.test(translation)) return [`Korean remains: ${source}`];
+      if (/^\[Translation of |not available; please provide the target language/i.test(translation)) {
+        return [`generated artifact: ${source}`];
+      }
+      if (JSON.stringify(placeholders(source)) !== JSON.stringify(placeholders(translation))) {
+        return [`placeholder mismatch: ${source}`];
+      }
+      return [];
+    });
+
+    expect(invalid).toEqual([]);
   });
 
   it("does not leave Korean JSX text or localized native attributes unwrapped", () => {

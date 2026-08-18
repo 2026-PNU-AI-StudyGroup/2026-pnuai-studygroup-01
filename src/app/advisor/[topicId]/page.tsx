@@ -7,8 +7,8 @@ import { findAdvisorReview, findAssignedProject } from "@/modules/advisor/infras
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { renderMarkdown } from "@/shared/ui/render-markdown";
 import { ARTIFACT_TYPE_LABELS, ArtifactMedia, type ArtifactType } from "@/shared/ui/artifact-media";
 import { DocumentIcon } from "@/shared/ui/workspace-icons";
 
@@ -42,7 +42,7 @@ export default async function AdvisorProjectDetailPage({ params }: { params: Pro
         <>
           <section aria-labelledby="advisor-project-intro">
             <h2 id="advisor-project-intro" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2>
-            <div className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]">{renderMarkdown(topic.team.showcaseIntro ?? topic.description)}</div>
+            <LocalizedMarkdown text={topic.team.showcaseIntro ?? topic.description} className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]" />
           </section>
 
           <section aria-labelledby="advisor-project-artifacts">

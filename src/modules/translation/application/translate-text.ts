@@ -18,8 +18,11 @@ export class TranslateTextService {
   constructor(private readonly engine: TranslationEngine) {}
 
   async execute(input: { text: string; target: TranslationTarget }): Promise<string> {
+    const source = normalizeTranslationText(input.text);
+    if (!/[A-Za-z가-힣]/.test(source)) return source;
+
     const translated = await this.engine.translate({
-      text: normalizeTranslationText(input.text),
+      text: source,
       target: input.target,
     });
     const normalized = translated.trim();

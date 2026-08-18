@@ -13,4 +13,13 @@ describe("텍스트 번역", () => {
     expect(result).toBe("Graduation project");
     expect(engine.translate).toHaveBeenCalledWith({ text: "졸업과제", target: "en" });
   });
+
+  it("stores language-neutral user content without calling the model", async () => {
+    const engine = { translate: vi.fn() };
+    const service = new TranslateTextService(engine);
+
+    await expect(service.execute({ text: "  2026-08-18  ", target: "en" })).resolves.toBe("2026-08-18");
+    await expect(service.execute({ text: "ㅡ", target: "ko" })).resolves.toBe("ㅡ");
+    expect(engine.translate).not.toHaveBeenCalled();
+  });
 });

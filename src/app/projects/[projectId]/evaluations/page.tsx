@@ -6,9 +6,9 @@ import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-wo
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { canTeamMemberViewEvaluation, isEvaluationComplete } from "@/modules/rubric/domain/rubric-policy";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
-import { renderMarkdown } from "@/shared/ui/render-markdown";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 평가");
@@ -96,7 +96,7 @@ export default async function TeamEvaluationsPage({ params }: { params: Promise<
       {advisorFeedback.length ? (
         <section aria-labelledby="advisor-feedback-title" className="space-y-4 border-t border-[var(--line)] pt-7">
           <header><h2 id="advisor-feedback-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"자문위원 피드백"}</UiText></h2><p className="muted mt-1 text-sm"><UiText>{"담당 자문위원이 남긴 피드백입니다."}</UiText></p></header>
-          <div className="grid gap-3">{advisorFeedback.map((feedback) => <article key={feedback.id} className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-sm font-bold"><UiText>{feedback.advisor.name}</UiText> <span className="muted ml-2 text-xs font-medium"><UiDate value={feedback.createdAt} mode="dateTime" /></span></p><div className="mt-3 text-sm leading-6">{renderMarkdown(feedback.body)}</div></article>)}</div>
+          <div className="grid gap-3">{advisorFeedback.map((feedback) => <article key={feedback.id} className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-sm font-bold"><UiText>{feedback.advisor.name}</UiText> <span className="muted ml-2 text-xs font-medium"><UiDate value={feedback.createdAt} mode="dateTime" /></span></p><LocalizedMarkdown text={feedback.body} className="mt-3 text-sm leading-6" /></article>)}</div>
         </section>
       ) : null}
       {isStaff && advisorEvaluations.length ? (

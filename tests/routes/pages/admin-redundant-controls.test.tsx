@@ -14,6 +14,10 @@ vi.mock("@/modules/translation/infrastructure/localized-metadata", () => ({ getL
 vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentActor }));
 vi.mock("@/modules/identity/application/manage-users", () => ({
   UserAdministrationService: class { list = listUsers; },
+  USER_LIST_ROLE_FILTERS: ["ALL", "STUDENT", "PROFESSOR", "ADMIN", "ADVISOR"],
+  USER_LIST_STATUS_FILTERS: ["ALL", "ACTIVE", "INACTIVE"],
+  resolveUserListRoleFilter: () => "ALL",
+  resolveUserListStatusFilter: () => "ALL",
 }));
 vi.mock("@/modules/identity/infrastructure/prisma-user-administration-repository", () => ({ PrismaUserAdministrationRepository: class {} }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ChoiceCard, DateTimeInput, FileInput, FormField, FormSection, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
+import { ChoiceCard, DateTimeInput, FileInput, FormField, FormSection, NumberField, Textarea, TextInput, Toggle } from "@/shared/ui/form-system";
 
 describe("form-system controls", () => {
   it("공통 텍스트·날짜·파일 호스트가 서버 제출 계약을 유지한다", () => {
@@ -57,6 +57,15 @@ describe("form-system controls", () => {
     expect(new FormData(container.querySelector("form")!).get("studentProjectCreationEnabled")).toBe("true");
     fireEvent.click(toggle);
     expect(new FormData(container.querySelector("form")!).has("studentProjectCreationEnabled")).toBe(false);
+  });
+
+  it("숫자 필드는 필수 검증을 위해 입력 중 빈 값을 보존한다", () => {
+    const onValueChange = vi.fn();
+    render(<NumberField aria-label="투표 수" value={3} min={1} onValueChange={onValueChange} required />);
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "투표 수" }), { target: { value: "" } });
+
+    expect(onValueChange).toHaveBeenLastCalledWith("");
   });
 
   it("섹션과 선택 컨트롤의 화면 밀도를 명시적인 API로 정한다", () => {

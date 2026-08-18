@@ -28,8 +28,14 @@ export function ProgramTeamSizeRange({ studentProjectCreationEnabled, teamMinSiz
   onTeamMinSizeChange: (value: number) => void;
   onTeamMaxSizeChange: (value: number) => void;
 }) {
-  const updateMin = (value: number) => onTeamMinSizeChange(Math.min(teamMaxSize, Math.max(1, value)));
-  const updateMax = (value: number) => onTeamMaxSizeChange(Math.max(studentProjectCreationEnabled ? teamMinSize : 1, Math.min(100, value)));
+  const updateMin = (value: number | "") => {
+    if (value === "") return;
+    onTeamMinSizeChange(Math.min(teamMaxSize, Math.max(1, value)));
+  };
+  const updateMax = (value: number | "") => {
+    if (value === "") return;
+    onTeamMaxSizeChange(Math.max(studentProjectCreationEnabled ? teamMinSize : 1, Math.min(100, value)));
+  };
   return (
     <UiDiv className={styles.teamSizeRange} role="group" aria-label="팀 인원">
       {studentProjectCreationEnabled ? <>
