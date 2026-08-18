@@ -59,6 +59,23 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # 운영 이미지(runner)는 Next standalone 이라 scripts 도 tsx 도 없다.
+  # 스크립트 실행에 필요한 도구가 모두 들어 있는 시드용 스테이지를 그대로 쓴다.
+  # 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm import-opus
+  import-opus:
+    build:
+      context: .
+      target: demo-seeder
+    env_file: ${ENV_FILE:-.env.production}
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    command: ["./node_modules/.bin/tsx", "scripts/import-opus-archive.ts", "--confirm"]
+    restart: "no"
+
   app:
     build:
       context: .
