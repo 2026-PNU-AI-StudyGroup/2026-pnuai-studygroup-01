@@ -64,7 +64,8 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
   const { projectId } = await params;
   const { actor, workspace } = await loadTeamWorkspace(projectId);
   const announcementService = new AnnouncementService(new PrismaAnnouncementRepository(prisma));
-  const announcements = await announcementService.listForTeamOverview(await resolveAnnouncementAudience(actor), workspace.id);
+  // 개요의 공지 칸은 프로그램 공지 자리다. 프로젝트 공지는 프로젝트 공지 화면에서 따로 본다.
+  const announcements = await announcementService.listForProgram(await resolveAnnouncementAudience(actor), workspace.programId);
   const now = new Date();
   const { focus: nextTask } = presentTasks(workspace.tasks, now);
   const focusDeadlineState = nextTask ? taskDeadlineState(nextTask, now) : null;

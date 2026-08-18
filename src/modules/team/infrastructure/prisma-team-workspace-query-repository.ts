@@ -67,7 +67,7 @@ export class PrismaTeamWorkspaceQueryRepository
           status: true,
           description: true,
           managerId: true,
-          program: { select: { name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
+          program: { select: { id: true, name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
           manager: {
             select: {
               id: true,
@@ -184,6 +184,7 @@ export class PrismaTeamWorkspaceQueryRepository
     const assistantIds = new Set(team.project.assistants.map(({ userId }) => userId));
     return {
       id: team.id,
+      programId: team.project.program.id,
       topicId: team.project.id,
       topicDescription: team.project.description,
       name: team.name,

@@ -14,7 +14,7 @@ const ROUTE_FILES = new Set([
   "route.ts",
   "template.tsx",
 ]);
-const ROOT_ASSETS = new Set(["globals.css", "icon.svg"]);
+const ROOT_ASSETS = new Set(["globals.css", "icon.png"]);
 const IGNORED_FILES = new Set([".DS_Store"]);
 const FULL_PAGE_LOADING_BOUNDARIES = new Set([
   "loading.tsx",

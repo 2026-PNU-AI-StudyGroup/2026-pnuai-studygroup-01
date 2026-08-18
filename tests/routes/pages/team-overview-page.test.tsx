@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TeamOverviewPage from "@/app/projects/[projectId]/page";
 
-const { loadTeamWorkspace, listForTeamOverview, resolveAnnouncementAudience } = vi.hoisted(() => ({
+const { loadTeamWorkspace, listForProgram, resolveAnnouncementAudience } = vi.hoisted(() => ({
   loadTeamWorkspace: vi.fn(),
-  listForTeamOverview: vi.fn(),
+  listForProgram: vi.fn(),
   resolveAnnouncementAudience: vi.fn(),
 }));
 
@@ -39,7 +39,7 @@ vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", 
 
 vi.mock("@/modules/announcement/application/manage-announcements", () => ({
   AnnouncementService: class AnnouncementService {
-    listForTeamOverview = listForTeamOverview;
+    listForProgram = listForProgram;
   },
 }));
 
@@ -107,7 +107,7 @@ describe("TeamOverviewPage", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
     resolveAnnouncementAudience.mockResolvedValue({ role: "STUDENT", actorId: "student-1", teamIds: ["team-1"], programIds: [] });
-    listForTeamOverview.mockResolvedValue([]);
+    listForProgram.mockResolvedValue([]);
   });
 
   afterEach(() => vi.useRealTimers());
