@@ -65,8 +65,11 @@ type SnapshotTeam = {
   images: SnapshotImage[];
 };
 
+type SnapshotRank = { rank: number; teamId: number; voteCount: number };
+
 type SnapshotContest = {
   contest: { contestId: number; contestName: string; categoryName: string };
+  ranking: SnapshotRank[];
   teams: SnapshotTeam[];
 };
 
@@ -84,10 +87,14 @@ function teamDisplayName(raw: string): string {
   return raw.replace(/^[A-Za-z]?-?\d+\.\s*/, "").trim() || raw.trim();
 }
 
-function buildIntro(team: SnapshotTeam): string {
+function buildIntro(team: SnapshotTeam, rank: SnapshotRank | undefined): string {
   const sections: string[] = [];
-  const awards = team.awards.map(({ awardName }) => awardName).filter(Boolean);
-  if (awards.length) sections.push(`**${awards.join(" · ")}**`);
+  // 투표 이력은 투표자 계정이 있어야 표로 옮길 수 있다. 원본에 계정이 없어 결과만 글로 남긴다.
+  const headline = [
+    ...team.awards.map(({ awardName }) => awardName).filter(Boolean),
+    rank && rank.voteCount > 0 ? `투표 ${rank.rank}위 ${rank.voteCount}표` : null,
+  ].filter(Boolean);
+  if (headline.length) sections.push(`**${headline.join(" · ")}**`);
   const overview = team.overview?.trim();
   if (overview && !PLACEHOLDER.test(overview)) sections.push(overview);
   const leader = team.teamMembers.find(({ roleType }) => roleType.includes("팀장"));
@@ -177,7 +184,7 @@ async function main() {
     update: { name: "이전 시스템 이관", accountStatus: "DISABLED" },
   });
 
-  for (const { contest, teams } of snapshot) {
+  for (const { contest, ranking, teams } of snapshot) {
     const period = PROGRAM_PERIOD[contest.contestId];
     if (!period) throw new Error(`대회 ${contest.contestId} 의 운영 기간이 정의되지 않았습니다.`);
     const startsAt = new Date(`${period.startsAt}T00:00:00+09:00`);
@@ -209,6 +216,8 @@ async function main() {
       update: program,
     });
 
+    const rankByTeam = new Map((ranking ?? []).map((entry) => [entry.teamId, entry]));
+
     for (const team of teams) {
       const topicId = stableId("topic", team.teamId);
       const projectTeamId = stableId("team", team.teamId);
@@ -232,7 +241,7 @@ async function main() {
         update: topic,
       });
 
-      const showcaseIntro = buildIntro(team);
+      const showcaseIntro = buildIntro(team, rankByTeam.get(team.teamId));
       const projectTeam = {
         name: teamDisplayName(team.teamName),
         confirmedAt: startsAt,

@@ -1288,6 +1288,88 @@
           }
         ]
       }
+    ],
+    "ranking": [
+      {
+        "rank": 1,
+        "teamId": 28,
+        "voteCount": 59
+      },
+      {
+        "rank": 2,
+        "teamId": 36,
+        "voteCount": 33
+      },
+      {
+        "rank": 3,
+        "teamId": 27,
+        "voteCount": 18
+      },
+      {
+        "rank": 4,
+        "teamId": 25,
+        "voteCount": 17
+      },
+      {
+        "rank": 4,
+        "teamId": 33,
+        "voteCount": 17
+      },
+      {
+        "rank": 6,
+        "teamId": 29,
+        "voteCount": 16
+      },
+      {
+        "rank": 7,
+        "teamId": 32,
+        "voteCount": 14
+      },
+      {
+        "rank": 8,
+        "teamId": 19,
+        "voteCount": 13
+      },
+      {
+        "rank": 9,
+        "teamId": 21,
+        "voteCount": 8
+      },
+      {
+        "rank": 9,
+        "teamId": 23,
+        "voteCount": 8
+      },
+      {
+        "rank": 9,
+        "teamId": 26,
+        "voteCount": 8
+      },
+      {
+        "rank": 12,
+        "teamId": 34,
+        "voteCount": 7
+      },
+      {
+        "rank": 13,
+        "teamId": 24,
+        "voteCount": 5
+      },
+      {
+        "rank": 14,
+        "teamId": 22,
+        "voteCount": 3
+      },
+      {
+        "rank": 15,
+        "teamId": 30,
+        "voteCount": 2
+      },
+      {
+        "rank": 15,
+        "teamId": 35,
+        "voteCount": 2
+      }
     ]
   },
   {
@@ -1687,6 +1769,48 @@
             "size": 66116
           }
         ]
+      }
+    ],
+    "ranking": [
+      {
+        "rank": 1,
+        "teamId": 141,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 142,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 143,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 144,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 145,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 146,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 147,
+        "voteCount": 0
+      },
+      {
+        "rank": 1,
+        "teamId": 148,
+        "voteCount": 0
       }
     ]
   }
