@@ -29,6 +29,7 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
             <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"내 프로젝트 > 프로젝트 > 결과물에서 등록할 수 있습니다."}</UiText></span>
           </div>
         ) : current?.kind === "image" ? (
+          // /api/files 는 로그인 쿠키를 요구한다. 이미지 최적화 서버는 쿠키 없이 가져가 401 을 받는다.
           <Image
             key={current.src}
             alt={current.alt}
@@ -37,6 +38,7 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
             priority={index === 0}
             sizes="(min-width: 1024px) 48rem, 100vw"
             className="object-contain"
+            unoptimized
           />
         ) : current ? (
           <iframe

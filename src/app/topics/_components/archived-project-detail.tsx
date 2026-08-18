@@ -35,10 +35,11 @@ export function ArchivedProjectDetail({ project, ballot }: { project: ArchivedPr
   const embeddedIds = new Set(videoArtifacts.map((entry) => entry.artifact.id));
   const galleryImages = project.artifacts.filter((artifact) => artifact.type === "IMAGE" && (artifact.fileId || artifact.externalUrl));
   const galleryImageIds = new Set(galleryImages.map((artifact) => artifact.id));
+  // 발표 영상을 맨 앞에 둔다. 지난 프로젝트에서 가장 먼저 보고 싶은 자료다.
   const media: ProjectMediaItem[] = [
+    ...videoArtifacts.map(({ artifact, embedUrl }) => ({ kind: "video" as const, embedUrl, title: artifact.title })),
     ...galleryImages.map((artifact) => ({ kind: "image" as const, src: artifact.fileId ? `/api/files/${artifact.fileId}` : artifact.externalUrl!, alt: artifact.title })),
     ...(project.thumbnailPath ? [{ kind: "image" as const, src: project.thumbnailPath, alt: `${project.topicTitle} 대표 이미지` }] : []),
-    ...videoArtifacts.map(({ artifact, embedUrl }) => ({ kind: "video" as const, embedUrl, title: artifact.title })),
     ...(project.posterPath ? [{ kind: "image" as const, src: project.posterPath, alt: `${project.topicTitle} 프로젝트 포스터` }] : []),
   ];
   const githubArtifact = project.artifacts.find((artifact) => artifact.type === "SOURCE_CODE" && /github\.com/i.test(artifact.externalUrl ?? ""));
