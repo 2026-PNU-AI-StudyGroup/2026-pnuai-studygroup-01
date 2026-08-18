@@ -32,6 +32,7 @@ export type TeamListPage = {
 };
 
 export type TeamWorkspace = TeamListItem & {
+  programId: string;
   topicId: string;
   topicDescription: string;
   professorName: string;

@@ -69,7 +69,6 @@ export interface AnnouncementRepository {
   listSystem(audience: AnnouncementAudience, page: number, pageSize: number): Promise<AnnouncementPage>;
   listForProgram(audience: AnnouncementAudience, programId: string): Promise<AnnouncementRecord[]>;
   listForTeam(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]>;
-  listForTeamOverview(audience: AnnouncementAudience, teamId: string): Promise<AnnouncementRecord[]>;
   findById(id: string): Promise<AnnouncementRecord | null>;
   create(
     actor: CurrentActor,

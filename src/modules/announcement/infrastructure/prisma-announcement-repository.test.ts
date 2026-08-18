@@ -101,28 +101,4 @@ describe("공지 대상 스코프 where", () => {
     });
   });
 
-  it("프로젝트 개요 조회는 해당 프로젝트 공지와 전체 공지만 포함한다", async () => {
-    const findMany = vi.fn(async () => []);
-    const repository = new PrismaAnnouncementRepository({
-      announcement: { findMany },
-    } as unknown as PrismaClient);
-
-    await repository.listForTeamOverview(student, "team-1");
-
-    expect(findMany).toHaveBeenCalledWith({
-      where: {
-        AND: [
-          {
-            OR: [
-              { projectTeamId: "team-1", programId: null },
-              { projectTeamId: null, programId: null },
-            ],
-          },
-          announcementScopeWhere(student),
-        ],
-      },
-      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
-      select: expect.any(Object),
-    });
-  });
 });
