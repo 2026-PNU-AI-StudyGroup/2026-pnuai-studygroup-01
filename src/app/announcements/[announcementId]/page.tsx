@@ -19,7 +19,7 @@ import {
 } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { IconLink } from "@/shared/ui/icon-button";
-import { renderMarkdown } from "@/shared/ui/render-markdown";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { ChevronIcon, EditIcon } from "@/shared/ui/workspace-icons";
 import { AnnouncementAttachmentList } from "@/modules/announcement/ui/announcement-attachment-list";
 
@@ -95,7 +95,7 @@ export default async function AnnouncementDetailPage({
             </header>
 
             <div className="min-h-72 space-y-4 px-5 py-8 text-base leading-8 text-[var(--ink)] [overflow-wrap:anywhere] sm:px-8 sm:py-10">
-              {renderMarkdown(announcement.content)}
+              <LocalizedMarkdown text={announcement.content} />
             </div>
             <AnnouncementAttachmentList attachments={announcement.attachments} />
           </article>

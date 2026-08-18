@@ -7,7 +7,7 @@ import {
   type FeedbackTypeValue,
   type TargetScreenValue,
 } from "@/app/feedback/_lib/feedback-options";
-import { renderMarkdown } from "@/shared/ui/render-markdown";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -79,7 +79,7 @@ export function FeedbackPostCard({ post, canModerate = false }: { post: Feedback
         </p>
       </div>
 
-      <div className="text-[0.95rem] text-[var(--ink)]">{renderMarkdown(post.body)}</div>
+      <LocalizedMarkdown text={post.body} className="text-[0.95rem] text-[var(--ink)]" />
 
       {resolved && post.resolvedAt ? (
         <p className="rounded-[var(--radius-control)] bg-[var(--success-subtle)] px-3 py-2 text-xs font-semibold text-[var(--success)]">

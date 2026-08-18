@@ -24,7 +24,6 @@
     "translations:process": "tsx scripts/process-translation-queue.ts",
     "translations:worker": "tsx scripts/process-translation-queue.ts --watch",
     "translations:retry-failed": "tsx scripts/process-translation-queue.ts --retry-failed",
-    "translations:ui-catalog": "tsx scripts/generate-ui-message-catalog.ts",
     "db:deploy": "prisma migrate deploy",
     "db:migrate": "prisma migrate dev",
     "db:status": "prisma migrate status",
