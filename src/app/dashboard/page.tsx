@@ -34,7 +34,7 @@ import { ProjectAssistantInvitationDecisionForm } from "@/app/_components/projec
 import { ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
 import { PrismaProjectAssistantRepository } from "@/modules/project-assistant/infrastructure/prisma-project-assistant-repository";
 import { ProjectPagination } from "@/shared/ui/project-pagination";
-import { SettingsIcon } from "@/shared/ui/workspace-icons";
+import { ProfileIcon, SearchIcon, SettingsIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
@@ -157,9 +157,6 @@ export default async function DashboardPage({
       ? teams.filter((team) => team.status === "COMPLETED")
       : teams;
   const hasAnyProject = counts.all > 0;
-  if (student && !hasAnyProject) {
-    redirect("/recruitments");
-  }
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
@@ -215,7 +212,16 @@ export default async function DashboardPage({
           ) : null}
 
           {view === "all" && !hasAnyProject ? (
-            <EmptyState title="아직 연결된 프로젝트가 없습니다" description={actor.role === "STUDENT" ? "참여할 프로젝트를 확인하고 지원서를 제출하세요." : "프로젝트를 등록하거나 학생 지원을 승인하면 팀이 연결됩니다."} />
+            <EmptyState
+              title="아직 연결된 프로젝트가 없습니다"
+              description={student ? "참여할 프로젝트를 찾거나 팀 모집 공고에 지원해 보세요." : "프로젝트를 등록하거나 학생 지원을 승인하면 팀이 연결됩니다."}
+              action={student ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link href="/topics" className="button-primary gap-2"><SearchIcon className="size-4 shrink-0" /><UiText>{"프로젝트 찾기"}</UiText></Link>
+                  <Link href="/recruitments" className="button-secondary gap-2"><ProfileIcon className="size-4 shrink-0" /><UiText>{"팀 모집 둘러보기"}</UiText></Link>
+                </div>
+              ) : undefined}
+            />
           ) : null}
 
           {view === "all" && activeCount > 0 ? (
