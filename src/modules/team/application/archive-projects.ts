@@ -20,6 +20,9 @@ export type ArchivedProject = {
   thumbnailPath?: string;
   posterPath?: string;
   showcaseIntro?: string;
+  award?: string;
+  // 관리자에게만 채워 준다. 학생·교원은 정확한 득표수를 보지 않는다.
+  archivedVoteCount?: number;
   artifacts: Array<{
     id: string;
     type: "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER" | "IMAGE";

@@ -87,14 +87,8 @@ function teamDisplayName(raw: string): string {
   return raw.replace(/^[A-Za-z]?-?\d+\.\s*/, "").trim() || raw.trim();
 }
 
-function buildIntro(team: SnapshotTeam, rank: SnapshotRank | undefined): string {
+function buildIntro(team: SnapshotTeam): string {
   const sections: string[] = [];
-  // 투표 이력은 투표자 계정이 있어야 표로 옮길 수 있다. 원본에 계정이 없어 결과만 글로 남긴다.
-  const headline = [
-    ...team.awards.map(({ awardName }) => awardName).filter(Boolean),
-    rank && rank.voteCount > 0 ? `투표 ${rank.rank}위 ${rank.voteCount}표` : null,
-  ].filter(Boolean);
-  if (headline.length) sections.push(`**${headline.join(" · ")}**`);
   const overview = team.overview?.trim();
   if (overview && !PLACEHOLDER.test(overview)) sections.push(overview);
   const leader = team.teamMembers.find(({ roleType }) => roleType.includes("팀장"));
@@ -241,11 +235,14 @@ async function main() {
         update: topic,
       });
 
-      const showcaseIntro = buildIntro(team, rankByTeam.get(team.teamId));
+      // 투표 이력은 투표자 계정이 있어야 옮길 수 있다. 원본에 계정이 없어 득표수만 보관한다.
+      const voteCount = rankByTeam.get(team.teamId)?.voteCount ?? 0;
       const projectTeam = {
         name: teamDisplayName(team.teamName),
         confirmedAt: startsAt,
-        showcaseIntro,
+        showcaseIntro: buildIntro(team),
+        award: team.awards.map(({ awardName }) => awardName).filter(Boolean).join(" · ") || null,
+        archivedVoteCount: voteCount > 0 ? voteCount : null,
       };
       await prisma.projectTeam.upsert({
         where: { id: projectTeamId },

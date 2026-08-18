@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
 import { ActiveProjectFilters } from "@/app/topics/_components/active-project-filters";
 import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
+import { ProjectAwardBadge } from "@/app/topics/_components/project-award-badge";
 import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
 import { ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
 import { ProjectVoteButton, ProjectVoteCountBadge } from "@/app/topics/_components/project-vote-control";
@@ -63,8 +64,17 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             divisionName={project.divisionName}
             description={project.topicDescription}
             imagePath={project.thumbnailPath}
-            coverStatus={<ProjectGalleryStatusBadge label="완료" tone="neutral" />}
-            coverOverlay={typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : undefined}
+            coverStatus={(
+              <>
+                <ProjectGalleryStatusBadge label="완료" tone="neutral" />
+                {project.award ? <ProjectAwardBadge award={project.award} /> : null}
+              </>
+            )}
+            coverOverlay={(() => {
+              // 진행 중 투표의 득표수가 있으면 그 값을, 없으면 이관된 득표수를 쓴다.
+              const voteCount = voteCandidate?.voteCount ?? project.archivedVoteCount;
+              return typeof voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCount} /> : undefined;
+            })()}
             details={(
               <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">
                 <span className="text-[var(--ink)]">{project.teamName} <UiText>{"팀"}</UiText></span>
