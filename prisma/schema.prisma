@@ -1072,6 +1072,10 @@ model ProjectTeam {
   guidanceRequests  ProjectGuidanceRequest[]
   announcements     Announcement[]
   showcaseIntro      String?
+  // 오프라인 심사로 정해지는 수상 내역. 이전 시스템에서 옮겨 온 값도 여기에 들어간다.
+  award              String?
+  // 이전 시스템에서 옮겨 온 득표수. 투표 이력이 없어 집계할 수 없으므로 값만 보관한다.
+  archivedVoteCount  Int?
   advisorEvaluations AdvisorEvaluation[]
   advisorFeedbacks   AdvisorFeedback[]
 

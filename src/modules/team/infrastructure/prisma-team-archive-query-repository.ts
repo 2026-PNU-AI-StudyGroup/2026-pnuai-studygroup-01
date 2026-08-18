@@ -10,6 +10,8 @@ const archivedProjectSelect = {
   id: true,
   name: true,
   showcaseIntro: true,
+  award: true,
+  archivedVoteCount: true,
   project: { select: {
     id: true,
     title: true,
@@ -20,7 +22,7 @@ const archivedProjectSelect = {
     posterPath: true,
     divisionId: true,
     division: { select: { name: true } },
-    program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true } },
+    program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true, votingPolicy: { select: { endsAt: true, resultsVisibleAfterVoting: true } } } },
     manager: { select: { name: true } },
   } },
   memberships: {
@@ -120,7 +122,7 @@ export class PrismaTeamArchiveQueryRepository
       take: input.limit,
       select: archivedProjectSelect,
     });
-    return teams.map(toArchivedProject);
+    return teams.map((team) => toArchivedProject(team, this.audience));
   }
 
   async findClosed(id: string): Promise<ArchivedProject | null> {
@@ -132,12 +134,12 @@ export class PrismaTeamArchiveQueryRepository
       },
       select: archivedProjectSelect,
     });
-    return team ? toArchivedProject(team) : null;
+    return team ? toArchivedProject(team, this.audience) : null;
   }
 
 }
 
-function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
+function toArchivedProject(team: ArchivedProjectRow, audience: "STUDENT" | "FACULTY" | "ADMIN"): ArchivedProject {
   return {
     id: team.project.id,
     topicId: team.project.id,
@@ -158,6 +160,10 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
     thumbnailPath: team.project.thumbnailPath ?? undefined,
     posterPath: team.project.posterPath ?? undefined,
     showcaseIntro: team.showcaseIntro ?? undefined,
+    award: team.award ?? undefined,
+    archivedVoteCount: canSeeVoteCount(team.project.program.votingPolicy, audience)
+      ? team.archivedVoteCount ?? undefined
+      : undefined,
     artifacts: team.artifacts.map(({ file, ...artifact }) => ({
       id: artifact.id,
       type: artifact.type,
@@ -168,6 +174,17 @@ function toArchivedProject(team: ArchivedProjectRow): ArchivedProject {
       position: artifact.position,
     })),
   };
+}
+
+// 득표수는 관리자에게 항상 보이고, 그 밖에는 프로그램의 "마감 후 득표 공개" 설정을 따른다.
+// 이관한 지난 대회는 투표 설정이 없어 관리자만 본다.
+function canSeeVoteCount(
+  policy: { endsAt: Date; resultsVisibleAfterVoting: boolean } | null,
+  audience: "STUDENT" | "FACULTY" | "ADMIN",
+): boolean {
+  if (audience === "ADMIN") return true;
+  if (!policy) return false;
+  return policy.resultsVisibleAfterVoting && policy.endsAt <= new Date();
 }
 
 function closedProjectWhere(

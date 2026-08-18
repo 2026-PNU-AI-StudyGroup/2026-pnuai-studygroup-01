@@ -38,7 +38,7 @@ export function ProjectGalleryCardShell({
     <article aria-labelledby={titleId} className={styles.card}>
       <div className="relative">
         <ProjectGalleryCover imagePath={imagePath} programName={programName} title={title} />
-        {coverStatus ? <div className="pointer-events-none absolute left-3 top-3 z-[2]">{coverStatus}</div> : null}
+        {coverStatus ? <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap items-center gap-1.5">{coverStatus}</div> : null}
         {coverOverlay}
       </div>
       <div className={styles.body}>
