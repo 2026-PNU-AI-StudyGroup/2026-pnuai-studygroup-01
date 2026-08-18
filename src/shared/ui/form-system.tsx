@@ -115,7 +115,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
 
 type NumberFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange"> & {
   value: number | string;
-  onValueChange: (value: number) => void;
+  onValueChange: (value: number | "") => void;
   min?: number;
   max?: number;
   unit?: string;
@@ -152,7 +152,10 @@ export function NumberField({ value, onValueChange, min, max, unit, className = 
         value={value}
         min={min}
         max={max}
-        onChange={(event) => onValueChange(Number(event.target.value))}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          onValueChange(nextValue === "" ? "" : Number(nextValue));
+        }}
         className={withFormControl(`${styles.numberInput} ${className}`)}
       />
       <button
