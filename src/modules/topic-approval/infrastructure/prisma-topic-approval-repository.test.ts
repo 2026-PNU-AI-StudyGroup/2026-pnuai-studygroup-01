@@ -35,6 +35,7 @@ describe("PrismaTopicApprovalRepository", () => {
 
   it("등록 시 학생팀을 복사한 승인 대기 프로젝트팀을 만든다", async () => {
     const create = vi.fn(async () => ({ id: "topic-1" }));
+    const cancelInvitations = vi.fn(async () => ({ count: 1 }));
     const transaction = {
       $queryRaw: vi.fn().mockResolvedValueOnce([openProgram()]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "student-team-1" }]),
       studentTeam: { findFirst: vi.fn(async () => ({ id: "student-team-1",
@@ -42,8 +43,8 @@ describe("PrismaTopicApprovalRepository", () => {
           { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
           { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
         ],
-        _count: { invitations: 0 },
       })) },
+      studentTeamInvitation: { updateMany: cancelInvitations },
       topic: { create }, user: { findMany: vi.fn(async () => []) },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) }, emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
@@ -51,6 +52,10 @@ describe("PrismaTopicApprovalRepository", () => {
 
     await expect(new PrismaTopicApprovalRepository(client).create(registration)).resolves.toBeTruthy();
 
+    expect(cancelInvitations).toHaveBeenCalledWith({
+      where: { teamId: "student-team-1", status: "PENDING" },
+      data: { status: "CANCELED" },
+    });
     expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({
       status: "PENDING_APPROVAL", capacity: 2,
       approvalRequests: { create: expect.objectContaining({ requesterId: "student-1", route: "ADMIN" }) },
