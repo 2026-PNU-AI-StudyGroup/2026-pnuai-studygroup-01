@@ -7,6 +7,7 @@ import { ArtifactRegistrationForm } from "@/app/projects/[projectId]/_components
 import { ArtifactManagementForm } from "@/app/projects/[projectId]/_components/artifact-management-form";
 import { ShowcaseIntroEditor } from "@/app/projects/[projectId]/_components/showcase-intro-editor";
 import { ShowcaseManager } from "@/app/projects/[projectId]/_components/showcase-manager";
+import { ShowcaseSaveAllBar } from "@/app/projects/[projectId]/_components/showcase-save-all-bar";
 import { ShowcaseVideoCard } from "@/app/projects/[projectId]/_components/showcase-video-card";
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
@@ -75,15 +76,16 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         titleId="artifacts-title"
         bordered={false}
       />
-      {/* 프로젝트 상세에 실리는 순서대로 둔다. 소개 글 → 이미지 → 영상 → 나머지 자료. */}
+      {/* 프로젝트 상세에 실리는 순서대로 둔다. 소개 글 → 영상 → 이미지 → 나머지 자료. */}
       <ShowcaseIntroEditor
         teamId={workspace.id}
         intro={reportWorkspace.showcaseIntro ?? workspace.topicDescription}
         canManage={canRegisterArtifact}
       />
-      {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} /> : null}
       <ShowcaseVideoCard teamId={workspace.id} video={showcaseVideo} canManage={canRegisterArtifact} />
+      {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} /> : null}
       {canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : null}
+      {canRegisterArtifact ? <ShowcaseSaveAllBar teamId={workspace.id} /> : null}
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"

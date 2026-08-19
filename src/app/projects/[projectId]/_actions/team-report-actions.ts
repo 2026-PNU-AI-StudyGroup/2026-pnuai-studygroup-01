@@ -26,6 +26,7 @@ import {
   reportDecisionSchema,
   reportFeedbackSchema,
   reportSubmissionSchema,
+  showcaseBasicsSchema,
   showcaseImageSchema,
   showcaseIntroSchema,
   showcaseVideoSchema,
@@ -244,6 +245,32 @@ export async function saveShowcaseIntroAction(
     revalidatePath("/projects", "layout");
     revalidatePath("/topics", "layout");
     return { status: "success", message: "프로젝트 소개를 저장했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+// 결과물 화면의 "전체 저장"이 쓴다. 소개 글과 영상 링크를 한 요청으로 저장한다.
+// 사진·대표 이미지·자료는 고를 때 바로 올라가므로 여기서 다시 저장할 것이 없다.
+export async function saveShowcaseBasicsAction(formData: FormData): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = showcaseBasicsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "결과물 입력을 확인해 주세요." };
+  const { teamId, intro, externalUrl } = parsed.data;
+  try {
+    const repository = new PrismaArtifactRepository(prisma);
+    if (intro !== undefined) {
+      await new ArtifactManagementService(repository).setShowcaseIntro(actor, { teamId, intro });
+    }
+    if (externalUrl) {
+      await new ShowcaseVideoService(repository).save(actor, { teamId, externalUrl });
+    }
+    revalidatePath("/projects", "layout");
+    revalidatePath("/topics", "layout");
+    return { status: "success", message: "결과물을 저장했습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

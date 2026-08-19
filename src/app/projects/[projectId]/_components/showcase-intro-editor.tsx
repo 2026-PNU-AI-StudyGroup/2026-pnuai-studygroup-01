@@ -37,21 +37,27 @@ export function ShowcaseIntroEditor({ teamId, intro = "", canManage }: {
         intro.trim()
           ? <div className="space-y-3 text-[0.9375rem] leading-7 text-[var(--ink)]">{renderMarkdown(intro)}</div>
           : <p className="muted text-sm leading-6"><UiText>{"팀이 프로젝트 소개를 작성하면 이곳에 표시됩니다."}</UiText></p>
-      ) : preview ? (
-        <div className="space-y-3 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-4 text-[0.9375rem] leading-7 text-[var(--ink)]">
-          {renderMarkdown(draft)}
-        </div>
       ) : (
-        <form action={action} className="grid gap-3">
+        // 미리보기로 바꿔도 폼은 그대로 둔다. 화면 아래 "전체 저장"이 이 폼의 값을 읽어 간다.
+        <form action={action} data-showcase-form="" className="grid gap-3">
           <input type="hidden" name="teamId" value={teamId} />
-          <UiTextarea
-            name="intro"
-            className="form-control min-h-56 bg-[var(--surface)] leading-7"
-            maxLength={20_000}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="어떤 문제를 풀었는지, 무엇을 만들었는지 적어 주세요. ## 제목, **굵게**, - 목록을 쓸 수 있습니다."
-          />
+          {preview ? (
+            <>
+              <div className="space-y-3 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-4 text-[0.9375rem] leading-7 text-[var(--ink)]">
+                {renderMarkdown(draft)}
+              </div>
+              <input type="hidden" name="intro" value={draft} />
+            </>
+          ) : (
+            <UiTextarea
+              name="intro"
+              className="form-control min-h-56 bg-[var(--surface)] leading-7"
+              maxLength={20_000}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="어떤 문제를 풀었는지, 무엇을 만들었는지 적어 주세요. ## 제목, **굵게**, - 목록을 쓸 수 있습니다."
+            />
+          )}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p aria-live="polite" className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
               {state.message ? <UiText>{state.message}</UiText> : null}

@@ -66,6 +66,13 @@ export const showcaseIntroSchema = z.object({
   intro: z.string().max(20_000),
 });
 
+// 결과물 화면의 "전체 저장"은 소개 글과 영상 링크를 한 번에 받는다. 둘 다 비어 있을 수 있다.
+export const showcaseBasicsSchema = z.object({
+  teamId: z.string().uuid(),
+  intro: z.string().max(20_000).optional(),
+  externalUrl: z.string().trim().max(2_048).optional(),
+});
+
 export const teamThumbnailSchema = z.object({
   teamId: z.string().uuid(),
   uploadId: z.string().uuid().optional(),

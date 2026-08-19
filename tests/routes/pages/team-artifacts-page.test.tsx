@@ -31,6 +31,10 @@ vi.mock("@/app/projects/[projectId]/_components/showcase-video-card", () => ({
   ShowcaseVideoCard: () => null,
 }));
 
+vi.mock("@/app/projects/[projectId]/_components/showcase-save-all-bar", () => ({
+  ShowcaseSaveAllBar: () => <button type="button">전체 저장</button>,
+}));
+
 const actor = {
   id: "student-1",
   name: "정하늘",

@@ -42,7 +42,7 @@ export function ShowcaseVideoCard({
       </div>
 
       {canManage ? (
-        <form action={action} className="grid gap-3">
+        <form action={action} data-showcase-form="" className="grid gap-3">
           <input type="hidden" name="teamId" value={teamId} />
           <input type="hidden" name="type" value="PRESENTATION_VIDEO" />
           <label className="grid gap-2 text-sm font-semibold">
