@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { userIdSchema } from "@/modules/identity/domain/user-id";
+
 const calendarDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -17,7 +19,7 @@ export const taskInputSchema = z.object({
   teamId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   dueAt: calendarDate,
-  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
+  assigneeIds: z.array(userIdSchema).max(100).default([]),
 });
 
 export const taskUpdateInputSchema = z.object({
@@ -26,7 +28,7 @@ export const taskUpdateInputSchema = z.object({
   title: z.string().trim().min(1).max(200),
   dueAt: calendarDate,
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
-  assigneeIds: z.array(z.string().uuid()).max(100).default([]),
+  assigneeIds: z.array(userIdSchema).max(100).default([]),
 });
 
 export const taskDeleteInputSchema = z.object({
