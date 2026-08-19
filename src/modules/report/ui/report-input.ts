@@ -61,6 +61,11 @@ export const artifactReorderSchema = z.object({
     .pipe(z.array(z.string().uuid()).min(1)),
 });
 
+export const showcaseIntroSchema = z.object({
+  teamId: z.string().uuid(),
+  intro: z.string().max(20_000),
+});
+
 export const teamThumbnailSchema = z.object({
   teamId: z.string().uuid(),
   uploadId: z.string().uuid().optional(),

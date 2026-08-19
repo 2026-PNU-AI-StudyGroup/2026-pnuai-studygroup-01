@@ -35,6 +35,7 @@ export type ReportWorkspace = {
       createdAt: Date;
     }>;
   }>;
+  showcaseIntro?: string;
   artifacts: Array<{
     id: string;
     type: ArtifactType;
@@ -117,6 +118,12 @@ export interface ArtifactWriter {
     teamId: string;
     actor: CurrentActor;
     fileId: string | null;
+    updatedAt: Date;
+  }): Promise<boolean>;
+  setShowcaseIntro(input: {
+    teamId: string;
+    actor: CurrentActor;
+    intro: string | null;
     updatedAt: Date;
   }): Promise<boolean>;
   reorderArtifacts(input: {

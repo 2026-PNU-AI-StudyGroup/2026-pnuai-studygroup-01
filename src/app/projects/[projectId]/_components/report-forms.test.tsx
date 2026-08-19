@@ -301,9 +301,8 @@ describe("보고서 요구사항 화면", () => {
     vi.stubGlobal("fetch", fetchMock);
     const { unmount } = render(<ArtifactRegistrationForm teamId="70000000-0000-4000-8000-000000000001" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "결과물 등록" }));
     fireEvent.click(screen.getByRole("button", { name: "파일 업로드" }));
-    fireEvent.submit(screen.getByRole("dialog", { name: "결과물 등록" }).querySelector("form")!);
+    fireEvent.submit(screen.getByRole("button", { name: "결과물 등록" }).closest("form")!);
     await waitFor(() => expect(SuccessfulUploadRequest.instances).toHaveLength(1));
 
     unmount();
@@ -347,14 +346,12 @@ describe("보고서 요구사항 화면", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("결과물 링크와 파일 등록을 한 모달 안에서 전환한다", () => {
+  it("결과물 링크와 파일 등록을 모달 없이 화면 안에서 전환한다", () => {
     render(<ArtifactRegistrationForm teamId="70000000-0000-4000-8000-000000000001" />);
 
-    expect(screen.queryByRole("dialog", { name: "결과물 등록" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "결과물 등록" }));
-    expect(screen.getByRole("dialog", { name: "결과물 등록" })).toHaveAttribute("open");
-    const dialog = screen.getByRole("dialog", { name: "결과물 등록" });
-    const form = dialog.querySelector("form")!;
+    // 등록 폼은 처음부터 화면에 있다. 창을 따로 열지 않는다.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const form = screen.getByRole("button", { name: "결과물 등록" }).closest("form")!;
     expect(screen.getByRole("button", { name: "외부 링크" }).closest("form")).toBe(form);
     expect(screen.queryByRole("option", { name: "이미지" })).not.toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "포스터" })).not.toBeInTheDocument();
@@ -364,21 +361,18 @@ describe("보고서 요구사항 화면", () => {
     expect(screen.getByLabelText("결과물 파일")).toBeInTheDocument();
   });
 
-  it("결과물을 연속 등록해도 매번 모달 종료와 성공 피드백을 처리한다", async () => {
+  it("결과물을 연속 등록해도 매번 성공 안내를 보여준다", async () => {
     registerArtifact.mockImplementation(async () => ({ status: "success", message: "결과물을 등록했습니다." }));
     render(<ArtifactRegistrationForm teamId="70000000-0000-4000-8000-000000000001" />);
-    const openButton = screen.getByRole("button", { name: "결과물 등록" });
+    const form = screen.getByRole("button", { name: "결과물 등록" }).closest("form")!;
 
-    fireEvent.click(openButton);
-    const dialog = screen.getByRole("dialog", { name: "결과물 등록" });
-    fireEvent.submit(dialog.querySelector("form")!);
-    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
+    fireEvent.submit(form);
+    await waitFor(() => expect(screen.getByText("결과물을 등록했습니다.")).toBeInTheDocument());
+    fireEvent.submit(form);
+    await waitFor(() => expect(registerArtifact).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(openButton);
-    fireEvent.submit(dialog.querySelector("form")!);
-    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
-
-    expect(registerArtifact).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole("status")).toHaveTextContent("결과물을 등록했습니다.");
+    // 등록이 끝나도 폼은 그대로 남아 바로 다음 자료를 올릴 수 있다.
+    await waitFor(() => expect(form.querySelector("button[type=submit]")).toBeEnabled());
+    expect(screen.getByText("결과물을 등록했습니다.")).toBeInTheDocument();
   });
 });
