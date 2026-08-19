@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import {
+  cancelStudentTeamInvitationAction,
   createStudentTeamAction,
   deleteStudentTeamAction,
   inviteStudentTeamMemberAction,
@@ -59,6 +60,17 @@ export function InvitationDecisionForm({ invitationId }: { invitationId: string 
       <input type="hidden" name="invitationId" value={invitationId} />
       <button className="button-secondary" name="decision" value="DECLINE" type="submit" disabled={pending}><UiText>{"거절"}</UiText></button>
       <button className="button-primary" name="decision" value="ACCEPT" type="submit" disabled={pending}><UiText>{"팀 참여"}</UiText></button>
+      <ActionMessage state={state} />
+    </form>
+  );
+}
+
+export function CancelStudentTeamInvitationForm({ invitationId, email }: { invitationId: string; email: string }) {
+  const [state, action, pending] = useActionState(cancelStudentTeamInvitationAction, initialStudentTeamActionState);
+  return (
+    <form action={action} className="flex flex-wrap items-center justify-end gap-2" aria-busy={pending}>
+      <input type="hidden" name="invitationId" value={invitationId} />
+      <ConfirmSubmitButton className="button-quiet text-[var(--danger)]" disabled={pending} confirmMessage={`${email} 님에게 보낸 초대를 철회하시겠습니까?`}><UiText>{"초대 철회"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );

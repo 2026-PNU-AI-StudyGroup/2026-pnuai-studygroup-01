@@ -103,6 +103,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
       programName={topic.programName}
       divisionName={topic.divisionName}
       description={topic.description}
+      imagePath={topic.thumbnailPath ?? undefined}
       coverStatus={<ProjectStatusBadge topic={topic} recruiting={recruiting} />}
       coverOverlay={typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : undefined}
       titleAside={<StatusBadge tone={availabilityTone}><span className="whitespace-nowrap"><UiText>{memberLabel}</UiText></span></StatusBadge>}

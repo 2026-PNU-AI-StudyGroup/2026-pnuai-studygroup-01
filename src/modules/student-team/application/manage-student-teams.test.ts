@@ -9,6 +9,7 @@ function writer(): StudentTeamWriter {
     create: vi.fn(async () => "team-1"),
     invite: vi.fn(async () => "INVITED" as const),
     respond: vi.fn(async () => "ACCEPTED" as const),
+  cancelInvitation: vi.fn(async () => true),
     transferLeadership: vi.fn(async () => true),
     removeMember: vi.fn(async () => true),
     leave: vi.fn(async () => "LEFT" as const),

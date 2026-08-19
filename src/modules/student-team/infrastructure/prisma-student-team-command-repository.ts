@@ -243,6 +243,19 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
     });
   }
 
+  // 팀장이 보낸 초대를 되돌린다. 응답을 기다리는 초대가 남아 있으면 프로젝트 등록이 막힌다.
+  async cancelInvitation(input: { invitationId: string; leaderId: string }): Promise<boolean> {
+    const { count } = await this.client.studentTeamInvitation.updateMany({
+      where: {
+        id: input.invitationId,
+        status: "PENDING",
+        team: { leaderId: input.leaderId, deletedAt: null },
+      },
+      data: { status: "CANCELED" },
+    });
+    return count === 1;
+  }
+
   transferLeadership(input: {
     teamId: string;
     leaderId: string;

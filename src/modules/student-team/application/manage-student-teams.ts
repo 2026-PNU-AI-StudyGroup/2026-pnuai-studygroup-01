@@ -77,6 +77,13 @@ export class StudentTeamCommandService {
     }
   }
 
+  async cancelInvitation(actor: CurrentUser, invitationId: string) {
+    assertStudent(actor);
+    if (!await this.writer.cancelInvitation({ invitationId, leaderId: actor.id })) {
+      throw new StudentTeamOperationError("팀장만 응답을 기다리는 초대를 철회할 수 있습니다.");
+    }
+  }
+
   async transferLeadership(actor: CurrentUser, teamId: string, nextLeaderId: string) {
     assertStudent(actor);
     if (!await this.writer.transferLeadership({ teamId, leaderId: actor.id, nextLeaderId, changedAt: this.now() })) {
