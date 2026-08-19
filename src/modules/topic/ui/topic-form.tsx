@@ -91,12 +91,12 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const teamMinSize = selectedProgram?.projectTeamMinSize ?? 2;
   const teamMaxSize = selectedProgram?.projectTeamMaxSize ?? 6;
-  const eligibleTeams = studentApproval.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => (
-    pendingInvitationCount === 0 && memberCount >= teamMinSize && memberCount <= teamMaxSize
+  // 응답을 기다리는 초대는 등록을 막지 않는다. 남은 초대는 등록 시점에 함께 철회된다.
+  const eligibleTeams = studentApproval.studentTeams.filter(({ memberCount }) => (
+    memberCount >= teamMinSize && memberCount <= teamMaxSize
   ));
-  const pendingInvitationTeams = studentApproval.studentTeams.filter(({ pendingInvitationCount = 0 }) => pendingInvitationCount > 0);
-  const invalidSizeTeams = studentApproval.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => (
-    pendingInvitationCount === 0 && (memberCount < teamMinSize || memberCount > teamMaxSize)
+  const invalidSizeTeams = studentApproval.studentTeams.filter(({ memberCount }) => (
+    memberCount < teamMinSize || memberCount > teamMaxSize
   ));
   const advisorEnabled = selectedProgram?.advisorEnabled;
   const selectedStudentTeam = studentApproval.studentTeams.find(({ id }) => id === studentTeamId);
@@ -162,7 +162,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
       <input type="hidden" name="capacity" value="1" />
 
       <FormSection id="topic-team" title="팀 선택" appearance="plain" hidden={step !== 0}>
-        {eligibleTeams.length || wizard.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`확정 팀원 ${teamMinSize}–${teamMaxSize}명인 팀만 선택할 수 있습니다.`} required>
+        {eligibleTeams.length || wizard.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`팀장인 팀만 표시됩니다. 확정 팀원 ${teamMinSize}–${teamMaxSize}명인 팀을 선택할 수 있습니다.`} required>
           <CustomSelect
             id="topic-student-team"
             name="sourceStudentTeamId"
@@ -185,7 +185,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
               ...(wizard.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동" }] : []),
             ]}
           />
-        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{pendingInvitationTeams.length ? "초대 응답이 모두 끝난 팀만 프로젝트를 등록할 수 있습니다." : "프로젝트를 등록하려면 먼저 팀을 만들어야 합니다."}</UiText></p>}
+        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{"프로젝트는 팀장만 등록할 수 있습니다. 팀이 없으면 새로 만들고, 이미 속한 팀이 있으면 팀장에게 등록을 요청해 주세요."}</UiText></p>}
         {selectedStudentTeam ? <div className="grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4">
           <div><p className="text-sm font-bold"><UiText>{"팀원"}</UiText></p><ul className="mt-2 flex flex-wrap gap-2">{(selectedStudentTeam.members ?? []).map((member) => <li key={member.id} className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-semibold"><UiText>{member.name}</UiText></li>)}</ul></div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -193,7 +193,6 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
             <FormField id="topic-project-representative" label="프로젝트 대표" required><CustomSelect id="topic-project-representative" name="projectRepresentativeId" ariaLabel="프로젝트 대표" value={projectRepresentativeId} onValueChange={setProjectRepresentativeId} required placeholder="대표를 선택하세요" options={(selectedStudentTeam.members ?? []).map((member) => ({ value: member.id, label: member.name }))} /></FormField>
           </div>
         </div> : null}
-        {pendingInvitationTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`초대 응답 대기 중인 팀 ${pendingInvitationTeams.length}개는 모든 초대가 처리된 뒤 선택할 수 있습니다.`}</UiText></p> : null}
         {invalidSizeTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`팀 인원 기준(${teamMinSize}–${teamMaxSize}명)에 맞지 않는 팀 ${invalidSizeTeams.length}개는 선택할 수 없습니다.`}</UiText></p> : null}
       </FormSection>
 
@@ -304,9 +303,8 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
   const selectedProgram = programs.find(({ id }) => id === selectedProgramId);
   const projectTeamMinSize = selectedProgram?.projectTeamMinSize ?? 2;
   const projectTeamMaxSize = selectedProgram?.projectTeamMaxSize ?? 6;
-  const eligibleStudentTeams = studentApproval?.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => pendingInvitationCount === 0 && memberCount >= projectTeamMinSize && memberCount <= projectTeamMaxSize) ?? [];
-  const pendingInvitationTeams = studentApproval?.studentTeams.filter(({ pendingInvitationCount = 0 }) => pendingInvitationCount > 0) ?? [];
-  const invalidSizeTeams = studentApproval?.studentTeams.filter(({ memberCount, pendingInvitationCount = 0 }) => pendingInvitationCount === 0 && (memberCount < projectTeamMinSize || memberCount > projectTeamMaxSize)) ?? [];
+  const eligibleStudentTeams = studentApproval?.studentTeams.filter(({ memberCount }) => memberCount >= projectTeamMinSize && memberCount <= projectTeamMaxSize) ?? [];
+  const invalidSizeTeams = studentApproval?.studentTeams.filter(({ memberCount }) => memberCount < projectTeamMinSize || memberCount > projectTeamMaxSize) ?? [];
   const selectedDivision = selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId);
   const advisorEnabled = selectedProgram?.advisorEnabled;
   const wizardSteps: Array<{ id: TopicWizardStep; label: string }> = useMemo(() => studentRegistration
@@ -563,7 +561,7 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
         </section>
       ) : null}
       {studentRegistration && studentApproval ? <FormSection id="topic-team" title="팀 선택" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "FINAL" ? "hidden" : ""}>
-        {eligibleStudentTeams.length || wizard?.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`확정 팀원 ${projectTeamMinSize}–${projectTeamMaxSize}명인 팀만 선택할 수 있습니다.`} required>
+        {eligibleStudentTeams.length || wizard?.createTeamHref ? <FormField id="topic-student-team" label="참여 팀" description={`팀장인 팀만 표시됩니다. 확정 팀원 ${projectTeamMinSize}–${projectTeamMaxSize}명인 팀을 선택할 수 있습니다.`} required>
           <CustomSelect
             id="topic-student-team"
             name="sourceStudentTeamId"
@@ -583,8 +581,7 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
               ...(wizard?.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동" }] : []),
             ]}
           />
-        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{pendingInvitationTeams.length ? "초대 응답이 모두 끝난 팀만 프로젝트를 등록할 수 있습니다." : "프로젝트를 등록하려면 먼저 팀을 만들어야 합니다."}</UiText></p>}
-        {pendingInvitationTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`초대 응답 대기 중인 팀 ${pendingInvitationTeams.length}개는 모든 초대가 처리된 뒤 선택할 수 있습니다.`}</UiText></p> : null}
+        </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{"프로젝트는 팀장만 등록할 수 있습니다. 팀이 없으면 새로 만들고, 이미 속한 팀이 있으면 팀장에게 등록을 요청해 주세요."}</UiText></p>}
         {invalidSizeTeams.length ? <p className="text-sm text-[var(--muted)]"><UiText>{`팀 인원 기준(${projectTeamMinSize}–${projectTeamMaxSize}명)에 맞지 않는 팀 ${invalidSizeTeams.length}개는 선택할 수 없습니다.`}</UiText></p> : null}
       </FormSection> : null}
       {studentApproval ? <FormSection id="topic-approval" title="검토 요청" appearance={formSectionAppearance} className={wizard && currentWizardStep.id !== "BASIC" ? "hidden" : ""}>

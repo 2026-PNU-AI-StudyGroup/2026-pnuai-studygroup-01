@@ -85,7 +85,6 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           select: {
             id: true,
             members: { select: { studentId: true, student: { select: { role: true, accountStatus: true } } } },
-            _count: { select: { invitations: { where: { status: "PENDING" } } } },
           },
         })
         : null;
@@ -94,7 +93,6 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         studentTeam.members.length < program.projectTeamMinSize ||
         studentTeam.members.length > program.projectTeamMaxSize ||
         studentTeam.members.some(({ student }) => student.role !== "STUDENT" || student.accountStatus !== "ACTIVE") ||
-        studentTeam._count.invitations > 0 ||
         !studentTeam.members.some(({ studentId }) => studentId === input.projectRepresentativeId)
       ) return null;
       const { applicationQuestions, route, requestedProfessorId, sourceStudentTeamId, projectRepresentativeId, projectTeamName, requestedAt, ...topic } = input;
@@ -126,6 +124,12 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             })) },
           } },
         },
+      });
+      // 프로젝트 팀은 등록 시점의 명단으로 굳는다. 아직 응답이 없는 초대를 살려 두면
+      // 뒤늦게 수락한 사람이 학생 팀에만 들어가 명단이 어긋난다.
+      await transaction.studentTeamInvitation.updateMany({
+        where: { teamId: sourceStudentTeamId, status: "PENDING" },
+        data: { status: "CANCELED" },
       });
       await enqueueTranslations(transaction, [
         topic.title,

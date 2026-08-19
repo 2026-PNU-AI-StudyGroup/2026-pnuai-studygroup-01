@@ -5,7 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/app/_components/app-shell";
 import { ArchivedProjectDetail } from "@/app/topics/_components/archived-project-detail";
 import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
-import { ProjectMediaCarousel, type ProjectMediaItem } from "@/app/topics/_components/project-media-carousel";
+import { ProjectMediaCarousel } from "@/app/topics/_components/project-media-carousel";
+import { buildShowcaseMedia, ProjectArtifactSection } from "@/app/topics/_components/project-showcase-sections";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { buildAdminProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-items";
@@ -25,7 +26,7 @@ import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { ExternalLinkIcon } from "@/shared/ui/workspace-icons";
+import {  } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 상세");
@@ -59,10 +60,12 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       : loadProgramSidebarItems("active", {}, audience)
   );
   const directApplicationsEnabled = !topic.studentProjectCreationEnabled;
-  const media: ProjectMediaItem[] = [
-    ...(topic.thumbnailPath ? [{ kind: "image" as const, src: topic.thumbnailPath, alt: `${topic.title} 대표 이미지` }] : []),
-    ...(topic.posterPath ? [{ kind: "image" as const, src: topic.posterPath, alt: `${topic.title} 프로젝트 포스터` }] : []),
-  ];
+  const { media, embeddedIds, galleryIds } = buildShowcaseMedia({
+    artifacts: topic.artifacts,
+    title: topic.title,
+    thumbnailPath: topic.thumbnailPath,
+    posterPath: topic.posterPath,
+  });
   const teamLeader = topic.teamMembers?.find(({ role }) => role === "LEADER");
   const teamMembers = topic.teamMembers?.filter(({ role }) => role === "MEMBER") ?? [];
 
@@ -75,7 +78,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
         <div className="mx-auto max-w-4xl space-y-11">
           <ProjectMediaCarousel items={media} />
           <section aria-labelledby="topic-description"><h2 id="topic-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2><TranslatedText text={topic.description} className="mt-3 max-w-3xl whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" /></section>
-          <section aria-labelledby="topic-artifacts"><h2 id="topic-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>{topic.sourceUrl ? <a href={topic.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] p-4 transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]"><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-[var(--ink)]"><UiText>{"프로젝트 링크"}</UiText></span><span className="mt-0.5 block truncate text-xs font-semibold text-[var(--muted)]">{topic.sourceUrl}</span></span><ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" /></a> : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개 결과물 준비 중"}</UiText></p>}</section>
+          <ProjectArtifactSection artifacts={topic.artifacts} sourceUrl={topic.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} />
           {directApplicationsEnabled && topic.recruitmentEnabled ? <section aria-labelledby="topic-requirements"><h2 id="topic-requirements" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"지원 조건"}</UiText></h2><dl className="mt-3 border-t border-[var(--line)]">{[["필수 기술", topic.requiredSkills.join(", ") || "별도 조건 없음"], ["우대 기술", topic.preferredSkills.join(", ") || "별도 조건 없음"], ["예상 역할", topic.roleExpectations], ["활동 조건", topic.availabilityRequirement]].map(([label, value]) => <div key={label} className="grid gap-1 border-t border-[var(--line)] py-4 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)]"><dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt><dd className="text-sm font-semibold leading-6 text-[var(--ink)]"><UiText>{value}</UiText></dd></div>)}</dl></section> : null}
         </div>
       </ProjectDetailShell>
