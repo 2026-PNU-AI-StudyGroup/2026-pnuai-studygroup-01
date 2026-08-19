@@ -103,6 +103,7 @@ export type PublicTopicSummary = TopicSummary & {
   authorName: string;
   professorName: string | null;
   sourceUrl?: string | null;
+  showcaseIntro?: string | null;
   thumbnailPath?: string | null;
   posterPath?: string | null;
   artifacts: Array<{

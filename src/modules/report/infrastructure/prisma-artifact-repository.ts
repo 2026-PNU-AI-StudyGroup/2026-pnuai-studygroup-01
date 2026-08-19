@@ -201,6 +201,28 @@ export class PrismaArtifactRepository implements ArtifactWriter {
     });
   }
 
+  // 프로젝트 소개는 팀이 직접 쓰는 공개 글이다. 팀 권한만 확인하고 본문을 그대로 저장한다.
+  setShowcaseIntro(input: {
+    teamId: string;
+    actor: CurrentActor;
+    intro: string | null;
+    updatedAt: Date;
+  }): Promise<boolean> {
+    return this.client.$transaction(async (transaction) => {
+      const authorized = await this.authorizeTeam(transaction, {
+        teamId: input.teamId,
+        actor: input.actor,
+        at: input.updatedAt,
+      });
+      if (authorized.length !== 1) return false;
+      await transaction.projectTeam.update({
+        where: { id: input.teamId },
+        data: { showcaseIntro: input.intro },
+      });
+      return true;
+    });
+  }
+
   setThumbnail(input: {
     teamId: string;
     actor: CurrentActor;

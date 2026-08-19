@@ -143,6 +143,21 @@ export class ArtifactManagementService {
     if (!updated) throw new ReportOperationNotAllowedError();
   }
 
+  async setShowcaseIntro(actor: CurrentActor, input: {
+    teamId: string;
+    intro: string;
+  }, now = new Date()) {
+    const intro = input.intro.trim();
+    if (intro.length > 20_000) throw new ReportOperationNotAllowedError();
+    const updated = await this.artifactWriter.setShowcaseIntro({
+      teamId: input.teamId,
+      actor,
+      intro: intro || null,
+      updatedAt: now,
+    });
+    if (!updated) throw new ReportOperationNotAllowedError();
+  }
+
   async reorderArtifacts(actor: CurrentActor, input: {
     teamId: string;
     orderedIds: string[];

@@ -27,6 +27,7 @@ import {
   reportFeedbackSchema,
   reportSubmissionSchema,
   showcaseImageSchema,
+  showcaseIntroSchema,
   showcaseVideoSchema,
   teamThumbnailSchema,
 } from "@/modules/report/ui/report-input";
@@ -223,6 +224,26 @@ export async function reorderArtifactsAction(formData: FormData): Promise<Report
     await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).reorderArtifacts(actor, parsed.data);
     revalidatePath("/projects", "layout");
     return { status: "success", message: "이미지 순서를 변경했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function saveShowcaseIntroAction(
+  _state: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = showcaseIntroSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "프로젝트 소개는 20,000자까지 저장할 수 있습니다." };
+  try {
+    await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).setShowcaseIntro(actor, parsed.data);
+    revalidatePath("/projects", "layout");
+    revalidatePath("/topics", "layout");
+    return { status: "success", message: "프로젝트 소개를 저장했습니다." };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

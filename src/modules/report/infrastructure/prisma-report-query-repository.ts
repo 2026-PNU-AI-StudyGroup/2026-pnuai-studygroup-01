@@ -16,6 +16,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
     const team = await this.client.projectTeam.findFirst({
       where: { id: teamId, ...teamActorWhere(actor) },
       select: {
+        showcaseIntro: true,
         project: {
           select: {
             thumbnailPath: true,
@@ -116,6 +117,7 @@ export class PrismaReportQueryRepository implements ReportWorkspaceReader {
         externalUrl: artifact.externalUrl ?? undefined,
       })),
       thumbnailPath: team.project.thumbnailPath ?? undefined,
+      showcaseIntro: team.showcaseIntro ?? undefined,
     };
   }
 }

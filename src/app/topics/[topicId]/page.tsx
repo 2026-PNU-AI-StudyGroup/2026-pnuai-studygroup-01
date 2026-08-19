@@ -7,10 +7,11 @@ import { ArchivedProjectDetail } from "@/app/topics/_components/archived-project
 import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
 import { ProjectMediaCarousel } from "@/app/topics/_components/project-media-carousel";
 import { buildShowcaseMedia, ProjectArtifactSection } from "@/app/topics/_components/project-showcase-sections";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { buildAdminProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-items";
-import { TranslatedText } from "@/app/_components/translated-text";
+
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -77,7 +78,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
       >
         <div className="mx-auto max-w-4xl space-y-11">
           <ProjectMediaCarousel items={media} />
-          <section aria-labelledby="topic-description"><h2 id="topic-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2><TranslatedText text={topic.description} className="mt-3 max-w-3xl whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" /></section>
+          <section aria-labelledby="topic-description"><h2 id="topic-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2><LocalizedMarkdown text={topic.showcaseIntro ?? topic.description} className="mt-3 max-w-3xl space-y-3 text-[0.9375rem] leading-7 text-[var(--ink)]" /></section>
           <ProjectArtifactSection artifacts={topic.artifacts} sourceUrl={topic.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} />
           {directApplicationsEnabled && topic.recruitmentEnabled ? <section aria-labelledby="topic-requirements"><h2 id="topic-requirements" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"지원 조건"}</UiText></h2><dl className="mt-3 border-t border-[var(--line)]">{[["필수 기술", topic.requiredSkills.join(", ") || "별도 조건 없음"], ["우대 기술", topic.preferredSkills.join(", ") || "별도 조건 없음"], ["예상 역할", topic.roleExpectations], ["활동 조건", topic.availabilityRequirement]].map(([label, value]) => <div key={label} className="grid gap-1 border-t border-[var(--line)] py-4 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)]"><dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt><dd className="text-sm font-semibold leading-6 text-[var(--ink)]"><UiText>{value}</UiText></dd></div>)}</dl></section> : null}
         </div>
