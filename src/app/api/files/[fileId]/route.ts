@@ -18,18 +18,18 @@ export async function GET(
   if (!actor) return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
   const { fileId } = await params;
   const announcementAudience = await resolveAnnouncementAudience(actor);
-  const completedProgramWhere = actor.role === "ADMIN"
-    ? { endsAt: { lte: new Date() } }
-    : { isPublic: true, endsAt: { lte: new Date() } };
   // 접근 사유마다 따로 조회한다. 한 OR 안에 모으면 관리자처럼 제한이 없는 조건이 빈 객체가 되고,
   // Prisma 는 OR 안의 빈 가지를 참이 아니라 거짓으로 취급해 조건 전체가 죽는다.
   const accessReasons: Prisma.StoredFileWhereInput[] = [
     { projectTeam: teamFileAccessWhere(actor) },
+    // 공개 결과물은 프로그램이 끝나기를 기다리지 않는다. 프로젝트 상세가 보이는 조건과 같게 둔다.
     {
       purpose: "ARTIFACT",
       projectTeam: {
-        confirmedAt: { not: null },
-        project: { program: completedProgramWhere },
+        project: {
+          status: "ACTIVE",
+          ...(actor.role === "ADMIN" ? {} : { program: { isPublic: true } }),
+        },
       },
     },
     { announcementAttachment: { announcement: announcementScopeWhere(announcementAudience) } },

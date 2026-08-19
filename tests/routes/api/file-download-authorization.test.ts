@@ -76,16 +76,26 @@ describe("파일 다운로드 권한", () => {
     expect((await request()).status).toBe(200);
   });
 
-  it("교수는 공개된 종료 프로그램의 결과물을 받는다", async () => {
+  it("공개 프로그램의 결과물은 소속과 무관하게 받는다", async () => {
     mocks.actor.mockResolvedValue({ id: "professor-1", role: "PROFESSOR" });
     mocks.audience.mockResolvedValue({ role: "PROFESSOR", actorId: "professor-1", teamIds: [], programIds: [] });
     allowOnly((where) => {
       if (where.purpose !== "ARTIFACT") return false;
-      const team = where.projectTeam as { project?: { program?: { isPublic?: boolean } } } | undefined;
-      return team?.project?.program?.isPublic === true;
+      const project = (where.projectTeam as { project?: { status?: string; program?: { isPublic?: boolean } } }).project;
+      // 프로그램 종료를 기다리지 않는다. 종료 조건이 남아 있으면 이 검사가 깨진다.
+      return project?.status === "ACTIVE" && project.program?.isPublic === true && !JSON.stringify(where).includes("endsAt");
     });
 
     expect((await request()).status).toBe(200);
+  });
+
+  it("승인되지 않은 프로젝트의 결과물은 내려주지 않는다", async () => {
+    mocks.actor.mockResolvedValue({ id: "professor-1", role: "PROFESSOR" });
+    mocks.audience.mockResolvedValue({ role: "PROFESSOR", actorId: "professor-1", teamIds: [], programIds: [] });
+    // 주제가 ACTIVE 가 아니면 어떤 사유로도 걸리지 않는다.
+    mocks.findFirst.mockResolvedValue(null);
+
+    expect((await request()).status).toBe(404);
   });
 
   it("열람 가능한 연결이 없으면 파일 존재를 숨긴다", async () => {
