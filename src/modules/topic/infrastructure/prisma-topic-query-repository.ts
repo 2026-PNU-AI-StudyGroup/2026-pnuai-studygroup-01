@@ -21,7 +21,7 @@ const publicTopicInclude = {
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
   program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
-  projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } } } },
+  projectTeam: { select: { confirmedAt: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } }, artifacts: { orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }], select: { id: true, type: true, title: true, fileId: true, externalUrl: true, position: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
     select: {
@@ -313,6 +313,11 @@ function toPublicTopic(
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
+    artifacts: (projectTeam?.artifacts ?? []).map(({ fileId, externalUrl, ...artifact }) => ({
+      ...artifact,
+      fileId: fileId ?? undefined,
+      externalUrl: externalUrl ?? undefined,
+    })),
     memberCount: projectTeam?._count.memberships ?? 0,
     teamMembers: projectTeam?.memberships.map(({ role, user }) => ({ name: user.name, role })) ?? [],
     ownApplicationStatus,

@@ -105,6 +105,14 @@ export type PublicTopicSummary = TopicSummary & {
   sourceUrl?: string | null;
   thumbnailPath?: string | null;
   posterPath?: string | null;
+  artifacts: Array<{
+    id: string;
+    type: "PRESENTATION_VIDEO" | "SOURCE_CODE" | "POSTER" | "OTHER" | "IMAGE";
+    title: string;
+    fileId?: string;
+    externalUrl?: string;
+    position: number;
+  }>;
   startYear: number;
   memberCount: number;
   teamMembers?: Array<{ name: string; role: "LEADER" | "MEMBER" }>;

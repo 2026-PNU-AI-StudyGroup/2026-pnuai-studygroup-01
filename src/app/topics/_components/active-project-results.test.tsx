@@ -54,7 +54,8 @@ function topics(memberCount = 1): PublicTopicPage {
       professorName: "김교수",
       startYear: 2026,
       memberCount,
-      ownApplicationStatus: null,
+      artifacts: [],
+  ownApplicationStatus: null,
     }],
   };
 }
