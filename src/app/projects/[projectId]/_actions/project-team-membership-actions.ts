@@ -10,6 +10,7 @@ import {
   ProjectTeamMembershipService,
 } from "@/modules/project-team/application/manage-project-team-membership";
 import { PrismaProjectTeamMembershipRepository } from "@/modules/project-team/infrastructure/prisma-project-team-membership-repository";
+import { userIdSchema } from "@/modules/identity/domain/user-id";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type ProjectTeamMembershipActionState = {
@@ -27,8 +28,8 @@ export async function projectTeamMembershipAction(
     projectId: z.string().uuid(),
     projectTeamId: z.string().uuid(),
     intent: z.enum(["LEAVE", "REMOVE", "TRANSFER", "REMOVE_LEADER"]),
-    targetUserId: z.string().uuid().optional(),
-    nextLeaderId: z.string().uuid().optional(),
+    targetUserId: userIdSchema.optional(),
+    nextLeaderId: userIdSchema.optional(),
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "팀원 변경 내용을 확인해 주세요." };
   if (parsed.data.intent === "REMOVE_LEADER" && (

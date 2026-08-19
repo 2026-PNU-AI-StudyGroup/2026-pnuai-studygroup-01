@@ -13,6 +13,7 @@ import { parseTopicFormData } from "@/modules/topic/ui/create-topic-input";
 import type { TopicFormActionState } from "@/modules/topic/ui/topic-form";
 import { TopicApprovalOperationError, TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
+import { userIdSchema } from "@/modules/identity/domain/user-id";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export async function createTopicAction(
@@ -30,9 +31,9 @@ export async function createTopicAction(
   if (actor.role === "STUDENT") {
     const approval = z.object({
       approvalRoute: z.enum(["PROFESSOR", "ADMIN"]),
-      requestedProfessorId: z.string().uuid().optional(),
+      requestedProfessorId: userIdSchema.optional(),
       sourceStudentTeamId: z.string().uuid().optional(),
-      projectRepresentativeId: z.string().uuid().optional(),
+      projectRepresentativeId: userIdSchema.optional(),
       projectTeamName: z.string().trim().min(1).max(100),
     }).safeParse({
       approvalRoute: formData.get("approvalRoute"),

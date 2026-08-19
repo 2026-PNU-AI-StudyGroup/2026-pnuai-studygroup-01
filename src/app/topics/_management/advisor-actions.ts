@@ -8,6 +8,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { AdvisorAdminService, AdvisorOperationError } from "@/modules/advisor/application/manage-advisors";
 import { PrismaAdvisorAdminRepository } from "@/modules/advisor/infrastructure/prisma-advisor-admin-repository";
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
+import { userIdSchema } from "@/modules/identity/domain/user-id";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export type AdvisorActionState = { status: "idle" | "error" | "success"; message: string; inviteLink?: string };
@@ -37,7 +38,7 @@ export async function registerAdvisorAction(_state: AdvisorActionState, formData
   }
 }
 
-const targetSchema = z.object({ programId: z.string().uuid(), userId: z.string().uuid() });
+const targetSchema = z.object({ programId: z.string().uuid(), userId: userIdSchema });
 
 export async function reissueAdvisorTokenAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
   const actor = await getCurrentActor();
