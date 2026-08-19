@@ -1,5 +1,5 @@
 // 법정 고지문이라 UI 문구 카탈로그가 아닌 문서 본문으로 둔다. 한국어 원문 그대로 게시해야 하며
-// renderMarkdown 이 지원하는 문법(제목·목록·강조)만 사용한다(표 미지원).
+// renderMarkdown 은 GitHub 과 같은 문법(CommonMark + GFM)을 렌더한다.
 
 export const PRIVACY_POLICY_EFFECTIVE_DATE = "2026-08-17";
 

@@ -1,169 +1,68 @@
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import Markdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-// 의존성 없이 마크다운 부분집합만 렌더한다: 제목(#,##,###), 목록(-,*,1.),
-// 인용(>), 코드펜스(```), 굵게(**), 기울임(*), 인라인코드(`), 링크([]()).
-// dangerouslySetInnerHTML을 쓰지 않아 XSS에 안전하다.
+// GitHub 과 같은 문법(CommonMark + GFM)을 그대로 렌더한다. 예전에는 제목·목록·강조만 아는
+// 부분집합을 직접 구현해 두어 표·이미지·체크박스·중첩 목록이 원문 그대로 보였다.
+// react-markdown 은 HTML 문자열이 아니라 React 요소를 만들고 원본 HTML 은 무시하므로
+// dangerouslySetInnerHTML 없이도 XSS 에 안전하다.
 
-function safeUrl(raw: string): string | null {
-  const url = raw.trim();
-  // 같은 서비스 내부 링크(/privacy 등)도 허용한다. //host 는 프로토콜 상대 주소라 제외한다.
-  if (/^\/(?!\/)/.test(url)) return url;
-  return /^(https?:\/\/|mailto:)/i.test(url) ? url : null;
+// react-markdown 은 컴포넌트에 파싱 노드까지 넘긴다. DOM 요소에 그대로 흘리면 경고가 난다.
+function omitNode<T extends object>(props: T & { node?: unknown }): T {
+  const rest = { ...props };
+  delete (rest as { node?: unknown }).node;
+  return rest as T;
 }
 
-const INLINE = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(\[[^\]]+\]\([^)]+\))/g;
+// em 기준이라 카드(작은 본문)와 문서 페이지(큰 본문) 모두에서 위계가 유지된다.
+// 본문 안 제목은 화면 제목보다 한 단계 낮춰 h1 이 겹치지 않게 한다.
+const HEADING_CLASS = {
+  1: "mt-6 text-[1.4em] font-bold leading-snug tracking-[-0.02em] first:mt-0",
+  2: "mt-6 text-[1.15em] font-bold leading-snug tracking-[-0.015em] first:mt-0",
+  3: "mt-5 text-[1em] font-semibold leading-snug first:mt-0",
+} as const;
 
-function renderInline(text: string, keyPrefix: string): ReactNode[] {
-  const nodes: ReactNode[] = [];
-  let last = 0;
-  let match: RegExpExecArray | null;
-  let index = 0;
-  INLINE.lastIndex = 0;
-  while ((match = INLINE.exec(text)) !== null) {
-    if (match.index > last) nodes.push(text.slice(last, match.index));
-    const token = match[0];
-    const key = `${keyPrefix}-${index}`;
-    if (token.startsWith("`")) {
-      nodes.push(<code key={key} className="rounded bg-[var(--surface-subtle)] px-1 py-0.5 text-[0.9em]">{token.slice(1, -1)}</code>);
-    } else if (token.startsWith("**")) {
-      nodes.push(<strong key={key}>{token.slice(2, -2)}</strong>);
-    } else if (token.startsWith("*")) {
-      nodes.push(<em key={key}>{token.slice(1, -1)}</em>);
-    } else {
-      const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
-      const href = link ? safeUrl(link[2]) : null;
-      nodes.push(
-        link && href
-          // 서비스 내부 경로는 같은 탭에서 이동하고, 외부 주소만 새 탭으로 연다.
-          ? <a key={key} href={href} {...(href.startsWith("/") ? {} : { target: "_blank", rel: "noreferrer noopener" })} className="text-[var(--primary)] underline">{link[1]}</a>
-          : token,
-      );
-    }
-    last = match.index + token.length;
-    index += 1;
-  }
-  if (last < text.length) nodes.push(text.slice(last));
-  return nodes;
-}
-
-function paragraph(lines: string[], key: string): ReactNode {
-  const inner = lines.flatMap((line, lineIndex) => {
-    const rendered = renderInline(line, `${key}-l${lineIndex}`);
-    return lineIndex === 0 ? rendered : [<br key={`${key}-br${lineIndex}`} />, ...rendered];
-  });
-  return <p key={key} className="leading-7">{inner}</p>;
-}
+const COMPONENTS: Components = {
+  h1: (props) => <h3 {...omitNode(props)} className={HEADING_CLASS[1]} />,
+  h2: (props) => <h4 {...omitNode(props)} className={HEADING_CLASS[2]} />,
+  h3: (props) => <h5 {...omitNode(props)} className={HEADING_CLASS[3]} />,
+  h4: (props) => <h6 {...omitNode(props)} className={HEADING_CLASS[3]} />,
+  h5: (props) => <h6 {...omitNode(props)} className={HEADING_CLASS[3]} />,
+  h6: (props) => <h6 {...omitNode(props)} className={HEADING_CLASS[3]} />,
+  p: (props) => <p {...omitNode(props)} className="leading-7" />,
+  // 서비스 내부 경로는 같은 탭에서 이동하고, 외부 주소만 새 탭으로 연다.
+  // //host 는 프로토콜 상대 주소라 내부 경로가 아니다.
+  a: (props) => {
+    const { href } = props;
+    const internal = !href || /^\/(?!\/)/.test(href) || href.startsWith("#");
+    return <a {...(internal ? {} : { target: "_blank", rel: "noreferrer noopener" })} {...omitNode(props)} className="text-[var(--primary)] underline" />;
+  },
+  ul: (props) => <ul {...omitNode(props)} className="list-disc space-y-1 pl-5 leading-7" />,
+  ol: (props) => <ol {...omitNode(props)} className="list-decimal space-y-1 pl-5 leading-7" />,
+  // 체크박스 목록은 GFM 이 li 안에 input 을 넣는다. 그때만 글머리 기호를 지운다.
+  li: (props) => <li {...omitNode(props)} className="[&:has(>input[type=checkbox])]:list-none" />,
+  input: (props) => <input {...omitNode(props)} className="mr-1.5 align-middle accent-[var(--primary)]" />,
+  blockquote: (props) => <blockquote {...omitNode(props)} className="border-l-2 border-[var(--line)] pl-3 text-[var(--muted)]" />,
+  hr: (props) => <hr {...omitNode(props)} className="my-6 border-t border-[var(--line)]" />,
+  code: (props) => <code {...omitNode(props)} className="rounded bg-[var(--surface-subtle)] px-1 py-0.5 text-[0.9em]" />,
+  // 코드블록 안의 code 는 칩 모양을 걷어낸다. 자식 선택자라 code 쪽 유틸리티를 이긴다.
+  pre: (props) => <pre {...omitNode(props)} className="overflow-x-auto rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 text-sm [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[1em]" />,
+  // 넓은 표가 화면을 밀어내지 않도록 표만 따로 가로 스크롤한다.
+  table: (props) => (
+    <div className="overflow-x-auto">
+      <table {...omitNode(props)} className="w-full border-collapse text-[0.9375rem]" />
+    </div>
+  ),
+  th: (props) => <th {...omitNode(props)} className="border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-2 text-left font-bold" />,
+  td: (props) => <td {...omitNode(props)} className="border border-[var(--line)] px-3 py-2 align-top" />,
+  del: (props) => <del {...omitNode(props)} className="text-[var(--muted)]" />,
+  // 본문 이미지는 주소를 미리 알 수 없어 next/image 최적화 대상으로 둘 수 없다.
+  // eslint-disable-next-line @next/next/no-img-element
+  img: (props) => <img alt="" {...omitNode(props)} loading="lazy" className="h-auto max-w-full rounded-[var(--radius-control)]" />,
+};
 
 export function renderMarkdown(source: string): ReactNode {
-  const lines = source.replace(/\r\n/g, "\n").split("\n");
-  const blocks: ReactNode[] = [];
-  let paragraphBuffer: string[] = [];
-  let key = 0;
-
-  const flushParagraph = () => {
-    if (paragraphBuffer.length) {
-      blocks.push(paragraph(paragraphBuffer, `p${key++}`));
-      paragraphBuffer = [];
-    }
-  };
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
-
-    // 코드펜스
-    if (line.trim().startsWith("```")) {
-      flushParagraph();
-      const code: string[] = [];
-      i += 1;
-      while (i < lines.length && !lines[i].trim().startsWith("```")) {
-        code.push(lines[i]);
-        i += 1;
-      }
-      blocks.push(
-        <pre key={`pre${key++}`} className="overflow-x-auto rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 text-sm">
-          <code>{code.join("\n")}</code>
-        </pre>,
-      );
-      continue;
-    }
-
-    // 제목
-    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
-    if (heading) {
-      flushParagraph();
-      const level = heading[1].length;
-      const content = renderInline(heading[2], `h${key}`);
-      // em 기준이라 카드(작은 본문)와 문서 페이지(큰 본문) 모두에서 위계가 유지된다.
-      const className = level === 1
-        ? "mt-6 text-[1.4em] font-bold leading-snug tracking-[-0.02em] first:mt-0"
-        : level === 2
-          ? "mt-6 text-[1.15em] font-bold leading-snug tracking-[-0.015em] first:mt-0"
-          : "mt-5 text-[1em] font-semibold leading-snug first:mt-0";
-      blocks.push(
-        level === 1
-          ? <h3 key={`h${key++}`} className={className}>{content}</h3>
-          : level === 2
-            ? <h4 key={`h${key++}`} className={className}>{content}</h4>
-            : <h5 key={`h${key++}`} className={className}>{content}</h5>,
-      );
-      continue;
-    }
-
-    // 인용
-    if (/^>\s?/.test(line)) {
-      flushParagraph();
-      const quote: string[] = [];
-      while (i < lines.length && /^>\s?/.test(lines[i])) {
-        quote.push(lines[i].replace(/^>\s?/, ""));
-        i += 1;
-      }
-      i -= 1;
-      blocks.push(
-        <blockquote key={`q${key++}`} className="border-l-2 border-[var(--line)] pl-3 text-[var(--muted)]">
-          {quote.map((quoteLine, quoteIndex) => (
-            <p key={quoteIndex} className="leading-7">{renderInline(quoteLine, `q${key}-${quoteIndex}`)}</p>
-          ))}
-        </blockquote>,
-      );
-      continue;
-    }
-
-    // 목록 (순서 없음/있음)
-    const unordered = /^\s*[-*]\s+(.*)$/.exec(line);
-    const ordered = /^\s*\d+\.\s+(.*)$/.exec(line);
-    if (unordered || ordered) {
-      flushParagraph();
-      const items: string[] = [];
-      const isOrdered = Boolean(ordered);
-      while (i < lines.length) {
-        const item = isOrdered ? /^\s*\d+\.\s+(.*)$/.exec(lines[i]) : /^\s*[-*]\s+(.*)$/.exec(lines[i]);
-        if (!item) break;
-        items.push(item[1]);
-        i += 1;
-      }
-      i -= 1;
-      const listItems = items.map((item, itemIndex) => (
-        <li key={itemIndex}>{renderInline(item, `li${key}-${itemIndex}`)}</li>
-      ));
-      blocks.push(
-        isOrdered
-          ? <ol key={`ol${key++}`} className="list-decimal space-y-1 pl-5 leading-7">{listItems}</ol>
-          : <ul key={`ul${key++}`} className="list-disc space-y-1 pl-5 leading-7">{listItems}</ul>,
-      );
-      continue;
-    }
-
-    // 빈 줄 = 문단 구분
-    if (line.trim() === "") {
-      flushParagraph();
-      continue;
-    }
-
-    paragraphBuffer.push(line);
-  }
-
-  flushParagraph();
-  return <Fragment>{blocks}</Fragment>;
+  return <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>{source}</Markdown>;
 }
 
 /** 목록 미리보기처럼 서식 없이 한 줄로 보여줄 때 쓴다. 마크다운 기호만 걷어낸다. */
