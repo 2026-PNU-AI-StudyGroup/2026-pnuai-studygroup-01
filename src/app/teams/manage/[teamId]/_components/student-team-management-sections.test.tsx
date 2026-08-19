@@ -6,6 +6,7 @@ import type { StudentTeamSummary } from "@/modules/student-team/application/stud
 
 vi.mock("@/app/teams/_components/student-team-controls", () => ({
   InviteStudentTeamMemberForm: () => <button>초대 보내기</button>,
+  CancelStudentTeamInvitationForm: ({ email }: { email: string }) => <button>{`${email} 초대 철회`}</button>,
   TeamMemberActions: ({ studentName }: { studentName: string }) => <button>{studentName} 관리</button>,
   DeleteStudentTeamForm: () => <button>팀 삭제 실행</button>,
   LeaveStudentTeamForm: () => <button>팀 탈퇴</button>,

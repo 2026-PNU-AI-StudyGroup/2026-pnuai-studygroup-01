@@ -3,6 +3,7 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import {
+  CancelStudentTeamInvitationForm,
   DeleteStudentTeamForm,
   InviteStudentTeamMemberForm,
   LeaveStudentTeamForm,
@@ -126,7 +127,10 @@ export function StudentTeamManagementSections({
                   {team.invitations.map((invite) => (
                     <li key={invite.id} className="grid gap-2 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                       <span className="min-w-0 truncate font-semibold">{invite.email}</span>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]"><span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--primary)]" /><UiText>{"응답 대기"}</UiText></span>
+                      <span className="flex flex-wrap items-center justify-end gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]"><span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--primary)]" /><UiText>{"응답 대기"}</UiText></span>
+                        <CancelStudentTeamInvitationForm invitationId={invite.id} email={invite.email} />
+                      </span>
                     </li>
                   ))}
                 </UiUl>

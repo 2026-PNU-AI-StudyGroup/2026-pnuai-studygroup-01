@@ -62,6 +62,13 @@ export async function respondStudentTeamInvitationAction(_state: StudentTeamActi
   return run(async () => { await service.respond(actor, parsed.data.invitationId, parsed.data.decision); }, parsed.data.decision === "ACCEPT" ? "팀에 합류했습니다." : "초대를 거절했습니다.");
 }
 
+export async function cancelStudentTeamInvitationAction(_state: StudentTeamActionState, formData: FormData): Promise<StudentTeamActionState> {
+  const parsed = z.object({ invitationId: z.string().uuid() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "초대를 확인해 주세요." };
+  const { actor, service } = await serviceAndActor();
+  return run(async () => { await service.cancelInvitation(actor, parsed.data.invitationId); }, "초대를 철회했습니다.");
+}
+
 export async function transferStudentTeamLeadershipAction(_state: StudentTeamActionState, formData: FormData): Promise<StudentTeamActionState> {
   const parsed = z.object({ teamId: z.string().uuid(), nextLeaderId: z.string().min(1) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: "새 팀장을 선택해 주세요." };
