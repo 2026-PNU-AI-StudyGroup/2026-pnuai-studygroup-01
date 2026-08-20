@@ -162,10 +162,12 @@ describe("PrismaTopicApprovalRepository", () => {
       requestedProfessorId: null, status: "PENDING" as const, topic: { title: "학생 등록" },
     };
     const removeTeam = vi.fn(async () => ({ count: 1 }));
+    const recordAudit = vi.fn(async () => ({ id: "audit-1" }));
     const transaction = {
       $queryRaw: vi.fn(async () => [request]),
       topicApprovalRequest: { findUnique: vi.fn(async () => request), update: vi.fn(async () => request) },
       topic: { updateMany: vi.fn(async () => ({ count: 1 })) }, projectTeam: { deleteMany: removeTeam },
+      auditLog: { create: recordAudit },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) }, user: { findMany: vi.fn(async () => []) },
       emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
@@ -175,6 +177,14 @@ describe("PrismaTopicApprovalRepository", () => {
       requestId: "request-1", actorId: "admin-1", actorRole: "ADMIN", decision: "REJECT", reviewComment: "반려", decidedAt: requestedAt,
     })).resolves.toBe("REJECTED");
     expect(removeTeam).toHaveBeenCalledWith({ where: { projectId: "topic-1", confirmedAt: null } });
+    // 반려는 관리 이력에 사유까지 남아야 책임소재를 확인할 수 있다.
+    expect(recordAudit).toHaveBeenCalledWith({ data: expect.objectContaining({
+      actorId: "admin-1",
+      action: "TOPIC_APPROVAL_REJECTED",
+      targetType: "TOPIC",
+      targetId: "topic-1",
+      metadata: expect.objectContaining({ reviewComment: "반려", requestId: "request-1", route: "ADMIN" }),
+    }) });
   });
 
   it("등록자가 철회하면 승인 요청과 대기 팀을 함께 종료한다", async () => {
@@ -200,6 +210,7 @@ describe("PrismaTopicApprovalRepository", () => {
     };
     const confirmTeam = vi.fn(async () => ({ id: "team-1" }));
     const createGroup = vi.fn(async () => ({ id: "group-1" }));
+    const recordApproval = vi.fn(async () => ({ id: "audit-1" }));
     const transaction = {
       $queryRaw: vi.fn()
         .mockResolvedValueOnce([{ projectRegistrationStartsAt: new Date("2026-08-01T00:00:00Z"), projectRegistrationEndsAt: new Date("2026-08-20T00:00:00Z"), endsAt: new Date("2026-12-31T00:00:00Z"), studentProjectCreationEnabled: true }])
@@ -220,6 +231,7 @@ describe("PrismaTopicApprovalRepository", () => {
       topicApplication: { createMany: vi.fn(async () => ({ count: 2 })) },
       projectTeamMembership: { update: vi.fn(async () => ({ id: "membership-1" })) },
       topic: { update: vi.fn(async () => ({ id: "topic-1" })) },
+      auditLog: { create: recordApproval },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) },
       user: { findMany: vi.fn(async () => []) },
       emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
@@ -233,6 +245,11 @@ describe("PrismaTopicApprovalRepository", () => {
       where: { id: "team-1" },
       data: { confirmedAt: requestedAt, updatedAt: requestedAt },
     });
+    expect(recordApproval).toHaveBeenCalledWith({ data: expect.objectContaining({
+      action: "TOPIC_APPROVAL_APPROVED",
+      targetType: "TOPIC",
+      targetId: "topic-1",
+    }) });
     expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ leaderId: "student-1" }) }));
   });
 });
