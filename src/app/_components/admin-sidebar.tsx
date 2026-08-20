@@ -5,7 +5,6 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 const adminNavigationItems = [
   { href: "/admin/professors", label: "교수 권한", icon: "professor" },
   { href: "/admin/users", label: "사용자", icon: "users" },
-  { href: "/admin/program-categories", label: "프로그램 분류", hint: "이름 변경과 통합", icon: "category" },
   { href: "/admin/emails", label: "이메일 전송", hint: "대기열과 실패 작업", icon: "email" },
   { href: "/admin/audit", label: "관리 이력", hint: "주요 변경 기록", icon: "audit" },
 ] as const;
@@ -19,7 +18,6 @@ function AdminNavigationIcon({ name }: { name: (typeof adminNavigationItems)[num
     professor: <><circle cx="10" cy="7" r="3" /><path d="M4 17c.4-4 2.4-6 6-6s5.6 2 6 6m-2-8 2 2 3-4" /></>,
     users: <><circle cx="7" cy="7" r="3" /><path d="M2 17c.3-4 2-6 5-6s4.7 2 5 6m2-10c2 0 3 1.3 3 3s-1 2.7-2.5 3M15 13c2.2.3 3.3 1.6 3.5 4" /></>,
     email: <><rect x="2.5" y="4" width="15" height="12" rx="1.5" /><path d="m3.5 5 6.5 5 6.5-5" /></>,
-    category: <><path d="M2.5 6.5A1.5 1.5 0 0 1 4 5h3.2l1.4 1.8H16A1.5 1.5 0 0 1 17.5 8.3v6.2A1.5 1.5 0 0 1 16 16H4a1.5 1.5 0 0 1-1.5-1.5Z" /></>,
     audit: <><circle cx="10" cy="10" r="7" /><path d="M10 6v4l3 2M15.5 15.5 18 18" /></>,
   };
   return (

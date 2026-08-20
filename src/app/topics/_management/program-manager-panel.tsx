@@ -30,21 +30,13 @@ export function ProgramManagerPanel({ programId, candidates }: {
         {candidates.length === 0 ? (
           <p className="text-sm leading-6 text-[var(--muted)]"><UiText>{"지정할 수 있는 관리자 계정이 없습니다."}</UiText></p>
         ) : (
-          <fieldset className="grid gap-3">
+          <fieldset className="grid gap-2.5">
             <legend className="sr-only"><UiText>{"담당 관리자 선택"}</UiText></legend>
             {candidates.map((candidate) => (
-              <label key={candidate.id} className="flex items-start justify-between gap-5 border-b border-[var(--line)] pb-3 last:border-b-0 last:pb-0">
-                <span className="min-w-0">
-                  <strong className="block text-sm">{candidate.name}</strong>
-                  <span className="mt-0.5 block truncate text-sm leading-6 text-[var(--muted)]">{candidate.email}</span>
-                </span>
-                <UiInput
-                  name="managerIds"
-                  type="checkbox"
-                  value={candidate.id}
-                  defaultChecked={candidate.assigned}
-                  className="mt-1 size-4 shrink-0 accent-[var(--primary)]"
-                />
+              <label key={candidate.id} className="flex min-w-0 items-center gap-2.5 text-sm">
+                <UiInput name="managerIds" type="checkbox" value={candidate.id} defaultChecked={candidate.assigned} />
+                <span className="font-semibold">{candidate.name}</span>
+                <span className="min-w-0 truncate text-[0.8125rem] text-[var(--muted)]">{candidate.email}</span>
               </label>
             ))}
           </fieldset>

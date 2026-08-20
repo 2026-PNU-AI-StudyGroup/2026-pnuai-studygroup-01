@@ -182,7 +182,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
             placeholder="팀을 선택하세요"
             options={[
               ...eligibleTeams.map((team) => ({ value: team.id, label: team.name, description: `${team.memberCount}명` })),
-              ...(wizard.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동" }] : []),
+              ...(wizard.createTeamHref ? [{ value: CREATE_TEAM_OPTION, label: "새 팀 만들기", description: "팀 생성 페이지로 이동", variant: "action" as const }] : []),
             ]}
           />
         </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{"프로젝트는 팀장만 등록할 수 있습니다. 팀이 없으면 새로 만들고, 이미 속한 팀이 있으면 팀장에게 등록을 요청해 주세요."}</UiText></p>}
@@ -248,14 +248,26 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
         <div className="border-b border-[var(--line)] pb-4">
           <h2 id="topic-review-title" className="text-lg font-bold"><UiText>{"입력 내용 확인"}</UiText></h2>
         </div>
-        <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트 팀"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{projectTeamName || "입력 안 됨"}</UiText></dd></div>
-          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트 대표"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedStudentTeam?.members?.find(({ id }) => id === projectRepresentativeId)?.name ?? "선택 안 됨"}</UiText></dd></div>
-          <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"검토 요청 대상"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{advisorEnabled === false || approvalRoute === "ADMIN" ? "관리자" : studentApproval.professors.find(({ id }) => id === requestedProfessorId)?.name ?? "교수 선택 안 됨"}</UiText></dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로그램"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedProgram?.name ?? "선택 안 됨"}</UiText>{selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId) ? <><span className="text-[var(--muted)]"> · </span><UiText>{selectedProgram.divisions.find(({ id }) => id === selectedDivisionId)?.name ?? ""}</UiText></> : null}</dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트명"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{title}</UiText></dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"설명"}</UiText></dt><dd className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap leading-6"><UiText>{description}</UiText></dd></div>
+        {/* 값을 표처럼 라벨 열과 값 열로 나란히 둔다. 예전에는 라벨 위 값 아래로 쌓여
+            줄마다 시작점이 달라 읽기 어려웠다. 소개 글만 아래에 폭 전체로 둔다. */}
+        <dl className="overflow-hidden rounded-[var(--radius-control)] border border-[var(--line)] text-sm">
+          <ReviewRow label="프로젝트 팀" value={projectTeamName || "입력 안 됨"} />
+          <ReviewRow label="프로젝트 대표" value={selectedStudentTeam?.members?.find(({ id }) => id === projectRepresentativeId)?.name ?? "선택 안 됨"} />
+          <ReviewRow label="검토 요청 대상" value={advisorEnabled === false || approvalRoute === "ADMIN" ? "관리자" : studentApproval.professors.find(({ id }) => id === requestedProfessorId)?.name ?? "교수 선택 안 됨"} />
+          <ReviewRow
+            label="프로그램"
+            value={selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId)
+              ? `${selectedProgram?.name ?? ""} · ${selectedProgram?.divisions?.find(({ id }) => id === selectedDivisionId)?.name ?? ""}`
+              : selectedProgram?.name ?? "선택 안 됨"}
+          />
+          <ReviewRow label="프로젝트명" value={title || "입력 안 됨"} />
         </dl>
+        <div className="grid gap-2">
+          <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></p>
+          <div className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-3 text-sm leading-6">
+            <UiText>{description || "입력 안 됨"}</UiText>
+          </div>
+        </div>
       </section>
 
       <div className={`${styles.actions} flex flex-wrap items-center justify-end gap-3`}>
@@ -264,6 +276,16 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
         {step < STUDENT_REGISTRATION_STEPS.length - 1 ? <button type="button" className="button-primary" onClick={next} disabled={step === 0 && (!studentTeamId || !projectTeamName || !projectRepresentativeId)}><UiText>{"다음"}</UiText></button> : <button type="button" className="button-primary max-sm:w-full" onClick={submit} disabled={pending}><UiText>{pending ? "제출 중" : "프로젝트 등록 제출"}</UiText></button>}
       </div>
     </form>
+  );
+}
+
+// 확인 화면 한 줄. 라벨 열 폭을 고정해 값이 같은 선에서 시작한다.
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3 border-b border-[var(--line)] px-4 py-2.5 last:border-b-0 sm:grid-cols-[8rem_minmax(0,1fr)]">
+      <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className="min-w-0 break-words font-semibold"><UiText>{value}</UiText></dd>
+    </div>
   );
 }
 

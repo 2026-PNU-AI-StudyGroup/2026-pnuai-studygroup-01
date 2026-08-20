@@ -278,3 +278,14 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* 목록이 아니라 다른 화면으로 보내는 항목. 팀 목록과 섞이지 않게 옅은 배경과 윗선으로 뗀다. */
+.option[data-variant="action"] {
+  border-top: 1px solid var(--line);
+  background: var(--surface-subtle);
+}
+
+.option[data-variant="action"]:hover,
+.option[data-variant="action"]:focus-visible {
+  background: var(--primary-subtle);
+}

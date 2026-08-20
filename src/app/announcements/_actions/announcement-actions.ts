@@ -74,44 +74,6 @@ function parseTarget(
   return null;
 }
 
-export async function createSystemAnnouncementAction(
-  _previous: AnnouncementActionState,
-  formData: FormData,
-): Promise<AnnouncementActionState> {
-  const parsed = parseAnnouncement(formData);
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "제목은 120자 이내, 본문은 20,000자 이내로 입력해 주세요.",
-    };
-  }
-  const attachments = parseAttachmentIds(formData);
-  if (!attachments) return { status: "error", message: "첨부파일 정보를 확인해 주세요." };
-
-  const current = await actor();
-  const audience = await resolveAnnouncementAudience(current);
-  let announcementId: string;
-  try {
-    const created = await service().create(current, audience, {
-      ...parsed.data,
-      visibility: "AUTHENTICATED",
-      teamId: null,
-      programId: null,
-      ...attachments,
-    });
-    announcementId = created.id;
-  } catch (error) {
-    if (error instanceof AnnouncementError) {
-      return { status: "error", message: error.message };
-    }
-    throw error;
-  }
-
-  revalidatePath("/announcements");
-  revalidatePath("/projects", "layout");
-  redirect(`/announcements/${announcementId}`);
-}
-
 export async function createAnnouncementAction(
   _previous: AnnouncementActionState,
   formData: FormData,
@@ -127,8 +89,9 @@ export async function createAnnouncementAction(
   const current = await actor();
   const target = parseTarget(formData.get("target"));
   const attachments = parseAttachmentIds(formData);
-  if (!target?.teamId || target.programId || !attachments) {
-    return { status: "error", message: "프로젝트 공지 대상을 확인해 주세요." };
+  // 전체·프로그램·팀 세 가지 대상을 모두 받는다. 권한과 대상 소관 확인은 서비스가 한다.
+  if (!target || !attachments) {
+    return { status: "error", message: "공지 대상을 확인해 주세요." };
   }
   const audience = await resolveAnnouncementAudience(current);
 
@@ -145,7 +108,8 @@ export async function createAnnouncementAction(
     throw error;
   }
 
-  if (createdTeamId) revalidatePath("/projects", "layout");
+  revalidatePath("/announcements");
+  if (createdTeamId || target.programId) revalidatePath("/projects", "layout");
   redirect(`/announcements/${announcementId}`);
 }
 

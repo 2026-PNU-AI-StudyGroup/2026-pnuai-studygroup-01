@@ -251,6 +251,11 @@ summary::-webkit-details-marker {
     display: inline-grid;
     width: 1.125rem;
     height: 1.125rem;
+    /* UiInput 은 모든 input 에 form-control 을 붙인다. 그 규칙의 min-height 3rem·padding·그림자가
+       체크박스까지 흘러들어 세로로 늘어난 상자가 됐다. 정사각형으로 되돌린다. */
+    min-height: 0;
+    padding: 0;
+    box-shadow: none;
     flex: 0 0 auto;
     place-content: center;
     border: 1.5px solid var(--field-border);

@@ -7,7 +7,7 @@ describe("팀 상태 표현", () => {
     expect(teamStatusPresentation).toEqual({
       FORMING: { label: "구성 중", tone: "warning" },
       IN_PROGRESS: { label: "진행 중", tone: "info" },
-      COMPLETED: { label: "완료", tone: "neutral" },
+      COMPLETED: { label: "완료", tone: "success" },
       CANCELED: { label: "취소", tone: "danger" },
     });
   });

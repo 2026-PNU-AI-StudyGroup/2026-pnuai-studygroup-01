@@ -93,7 +93,7 @@ describe("내 프로젝트 통합 화면", () => {
     rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "COMPLETED" }]} view="completed" />);
 
     expect(screen.getByRole("heading", { name: "완료한 프로젝트" })).toBeInTheDocument();
-    expect(screen.getByText("완료")).toHaveClass("bg-[var(--surface-subtle)]");
+    expect(screen.getByText("완료")).toHaveClass("bg-[var(--success-subtle)]");
     expect(screen.getByRole("link", { name: "실내 길찾기 완료 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByText("진행 중 프로젝트")).not.toBeInTheDocument();
   });

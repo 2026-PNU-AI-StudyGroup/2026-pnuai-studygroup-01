@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-// ponytail: 단순 폴링. 새로고침 없이 새 메시지 반영. 서버 부하 크면 SSE/웹소켓으로 승격.
-export function DiscussionAutoRefresh({ intervalMs = 4000 }: { intervalMs?: number }) {
+// 새로고침 없이 서버 데이터를 다시 읽어 온다. 화면이 보일 때만 돈다.
+// ponytail: 단순 폴링. 서버 부하 크면 SSE/웹소켓으로 승격.
+export function AutoRefresh({ intervalMs = 4000 }: { intervalMs?: number }) {
   const router = useRouter();
   useEffect(() => {
     const tick = () => {

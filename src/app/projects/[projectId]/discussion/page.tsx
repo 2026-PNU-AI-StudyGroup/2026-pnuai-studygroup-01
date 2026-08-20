@@ -7,7 +7,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
 import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
-import { DiscussionAutoRefresh } from "@/app/projects/[projectId]/_components/discussion-auto-refresh";
+import { AutoRefresh } from "@/shared/ui/auto-refresh";
 import { DiscussionPostForm } from "@/app/projects/[projectId]/_components/discussion-post-form";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
@@ -40,7 +40,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
 
   return (
     <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
-      {workspace.status !== "COMPLETED" && workspace.discussionPage === 1 ? <DiscussionAutoRefresh /> : null}
+      {workspace.status !== "COMPLETED" && workspace.discussionPage === 1 ? <AutoRefresh /> : null}
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">
           <h1 id="discussion-title" className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.045em]"><UiText>{"팀 대화"}</UiText></h1>

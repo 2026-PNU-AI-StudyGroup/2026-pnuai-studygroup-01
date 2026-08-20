@@ -40,7 +40,7 @@ export class PrismaTeamDiscussionRepository
 
       const team = await transaction.projectTeam.findUniqueOrThrow({
         where: { id: input.teamId },
-        select: { project: { select: { id: true, managerId: true } } },
+        select: { project: { select: { id: true, managerId: true, manager: { select: { role: true } } } } },
       });
       const [members, assistants, author] = await Promise.all([
         transaction.projectTeamMembership.findMany({
@@ -56,8 +56,14 @@ export class PrismaTeamDiscussionRepository
           select: { name: true },
         }),
       ]);
+      // 담당자가 지도교수일 때만 알린다. 학생 등록 프로젝트를 관리자 경로로 승인하면
+      // 승인한 관리자가 managerId 로 박혀서, 자기가 승인한 모든 팀의 대화 알림을 다 받게 된다.
+      // managerId 를 지도교수로만 해석하는 것은 project-supervisor-authorization 과 같은 규칙이다.
+      const supervisorIds = team.project.managerId && team.project.manager?.role === "PROFESSOR"
+        ? [team.project.managerId]
+        : [];
       const recipientIds = [...new Set([
-        ...(team.project.managerId ? [team.project.managerId] : []),
+        ...supervisorIds,
         ...members.map(({ userId }) => userId),
         ...assistants.map(({ userId }) => userId),
       ])].filter((userId) => userId !== input.actor.id);
