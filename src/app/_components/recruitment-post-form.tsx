@@ -119,7 +119,7 @@ export function RecruitmentPostForm({
       </FormSection>
 
       <div className="form-action-bar">
-        <button type="submit" className="button-primary shrink-0" disabled={pending}><UiText>{pending ? "등록 중" : "모집 공고 작성"}</UiText></button>
+        <button type="submit" className="button-primary shrink-0" disabled={pending}><UiText>{pending ? "등록 중" : "모집 공고 등록"}</UiText></button>
       </div>
       {state.message ? (
         <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`px-1 text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>

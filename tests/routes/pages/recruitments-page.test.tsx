@@ -30,6 +30,9 @@ vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamPageIntro: ({ title, description, meta }: { title: string; description: string; meta?: ReactNode }) => <header><h1>{title}</h1><p>{description}</p><div>{meta}</div></header>,
   StudentTeamPagination: () => null,
 }));
+vi.mock("@/app/recruitments/_lib/recruit-members-entry", () => ({
+  recruitMembersEntry: async () => ({ href: "/teams/manage/team-1?modal=recruitment", label: "팀원 모집하기" }),
+}));
 vi.mock("@/app/recruitments/_components/recruitment-post-list", () => ({
   RecruitmentPostList: () => <div>모집 카드</div>,
 }));

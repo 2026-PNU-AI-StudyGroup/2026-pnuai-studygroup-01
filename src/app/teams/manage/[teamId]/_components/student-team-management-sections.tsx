@@ -44,7 +44,7 @@ export function StudentTeamManagementSections({
           <h1 className="mt-3 text-[clamp(2rem,3.25vw,2.85rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--ink)]">{team.name}</h1>
           {team.description ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)] sm:text-base"><UiText>{team.description}</UiText></p> : null}
         </div>
-        {isLeader ? <div className="flex flex-wrap gap-2"><Link className="button-secondary" href={`/recruitments/received?teamId=${team.id}`}><UiText>{"받은 지원"}</UiText>{" "}{team.pendingApplicantCount}</Link><Link className="button-primary shrink-0 gap-2" href={`/teams/manage/${team.id}?modal=recruitment`}><AddIcon className="size-4 shrink-0" /><UiText>{"모집 공고 작성"}</UiText></Link></div> : null}
+        {isLeader ? <div className="flex flex-wrap gap-2"><Link className="button-secondary" href={`/recruitments/received?teamId=${team.id}`}><UiText>{"받은 지원"}</UiText>{" "}{team.pendingApplicantCount}</Link><Link className="button-primary shrink-0 gap-2" href={`/teams/manage/${team.id}?modal=recruitment`}><AddIcon className="size-4 shrink-0" /><UiText>{"팀원 모집하기"}</UiText></Link></div> : null}
       </header>
 
       {isLeader ? (
