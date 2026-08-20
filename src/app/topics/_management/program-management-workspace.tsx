@@ -4,6 +4,7 @@ import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { ProjectProgramOperationError, ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { listProgramCategories } from "@/app/topics/_management/program-categories";
+import { ProgramManagerPanel, type ProgramManagerCandidate } from "@/app/topics/_management/program-manager-panel";
 import { ProgramForm } from "@/app/topics/_management/program-form";
 import {
   type ProgramManagementTab,
@@ -139,12 +140,19 @@ export async function ProgramManagementWorkspace({
   let content: React.ReactNode;
 
   if (tab === "settings") {
-    const [categoryOptions, divisions] = await Promise.all([
+    const [categoryOptions, divisions, admins, managers] = await Promise.all([
       listProgramCategories(),
       prisma.programDivision.findMany({ where: { programId: program.id }, orderBy: { position: "asc" }, select: { id: true, name: true, _count: { select: { topics: true } } } }),
+      prisma.user.findMany({ where: { role: "ADMIN", accountStatus: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
+      prisma.programManager.findMany({ where: { programId: program.id }, select: { userId: true } }),
     ]);
     const tracks = divisions.map((division) => ({ name: division.name }));
-    content = <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />;
+    const assignedIds = new Set(managers.map(({ userId }) => userId));
+    const managerCandidates: ProgramManagerCandidate[] = admins.map((admin) => ({ ...admin, assigned: assignedIds.has(admin.id) }));
+    content = <>
+      <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />
+      <ProgramManagerPanel programId={program.id} candidates={managerCandidates} />
+    </>;
   } else if (tab === "operation") {
     content = <ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, projectTeamMinSize: program.projectTeamMinSize ?? 2, projectTeamMaxSize: program.projectTeamMaxSize ?? 6 }} />;
   } else if (tab === "schedule") {

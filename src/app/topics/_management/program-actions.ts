@@ -180,6 +180,29 @@ export async function updateProgramBasicInfoAction(_state: ProgramActionState, f
   return { status: "success", message: "기본 정보를 저장했습니다.", savedVisibility: input.data.visibility };
 }
 
+// 프로그램 담당 관리자를 지정한다. 프로그램 운영 알림은 여기 지정된 사람에게만 간다.
+// 아무도 지정하지 않으면 예전처럼 관리자 전체에게 간다.
+export async function updateProgramManagersAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const currentActor = await actor();
+  if (currentActor.role !== "ADMIN") return { status: "error", message: "관리자만 담당 관리자를 지정할 수 있습니다." };
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  if (!programId.success) return { status: "error", message: "프로그램을 다시 확인해 주세요." };
+  const requestedIds = [...new Set(formData.getAll("managerIds").filter((value): value is string => typeof value === "string" && value.length > 0))];
+  // 탈퇴·정지된 계정이나 관리자가 아닌 사람이 담당자로 남지 않게 실제 계정을 다시 확인한다.
+  const admins = requestedIds.length
+    ? await prisma.user.findMany({ where: { id: { in: requestedIds }, role: "ADMIN", accountStatus: "ACTIVE" }, select: { id: true } })
+    : [];
+  await prisma.$transaction([
+    prisma.programManager.deleteMany({ where: { programId: programId.data } }),
+    prisma.programManager.createMany({ data: admins.map(({ id }) => ({ programId: programId.data, userId: id })) }),
+  ]);
+  refreshManagement(programId.data, "settings");
+  return {
+    status: "success",
+    message: admins.length ? "담당 관리자를 저장했습니다." : "담당 관리자를 비웠습니다. 알림은 관리자 전체에게 갑니다.",
+  };
+}
+
 export async function updateProgramOperationAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const programId = programIdSchema.safeParse(formData.get("programId"));
   const input = programOperationSchema.safeParse(Object.fromEntries(formData));

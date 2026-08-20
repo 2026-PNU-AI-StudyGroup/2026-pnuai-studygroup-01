@@ -289,8 +289,8 @@ model User {
   emailVerified                      Boolean                             @default(false)
   image                              String?
   role                               UserRole                            @default(STUDENT)
-  accountStatus                     UserAccountStatus                   @default(ACTIVE)
-  withdrawnAt                       DateTime?
+  accountStatus                      UserAccountStatus                   @default(ACTIVE)
+  withdrawnAt                        DateTime?
   preferredLocale                    String                              @default("ko")
   department                         String?
   studentNumber                      String?                             @unique
@@ -356,6 +356,7 @@ model User {
   grantedProjectAdvisors             ProjectAdvisor[]                    @relation("ProjectAdvisorGrantor")
   advisorEvaluations                 AdvisorEvaluation[]
   advisorFeedbacks                   AdvisorFeedback[]
+  managedPrograms                    ProgramManager[]
 
   @@map("user")
 }
@@ -366,20 +367,20 @@ enum AnnouncementVisibility {
 }
 
 model Announcement {
-  id          String                   @id @default(uuid())
-  authorId    String
-  title       String
-  content     String
-  visibility  AnnouncementVisibility   @default(AUTHENTICATED)
-  pinned      Boolean                  @default(false)
+  id            String                   @id @default(uuid())
+  authorId      String
+  title         String
+  content       String
+  visibility    AnnouncementVisibility   @default(AUTHENTICATED)
+  pinned        Boolean                  @default(false)
   projectTeamId String?
-  programId   String?
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  author      User                     @relation(fields: [authorId], references: [id])
-  projectTeam ProjectTeam?             @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  program     ProjectProgram?          @relation(fields: [programId], references: [id], onDelete: Cascade)
-  attachments AnnouncementAttachment[]
+  programId     String?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  author        User                     @relation(fields: [authorId], references: [id])
+  projectTeam   ProjectTeam?             @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  program       ProjectProgram?          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  attachments   AnnouncementAttachment[]
 
   @@index([createdAt])
   @@index([authorId])
@@ -462,44 +463,59 @@ model Notification {
   @@map("notification")
 }
 
+// 프로그램마다 담당 관리자를 둔다. 프로그램 운영 알림은 여기 지정된 사람에게만 간다.
+// 지정이 없는 프로그램은 예전처럼 관리자 전체에게 간다.
+model ProgramManager {
+  programId String
+  userId    String
+  createdAt DateTime       @default(now())
+  program   ProjectProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([programId, userId])
+  @@index([userId])
+  @@map("program_manager")
+}
+
 model EmailPreference {
-  userId                String   @id
-  reportActivityEnabled Boolean  @default(false)
-  discussionEnabled     Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String   @id
+  reportActivityEnabled  Boolean  @default(false)
+  discussionEnabled      Boolean  @default(false)
+  programActivityEnabled Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_preference")
 }
 
 model EmailDelivery {
-  id             String              @id @default(uuid())
-  kind           EmailDeliveryKind
-  recipientUserId String?
-  recipientType  EmailDeliveryRecipientType @default(REGISTERED)
-  recipientEmail String
-  locale         String              @default("ko")
-  title          String?
-  body           String?
-  titleEn        String?
-  bodyEn         String?
-  href           String?
-  priority       Int                 @default(100)
-  optional       Boolean             @default(false)
-  allowInactiveRecipient Boolean     @default(false)
-  idempotencyKey String              @unique
-  status         EmailDeliveryStatus @default(PENDING)
-  attempts       Int                 @default(0)
-  availableAt    DateTime            @default(now())
-  lockedAt       DateTime?
-  lockedBy       String?
-  sentAt         DateTime?
-  providerMessageId String?
-  lastError      String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  recipient      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+  id                     String                     @id @default(uuid())
+  kind                   EmailDeliveryKind
+  recipientUserId        String?
+  recipientType          EmailDeliveryRecipientType @default(REGISTERED)
+  recipientEmail         String
+  locale                 String                     @default("ko")
+  title                  String?
+  body                   String?
+  titleEn                String?
+  bodyEn                 String?
+  href                   String?
+  priority               Int                        @default(100)
+  optional               Boolean                    @default(false)
+  allowInactiveRecipient Boolean                    @default(false)
+  idempotencyKey         String                     @unique
+  status                 EmailDeliveryStatus        @default(PENDING)
+  attempts               Int                        @default(0)
+  availableAt            DateTime                   @default(now())
+  lockedAt               DateTime?
+  lockedBy               String?
+  sentAt                 DateTime?
+  providerMessageId      String?
+  lastError              String?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  recipient              User?                      @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
 
   @@index([status, availableAt, priority, createdAt])
   @@index([sentAt])
@@ -637,6 +653,7 @@ model ProjectProgram {
   reportDefinitions             ProgramReportDefinition[]
   rubricDefinitions             RubricDefinition[]
   announcements                 Announcement[]
+  managers                      ProgramManager[]
 
   @@unique([name, startsAt])
   @@index([endsAt, endProcessedAt])
@@ -645,13 +662,13 @@ model ProjectProgram {
 }
 
 model ProgramDivision {
-  id                String                    @id @default(uuid())
+  id                String             @id @default(uuid())
   programId         String
   name              String
-  position          Int                       @default(0)
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  program           ProjectProgram            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  position          Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  program           ProjectProgram     @relation(fields: [programId], references: [id], onDelete: Cascade)
   topics            Topic[]
   rubricDefinitions RubricDefinition[]
 
@@ -681,19 +698,19 @@ model ProgramReportDefinition {
 }
 
 model RubricDefinition {
-  id                 String                 @id @default(uuid())
+  id                 String                        @id @default(uuid())
   programId          String
   divisionId         String?
   title              String
   gradingDueAt       DateTime
-  position           Int                    @default(0)
-  audience           RubricAudience         @default(STAFF_ONLY)
+  position           Int                           @default(0)
+  audience           RubricAudience                @default(STAFF_ONLY)
   archivedAt         DateTime?
-  legacy             Boolean                @default(false)
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-  program            ProjectProgram         @relation(fields: [programId], references: [id], onDelete: Cascade)
-  division           ProgramDivision?       @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
+  legacy             Boolean                       @default(false)
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  program            ProjectProgram                @relation(fields: [programId], references: [id], onDelete: Cascade)
+  division           ProgramDivision?              @relation(fields: [divisionId, programId], references: [id, programId], onDelete: Restrict)
   criteria           RubricCriterion[]
   evaluations        ProjectTeamRubricEvaluation[]
   advisorEvaluations AdvisorEvaluation[]
@@ -735,14 +752,14 @@ model ProjectTeamRubricEvaluation {
 }
 
 model RubricScore {
-  id           String               @id @default(uuid())
+  id           String                      @id @default(uuid())
   evaluationId String
   criterionId  String
   points       Int
   scoredByName String
-  updatedAt    DateTime             @updatedAt
+  updatedAt    DateTime                    @updatedAt
   evaluation   ProjectTeamRubricEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
-  criterion    RubricCriterion      @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  criterion    RubricCriterion             @relation(fields: [criterionId], references: [id], onDelete: Restrict)
 
   @@unique([evaluationId, criterionId])
   @@index([evaluationId])
@@ -917,7 +934,7 @@ model AdvisorEvaluation {
   projectTeam   ProjectTeam      @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
   advisor       User             @relation(fields: [advisorId], references: [id], onDelete: Cascade)
   rubric        RubricDefinition @relation(fields: [rubricId], references: [id], onDelete: Restrict)
-  scores    AdvisorScore[]
+  scores        AdvisorScore[]
 
   @@unique([projectTeamId, advisorId, rubricId])
   @@index([projectTeamId])
@@ -1053,24 +1070,24 @@ model TopicApplicationAnswer {
 }
 
 model ProjectTeam {
-  id                String                         @id @default(uuid())
-  projectId         String                         @unique
-  name              String
-  confirmedAt       DateTime?
-  createdAt         DateTime                       @default(now())
-  updatedAt         DateTime                       @updatedAt
-  project           Topic                          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  memberships       ProjectTeamMembership[]
-  tasks             Task[]
-  progressUpdates   ProgressUpdate[]
-  discussionPosts   DiscussionPost[]
-  storedFiles       StoredFile[]
-  reports           Report[]
-  rubricEvaluations ProjectTeamRubricEvaluation[]
-  artifacts         Artifact[]
-  recruitmentPosts  RecruitmentPost[]
-  guidanceRequests  ProjectGuidanceRequest[]
-  announcements     Announcement[]
+  id                 String                        @id @default(uuid())
+  projectId          String                        @unique
+  name               String
+  confirmedAt        DateTime?
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  project            Topic                         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberships        ProjectTeamMembership[]
+  tasks              Task[]
+  progressUpdates    ProgressUpdate[]
+  discussionPosts    DiscussionPost[]
+  storedFiles        StoredFile[]
+  reports            Report[]
+  rubricEvaluations  ProjectTeamRubricEvaluation[]
+  artifacts          Artifact[]
+  recruitmentPosts   RecruitmentPost[]
+  guidanceRequests   ProjectGuidanceRequest[]
+  announcements      Announcement[]
   showcaseIntro      String?
   // 오프라인 심사로 정해지는 수상 내역. 이전 시스템에서 옮겨 온 값도 여기에 들어간다.
   award              String?
@@ -1084,25 +1101,25 @@ model ProjectTeam {
 }
 
 model ProjectGuidanceRequest {
-  id           String                       @id @default(uuid())
+  id            String                       @id @default(uuid())
   projectTeamId String
-  requesterId  String
-  kind         ProjectGuidanceRequestKind
-  title        String
-  content      String
-  referenceUrl String?
-  preferredAt  DateTime?
-  status       ProjectGuidanceRequestStatus @default(PENDING)
-  response     String?
-  scheduledAt  DateTime?
-  responderId  String?
-  respondedAt  DateTime?
-  canceledAt   DateTime?
-  createdAt    DateTime                     @default(now())
-  updatedAt    DateTime                     @updatedAt
-  projectTeam  ProjectTeam                  @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  requester    User                         @relation("ProjectGuidanceRequester", fields: [requesterId], references: [id], onDelete: Restrict)
-  responder    User?                        @relation("ProjectGuidanceResponder", fields: [responderId], references: [id], onDelete: Restrict)
+  requesterId   String
+  kind          ProjectGuidanceRequestKind
+  title         String
+  content       String
+  referenceUrl  String?
+  preferredAt   DateTime?
+  status        ProjectGuidanceRequestStatus @default(PENDING)
+  response      String?
+  scheduledAt   DateTime?
+  responderId   String?
+  respondedAt   DateTime?
+  canceledAt    DateTime?
+  createdAt     DateTime                     @default(now())
+  updatedAt     DateTime                     @updatedAt
+  projectTeam   ProjectTeam                  @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  requester     User                         @relation("ProjectGuidanceRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  responder     User?                        @relation("ProjectGuidanceResponder", fields: [responderId], references: [id], onDelete: Restrict)
 
   @@index([projectTeamId, status, createdAt])
   @@index([requesterId, createdAt])
@@ -1187,18 +1204,18 @@ model StudentTeamRecruitmentPost {
 }
 
 model StudentTeamRecruitmentApplication {
-  id          String                       @id @default(uuid())
-  postId      String
-  studentId   String
-  message     String
-  desiredRole String
-  sharedContacts Json                       @default("{}")
-  status      RecruitmentApplicationStatus @default(PENDING)
-  decidedAt   DateTime?
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
-  post        StudentTeamRecruitmentPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  student     User                         @relation("StudentTeamRecruitmentApplicant", fields: [studentId], references: [id])
+  id             String                       @id @default(uuid())
+  postId         String
+  studentId      String
+  message        String
+  desiredRole    String
+  sharedContacts Json                         @default("{}")
+  status         RecruitmentApplicationStatus @default(PENDING)
+  decidedAt      DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  post           StudentTeamRecruitmentPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  student        User                         @relation("StudentTeamRecruitmentApplicant", fields: [studentId], references: [id])
 
   @@unique([postId, studentId])
   @@index([studentId, status])
@@ -1263,18 +1280,18 @@ model ProjectTeamMembership {
 }
 
 model Task {
-  id          String         @id @default(uuid())
+  id            String         @id @default(uuid())
   projectTeamId String
-  createdById String
-  title       String
-  dueAt       DateTime
-  status      TaskStatus     @default(TODO)
-  completedAt DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  projectTeam ProjectTeam    @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  createdBy   User           @relation("TaskCreator", fields: [createdById], references: [id])
-  assignees   TaskAssignee[]
+  createdById   String
+  title         String
+  dueAt         DateTime
+  status        TaskStatus     @default(TODO)
+  completedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  projectTeam   ProjectTeam    @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  createdBy     User           @relation("TaskCreator", fields: [createdById], references: [id])
+  assignees     TaskAssignee[]
 
   @@index([projectTeamId, dueAt])
   @@map("task")
@@ -1293,28 +1310,28 @@ model TaskAssignee {
 }
 
 model ProgressUpdate {
-  id         String   @id @default(uuid())
+  id            String      @id @default(uuid())
   projectTeamId String
-  authorId   String
-  content    String
-  risk       String
-  nextAction String
-  createdAt  DateTime @default(now())
-  projectTeam ProjectTeam @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  author     User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  content       String
+  risk          String
+  nextAction    String
+  createdAt     DateTime    @default(now())
+  projectTeam   ProjectTeam @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id])
 
   @@index([projectTeamId, createdAt])
   @@map("progress_update")
 }
 
 model DiscussionPost {
-  id        String   @id @default(uuid())
+  id            String      @id @default(uuid())
   projectTeamId String
-  authorId  String
-  content   String
-  createdAt DateTime @default(now())
-  projectTeam ProjectTeam @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+  projectTeam   ProjectTeam @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id])
 
   @@index([projectTeamId, createdAt])
   @@index([authorId])
@@ -1395,19 +1412,19 @@ model ObjectDeletionJob {
 }
 
 model Report {
-  id            String                  @id @default(uuid())
-  projectTeamId String
-  definitionId  String
-  titleSnapshot String
-  dueAt         DateTime
-  required      Boolean                 @default(true)
-  submissionEnabled Boolean              @default(true)
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  projectTeam   ProjectTeam             @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
-  definition    ProgramReportDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
-  versions      ReportVersion[]
-  feedback      ReportFeedback[]
+  id                String                  @id @default(uuid())
+  projectTeamId     String
+  definitionId      String
+  titleSnapshot     String
+  dueAt             DateTime
+  required          Boolean                 @default(true)
+  submissionEnabled Boolean                 @default(true)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  projectTeam       ProjectTeam             @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  definition        ProgramReportDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  versions          ReportVersion[]
+  feedback          ReportFeedback[]
 
   @@unique([projectTeamId, definitionId])
   @@index([projectTeamId, required, dueAt])
