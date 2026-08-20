@@ -105,7 +105,9 @@ export class PrismaReportDecisionRepository implements ReportDecisionWriter {
           : "REPORT_REVISION_REQUESTED",
         targetType: "REPORT_VERSION",
         targetId: input.reportVersionId,
-        metadata: { teamId: teams[0].id, decision: input.decision },
+        // 사유를 함께 남긴다. 예전에는 approval_decision 행에만 있어서
+        // 관리 이력 화면에서 왜 반려했는지 볼 수 없었다.
+        metadata: { teamId: teams[0].id, decision: input.decision, reviewComment: input.comment },
         createdAt: input.decidedAt,
       } });
       return true;
