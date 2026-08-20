@@ -8,6 +8,7 @@ import type {
   VotingResultsView,
 } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { AutoRefresh } from "@/shared/ui/auto-refresh";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { BarChartIcon, CloseIcon } from "@/shared/ui/workspace-icons";
 
@@ -21,6 +22,8 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [view, setView] = useState<ResultView>("overall");
+  // 열려 있는 동안만 서버 데이터를 다시 읽는다. 닫아 두고 계속 조회하면 낭비다.
+  const [open, setOpen] = useState(false);
   const sortedResults = sortByVotes(results.results);
   const divisionGroups = groupByDivision(results.results);
   const votersByTopic = resultsView.mode === "ADMIN"
@@ -36,7 +39,10 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={() => {
+          setOpen(true);
+          dialogRef.current?.showModal();
+        }}
         className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs"
       >
         <BarChartIcon className="size-4 shrink-0" />
@@ -45,9 +51,13 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
       <dialog
         ref={dialogRef}
         aria-labelledby="project-vote-results-title"
-        onClose={() => triggerRef.current?.focus({ preventScroll: true })}
+        onClose={() => {
+          setOpen(false);
+          triggerRef.current?.focus({ preventScroll: true });
+        }}
         className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[rgba(23,32,51,.48)]"
       >
+        {open ? <AutoRefresh intervalMs={10_000} /> : null}
         <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-white px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
           <p className="text-xs font-bold text-[var(--primary)]"><UiText>{results.programName}</UiText></p>
           <h2 id="project-vote-results-title" className="mt-1 text-2xl font-bold tracking-[-0.035em]">

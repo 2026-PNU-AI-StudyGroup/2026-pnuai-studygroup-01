@@ -1,5 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// 결과 모달은 열려 있는 동안 폴링으로 서버 데이터를 다시 읽는다. 라우터가 필요하다.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
 import type {

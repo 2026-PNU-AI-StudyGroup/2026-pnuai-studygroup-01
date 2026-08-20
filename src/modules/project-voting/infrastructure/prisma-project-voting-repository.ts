@@ -9,7 +9,7 @@ import {
   type ReplaceProgramVotesOutcome,
 } from "@/modules/project-voting/application/manage-project-voting";
 import type { UserRole } from "@/modules/identity/domain/user-role";
-import { canViewPublicVotingResults, normalizeVoteSelection, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
+import { canViewPublicVotingResults, isOwnProject, normalizeVoteSelection, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUS = "ACTIVE" as const;
 
@@ -68,10 +68,12 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         divisionId: candidate.divisionId,
         divisionName: candidate.division?.name ?? null,
         divisionPosition: candidate.division?.position ?? null,
-        isSelfProject: candidate.authorId === voterId ||
-          candidate.managerId === voterId ||
-          candidate.assistants.length > 0 ||
-          (candidate.projectTeam?.memberships.length ?? 0) > 0,
+        isSelfProject: isOwnProject({
+          authorId: candidate.authorId,
+          managerId: candidate.managerId,
+          assistantCount: candidate.assistants.length,
+          memberCount: candidate.projectTeam?.memberships.length ?? 0,
+        }, { id: voterId, role: voterRole }),
         voteCount: resultsVisible ? voteCounts.get(candidate.id) ?? 0 : null,
       })).sort((left, right) => ballotSort(left, right, policy.voteLimitScope)),
       selectedTopicIds: votes.map(({ topicId }) => topicId),
@@ -139,12 +141,12 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         : [];
       if (candidates.length !== input.topicIds.length) return "INVALID_CANDIDATE";
       try { normalizeVoteSelection(input.topicIds, policy, candidates.map(({ id, divisionId }) => ({ id, divisionId }))); } catch { return "INVALID_CANDIDATE"; }
-      if (!policy.selfVotingAllowed && candidates.some((candidate) =>
-        candidate.authorId === input.voterId ||
-        candidate.managerId === input.voterId ||
-        candidate.assistants.length > 0 ||
-        (candidate.projectTeam?.memberships.length ?? 0) > 0,
-      )) return "SELF_VOTE_FORBIDDEN";
+      if (!policy.selfVotingAllowed && candidates.some((candidate) => isOwnProject({
+        authorId: candidate.authorId,
+        managerId: candidate.managerId,
+        assistantCount: candidate.assistants.length,
+        memberCount: candidate.projectTeam?.memberships.length ?? 0,
+      }, { id: input.voterId, role: voterRole }))) return "SELF_VOTE_FORBIDDEN";
 
       await transaction.projectVote.deleteMany({ where: { programId: input.programId, voterId: input.voterId } });
       if (input.topicIds.length) {
