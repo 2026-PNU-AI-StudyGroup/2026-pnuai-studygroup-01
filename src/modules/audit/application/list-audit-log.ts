@@ -29,6 +29,8 @@ export type AuditAction =
   | "PROJECT_ASSISTANT_REMOVED"
   | "TOPIC_CLOSED"
   | "TOPIC_RECRUITMENT_CLOSED"
+  | "TOPIC_APPROVAL_APPROVED"
+  | "TOPIC_APPROVAL_REJECTED"
   | "PROGRAM_DIVISION_CREATED"
   | "PROGRAM_DIVISION_UPDATED"
   | "PROGRAM_DIVISION_DELETED"
@@ -51,6 +53,8 @@ type AuditEntry = {
   action: AuditAction;
   actorName: string;
   targetLabel: string;
+  // 반려처럼 사유가 있는 결정은 화면에서 사유까지 보여야 책임소재가 남는다.
+  reason: string | null;
   createdAt: Date;
 };
 

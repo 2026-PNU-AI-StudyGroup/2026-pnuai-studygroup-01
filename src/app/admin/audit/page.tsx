@@ -54,6 +54,8 @@ const actionLabel: Record<AuditAction, string> = {
   PROJECT_ASSISTANT_REMOVED: "프로젝트 조교 권한 해제",
   TOPIC_CLOSED: "프로젝트 마감",
   TOPIC_RECRUITMENT_CLOSED: "프로젝트 모집 마감",
+  TOPIC_APPROVAL_APPROVED: "프로젝트 등록 승인",
+  TOPIC_APPROVAL_REJECTED: "프로젝트 등록 반려",
   PROGRAM_DIVISION_CREATED: "분과 추가",
   PROGRAM_DIVISION_UPDATED: "분과 변경",
   PROGRAM_DIVISION_DELETED: "분과 삭제",
@@ -99,11 +101,16 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   className={`${adminRecordRowClassName} grid gap-4 xl:grid-cols-[13rem_minmax(18rem,1fr)_12rem] xl:items-center`}
                 >
                   <div>
-                    <StatusBadge tone={entry.action.includes("REVOKED") || entry.action.includes("DEACTIVATED") || entry.action.includes("REVISION") ? "warning" : "neutral"}>{actionLabel[entry.action]}</StatusBadge>
+                    <StatusBadge tone={entry.action.includes("REVOKED") || entry.action.includes("DEACTIVATED") || entry.action.includes("REVISION") || entry.action.includes("REJECTED") ? "warning" : "neutral"}>{actionLabel[entry.action]}</StatusBadge>
                   </div>
                   <div className="min-w-0">
                     <p className="break-words font-bold"><UiText>{entry.targetLabel}</UiText></p>
                     <p className="muted mt-1 text-sm"><UiText>{"관리자"}</UiText>{" "}{entry.actorName}</p>
+                    {entry.reason ? (
+                      <p className="mt-1 break-words text-sm leading-6 text-[var(--ink)]">
+                        <span className="muted"><UiText>{"사유"}</UiText>{" "}</span>{entry.reason}
+                      </p>
+                    ) : null}
                   </div>
                   <time className="muted text-sm xl:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
                 </li>

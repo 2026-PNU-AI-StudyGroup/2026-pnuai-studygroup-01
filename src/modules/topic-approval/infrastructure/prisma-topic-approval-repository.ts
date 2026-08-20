@@ -40,6 +40,33 @@ async function adminReviewerIds(
   return admins.map(({ id }) => id);
 }
 
+// 프로젝트 등록 승인·반려를 관리 이력에 남긴다. 예전에는 topic_approval_request 행에만 남아
+// 관리 이력 화면에서 누가 왜 반려했는지 볼 수 없었다. 반려 사유까지 metadata 에 담는다.
+async function recordApprovalDecisionAudit(
+  transaction: Pick<Prisma.TransactionClient, "auditLog">,
+  request: { id: string; topicId: string; requesterId: string; route: "PROFESSOR" | "ADMIN"; topic: { title: string } },
+  input: { actorId: string; actorRole: "PROFESSOR" | "ADMIN"; reviewComment: string; decidedAt: Date },
+  outcome: "APPROVED" | "REJECTED",
+): Promise<void> {
+  await transaction.auditLog.create({
+    data: {
+      actorId: input.actorId,
+      action: outcome === "APPROVED" ? "TOPIC_APPROVAL_APPROVED" : "TOPIC_APPROVAL_REJECTED",
+      targetType: "TOPIC",
+      targetId: request.topicId,
+      metadata: {
+        requestId: request.id,
+        topicTitle: request.topic.title,
+        requesterId: request.requesterId,
+        route: request.route,
+        reviewerRole: input.actorRole,
+        reviewComment: input.reviewComment,
+      },
+      createdAt: input.decidedAt,
+    },
+  });
+}
+
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   constructor(private readonly client: PrismaClient) {}
 
@@ -365,6 +392,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
             data: { status: "REJECTED" },
           });
           await transaction.projectTeam.deleteMany({ where: { projectId: request.topicId, confirmedAt: null } });
+          await recordApprovalDecisionAudit(transaction, initialRequest, input, "REJECTED");
           await notifyTopicApprovalResult(transaction, initialRequest, "REJECTED", input.decidedAt);
           return "REJECTED";
         }
@@ -469,6 +497,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
           where: { id: request.id },
           data: { status: "APPROVED", reviewComment: input.reviewComment, decidedById: input.actorId, decidedAt: input.decidedAt },
         });
+        await recordApprovalDecisionAudit(transaction, initialRequest, input, "APPROVED");
         await notifyTopicApprovalResult(transaction, initialRequest, "APPROVED", input.decidedAt);
         return "APPROVED";
         });

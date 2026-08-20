@@ -46,6 +46,7 @@ export class PrismaAuditLogReader implements AuditLogReader {
         action: entry.action,
         actorName: entry.actor?.name ?? "시스템",
         targetLabel: resolveTargetLabel(entry, userById, teamById, topicById, divisionById, programById),
+        reason: resolveReason(entry.metadata),
         createdAt: entry.createdAt,
       })),
       page,
@@ -57,6 +58,13 @@ export class PrismaAuditLogReader implements AuditLogReader {
 
 function isMetadata(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// 결정에 붙은 사유. 지금은 프로젝트 등록 승인·반려가 남긴다.
+function resolveReason(metadata: unknown): string | null {
+  if (!isMetadata(metadata) || typeof metadata.reviewComment !== "string") return null;
+  const reason = metadata.reviewComment.trim();
+  return reason.length ? reason : null;
 }
 
 function resolveTargetLabel(
