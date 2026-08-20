@@ -78,7 +78,11 @@ function resolveTargetLabel(
   if (entry.targetType === "PUSAN_EMAIL") return entry.targetId;
   if (entry.targetType === "USER") return userById.get(entry.targetId) ?? "탈퇴한 사용자";
   if (entry.targetType === "TEAM") return teamById.get(entry.targetId) ?? "종료된 팀";
-  if (entry.targetType === "TOPIC") return topicById.get(entry.targetId) ?? "삭제된 프로젝트";
+  // 삭제된 프로젝트는 조회할 대상이 없다. 지울 때 metadata 에 남긴 이름을 쓴다.
+  if (entry.targetType === "TOPIC") {
+    return topicById.get(entry.targetId)
+      ?? (isMetadata(entry.metadata) && typeof entry.metadata.title === "string" ? entry.metadata.title : "삭제된 프로젝트");
+  }
   if (entry.targetType === "PROGRAM_DIVISION") return divisionById.get(entry.targetId) ?? (isMetadata(entry.metadata) && typeof entry.metadata.name === "string" ? entry.metadata.name : "삭제된 분과");
   if (entry.targetType === "PROJECT_PROGRAM") return programById.get(entry.targetId) ?? entry.targetId;
   if (entry.targetType === "PROJECT_ASSISTANT_INVITATION" && isMetadata(entry.metadata) && typeof entry.metadata.topicId === "string") {
