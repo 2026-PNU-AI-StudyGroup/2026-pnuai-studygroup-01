@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { acceptPrivacyConsentAction } from "@/app/onboarding/_actions/accept-privacy-consent-action";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -13,6 +16,7 @@ const SUMMARY = [
 ];
 
 export function PrivacyNoticeStep() {
+  const [agreed, setAgreed] = useState(false);
   return (
     <section aria-labelledby="privacy-notice-title" className="page-enter">
       <h2 id="privacy-notice-title" className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
@@ -46,6 +50,8 @@ export function PrivacyNoticeStep() {
             type="checkbox"
             value="on"
             required
+            checked={agreed}
+            onChange={(event) => setAgreed(event.target.checked)}
             className="mt-1 size-4 shrink-0 accent-[var(--primary)]"
           />
           <span>
@@ -54,7 +60,8 @@ export function PrivacyNoticeStep() {
           </span>
         </label>
         <div>
-          <button type="submit" className="button-primary">
+          {/* 체크 전에는 버튼을 막는다. required 만 두면 눌러 본 뒤에야 막힌 걸 안다. */}
+          <button type="submit" className="button-primary" disabled={!agreed}>
             <UiText>{"동의하고 시작하기"}</UiText>
           </button>
         </div>
