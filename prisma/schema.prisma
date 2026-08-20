@@ -299,7 +299,7 @@ model User {
   contactEmail                       String?
   onboardingRequired                 Boolean                             @default(false)
   onboardingCompletedAt              DateTime?
-  privacyNoticeAckAt                 DateTime?
+  privacyConsentAt                 DateTime?
   createdAt                          DateTime                            @default(now())
   updatedAt                          DateTime                            @updatedAt
   sessions                           Session[]
