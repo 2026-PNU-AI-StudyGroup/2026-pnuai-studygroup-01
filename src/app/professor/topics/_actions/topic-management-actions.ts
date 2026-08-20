@@ -21,6 +21,11 @@ import {
   ManageAdminProjectLifecycleService,
 } from "@/modules/topic/application/manage-admin-project-lifecycle";
 import { PrismaAdminProjectLifecycleWriter } from "@/modules/topic/infrastructure/prisma-admin-project-lifecycle-writer";
+import {
+  DeleteProjectError,
+  DeleteProjectService,
+} from "@/modules/topic/application/delete-project";
+import { PrismaProjectDeletionRepository } from "@/modules/topic/infrastructure/prisma-project-deletion-repository";
 
 type TopicManagementActionState = {
   status: "idle" | "error" | "success";
@@ -29,6 +34,38 @@ type TopicManagementActionState = {
 
 export type TopicStatusActionState = TopicManagementActionState;
 export type AdminProjectLifecycleActionState = TopicManagementActionState;
+export type ProjectDeleteActionState = TopicManagementActionState;
+
+export async function deleteProjectAction(
+  _previousState: TopicManagementActionState,
+  formData: FormData,
+): Promise<TopicManagementActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = z.object({
+    topicId: z.string().uuid(),
+    reason: z.string(),
+    confirmedTitle: z.string(),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "삭제 내용을 다시 확인해 주세요." };
+  try {
+    await new DeleteProjectService(
+      new PrismaProjectDeletionRepository(prisma),
+    ).execute(actor, {
+      projectId: parsed.data.topicId,
+      reason: parsed.data.reason,
+      confirmedTitle: parsed.data.confirmedTitle,
+    });
+  } catch (error) {
+    if (error instanceof DeleteProjectError) {
+      return { status: "error", message: error.message };
+    }
+    throw error;
+  }
+  revalidatePath("/professor/topics");
+  revalidatePath("/topics");
+  redirect("/professor/topics");
+}
 
 export async function adminProjectLifecycleAction(
   _previousState: AdminProjectLifecycleActionState,

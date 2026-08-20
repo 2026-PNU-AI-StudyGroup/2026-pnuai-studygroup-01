@@ -56,6 +56,7 @@ const actionLabel: Record<AuditAction, string> = {
   TOPIC_RECRUITMENT_CLOSED: "프로젝트 모집 마감",
   TOPIC_APPROVAL_APPROVED: "프로젝트 등록 승인",
   TOPIC_APPROVAL_REJECTED: "프로젝트 등록 반려",
+  TOPIC_DELETED: "프로젝트 삭제",
   PROGRAM_DIVISION_CREATED: "분과 추가",
   PROGRAM_DIVISION_UPDATED: "분과 변경",
   PROGRAM_DIVISION_DELETED: "분과 삭제",
