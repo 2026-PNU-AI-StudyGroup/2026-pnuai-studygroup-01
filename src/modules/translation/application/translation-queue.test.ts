@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   enqueueTranslations,
@@ -7,6 +7,22 @@ import {
 } from "@/modules/translation/application/translation-queue";
 
 describe("번역 큐 등록", () => {
+  // 사용자 콘텐츠 번역은 기본으로 꺼져 있다. 등록 동작을 보려면 켠 상태여야 한다.
+  beforeEach(() => vi.stubEnv("USER_CONTENT_TRANSLATION_ENABLED", "true"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("꺼져 있으면 원문도 일감도 남기지 않는다", async () => {
+    vi.stubEnv("USER_CONTENT_TRANSLATION_ENABLED", "");
+    const translationSource = { createMany: vi.fn() };
+    const translationJob = { createMany: vi.fn() };
+    const client = { translationSource, translationJob } as unknown as TranslationQueueClient;
+
+    await enqueueTranslations(client, ["팀 대화 내용"]);
+
+    expect(translationSource.createMany).not.toHaveBeenCalled();
+    expect(translationJob.createMany).not.toHaveBeenCalled();
+  });
+
   it("정규화된 원문을 해시로 중복 제거하고 한영 작업을 함께 등록한다", async () => {
     const translationSource = { createMany: vi.fn(async () => ({ count: 2 })) };
     const translationJob = { createMany: vi.fn(async () => ({ count: 4 })) };

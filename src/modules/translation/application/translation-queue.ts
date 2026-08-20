@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { Prisma } from "@/generated/prisma/client";
 import {
+  isUserContentTranslationEnabled,
   normalizeTranslationText,
   translationTargets,
   type TranslationTarget,
@@ -20,6 +21,9 @@ export async function enqueueTranslations(
   client: TranslationQueueClient,
   values: ReadonlyArray<string | null | undefined>,
 ): Promise<void> {
+  // 꺼져 있으면 원문 복사본도 남기지 않는다. 처리하지 않을 일감을 쌓아 둘 이유가 없다.
+  if (!isUserContentTranslationEnabled(process.env)) return;
+
   const sources = [
     ...new Map(
       values

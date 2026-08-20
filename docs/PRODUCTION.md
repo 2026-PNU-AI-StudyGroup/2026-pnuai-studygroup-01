@@ -72,7 +72,7 @@ docker compose -f compose.production.yaml --env-file .env.production \
 
 | 타이머 | 주기 | 내용 |
 |---|---|---|
-| `aipms-translations.timer` | 1분 | 번역 큐 처리 |
+| `aipms-translations.timer` | 1분 | 번역 큐 처리 (사용자 콘텐츠 번역이 꺼져 있으면 건너뜀) |
 | `aipms-emails.timer` | 1분 | 이메일 대기열 발송 |
 | `aipms-deadlines.timer` | 매일 09:00 | 마감 임박 알림 생성 |
 | `aipms-backup.timer` | 매일 03:30 | PostgreSQL 덤프 + MinIO 데이터 백업 |
