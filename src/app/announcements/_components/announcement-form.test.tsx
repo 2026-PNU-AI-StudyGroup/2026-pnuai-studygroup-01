@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/announcements/_actions/announcement-actions", () => ({
   createAnnouncementAction: vi.fn(),
-  createSystemAnnouncementAction: vi.fn(),
   updateAnnouncementAction: vi.fn(),
 }));
 
@@ -19,7 +18,6 @@ describe("공지 작성 열람 범위", () => {
     const { container } = render(
       <AnnouncementForm
         targets={targets}
-        creationScope="SYSTEM"
         targetLocked
         targetLabel="시스템 전체"
       />,

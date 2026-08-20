@@ -33,7 +33,6 @@ vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", 
 
 import {
   createAnnouncementAction,
-  createSystemAnnouncementAction,
   deleteAnnouncementAction,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
@@ -69,10 +68,10 @@ describe("공지 서버 액션", () => {
     mocks.delete.mockResolvedValue("DELETED");
   });
 
-  it("프로젝트 작성 액션으로 프로그램 공지를 만들 수 없다", async () => {
+  it("대상 형식이 잘못되면 만들지 않는다", async () => {
     await expect(createAnnouncementAction(
       { status: "idle", message: "" },
-      validForm(`program:${programId}`),
+      validForm("nonsense:1"),
     )).resolves.toMatchObject({ status: "error" });
 
     expect(mocks.create).not.toHaveBeenCalled();
@@ -88,12 +87,12 @@ describe("공지 서버 액션", () => {
     )).rejects.toThrow(`REDIRECT:/announcements/${noticeId}`);
 
     expect(mocks.create).toHaveBeenCalledWith(actor, expect.objectContaining({ newAttachmentUploadIds: [uploadId] }));
-    expect(mocks.revalidatePath).not.toHaveBeenCalledWith("/announcements");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/announcements");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/projects", "layout");
   });
 
-  it("시스템 공지 작성 액션은 관리자만 사용할 수 있다", async () => {
-    await expect(createSystemAnnouncementAction(
+  it("전체 공지는 관리자만 작성할 수 있고 대상은 비운다", async () => {
+    await expect(createAnnouncementAction(
       { status: "idle", message: "" },
       validForm("GLOBAL"),
     )).resolves.toMatchObject({ status: "error" });
@@ -104,15 +103,25 @@ describe("공지 서버 액션", () => {
     mocks.audience.mockResolvedValue({ role: "ADMIN", actorId: admin.id, teamIds: [], programIds: [] });
     mocks.create.mockResolvedValue({ id: noticeId, teamId: null, programId: null });
 
-    await expect(createSystemAnnouncementAction(
+    await expect(createAnnouncementAction(
+      { status: "idle", message: "" },
+      validForm("GLOBAL"),
+    )).rejects.toThrow(`REDIRECT:/announcements/${noticeId}`);
+    expect(mocks.create).toHaveBeenCalledWith(admin, expect.objectContaining({ teamId: null, programId: null }));
+  });
+
+  it("프로그램 대상 공지도 같은 액션으로 작성한다", async () => {
+    // 예전에는 팀 대상만 받아 프로그램 공지를 만들 수 없었다.
+    const admin = { id: "10000000-0000-4000-8000-000000000009", role: "ADMIN" as const };
+    mocks.actor.mockResolvedValue(admin);
+    mocks.audience.mockResolvedValue({ role: "ADMIN", actorId: admin.id, teamIds: [], programIds: [programId] });
+    mocks.create.mockResolvedValue({ id: noticeId, teamId: null, programId });
+
+    await expect(createAnnouncementAction(
       { status: "idle", message: "" },
       validForm(`program:${programId}`),
     )).rejects.toThrow(`REDIRECT:/announcements/${noticeId}`);
-    expect(mocks.create).toHaveBeenCalledWith(admin, expect.objectContaining({
-      teamId: null,
-      programId: null,
-      visibility: "AUTHENTICATED",
-    }));
+    expect(mocks.create).toHaveBeenCalledWith(admin, expect.objectContaining({ programId, teamId: null }));
   });
 
   it("수정·삭제 성공 후 프로그램 화면을 재검증한다", async () => {

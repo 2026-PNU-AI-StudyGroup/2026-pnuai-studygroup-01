@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 import {
   createAnnouncementAction,
-  createSystemAnnouncementAction,
   type AnnouncementActionState,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
@@ -33,7 +32,6 @@ export function AnnouncementForm({
   initialVisibility = "AUTHENTICATED",
   initialAttachments = [],
   returnHref,
-  creationScope = "SCOPED",
   targetLocked = false,
   targetLabel,
 }: {
@@ -46,7 +44,6 @@ export function AnnouncementForm({
   initialVisibility?: AnnouncementVisibility;
   initialAttachments?: AnnouncementAttachmentRecord[];
   returnHref?: string;
-  creationScope?: "SYSTEM" | "SCOPED";
   targetLocked?: boolean;
   targetLabel?: string;
 }) {
@@ -91,9 +88,7 @@ export function AnnouncementForm({
             setUploadProgress(null);
             const result = announcementId
               ? await updateAnnouncementAction(announcementId, initialState, formData)
-              : creationScope === "SYSTEM"
-                ? await createSystemAnnouncementAction(initialState, formData)
-                : await createAnnouncementAction(initialState, formData);
+              : await createAnnouncementAction(initialState, formData);
             setState(result);
           } catch (error) {
             if (!isUploadAbortError(error)) {
