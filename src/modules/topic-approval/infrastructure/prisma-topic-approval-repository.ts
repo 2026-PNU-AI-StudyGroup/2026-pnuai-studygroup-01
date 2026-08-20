@@ -21,6 +21,25 @@ function visibleApprovalRequest(actor: TopicApprovalViewer): Prisma.TopicApprova
   return { route: "ADMIN" };
 }
 
+// 프로그램 운영 알림 수신자. 담당 관리자를 지정한 프로그램은 그 사람들에게만 보내고,
+// 지정이 없으면 예전처럼 관리자 전체에게 보낸다. 담당자를 비워 둔 프로그램의 알림이
+// 조용히 아무에게도 안 가는 상황을 만들지 않는다.
+async function adminReviewerIds(
+  transaction: Pick<Prisma.TransactionClient, "programManager" | "user">,
+  programId: string,
+): Promise<string[]> {
+  const managers = await transaction.programManager.findMany({
+    where: { programId, user: { role: "ADMIN", accountStatus: "ACTIVE" } },
+    select: { userId: true },
+  });
+  if (managers.length) return managers.map(({ userId }) => userId);
+  const admins = await transaction.user.findMany({
+    where: { role: "ADMIN", accountStatus: "ACTIVE" },
+    select: { id: true },
+  });
+  return admins.map(({ id }) => id);
+}
+
 export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
   constructor(private readonly client: PrismaClient) {}
 
@@ -142,10 +161,7 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
       ]);
       const reviewerIds = route === "PROFESSOR"
         ? [requestedProfessorId!]
-        : (await transaction.user.findMany({
-          where: { role: "ADMIN", accountStatus: "ACTIVE" },
-          select: { id: true },
-        })).map(({ id: userId }) => userId);
+        : await adminReviewerIds(transaction, topic.programId);
       const reviewerHref = route === "ADMIN"
         ? projectApprovalsHref({ programId: topic.programId, status: "PENDING" })
         : "/dashboard?view=pending";

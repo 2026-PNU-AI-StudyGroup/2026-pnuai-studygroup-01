@@ -19,13 +19,13 @@ export default async function Home({
     const registration = await prisma.user.findUnique({
       where: { id: actor.id },
       select: {
-        privacyNoticeAckAt: true,
+        privacyConsentAt: true,
         onboardingRequired: true,
         onboardingCompletedAt: true,
       },
     });
     // 처리방침 확인은 역할과 무관하게 1회 필요하다.
-    if (!registration?.privacyNoticeAckAt) redirect("/onboarding");
+    if (!registration?.privacyConsentAt) redirect("/onboarding");
     if (
       actor.role === "STUDENT" &&
       registration.onboardingRequired &&

@@ -61,7 +61,8 @@ export class UserAdministrationService {
     assertAdmin(actor);
     const normalizedQuery = query.trim().slice(0, 100);
     const normalizedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
-    return this.repository.list(normalizedQuery, normalizedPage, 30, {
+    // 행 높이를 줄여 한 화면에 더 많이 담는다. 그만큼 한 페이지 인원도 늘린다.
+    return this.repository.list(normalizedQuery, normalizedPage, 50, {
       role: resolveUserListRoleFilter(filters.role),
       status: resolveUserListStatusFilter(filters.status),
     });

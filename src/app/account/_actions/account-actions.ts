@@ -49,6 +49,7 @@ const academicSchema = z.object({
 const emailPreferenceSchema = z.object({
   reportActivityEnabled: z.enum(["on", "off"]).default("off"),
   discussionEnabled: z.enum(["on", "off"]).default("off"),
+  programActivityEnabled: z.enum(["on", "off"]).default("off"),
 });
 
 export async function saveEmailPreferenceAction(_state: StudentProfileActionState, formData: FormData): Promise<StudentProfileActionState> {
@@ -57,6 +58,7 @@ export async function saveEmailPreferenceAction(_state: StudentProfileActionStat
   const parsed = emailPreferenceSchema.safeParse({
     reportActivityEnabled: formData.get("reportActivityEnabled") === "on" ? "on" : "off",
     discussionEnabled: formData.get("discussionEnabled") === "on" ? "on" : "off",
+    programActivityEnabled: formData.get("programActivityEnabled") === "on" ? "on" : "off",
   });
   if (!parsed.success) return { status: "error", message: "이메일 수신 설정을 확인해 주세요." };
   await prisma.emailPreference.upsert({
@@ -65,10 +67,12 @@ export async function saveEmailPreferenceAction(_state: StudentProfileActionStat
       userId: actor.id,
       reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
       discussionEnabled: parsed.data.discussionEnabled === "on",
+      programActivityEnabled: parsed.data.programActivityEnabled === "on",
     },
     update: {
       reportActivityEnabled: parsed.data.reportActivityEnabled === "on",
       discussionEnabled: parsed.data.discussionEnabled === "on",
+      programActivityEnabled: parsed.data.programActivityEnabled === "on",
     },
   });
   revalidatePath("/account");

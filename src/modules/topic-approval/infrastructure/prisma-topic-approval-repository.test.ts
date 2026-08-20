@@ -46,6 +46,7 @@ describe("PrismaTopicApprovalRepository", () => {
       })) },
       studentTeamInvitation: { updateMany: cancelInvitations },
       topic: { create }, user: { findMany: vi.fn(async () => []) },
+      programManager: { findMany: vi.fn(async () => []) },
       notification: { createMany: vi.fn(async () => ({ count: 0 })) }, emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
     };
     const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
@@ -67,6 +68,62 @@ describe("PrismaTopicApprovalRepository", () => {
         ]) },
       }) },
     }) });
+  });
+
+  // 예전에는 등록 검토 알림이 관리자로 지정된 사람 전원에게 갔다. 프로그램마다 담당자를 두면
+  // 그 프로그램 알림은 담당자에게만 가야 한다.
+  function reviewerTransaction(managerIds: string[], adminIds: string[]) {
+    const notificationCreateMany = vi.fn(async () => ({ count: 0 }));
+    const emailCreateMany = vi.fn(async () => ({ count: 0 }));
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValueOnce([openProgram()]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "student-team-1" }]),
+      studentTeam: { findFirst: vi.fn(async () => ({ id: "student-team-1",
+        members: [
+          { studentId: "student-1", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+          { studentId: "student-2", student: { role: "STUDENT", accountStatus: "ACTIVE" } },
+        ],
+      })) },
+      studentTeamInvitation: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      topic: { create: vi.fn(async () => ({ id: "topic-1" })) },
+      programManager: { findMany: vi.fn(async () => managerIds.map((userId) => ({ userId }))) },
+      user: { findMany: vi.fn(async () => adminIds.map((id) => ({ id }))) },
+      notification: { createMany: notificationCreateMany },
+      emailDelivery: { createMany: emailCreateMany },
+    };
+    return { transaction, notificationCreateMany, emailCreateMany };
+  }
+
+  function recipientIds(createMany: ReturnType<typeof vi.fn>): string[] {
+    const [{ data }] = createMany.mock.calls[0] as [{ data: Array<{ recipientId?: string; recipientUserId?: string }> }];
+    return data.map((row) => row.recipientId ?? row.recipientUserId!);
+  }
+
+  it("담당 관리자를 지정한 프로그램은 담당자에게만 검토 알림을 보낸다", async () => {
+    const { transaction, notificationCreateMany } = reviewerTransaction(["admin-2"], ["admin-1", "admin-2", "admin-3"]);
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await new PrismaTopicApprovalRepository(client).create(registration);
+
+    expect(transaction.programManager.findMany).toHaveBeenCalledWith({
+      where: { programId: "program-1", user: { role: "ADMIN", accountStatus: "ACTIVE" } },
+      select: { userId: true },
+    });
+    // 관리자 전체를 긁어오는 조회는 쓰지 않는다.
+    expect(transaction.user.findMany).not.toHaveBeenCalledWith({
+      where: { role: "ADMIN", accountStatus: "ACTIVE" },
+      select: { id: true },
+    });
+    // 요청자 본인 접수 알림은 그대로 간다.
+    expect(recipientIds(notificationCreateMany)).toEqual(["admin-2", "student-1"]);
+  });
+
+  it("담당 관리자가 없는 프로그램은 관리자 전체에게 검토 알림을 보낸다", async () => {
+    const { transaction, notificationCreateMany } = reviewerTransaction([], ["admin-1", "admin-2"]);
+    const client = { $transaction: vi.fn(async (callback: (tx: typeof transaction) => unknown) => callback(transaction)) } as unknown as PrismaClient;
+
+    await new PrismaTopicApprovalRepository(client).create(registration);
+
+    expect(recipientIds(notificationCreateMany)).toEqual(["admin-1", "admin-2", "student-1"]);
   });
 
   it("프로젝트 대표가 원본 학생팀 구성원이 아니면 생성하지 않는다", async () => {

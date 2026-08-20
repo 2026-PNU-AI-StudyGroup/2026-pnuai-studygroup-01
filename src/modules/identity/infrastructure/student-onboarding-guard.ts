@@ -10,13 +10,13 @@ export async function requireCompletedStudentOnboarding<TActor extends CurrentAc
   const registration = await prisma.user.findUnique({
     where: { id: actor.id },
     select: {
-      privacyNoticeAckAt: true,
+      privacyConsentAt: true,
       onboardingRequired: true,
       onboardingCompletedAt: true,
     },
   });
   if (!registration) return actor;
-  if (!registration.privacyNoticeAckAt) redirect("/onboarding");
+  if (!registration.privacyConsentAt) redirect("/onboarding");
   if (
     actor.role === "STUDENT" &&
     registration.onboardingRequired &&

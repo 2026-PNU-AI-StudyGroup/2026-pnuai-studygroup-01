@@ -20,7 +20,7 @@ const enabledSchema = z.object({
   GMAIL_OAUTH_REFRESH_TOKEN: z.string().trim().min(1),
   EMAIL_FROM_NAME: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-    z.string().trim().min(1).max(100).default("PNU 프로젝트 관리 시스템"),
+    z.string().trim().min(1).max(100).default("PNU AIPMS"),
   ),
   EMAIL_REPLY_TO: blankAsUndefined,
 });

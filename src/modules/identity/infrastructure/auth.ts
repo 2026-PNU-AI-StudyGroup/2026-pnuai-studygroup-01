@@ -61,7 +61,7 @@ async function reconcileProfessorRole(userId: string): Promise<void> {
 }
 
 export const auth = betterAuth({
-  appName: "PNU 프로젝트 관리 시스템",
+  appName: "PNU AIPMS",
   baseURL: authEnvironment.BETTER_AUTH_URL,
   secret: authEnvironment.BETTER_AUTH_SECRET,
   advanced: {

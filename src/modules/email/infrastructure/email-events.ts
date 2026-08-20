@@ -1,24 +1,10 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { OutboxEmailEvent } from "@/modules/email/application/email-delivery-ports";
-import { isDirectEmailDeliveryKind, isOptionalEmailKind, normalizeEmailHref } from "@/modules/email/domain/email-delivery";
+import { emailPreferenceAllows, isDirectEmailDeliveryKind, isOptionalEmailKind, normalizeEmailHref } from "@/modules/email/domain/email-delivery";
 import { isPusanEmail } from "@/modules/identity/domain/user-role";
 
 type EmailTransaction = Pick<Prisma.TransactionClient, "user" | "emailDelivery">;
 
-type Recipient = {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
-  preferredLocale: string;
-  emailPreference: { reportActivityEnabled: boolean; discussionEnabled: boolean } | null;
-};
-
-function preferenceAllows(recipient: Recipient, kind: OutboxEmailEvent["kind"]) {
-  if (kind === "REPORT_ACTIVITY") return recipient.emailPreference?.reportActivityEnabled ?? false;
-  if (kind === "DISCUSSION") return recipient.emailPreference?.discussionEnabled ?? false;
-  return true;
-}
 
 export async function enqueueEmailEvents(
   transaction: EmailTransaction,
@@ -35,7 +21,7 @@ export async function enqueueEmailEvents(
           emailVerified: true,
           accountStatus: true,
           preferredLocale: true,
-          emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true } },
+          emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true } },
         },
       })
     : [];
@@ -45,7 +31,7 @@ export async function enqueueEmailEvents(
     const recipient = event.recipientId ? recipientsById.get(event.recipientId) : null;
     if (recipient) {
       if (!recipient.emailVerified || !isPusanEmail(recipient.email) || (recipient.accountStatus !== "ACTIVE" && !event.allowInactiveRecipient)) continue;
-      if (isOptionalEmailKind(event.kind) && !preferenceAllows(recipient, event.kind)) continue;
+      if (!emailPreferenceAllows(event.kind, recipient.emailPreference)) continue;
       data.push({
         kind: event.kind,
         recipientUserId: recipient.id,

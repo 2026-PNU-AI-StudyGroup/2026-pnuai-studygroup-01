@@ -39,7 +39,7 @@ describe("parseEmailEnvironment", () => {
     });
     expect(parsed).toEqual(expect.objectContaining({
       enabled: true,
-      EMAIL_FROM_NAME: "PNU 프로젝트 관리 시스템",
+      EMAIL_FROM_NAME: "PNU AIPMS",
     }));
     expect(parsed.enabled && parsed.EMAIL_REPLY_TO).toBeUndefined();
   });

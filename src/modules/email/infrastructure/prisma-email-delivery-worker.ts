@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { ClaimedEmailDelivery, EmailTransport } from "@/modules/email/application/email-delivery-ports";
-import { isDirectEmailDeliveryKind } from "@/modules/email/domain/email-delivery";
+import { emailPreferenceAllows, isDirectEmailDeliveryKind } from "@/modules/email/domain/email-delivery";
 import { renderEmailDelivery } from "@/modules/email/infrastructure/email-template";
 import { isPusanEmail } from "@/modules/identity/domain/user-role";
 
@@ -226,7 +226,7 @@ export class PrismaEmailDeliveryWorker {
         email: true,
         emailVerified: true,
         accountStatus: true,
-        emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true } },
+        emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true } },
       },
     });
     if (!recipient || !recipient.emailVerified || !isPusanEmail(recipient.email)) {
@@ -235,11 +235,8 @@ export class PrismaEmailDeliveryWorker {
     if (recipient.accountStatus !== "ACTIVE" && !job.allowInactiveRecipient) {
       return { allowed: false, reason: "RECIPIENT_ACCOUNT_INACTIVE" };
     }
-    if (job.kind === "REPORT_ACTIVITY" && !recipient.emailPreference?.reportActivityEnabled) {
-      return { allowed: false, reason: "REPORT_ACTIVITY_EMAIL_DISABLED" };
-    }
-    if (job.kind === "DISCUSSION" && !recipient.emailPreference?.discussionEnabled) {
-      return { allowed: false, reason: "DISCUSSION_EMAIL_DISABLED" };
+    if (!emailPreferenceAllows(job.kind, recipient.emailPreference)) {
+      return { allowed: false, reason: `${job.kind}_EMAIL_DISABLED` };
     }
     return { allowed: true };
   }

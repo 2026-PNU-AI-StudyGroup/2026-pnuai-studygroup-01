@@ -43,7 +43,7 @@ describe("Home", () => {
   it("로그인 사용자를 프로젝트 찾기로 보낸다", async () => {
     getCurrentActorMock.mockResolvedValue({ id: "user", role: "STUDENT" });
     findUnique.mockResolvedValue({
-      privacyNoticeAckAt: new Date("2026-01-01"),
+      privacyConsentAt: new Date("2026-01-01"),
       onboardingRequired: false,
       onboardingCompletedAt: null,
     });
@@ -53,7 +53,7 @@ describe("Home", () => {
     expect(findUnique).toHaveBeenCalledWith({
       where: { id: "user" },
       select: {
-        privacyNoticeAckAt: true,
+        privacyConsentAt: true,
         onboardingRequired: true,
         onboardingCompletedAt: true,
       },
