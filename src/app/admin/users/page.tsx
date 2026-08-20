@@ -10,7 +10,6 @@ import {
   AdminSection,
   AdminSectionEmpty,
   adminRecordListClassName,
-  adminRecordRowClassName,
 } from "@/app/_components/admin-section";
 import { UserRoleForm } from "@/app/admin/users/_components/user-role-form";
 import { UserStatusForm } from "@/app/admin/users/_components/user-status-form";
@@ -38,6 +37,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const roleLabel = { STUDENT: "학생", PROFESSOR: "교수", ADMIN: "관리자", ADVISOR: "자문위원" } as const;
+
+// 한 화면에 최대한 많은 사용자를 담으려고 공용 행보다 낮게 쓴다.
+// 공용 adminRecordRowClassName 은 다른 목록과 함께 쓰이므로 건드리지 않는다.
+const userRowClassName = "record-row px-5 py-3 sm:px-6";
 
 const roleFilterLabel: Record<UserListRoleFilter, string> = {
   ALL: "전체",
@@ -134,30 +137,27 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
               {data.items.map((user) => (
                 <li
                   key={user.id}
-                  className={`${adminRecordRowClassName} grid gap-5 xl:grid-cols-[minmax(18rem,1fr)_minmax(9rem,11rem)_minmax(10rem,13rem)] xl:items-center`}
+                  className={`${userRowClassName} grid gap-x-4 gap-y-2 md:grid-cols-[minmax(9rem,1fr)_minmax(11rem,1.4fr)_5.5rem_auto] md:items-center`}
                 >
-                  <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <h3 className="truncate font-semibold">{user.name}</h3>
+                    <StatusBadge>{roleLabel[user.role]}</StatusBadge>
+                    {/* 활성은 기본 상태다. 배지를 붙이면 줄 폭만 잡아먹는다. */}
+                    {user.isActive ? null : <StatusBadge tone="danger"><UiText>{"비활성"}</UiText></StatusBadge>}
+                  </div>
+                  <p className="muted min-w-0 truncate text-sm">{user.email}</p>
+                  <time className="muted text-sm md:whitespace-nowrap" dateTime={user.createdAt.toISOString()}>
+                    <span className="sr-only"><UiText>{"가입일"}</UiText>{" "}</span>
+                    <UiDate value={user.createdAt} mode="date" />
+                  </time>
+                  {user.id === actor.id ? (
+                    <StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge>
+                  ) : (
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-semibold">{user.name}</h3>
-                      <StatusBadge>{roleLabel[user.role]}</StatusBadge>
-                      <StatusBadge tone={user.isActive ? "neutral" : "danger"}><UiText>{user.isActive ? "활성" : "비활성"}</UiText></StatusBadge>
+                      <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
+                      {user.isActive ? <UserRoleForm userId={user.id} name={user.name} role={user.role} isSelf={false} /> : null}
                     </div>
-                    <p className="muted mt-2 break-words text-sm">{user.email}</p>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end xl:contents">
-                    <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-1 text-sm xl:block">
-                      <dt className="muted xl:text-xs"><UiText>{"가입일"}</UiText></dt>
-                      <dd className="xl:mt-1"><UiDate value={user.createdAt} mode="date" /></dd>
-                    </dl>
-                    {user.id === actor.id ? (
-                      <div className="sm:text-right"><StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge></div>
-                    ) : (
-                      <div className="grid gap-2">
-                        <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
-                        {user.isActive ? <UserRoleForm userId={user.id} name={user.name} role={user.role} isSelf={false} /> : null}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </li>
               ))}
             </ol>

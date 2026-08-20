@@ -452,6 +452,14 @@ summary::-webkit-details-marker {
     background: #ffe9e6;
   }
 
+  /* 목록 한 줄에 들어가는 버튼. 한 화면에 더 많은 행을 담으려고 높이를 줄인다.
+     공용 버튼 규칙 뒤에 두어야 min-height 를 덮어쓴다. */
+  .button-compact {
+    min-height: 2.125rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8125rem;
+  }
+
   button:disabled,
   [aria-disabled="true"] {
     cursor: not-allowed;

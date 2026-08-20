@@ -20,12 +20,12 @@ export function UserRoleForm({ userId, name, role, isSelf }: {
   if (role === "ADVISOR" || (isAdmin && isSelf)) return null;
 
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2 sm:justify-end">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="isAdmin" value={String(!isAdmin)} />
       {isAdmin ? (
         <ConfirmSubmitButton
-          className="button-secondary"
+          className="button-secondary button-compact"
           confirmMessage={`${name} 계정의 관리자 권한을 해제하시겠습니까? 로그인 상태도 종료됩니다.`}
           disabled={pending}
         >
@@ -33,7 +33,7 @@ export function UserRoleForm({ userId, name, role, isSelf }: {
         </ConfirmSubmitButton>
       ) : (
         <ConfirmSubmitButton
-          className="button-secondary"
+          className="button-secondary button-compact"
           confirmMessage={`${name} 계정에 관리자 권한을 부여하시겠습니까? 프로그램, 사용자와 운영 설정 전체를 관리할 수 있게 됩니다.`}
           disabled={pending}
         >
