@@ -44,7 +44,7 @@ export function PrivacyNoticeStep() {
       </p>
       {/* 서비스 이용에 반드시 필요한 항목이라 선택 동의는 두지 않는다. 대신 필수임을 분명히 밝힌다. */}
       <form action={acceptPrivacyConsentAction} className="mt-6 grid gap-4">
-        <label className="flex items-start gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-4 text-[0.9375rem] leading-6">
+        <label className="flex items-start gap-2.5 text-[0.9375rem] leading-6">
           <UiInput
             name="privacyConsent"
             type="checkbox"
@@ -52,7 +52,7 @@ export function PrivacyNoticeStep() {
             required
             checked={agreed}
             onChange={(event) => setAgreed(event.target.checked)}
-            className="mt-1 size-4 shrink-0 accent-[var(--primary)]"
+            className="mt-0.5"
           />
           <span>
             <strong className="font-bold text-[var(--ink)]"><UiText>{"[필수]"}</UiText></strong>{" "}

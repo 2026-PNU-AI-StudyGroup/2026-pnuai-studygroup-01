@@ -21,21 +21,21 @@ export function EmailPreferenceForm({ preference }: {
             <strong className="block text-sm"><UiText>{"보고서 제출·검토 활동"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"보고서가 제출되거나 검토될 때 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <UiInput name="reportActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.reportActivityEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
+          <UiInput name="reportActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.reportActivityEnabled ?? false} className="mt-0.5" />
         </label>
         <label className="flex items-start justify-between gap-5 border-b border-[var(--line)] pb-4">
           <span>
             <strong className="block text-sm"><UiText>{"프로젝트 토론 활동"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"프로젝트 토론에 새 글이 등록될 때 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <UiInput name="discussionEnabled" type="checkbox" value="on" defaultChecked={preference?.discussionEnabled ?? false} className="mt-1 size-4 accent-[var(--primary)]" />
+          <UiInput name="discussionEnabled" type="checkbox" value="on" defaultChecked={preference?.discussionEnabled ?? false} className="mt-0.5" />
         </label>
         <label className="flex items-start justify-between gap-5">
           <span>
             <strong className="block text-sm"><UiText>{"프로그램 운영 알림"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"담당 프로그램의 프로젝트 등록 검토 요청을 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <UiInput name="programActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.programActivityEnabled ?? true} className="mt-1 size-4 accent-[var(--primary)]" />
+          <UiInput name="programActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.programActivityEnabled ?? true} className="mt-0.5" />
         </label>
       </fieldset>
       <div className="form-action-bar">

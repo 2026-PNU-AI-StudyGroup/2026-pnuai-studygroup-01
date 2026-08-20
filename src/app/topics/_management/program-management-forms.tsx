@@ -56,7 +56,7 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
       <input type="hidden" name="programId" value={program.id} />
       <FormSection appearance="plain" title="기본 정보" className={styles.section} contentClassName={formStyles.basicGrid}>
           <FormField id="management-program-category" label="프로그램 분류">
-            <CategorySelect options={categoryOptions} defaultValue={program.category} />
+            <CategorySelect options={categoryOptions} defaultValue={program.category} canRename />
           </FormField>
           <FormField id="management-program-name" label="프로그램명">
             <TextInput id="management-program-name" name="name" defaultValue={program.name} maxLength={200} required placeholder="예: 창의융합 해커톤" />
