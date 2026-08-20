@@ -19,7 +19,8 @@ import {
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
-import { DocumentIcon } from "@/shared/ui/workspace-icons";
+import { recruitMembersEntry } from "@/app/recruitments/_lib/recruit-members-entry";
+import { AddIcon, DocumentIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("팀원 모집");
@@ -38,6 +39,7 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
     new StudentProfileService(new PrismaStudentProfileRepository(prisma)).get(actor),
   ]);
   const pageHref = (page: number) => page > 1 ? `/recruitments?page=${page}` : "/recruitments";
+  const recruitEntry = await recruitMembersEntry(actor);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments">
@@ -48,7 +50,12 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
               title="둘러보기"
               description="다른 팀이 올린 모집 공고를 보고 지원하세요."
               meta={<span><UiText>{"모집 중"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></span>}
-              action={<Link className="button-secondary gap-2" href="/teams"><DocumentIcon className="size-4 shrink-0" /><UiText>{"내 팀"}</UiText></Link>}
+              action={(
+                <div className="flex flex-wrap gap-2">
+                  <Link className="button-secondary gap-2" href="/teams"><DocumentIcon className="size-4 shrink-0" /><UiText>{"내 팀"}</UiText></Link>
+                  <Link className="button-primary gap-2" href={recruitEntry.href}><AddIcon className="size-4 shrink-0" /><UiText>{recruitEntry.label}</UiText></Link>
+                </div>
+              )}
             />
             <UiSection aria-label="팀원 모집 목록" className="space-y-6">
               <RecruitmentPostList actorId={actor.id} data={data} contactOptions={contactOptions} />

@@ -16,7 +16,9 @@ import {
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { recruitMembersEntry } from "@/app/recruitments/_lib/recruit-members-entry";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
+import { AddIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("지원 내역");
@@ -39,6 +41,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
     new PrismaStudentTeamRecruitmentQueryRepository(prisma),
   ).listApplicationHistory(actor, requestedPage);
   const pageHref = (page: number) => page > 1 ? `/recruitments/applications?page=${page}` : "/recruitments/applications";
+  const recruitEntry = await recruitMembersEntry(actor);
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/applications">
@@ -48,11 +51,15 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             <StudentTeamPageIntro
               title="지원 내역"
               meta={<span><UiText>{"지원 기록"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
-              action={data.applications.length ? <Link className="button-secondary" href="/recruitments"><UiText>{"팀원 모집"}</UiText></Link> : undefined}
+              action={(
+                <Link className="button-primary gap-2" href={recruitEntry.href}>
+                  <AddIcon className="size-4 shrink-0" /><UiText>{recruitEntry.label}</UiText>
+                </Link>
+              )}
             />
 
             {data.applications.length === 0 ? (
-              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"팀원 모집"}</UiText></Link>} />
+              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"모집 공고 둘러보기"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
                 <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">

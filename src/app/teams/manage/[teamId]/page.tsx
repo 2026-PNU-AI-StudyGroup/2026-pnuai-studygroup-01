@@ -50,7 +50,7 @@ export default async function StudentTeamManagePage({
         <StudentTeamSectionLayout currentPath={`/teams/manage/${team.id}`}>
           <StudentTeamManagementSections team={team} actorId={actor.id} recruitmentPosts={postData.posts} />
           {modal === "recruitment" && team.leaderId === actor.id ? (
-            <TeamModal title="모집 공고 작성" closeHref={`/teams/manage/${team.id}`} size="wide">
+            <TeamModal title="팀원 모집 공고" closeHref={`/teams/manage/${team.id}`} size="wide">
               <RecruitmentPostForm teams={leaderTeams.filter((candidate) => candidate.id === team.id)} selectedTeamId={team.id} successHref={`/teams/manage/${team.id}`} surface="embedded" />
             </TeamModal>
           ) : null}
