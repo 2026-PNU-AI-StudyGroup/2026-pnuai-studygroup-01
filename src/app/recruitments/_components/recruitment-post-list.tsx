@@ -66,23 +66,28 @@ function RecruitmentCard({ post, actorId, contactOptions }: {
             </div>
           </dl>
 
-          <div className="mt-auto flex items-end justify-end pt-6">
-            <div className="min-w-36">
-              {post.authorId !== actorId && post.canApply && !post.ownApplication && !post.isMember ? (
+          {/* 지원 버튼은 오른쪽에 두고, 상태 표시는 본문과 같은 왼쪽 선에 맞춘다.
+              예전에는 버튼 자리에 작은 뱃지만 들어가 카드 모서리에 떠 있는 것처럼 보였다. */}
+          <div className="mt-auto flex items-end pt-6">
+            {post.authorId !== actorId && post.canApply && !post.ownApplication && !post.isMember ? (
+              <div className="ml-auto min-w-36">
                 <RecruitmentApplyForm postId={post.id} postTitle={post.title} teamName={post.teamName} contactOptions={contactOptions} />
-              ) : post.ownApplication ? (
+              </div>
+            ) : post.ownApplication ? (
+              <p className="flex min-h-11 w-full items-center gap-2 text-sm font-semibold text-[var(--muted)]">
+                <UiText>{"내 지원"}</UiText>
                 <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
-              ) : post.authorId === actorId ? (
-                <Link href={`/recruitments/${post.id}/applications`} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[var(--primary)]">
-                  <UiText>{"지원자 보기"}</UiText>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </Link>
-              ) : post.isMember ? (
-                <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"내 팀"}</UiText></span>
-              ) : (
-                <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"지원 마감"}</UiText></span>
-              )}
-            </div>
+              </p>
+            ) : post.authorId === actorId ? (
+              <Link href={`/recruitments/${post.id}/applications`} className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[var(--primary)]">
+                <UiText>{"지원자 보기"}</UiText>
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </Link>
+            ) : (
+              <p className="flex min-h-11 w-full items-center text-sm font-semibold text-[var(--muted)]">
+                <UiText>{post.isMember ? "내 팀" : "지원 마감"}</UiText>
+              </p>
+            )}
           </div>
         </div>
       </article>

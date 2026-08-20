@@ -12,6 +12,8 @@ type SelectOption = {
   value: string;
   label: string;
   description?: string;
+  // 목록 항목이 아니라 다른 화면으로 보내는 동작일 때 쓴다. 옅은 배경으로 구분한다.
+  variant?: "action";
 };
 
 type CustomSelectProps = {
@@ -213,6 +215,7 @@ export function CustomSelect({
               tabIndex={resolvedActiveIndex === index ? 0 : -1}
               aria-selected={value === option.value}
               className={styles.option}
+              data-variant={option.variant}
               onFocus={() => setActiveIndex(index)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
