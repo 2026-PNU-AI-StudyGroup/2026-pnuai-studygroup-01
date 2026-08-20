@@ -251,7 +251,11 @@ npm run translations:process
 npm run cleanup:uploads
 ```
 
-로컬에서 번역 큐를 계속 처리하려면 `npm run translations:worker`를 별도 프로세스로 실행합니다. Docker 기반 운영 배포, 상태 확인, 정기 작업과 백업·복구 절차는 [프로덕션 운영 문서](docs/PRODUCTION.md)를 따릅니다.
+사용자 콘텐츠 자동 번역(팀 대화·공지 본문 등)은 **기본으로 꺼져 있습니다.** 번역 품질이 원문보다 도움이 되지 않아 끈 상태를 기본으로 둡니다. 화면 문구 번역(`ui-messages.en.json`)은 사람이 작성한 카탈로그라 이 설정과 무관하게 계속 동작합니다.
+
+켜려면 `USER_CONTENT_TRANSLATION_ENABLED=true`를 넣습니다. 꺼져 있으면 번역 일감을 쌓지 않고, 정기 작업도 건너뜁니다. 켠 뒤 로컬에서 큐를 계속 처리하려면 `npm run translations:worker`를 별도 프로세스로 실행합니다.
+
+Docker 기반 운영 배포, 상태 확인, 정기 작업과 백업·복구 절차는 [프로덕션 운영 문서](docs/PRODUCTION.md)를 따릅니다.
 
 ## 디렉터리 구조
 

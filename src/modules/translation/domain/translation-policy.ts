@@ -18,3 +18,12 @@ export function normalizeTranslationText(text: string): string {
   }
   return normalized;
 }
+
+// 사용자 콘텐츠 자동 번역(Ollama)은 기본으로 끈다. 번역 품질이 낮아 원문보다 도움이 안 됐다.
+// 화면 문구 번역(ui-messages.en.json)은 사람이 쓴 카탈로그라 이 설정과 무관하게 계속 동작한다.
+// 다시 켜려면 USER_CONTENT_TRANSLATION_ENABLED=true 를 넣는다.
+export function isUserContentTranslationEnabled(
+  environment: Record<string, string | undefined>,
+): boolean {
+  return environment.USER_CONTENT_TRANSLATION_ENABLED === "true";
+}

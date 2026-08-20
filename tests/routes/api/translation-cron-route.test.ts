@@ -26,6 +26,7 @@ const previousSecret = process.env.CRON_SECRET;
 
 afterEach(() => {
   process.env.CRON_SECRET = previousSecret;
+  vi.unstubAllEnvs();
 });
 
 describe("translation queue cron API", () => {
@@ -65,7 +66,28 @@ describe("translation queue cron API", () => {
     expect(mocks.processBatch).not.toHaveBeenCalled();
   });
 
+  it("skips the batch while user content translation is off", async () => {
+    // 기본이 꺼짐이다. 정기 작업이 실패로 기록되지 않게 200 으로 건너뛴다.
+    process.env.CRON_SECRET =
+      "a-secure-random-cron-secret-with-48-characters-1234";
+
+    const response = await POST(
+      new Request("http://localhost/api/cron/translations", {
+        method: "POST",
+        headers: {
+          authorization:
+            "Bearer a-secure-random-cron-secret-with-48-characters-1234",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ skipped: true });
+    expect(mocks.processBatch).not.toHaveBeenCalled();
+  });
+
   it("runs one bounded batch for an authorized request", async () => {
+    vi.stubEnv("USER_CONTENT_TRANSLATION_ENABLED", "true");
     process.env.CRON_SECRET =
       "a-secure-random-cron-secret-with-48-characters-1234";
 
