@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
-import { announcementReturnHref } from "@/app/announcements/_lib/announcement-return-href";
+import { announcementReturnHref } from "@/app/_lib/announcement-return-href";
 import {
   AnnouncementError,
   AnnouncementService,
@@ -151,28 +151,3 @@ export async function updateAnnouncementAction(
   redirect(announcementReturnHref(formData.get("returnTo"), `/announcements/${parsedId.data}`));
 }
 
-export async function deleteAnnouncementAction(
-  announcementId: string,
-  _previous: AnnouncementActionState,
-  _formData: FormData,
-): Promise<AnnouncementActionState> {
-  void _previous;
-  const parsedId = idSchema.safeParse(announcementId);
-  if (!parsedId.success) {
-    return { status: "error", message: "공지사항 정보를 확인해 주세요." };
-  }
-
-  try {
-    await service().delete(await actor(), parsedId.data);
-  } catch (error) {
-    if (error instanceof AnnouncementError) {
-      return { status: "error", message: error.message };
-    }
-    throw error;
-  }
-
-  revalidatePath("/announcements");
-  revalidatePath("/topics");
-  revalidatePath("/projects", "layout");
-  redirect(announcementReturnHref(_formData.get("returnTo")));
-}

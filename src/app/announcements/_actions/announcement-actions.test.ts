@@ -33,9 +33,9 @@ vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", 
 
 import {
   createAnnouncementAction,
-  deleteAnnouncementAction,
   updateAnnouncementAction,
 } from "@/app/announcements/_actions/announcement-actions";
+import { deleteAnnouncementAction } from "@/app/_actions/delete-announcement-action";
 
 const actor = { id: "10000000-0000-4000-8000-000000000001", role: "PROFESSOR" as const };
 const noticeId = "a2000000-0000-4000-8000-000000000001";

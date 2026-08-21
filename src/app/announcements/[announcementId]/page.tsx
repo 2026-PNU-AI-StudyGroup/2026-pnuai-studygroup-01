@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { DeleteAnnouncementForm } from "@/app/announcements/_components/delete-announcement-form";
+import { DeleteAnnouncementForm } from "@/app/_components/delete-announcement-form";
 import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
 import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import {

@@ -51,6 +51,8 @@ function topics(memberCount = 1): PublicTopicPage {
       programRecruitmentEndsAt: new Date("2026-08-31T00:00:00Z"),
       programExecutionStartsAt: new Date("2026-08-01T00:00:00Z"),
       programExecutionEndsAt: new Date("2026-11-30T00:00:00Z"),
+      programVotingStartsAt: null,
+      programVotingEndsAt: null,
       professorName: "김교수",
       startYear: 2026,
       memberCount,

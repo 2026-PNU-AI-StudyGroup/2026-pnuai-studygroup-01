@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { AnnouncementForm } from "@/app/announcements/_components/announcement-form";
-import { announcementReturnHref } from "@/app/announcements/_lib/announcement-return-href";
+import { announcementReturnHref } from "@/app/_lib/announcement-return-href";
 import {
   AnnouncementNotFoundError,
   AnnouncementService,

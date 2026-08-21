@@ -9,6 +9,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 
 import type { AnnouncementRecord } from "@/modules/announcement/application/announcement-ports";
@@ -21,11 +22,13 @@ import { EmptyState } from "@/shared/ui/page-primitives";
 
 const MOUSE_DRAG_THRESHOLD_PX = 8;
 
-export function ProgramAnnouncementRail({ announcements, createHref, manageableAnnouncementIds = [], returnHref }: {
+export function ProgramAnnouncementRail({ announcements, createHref, manageableAnnouncementIds = [], returnHref, deleteControls }: {
   announcements: AnnouncementRecord[];
   createHref?: string;
   manageableAnnouncementIds?: string[];
   returnHref?: string;
+  /** 공지별 삭제 버튼. 서버 액션을 쓰는 폼이라 앱 계층에서 만들어 넣는다. */
+  deleteControls?: Record<string, ReactNode>;
 }) {
   const railRef = useRef<HTMLOListElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -262,6 +265,7 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
                       <IconLink href={selectedEditHref} aria-label="공지 수정" title="공지 수정">
                         <EditIcon className="size-5" />
                       </IconLink>
+                      {deleteControls?.[selectedAnnouncement.id] ?? null}
                     </UiDiv>
                   ) : null}
                   <IconButton type="button" aria-label="공지 닫기" title="공지 닫기" onClick={closeAnnouncement}>
