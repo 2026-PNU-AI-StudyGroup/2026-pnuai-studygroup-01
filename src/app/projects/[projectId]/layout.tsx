@@ -52,7 +52,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
                 )}
               </div>
             </div>
-            <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation projectId={workspace.topicId} advisorEnabled={workspace.advisorEnabled} /></div>
+            <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation projectId={workspace.topicId} advisorEnabled={workspace.advisorEnabled} canDelete={actor.role === "ADMIN"} /></div>
             <TeamPeopleSidebar
               advisorEnabled={workspace.advisorEnabled}
               professor={workspace.professor}

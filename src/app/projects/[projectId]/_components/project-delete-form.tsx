@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import {
   deleteProjectAction,
   type ProjectDeleteActionState,
-} from "@/app/admin/projects/[topicId]/_actions/project-delete-actions";
+} from "@/app/projects/[projectId]/_actions/project-delete-actions";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { TextInput } from "@/shared/ui/form-system";
 

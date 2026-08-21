@@ -46,6 +46,20 @@ describe("ProgramSidebar", () => {
     expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
   });
 
+  it("투표 중인 분류를 맨 위로 올린다", () => {
+    // 관리자가 들어오자마자 지금 손볼 분류가 보여야 한다.
+    render(<ProgramSidebar items={[
+      { id: "p-1", name: "캡스톤 2026", category: "캡스톤", icon: "FOLDER", startYear: 2026, status: "active", href: "/topics?programId=p-1" },
+      { id: "p-2", name: "제7회 해커톤", category: "해커톤", icon: "FOLDER", startYear: 2026, status: "active", href: "/topics?programId=p-2", votingEndsAt: new Date("2026-08-28T16:00:00Z") },
+    ]} />);
+
+    const headers = screen.getAllByRole("button").map((button) => button.textContent ?? "");
+    const hackathonIndex = headers.findIndex((text) => text.includes("해커톤"));
+    const capstoneIndex = headers.findIndex((text) => text.includes("캡스톤"));
+    expect(hackathonIndex).toBeGreaterThanOrEqual(0);
+    expect(hackathonIndex).toBeLessThan(capstoneIndex);
+  });
+
   it("선택된 프로그램의 대분류를 펼치고 링크 선택 상태를 표시한다", () => {
     const { container } = render(<ProgramSidebar items={items} selectedId="capstone-2025" />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
