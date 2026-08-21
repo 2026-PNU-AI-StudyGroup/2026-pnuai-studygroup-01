@@ -55,6 +55,8 @@ export type TeamWorkspace = TeamListItem & {
     programRecruitmentEndsAt: Date | null;
     executionStartsAt: Date;
     executionEndsAt: Date;
+    votingStartsAt: Date | null;
+    votingEndsAt: Date | null;
   };
   assistants: Array<{
     id: string;
