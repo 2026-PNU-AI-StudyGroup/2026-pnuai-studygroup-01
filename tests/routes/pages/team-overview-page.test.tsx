@@ -144,7 +144,7 @@ describe("TeamOverviewPage", () => {
     expect(screen.queryByText("assistant@pusan.ac.kr")).not.toBeInTheDocument();
   });
 
-  it("감독자 헤더에는 프로젝트 정보 수정과 조교 관리 행동을 둔다", async () => {
+  it("감독자 헤더에는 프로젝트 정보 수정만 둔다", async () => {
     loadTeamWorkspace.mockResolvedValue({
       workspace: {
         ...workspace,
@@ -161,10 +161,8 @@ describe("TeamOverviewPage", () => {
 
     render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    expect(screen.getByRole("link", { name: "조교 관리" })).toHaveAttribute(
-      "href",
-      "/professor/topics/topic-1/assistants",
-    );
+    // 조교 관리는 주제 관리 화면에서 한다. 진행 현황에 두면 여기서 할 일과 섞인다.
+    expect(screen.queryByRole("link", { name: "조교 관리" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "프로젝트 정보 수정" })).toBeEnabled();
     expect(screen.queryByText("프로젝트 운영 중")).not.toBeInTheDocument();
   });
@@ -223,7 +221,7 @@ describe("TeamOverviewPage", () => {
 
     expect(screen.queryByRole("link", { name: "지도 의견 남기기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "보고서 관리" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "조교 관리" })).toHaveAttribute("href", "/professor/topics/topic-1/assistants");
+    expect(screen.queryByRole("link", { name: "조교 관리" })).not.toBeInTheDocument();
   });
 
   it("기한이 지난 활성 할 일을 상태와 담당자, 이동 링크가 있는 다음 행동으로 보여준다", async () => {

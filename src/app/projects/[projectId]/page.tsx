@@ -19,7 +19,6 @@ import { getLocalizedMetadata } from "@/modules/translation/infrastructure/local
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { ProfileIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 개요");
@@ -88,9 +87,8 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
         disabled={!canEditProjectInfo}
       />
     : null;
-  const headerActions = projectInfoEditAction || workspace.access.canSupervise
-    ? <>{projectInfoEditAction}{workspace.access.canSupervise ? <Link href={`/professor/topics/${workspace.topicId}/assistants`} className="button-secondary gap-2"><ProfileIcon className="size-4 shrink-0" /><UiText>{"조교 관리"}</UiText></Link> : null}</>
-    : undefined;
+  // 조교 관리는 주제 관리 화면에서 한다. 진행 현황에 두면 여기서 할 일과 섞인다.
+  const headerActions = projectInfoEditAction ?? undefined;
 
   return (
     <div className="mx-auto max-w-6xl space-y-7">
