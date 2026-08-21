@@ -81,7 +81,6 @@ export type UpdateProjectProgramSettingsOutcome =
   | "VOTING_POLICY_HAS_VOTES"
   | "VOTE_LIMIT_CONFLICT"
   | "SELF_VOTE_CONFLICT"
-  | "VOTE_PERIOD_CONFLICT"
   | { status: "VOTE_RESET_CONFIRMATION_REQUIRED"; impact: ProgramVoteResetImpact }
   | "DIVISIONS_REQUIRED";
 
@@ -314,7 +313,6 @@ export class ProjectProgramService {
       VOTING_POLICY_HAS_VOTES: "표가 저장된 투표 설정은 해제할 수 없습니다. 종료 시각을 조정해 마감해 주세요.",
       VOTE_LIMIT_CONFLICT: "기존 투표자가 선택한 프로젝트 수보다 적게 줄일 수 없습니다.",
       SELF_VOTE_CONFLICT: "기존 자기 프로젝트 표가 있어 자기 프로젝트 투표를 금지할 수 없습니다.",
-      VOTE_PERIOD_CONFLICT: "기존 투표 시각을 제외하는 기간으로 변경할 수 없습니다.",
       DIVISIONS_REQUIRED: "분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.",
     };
     throw new ProjectProgramOperationError(outcome === "NOT_FOUND" ? "투표 정책을 변경할 프로그램이 없습니다." : messages[outcome]);
@@ -375,7 +373,6 @@ export class ProjectProgramService {
       VOTING_POLICY_HAS_VOTES: "표가 저장된 투표 설정은 해제할 수 없습니다. 종료 시각을 조정해 마감해 주세요.",
       VOTE_LIMIT_CONFLICT: "기존 투표자가 선택한 프로젝트 수보다 적게 줄일 수 없습니다.",
       SELF_VOTE_CONFLICT: "기존 자기 프로젝트 표가 있어 자기 프로젝트 투표를 금지할 수 없습니다.",
-      VOTE_PERIOD_CONFLICT: "기존 투표 시각을 제외하는 기간으로 변경할 수 없습니다.",
       DIVISIONS_REQUIRED: "분과별 투표는 분과를 하나 이상 등록한 프로그램에서만 사용할 수 있습니다.",
     };
     throw new ProjectProgramOperationError(messages[outcome]);

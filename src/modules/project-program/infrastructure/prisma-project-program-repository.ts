@@ -235,12 +235,27 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         const policyChanged = currentPolicy.voteLimit !== input.votingPolicy.voteLimit || currentPolicy.voteLimitScope !== requestedScope;
         const periodChanged = currentPolicy.startsAt.getTime() !== input.votingPolicy.startsAt.getTime() ||
           currentPolicy.endsAt.getTime() !== input.votingPolicy.endsAt.getTime();
+        // 기간을 옮기면 새 기간 밖으로 밀려나는 표가 생긴다. 그 표는 새 일정에서 의미가 없으므로
+        // 예전처럼 거부하지 않고 정책 변경과 똑같이 "초기화 확인"을 받고 지운다.
+        // 투표를 조금 받아 본 뒤 일정을 미뤄 다시 시작하는 운영이 실제로 필요했다.
+        const votesOutsideNewPeriod = periodChanged
+          ? await transaction.projectVote.count({
+            where: {
+              programId: id,
+              OR: [
+                { createdAt: { lt: input.votingPolicy.startsAt } },
+                { createdAt: { gte: input.votingPolicy.endsAt } },
+              ],
+            },
+          })
+          : 0;
+        const resetRequired = voteCount > 0 && (policyChanged || votesOutsideNewPeriod > 0);
         const resetConfirmed = input.confirmVoteReset?.voteCount === voteCount &&
           input.confirmVoteReset.from.voteLimit === currentPolicy.voteLimit &&
           input.confirmVoteReset.from.voteLimitScope === currentPolicy.voteLimitScope &&
           input.confirmVoteReset.to.voteLimit === input.votingPolicy.voteLimit &&
           input.confirmVoteReset.to.voteLimitScope === requestedScope;
-        if (voteCount > 0 && policyChanged && !resetConfirmed) return {
+        if (resetRequired && !resetConfirmed) return {
           status: "VOTE_RESET_CONFIRMATION_REQUIRED" as const,
           impact: {
             voteCount,
@@ -258,26 +273,13 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             return "VOTE_LIMIT_CONFLICT";
           }
         }
-        if (periodChanged) {
-          const votesOutsidePeriod = await transaction.projectVote.findFirst({
-            where: {
-              programId: id,
-              OR: [
-                { createdAt: { lt: input.votingPolicy.startsAt } },
-                { createdAt: { gte: input.votingPolicy.endsAt } },
-              ],
-            },
-            select: { id: true },
-          });
-          if (votesOutsidePeriod) return "VOTE_PERIOD_CONFLICT";
-        }
         if (currentPolicy.selfVotingAllowed && !input.votingPolicy.selfVotingAllowed) {
           const selfVote = await findSelfVote(transaction, id);
           if (selfVote) return "SELF_VOTE_CONFLICT";
         }
-        if (voteCount > 0 && policyChanged) {
+        if (resetRequired) {
           await transaction.projectVote.deleteMany({ where: { programId: id } });
-          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "POLICY_CHANGED", voteCount, from: { voteLimit: currentPolicy.voteLimit, voteLimitScope: currentPolicy.voteLimitScope }, to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope } } } });
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: policyChanged ? "POLICY_CHANGED" : "PERIOD_CHANGED", voteCount, from: { voteLimit: currentPolicy.voteLimit, voteLimitScope: currentPolicy.voteLimitScope, startsAt: currentPolicy.startsAt.toISOString(), endsAt: currentPolicy.endsAt.toISOString() }, to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope, startsAt: input.votingPolicy.startsAt.toISOString(), endsAt: input.votingPolicy.endsAt.toISOString() } } } });
         }
         await transaction.programVotingPolicy.update({ where: { programId: id }, data: input.votingPolicy });
         } else {

@@ -255,7 +255,8 @@ describe("Prisma 프로그램 저장소", () => {
     });
   });
 
-  it("투표 기간을 변경할 때는 변경된 기간 밖의 기존 표를 계속 차단한다", async () => {
+  it("투표 기간을 옮기면 기간 밖으로 밀려나는 표를 초기화할지 먼저 확인한다", async () => {
+    // 예전에는 그냥 거부했다. 투표를 조금 받아 본 뒤 일정을 미뤄 다시 시작하는 운영이 막혔다.
     const currentPolicy = {
       programId: "program-1",
       startsAt: new Date("2026-08-01T00:00:00Z"),
@@ -266,37 +267,69 @@ describe("Prisma 프로그램 저장소", () => {
       resultsVisibleDuringVoting: false,
       resultsVisibleAfterVoting: true,
     };
-    const transaction = {
-      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1", endsAt: input.endsAt }]),
-      programVotingPolicy: { findUnique: vi.fn().mockResolvedValue(currentPolicy) },
-      projectVote: {
-        count: vi.fn().mockResolvedValue(1),
-        findFirst: vi.fn().mockResolvedValue({ id: "vote-1" }),
-        deleteMany: vi.fn(),
-      },
-      programDivision: { count: vi.fn().mockResolvedValue(1) },
-      projectProgram: { update: vi.fn() },
+    const movedPolicy = {
+      startsAt: new Date("2026-09-10T00:00:00Z"),
+      endsAt: new Date("2026-09-20T00:00:00Z"),
+      voteLimit: currentPolicy.voteLimit,
+      voteLimitScope: currentPolicy.voteLimitScope,
+      selfVotingAllowed: currentPolicy.selfVotingAllowed,
+      resultsVisibleDuringVoting: currentPolicy.resultsVisibleDuringVoting,
+      resultsVisibleAfterVoting: currentPolicy.resultsVisibleAfterVoting,
     };
-    const repository = new PrismaProjectProgramRepository({
-      $transaction: vi.fn(async (operation) => operation(transaction)),
-    } as unknown as PrismaClient);
+    function harness() {
+      const transaction = {
+        $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1", endsAt: input.endsAt }]),
+        programVotingPolicy: { findUnique: vi.fn().mockResolvedValue(currentPolicy), update: vi.fn() },
+        projectVote: {
+          count: vi.fn().mockResolvedValue(1),
+          findFirst: vi.fn().mockResolvedValue(null),
+          deleteMany: vi.fn(),
+          groupBy: vi.fn().mockResolvedValue([]),
+        },
+        programDivision: { count: vi.fn().mockResolvedValue(1) },
+        projectProgram: { update: vi.fn() },
+        auditLog: { create: vi.fn() },
+      };
+      const repository = new PrismaProjectProgramRepository({
+        $transaction: vi.fn(async (operation) => operation(transaction)),
+      } as unknown as PrismaClient);
+      return { transaction, repository };
+    }
 
-    const outcome = await repository.updateSettings("program-1", {
+    const first = harness();
+    const outcome = await first.repository.updateSettings("program-1", {
       ...input,
-      votingPolicy: {
-        startsAt: new Date("2026-08-02T00:00:00Z"),
-        endsAt: currentPolicy.endsAt,
-        voteLimit: currentPolicy.voteLimit,
-        voteLimitScope: currentPolicy.voteLimitScope,
-        selfVotingAllowed: currentPolicy.selfVotingAllowed,
-        resultsVisibleDuringVoting: currentPolicy.resultsVisibleDuringVoting,
-        resultsVisibleAfterVoting: currentPolicy.resultsVisibleAfterVoting,
+      votingPolicy: movedPolicy,
+    }, "admin-1");
+
+    expect(outcome).toEqual({
+      status: "VOTE_RESET_CONFIRMATION_REQUIRED",
+      impact: {
+        voteCount: 1,
+        from: { voteLimit: 3, voteLimitScope: "PROGRAM" },
+        to: { voteLimit: 3, voteLimitScope: "PROGRAM" },
+      },
+    });
+    expect(first.transaction.projectVote.deleteMany).not.toHaveBeenCalled();
+    expect(first.transaction.projectProgram.update).not.toHaveBeenCalled();
+
+    const second = harness();
+    const confirmed = await second.repository.updateSettings("program-1", {
+      ...input,
+      votingPolicy: movedPolicy,
+      confirmVoteReset: {
+        voteCount: 1,
+        from: { voteLimit: 3, voteLimitScope: "PROGRAM" },
+        to: { voteLimit: 3, voteLimitScope: "PROGRAM" },
       },
     }, "admin-1");
 
-    expect(outcome).toBe("VOTE_PERIOD_CONFLICT");
-    expect(transaction.projectVote.findFirst).toHaveBeenCalled();
-    expect(transaction.projectProgram.update).not.toHaveBeenCalled();
+    expect(confirmed).toBe("UPDATED");
+    expect(second.transaction.projectVote.deleteMany).toHaveBeenCalledWith({ where: { programId: "program-1" } });
+    expect(second.transaction.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      action: "PROGRAM_VOTING_RESET",
+      metadata: expect.objectContaining({ reason: "PERIOD_CHANGED", voteCount: 1 }),
+    }) });
   });
 
   it("프로그램 목록의 프로젝트 수에 마감된 프로젝트도 포함한다", async () => {
