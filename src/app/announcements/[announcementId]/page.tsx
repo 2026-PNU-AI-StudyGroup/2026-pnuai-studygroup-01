@@ -18,7 +18,7 @@ import {
   UiText,
 } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { IconLink } from "@/shared/ui/icon-button";
+
 import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { ChevronIcon, EditIcon } from "@/shared/ui/workspace-icons";
 import { AnnouncementAttachmentList } from "@/modules/announcement/ui/announcement-attachment-list";
@@ -48,7 +48,6 @@ export default async function AnnouncementDetailPage({
   const audience = await resolveAnnouncementAudience(actor);
   if (!service.canView(audience, announcement)) notFound();
   const canManage = service.canManage(actor, announcement);
-  const isSystemAnnouncement = !announcement.teamId && !announcement.programId;
   const wasUpdated = announcement.updatedAt.getTime() !== announcement.createdAt.getTime();
   const listHref = announcement.teamId
     ? `/projects/${announcement.projectId}/announcements`
@@ -67,10 +66,14 @@ export default async function AnnouncementDetailPage({
         <div className="mx-auto max-w-4xl">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <Link className="button-quiet gap-2" href={listHref}><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"공지 목록"}</UiText></Link>
+            {/* 예전에는 시스템 공지에서 수정·삭제가 아이콘만이라 눌러야 할 것이 있는지 알기 어려웠다.
+                글자를 붙여 무엇을 하는 버튼인지 보이게 한다. */}
             {canManage ? (
-              <div className="flex items-start gap-2">
-                <IconLink href={`/announcements/${announcement.id}/edit`} aria-label="공지 수정" title="공지 수정"><EditIcon className="size-5" /></IconLink>
-                <DeleteAnnouncementForm announcementId={announcement.id} iconOnly={isSystemAnnouncement} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Link className="button-secondary button-compact gap-1.5" href={`/announcements/${announcement.id}/edit`}>
+                  <EditIcon className="size-4 shrink-0" /><UiText>{"수정"}</UiText>
+                </Link>
+                <DeleteAnnouncementForm announcementId={announcement.id} />
               </div>
             ) : null}
           </div>
