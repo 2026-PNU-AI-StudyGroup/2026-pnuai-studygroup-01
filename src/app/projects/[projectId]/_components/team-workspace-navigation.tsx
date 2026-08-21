@@ -14,6 +14,8 @@ const sections = [
   { label: "보고서", suffix: "/reports", icon: "report" },
   { label: "평가", suffix: "/evaluations", icon: "evaluation" },
   { label: "결과물", suffix: "/artifacts", icon: "artifact" },
+  // 관리자만 보이는 탭. 결과물을 확인하고 그 자리에서 프로젝트를 지울 수 있게 둔다.
+  { label: "프로젝트 삭제", suffix: "/delete", icon: "trash" },
 ] as const;
 
 type WorkspaceIcon = typeof sections[number]["icon"];
@@ -27,15 +29,18 @@ function NavigationIcon({ name }: { name: WorkspaceIcon }) {
     report: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></>,
     evaluation: <><path d="M5 4h14v16H5zM8 8h8M8 12h5" /><path d="m9 16 2 2 4-5" /></>,
     artifact: <><path d="M4 7h6l2 2h8v10H4z" /></>,
+    trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /><path d="M10 11v6M14 11v6" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]">{paths[name]}</svg>;
 }
 
-export function TeamWorkspaceNavigation({ projectId, advisorEnabled }: { projectId: string; advisorEnabled: boolean }) {
+export function TeamWorkspaceNavigation({ projectId, advisorEnabled, canDelete = false }: { projectId: string; advisorEnabled: boolean; canDelete?: boolean }) {
   const pathname = usePathname();
-  const visibleSections = advisorEnabled
-    ? sections
-    : sections.filter(({ suffix }) => suffix !== "/requests");
+  const visibleSections = sections.filter(({ suffix }) => {
+    if (suffix === "/requests") return advisorEnabled;
+    if (suffix === "/delete") return canDelete;
+    return true;
+  });
   const currentSection = visibleSections.find(({ suffix }) => {
     const href = `/projects/${projectId}${suffix}`;
     return suffix ? pathname.startsWith(href) : pathname === href;

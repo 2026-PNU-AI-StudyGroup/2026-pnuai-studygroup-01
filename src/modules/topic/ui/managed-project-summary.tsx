@@ -123,6 +123,9 @@ export function ManagedProjectSummary({ topic, description, footer }: {
               ? <Period label="모집 기간" start={topic.programRecruitmentStartsAt} end={topic.programRecruitmentEndsAt} />
               : null}
             <Period label="수행 기간" start={topic.programExecutionStartsAt} end={topic.programExecutionEndsAt} />
+            {topic.programVotingStartsAt && topic.programVotingEndsAt
+              ? <Period label="투표 기간" start={topic.programVotingStartsAt} end={topic.programVotingEndsAt} />
+              : null}
           </dl>
         </aside>
       </div>

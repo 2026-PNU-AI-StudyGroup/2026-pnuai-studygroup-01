@@ -20,7 +20,7 @@ const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
   projectTeam: { select: { confirmedAt: true, showcaseIntro: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } }, artifacts: { orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }], select: { id: true, type: true, title: true, fileId: true, externalUrl: true, position: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -78,7 +78,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
+  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -283,6 +283,8 @@ function toTopicSummary(
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
+    programVotingStartsAt: program.votingPolicy?.startsAt ?? null,
+    programVotingEndsAt: program.votingPolicy?.endsAt ?? null,
     pendingApplicationCount: _count.applications,
     openRecruitmentPostCount: projectTeam?._count.recruitmentPosts ?? 0,
   };
@@ -313,6 +315,8 @@ function toPublicTopic(
     programRecruitmentEndsAt: program.recruitmentEndsAt,
     programExecutionStartsAt: program.executionStartsAt,
     programExecutionEndsAt: program.executionEndsAt,
+    programVotingStartsAt: program.votingPolicy?.startsAt ?? null,
+    programVotingEndsAt: program.votingPolicy?.endsAt ?? null,
     showcaseIntro: projectTeam?.showcaseIntro ?? null,
     artifacts: (projectTeam?.artifacts ?? []).map(({ fileId, externalUrl, ...artifact }) => ({
       ...artifact,

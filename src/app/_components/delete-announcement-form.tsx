@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import {
   type AnnouncementActionState,
   deleteAnnouncementAction,
-} from "@/app/announcements/_actions/announcement-actions";
+} from "@/app/_actions/delete-announcement-action";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { iconControlClassName } from "@/shared/ui/icon-button";

@@ -57,6 +57,23 @@ describe("프로그램 공지 카드 레일", () => {
     expect(dialog).not.toHaveAttribute("open");
   });
 
+  it("관리 권한이 있는 공지에는 수정과 삭제를 함께 보여준다", () => {
+    // 예전에는 프로그램 공지에 수정만 있어 삭제 기능이 없는 것처럼 보였다.
+    render(
+      <ProgramAnnouncementRail
+        announcements={[base]}
+        manageableAnnouncementIds={[base.id]}
+        deleteControls={{ [base.id]: <button type="button">공지 삭제</button> }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /발표 일정 안내/ }));
+    const manageGroup = screen.getByRole("group", { name: "공지 관리" });
+    expect(manageGroup).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "공지 수정" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "공지 삭제" })).toBeInTheDocument();
+  });
+
   it("중간 위치에서 화살표를 누르면 다음 카드 시작점에 맞춘다", () => {
     render(<ProgramAnnouncementRail announcements={[base, { ...base, id: "notice-2" }]} />);
     const rail = screen.getByRole("list");

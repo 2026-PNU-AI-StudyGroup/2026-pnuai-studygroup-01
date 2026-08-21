@@ -256,10 +256,18 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
     result.set(key, group);
     return result;
   }, new Map<string, ProgramSidebarItem[]>());
-  // 대분류(카테고리)를 최상위 그룹으로, 최근 연도가 있는 분류를 위로. 동률은 가나다순.
+  // 대분류(카테고리)를 최상위 그룹으로 둔다. 지금 손볼 일이 있는 분류가 위로 와야
+  // 들어오자마자 보인다. 그래서 투표 중 → 진행 중 → 최근 연도 → 가나다순으로 정렬한다.
+  const categoryRank = (category: string) => {
+    const group = groups.get(category)!;
+    if (group.some((item) => item.votingEndsAt)) return 0;
+    if (group.some((item) => item.status === "active")) return 1;
+    if (group.some((item) => item.status === "draft")) return 2;
+    return 3;
+  };
   const categories = [...groups.keys()].sort((a, b) => {
     const maxYear = (category: string) => Math.max(...groups.get(category)!.map((item) => item.startYear));
-    return maxYear(b) - maxYear(a) || a.localeCompare(b, "ko");
+    return categoryRank(a) - categoryRank(b) || maxYear(b) - maxYear(a) || a.localeCompare(b, "ko");
   });
   const categoriesKey = categories.join(":");
   const selectedCategory = items.find((item) => item.id === selectedId)?.category;

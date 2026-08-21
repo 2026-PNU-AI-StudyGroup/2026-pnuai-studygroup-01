@@ -58,6 +58,8 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programRecruitmentEndsAt: Date | null;
   programExecutionStartsAt: Date;
   programExecutionEndsAt: Date;
+  programVotingStartsAt: Date | null;
+  programVotingEndsAt: Date | null;
 };
 
 export type ManagedTopicSummary = TopicSummary & {

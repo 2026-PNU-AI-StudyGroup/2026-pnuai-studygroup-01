@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { TeamProjectInfoEditDialog } from "@/app/projects/[projectId]/_components/team-project-info-form";
+import { announcementDeleteControls } from "@/app/_components/announcement-delete-controls";
 import { ProgramAnnouncementRail } from "@/modules/announcement/ui/program-announcement-rail";
 import {
   taskDeadlineState,
@@ -158,6 +159,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
       <ProgramAnnouncementRail
         announcements={announcements}
         manageableAnnouncementIds={announcements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id)}
+        deleteControls={announcementDeleteControls(announcements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id), `/projects/${projectId}`)}
         returnHref={`/projects/${projectId}`}
       />
 

@@ -27,6 +27,7 @@ import { ProgramAnnouncementCreateModal } from "@/modules/announcement/ui/progra
 import { createProgramAnnouncementAction } from "@/app/topics/_actions/create-program-announcement-action";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
+import { announcementDeleteControls } from "@/app/_components/announcement-delete-controls";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
@@ -247,6 +248,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               announcements={programAnnouncements}
               createHref={announcementCreateHref}
               manageableAnnouncementIds={programAnnouncements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id)}
+              deleteControls={announcementDeleteControls(programAnnouncements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id))}
               returnHref={closeAnnouncementHref}
             />
           )}
@@ -342,6 +344,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
               announcements={programAnnouncements}
               createHref={announcementCreateHref}
               manageableAnnouncementIds={programAnnouncements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id)}
+              deleteControls={announcementDeleteControls(programAnnouncements.filter((announcement) => announcementService.canManage(actor, announcement)).map((announcement) => announcement.id))}
               returnHref={closeRegistrationHref}
             />
           )}
