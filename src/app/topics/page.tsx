@@ -16,7 +16,9 @@ import { ProjectRegistrationModal } from "@/app/topics/_components/project-regis
 import { StudentProjectRegistrationLink } from "@/app/topics/_components/student-project-registration-link";
 import { topicsHref, type ProjectView } from "@/app/topics/_lib/topics-query";
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
+import { orderedProgramSidebarIds } from "@/modules/project-program/ui/program-sidebar-items";
 import { hideGraduationProgramsForStudent } from "@/app/topics/_lib/hidden-graduation-programs";
+import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
 import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selection";
 import {
   AnnouncementService,
@@ -269,12 +271,21 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       : hideGraduationProgramsForStudent(programsRaw, actor.role);
     const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    const programId = resolveProgramSelection(requestedProgramId, programs);
+    // 사이드바 목록 맨 위 프로그램과 기본으로 열리는 프로그램을 같게 맞춘다.
+    const adminSidebarOrder = actor.role === "ADMIN"
+      ? orderedProgramSidebarIds(buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts))
+      : [];
+    const programId = resolveProgramSelection(requestedProgramId, programs, adminSidebarOrder);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
       redirect(topicsHref({ programId, q: query, teamStatus: operationFilters?.team, reportStatus: operationFilters?.report, page: requestedPage }));
     }
     const selectedProgram = programs.find((program) => program.id === programId);
+    // 투표 기간에는 사람마다 다른 순서로 보여 상단 노출 이득을 흩는다.
+    // 같은 사람에게는 같은 순서라 스크롤과 페이지 넘김이 어긋나지 않는다.
+    const showcaseShuffleSeed = programId && isProgramVotingOpen(selectedProgram?.votingPolicy ?? null, now)
+      ? `${programId}:${actor.id}`
+      : undefined;
     const divisionId = selectedProgram?.divisions?.some((division) => division.id === requestedDivisionId)
       ? requestedDivisionId
       : requestedDivisionId === "UNASSIGNED" && programId ? "UNASSIGNED" : undefined;
@@ -296,7 +307,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const [topics, archivedProgramsRaw, leaderTeams, ballot, votingResults, programAnnouncements, announcementCreateHref, registrationPrograms, registrationProfessors] = await Promise.all([
       actor.role === "ADMIN"
         ? new ListAdminTopicPreviewService(topicRepository).execute(actor, { programId, divisionId, query, page: requestedPage, now, topicIds: operations?.matchingTopicIds })
-        : topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, page: requestedPage, now }),
+        : topicService.execute({ viewerId: actor.role === "STUDENT" ? actor.id : undefined, programId, divisionId, query, page: requestedPage, now, shuffleSeed: showcaseShuffleSeed }),
       archiveService.listPrograms(),
       actor.role === "STUDENT"
         ? new PrismaStudentTeamRecruitmentQueryRepository(prisma).listLeaderTeams(actor.id)

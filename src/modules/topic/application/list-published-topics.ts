@@ -15,11 +15,13 @@ export class ListPublishedTopicsService {
     query?: string;
     page?: number;
     now?: Date;
+    shuffleSeed?: string;
   } = {}): Promise<PublicTopicPage> {
     const page = Number.isSafeInteger(input.page) && (input.page ?? 0) > 0 ? input.page! : 1;
     const query: PublicTopicQuery = {
       viewerId: input.viewerId,
       programId: input.programId,
+      shuffleSeed: input.shuffleSeed,
       divisionId: input.divisionId,
       query: input.query?.trim().slice(0, 100) ?? "",
       page,

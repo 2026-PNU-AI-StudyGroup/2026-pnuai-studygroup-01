@@ -72,6 +72,10 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
   const schedule = [
     ...(workspace.schedule.recruitmentStartsAt && workspace.schedule.programRecruitmentEndsAt ? [["모집", workspace.schedule.recruitmentStartsAt, workspace.schedule.programRecruitmentEndsAt] as const] : []),
     ["수행", workspace.schedule.executionStartsAt, workspace.schedule.executionEndsAt],
+    // 투표 일정도 팀이 챙겨야 하는 기간이다. 잡혀 있을 때만 줄을 늘린다.
+    ...(workspace.schedule.votingStartsAt && workspace.schedule.votingEndsAt
+      ? [["투표", workspace.schedule.votingStartsAt, workspace.schedule.votingEndsAt] as const]
+      : []),
   ] as const;
   const timeline = buildScheduleTimeline(
     schedule.map(([label, start, end]) => ({ label, start, end, state: schedulePhaseState(start, end, now) })),

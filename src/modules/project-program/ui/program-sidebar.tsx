@@ -7,6 +7,7 @@ import { UiLink, UiNav, UiSection } from "@/modules/translation/ui/localized-ele
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { programCreateHref, programManagementHref } from "@/modules/project-program/ui/program-management-route";
+import { orderProgramSidebarCategories } from "@/modules/project-program/ui/program-sidebar-items";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
@@ -256,19 +257,9 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
     result.set(key, group);
     return result;
   }, new Map<string, ProgramSidebarItem[]>());
-  // 대분류(카테고리)를 최상위 그룹으로 둔다. 지금 손볼 일이 있는 분류가 위로 와야
-  // 들어오자마자 보인다. 그래서 투표 중 → 진행 중 → 최근 연도 → 가나다순으로 정렬한다.
-  const categoryRank = (category: string) => {
-    const group = groups.get(category)!;
-    if (group.some((item) => item.votingEndsAt)) return 0;
-    if (group.some((item) => item.status === "active")) return 1;
-    if (group.some((item) => item.status === "draft")) return 2;
-    return 3;
-  };
-  const categories = [...groups.keys()].sort((a, b) => {
-    const maxYear = (category: string) => Math.max(...groups.get(category)!.map((item) => item.startYear));
-    return categoryRank(a) - categoryRank(b) || maxYear(b) - maxYear(a) || a.localeCompare(b, "ko");
-  });
+  // 정렬 규칙은 기본 프로그램 선택과 공유한다. 두 곳이 어긋나면
+  // 목록 맨 위와 눌렀을 때 열리는 프로그램이 달라진다.
+  const categories = orderProgramSidebarCategories(items);
   const categoriesKey = categories.join(":");
   const selectedCategory = items.find((item) => item.id === selectedId)?.category;
   const selectedProgram = items.find((item) => item.id === selectedId);

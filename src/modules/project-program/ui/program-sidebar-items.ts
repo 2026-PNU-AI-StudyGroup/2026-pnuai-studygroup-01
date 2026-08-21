@@ -108,3 +108,33 @@ export function buildAdminProgramSidebarItems(
     };
   });
 }
+
+/**
+ * 사이드바에 보이는 순서. 대분류를 투표 중 → 진행 중 → 초안 → 종료로 세우고,
+ * 같으면 최근 연도, 그다음 가나다순으로 둔다.
+ *
+ * 화면 정렬과 기본 선택이 서로 다른 규칙을 쓰면 "목록 맨 위는 해커톤인데 눌러 보면
+ * 다른 프로그램이 열리는" 어긋남이 생긴다. 두 곳이 이 함수를 함께 쓴다.
+ */
+export function orderProgramSidebarCategories(items: readonly ProgramSidebarItem[]): string[] {
+  const groups = new Map<string, ProgramSidebarItem[]>();
+  for (const item of items) {
+    groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
+  }
+  const rank = (category: string) => {
+    const group = groups.get(category)!;
+    if (group.some((item) => item.votingEndsAt)) return 0;
+    if (group.some((item) => item.status === "active")) return 1;
+    if (group.some((item) => item.status === "draft")) return 2;
+    return 3;
+  };
+  const maxYear = (category: string) => Math.max(...groups.get(category)!.map((item) => item.startYear));
+  return [...groups.keys()].sort((a, b) =>
+    rank(a) - rank(b) || maxYear(b) - maxYear(a) || a.localeCompare(b, "ko"));
+}
+
+/** 사이드바에 보이는 순서대로 늘어놓은 프로그램 id 목록. */
+export function orderedProgramSidebarIds(items: readonly ProgramSidebarItem[]): string[] {
+  const order = orderProgramSidebarCategories(items);
+  return order.flatMap((category) => items.filter((item) => item.category === category).map((item) => item.id));
+}

@@ -125,6 +125,8 @@ export type PublicTopicSummary = TopicSummary & {
 export type PublicTopicQuery = {
   viewerId?: string;
   programId?: string;
+  /** 투표 기간에는 사람마다 다른 순서로 보여 노출 이득을 흩는다. */
+  shuffleSeed?: string;
   divisionId?: string | "UNASSIGNED";
   query: string;
   page: number;

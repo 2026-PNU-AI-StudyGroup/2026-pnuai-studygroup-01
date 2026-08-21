@@ -67,7 +67,7 @@ export class PrismaTeamWorkspaceQueryRepository
           status: true,
           description: true,
           managerId: true,
-          program: { select: { id: true, name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true } },
+          program: { select: { id: true, name: true, advisorEnabled: true, endsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
           manager: {
             select: {
               id: true,
@@ -212,6 +212,8 @@ export class PrismaTeamWorkspaceQueryRepository
         programRecruitmentEndsAt: team.project.program.recruitmentEndsAt,
         executionStartsAt: team.project.program.executionStartsAt,
         executionEndsAt: team.project.program.executionEndsAt,
+        votingStartsAt: team.project.program.votingPolicy?.startsAt ?? null,
+        votingEndsAt: team.project.program.votingPolicy?.endsAt ?? null,
       },
       memberCount: team.memberships.length,
       taskCount: team.tasks.length,

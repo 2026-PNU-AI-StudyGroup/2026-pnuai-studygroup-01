@@ -15,6 +15,7 @@ import type {
 import { topicSupervisorWhere } from "@/modules/project-assistant/infrastructure/project-supervisor-authorization";
 import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
 import { effectiveProjectStatus } from "@/modules/topic/domain/project-lifecycle";
+import { orderShowcaseIds } from "@/modules/topic/domain/showcase-order";
 
 const publicTopicInclude = {
   author: { select: { name: true, role: true } },
@@ -203,13 +204,29 @@ export class PrismaTopicQueryRepository
     const total = await this.client.topic.count({ where });
     const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
     const page = Math.min(query.page, totalPages);
-    const topics = await this.client.topic.findMany({
-      where,
-      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
-      skip: (page - 1) * query.pageSize,
-      take: query.pageSize,
-      include: publicTopicInclude,
-    });
+    // 투표 기간에는 사람마다 다른 순서로 보여야 한다. 정렬 키가 사람에 따라 달라지므로
+    // DB 정렬로는 못 하고, 조건에 맞는 id 를 먼저 받아 순서를 정하고 그 쪽만 다시 읽는다.
+    // 한 프로그램의 프로젝트 수는 수십 개라 id 목록을 받는 비용이 작다.
+    const shuffledIds = query.shuffleSeed
+      ? orderShowcaseIds(
+        (await this.client.topic.findMany({ where, select: { id: true } })).map(({ id }) => id),
+        query.shuffleSeed,
+      )
+      : null;
+    const pageIds = shuffledIds?.slice((page - 1) * query.pageSize, page * query.pageSize);
+    const rows = pageIds
+      ? await this.client.topic.findMany({ where: { id: { in: pageIds } }, include: publicTopicInclude })
+      : await this.client.topic.findMany({
+        where,
+        orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+        skip: (page - 1) * query.pageSize,
+        take: query.pageSize,
+        include: publicTopicInclude,
+      });
+    // in 조회는 순서를 보장하지 않는다. 정한 순서로 다시 세운다.
+    const topics = pageIds
+      ? pageIds.flatMap((id) => rows.filter((row) => row.id === id))
+      : rows;
     const ownApplications = query.viewerId && topics.length
       ? await this.client.topicApplication.findMany({
           where: {
