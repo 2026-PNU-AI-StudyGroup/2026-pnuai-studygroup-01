@@ -18,6 +18,8 @@
 }
 
 .hero {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   position: relative;
   isolation: isolate;
   overflow: clip;
@@ -284,4 +286,78 @@
       animation-range: entry 16% cover 36%;
     }
   }
+}
+
+/* 각 구역의 시작점에 붙는다. */
+.snap {
+  scroll-snap-align: start;
+}
+
+/* 구역 머리말. 눈썹 라벨 없이 제목과 한 줄 설명으로만 쓴다. */
+.sectionLede {
+  max-width: 40rem;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+/* 실제 화면. 한 행에 캡처와 설명을 두고 행마다 좌우를 바꾼다. */
+.screenRow {
+  display: grid;
+  gap: 1.75rem;
+  align-items: center;
+}
+
+@media (min-width: 60rem) {
+  .screenRow {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 3.5rem;
+  }
+
+  .screenRowFlip .screenShot {
+    order: 2;
+  }
+}
+
+.screenShot {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(16 24 40 / 0.08);
+}
+
+.screenShot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 기능 목록. 역할 표와 같은 문법으로 맞춰 페이지 안에서 한 벌로 읽히게 한다. */
+.featureRow {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid var(--line);
+  padding-block: 1.25rem;
+}
+
+@media (min-width: 48rem) {
+  .featureRow {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+}
+
+/* 마무리. 히어로와 같은 짙은 바탕을 한 번 더 써서 페이지를 닫는다. */
+.closing {
+  background: var(--hero-ground);
+  color: var(--hero-ink);
+}
+
+.closingTitle {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.25;
+  text-wrap: balance;
 }

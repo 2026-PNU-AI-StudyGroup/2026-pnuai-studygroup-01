@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
@@ -27,6 +28,48 @@ const STEPS = [
   {
     title: "결과물 제출",
     body: "보고서를 제출하고 승인을 받으면 결과물이 아카이브에 남습니다.",
+  },
+];
+
+const SCREENS = [
+  {
+    src: "/landing/screens/project-explorer.webp",
+    alt: "프로그램별 프로젝트 탐색 화면",
+    title: "찾는 조건을 한 화면에서 조합한다",
+    body: "프로그램과 상태, 검색어와 정렬을 함께 걸어 공개된 프로젝트의 모집 현황을 봅니다. 지난 프로젝트는 연도별 아카이브에 그대로 남습니다.",
+  },
+  {
+    src: "/landing/screens/my-projects.webp",
+    alt: "학생 내 프로젝트와 할 일 화면",
+    title: "내 일정과 제출률이 카드에 있다",
+    body: "지원 상태와 진행 중인 프로젝트를 구분해 보여주고, 카드에서 다가오는 할 일과 보고서 제출률을 확인한 뒤 작업 공간으로 넘어갑니다.",
+  },
+];
+
+const FEATURES = [
+  {
+    name: "프로그램 운영",
+    body: "시작일과 종료일을 정해 프로그램을 개설하고, 공개와 마감을 관리합니다.",
+  },
+  {
+    name: "주제와 지원",
+    body: "교수가 주제와 정원을 등록하고, 학생 지원을 검토해 팀을 확정합니다.",
+  },
+  {
+    name: "팀 작업공간",
+    body: "할 일과 담당자, 팀과 지도교수 대화, 진행 현황을 한자리에서 다룹니다.",
+  },
+  {
+    name: "보고서와 승인",
+    body: "요구사항과 기한을 정해 버전으로 제출받고, 승인하거나 수정을 요청합니다.",
+  },
+  {
+    name: "결과물 아카이브",
+    body: "승인된 결과물이 연도별로 남아 다음 프로젝트의 참고 자료가 됩니다.",
+  },
+  {
+    name: "투표와 채점",
+    body: "프로그램 단위 투표와 채점표 기반 평가를 함께 운영합니다.",
   },
 ];
 
@@ -65,7 +108,7 @@ export function SignInLanding({
   seedRequired: boolean;
 }) {
   return (
-    <div className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
+    <div data-landing="true" className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
       <section className={styles.hero}>
         <div aria-hidden="true" className={styles.mosaic}>
           <div className={styles.mosaicLayer} />
@@ -84,6 +127,8 @@ export function SignInLanding({
               </UiLink>
               <UiNav aria-label="페이지 안내" className="hidden items-center gap-7 text-sm md:flex">
                 <a className={styles.navLink} href="#steps"><UiText>{"이용 절차"}</UiText></a>
+                <a className={styles.navLink} href="#screens"><UiText>{"실제 화면"}</UiText></a>
+                <a className={styles.navLink} href="#features"><UiText>{"주요 기능"}</UiText></a>
                 <a className={styles.navLink} href="#roles"><UiText>{"역할별 안내"}</UiText></a>
                 <a className={styles.navLink} href={MANUAL_URL} target="_blank" rel="noreferrer">
                   <UiText>{"사용 매뉴얼"}</UiText>
@@ -128,11 +173,14 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="steps" aria-labelledby="steps-title" className="scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24">
+      <section id="steps" aria-labelledby="steps-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="steps-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"이용 절차"}</UiText>
           </h2>
+          <p className={`${styles.sectionLede} ${styles.rise} mt-4 text-base`}>
+            <UiText>{"네 단계면 프로젝트가 시작됩니다. 학교 계정으로 들어와 동의를 한 번 거치면 그다음부터는 프로그램마다 반복하지 않습니다."}</UiText>
+          </p>
           <ol className={`${styles.steps} mt-10`}>
             {STEPS.map((step, index) => (
               <li key={step.title} className={styles.rise}>
@@ -149,7 +197,61 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="roles" aria-labelledby="roles-title" className="scroll-mt-8 px-5 py-16 sm:px-8 lg:py-24">
+      <section id="screens" aria-labelledby="screens-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
+        <div className="mx-auto w-full max-w-[76rem]">
+          <h2 id="screens-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
+            <UiText>{"실제 화면"}</UiText>
+          </h2>
+          <p className={`${styles.sectionLede} ${styles.rise} mt-4 text-base`}>
+            <UiText>{"지금 쓰고 있는 화면 그대로입니다. 화면에 보이는 프로젝트는 예시 데이터입니다."}</UiText>
+          </p>
+          <div className="mt-12 grid gap-16 lg:gap-24">
+            {SCREENS.map((screen, index) => (
+              <div
+                key={screen.src}
+                className={`${styles.screenRow} ${index % 2 === 1 ? styles.screenRowFlip : ""} ${styles.rise}`}
+              >
+                <div className={styles.screenShot}>
+                  <Image src={screen.src} alt={screen.alt} width={1600} height={1000} sizes="(min-width: 60rem) 55vw, 100vw" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold tracking-[-0.03em]">
+                    <UiText>{screen.title}</UiText>
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                    <UiText>{screen.body}</UiText>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="features" aria-labelledby="features-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
+        <div className="mx-auto w-full max-w-[76rem]">
+          <h2 id="features-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
+            <UiText>{"주요 기능"}</UiText>
+          </h2>
+          <p className={`${styles.sectionLede} ${styles.rise} mt-4 text-base`}>
+            <UiText>{"해커톤과 캡스톤 디자인, AI 부스터를 하나의 정해진 유형에 맞추지 않고 같은 시스템에서 운영합니다."}</UiText>
+          </p>
+          <dl className="mt-10">
+            {FEATURES.map((feature) => (
+              <div key={feature.name} className={`${styles.featureRow} ${styles.rise}`}>
+                <dt className="text-base font-semibold">
+                  <UiText>{feature.name}</UiText>
+                </dt>
+                <dd className="text-sm leading-7 text-[var(--muted)]">
+                  <UiText>{feature.body}</UiText>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section id="roles" aria-labelledby="roles-title" className={`${styles.snap} scroll-mt-8 px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="roles-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"역할별 안내"}</UiText>
@@ -174,6 +276,31 @@ export function SignInLanding({
               </div>
             ))}
           </dl>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="closing-title"
+        className={`${styles.closing} ${styles.snap} px-5 py-20 sm:px-8 lg:py-28`}
+      >
+        <div className="mx-auto w-full max-w-[76rem]">
+          <h2 id="closing-title" className={styles.closingTitle}>
+            <UiText>{"부산대학교 구성원이면 지금 들어올 수 있습니다"}</UiText>
+          </h2>
+          <p className={`${styles.signInNote} mt-5 text-base`}>
+            <UiText>{"처음이라면 사용 매뉴얼을 함께 보세요. 막히는 곳이 있으면 피드백 게시판으로 알려 주세요."}</UiText>
+          </p>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <a className="button-primary" href="#sign-in"><UiText>{"로그인하러 가기"}</UiText></a>
+            <a
+              className="button-secondary"
+              href={MANUAL_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <UiText>{"사용 매뉴얼"}</UiText>
+            </a>
+          </div>
         </div>
       </section>
 

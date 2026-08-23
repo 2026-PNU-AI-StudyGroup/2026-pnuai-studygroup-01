@@ -576,6 +576,21 @@ dialog::backdrop {
   }
 }
 
+/*
+  로그인 랜딩만 구역 단위로 붙는 스크롤을 쓴다. html 이 그대로 스크롤 컨테이너라
+  키보드 화살표와 찾기 기능이 평소대로 동작한다. proximity 라서 화면보다 긴 구역에
+  갇히지 않는다.
+*/
+html:has([data-landing]) {
+  scroll-snap-type: y proximity;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has([data-landing]) {
+    scroll-behavior: smooth;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
