@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="project-lifecycle-title project-lifecycle-desc">
+      <title id="project-lifecycle-title">AIPMS 프로젝트 업무 흐름</title>
+      <desc id="project-lifecycle-desc">관리자가 프로그램을 공개하면 주제가 열리고, 팀이 확정된 프로젝트만 작업과 보고서 제출로 넘어간다. 보고서는 승인될 때까지 수정 요청으로 되돌아오고, 승인된 프로젝트는 결과물 공개와 투표를 거쳐 완료 아카이브에 남는다. 팀이 확정되지 않은 주제는 취소되어 관리자만 조회한다.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b616e"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f46e5"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <!-- ARROWS -->
+
+      <!-- 1 → 2 -->
+      <line x1="440" y1="104" x2="440" y2="136" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- 2 → 3 -->
+      <line x1="440" y1="192" x2="440" y2="208" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- 3 → 4 (있음) -->
+      <line x1="440" y1="312" x2="440" y2="344" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="452" y="320" width="36" height="16" rx="2" fill="#f6f7f9"/>
+      <text x="470" y="332" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">있음</text>
+
+      <!-- 3 → 9 (없음) -->
+      <line x1="540" y1="264" x2="752" y2="264" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="628" y="240" width="36" height="16" rx="2" fill="#f6f7f9"/>
+      <text x="646" y="252" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <!-- 4 → 5 -->
+      <line x1="440" y1="400" x2="440" y2="416" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- 5 → 4 (수정 요청) -->
+      <path d="M 340,472 H 264 Q 256,472 256,464 V 384 Q 256,376 264,376 H 312" fill="none" stroke="#5b616e" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="168" y="416" width="76" height="16" rx="2" fill="#f6f7f9"/>
+      <text x="206" y="428" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">수정 요청</text>
+
+      <!-- 5 → 6 (승인) -->
+      <line x1="440" y1="520" x2="440" y2="544" stroke="#4f46e5" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="452" y="524" width="36" height="16" rx="2" fill="#f6f7f9"/>
+      <text x="470" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">승인</text>
+
+      <!-- 6 → 7 -->
+      <line x1="560" y1="576" x2="752" y2="576" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="620" y="552" width="76" height="16" rx="2" fill="#f6f7f9"/>
+      <text x="658" y="564" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">운영 종료</text>
+
+      <!-- NODES -->
+
+      <!-- 1. 프로그램 공개 (start) -->
+      <rect x="320" y="56" width="240" height="48" rx="24" fill="#f6f7f9"/>
+      <rect x="320" y="56" width="240" height="48" rx="24" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="1"/>
+      <text x="440" y="80" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">프로그램 공개</text>
+      <text x="440" y="94" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ADMIN</text>
+
+      <!-- 2. 주제 공개 -->
+      <rect x="320" y="144" width="240" height="48" rx="6" fill="#f6f7f9"/>
+      <rect x="320" y="144" width="240" height="48" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <text x="440" y="168" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">주제 공개와 지원</text>
+      <text x="440" y="182" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">PROFESSOR / ADMIN / STUDENT</text>
+
+      <!-- 3. 팀 확정? (decision) -->
+      <polygon points="440,216 540,264 440,312 340,264" fill="#f6f7f9"/>
+      <polygon points="440,216 540,264 440,312 340,264" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <text x="440" y="268" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">팀 확정?</text>
+
+      <!-- 4. 팀 작업과 보고서 제출 -->
+      <rect x="320" y="352" width="240" height="48" rx="6" fill="#f6f7f9"/>
+      <rect x="320" y="352" width="240" height="48" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <text x="440" y="376" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">팀 작업과 보고서 제출</text>
+      <text x="440" y="390" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">TASK / DISCUSSION / REPORT</text>
+
+      <!-- 5. 승인? (decision) -->
+      <polygon points="440,424 540,472 440,520 340,472" fill="#f6f7f9"/>
+      <polygon points="440,424 540,472 440,520 340,472" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <text x="440" y="476" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">승인?</text>
+
+      <!-- 6. 결과물 공개와 투표 (focal) -->
+      <rect x="320" y="552" width="240" height="48" rx="6" fill="#f6f7f9"/>
+      <rect x="320" y="552" width="240" height="48" rx="6" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="1.2"/>
+      <text x="440" y="576" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">결과물 공개와 투표</text>
+      <text x="440" y="590" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SHOWCASE / VOTE</text>
+
+      <!-- 7. 완료 아카이브 (end) -->
+      <rect x="760" y="552" width="240" height="48" rx="24" fill="#f6f7f9"/>
+      <rect x="760" y="552" width="240" height="48" rx="24" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="1"/>
+      <text x="880" y="582" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">완료 아카이브</text>
+
+      <!-- 9. 취소 (end) -->
+      <rect x="760" y="240" width="240" height="48" rx="24" fill="#f6f7f9"/>
+      <rect x="760" y="240" width="240" height="48" rx="24" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="1"/>
+      <text x="880" y="270" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">취소 (관리자만 조회)</text>
+
+      <!-- 콜아웃 - 오른쪽 -->
+      <text x="1240" y="440" fill="#191c22" font-size="14" font-family="'Noto Serif KR', serif" text-anchor="end">투표 기간에는 사람마다 순서가 다르게 섞인다</text>
+      <path d="M 1080,452 Q 900,500 572,572" fill="none" stroke="rgba(79,70,229,0.50)" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="564" cy="574" r="2" fill="#4f46e5"/>
+
+      <!-- LEGEND -->
+      <line x1="40" y1="656" x2="1240" y2="656" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="40" y="676" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <rect x="140" y="666" width="16" height="12" rx="6" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="0.8"/>
+      <text x="162" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">시작과 끝</text>
+
+      <rect x="300" y="666" width="16" height="12" rx="2" fill="#ffffff" stroke="#191c22" stroke-width="0.8"/>
+      <text x="322" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">단계</text>
+
+      <polygon points="424,664 438,672 424,680 410,672" fill="#ffffff" stroke="#191c22" stroke-width="0.8"/>
+      <text x="446" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">판정</text>
+
+      <rect x="540" y="666" width="16" height="12" rx="2" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="0.8"/>
+      <text x="562" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">해커톤 초점</text>
+
+      <line x1="740" y1="672" x2="772" y2="672" stroke="#5b616e" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="780" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">되돌림</text>
+    </svg>

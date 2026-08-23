@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1280 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="core-data-model-title core-data-model-desc">
+      <title id="core-data-model-title">AIPMS 핵심 데이터 모델</title>
+      <desc id="core-data-model-desc">프로그램이 여러 프로젝트를 담고, 프로젝트마다 확정 팀이 최대 하나 붙으며, 그 팀에 구성원과 보고서와 첨부 파일이 매달린다. 투표는 프로그램, 프로젝트, 투표자 조합에 유일 제약을 걸어 한 사람이 같은 프로젝트에 두 번 투표하지 못하게 막는다. 저장소의 65개 모델 가운데 뼈대에 해당하는 8개만 추렸다.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <line x1="312" y1="124" x2="344" y2="124" stroke="#5b616e" stroke-width="1"/>
+      <text x="316" y="116" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start">1</text>
+      <text x="340" y="116" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">N</text>
+      <line x1="616" y1="124" x2="648" y2="124" stroke="#5b616e" stroke-width="1"/>
+      <text x="620" y="116" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start">1</text>
+      <text x="644" y="138" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">0..1</text>
+      <line x1="920" y1="124" x2="952" y2="124" stroke="#5b616e" stroke-width="1"/>
+      <text x="924" y="116" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start">1</text>
+      <text x="948" y="116" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">N</text>
+      <line x1="480" y1="204" x2="480" y2="320" stroke="#5b616e" stroke-width="1"/>
+      <text x="492" y="220" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">N</text>
+      <text x="492" y="314" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+      <rect x="492" y="252" width="52" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="518" y="261" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">AUTHOR</text>
+      <path d="M 176,320 V 296 Q 176,288 184,288 H 392 Q 400,288 400,280 V 204" fill="none" stroke="#5b616e" stroke-width="1"/>
+      <text x="160" y="314" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">N</text>
+      <text x="414" y="220" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+      <line x1="344" y1="372" x2="312" y2="372" stroke="#5b616e" stroke-width="1"/>
+      <text x="316" y="364" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start">N</text>
+      <text x="340" y="364" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">1</text>
+      <line x1="616" y1="372" x2="648" y2="372" stroke="#5b616e" stroke-width="1"/>
+      <text x="620" y="364" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start">1</text>
+      <text x="644" y="364" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">N</text>
+      <line x1="780" y1="188" x2="780" y2="320" stroke="#5b616e" stroke-width="1"/>
+      <text x="768" y="204" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+      <text x="768" y="314" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">N</text>
+      <path d="M 860,188 V 272 Q 860,280 868,280 H 1042 Q 1050,280 1050,288 V 320" fill="none" stroke="#5b616e" stroke-width="1"/>
+      <text x="872" y="202" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+      <text x="1064" y="314" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">N</text>
+
+      <rect x="40" y="64" width="272" height="124" rx="6" fill="#f6f7f9"/>
+      <rect x="40" y="64" width="272" height="124" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="40" y1="96" x2="312" y2="96" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="48" y="73" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="70" y="83" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="100" y="85" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">프로그램</text>
+      <text x="304" y="85" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">project_program</text>
+      <text x="52" y="114" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="52" y="130" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">name</text>
+      <text x="52" y="146" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">category</text>
+      <text x="52" y="162" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">startsAt / endsAt</text>
+      <text x="52" y="178" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">isPublic</text>
+
+      <rect x="344" y="64" width="272" height="140" rx="6" fill="#f6f7f9"/>
+      <rect x="344" y="64" width="272" height="140" rx="6" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="1.2"/>
+      <line x1="344" y1="96" x2="616" y2="96" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="352" y="73" width="44" height="14" rx="2" fill="transparent" stroke="rgba(79,70,229,0.40)" stroke-width="0.8"/>
+      <text x="374" y="83" fill="rgba(79,70,229,0.85)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="404" y="85" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">프로젝트</text>
+      <text x="608" y="85" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">topic</text>
+      <text x="356" y="114" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="356" y="130" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; programId</text>
+      <text x="356" y="146" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; authorId / managerId</text>
+      <text x="356" y="162" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">title</text>
+      <text x="356" y="178" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">capacity</text>
+      <text x="356" y="194" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">status</text>
+
+      <rect x="648" y="64" width="272" height="124" rx="6" fill="#f6f7f9"/>
+      <rect x="648" y="64" width="272" height="124" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="648" y1="96" x2="920" y2="96" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="656" y="73" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="678" y="83" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="708" y="85" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">확정 팀</text>
+      <text x="912" y="85" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">project_team</text>
+      <text x="660" y="114" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="660" y="130" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; projectId  [unique]</text>
+      <text x="660" y="146" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">name</text>
+      <text x="660" y="162" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">confirmedAt</text>
+      <text x="660" y="178" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">award</text>
+
+      <rect x="952" y="64" width="272" height="124" rx="6" fill="#f6f7f9"/>
+      <rect x="952" y="64" width="272" height="124" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="952" y1="96" x2="1224" y2="96" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="960" y="73" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="982" y="83" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="1012" y="85" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">첨부 파일</text>
+      <text x="1216" y="85" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">stored_file</text>
+      <text x="964" y="114" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="964" y="130" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; projectTeamId?</text>
+      <text x="964" y="146" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; ownerId</text>
+      <text x="964" y="162" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">objectKey  [unique]</text>
+      <text x="964" y="178" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">sha256 / status</text>
+
+      <rect x="40" y="320" width="272" height="108" rx="6" fill="#f6f7f9"/>
+      <rect x="40" y="320" width="272" height="108" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="40" y1="352" x2="312" y2="352" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="48" y="329" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="70" y="339" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="100" y="341" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">투표</text>
+      <text x="304" y="341" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">project_vote</text>
+      <text x="52" y="370" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="52" y="386" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; programId / topicId</text>
+      <text x="52" y="402" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; voterId</text>
+      <text x="52" y="418" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">[unique] program+voter+topic</text>
+
+      <rect x="344" y="320" width="272" height="124" rx="6" fill="#f6f7f9"/>
+      <rect x="344" y="320" width="272" height="124" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="344" y1="352" x2="616" y2="352" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="352" y="329" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="374" y="339" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="404" y="341" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">사용자</text>
+      <text x="608" y="341" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">user</text>
+      <text x="356" y="370" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="356" y="386" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">name / email</text>
+      <text x="356" y="402" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">role</text>
+      <text x="356" y="418" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">accountStatus</text>
+      <text x="356" y="434" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">privacyConsentAt</text>
+
+      <rect x="648" y="320" width="272" height="124" rx="6" fill="#f6f7f9"/>
+      <rect x="648" y="320" width="272" height="124" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="648" y1="352" x2="920" y2="352" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="656" y="329" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="678" y="339" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="708" y="341" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">팀 구성원</text>
+      <text x="912" y="341" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">project_team_membership</text>
+      <text x="660" y="370" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="660" y="386" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; projectTeamId</text>
+      <text x="660" y="402" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; userId</text>
+      <text x="660" y="418" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">role</text>
+      <text x="660" y="434" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">joinedAt / endedAt</text>
+
+      <rect x="952" y="320" width="272" height="108" rx="6" fill="#f6f7f9"/>
+      <rect x="952" y="320" width="272" height="108" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <line x1="952" y1="352" x2="1224" y2="352" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <rect x="960" y="329" width="44" height="14" rx="2" fill="transparent" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="982" y="339" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+      <text x="1012" y="341" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">보고서</text>
+      <text x="1216" y="341" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">report</text>
+      <text x="964" y="370" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+      <text x="964" y="386" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; projectTeamId</text>
+      <text x="964" y="402" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; definitionId</text>
+      <text x="964" y="418" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">dueAt / required</text>
+
+      <line x1="40" y1="496" x2="1240" y2="496" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="40" y="516" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="140" y="506" width="12" height="12" rx="2" fill="#ffffff" stroke="#191c22" stroke-width="0.8"/>
+      <text x="158" y="516" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">엔티티</text>
+      <rect x="300" y="506" width="12" height="12" rx="2" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="0.8"/>
+      <text x="318" y="516" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">중심 엔티티</text>
+      <text x="500" y="516" fill="#191c22" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># 기본키</text>
+      <text x="620" y="516" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">&#8594; 외래키</text>
+      <text x="740" y="516" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">1 / N / 0..1  cardinality</text>
+    </svg>
