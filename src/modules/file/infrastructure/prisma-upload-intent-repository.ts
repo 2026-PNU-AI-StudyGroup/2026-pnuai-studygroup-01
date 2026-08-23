@@ -34,9 +34,12 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
             ${input.objectKey}, ${input.uploadObjectKey}, ${input.originalName},
             ${input.contentType}, ${input.size}, ${input.sha256}, ${input.expiresAt},
             ${input.cleanupAfter}, ${new Date()}
+          -- 만료된 PENDING 은 세지 않는다. 업로드가 끊기면 그 행은 cleanupAfter(26시간)까지
+          -- 남는데, 그때까지 자리를 잡으면 마감일에 재시도 몇 번으로 하루 종일 막힌다.
           WHERE (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
+              AND "expiresAt" > NOW()
           ) < 5
           RETURNING "id"
         `);
@@ -86,6 +89,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
+              AND "expiresAt" > NOW()
           ) < 3
           AND COALESCE((
             SELECT sum("size") FROM "stored_file"

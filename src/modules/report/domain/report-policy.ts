@@ -60,7 +60,10 @@ export function normalizeYoutubeUrl(value: string): string {
   } catch {
     throw new InvalidReportInputError();
   }
-  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  // 모바일 브라우저 주소창에서 복사하면 m.youtube.com 이 온다. music 과 nocookie 도 같은 영상이다.
+  const hostname = url.hostname.toLowerCase()
+    .replace(/^(www|m|music)\./, "")
+    .replace(/^youtube-nocookie\.com$/, "youtube.com");
   const pathParts = url.pathname.split("/").filter(Boolean);
   const videoId = hostname === "youtu.be"
     ? pathParts[0]

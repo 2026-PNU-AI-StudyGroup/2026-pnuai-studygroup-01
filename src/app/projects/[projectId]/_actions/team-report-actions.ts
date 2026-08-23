@@ -173,7 +173,8 @@ export async function upsertShowcaseVideoAction(
     return { status: "success", message: "시연·발표 영상을 저장했습니다." };
   } catch (error) {
     const expected = message(error);
-    if (expected) return { status: "error", message: "YouTube 링크를 확인해 주세요." };
+    // 마감이 지나서 거절된 것을 "링크를 확인해 주세요" 로 덮으면 학생은 계속 링크만 고친다.
+    if (expected) return { status: "error", message: expected };
     throw error;
   }
 }

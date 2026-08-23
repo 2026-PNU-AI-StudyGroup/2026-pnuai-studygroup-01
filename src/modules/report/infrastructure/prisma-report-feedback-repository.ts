@@ -29,7 +29,7 @@ export class PrismaReportFeedbackRepository implements ReportFeedbackWriter {
     createdAt: Date;
   }): Promise<boolean> {
     const report = await this.client.report.findFirst({
-      where: { id: input.reportId, team: teamActorWhere(input.actor) },
+      where: { id: input.reportId, projectTeam: teamActorWhere(input.actor) },
       select: { id: true },
     });
     if (!report) return false;

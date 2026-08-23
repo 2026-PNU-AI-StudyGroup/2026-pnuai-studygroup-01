@@ -15,6 +15,7 @@ import {
 import type { AnnouncementRecord } from "@/modules/announcement/application/announcement-ports";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton, UiDiv } from "@/modules/translation/ui/localized-elements";
+import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { AddIcon, CloseIcon, EditIcon, PinIcon } from "@/shared/ui/workspace-icons";
 import { AnnouncementAttachmentList } from "@/modules/announcement/ui/announcement-attachment-list";
 import { IconButton, IconLink } from "@/shared/ui/icon-button";
@@ -284,8 +285,8 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
                 </time>
               </div>
             </header>
-            <div className="whitespace-pre-wrap px-6 py-7 text-sm leading-7 sm:px-8 sm:py-8 sm:text-base">
-              <UiText>{selectedAnnouncement.content}</UiText>
+            <div className="px-6 py-7 text-sm leading-7 sm:px-8 sm:py-8 sm:text-base">
+              <LocalizedMarkdown text={selectedAnnouncement.content} />
             </div>
             <AnnouncementAttachmentList attachments={selectedAnnouncement.attachments} compact />
           </article>

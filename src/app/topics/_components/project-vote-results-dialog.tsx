@@ -230,7 +230,10 @@ function VoterTable({ voters }: { voters: ProgramVoteResult["voters"] }) {
 }
 
 function roleLabel(role: ProgramVoteResult["voters"][number]["role"]) {
-  return role === "ADMIN" ? "관리자" : role === "PROFESSOR" ? "교수" : "학생";
+  if (role === "ADMIN") return "관리자";
+  if (role === "PROFESSOR") return "교수";
+  if (role === "ADVISOR") return "자문위원";
+  return "학생";
 }
 
 function sortByVotes(results: PublicProgramVoteResult[]) {
