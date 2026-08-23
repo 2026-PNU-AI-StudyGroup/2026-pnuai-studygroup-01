@@ -1,0 +1,497 @@
+/*
+  로그인 첫 화면. 히어로 한 폭만 짙게 쓰고 아래 설명 구역은 앱과 같은 라이트로 둔다.
+  로그인 직후 흰 작업 화면으로 넘어가므로 페이지 전체를 다크로 만들면 낙차가 크다.
+*/
+
+.page {
+  --hero-ground: #10141c;
+  --hero-ground-deep: #0a0d13;
+  --hero-ink: #f4f6fa;
+  --hero-muted: #a9b2c4;
+  --hero-accent: #8b83f5;
+  --hero-line: rgb(244 246 250 / 0.16);
+}
+
+.page ::selection {
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+  color: var(--ink);
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--hero-ground);
+  color: var(--hero-ink);
+}
+
+/*
+  지난 프로젝트 결과물의 벽. 한 장으로 이어붙인 4x4 블록을 배경으로 무한 반복시키고,
+  그 층을 정확히 한 블록만큼 좌상단에서 우하단으로 옮긴다. 반복 배경이라 되돌아오는
+  자리에 같은 그림이 놓여 이음매가 보이지 않는다. DOM 은 두 칸뿐이다.
+*/
+.mosaic {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
+}
+
+.mosaicLayer {
+  --block-w: 640px;
+  --block-h: 406px;
+  position: absolute;
+  top: calc(-1 * var(--block-h));
+  left: calc(-1 * var(--block-w));
+  width: calc(100% + var(--block-w));
+  height: calc(100% + var(--block-h));
+  background-color: var(--hero-ground-deep);
+  background-image: url("/landing/showcase-wall.webp");
+  background-repeat: repeat;
+  background-size: var(--block-w) var(--block-h);
+  opacity: 0.4;
+  animation: flow 34s linear infinite;
+  will-change: transform;
+}
+
+@media (min-width: 64rem) {
+  .mosaicLayer {
+    --block-w: 920px;
+    --block-h: 584px;
+  }
+}
+
+@keyframes flow {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--block-w), var(--block-h), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mosaicLayer {
+    animation: none;
+    transform: translate3d(var(--block-w), var(--block-h), 0);
+  }
+}
+
+/* 왼쪽 글자 자리를 비우는 층. 촘촘해진 배경 위에서 본문 대비를 확보한다. */
+.heroWash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(100deg, rgb(16 20 28 / 0.98) 0%, rgb(16 20 28 / 0.92) 34%, rgb(16 20 28 / 0.55) 62%, rgb(16 20 28 / 0.34) 100%),
+    linear-gradient(to bottom, rgb(10 13 19 / 0.72) 0%, rgb(10 13 19 / 0.18) 34%, rgb(10 13 19 / 0.86) 100%);
+}
+
+.heroInner {
+  position: relative;
+  z-index: 2;
+}
+
+.topBar {
+  border-bottom: 1px solid var(--hero-line);
+}
+
+/*
+  랜딩 전용 워드마크. 어두운 히어로 위에서 파란 원본을 그대로 쓰면 대비가 안 나온다.
+  알파 마스크로 흰색을 입히면 인장 선화가 그대로 남는다. 비율 1994:253.
+*/
+.institute {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.instituteMark {
+  display: block;
+  width: 12rem;
+  height: 1.5rem;
+  background-color: var(--hero-ink);
+  mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
+  -webkit-mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
+}
+
+@media (min-width: 48rem) {
+  .instituteMark {
+    width: 15.75rem;
+    height: 2rem;
+  }
+}
+
+.institute:focus-visible {
+  border-radius: 0.25rem;
+  outline: 2px solid var(--hero-accent);
+  outline-offset: 4px;
+}
+
+.navLink {
+  color: var(--hero-muted);
+  text-decoration: none;
+  text-underline-offset: 0.25em;
+}
+
+.navLink:hover {
+  color: var(--hero-ink);
+  text-decoration: underline;
+}
+
+.navLink:focus-visible {
+  border-radius: 0.25rem;
+  outline: 2px solid var(--hero-accent);
+  outline-offset: 3px;
+}
+
+.title {
+  /* 워시로 비워 둔 왼쪽 영역 안에서 두 줄로 접히게 폭을 묶는다. */
+  max-width: 42rem;
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 33rem;
+  color: var(--hero-muted);
+  line-height: 1.75;
+}
+
+/* 로그인은 상자에 담지 않고 히어로 본문 흐름 안에 둔다. */
+.signInAction {
+  max-width: 22rem;
+}
+
+.signInNote {
+  max-width: 30rem;
+  color: var(--hero-muted);
+  line-height: 1.7;
+}
+
+.signInNote strong {
+  color: var(--hero-ink);
+  font-weight: 600;
+}
+
+.heroDivider {
+  width: 3.5rem;
+  border-top: 2px solid var(--hero-accent);
+}
+
+.stepIndex {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* 절차는 실제 순서가 있어 번호를 쓴다. */
+.steps {
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 60rem) {
+  .steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+  }
+}
+
+.roleHead {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .roleHead {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
+    gap: 1.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+}
+
+.roleRow {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid var(--line);
+  padding-block: 1.25rem;
+}
+
+@media (min-width: 48rem) {
+  .roleRow {
+    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+}
+
+.accessTag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.accessTagAccent {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/*
+  아래로 내려갈수록 하나씩 올라오는 등장. 스크롤이 곧 시계라서 JS 없이 처리한다.
+  기본 상태는 이미 보이는 상태이므로 스크롤 구동을 지원하지 않는 브라우저에서는
+  아무것도 숨겨지지 않는다. reduced-motion 에서도 그대로 보인다.
+*/
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    filter: blur(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
+    /* 한 줄에 나란히 선 항목은 왼쪽부터 차례로 올라오게 시점을 어긋낸다. */
+    .steps > .rise:nth-child(2) {
+      animation-range: entry 8% cover 28%;
+    }
+
+    .steps > .rise:nth-child(3) {
+      animation-range: entry 12% cover 32%;
+    }
+
+    .steps > .rise:nth-child(4) {
+      animation-range: entry 16% cover 36%;
+    }
+  }
+}
+
+/* 구역 머리말. 눈썹 라벨 없이 제목과 한 줄 설명으로만 쓴다. */
+.sectionLede {
+  max-width: 40rem;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+/* 실제 화면. 한 행에 캡처와 설명을 두고 행마다 좌우를 바꾼다. */
+.screenRow {
+  display: grid;
+  gap: 1.75rem;
+  align-items: center;
+}
+
+@media (min-width: 60rem) {
+  .screenRow {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 3.5rem;
+  }
+
+  .screenRowFlip .screenShot {
+    order: 2;
+  }
+}
+
+.screenShot {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(16 24 40 / 0.08);
+}
+
+.screenShot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 기능 목록. 역할 표와 같은 문법으로 맞춰 페이지 안에서 한 벌로 읽히게 한다. */
+.featureRow {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid var(--line);
+  padding-block: 1.25rem;
+}
+
+@media (min-width: 48rem) {
+  .featureRow {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+}
+
+/* 마무리. 히어로와 같은 짙은 바탕을 한 번 더 써서 페이지를 닫는다. */
+.closing {
+  background: var(--hero-ground-deep);
+  color: var(--hero-ink);
+}
+
+.closingTitle {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/* 패밀리 사이트. 이름과 실제 주소를 함께 둬서 어디로 가는지 눌러보기 전에 알 수 있다. */
+.familyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 48rem) {
+  .familyGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 72rem) {
+  .familyGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.familyCard {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.85rem 0.9rem;
+  text-decoration: none;
+  transition: border-color 120ms, transform 120ms;
+}
+
+.familyCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.familyCard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.familyName {
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.familyHost {
+  color: var(--soft, var(--muted));
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  word-break: break-all;
+}
+
+/* 카드 위쪽 짧은 막대. 국내 기관 사이트의 패밀리 사이트 카드 관례를 따른다. */
+.familyDash {
+  display: block;
+  width: 1.25rem;
+  border-top: 2px solid var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.familyGo {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
+.familyCard:hover .familyGo {
+  color: var(--accent-ink);
+}
+
+.familyArrow {
+  display: inline-block;
+  transition: transform 120ms;
+}
+
+.familyCard:hover .familyArrow {
+  transform: translateX(0.2rem);
+}
+
+/*
+  페이지 끝은 어두운 한 구간으로 닫는다. 패밀리 사이트가 진한 회색, 마무리 칸이
+  가장 짙은 색, 푸터가 그 안의 얇은 띠다. 아래로 갈수록 어두워진다.
+*/
+.familyBand {
+  background: #171b24;
+  color: var(--hero-ink);
+}
+
+.familyBandTitle {
+  color: var(--hero-muted);
+}
+
+.familyBand .familyCard {
+  border-color: rgb(244 246 250 / 0.14);
+  background: rgb(244 246 250 / 0.04);
+}
+
+.familyBand .familyCard:hover {
+  border-color: var(--hero-accent);
+  background: rgb(244 246 250 / 0.07);
+}
+
+.familyBand .familyCard:focus-visible {
+  outline-color: var(--hero-accent);
+}
+
+.familyBand .familyDash {
+  border-top-color: var(--hero-accent);
+}
+
+.familyBand .familyName {
+  color: var(--hero-ink);
+}
+
+.familyBand .familyHost,
+.familyBand .familyGo {
+  color: var(--hero-muted);
+}
+
+.familyBand .familyCard:hover .familyGo {
+  color: var(--hero-accent);
+}
+
+.footerDark {
+  background: var(--hero-ground-deep);
+  color: var(--hero-muted);
+  border-top: 1px solid rgb(244 246 250 / 0.12);
+}
+
+.footerDark a:hover {
+  color: var(--hero-ink);
+}
