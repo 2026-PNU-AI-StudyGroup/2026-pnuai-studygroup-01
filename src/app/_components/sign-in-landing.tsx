@@ -12,7 +12,7 @@ import styles from "./sign-in-landing.module.css";
 const MANUAL_URL = "https://aipms.notion.site/";
 
 // 지난 해커톤과 캡스톤 결과물 16장을 촘촘히 깐다. 7과 16은 서로소라 같은 그림이 이웃하지 않는다.
-const SHOWCASE_TILES = Array.from({ length: 70 }, (_, index) => (index * 7) % 16 + 1);
+const SHOWCASE_TILES = Array.from({ length: 144 }, (_, index) => (index * 7) % 16 + 1);
 
 const STEPS = [
   {
@@ -78,7 +78,7 @@ export function SignInLanding({
                 alt=""
                 width={640}
                 height={400}
-                priority={index < 10}
+                priority={index < 12}
               />
             </div>
           ))}
