@@ -296,6 +296,28 @@ export function SignInLanding({
         </div>
       </section>
 
+      <section aria-labelledby="family-title" className={`${styles.familyBand} px-5 pb-14 pt-16 sm:px-8`}>
+        <div className="mx-auto w-full max-w-[76rem]">
+          <h2 id="family-title" className={`${styles.familyBandTitle} text-sm font-semibold`}>
+            <UiText>{"패밀리 사이트"}</UiText>
+          </h2>
+          <ul className={`${styles.familyGrid} mt-5`}>
+            {FAMILY_SITES.map((site) => (
+              <li key={site.href}>
+                <a className={styles.familyCard} href={site.href} target="_blank" rel="noreferrer">
+                  <span aria-hidden="true" className={styles.familyDash} />
+                  <span className={styles.familyName}><UiText>{site.name}</UiText></span>
+                  <span className={styles.familyHost}>{site.host}</span>
+                  <span className={styles.familyGo}>
+                    <UiText>{"바로가기"}</UiText> <span aria-hidden="true" className={styles.familyArrow}>&rarr;</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section
         aria-labelledby="closing-title"
         className={`${styles.closing} px-5 py-20 sm:px-8 lg:py-28`}
@@ -321,37 +343,15 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section aria-labelledby="family-title" className="border-t border-[var(--line)] bg-[var(--workspace)] px-5 pb-12 pt-10 sm:px-8">
-        <div className="mx-auto w-full max-w-[76rem]">
-          <h2 id="family-title" className="text-sm font-semibold text-[var(--muted)]">
-            <UiText>{"패밀리 사이트"}</UiText>
-          </h2>
-          <ul className={`${styles.familyGrid} mt-5`}>
-            {FAMILY_SITES.map((site) => (
-              <li key={site.href}>
-                <a className={styles.familyCard} href={site.href} target="_blank" rel="noreferrer">
-                  <span aria-hidden="true" className={styles.familyDash} />
-                  <span className={styles.familyName}><UiText>{site.name}</UiText></span>
-                  <span className={styles.familyHost}>{site.host}</span>
-                  <span className={styles.familyGo}>
-                    <UiText>{"바로가기"}</UiText> <span aria-hidden="true" className={styles.familyArrow}>&rarr;</span>
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <footer className="border-t border-[var(--line)] bg-[var(--workspace)] px-5 py-10 sm:px-8">
-        <div className={`${styles.rise} mx-auto flex w-full max-w-[76rem] flex-wrap items-center gap-x-7 gap-y-3 text-sm text-[var(--muted)]`}>
-          <a href={MANUAL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-[var(--ink)]">
+      <footer className={`${styles.footerDark} px-5 py-9 sm:px-8`}>
+        <div className="mx-auto flex w-full max-w-[76rem] flex-wrap items-center gap-x-7 gap-y-3 text-sm">
+          <a href={MANUAL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-4">
             <UiText>{"사용 매뉴얼"}</UiText>
           </a>
-          <Link href="/feedback" className="underline underline-offset-4 hover:text-[var(--ink)]">
+          <Link href="/feedback" className="underline underline-offset-4">
             <UiText>{"피드백 게시판"}</UiText>
           </Link>
-          <Link href="/privacy" className="underline underline-offset-4 hover:text-[var(--ink)]">
+          <Link href="/privacy" className="underline underline-offset-4">
             <UiText>{"개인정보 처리방침"}</UiText>
           </Link>
           <span className="ms-auto">

@@ -343,7 +343,7 @@
 
 /* 마무리. 히어로와 같은 짙은 바탕을 한 번 더 써서 페이지를 닫는다. */
 .closing {
-  background: var(--hero-ground);
+  background: var(--hero-ground-deep);
   color: var(--hero-ink);
 }
 
@@ -440,4 +440,58 @@
 
 .familyCard:hover .familyArrow {
   transform: translateX(0.2rem);
+}
+
+/*
+  페이지 끝은 어두운 한 구간으로 닫는다. 패밀리 사이트가 진한 회색, 마무리 칸이
+  가장 짙은 색, 푸터가 그 안의 얇은 띠다. 아래로 갈수록 어두워진다.
+*/
+.familyBand {
+  background: #171b24;
+  color: var(--hero-ink);
+}
+
+.familyBandTitle {
+  color: var(--hero-muted);
+}
+
+.familyBand .familyCard {
+  border-color: rgb(244 246 250 / 0.14);
+  background: rgb(244 246 250 / 0.04);
+}
+
+.familyBand .familyCard:hover {
+  border-color: var(--hero-accent);
+  background: rgb(244 246 250 / 0.07);
+}
+
+.familyBand .familyCard:focus-visible {
+  outline-color: var(--hero-accent);
+}
+
+.familyBand .familyDash {
+  border-top-color: var(--hero-accent);
+}
+
+.familyBand .familyName {
+  color: var(--hero-ink);
+}
+
+.familyBand .familyHost,
+.familyBand .familyGo {
+  color: var(--hero-muted);
+}
+
+.familyBand .familyCard:hover .familyGo {
+  color: var(--hero-accent);
+}
+
+.footerDark {
+  background: var(--hero-ground-deep);
+  color: var(--hero-muted);
+  border-top: 1px solid rgb(244 246 250 / 0.12);
+}
+
+.footerDark a:hover {
+  color: var(--hero-ink);
 }
