@@ -23,6 +23,9 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       `);
       if (input.purpose === "ANNOUNCEMENT") {
         if (input.teamId !== null || input.actor.role === "STUDENT") return false;
+        // 만료된 PENDING 은 세지 않는다. 업로드가 끊기면 그 행은 cleanupAfter(26시간)까지
+        // 남는데, 그때까지 자리를 잡으면 마감일에 재시도 몇 번으로 하루 종일 막힌다.
+        // 주석을 쿼리 문자열 안에 두면 ui-localization 이 한글 리터럴로 잡는다.
         const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
           INSERT INTO "stored_file" (
             "id", "projectTeamId", "ownerId", "purpose", "consumer", "status", "objectKey",
@@ -34,8 +37,6 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
             ${input.objectKey}, ${input.uploadObjectKey}, ${input.originalName},
             ${input.contentType}, ${input.size}, ${input.sha256}, ${input.expiresAt},
             ${input.cleanupAfter}, ${new Date()}
-          -- 만료된 PENDING 은 세지 않는다. 업로드가 끊기면 그 행은 cleanupAfter(26시간)까지
-          -- 남는데, 그때까지 자리를 잡으면 마감일에 재시도 몇 번으로 하루 종일 막힌다.
           WHERE (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
