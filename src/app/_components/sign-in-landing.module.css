@@ -26,54 +26,41 @@
 }
 
 /*
-  지난 프로젝트 결과물. 좌상단에서 우하단으로 한 칸씩 계속 흘러간다.
-  한 주기가 정확히 한 칸이라 격자선이 맞물려 이어붙인 자리가 보이지 않는다.
+  지난 프로젝트 결과물의 벽. 한 장으로 이어붙인 4x4 블록을 배경으로 무한 반복시키고,
+  그 층을 정확히 한 블록만큼 좌상단에서 우하단으로 옮긴다. 반복 배경이라 되돌아오는
+  자리에 같은 그림이 놓여 이음매가 보이지 않는다. DOM 은 두 칸뿐이다.
 */
 .mosaic {
   position: absolute;
-  top: -12rem;
-  left: -12rem;
-  right: -4rem;
-  bottom: -4rem;
+  inset: 0;
   z-index: 0;
-  --tile: 7rem;
-  --gap: 0.375rem;
-  --step-x: calc(var(--tile) + var(--gap));
-  --step-y: calc(var(--tile) * 0.625 + var(--gap));
-  display: grid;
-  grid-template-columns: repeat(auto-fill, var(--tile));
-  gap: var(--gap);
-  align-content: start;
-  opacity: 0.34;
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 82%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 82%, transparent 100%);
-  animation: flow 16s linear infinite;
+  overflow: clip;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
+}
+
+.mosaicLayer {
+  --block-w: 640px;
+  --block-h: 406px;
+  position: absolute;
+  top: calc(-1 * var(--block-h));
+  left: calc(-1 * var(--block-w));
+  width: calc(100% + var(--block-w));
+  height: calc(100% + var(--block-h));
+  background-color: var(--hero-ground-deep);
+  background-image: url("/landing/showcase-wall.webp");
+  background-repeat: repeat;
+  background-size: var(--block-w) var(--block-h);
+  opacity: 0.4;
+  animation: flow 34s linear infinite;
   will-change: transform;
 }
 
-@media (min-width: 48rem) {
-  .mosaic {
-    --tile: 8.5rem;
-  }
-}
-
 @media (min-width: 64rem) {
-  .mosaic {
-    --tile: 10rem;
+  .mosaicLayer {
+    --block-w: 920px;
+    --block-h: 584px;
   }
-}
-
-.tile {
-  overflow: hidden;
-  border-radius: 0.25rem;
-  aspect-ratio: 8 / 5;
-  background: var(--hero-ground-deep);
-}
-
-.tile img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
 }
 
 @keyframes flow {
@@ -81,13 +68,14 @@
     transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translate3d(var(--step-x), var(--step-y), 0);
+    transform: translate3d(var(--block-w), var(--block-h), 0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mosaic {
+  .mosaicLayer {
     animation: none;
+    transform: translate3d(var(--block-w), var(--block-h), 0);
   }
 }
 
@@ -108,6 +96,38 @@
 
 .topBar {
   border-bottom: 1px solid var(--hero-line);
+}
+
+/*
+  랜딩 전용 워드마크. 어두운 히어로 위에서 파란 원본을 그대로 쓰면 대비가 안 나온다.
+  알파 마스크로 흰색을 입히면 인장 선화가 그대로 남는다. 비율 1994:253.
+*/
+.institute {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.instituteMark {
+  display: block;
+  width: 12rem;
+  height: 1.5rem;
+  background-color: var(--hero-ink);
+  mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
+  -webkit-mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
+}
+
+@media (min-width: 48rem) {
+  .instituteMark {
+    width: 15.75rem;
+    height: 2rem;
+  }
+}
+
+.institute:focus-visible {
+  border-radius: 0.25rem;
+  outline: 2px solid var(--hero-accent);
+  outline-offset: 4px;
 }
 
 .navLink {

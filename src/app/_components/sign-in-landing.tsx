@@ -1,18 +1,15 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
-import { UiNav } from "@/shared/i18n/localized-elements";
+import { UiLink, UiNav } from "@/shared/i18n/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { Brand } from "@/shared/ui/brand";
 
 import styles from "./sign-in-landing.module.css";
 
 const MANUAL_URL = "https://aipms.notion.site/";
 
-// 지난 해커톤과 캡스톤 결과물 16장을 촘촘히 깐다. 7과 16은 서로소라 같은 그림이 이웃하지 않는다.
-const SHOWCASE_TILES = Array.from({ length: 144 }, (_, index) => (index * 7) % 16 + 1);
+// 배경 벽은 CSS 반복 배경 한 장으로 처리한다. public/landing/showcase-wall.webp 참고.
 
 const STEPS = [
   {
@@ -71,24 +68,20 @@ export function SignInLanding({
     <div className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
       <section className={styles.hero}>
         <div aria-hidden="true" className={styles.mosaic}>
-          {SHOWCASE_TILES.map((tile, index) => (
-            <div key={`${tile}-${index}`} className={styles.tile}>
-              <Image
-                src={`/landing/showcase/${String(tile).padStart(2, "0")}.webp`}
-                alt=""
-                width={640}
-                height={400}
-                priority={index < 12}
-              />
-            </div>
-          ))}
+          <div className={styles.mosaicLayer} />
         </div>
         <div aria-hidden="true" className={styles.heroWash} />
 
         <div className={styles.heroInner}>
           <div className={styles.topBar}>
             <div className="mx-auto flex w-full max-w-[76rem] items-center justify-between gap-6 px-5 py-4 sm:px-8">
-              <Brand href="/" inverse />
+              <UiLink
+                href="/"
+                aria-label="부산대학교 학과 프로젝트 관리 홈"
+                className={styles.institute}
+              >
+                <span aria-hidden="true" className={styles.instituteMark} />
+              </UiLink>
               <UiNav aria-label="페이지 안내" className="hidden items-center gap-7 text-sm md:flex">
                 <a className={styles.navLink} href="#steps"><UiText>{"이용 절차"}</UiText></a>
                 <a className={styles.navLink} href="#roles"><UiText>{"역할별 안내"}</UiText></a>
