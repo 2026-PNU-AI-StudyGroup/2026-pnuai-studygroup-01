@@ -25,38 +25,37 @@
   color: var(--hero-ink);
 }
 
-/* 지난 프로젝트 결과물. 장식이라 아주 낮은 명도로 깔고 글자 쪽은 마스크로 비운다. */
+/* 지난 프로젝트 결과물. 촘촘하게 깔아 벽처럼 보이게 하고 글자 쪽은 마스크와 워시로 비운다. */
 .mosaic {
   position: absolute;
-  inset: -8% -6%;
+  inset: -6% -5%;
   z-index: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.375rem;
   align-content: start;
-  opacity: 0.22;
-  transform: scale(1.06);
-  mask-image:
-    linear-gradient(to right, transparent 0%, transparent 30%, #000 78%),
-    linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%);
-  mask-composite: intersect;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0%, transparent 30%, #000 78%),
-    linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  animation: drift 96s ease-in-out infinite alternate;
+  opacity: 0.34;
+  transform: scale(1.04);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 78%, transparent 100%);
+  animation: drift 110s ease-in-out infinite alternate;
+}
+
+@media (min-width: 48rem) {
+  .mosaic {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 64rem) {
   .mosaic {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
   }
 }
 
 .tile {
-  position: relative;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
   aspect-ratio: 8 / 5;
   background: var(--hero-ground-deep);
 }
@@ -69,27 +68,21 @@
 
 @keyframes drift {
   from {
-    transform: scale(1.06) translate3d(-1.2%, -0.8%, 0);
+    transform: scale(1.04) translate3d(-1%, -0.6%, 0);
   }
   to {
-    transform: scale(1.06) translate3d(1.2%, 0.8%, 0);
+    transform: scale(1.04) translate3d(1%, 0.6%, 0);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mosaic {
-    animation: none;
-  }
-}
-
-/* 모자이크 위에 짙은 층을 한 겹 더 둬서 본문 대비를 확보한다. */
+/* 왼쪽 글자 자리를 비우는 층. 촘촘해진 배경 위에서 본문 대비를 확보한다. */
 .heroWash {
   position: absolute;
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(75% 90% at 18% 42%, rgb(16 20 28 / 0.97) 0%, rgb(16 20 28 / 0.82) 45%, rgb(16 20 28 / 0.42) 100%),
-    linear-gradient(to bottom, rgb(10 13 19 / 0.78), rgb(10 13 19 / 0.28) 42%, rgb(10 13 19 / 0.88));
+    linear-gradient(100deg, rgb(16 20 28 / 0.98) 0%, rgb(16 20 28 / 0.92) 34%, rgb(16 20 28 / 0.55) 62%, rgb(16 20 28 / 0.34) 100%),
+    linear-gradient(to bottom, rgb(10 13 19 / 0.72) 0%, rgb(10 13 19 / 0.18) 34%, rgb(10 13 19 / 0.86) 100%);
 }
 
 .heroInner {
@@ -112,38 +105,47 @@
   text-decoration: underline;
 }
 
-.navLink:focus-visible,
-.heroLink:focus-visible {
+.navLink:focus-visible {
   border-radius: 0.25rem;
   outline: 2px solid var(--hero-accent);
   outline-offset: 3px;
 }
 
 .title {
-  font-size: clamp(2rem, 4.4vw, 3.25rem);
+  /* 워시로 비워 둔 왼쪽 영역 안에서 두 줄로 접히게 폭을 묶는다. */
+  max-width: 42rem;
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
   font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.04em;
+  line-height: 1.16;
+  letter-spacing: -0.045em;
   text-wrap: balance;
 }
 
 .lede {
-  max-width: 34rem;
+  max-width: 33rem;
   color: var(--hero-muted);
   line-height: 1.75;
 }
 
-.heroLink {
-  color: var(--hero-accent);
-  text-underline-offset: 0.25em;
+/* 로그인은 상자에 담지 않고 히어로 본문 흐름 안에 둔다. */
+.signInAction {
+  max-width: 22rem;
 }
 
-.card {
-  /* 히어로가 밝은 글자색을 물려주므로 카드 안에서 본문 색을 되돌린다. */
-  color: var(--ink);
-  background: var(--surface);
-  border-radius: var(--radius-panel);
-  box-shadow: 0 18px 48px rgb(4 6 10 / 0.5), 0 2px 6px rgb(4 6 10 / 0.4);
+.signInNote {
+  max-width: 30rem;
+  color: var(--hero-muted);
+  line-height: 1.7;
+}
+
+.signInNote strong {
+  color: var(--hero-ink);
+  font-weight: 600;
+}
+
+.heroDivider {
+  width: 3.5rem;
+  border-top: 2px solid var(--hero-accent);
 }
 
 .stepIndex {
@@ -153,7 +155,7 @@
   color: var(--muted);
 }
 
-/* 절차는 실제 순서가 있어 번호를 쓴다. 데스크톱에서는 가는 선으로 이어 흐름을 보인다. */
+/* 절차는 실제 순서가 있어 번호를 쓴다. */
 .steps {
   display: grid;
   gap: 1.75rem;
@@ -177,8 +179,7 @@
     gap: 1.5rem;
     padding-bottom: 0.5rem;
     font-size: 0.75rem;
-    color: var(--soft, var(--muted));
-    letter-spacing: 0.02em;
+    color: var(--muted);
   }
 }
 
@@ -206,4 +207,45 @@
 .accessTagAccent {
   color: var(--accent-ink);
   font-weight: 600;
+}
+
+/*
+  아래로 내려갈수록 하나씩 올라오는 등장. 스크롤이 곧 시계라서 JS 없이 처리한다.
+  기본 상태는 이미 보이는 상태이므로 스크롤 구동을 지원하지 않는 브라우저에서는
+  아무것도 숨겨지지 않는다. reduced-motion 에서도 그대로 보인다.
+*/
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    filter: blur(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
+    /* 한 줄에 나란히 선 항목은 왼쪽부터 차례로 올라오게 시점을 어긋낸다. */
+    .steps > .rise:nth-child(2) {
+      animation-range: entry 8% cover 28%;
+    }
+
+    .steps > .rise:nth-child(3) {
+      animation-range: entry 12% cover 32%;
+    }
+
+    .steps > .rise:nth-child(4) {
+      animation-range: entry 16% cover 36%;
+    }
+  }
 }
