@@ -33,5 +33,13 @@ describe("보고서 정책", () => {
       .toBe("https://www.youtube.com/watch?v=Uou5iwWqTDA");
     expect(() => normalizeYoutubeUrl("https://example.com/video")).toThrow(InvalidReportInputError);
     expect(() => normalizeYoutubeUrl("https://notyoutube.com/watch?v=Uou5iwWqTDA")).toThrow(InvalidReportInputError);
+
+    // 모바일 브라우저 주소창에서 복사하면 m.youtube.com 이 온다. 학생이 실제로 붙여 넣는 형태다.
+    expect(normalizeYoutubeUrl("https://m.youtube.com/watch?v=Uou5iwWqTDA"))
+      .toBe("https://www.youtube.com/watch?v=Uou5iwWqTDA");
+    expect(normalizeYoutubeUrl("https://music.youtube.com/watch?v=Uou5iwWqTDA"))
+      .toBe("https://www.youtube.com/watch?v=Uou5iwWqTDA");
+    expect(normalizeYoutubeUrl("https://www.youtube-nocookie.com/embed/Uou5iwWqTDA"))
+      .toBe("https://www.youtube.com/watch?v=Uou5iwWqTDA");
   });
 });

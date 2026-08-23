@@ -62,7 +62,11 @@ export async function saveRubricScoresAction(
     if (!criteria.length) return "MISSING" as const;
     const scores: Array<{ criterionId: string; points: number }> = [];
     for (const criterion of criteria) {
-      const parsed = z.coerce.number().int().min(0).max(criterion.maxPoints).safeParse(formData.get(`points_${criterion.id}`));
+      // formData.get 은 항목이 없으면 null 을 준다. coerce 는 그 null 을 0 으로 바꿔 통과시키므로
+      // 채점하지 않은 항목이 0점으로 저장되고 "채점 완료" 로 집계된다. 빈 값은 먼저 거른다.
+      const raw = formData.get(`points_${criterion.id}`);
+      if (typeof raw !== "string" || raw.trim() === "") return "INVALID" as const;
+      const parsed = z.coerce.number().int().min(0).max(criterion.maxPoints).safeParse(raw);
       if (!parsed.success) return "INVALID" as const;
       scores.push({ criterionId: criterion.id, points: parsed.data });
     }
