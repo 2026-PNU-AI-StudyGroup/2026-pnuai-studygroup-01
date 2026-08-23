@@ -37,16 +37,24 @@ export function withEffectiveVoteLimit<T extends ProgramVotingPolicyDetails>(pol
 export function normalizeVoteSelection(topicIds: readonly string[], policy: ProgramVotingPolicyDetails, candidates: ReadonlyArray<{ id: string; divisionId?: string | null }>): string[] {
   const selectedTopicIds = [...new Set(topicIds.map((id) => id.trim()).filter(Boolean))];
   const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
-  if (selectedTopicIds.some((id) => !candidateById.has(id))) throw new ProjectVotingPolicyError("투표 후보를 다시 선택해 주세요.");
+  if (selectedTopicIds.some((id) => !candidateById.has(id))) throw new ProjectVotingPolicyError("투표 후보를 다시 선택해 주세요.", "INVALID_CANDIDATE");
   const counts = new Map<string, number>();
   for (const id of selectedTopicIds) {
     const key = policy.voteLimitScope === "DIVISION" ? candidateById.get(id)!.divisionId ?? "UNASSIGNED" : "PROGRAM";
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   if ([...counts.values()].some((count) => count > policy.voteLimit)) {
-    throw new ProjectVotingPolicyError("인당 가능 투표수를 초과했습니다.");
+    throw new ProjectVotingPolicyError("인당 가능 투표수를 초과했습니다.", "VOTE_LIMIT");
   }
   return selectedTopicIds;
 }
 
-export class ProjectVotingPolicyError extends Error {}
+// 한도 초과와 후보 오류는 화면에서 다르게 말해 줘야 한다. 메시지 문자열로 구분하면 문구를
+// 고칠 때마다 조용히 깨지므로 종류를 값으로 들고 다닌다.
+export type ProjectVotingPolicyViolation = "INVALID_CANDIDATE" | "VOTE_LIMIT";
+
+export class ProjectVotingPolicyError extends Error {
+  constructor(message: string, readonly violation: ProjectVotingPolicyViolation = "INVALID_CANDIDATE") {
+    super(message);
+  }
+}
