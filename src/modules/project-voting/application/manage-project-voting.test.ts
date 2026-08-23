@@ -4,6 +4,7 @@ import {
   ProjectVotingOperationError,
   ProjectVotingService,
   type ProjectVotingRepository,
+  type SavedProgramVote,
 } from "@/modules/project-voting/application/manage-project-voting";
 import {
   canViewPublicVotingResults,
@@ -34,35 +35,63 @@ const ballot = {
   selectedTopicIds: [],
 };
 
+const savedOutcome: SavedProgramVote = {
+  status: "SAVED",
+  voted: true,
+  selectedTopicIds: ["topic-1"],
+  remainingVotes: 1,
+  scope: { type: "PROGRAM", divisionName: null },
+};
+
 function repository(overrides: Partial<ProjectVotingRepository> = {}): ProjectVotingRepository {
   return {
     findBallot: vi.fn(async () => ballot),
-    replaceVotes: vi.fn(async () => "SAVED" as const),
+    toggleVote: vi.fn(async () => savedOutcome),
     findResults: vi.fn(async () => null),
     findPublicResults: vi.fn(async () => null),
     ...overrides,
   };
 }
 
+const student = { id: "voter-1", role: "STUDENT" as const, name: "학생", email: "student@example.com", image: null };
+
 describe("프로그램 프로젝트 투표", () => {
-  it("중복 선택은 하나로 합쳐 최대 투표수 안에서 저장한다", async () => {
+  it("뒤집을 표만 저장소에 넘긴다", async () => {
+    // 다음 집합을 여기서 계산해 넘기면 그 계산의 근거가 트랜잭션 밖 읽기가 된다.
+    // 탭 두 개로 연달아 투표할 때 먼저 저장된 표가 지워지므로 의도만 넘겨야 한다.
     const value = repository();
-    await new ProjectVotingService(value, () => now).saveVotes(
-      { id: "voter-1", role: "STUDENT", name: "학생", email: "student@example.com", image: null },
-      "program-1",
-      ["topic-1", "topic-1", "topic-2"],
-    );
-    expect(value.replaceVotes).toHaveBeenCalledWith(expect.objectContaining({ topicIds: ["topic-1", "topic-2"] }));
+    await new ProjectVotingService(value, () => now).toggleVote(student, "program-1", "topic-2");
+    expect(value.toggleVote).toHaveBeenCalledWith({
+      programId: "program-1",
+      voterId: "voter-1",
+      topicId: "topic-2",
+      votedAt: now,
+    });
+    expect(value.findBallot).not.toHaveBeenCalled();
   });
 
-  it("인당 가능 투표수를 넘기면 저장소 호출 전에 거절한다", async () => {
-    const value = repository();
-    await expect(new ProjectVotingService(value, () => now).saveVotes(
-      { id: "voter-1", role: "STUDENT", name: "학생", email: "student@example.com", image: null },
-      "program-1",
-      ["topic-1", "topic-2", "topic-3"],
-    )).rejects.toBeInstanceOf(ProjectVotingPolicyError);
-    expect(value.replaceVotes).not.toHaveBeenCalled();
+  it("한도 초과는 분과 이름을 붙여 알린다", async () => {
+    const value = repository({
+      toggleVote: vi.fn(async () => ({
+        status: "VOTE_LIMIT_REACHED" as const,
+        voteLimit: 2,
+        scope: { type: "DIVISION" as const, divisionName: "창업" },
+      })),
+    });
+    await expect(new ProjectVotingService(value, () => now).toggleVote(student, "program-1", "topic-2"))
+      .rejects.toThrow(new ProjectVotingOperationError("창업 분과에서 가능한 2표를 모두 사용했습니다."));
+  });
+
+  it("분과 이름이 없으면 미분과로 알린다", async () => {
+    const value = repository({
+      toggleVote: vi.fn(async () => ({
+        status: "VOTE_LIMIT_REACHED" as const,
+        voteLimit: 1,
+        scope: { type: "DIVISION" as const, divisionName: null },
+      })),
+    });
+    await expect(new ProjectVotingService(value, () => now).toggleVote(student, "program-1", "topic-2"))
+      .rejects.toThrow(new ProjectVotingOperationError("미분과 분과에서 가능한 1표를 모두 사용했습니다."));
   });
 
   it("분과별 투표는 분과마다 같은 한도를 적용하고 미분과를 별도 묶음으로 본다", () => {
@@ -81,11 +110,11 @@ describe("프로그램 프로젝트 투표", () => {
   });
 
   it("저장소의 자기 프로젝트 차단 결과를 사용자 오류로 전달한다", async () => {
-    const value = repository({ replaceVotes: vi.fn(async () => "SELF_VOTE_FORBIDDEN" as const) });
-    await expect(new ProjectVotingService(value, () => now).saveVotes(
+    const value = repository({ toggleVote: vi.fn(async () => ({ status: "SELF_VOTE_FORBIDDEN" as const })) });
+    await expect(new ProjectVotingService(value, () => now).toggleVote(
       { id: "voter-1", role: "ADMIN", name: "관리자", email: "admin@example.com", image: null },
       "program-1",
-      ["topic-1"],
+      "topic-1",
     )).rejects.toThrow(new ProjectVotingOperationError("자기 프로젝트에는 투표할 수 없습니다."));
   });
 
@@ -100,28 +129,9 @@ describe("프로그램 프로젝트 투표", () => {
     };
     const staffRepository = () => repository({ findBallot: vi.fn(async () => staffBallot) });
     const user = (role: "ADVISOR" | "ADMIN" | "STUDENT") => ({ id: "voter-1", role, name: "사용자", email: "user@example.com", image: null });
-    const topicIds = (count: number) => Array.from({ length: count }, (_, index) => `topic-${index + 1}`);
 
-    it.each(["ADVISOR", "ADMIN"] as const)("%s는 staffVoteLimit까지 저장한다", async (role) => {
-      const value = staffRepository();
-      await new ProjectVotingService(value, () => now).saveVotes(user(role), "program-1", topicIds(4));
-      expect(value.replaceVotes).toHaveBeenCalledWith(expect.objectContaining({ topicIds: topicIds(4) }));
-    });
-
-    it("학생은 기존 voteLimit을 넘기면 거절한다", async () => {
-      const value = staffRepository();
-      await expect(new ProjectVotingService(value, () => now).saveVotes(user("STUDENT"), "program-1", topicIds(4)))
-        .rejects.toBeInstanceOf(ProjectVotingPolicyError);
-      expect(value.replaceVotes).not.toHaveBeenCalled();
-    });
-
-    it("자문위원도 staffVoteLimit을 넘기면 거절한다", async () => {
-      const value = staffRepository();
-      await expect(new ProjectVotingService(value, () => now).saveVotes(user("ADVISOR"), "program-1", topicIds(6)))
-        .rejects.toBeInstanceOf(ProjectVotingPolicyError);
-      expect(value.replaceVotes).not.toHaveBeenCalled();
-    });
-
+    // 한도 자체를 지키는 일은 저장소가 트랜잭션 안에서 한다(prisma-project-voting-repository.test.ts).
+    // 여기서는 화면에 내려보내는 유효 한도만 확인한다.
     it("getBallot은 자문위원에게 staffVoteLimit을 유효 한도로 준다", async () => {
       const service = new ProjectVotingService(staffRepository(), () => now);
       expect((await service.getBallot(user("ADVISOR"), "program-1"))?.policy.voteLimit).toBe(5);

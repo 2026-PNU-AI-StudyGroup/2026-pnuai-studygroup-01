@@ -6,12 +6,17 @@ import {
   type ProgramVotingResults,
   type PublicProgramVotingResults,
   type ProjectVotingRepository,
-  type ReplaceProgramVotesOutcome,
+  type ToggleProgramVoteOutcome,
+  type VoteScope,
 } from "@/modules/project-voting/application/manage-project-voting";
 import type { UserRole } from "@/modules/identity/domain/user-role";
-import { canViewPublicVotingResults, isOwnProject, normalizeVoteSelection, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
+import { canViewPublicVotingResults, isOwnProject, normalizeVoteSelection, ProjectVotingPolicyError, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUS = "ACTIVE" as const;
+
+// Serializable 트랜잭션이 동시 실행으로 직렬화에 실패(P2034)하면 다시 시도한다.
+// 표 하나를 뒤집는 짧은 트랜잭션이라 재시도가 사용자에게 보이지 않는다.
+const TOGGLE_ATTEMPTS = 3;
 
 type LockedVotingPolicy = ProgramVotingPolicyDetails & { programId: string };
 
@@ -80,87 +85,144 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     };
   }
 
-  async replaceVotes(input: { programId: string; voterId: string; voterRole?: UserRole; topicIds: string[]; votedAt: Date }): Promise<ReplaceProgramVotesOutcome> {
-    return this.client.$transaction(async (transaction) => {
-      const voters = await transaction.$queryRaw<Array<{ id: string; role: string }>>(Prisma.sql`
-        SELECT "id", "role" FROM "user"
-        WHERE "id" = ${input.voterId} AND "accountStatus" = 'ACTIVE'
-        FOR UPDATE
-      `);
-      const voter = voters[0];
-      if (!voter) return "INACTIVE_VOTER";
-      const voterRole = voter.role as UserRole;
+  async toggleVote(input: { programId: string; voterId: string; topicId: string; votedAt: Date }): Promise<ToggleProgramVoteOutcome> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= TOGGLE_ATTEMPTS; attempt += 1) {
+      try {
+        return await this.client.$transaction(async (transaction): Promise<ToggleProgramVoteOutcome> => {
+          const voters = await transaction.$queryRaw<Array<{ id: string; role: string }>>(Prisma.sql`
+            SELECT "id", "role" FROM "user"
+            WHERE "id" = ${input.voterId} AND "accountStatus" = 'ACTIVE'
+            FOR UPDATE
+          `);
+          const voter = voters[0];
+          if (!voter) return { status: "INACTIVE_VOTER" };
+          const voterRole = voter.role as UserRole;
 
-      const visibility = voterRole === "ADMIN"
-        ? Prisma.sql`TRUE`
-        : Prisma.sql`"project_program"."isPublic" = true`;
-      const policies = await transaction.$queryRaw<LockedVotingPolicy[]>(Prisma.sql`
-        SELECT
-          "program_voting_policy"."programId",
-          "program_voting_policy"."startsAt",
-          "program_voting_policy"."endsAt",
-          "program_voting_policy"."voteLimit",
-          "program_voting_policy"."staffVoteLimit",
-          "program_voting_policy"."voteLimitScope",
-          "program_voting_policy"."selfVotingAllowed",
-          "program_voting_policy"."resultsVisibleDuringVoting",
-          "program_voting_policy"."resultsVisibleAfterVoting"
-        FROM "project_program"
-        JOIN "program_voting_policy"
-          ON "program_voting_policy"."programId" = "project_program"."id"
-        WHERE "project_program"."id" = ${input.programId}
-          AND ${visibility}
-        FOR UPDATE OF "project_program", "program_voting_policy"
-      `);
-      const locked = policies[0];
-      if (!locked) return "NOT_FOUND";
-      const policy = withEffectiveVoteLimit(locked, voterRole);
-      if (getProgramVotingPhase(policy, input.votedAt) !== "OPEN") return "NOT_OPEN";
+          const visibility = voterRole === "ADMIN"
+            ? Prisma.sql`TRUE`
+            : Prisma.sql`"project_program"."isPublic" = true`;
+          const policies = await transaction.$queryRaw<LockedVotingPolicy[]>(Prisma.sql`
+            SELECT
+              "program_voting_policy"."programId",
+              "program_voting_policy"."startsAt",
+              "program_voting_policy"."endsAt",
+              "program_voting_policy"."voteLimit",
+              "program_voting_policy"."staffVoteLimit",
+              "program_voting_policy"."voteLimitScope",
+              "program_voting_policy"."selfVotingAllowed",
+              "program_voting_policy"."resultsVisibleDuringVoting",
+              "program_voting_policy"."resultsVisibleAfterVoting"
+            FROM "project_program"
+            JOIN "program_voting_policy"
+              ON "program_voting_policy"."programId" = "project_program"."id"
+            WHERE "project_program"."id" = ${input.programId}
+              AND ${visibility}
+            FOR UPDATE OF "project_program", "program_voting_policy"
+          `);
+          const locked = policies[0];
+          if (!locked) return { status: "NOT_FOUND" };
+          const policy = withEffectiveVoteLimit(locked, voterRole);
+          if (getProgramVotingPhase(policy, input.votedAt) !== "OPEN") return { status: "NOT_OPEN" };
 
-      const candidates = input.topicIds.length
-        ? await transaction.topic.findMany({
-          where: {
-            id: { in: input.topicIds },
-            programId: input.programId,
-            publishedAt: { not: null },
-            status: VOTABLE_TOPIC_STATUS,
-            OR: [
-              { program: { endsAt: { gt: input.votedAt } } },
-              { projectTeam: { confirmedAt: { not: null } } },
-            ],
-          },
-          select: {
-            id: true,
-            divisionId: true,
-            authorId: true,
-            managerId: true,
-            assistants: { where: { userId: input.voterId }, select: { id: true } },
-            projectTeam: { select: { memberships: { where: { userId: input.voterId, endedAt: null }, select: { id: true } } } },
-          },
-        })
-        : [];
-      if (candidates.length !== input.topicIds.length) return "INVALID_CANDIDATE";
-      try { normalizeVoteSelection(input.topicIds, policy, candidates.map(({ id, divisionId }) => ({ id, divisionId }))); } catch { return "INVALID_CANDIDATE"; }
-      if (!policy.selfVotingAllowed && candidates.some((candidate) => isOwnProject({
-        authorId: candidate.authorId,
-        managerId: candidate.managerId,
-        assistantCount: candidate.assistants.length,
-        memberCount: candidate.projectTeam?.memberships.length ?? 0,
-      }, { id: input.voterId, role: voterRole }))) return "SELF_VOTE_FORBIDDEN";
+          // 지금 던져 둔 표를 같은 트랜잭션 안에서 잠그고 읽는다. 이 읽기가 트랜잭션 밖에 있으면
+          // 같은 사람이 탭 두 개에서 서로 다른 프로젝트를 찍을 때 늦게 도착한 요청이 먼저 저장된
+          // 표를 지운다. 표가 조용히 사라지므로 아무도 모른다.
+          const currentVotes = await transaction.$queryRaw<Array<{ topicId: string }>>(Prisma.sql`
+            SELECT "topicId" FROM "project_vote"
+            WHERE "programId" = ${input.programId} AND "voterId" = ${input.voterId}
+            FOR UPDATE
+          `);
+          const currentTopicIds = currentVotes.map(({ topicId }) => topicId);
+          const voted = !currentTopicIds.includes(input.topicId);
 
-      await transaction.projectVote.deleteMany({ where: { programId: input.programId, voterId: input.voterId } });
-      if (input.topicIds.length) {
-        await transaction.projectVote.createMany({
-          data: input.topicIds.map((topicId) => ({
-            programId: input.programId,
-            topicId,
-            voterId: input.voterId,
-            createdAt: input.votedAt,
-          })),
-        });
+          const target = await transaction.topic.findFirst({
+            where: { id: input.topicId, programId: input.programId },
+            select: {
+              id: true,
+              divisionId: true,
+              authorId: true,
+              managerId: true,
+              publishedAt: true,
+              status: true,
+              division: { select: { name: true } },
+              program: { select: { endsAt: true } },
+              assistants: { where: { userId: input.voterId }, select: { id: true } },
+              projectTeam: {
+                select: {
+                  confirmedAt: true,
+                  memberships: { where: { userId: input.voterId, endedAt: null }, select: { id: true } },
+                },
+              },
+            },
+          });
+          if (!target) return { status: "INVALID_CANDIDATE" };
+          const scope: VoteScope = {
+            type: policy.voteLimitScope === "DIVISION" ? "DIVISION" : "PROGRAM",
+            divisionName: target.division?.name ?? null,
+          };
+
+          const others = currentTopicIds.length
+            ? await transaction.topic.findMany({ where: { id: { in: currentTopicIds } }, select: { id: true, divisionId: true } })
+            : [];
+          const nextTopicIds = voted
+            ? [...currentTopicIds, target.id]
+            : currentTopicIds.filter((id) => id !== target.id);
+
+          if (voted) {
+            const stillVotable = target.publishedAt !== null
+              && target.status === VOTABLE_TOPIC_STATUS
+              && (target.program.endsAt > input.votedAt || target.projectTeam?.confirmedAt != null);
+            if (!stillVotable) return { status: "INVALID_CANDIDATE" };
+            if (!policy.selfVotingAllowed && isOwnProject({
+              authorId: target.authorId,
+              managerId: target.managerId,
+              assistantCount: target.assistants.length,
+              memberCount: target.projectTeam?.memberships.length ?? 0,
+            }, { id: input.voterId, role: voterRole })) return { status: "SELF_VOTE_FORBIDDEN" };
+            try {
+              normalizeVoteSelection(nextTopicIds, policy, [...others, { id: target.id, divisionId: target.divisionId }]);
+            } catch (error) {
+              if (error instanceof ProjectVotingPolicyError && error.violation === "VOTE_LIMIT") {
+                return { status: "VOTE_LIMIT_REACHED", voteLimit: policy.voteLimit, scope };
+              }
+              return { status: "INVALID_CANDIDATE" };
+            }
+            await transaction.projectVote.create({
+              data: { programId: input.programId, topicId: target.id, voterId: input.voterId, createdAt: input.votedAt },
+            });
+          } else {
+            // 취소는 후보 자격을 다시 묻지 않는다. 프로젝트가 비공개로 바뀐 뒤에도 자기 표는 뺄 수 있어야 한다.
+            await transaction.projectVote.deleteMany({
+              where: { programId: input.programId, topicId: target.id, voterId: input.voterId },
+            });
+          }
+
+          const divisionByTopicId = new Map(
+            [...others, { id: target.id, divisionId: target.divisionId }].map(({ id, divisionId }) => [id, divisionId ?? null] as const),
+          );
+          const bucketOf = (topicId: string) => policy.voteLimitScope === "DIVISION"
+            ? divisionByTopicId.get(topicId) ?? "UNASSIGNED"
+            : "PROGRAM";
+          const usedInScope = nextTopicIds.filter((id) => bucketOf(id) === bucketOf(target.id)).length;
+
+          return {
+            status: "SAVED",
+            voted,
+            selectedTopicIds: nextTopicIds,
+            remainingVotes: Math.max(0, policy.voteLimit - usedInScope),
+            scope,
+          };
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      } catch (error) {
+        if (isSerializationFailure(error) && attempt < TOGGLE_ATTEMPTS) {
+          lastError = error;
+          continue;
+        }
+        throw error;
       }
-      return "SAVED";
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }
+    throw lastError;
   }
 
   async findResults(programId: string, now: Date): Promise<ProgramVotingResults | null> {
@@ -332,4 +394,8 @@ function resultSort(
 
 function divisionSortPosition(position: number | null | undefined) {
   return position ?? Number.MAX_SAFE_INTEGER;
+}
+
+function isSerializationFailure(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
 }

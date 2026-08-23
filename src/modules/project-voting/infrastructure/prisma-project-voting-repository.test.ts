@@ -49,7 +49,11 @@ function client(topics: ResultTopic[] = [{
   } as unknown as PrismaClient;
 }
 
-function voteClient(role: string, voteLimit: number, staffVoteLimit: number) {
+function voteClient(role: string, voteLimit: number, staffVoteLimit: number, options: {
+  currentTopicIds?: string[];
+  targetPublishedAt?: Date | null;
+} = {}) {
+  const currentTopicIds = options.currentTopicIds ?? ["topic-1"];
   const transaction = {
     $queryRaw: vi.fn()
       .mockResolvedValueOnce([{ id: "voter-1", role }])
@@ -61,28 +65,87 @@ function voteClient(role: string, voteLimit: number, staffVoteLimit: number) {
         staffVoteLimit,
         voteLimitScope: "PROGRAM",
         selfVotingAllowed: false,
-        identityVisibility: "ANONYMOUS",
-      }]),
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: true,
+      }])
+      .mockResolvedValueOnce(currentTopicIds.map((topicId) => ({ topicId }))),
     topic: {
-      findMany: vi.fn().mockResolvedValue([
-        { id: "topic-1", divisionId: null, authorId: "professor-1", managerId: "professor-1", assistants: [], team: null },
-        { id: "topic-2", divisionId: null, authorId: "professor-1", managerId: "professor-1", assistants: [], team: null },
-      ]),
+      findFirst: vi.fn().mockResolvedValue({
+        id: "topic-2",
+        divisionId: null,
+        authorId: "professor-1",
+        managerId: "professor-1",
+        publishedAt: options.targetPublishedAt === undefined ? new Date("2026-07-01T00:00:00Z") : options.targetPublishedAt,
+        status: "ACTIVE",
+        division: null,
+        program: { endsAt: new Date("2026-12-31T00:00:00Z") },
+        assistants: [],
+        projectTeam: null,
+      }),
+      findMany: vi.fn().mockResolvedValue(currentTopicIds.map((id) => ({ id, divisionId: null }))),
     },
-    projectVote: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), createMany: vi.fn().mockResolvedValue({ count: 2 }) },
+    projectVote: {
+      create: vi.fn().mockResolvedValue({ id: "vote-1" }),
+      deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
   };
-  return { $transaction: vi.fn(async (run: (value: typeof transaction) => unknown) => run(transaction)) } as unknown as PrismaClient;
+  const client = { $transaction: vi.fn(async (run: (value: typeof transaction) => unknown) => run(transaction)) };
+  return { client: client as unknown as PrismaClient, transaction };
 }
 
-describe("PrismaProjectVotingRepository 표 저장", () => {
-  const input = { programId: "program-1", voterId: "voter-1", topicIds: ["topic-1", "topic-2"], votedAt: new Date("2026-08-10T00:00:00Z") };
+describe("PrismaProjectVotingRepository 표 뒤집기", () => {
+  const input = { programId: "program-1", voterId: "voter-1", topicId: "topic-2", votedAt: new Date("2026-08-10T00:00:00Z") };
 
-  it("자문위원에게는 staffVoteLimit을 적용해 저장한다", async () => {
-    await expect(new PrismaProjectVotingRepository(voteClient("ADVISOR", 1, 5)).replaceVotes(input)).resolves.toBe("SAVED");
+  it("자문위원에게는 staffVoteLimit을 적용해 한 표 더 받는다", async () => {
+    const { client, transaction } = voteClient("ADVISOR", 1, 5);
+    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+      status: "SAVED",
+      voted: true,
+      selectedTopicIds: ["topic-1", "topic-2"],
+      remainingVotes: 3,
+    });
+    expect(transaction.projectVote.create).toHaveBeenCalled();
   });
 
-  it("학생에게는 기존 voteLimit을 적용해 거절한다", async () => {
-    await expect(new PrismaProjectVotingRepository(voteClient("STUDENT", 1, 5)).replaceVotes(input)).resolves.toBe("INVALID_CANDIDATE");
+  it("학생은 기존 voteLimit을 넘기면 한도 초과로 돌려준다", async () => {
+    const { client, transaction } = voteClient("STUDENT", 1, 5);
+    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+      status: "VOTE_LIMIT_REACHED",
+      voteLimit: 1,
+    });
+    expect(transaction.projectVote.create).not.toHaveBeenCalled();
+  });
+
+  it("지금 던져 둔 표는 저장소가 직접 읽는다", async () => {
+    // 화면이 계산한 집합을 받지 않는다. 그 집합은 트랜잭션 밖에서 만들어지므로
+    // 탭 두 개가 겹치면 먼저 저장된 표를 지운다.
+    const { client, transaction } = voteClient("STUDENT", 5, 5, { currentTopicIds: ["topic-9"] });
+    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+      status: "SAVED",
+      selectedTopicIds: ["topic-9", "topic-2"],
+    });
+    const lockedRead = transaction.$queryRaw.mock.calls[2][0] as { strings: string[] };
+    expect(lockedRead.strings.join("")).toContain("FOR UPDATE");
+  });
+
+  it("이미 던진 표는 후보 자격을 다시 묻지 않고 취소한다", async () => {
+    // 프로젝트가 비공개로 바뀐 뒤에도 자기 표는 뺄 수 있어야 한다.
+    const { client, transaction } = voteClient("STUDENT", 1, 5, { currentTopicIds: ["topic-2"], targetPublishedAt: null });
+    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+      status: "SAVED",
+      voted: false,
+      selectedTopicIds: [],
+      remainingVotes: 1,
+    });
+    expect(transaction.projectVote.deleteMany).toHaveBeenCalled();
+    expect(transaction.projectVote.create).not.toHaveBeenCalled();
+  });
+
+  it("공개된 적 없는 프로젝트에는 새 표를 받지 않는다", async () => {
+    const { client } = voteClient("STUDENT", 5, 5, { targetPublishedAt: null });
+    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+      status: "INVALID_CANDIDATE",
+    });
   });
 });
 
