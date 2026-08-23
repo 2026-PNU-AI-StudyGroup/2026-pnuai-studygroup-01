@@ -1,0 +1,209 @@
+/*
+  로그인 첫 화면. 히어로 한 폭만 짙게 쓰고 아래 설명 구역은 앱과 같은 라이트로 둔다.
+  로그인 직후 흰 작업 화면으로 넘어가므로 페이지 전체를 다크로 만들면 낙차가 크다.
+*/
+
+.page {
+  --hero-ground: #10141c;
+  --hero-ground-deep: #0a0d13;
+  --hero-ink: #f4f6fa;
+  --hero-muted: #a9b2c4;
+  --hero-accent: #8b83f5;
+  --hero-line: rgb(244 246 250 / 0.16);
+}
+
+.page ::selection {
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+  color: var(--ink);
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--hero-ground);
+  color: var(--hero-ink);
+}
+
+/* 지난 프로젝트 결과물. 장식이라 아주 낮은 명도로 깔고 글자 쪽은 마스크로 비운다. */
+.mosaic {
+  position: absolute;
+  inset: -8% -6%;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-content: start;
+  opacity: 0.22;
+  transform: scale(1.06);
+  mask-image:
+    linear-gradient(to right, transparent 0%, transparent 30%, #000 78%),
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, transparent 30%, #000 78%),
+    linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  animation: drift 96s ease-in-out infinite alternate;
+}
+
+@media (min-width: 64rem) {
+  .mosaic {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  aspect-ratio: 8 / 5;
+  background: var(--hero-ground-deep);
+}
+
+.tile img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.06) translate3d(-1.2%, -0.8%, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(1.2%, 0.8%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mosaic {
+    animation: none;
+  }
+}
+
+/* 모자이크 위에 짙은 층을 한 겹 더 둬서 본문 대비를 확보한다. */
+.heroWash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(75% 90% at 18% 42%, rgb(16 20 28 / 0.97) 0%, rgb(16 20 28 / 0.82) 45%, rgb(16 20 28 / 0.42) 100%),
+    linear-gradient(to bottom, rgb(10 13 19 / 0.78), rgb(10 13 19 / 0.28) 42%, rgb(10 13 19 / 0.88));
+}
+
+.heroInner {
+  position: relative;
+  z-index: 2;
+}
+
+.topBar {
+  border-bottom: 1px solid var(--hero-line);
+}
+
+.navLink {
+  color: var(--hero-muted);
+  text-decoration: none;
+  text-underline-offset: 0.25em;
+}
+
+.navLink:hover {
+  color: var(--hero-ink);
+  text-decoration: underline;
+}
+
+.navLink:focus-visible,
+.heroLink:focus-visible {
+  border-radius: 0.25rem;
+  outline: 2px solid var(--hero-accent);
+  outline-offset: 3px;
+}
+
+.title {
+  font-size: clamp(2rem, 4.4vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 34rem;
+  color: var(--hero-muted);
+  line-height: 1.75;
+}
+
+.heroLink {
+  color: var(--hero-accent);
+  text-underline-offset: 0.25em;
+}
+
+.card {
+  /* 히어로가 밝은 글자색을 물려주므로 카드 안에서 본문 색을 되돌린다. */
+  color: var(--ink);
+  background: var(--surface);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 18px 48px rgb(4 6 10 / 0.5), 0 2px 6px rgb(4 6 10 / 0.4);
+}
+
+.stepIndex {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* 절차는 실제 순서가 있어 번호를 쓴다. 데스크톱에서는 가는 선으로 이어 흐름을 보인다. */
+.steps {
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 60rem) {
+  .steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+  }
+}
+
+.roleHead {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .roleHead {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
+    gap: 1.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--soft, var(--muted));
+    letter-spacing: 0.02em;
+  }
+}
+
+.roleRow {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid var(--line);
+  padding-block: 1.25rem;
+}
+
+@media (min-width: 48rem) {
+  .roleRow {
+    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
+    gap: 1.5rem;
+    align-items: baseline;
+  }
+}
+
+.accessTag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.accessTagAccent {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
