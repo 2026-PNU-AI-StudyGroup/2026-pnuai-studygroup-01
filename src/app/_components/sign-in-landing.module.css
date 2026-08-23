@@ -18,8 +18,6 @@
 }
 
 .hero {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   position: relative;
   isolation: isolate;
   overflow: clip;
@@ -288,11 +286,6 @@
   }
 }
 
-/* 각 구역의 시작점에 붙는다. */
-.snap {
-  scroll-snap-align: start;
-}
-
 /* 구역 머리말. 눈썹 라벨 없이 제목과 한 줄 설명으로만 쓴다. */
 .sectionLede {
   max-width: 40rem;
@@ -360,4 +353,91 @@
   letter-spacing: -0.04em;
   line-height: 1.25;
   text-wrap: balance;
+}
+
+/* 패밀리 사이트. 이름과 실제 주소를 함께 둬서 어디로 가는지 눌러보기 전에 알 수 있다. */
+.familyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 48rem) {
+  .familyGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 72rem) {
+  .familyGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.familyCard {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.85rem 0.9rem;
+  text-decoration: none;
+  transition: border-color 120ms, transform 120ms;
+}
+
+.familyCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.familyCard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.familyName {
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.familyHost {
+  color: var(--soft, var(--muted));
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  word-break: break-all;
+}
+
+/* 카드 위쪽 짧은 막대. 국내 기관 사이트의 패밀리 사이트 카드 관례를 따른다. */
+.familyDash {
+  display: block;
+  width: 1.25rem;
+  border-top: 2px solid var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.familyGo {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
+.familyCard:hover .familyGo {
+  color: var(--accent-ink);
+}
+
+.familyArrow {
+  display: inline-block;
+  transition: transform 120ms;
+}
+
+.familyCard:hover .familyArrow {
+  transform: translateX(0.2rem);
 }

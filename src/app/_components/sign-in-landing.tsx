@@ -6,6 +6,8 @@ import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button"
 import { UiLink, UiNav } from "@/shared/i18n/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
+import { SmoothScroll } from "./smooth-scroll";
+
 import styles from "./sign-in-landing.module.css";
 
 const MANUAL_URL = "https://aipms.notion.site/";
@@ -33,16 +35,20 @@ const STEPS = [
 
 const SCREENS = [
   {
-    src: "/landing/screens/project-explorer.webp",
-    alt: "프로그램별 프로젝트 탐색 화면",
-    title: "찾는 조건을 한 화면에서 조합한다",
-    body: "프로그램과 상태, 검색어와 정렬을 함께 걸어 공개된 프로젝트의 모집 현황을 봅니다. 지난 프로젝트는 연도별 아카이브에 그대로 남습니다.",
+    src: "/landing/screens/program-overview.webp",
+    alt: "관리자가 보는 프로그램 운영 화면",
+    title: "프로그램 하나가 한 화면에 들어온다",
+    body: "공지와 팀 구성, 보고서 제출 현황과 제출물을 프로그램 단위로 모아 봅니다. 투표를 켠 프로그램은 득표 현황도 같은 자리에서 확인합니다.",
+    width: 1600,
+    height: 1000,
   },
   {
-    src: "/landing/screens/my-projects.webp",
+    src: "/landing/screens/my-projects-dashboard.webp",
     alt: "학생 내 프로젝트와 할 일 화면",
     title: "내 일정과 제출률이 카드에 있다",
     body: "지원 상태와 진행 중인 프로젝트를 구분해 보여주고, 카드에서 다가오는 할 일과 보고서 제출률을 확인한 뒤 작업 공간으로 넘어갑니다.",
+    width: 1600,
+    height: 533,
   },
 ];
 
@@ -71,6 +77,15 @@ const FEATURES = [
     name: "투표와 채점",
     body: "프로그램 단위 투표와 채점표 기반 평가를 함께 운영합니다.",
   },
+];
+
+const FAMILY_SITES = [
+  { name: "AI융합교육원", host: "swedu.pusan.ac.kr", href: "https://swedu.pusan.ac.kr/swedu/index.do" },
+  { name: "PLATO", host: "plato.pusan.ac.kr", href: "https://plato.pusan.ac.kr" },
+  { name: "코드플레이스", host: "code.pusan.ac.kr", href: "https://code.pusan.ac.kr" },
+  { name: "AI역량지원시스템", host: "swcss.pusan.ac.kr", href: "https://swcss.pusan.ac.kr" },
+  { name: "공식 유튜브", host: "youtube.com/@pnuswedu", href: "https://www.youtube.com/@pnuswedu" },
+  { name: "인프런", host: "inflearn.com/@pnuswedu", href: "https://www.inflearn.com/users/1370319/@pnuswedu" },
 ];
 
 const ROLES = [
@@ -108,7 +123,9 @@ export function SignInLanding({
   seedRequired: boolean;
 }) {
   return (
-    <div data-landing="true" className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
+    <div className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
+      <SmoothScroll />
+
       <section className={styles.hero}>
         <div aria-hidden="true" className={styles.mosaic}>
           <div className={styles.mosaicLayer} />
@@ -173,7 +190,7 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="steps" aria-labelledby="steps-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
+      <section id="steps" aria-labelledby="steps-title" className={`scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="steps-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"이용 절차"}</UiText>
@@ -197,7 +214,7 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="screens" aria-labelledby="screens-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
+      <section id="screens" aria-labelledby="screens-title" className={`scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="screens-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"실제 화면"}</UiText>
@@ -212,7 +229,7 @@ export function SignInLanding({
                 className={`${styles.screenRow} ${index % 2 === 1 ? styles.screenRowFlip : ""} ${styles.rise}`}
               >
                 <div className={styles.screenShot}>
-                  <Image src={screen.src} alt={screen.alt} width={1600} height={1000} sizes="(min-width: 60rem) 55vw, 100vw" />
+                  <Image src={screen.src} alt={screen.alt} width={screen.width} height={screen.height} sizes="(min-width: 60rem) 55vw, 100vw" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold tracking-[-0.03em]">
@@ -228,7 +245,7 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="features" aria-labelledby="features-title" className={`${styles.snap} scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
+      <section id="features" aria-labelledby="features-title" className={`scroll-mt-8 border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="features-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"주요 기능"}</UiText>
@@ -251,7 +268,7 @@ export function SignInLanding({
         </div>
       </section>
 
-      <section id="roles" aria-labelledby="roles-title" className={`${styles.snap} scroll-mt-8 px-5 py-16 sm:px-8 lg:py-24`}>
+      <section id="roles" aria-labelledby="roles-title" className={`scroll-mt-8 px-5 py-16 sm:px-8 lg:py-24`}>
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="roles-title" className={`${styles.rise} text-2xl font-bold tracking-[-0.04em] sm:text-3xl`}>
             <UiText>{"역할별 안내"}</UiText>
@@ -281,7 +298,7 @@ export function SignInLanding({
 
       <section
         aria-labelledby="closing-title"
-        className={`${styles.closing} ${styles.snap} px-5 py-20 sm:px-8 lg:py-28`}
+        className={`${styles.closing} px-5 py-20 sm:px-8 lg:py-28`}
       >
         <div className="mx-auto w-full max-w-[76rem]">
           <h2 id="closing-title" className={styles.closingTitle}>
@@ -301,6 +318,28 @@ export function SignInLanding({
               <UiText>{"사용 매뉴얼"}</UiText>
             </a>
           </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="family-title" className="border-t border-[var(--line)] bg-[var(--workspace)] px-5 pb-12 pt-10 sm:px-8">
+        <div className="mx-auto w-full max-w-[76rem]">
+          <h2 id="family-title" className="text-sm font-semibold text-[var(--muted)]">
+            <UiText>{"패밀리 사이트"}</UiText>
+          </h2>
+          <ul className={`${styles.familyGrid} mt-5`}>
+            {FAMILY_SITES.map((site) => (
+              <li key={site.href}>
+                <a className={styles.familyCard} href={site.href} target="_blank" rel="noreferrer">
+                  <span aria-hidden="true" className={styles.familyDash} />
+                  <span className={styles.familyName}><UiText>{site.name}</UiText></span>
+                  <span className={styles.familyHost}>{site.host}</span>
+                  <span className={styles.familyGo}>
+                    <UiText>{"바로가기"}</UiText> <span aria-hidden="true" className={styles.familyArrow}>&rarr;</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
