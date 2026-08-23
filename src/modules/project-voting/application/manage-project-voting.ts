@@ -71,6 +71,9 @@ export type VotingResultsView =
   | { mode: "ADMIN"; results: ProgramVotingResults }
   | { mode: "PUBLIC"; results: PublicProgramVotingResults };
 
+/** 화면이 보고 있던 상태에서 사용자가 무엇을 하려 했는지. */
+export type VoteIntent = "ADD" | "REMOVE";
+
 export type ToggleProgramVoteFailure =
   | "NOT_FOUND"
   | "INACTIVE_VOTER"
@@ -95,13 +98,17 @@ export function voteScopeLabel(scope: VoteScope): string {
 export interface ProjectVotingRepository {
   findBallot(programId: string, voterId: string, voterRole: UserRole, now: Date): Promise<ProgramVoteBallot | null>;
   /**
-   * 표 하나를 뒤집는다. 지금 어떤 표를 던져 뒀는지는 저장소가 트랜잭션 안에서 직접 읽는다.
+   * 표 하나를 원하는 상태로 맞춘다. 지금 어떤 표를 던져 뒀는지는 저장소가 트랜잭션 안에서 읽는다.
    *
    * 화면이 계산한 "다음 집합"을 받아 통째로 덮어쓰면 안 된다. 그 집합은 트랜잭션 밖에서 읽은
    * 값으로 만들어지므로, 같은 사람이 탭 두 개에서 서로 다른 프로젝트를 찍으면 늦게 도착한
-   * 요청이 먼저 저장된 표를 지운다. 표가 조용히 사라지는 사고라 의도만 받는다.
+   * 요청이 먼저 저장된 표를 지운다.
+   *
+   * "뒤집어라" 가 아니라 "넣어라 / 빼라" 를 받는 것도 같은 이유다. 탭 두 개가 모두 투표하기를
+   * 보여주고 있으면 사용자 의도는 둘 다 넣기인데, 뒤집기로 받으면 나중 요청이 먼저 들어간
+   * 표를 지운다. 이미 원하는 상태면 아무것도 하지 않고 성공으로 돌려준다.
    */
-  toggleVote(input: { programId: string; voterId: string; topicId: string; votedAt: Date }): Promise<ToggleProgramVoteOutcome>;
+  setVote(input: { programId: string; voterId: string; topicId: string; intent: VoteIntent; votedAt: Date }): Promise<ToggleProgramVoteOutcome>;
   findResults(programId: string, now: Date): Promise<ProgramVotingResults | null>;
   findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR" | "ADVISOR", now: Date): Promise<PublicProgramVotingResults | null>;
 }
@@ -119,8 +126,8 @@ export class ProjectVotingService {
     return ballot ? { ...ballot, policy: withEffectiveVoteLimit(ballot.policy, actor.role) } : null;
   }
 
-  async toggleVote(actor: CurrentUser, programId: string, topicId: string): Promise<SavedProgramVote> {
-    const outcome = await this.repository.toggleVote({ programId, voterId: actor.id, topicId, votedAt: this.now() });
+  async setVote(actor: CurrentUser, programId: string, topicId: string, intent: VoteIntent): Promise<SavedProgramVote> {
+    const outcome = await this.repository.setVote({ programId, voterId: actor.id, topicId, intent, votedAt: this.now() });
     if (outcome.status === "SAVED") return outcome;
     if (outcome.status === "VOTE_LIMIT_REACHED") {
       throw new ProjectVotingOperationError(`${voteScopeLabel(outcome.scope)}에서 가능한 ${outcome.voteLimit}표를 모두 사용했습니다.`);

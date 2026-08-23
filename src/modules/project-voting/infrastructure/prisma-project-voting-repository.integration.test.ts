@@ -76,8 +76,8 @@ describe("PrismaProjectVotingRepository PostgreSQL 동시성", () => {
       const repository = new PrismaProjectVotingRepository(client);
       const votedAt = new Date();
       const [first, second] = await Promise.all([
-        repository.toggleVote({ programId, voterId, topicId: topicAId, votedAt }),
-        repository.toggleVote({ programId, voterId, topicId: topicBId, votedAt }),
+        repository.setVote({ programId, voterId, topicId: topicAId, intent: "ADD", votedAt }),
+        repository.setVote({ programId, voterId, topicId: topicBId, intent: "ADD", votedAt }),
       ]);
 
       expect(first.status).toBe("SAVED");

@@ -93,12 +93,13 @@ function voteClient(role: string, voteLimit: number, staffVoteLimit: number, opt
   return { client: client as unknown as PrismaClient, transaction };
 }
 
-describe("PrismaProjectVotingRepository 표 뒤집기", () => {
-  const input = { programId: "program-1", voterId: "voter-1", topicId: "topic-2", votedAt: new Date("2026-08-10T00:00:00Z") };
+describe("PrismaProjectVotingRepository 표 반영", () => {
+  const addInput = { programId: "program-1", voterId: "voter-1", topicId: "topic-2", intent: "ADD" as const, votedAt: new Date("2026-08-10T00:00:00Z") };
+  const removeInput = { ...addInput, intent: "REMOVE" as const };
 
   it("자문위원에게는 staffVoteLimit을 적용해 한 표 더 받는다", async () => {
     const { client, transaction } = voteClient("ADVISOR", 1, 5);
-    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
       status: "SAVED",
       voted: true,
       selectedTopicIds: ["topic-1", "topic-2"],
@@ -109,7 +110,7 @@ describe("PrismaProjectVotingRepository 표 뒤집기", () => {
 
   it("학생은 기존 voteLimit을 넘기면 한도 초과로 돌려준다", async () => {
     const { client, transaction } = voteClient("STUDENT", 1, 5);
-    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
       status: "VOTE_LIMIT_REACHED",
       voteLimit: 1,
     });
@@ -120,7 +121,7 @@ describe("PrismaProjectVotingRepository 표 뒤집기", () => {
     // 화면이 계산한 집합을 받지 않는다. 그 집합은 트랜잭션 밖에서 만들어지므로
     // 탭 두 개가 겹치면 먼저 저장된 표를 지운다.
     const { client, transaction } = voteClient("STUDENT", 5, 5, { currentTopicIds: ["topic-9"] });
-    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
       status: "SAVED",
       selectedTopicIds: ["topic-9", "topic-2"],
     });
@@ -131,7 +132,7 @@ describe("PrismaProjectVotingRepository 표 뒤집기", () => {
   it("이미 던진 표는 후보 자격을 다시 묻지 않고 취소한다", async () => {
     // 프로젝트가 비공개로 바뀐 뒤에도 자기 표는 뺄 수 있어야 한다.
     const { client, transaction } = voteClient("STUDENT", 1, 5, { currentTopicIds: ["topic-2"], targetPublishedAt: null });
-    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+    await expect(new PrismaProjectVotingRepository(client).setVote(removeInput)).resolves.toMatchObject({
       status: "SAVED",
       voted: false,
       selectedTopicIds: [],
@@ -141,9 +142,21 @@ describe("PrismaProjectVotingRepository 표 뒤집기", () => {
     expect(transaction.projectVote.create).not.toHaveBeenCalled();
   });
 
+  it("이미 던진 표에 다시 넣기를 요청하면 그대로 둔다", async () => {
+    // 탭 두 개가 같은 "투표하기" 를 누르면 나중 요청도 넣기로 온다. 뒤집으면 표가 사라진다.
+    const { client, transaction } = voteClient("STUDENT", 5, 5, { currentTopicIds: ["topic-2"] });
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
+      status: "SAVED",
+      voted: true,
+      selectedTopicIds: ["topic-2"],
+    });
+    expect(transaction.projectVote.create).not.toHaveBeenCalled();
+    expect(transaction.projectVote.deleteMany).not.toHaveBeenCalled();
+  });
+
   it("공개된 적 없는 프로젝트에는 새 표를 받지 않는다", async () => {
     const { client } = voteClient("STUDENT", 5, 5, { targetPublishedAt: null });
-    await expect(new PrismaProjectVotingRepository(client).toggleVote(input)).resolves.toMatchObject({
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
       status: "INVALID_CANDIDATE",
     });
   });
