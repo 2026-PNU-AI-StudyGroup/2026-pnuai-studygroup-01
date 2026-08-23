@@ -23,7 +23,7 @@ describe("PrismaReportFeedbackRepository", () => {
     expect(findFirst).toHaveBeenCalledWith({
       where: {
         id: "report-1",
-        team: {
+        projectTeam: {
           AND: [
             {
               project: {
@@ -63,7 +63,7 @@ describe("PrismaReportFeedbackRepository", () => {
     expect(findFirst).toHaveBeenCalledWith({
       where: {
         id: "report-1",
-        team: {
+        projectTeam: {
           AND: [
             {
               project: {
