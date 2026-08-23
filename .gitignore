@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # generated database client
 /src/generated/prisma
+
+# diagram-design 로컬 스킨 선택 (프로파일은 ~/.diagram-design 에 있어 저장소로 옮길 수 없다)
+.diagram-design
