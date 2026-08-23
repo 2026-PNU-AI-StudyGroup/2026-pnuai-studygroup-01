@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>역할별 권한 - AIPMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f6f7f9;
+      --color-ink:     #191c22;
+      --color-muted:   #5b616e;
+      --color-accent:  #4f46e5;
+      --font-sans:     'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      --font-serif:    'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 960px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    .figure { overflow-x: auto; }
+    svg { width: 100%; min-width: 820px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Access matrix / AIPMS</p>
+    <h1>역할별 권한</h1>
+
+    <div class="figure">
+    <svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="role-access-matrix-title role-access-matrix-desc">
+      <title id="role-access-matrix-title">AIPMS 역할별 권한</title>
+      <desc id="role-access-matrix-desc">학생, 교수, 관리자, 자문위원 네 역할이 프로그램 개설부터 투표와 관리 이력까지 아홉 가지 기능에 대해 각각 어디까지 할 수 있는지 보여주는 표. 자문위원은 초대 토큰으로 들어와 배정된 팀의 채점과 피드백만 다룰 수 있고, 관리자와 자문위원의 투표 한도만 기본 다섯 표로 따로 계산된다.</desc>
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <rect x="12" y="72" width="208" height="52" rx="6" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="116" y="96" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">기능</text>
+      <text x="116" y="112" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">vs. ROLE</text>
+      <rect x="232" y="72" width="148" height="52" rx="6" fill="#191c22"/>
+      <text x="306" y="92" fill="#ffffff" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">학생</text>
+      <text x="306" y="108" fill="#ffffff" fill-opacity="0.85" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">STUDENT</text>
+      <rect x="396" y="72" width="148" height="52" rx="6" fill="#191c22"/>
+      <text x="470" y="92" fill="#ffffff" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">교수</text>
+      <text x="470" y="108" fill="#ffffff" fill-opacity="0.85" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">PROFESSOR</text>
+      <rect x="560" y="72" width="148" height="52" rx="6" fill="#191c22"/>
+      <text x="634" y="92" fill="#ffffff" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">관리자</text>
+      <text x="634" y="108" fill="#ffffff" fill-opacity="0.85" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ADMIN</text>
+      <rect x="724" y="72" width="148" height="52" rx="6" fill="#191c22"/>
+      <text x="798" y="92" fill="#ffffff" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">자문위원</text>
+      <text x="798" y="108" fill="#ffffff" fill-opacity="0.85" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ADVISOR</text>
+
+      <rect x="12" y="140" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="162" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">프로그램 개설과 설정</text>
+      <text x="208" y="162" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.08em">ADMIN ONLY</text>
+      <rect x="232" y="140" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="162" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+      <rect x="396" y="140" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="162" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+      <rect x="560" y="140" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="162" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">전체</text>
+      <rect x="724" y="140" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="162" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <rect x="12" y="180" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="202" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">주제 등록과 공개</text>
+      <rect x="232" y="180" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="202" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">설정 시 제안</text>
+      <rect x="396" y="180" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="202" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">등록</text>
+      <rect x="560" y="180" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="202" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">전체</text>
+      <rect x="724" y="180" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="202" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <rect x="12" y="220" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="242" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">지원과 팀 확정</text>
+      <rect x="232" y="220" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="242" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">지원</text>
+      <rect x="396" y="220" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="242" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">검토와 확정</text>
+      <rect x="560" y="220" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="242" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">검토와 확정</text>
+      <rect x="724" y="220" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="242" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <rect x="12" y="260" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="282" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">팀 작업공간</text>
+      <text x="208" y="282" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.08em">TASK / CHAT</text>
+      <rect x="232" y="260" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="282" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">소속팀</text>
+      <rect x="396" y="260" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="282" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">지도팀</text>
+      <rect x="560" y="260" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="282" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">전체</text>
+      <rect x="724" y="260" width="148" height="36" rx="4" fill="rgba(91,97,110,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="282" fill="#5b616e" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">배정팀 열람</text>
+
+      <rect x="12" y="300" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="322" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">보고서 제출과 승인</text>
+      <rect x="232" y="300" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="322" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">제출</text>
+      <rect x="396" y="300" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="322" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">승인과 반려</text>
+      <rect x="560" y="300" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="322" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">승인과 반려</text>
+      <rect x="724" y="300" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="322" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <rect x="12" y="340" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="362" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">채점표와 피드백</text>
+      <text x="208" y="362" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.08em">RUBRIC</text>
+      <rect x="232" y="340" width="148" height="36" rx="4" fill="rgba(91,97,110,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="362" fill="#5b616e" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">결과 열람</text>
+      <rect x="396" y="340" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="362" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">채점</text>
+      <rect x="560" y="340" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="362" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">설정과 공개</text>
+      <rect x="724" y="340" width="148" height="36" rx="4" fill="rgba(79,70,229,0.07)" stroke="#4f46e5" stroke-width="1.4"/>
+      <text x="798" y="356" fill="#4f46e5" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">배정팀만</text>
+      <text x="798" y="370" fill="#4f46e5" fill-opacity="0.85" font-size="9" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">초대 토큰 로그인</text>
+
+      <rect x="12" y="380" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="402" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">결과물 공개</text>
+      <rect x="232" y="380" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="402" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">등록</text>
+      <rect x="396" y="380" width="148" height="36" rx="4" fill="rgba(91,97,110,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="402" fill="#5b616e" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">열람</text>
+      <rect x="560" y="380" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="402" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">전체</text>
+      <rect x="724" y="380" width="148" height="36" rx="4" fill="rgba(91,97,110,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="402" fill="#5b616e" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">열람</text>
+
+      <rect x="12" y="420" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="442" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">투표</text>
+      <text x="208" y="442" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.08em">VOTE</text>
+      <rect x="232" y="420" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="442" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">정책 한도</text>
+      <rect x="396" y="420" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="442" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">정책 한도</text>
+      <rect x="560" y="420" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="442" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">기본 5표</text>
+      <rect x="724" y="420" width="148" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="442" fill="#191c22" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">기본 5표</text>
+
+      <rect x="12" y="460" width="208" height="36" rx="4" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="24" y="482" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">사용자 권한과 관리 이력</text>
+      <text x="208" y="482" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.08em">AUDIT</text>
+      <rect x="232" y="460" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="306" y="482" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+      <rect x="396" y="460" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="470" y="482" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+      <rect x="560" y="460" width="148" height="36" rx="4" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="634" y="482" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">전체</text>
+      <rect x="724" y="460" width="148" height="36" rx="4" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.6"/>
+      <text x="798" y="482" fill="#868d9c" font-size="11" font-weight="400" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">없음</text>
+
+      <line x1="12" y1="516" x2="872" y2="516" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="12" y="536" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="100" y="526" width="14" height="12" rx="2" fill="rgba(25,28,34,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="120" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">전체 권한</text>
+      <rect x="252" y="526" width="14" height="12" rx="2" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="272" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">작성</text>
+      <rect x="404" y="526" width="14" height="12" rx="2" fill="rgba(91,97,110,0.08)" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="424" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">열람</text>
+      <rect x="556" y="526" width="14" height="12" rx="2" fill="#f6f7f9" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="576" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">없음</text>
+      <rect x="708" y="526" width="14" height="12" rx="2" fill="rgba(79,70,229,0.07)" stroke="#4f46e5" stroke-width="1.4"/>
+      <text x="728" y="536" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">핵심 규칙</text>
+    </svg>
+    </div>
+  </div>
+</body>
+</html>

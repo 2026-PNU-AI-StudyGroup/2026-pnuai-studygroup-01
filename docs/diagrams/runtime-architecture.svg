@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="runtime-architecture-title runtime-architecture-desc">
+      <title id="runtime-architecture-title">AIPMS 런타임 구성</title>
+      <desc id="runtime-architecture-desc">네 역할의 사용자가 하나의 Next.js 애플리케이션에 접속하고, 그 애플리케이션이 Google OAuth 로 로그인을 확인하며 업무 데이터와 대기열은 PostgreSQL, 업로드 파일은 MinIO 에 저장한다. 별도 정기 작업이 대기열을 읽어 Gmail SMTP 로 메일을 보내며, 로컬 Ollama 번역 경로는 기본으로 꺼져 있다.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b616e"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f46e5"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3f5c8a"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <!-- ARROWS (drawn before boxes) -->
+
+      <!-- 1. 사용자 → 앱 -->
+      <line x1="280" y1="152" x2="432" y2="152" stroke="#4f46e5" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="338" y="132" width="44" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="360" y="141" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+
+      <!-- 2. 앱 → Google OAuth -->
+      <line x1="680" y1="136" x2="992" y2="136" stroke="#3f5c8a" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="812" y="116" width="48" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="836" y="125" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">OAUTH</text>
+
+      <!-- 3. 앱 → PostgreSQL -->
+      <path d="M 680,160 H 852 Q 860,160 860,168 V 272" fill="none" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="872" y="208" width="48" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="896" y="217" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PRISMA</text>
+
+      <!-- 4. 앱 → MinIO (hop over arrow 3) -->
+      <path d="M 680,184 H 852 a 8,8 0 0,1 16,0 H 1132 Q 1140,184 1140,192 V 272" fill="none" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="916" y="164" width="48" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="940" y="173" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">S3 API</text>
+
+      <!-- 5. 정기 작업 → PostgreSQL -->
+      <path d="M 600,440 V 408 Q 600,400 608,400 H 792 Q 800,400 800,392 V 352" fill="none" stroke="#5b616e" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="676" y="374" width="48" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="700" y="383" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">QUEUE</text>
+
+      <!-- 6. 정기 작업 → Gmail SMTP -->
+      <line x1="680" y1="472" x2="1032" y2="472" stroke="#3f5c8a" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="832" y="452" width="44" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="854" y="461" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SMTP</text>
+
+      <!-- 7. 정기 작업 → Ollama (기본 꺼짐) -->
+      <path d="M 560,504 V 584 Q 560,592 568,592 H 752" fill="none" stroke="rgba(25,28,34,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="632" y="566" width="60" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="662" y="575" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DISABLED</text>
+
+      <!-- 8. Ollama → PostgreSQL (hop over arrow 6) -->
+      <path d="M 880,560 V 488 a 8,8 0 0,0 0,-16 V 352" fill="none" stroke="rgba(25,28,34,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="892" y="428" width="44" height="12" rx="2" fill="#f6f7f9"/>
+      <text x="914" y="437" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">WRITE</text>
+
+      <!-- NODES -->
+
+      <!-- A. 사용자 (input) -->
+      <rect x="40" y="120" width="240" height="64" rx="6" fill="#f6f7f9"/>
+      <rect x="40" y="120" width="240" height="64" rx="6" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="1"/>
+      <rect x="48" y="126" width="36" height="12" rx="2" fill="transparent" stroke="rgba(134,141,156,0.40)" stroke-width="0.8"/>
+      <text x="66" y="135" fill="rgba(91,97,110,0.80)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
+      <text x="160" y="160" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">사용자</text>
+      <text x="160" y="174" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">STUDENT / PROFESSOR / ADMIN / ADVISOR</text>
+
+      <!-- B. Next.js 애플리케이션 (focal) -->
+      <rect x="440" y="112" width="240" height="96" rx="6" fill="#f6f7f9"/>
+      <rect x="440" y="112" width="240" height="96" rx="6" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="1.2"/>
+      <rect x="448" y="118" width="32" height="12" rx="2" fill="transparent" stroke="rgba(79,70,229,0.40)" stroke-width="0.8"/>
+      <text x="464" y="127" fill="rgba(79,70,229,0.85)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+      <text x="560" y="164" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">Next.js 애플리케이션</text>
+      <text x="560" y="180" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">RSC / SERVER ACTION</text>
+      <text x="560" y="192" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">BETTER AUTH</text>
+
+      <!-- C. 정기 작업 (backend) -->
+      <rect x="440" y="440" width="240" height="64" rx="6" fill="#f6f7f9"/>
+      <rect x="440" y="440" width="240" height="64" rx="6" fill="#ffffff" stroke="#191c22" stroke-width="1"/>
+      <rect x="448" y="446" width="28" height="12" rx="2" fill="transparent" stroke="rgba(25,28,34,0.40)" stroke-width="0.8"/>
+      <text x="462" y="455" fill="rgba(25,28,34,0.80)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+      <text x="560" y="484" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">정기 작업</text>
+
+      <!-- D. PostgreSQL (store) -->
+      <rect x="760" y="280" width="200" height="64" rx="6" fill="#f6f7f9"/>
+      <rect x="760" y="280" width="200" height="64" rx="6" fill="rgba(25,28,34,0.05)" stroke="#5b616e" stroke-width="1"/>
+      <rect x="768" y="286" width="24" height="12" rx="2" fill="transparent" stroke="rgba(91,97,110,0.40)" stroke-width="0.8"/>
+      <text x="780" y="295" fill="rgba(91,97,110,0.80)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+      <text x="860" y="320" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">PostgreSQL</text>
+      <text x="860" y="334" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">DATA / QUEUES</text>
+
+      <!-- E. MinIO (store) -->
+      <rect x="1040" y="280" width="200" height="64" rx="6" fill="#f6f7f9"/>
+      <rect x="1040" y="280" width="200" height="64" rx="6" fill="rgba(25,28,34,0.05)" stroke="#5b616e" stroke-width="1"/>
+      <rect x="1048" y="286" width="24" height="12" rx="2" fill="transparent" stroke="rgba(91,97,110,0.40)" stroke-width="0.8"/>
+      <text x="1060" y="295" fill="rgba(91,97,110,0.80)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">S3</text>
+      <text x="1140" y="320" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">MinIO</text>
+
+      <!-- F. Google OAuth (external) -->
+      <rect x="1000" y="112" width="200" height="56" rx="6" fill="#f6f7f9"/>
+      <rect x="1000" y="112" width="200" height="56" rx="6" fill="rgba(25,28,34,0.03)" stroke="rgba(25,28,34,0.30)" stroke-width="1"/>
+      <rect x="1008" y="118" width="28" height="12" rx="2" fill="transparent" stroke="rgba(25,28,34,0.24)" stroke-width="0.8"/>
+      <text x="1022" y="127" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">IDP</text>
+      <text x="1100" y="152" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">Google OAuth</text>
+
+      <!-- G. Gmail SMTP (external) -->
+      <rect x="1040" y="444" width="200" height="56" rx="6" fill="#f6f7f9"/>
+      <rect x="1040" y="444" width="200" height="56" rx="6" fill="rgba(25,28,34,0.03)" stroke="rgba(25,28,34,0.30)" stroke-width="1"/>
+      <rect x="1048" y="450" width="36" height="12" rx="2" fill="transparent" stroke="rgba(25,28,34,0.24)" stroke-width="0.8"/>
+      <text x="1066" y="459" fill="rgba(25,28,34,0.60)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MAIL</text>
+      <text x="1140" y="484" fill="#191c22" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">Gmail SMTP</text>
+
+      <!-- H. Ollama 번역 (optional) -->
+      <rect x="760" y="560" width="200" height="64" rx="6" fill="#f6f7f9"/>
+      <rect x="760" y="560" width="200" height="64" rx="6" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <rect x="768" y="566" width="28" height="12" rx="2" fill="transparent" stroke="rgba(25,28,34,0.20)" stroke-width="0.8"/>
+      <text x="782" y="575" fill="rgba(25,28,34,0.55)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LLM</text>
+      <text x="860" y="600" fill="#5b616e" font-size="12" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">Ollama 번역</text>
+      <text x="860" y="614" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">DEFAULT OFF</text>
+
+      <!-- LEGEND -->
+      <line x1="40" y1="656" x2="1240" y2="656" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="40" y="676" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <rect x="140" y="666" width="12" height="12" rx="2" fill="rgba(91,97,110,0.10)" stroke="#868d9c" stroke-width="0.8"/>
+      <text x="158" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">사용자</text>
+
+      <rect x="340" y="666" width="12" height="12" rx="2" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="0.8"/>
+      <text x="358" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">애플리케이션</text>
+
+      <rect x="560" y="666" width="12" height="12" rx="2" fill="rgba(25,28,34,0.05)" stroke="#5b616e" stroke-width="0.8"/>
+      <text x="578" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">저장소</text>
+
+      <rect x="740" y="666" width="12" height="12" rx="2" fill="rgba(25,28,34,0.03)" stroke="rgba(25,28,34,0.30)" stroke-width="0.8"/>
+      <text x="758" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">외부 서비스</text>
+
+      <rect x="940" y="666" width="12" height="12" rx="2" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <text x="958" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">기본 꺼짐</text>
+    </svg>
