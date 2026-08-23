@@ -15,21 +15,18 @@
 
 AI는 한국어와 영어 번역에만 사용합니다. 주제 추천, 팀원 추천, 지원 심사, 팀 확정과 보고서 승인에는 AI를 사용하지 않습니다.
 
-## 실제 화면
 
-아래 화면은 로컬 데모 데이터를 사용해 1680 × 1050 브라우저 뷰포트에서 캡처한 실제 애플리케이션입니다.
-
-### 프로젝트 탐색
+### 프로젝트 현황
 
 프로그램, 상태, 검색어와 정렬 조건을 한 화면에서 조합하고 공개 프로젝트의 모집 현황을 확인합니다.
 
-![프로그램별 프로젝트 탐색 화면](docs/readme/project-explorer-desktop.jpg)
+<img width="1919" height="942" alt="image" src="https://github.com/user-attachments/assets/438eedd7-ada5-4ed5-bfb8-eaa1d4d7d39d" />
 
 ### 내 프로젝트
 
 지원 상태와 진행 중인 프로젝트를 구분하고, 프로젝트 카드에서 다가오는 할 일과 보고서 제출률을 확인한 뒤 작업 공간으로 이동합니다.
 
-![학생 내 프로젝트와 할 일 화면](docs/readme/project-dashboard-desktop.jpg)
+<img width="2040" height="5132" alt="image" src="https://github.com/user-attachments/assets/54dfbaaa-3fba-40e9-bc60-16a3d34abb3d" />
 
 ## 핵심 기능
 
