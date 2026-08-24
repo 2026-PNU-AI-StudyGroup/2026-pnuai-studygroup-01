@@ -166,7 +166,12 @@ export function SignInLanding({
 
             <div className={`${styles.heroDivider} mt-9`} />
 
-            <div id="sign-in" className="mt-9 scroll-mt-8">
+            <section id="sign-in" aria-labelledby="sign-in-title" className="mt-9 scroll-mt-8">
+              {/* 화면에는 안 보이지만 스크린 리더에는 들린다. 제목만 훑어 페이지 구조를 파악하는
+                  사람에게 로그인 구역이 어디인지 알려 준다. 디자인은 그대로 둔다. */}
+              <h2 id="sign-in-title" className="sr-only">
+                <UiText>{"로그인"}</UiText>
+              </h2>
               <div className={styles.signInAction}>
                 <GoogleSignInButton disabled={showDevelopmentLogin} />
               </div>
@@ -181,7 +186,7 @@ export function SignInLanding({
                   <DevelopmentRoleSignIn seedRequired={seedRequired} />
                 </div>
               ) : null}
-            </div>
+            </section>
 
             <p className={`${styles.lede} mt-12 text-sm`}>
               <UiText>{"뒤에 보이는 것은 지난 해커톤과 캡스톤 디자인에서 실제로 제출된 결과물입니다."}</UiText>
