@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="program-schedule-title program-schedule-desc">
+      <title id="program-schedule-title">AIPMS 프로그램 일정 모델</title>
+      <desc id="program-schedule-desc">한 프로그램이 준비, 팀 구성, 수행, 평가 네 단계를 거치며 각 일정이 서로 겹치는 모습을 상대 주 단위로 보여준다. 모집은 주제 공개와 겹치고 보고서 제출은 팀 작업 중에 시작되며, 마지막 주의 투표 기간이 결과물 등록 기간과 겹친다. 실제 날짜는 프로그램마다 관리자가 설정한다.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <text x="248" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W1</text>
+      <text x="344" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W2</text>
+      <text x="440" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W3</text>
+      <text x="536" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W4</text>
+      <text x="632" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W5</text>
+      <text x="728" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W6</text>
+      <text x="824" y="56" fill="#868d9c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">W7</text>
+      <line x1="200" y1="64" x2="872" y2="64" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <line x1="200" y1="64" x2="200" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="296" y1="64" x2="296" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="392" y1="64" x2="392" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="488" y1="64" x2="488" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="584" y1="64" x2="584" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="680" y1="64" x2="680" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="776" y1="64" x2="776" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+      <line x1="872" y1="64" x2="872" y2="392" stroke="rgba(25,28,34,0.06)" stroke-width="0.8"/>
+
+      <rect x="196" y="74" width="680" height="76" rx="8" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.10)" stroke-width="0.8"/>
+      <text x="20" y="116" fill="#868d9c" font-size="10" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">준비</text>
+      <rect x="196" y="154" width="680" height="76" rx="8" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.10)" stroke-width="0.8"/>
+      <text x="20" y="196" fill="#868d9c" font-size="10" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">팀구성</text>
+      <rect x="196" y="234" width="680" height="76" rx="8" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.10)" stroke-width="0.8"/>
+      <text x="20" y="276" fill="#868d9c" font-size="10" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">수행</text>
+      <rect x="196" y="314" width="680" height="76" rx="8" fill="rgba(25,28,34,0.02)" stroke="rgba(25,28,34,0.10)" stroke-width="0.8"/>
+      <text x="20" y="356" fill="#868d9c" font-size="10" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">평가</text>
+
+      <text x="68" y="97" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">프로그램 공개와 설정</text>
+      <rect x="200" y="80" width="96" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="137" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">주제 등록과 공개</text>
+      <rect x="200" y="120" width="192" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="177" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">팀원 모집</text>
+      <rect x="296" y="160" width="192" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="217" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">지원과 팀 확정</text>
+      <rect x="392" y="200" width="96" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="257" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">팀 작업과 대화</text>
+      <rect x="488" y="240" width="288" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="297" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">보고서 제출과 승인</text>
+      <rect x="584" y="280" width="192" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="337" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">결과물 등록</text>
+      <rect x="680" y="320" width="192" height="24" rx="4" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="1"/>
+      <text x="68" y="377" fill="#191c22" font-size="11" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">투표</text>
+      <rect x="776" y="360" width="96" height="24" rx="4" fill="rgba(79,70,229,0.12)" stroke="#4f46e5" stroke-width="1.2"/>
+      <text x="824" y="377" fill="#4f46e5" font-size="10" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">투표</text>
+
+      <line x1="20" y1="424" x2="940" y2="424" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="20" y="444" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="100" y="434" width="14" height="12" rx="2" fill="rgba(91,97,110,0.15)" stroke="#5b616e" stroke-width="0.8"/>
+      <text x="120" y="444" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">프로그램 일정</text>
+      <rect x="280" y="434" width="14" height="12" rx="2" fill="rgba(79,70,229,0.12)" stroke="#4f46e5" stroke-width="1.2"/>
+      <text x="300" y="444" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">투표 기간</text>
+      <text x="940" y="444" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">RELATIVE WEEKS / NOT FIXED DATES</text>
+    </svg>

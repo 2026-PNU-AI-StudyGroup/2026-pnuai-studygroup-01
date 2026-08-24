@@ -376,6 +376,8 @@ model Announcement {
   content       String
   visibility    AnnouncementVisibility   @default(AUTHENTICATED)
   pinned        Boolean                  @default(false)
+  // 로그인 후 화면에 창으로 띄울 공지. 전체 공지에만 붙는다.
+  popup         Boolean                  @default(false)
   projectTeamId String?
   programId     String?
   createdAt     DateTime                 @default(now())
@@ -388,6 +390,7 @@ model Announcement {
   @@index([createdAt])
   @@index([authorId])
   @@index([pinned, createdAt])
+  @@index([popup, createdAt])
   @@index([projectTeamId, createdAt])
   @@index([programId, createdAt])
   @@map("announcement")

@@ -8,9 +8,9 @@ import { DialogBackdropDismissController } from "@/shared/ui/dialog-backdrop-dis
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
-  const applicationName = locale === "ko"
-    ? "부산대학교 학과 프로젝트 관리"
-    : "PNU Department Project Management";
+  // 북마크와 탭에 뜨는 이름이다. 길면 "부산대학교 학과 프로젝트 관리 ..." 로 잘려
+  // 무슨 사이트인지 알아보기 어렵다. 짧은 서비스 이름을 쓴다.
+  const applicationName = "PNU AIPMS";
   return {
     applicationName,
     title: {

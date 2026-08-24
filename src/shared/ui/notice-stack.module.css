@@ -1,0 +1,257 @@
+/*
+  구석에 쌓이는 안내 창.
+
+  창은 전부 같은 크기다. 크기가 제각각이면 겹쳤을 때 어긋난 모서리가 들쭉날쭉해
+  카드 무더기로 안 보이고 그냥 어질러진 것으로 보인다. 본문이 길면 창 안에서 굴린다.
+
+  판은 화면 어디에 놓이든 흰색이다. 어두운 첫 화면 위에서는 그대로 대비가 되고,
+  로그인 후 밝은 화면에서는 본문 카드와 같은 결로 얹힌다. 꾸미지 않는다.
+  그러데이션도, 유리 흐림도, 색색의 강조도 없다. 서비스 카드와 같은 모서리와
+  같은 그림자를 쓴다.
+*/
+
+.stack {
+  position: fixed;
+  z-index: 60;
+  /* 겹치는 폭. 살짝만 어긋나야 한 무더기로 읽힌다. */
+  --cascade: 1.125rem;
+  --reserve: calc(var(--cascade) * 3);
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* 창 크기를 맞춰 두면 뒷장이 앞장 뒤로 정확히 숨는다. */
+  width: min(calc(var(--width) + var(--reserve)), calc(100vw - 2rem));
+  height: min(calc(var(--height) + var(--reserve)), calc(100dvh - 3rem));
+}
+
+/* 로그인 전 첫 화면. 구석에 비켜 두고 본문을 가리지 않는다. */
+.bottomRight {
+  --width: 20.5rem;
+  --height: 22rem;
+  right: 1.5rem;
+  bottom: 1.5rem;
+}
+
+/* 로그인 후. 반드시 읽어야 하는 공지라 화면 한가운데에 크게 놓는다. */
+.center {
+  --width: 32rem;
+  --height: 27rem;
+  left: 50%;
+  top: 50%;
+  /* 앞장은 겹치는 폭만큼 오른쪽 아래에 놓인다. 그만큼 통째로 당겨야 앞장이 한가운데 온다. */
+  translate: calc(-50% - var(--reserve) / 2) calc(-50% - var(--reserve) / 2);
+}
+
+@media (max-width: 30rem) {
+  .stack {
+    --cascade: 0.5rem;
+  }
+
+  .bottomRight {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+  }
+}
+
+.card {
+  /* 전부 같은 칸에 놓고 어긋남은 이동으로만 준다. */
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: end;
+  width: calc(100% - var(--reserve));
+  height: calc(100% - var(--reserve));
+  /* 격자 칸은 기본이 min-height: auto 라 내용이 길면 칸이 늘어난다. 창마다 높이가
+     달라지면 겹쳤을 때 어긋난 폭이 들쭉날쭉해진다. 눌러 두고 본문만 굴린다. */
+  min-height: 0;
+  min-width: 0;
+  z-index: var(--z);
+  transform: translate(calc(var(--depth) * var(--cascade) * -1), calc(var(--depth) * var(--cascade) * -1));
+}
+
+.behind {
+  cursor: pointer;
+}
+
+/* 뒷장은 모서리만 내민다. 살짝 눌러 두면 앞뒤가 바로 읽힌다.
+   밝은 판이라 어둡게 누르지 않고 색을 조금 뺀다. */
+.behind .window {
+  filter: saturate(0.6) brightness(0.97);
+}
+
+.behind .window:hover {
+  filter: none;
+}
+
+.window {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  color: var(--ink);
+  /* 어두운 첫 화면 위에서는 흰 테두리가, 밝은 화면 위에서는 회색 선이 경계를 만든다.
+     둘 다 살도록 바깥에 흰 선을 한 겹 두르고 그 밖에 부드러운 그림자를 깐다. */
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.55),
+    var(--shadow-float);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .window {
+    /* 길고 느리게 끝나는 곡선이라 마지막에 스르르 멎는다. 짧고 곧은 움직임은 툭 튀어나온다.
+       뒷장부터 한 장씩 놓이도록 앞장일수록 늦게 시작한다. */
+    animation: noticeIn 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--z) * 100ms);
+  }
+}
+
+@keyframes noticeIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+.head {
+  position: relative;
+  flex: none;
+  padding: 1.125rem 1.25rem 0.875rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.title {
+  margin-top: 0.3125rem;
+  padding-right: 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+/* 급한 소식 하나만 색을 쓴다. 창마다 색이 다르면 그것부터 눈에 들어온다. */
+.warning {
+  background: #fff8ec;
+  border-bottom-color: #f2dcb4;
+}
+
+.warning .badge {
+  color: #a4650b;
+}
+
+.close {
+  position: absolute;
+  /* 형제가 positioned 면 z-index 없이는 DOM 순서상 뒤인 쪽이 이 버튼을 덮는다. */
+  z-index: 1;
+  top: 0.625rem;
+  right: 0.625rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.close:hover { background: var(--surface-subtle); color: var(--ink); }
+.close:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.lead {
+  color: var(--muted);
+}
+
+.rows {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.lead + .rows {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  gap: 0.625rem;
+  align-items: baseline;
+}
+
+.rowLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #868d9c;
+}
+
+.rowValue {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.foot {
+  flex: none;
+  padding: 0 1.25rem 1rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.textButton {
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.textButton:hover { color: var(--ink); }
+.textButton:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 0.25rem; }
+
+.cta {
+  display: block;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-control);
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.cta:hover { background: var(--primary-hover); }
+.cta:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }

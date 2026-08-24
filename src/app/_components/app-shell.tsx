@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { openNotificationAction } from "@/app/_actions/notification-actions";
 import { updateLanguageAction } from "@/app/_actions/language-actions";
 import { NotificationIndicatorContainer } from "@/app/_components/notification-indicator-container";
+import { PopupAnnouncements } from "@/app/_components/popup-announcements";
 import styles from "@/app/_components/app-shell.module.css";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import { AccountPopover } from "@/modules/identity/ui/account-popover";
@@ -206,6 +207,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
           })}
         </nav>
         <AppToaster />
+        <PopupAnnouncements />
       </div>
     </div>
     </I18nProvider>

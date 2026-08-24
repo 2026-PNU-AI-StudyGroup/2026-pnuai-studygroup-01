@@ -17,6 +17,7 @@ const base: AnnouncementRecord = {
   content: "발표 순서와 시간을 확인해 주세요.",
   visibility: "AUTHENTICATED",
   pinned: false,
+  popup: false,
   teamId: null,
   teamName: null,
   projectId: null,

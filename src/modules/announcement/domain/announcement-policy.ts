@@ -36,3 +36,11 @@ export function canManageAnnouncement(
   return actor.role === "ADMIN" ||
     (actor.role === "PROFESSOR" && actor.id === authorId);
 }
+
+// 팝업은 대상을 가리지 않고 로그인한 모든 사람 앞에 뜬다.
+// 팀이나 프로그램을 지정한 공지에 붙이면 그 밖의 사람에게까지 내용이 새어 나간다.
+export function allowsPopup(
+  target: { teamId: string | null; programId: string | null },
+): boolean {
+  return target.teamId === null && target.programId === null;
+}

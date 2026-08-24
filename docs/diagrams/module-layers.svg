@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="module-layers-title module-layers-desc">
+      <title id="module-layers-title">AIPMS 모듈 의존 구조</title>
+      <desc id="module-layers-desc">라우트, 어댑터, 애플리케이션, 도메인 네 계층이 위에서 아래로 쌓여 있고 의존은 언제나 바깥에서 안쪽으로만 흐른다. 가장 안쪽 도메인 계층은 프레임워크를 알지 못하며, 저장소의 아키텍처 테스트가 이 방향을 자동으로 검증한다.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b616e"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f6f7f9"/>
+
+      <!-- 의존 방향 지시자 (스택 왼쪽 여백) -->
+      <text x="40" y="112" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">DEPENDS INWARD</text>
+      <line x1="104" y1="128" x2="104" y2="392" stroke="#5b616e" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- L1 -->
+      <rect x="160" y="120" width="800" height="72" rx="6" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="1"/>
+      <text x="184" y="162" fill="rgba(91,97,110,0.80)" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L1</text>
+      <text x="240" y="162" fill="#191c22" font-size="16" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">라우팅, 인증, 화면 조립</text>
+      <text x="936" y="162" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">src/app</text>
+
+      <!-- L2 -->
+      <rect x="160" y="192" width="800" height="72" rx="6" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="1"/>
+      <text x="184" y="234" fill="rgba(91,97,110,0.80)" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L2</text>
+      <text x="240" y="234" fill="#191c22" font-size="16" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">어댑터 - 도메인 UI 와 Prisma 구현</text>
+      <text x="936" y="234" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">modules/*/ui + modules/*/infrastructure</text>
+
+      <!-- L3 -->
+      <rect x="160" y="264" width="800" height="72" rx="6" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="1"/>
+      <text x="184" y="306" fill="rgba(91,97,110,0.80)" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L3</text>
+      <text x="240" y="306" fill="#191c22" font-size="16" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">유스케이스, 포트, 트랜잭션</text>
+      <text x="936" y="306" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">modules/*/application</text>
+
+      <!-- L4 (focal) -->
+      <rect x="160" y="336" width="800" height="72" rx="6" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="1.2"/>
+      <text x="184" y="378" fill="rgba(79,70,229,0.85)" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L4</text>
+      <text x="240" y="378" fill="#191c22" font-size="16" font-weight="600" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">정책, 값, 불변식</text>
+      <text x="936" y="378" fill="#5b616e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">modules/*/domain</text>
+
+      <!-- 콜아웃 1 - 오른쪽 위 -->
+      <text x="1240" y="96" fill="#191c22" font-size="14" font-family="'Noto Serif KR', serif" text-anchor="end">domain 은 Next.js, React, Prisma 를 모른다</text>
+      <path d="M 1160,104 Q 1080,200 968,368" fill="none" stroke="rgba(25,28,34,0.40)" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="960" cy="372" r="2" fill="#191c22"/>
+
+      <!-- 콜아웃 2 - 왼쪽 아래 -->
+      <text x="40" y="560" fill="#5b616e" font-size="14" font-family="'Noto Serif KR', serif">아키텍처 테스트 5종이 이 방향을 자동 검증한다</text>
+      <path d="M 120,540 Q 96,440 152,304" fill="none" stroke="rgba(25,28,34,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="160" cy="300" r="2" fill="#5b616e"/>
+      <text x="40" y="584" fill="#868d9c" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">tests/architecture/*.test.ts</text>
+
+      <!-- LEGEND -->
+      <line x1="40" y1="656" x2="1240" y2="656" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="40" y="676" fill="#5b616e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <rect x="140" y="666" width="12" height="12" rx="2" fill="#ffffff" stroke="rgba(25,28,34,0.12)" stroke-width="0.8"/>
+      <text x="158" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">바깥 계층</text>
+
+      <rect x="340" y="666" width="12" height="12" rx="2" fill="rgba(79,70,229,0.08)" stroke="#4f46e5" stroke-width="0.8"/>
+      <text x="358" y="676" fill="#5b616e" font-size="12" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">가장 안쪽, 프레임워크 비종속</text>
+    </svg>

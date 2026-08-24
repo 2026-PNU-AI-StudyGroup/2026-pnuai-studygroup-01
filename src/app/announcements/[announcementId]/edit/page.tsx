@@ -77,6 +77,7 @@ export default async function EditAnnouncementPage({
             initialTitle={announcement.title}
             initialContent={announcement.content}
             initialPinned={announcement.pinned}
+            initialPopup={announcement.popup}
             initialTarget={initialTarget}
             initialVisibility={announcement.visibility}
             initialAttachments={announcement.attachments}

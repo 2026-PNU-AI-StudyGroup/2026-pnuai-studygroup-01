@@ -20,6 +20,7 @@ export type AnnouncementRecord = {
   content: string;
   visibility: AnnouncementVisibility;
   pinned: boolean;
+  popup: boolean;
   teamId: string | null;
   teamName: string | null;
   projectId: string | null;
@@ -42,6 +43,8 @@ export type AnnouncementWriteInput = {
   content: string;
   visibility: AnnouncementVisibility;
   pinned: boolean;
+  /** 로그인 후 화면에 창으로 띄운다. 전체 공지에만 붙는다. 기본은 꺼짐. */
+  popup?: boolean;
   teamId: string | null;
   programId: string | null;
   retainedAttachmentIds: string[];
