@@ -13,8 +13,10 @@ import { useEffect } from "react";
  */
 export function SmoothScroll() {
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reduceMotion.matches) return;
+    // jsdom 처럼 matchMedia 가 없는 환경도 있다. 없으면 관성 스크롤을 붙이지 않는다.
+    // 같은 이유로 program-sidebar 도 이 가드를 쓴다.
+    if (typeof window.matchMedia !== "function") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const lenis = new Lenis({
       autoRaf: true,
