@@ -42,7 +42,7 @@ function client({
     $queryRaw: queryRaw,
     projectTeamMembership: { findFirst, update },
     auditLog: { create },
-    notification: { create: notificationCreate },
+    notification: { create: notificationCreate, createMany: notificationCreate },
     user: { findMany: vi.fn(async () => []) },
     emailDelivery: { createMany: vi.fn(async () => ({ count: 0 })) },
   };
