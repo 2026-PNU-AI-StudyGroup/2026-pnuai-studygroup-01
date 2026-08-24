@@ -33,6 +33,7 @@ export class PrismaDeadlineNotificationGenerator
             select: {
               id: true,
               managerId: true,
+              manager: { select: { role: true } },
               program: { select: { executionEndsAt: true } },
               assistants: { select: { userId: true } },
             },
@@ -55,7 +56,7 @@ export class PrismaDeadlineNotificationGenerator
               name: true,
               memberships: { where: { endedAt: null }, select: { userId: true } },
               project: {
-                select: { id: true, managerId: true, assistants: { select: { userId: true } } },
+                select: { id: true, managerId: true, manager: { select: { role: true } }, assistants: { select: { userId: true } } },
               },
             },
           },
@@ -83,7 +84,7 @@ export class PrismaDeadlineNotificationGenerator
               name: true,
               memberships: { where: { endedAt: null }, select: { userId: true } },
               project: {
-                select: { id: true, managerId: true, assistants: { select: { userId: true } } },
+                select: { id: true, managerId: true, manager: { select: { role: true } }, assistants: { select: { userId: true } } },
               },
             },
           },
@@ -93,8 +94,11 @@ export class PrismaDeadlineNotificationGenerator
 
     const rows: NotificationCreateInput[] = [];
     for (const team of teams) {
+      // 담당자가 지도교수일 때만 알린다. 학생 등록 프로젝트를 관리자 경로로 승인하면 승인한
+      // 관리자가 managerId 로 박혀서, 자기가 승인한 모든 팀의 마감 메일을 다 받게 된다.
+      // 팀 대화 알림도 같은 이유로 같은 가드를 쓴다.
       const recipients = new Set([
-        ...(team.project.managerId ? [team.project.managerId] : []),
+        ...supervisorIds(team.project),
         ...team.project.assistants.map(({ userId }) => userId),
         ...team.memberships.map(({ userId }) => userId),
       ]);
@@ -121,7 +125,7 @@ export class PrismaDeadlineNotificationGenerator
     }
     for (const task of tasks) {
       const recipients = new Set([
-        ...(task.projectTeam.project.managerId ? [task.projectTeam.project.managerId] : []),
+        ...supervisorIds(task.projectTeam.project),
         ...task.projectTeam.project.assistants.map(({ userId }) => userId),
         ...task.projectTeam.memberships.map(({ userId }) => userId),
       ]);
@@ -144,7 +148,7 @@ export class PrismaDeadlineNotificationGenerator
     for (const report of reports) {
       if (report.versions[0]?.decision?.decision === "APPROVED") continue;
       const recipients = new Set([
-        ...(report.projectTeam.project.managerId ? [report.projectTeam.project.managerId] : []),
+        ...supervisorIds(report.projectTeam.project),
         ...report.projectTeam.project.assistants.map(({ userId }) => userId),
         ...report.projectTeam.memberships.map(({ userId }) => userId),
       ]);
@@ -208,4 +212,11 @@ function formatEnglishDate(date: Date) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+// 담당자를 알림 대상으로 볼지 판단한다. managerId 가 지도교수를 뜻할 때만 참이다.
+// 학생 등록 프로젝트를 관리자 경로로 승인하면 승인한 관리자가 managerId 로 박히는데,
+// 그 사람까지 담당자로 보면 자기가 승인한 팀 수만큼 마감 메일을 받는다.
+function supervisorIds(project: { managerId: string | null; manager?: { role: string } | null }): string[] {
+  return project.managerId && project.manager?.role === "PROFESSOR" ? [project.managerId] : [];
 }
