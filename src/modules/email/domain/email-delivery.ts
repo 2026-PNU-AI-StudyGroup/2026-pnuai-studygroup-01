@@ -34,6 +34,7 @@ export type EmailPreferenceFlags = {
   reportActivityEnabled: boolean;
   discussionEnabled: boolean;
   programActivityEnabled: boolean;
+  deadlineEnabled: boolean;
 };
 
 // 종류마다 어떤 수신 설정을 보는지 한곳에 모은다. 큐에 넣을 때와 실제로 보낼 때 두 곳에서
@@ -42,14 +43,22 @@ const PREFERENCE_FLAG_BY_KIND: Partial<Record<EmailDeliveryKind, keyof EmailPref
   REPORT_ACTIVITY: "reportActivityEnabled",
   DISCUSSION: "discussionEnabled",
   TOPIC_APPROVAL: "programActivityEnabled",
+  DEADLINE: "deadlineEnabled",
 };
 
-// 프로그램 운영 알림은 담당 관리자의 업무 메일이라 기본값이 켜짐이다.
-// 지정하는 순간 아무에게도 안 가는 상황을 만들지 않는다. 나머지 둘은 예전처럼 꺼짐.
+// 선택 가능한 메일은 전부 기본 꺼짐이다. 받고 싶은 사람이 마이페이지에서 켠다.
+//
+// 교수님들이 관리자로도 들어와 계셔서 운영 메일이 한 사람에게 몰렸다. 메일을 줄이자는
+// 결정이라 기본값을 껐다. 앱 안 알림은 이 설정과 무관하게 그대로 쌓이므로 종 아이콘에서는
+// 다 보인다. 정보가 사라지는 것이 아니라 메일만 안 가는 것이다.
+//
+// 대신 프로젝트 등록 검토 요청도 메일로는 안 간다. 담당 관리자가 승인 대기함을 직접
+// 봐야 한다는 뜻이니 운영 방식과 함께 봐야 한다.
 export const EMAIL_PREFERENCE_DEFAULTS: EmailPreferenceFlags = {
   reportActivityEnabled: false,
   discussionEnabled: false,
-  programActivityEnabled: true,
+  programActivityEnabled: false,
+  deadlineEnabled: false,
 };
 
 export function emailPreferenceFlag(kind: EmailDeliveryKind): keyof EmailPreferenceFlags | null {

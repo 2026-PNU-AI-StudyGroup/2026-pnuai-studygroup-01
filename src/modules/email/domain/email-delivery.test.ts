@@ -23,7 +23,7 @@ describe("normalizeEmailHref", () => {
 describe("emailPreferenceAllows", () => {
   it("수신 설정이 없는 종류는 항상 보낸다", () => {
     expect(emailPreferenceAllows("TEAM_INVITATION", null)).toBe(true);
-    expect(emailPreferenceAllows("DEADLINE", { discussionEnabled: false })).toBe(true);
+    expect(emailPreferenceAllows("ACCOUNT_STATUS", { discussionEnabled: false })).toBe(true);
   });
 
   it("보고서·토론 알림은 설정을 켜야 보낸다", () => {
@@ -32,9 +32,12 @@ describe("emailPreferenceAllows", () => {
     expect(emailPreferenceAllows("REPORT_ACTIVITY", { reportActivityEnabled: true })).toBe(true);
   });
 
-  it("프로그램 운영 알림은 담당자 업무 메일이라 기본이 켜짐이다", () => {
-    // 설정 행이 없는 관리자에게도 검토 요청이 가야 한다. 끈 사람만 빠진다.
-    expect(emailPreferenceAllows("TOPIC_APPROVAL", null)).toBe(true);
-    expect(emailPreferenceAllows("TOPIC_APPROVAL", { programActivityEnabled: false })).toBe(false);
+  it("고를 수 있는 메일은 전부 기본이 꺼짐이다", () => {
+    // 교수님들이 관리자로도 들어와 계셔서 운영 메일이 한 사람에게 몰렸다. 받고 싶은
+    // 사람이 마이페이지에서 켜는 방식으로 통일했다. 앱 안 알림은 이 설정과 무관하다.
+    expect(emailPreferenceAllows("TOPIC_APPROVAL", null)).toBe(false);
+    expect(emailPreferenceAllows("DEADLINE", null)).toBe(false);
+    expect(emailPreferenceAllows("TOPIC_APPROVAL", { programActivityEnabled: true })).toBe(true);
+    expect(emailPreferenceAllows("DEADLINE", { deadlineEnabled: true })).toBe(true);
   });
 });

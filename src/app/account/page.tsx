@@ -34,7 +34,7 @@ export default async function AccountPage() {
     new PrismaProfileImageRepository(prisma).findForOwner(actor.id),
     prisma.emailPreference.findUnique({
       where: { userId: actor.id },
-      select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true },
+      select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true, deadlineEnabled: true },
     }),
   ]);
 
