@@ -21,6 +21,7 @@ const announcement: AnnouncementRecord = {
   content: "일정을 확인해 주세요.",
   visibility: "AUTHENTICATED",
   pinned: false,
+  popup: false,
   teamId: null,
   teamName: null,
   projectId: null,

@@ -13,6 +13,7 @@ const announcement: AnnouncementRecord = {
   content: "발표 자료를 금요일까지 제출해 주세요.",
   visibility: "TARGET_MEMBERS",
   pinned: true,
+  popup: false,
   teamId: "team-1",
   teamName: "테스트 팀",
   projectId: "project-1",

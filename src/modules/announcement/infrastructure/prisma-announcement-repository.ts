@@ -11,6 +11,7 @@ import type {
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { ANNOUNCEMENT_ATTACHMENT_MAX_COUNT } from "@/modules/file/domain/upload-policy";
 import { isAnnouncementAttachmentSetAllowed } from "@/modules/announcement/domain/announcement-attachment-policy";
+import { allowsPopup } from "@/modules/announcement/domain/announcement-policy";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
 const selectAnnouncement = {
@@ -20,6 +21,7 @@ const selectAnnouncement = {
   content: true,
   visibility: true,
   pinned: true,
+  popup: true,
   projectTeamId: true,
   programId: true,
   createdAt: true,
@@ -44,6 +46,7 @@ type SelectedAnnouncement = {
   content: string;
   visibility: "AUTHENTICATED" | "TARGET_MEMBERS";
   pinned: boolean;
+  popup: boolean;
   projectTeamId: string | null;
   programId: string | null;
   createdAt: Date;
@@ -68,6 +71,7 @@ function toRecord(value: SelectedAnnouncement): AnnouncementRecord {
     content: value.content,
     visibility: value.visibility,
     pinned: value.pinned,
+    popup: value.popup,
     teamId: value.projectTeamId,
     teamName: value.projectTeam?.name ?? null,
     projectId: value.projectTeam?.projectId ?? null,
@@ -158,6 +162,17 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     return items.map(toRecord);
   }
 
+  // 팝업은 화면을 가리므로 몇 장까지만 띄운다. 더 있어도 겹쳐서 읽지 못한다.
+  async listPopups(): Promise<AnnouncementRecord[]> {
+    const announcements = await this.client.announcement.findMany({
+      where: { popup: true, projectTeamId: null, programId: null, visibility: "AUTHENTICATED" },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      take: 3,
+      select: selectAnnouncement,
+    });
+    return announcements.map(toRecord);
+  }
+
   async findById(id: string): Promise<AnnouncementRecord | null> {
     const announcement = await this.client.announcement.findUnique({
       where: { id },
@@ -170,7 +185,8 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     actor: CurrentActor,
     input: AnnouncementWriteInput,
   ): Promise<AnnouncementCreateOutcome> {
-    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...announcementInput } = input;
+    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...rest } = input;
+    const announcementInput = { ...rest, popup: (rest.popup ?? false) && allowsPopup({ teamId, programId: rest.programId }) };
     if (retainedAttachmentIds.length > 0) return "INVALID_ATTACHMENTS";
     return this.client.$transaction(async (transaction) => {
       const files = await transaction.storedFile.findMany({
@@ -213,7 +229,8 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
     id: string,
     input: AnnouncementWriteInput,
   ): Promise<AnnouncementMutationOutcome> {
-    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...announcementInput } = input;
+    const { retainedAttachmentIds, newAttachmentUploadIds, teamId, ...rest } = input;
+    const announcementInput = { ...rest, popup: (rest.popup ?? false) && allowsPopup({ teamId, programId: rest.programId }) };
     return this.client.$transaction(async (transaction) => {
       const locked = await transaction.$queryRaw<Array<{ authorId: string }>>(Prisma.sql`
         SELECT "authorId" FROM "announcement" WHERE "id" = ${id} FOR UPDATE

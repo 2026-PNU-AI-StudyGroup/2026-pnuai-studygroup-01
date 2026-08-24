@@ -24,6 +24,7 @@ const announcementSchema = z.object({
   content: z.string().trim().min(1).max(20_000),
   visibility: z.enum(["AUTHENTICATED", "TARGET_MEMBERS"]).default("AUTHENTICATED"),
   pinned: z.boolean(),
+  popup: z.boolean(),
 });
 const idSchema = z.string().uuid();
 
@@ -43,6 +44,7 @@ function parseAnnouncement(formData: FormData) {
     content: formData.get("content"),
     visibility: formData.get("visibility") ?? undefined,
     pinned: formData.get("pinned") === "on" || formData.get("pinned") === "true",
+    popup: formData.get("popup") === "on" || formData.get("popup") === "true",
   });
 }
 

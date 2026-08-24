@@ -18,6 +18,10 @@ vi.mock("@/app/_actions/notification-actions", () => ({
 vi.mock("@/app/_actions/language-actions", () => ({
   updateLanguageAction: vi.fn(),
 }));
+// 팝업 공지는 껍데기 메뉴 검사와 상관없다. 공지 조회까지 흉내 내지 않는다.
+vi.mock("@/app/_components/popup-announcements", () => ({
+  PopupAnnouncements: () => null,
+}));
 vi.mock("@/app/_components/notification-indicator-container", () => ({
   NotificationIndicatorContainer: () => <a href="/notifications">알림함</a>,
 }));
