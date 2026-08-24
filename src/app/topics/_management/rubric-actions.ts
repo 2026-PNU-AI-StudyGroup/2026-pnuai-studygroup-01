@@ -50,6 +50,20 @@ async function lockProgram(tx: PrismaTypes.TransactionClient, programId: string)
 function failure(message: string): RubricActionState { return { status: "error", message }; }
 function success(message: string): RubricActionState { return { status: "success", message }; }
 
+// 채점표 잠금 판단은 교직원 점수와 자문위원 점수를 모두 봐야 한다. 예전에는 rubricScore 만
+// 봤는데, 자문위원만 채점하는 프로그램에서는 그 표가 비어 있어 잠금이 전혀 걸리지 않았다.
+// 그 상태로 채점 마감을 과거로 잘못 저장하면 자문위원 화면이 통째로 읽기 전용이 되어
+// 위원들이 점수를 고치지도 마저 넣지도 못한다.
+async function latestRubricScoreAt(tx: PrismaTypes.TransactionClient, rubricId: string): Promise<Date | null> {
+  const [staffScore, advisorScore] = await Promise.all([
+    tx.rubricScore.findFirst({ where: { evaluation: { rubricId } }, orderBy: { updatedAt: "desc" }, select: { updatedAt: true } }),
+    tx.advisorScore.findFirst({ where: { evaluation: { rubricId } }, orderBy: { updatedAt: "desc" }, select: { updatedAt: true } }),
+  ]);
+  const stamps = [staffScore?.updatedAt, advisorScore?.updatedAt].filter((value): value is Date => Boolean(value));
+  if (!stamps.length) return null;
+  return stamps.reduce((latest, value) => (value > latest ? value : latest));
+}
+
 async function hasSavedRubricEvaluation(tx: PrismaTypes.TransactionClient, rubricId: string) {
   const [staffScore, advisorEvaluation] = await Promise.all([
     tx.rubricScore.findFirst({ where: { evaluation: { rubricId } }, select: { id: true } }),
@@ -138,9 +152,9 @@ export async function updateRubricAction(
     if (parsed.data.gradingDueAt < program.startsAt || parsed.data.gradingDueAt > program.endsAt) return "DEADLINE" as const;
     const duplicate = await tx.rubricDefinition.findFirst({ where: { programId, divisionId: current.divisionId, archivedAt: null, legacy: false, id: { not: rubricId }, title: { equals: parsed.data.title, mode: "insensitive" } }, select: { id: true } });
     if (duplicate) return "DUPLICATE" as const;
-    const latestScore = await tx.rubricScore.findFirst({ where: { evaluation: { rubricId } }, orderBy: { updatedAt: "desc" }, select: { updatedAt: true } });
-    if (latestScore && current.title !== parsed.data.title) return "LOCKED" as const;
-    if (latestScore && parsed.data.gradingDueAt < latestScore.updatedAt) return "SCORE_CONFLICT" as const;
+    const latestScoredAt = await latestRubricScoreAt(tx, rubricId);
+    if (latestScoredAt && current.title !== parsed.data.title) return "LOCKED" as const;
+    if (latestScoredAt && parsed.data.gradingDueAt < latestScoredAt) return "SCORE_CONFLICT" as const;
     await tx.rubricDefinition.update({ where: { id: rubricId }, data: parsed.data });
     await tx.auditLog.create({ data: { actorId: actor.id, action: "PROGRAM_RUBRIC_UPDATED", targetType: "PROJECT_PROGRAM", targetId: programId, metadata: { rubricId, from: { title: current.title, gradingDueAt: current.gradingDueAt.toISOString(), audience: current.audience }, to: { ...parsed.data, gradingDueAt: parsed.data.gradingDueAt.toISOString() } } } });
     return "OK" as const;
