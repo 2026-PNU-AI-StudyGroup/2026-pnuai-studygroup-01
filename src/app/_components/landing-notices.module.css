@@ -1,0 +1,259 @@
+/*
+  로그인 첫 화면에 뜨는 안내 창들.
+
+  화면 한가운데를 막지 않는다. 오른쪽 아래에 쌓아 두고 뒤 화면은 그대로 쓰게 둔다.
+  가리지 않으니 어둡게 덮는 막도, 흐림도 없다. 경계는 테두리와 그림자로만 만든다.
+
+  성격이 다른 소식은 창을 따로 쓴다. 한 창에 몰아넣으면 같은 공지로 읽힌다.
+  점검은 호박색, 행사는 청록색으로 색부터 갈라 둔다.
+*/
+
+.stack {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 60;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: end;
+  width: min(21rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 30rem) {
+  .stack {
+    right: 1rem;
+    left: 1rem;
+    bottom: 1rem;
+    width: auto;
+  }
+}
+
+.window {
+  width: 100%;
+  border-radius: 0.75rem;
+  /* 어두운 판을 어두운 배경 위에 얹으면 흐린 테두리로는 경계가 안 보인다. 밝은 선을 두르고
+     그 바깥에 검은 선을 한 겹 더 깔아 밝은 배경에서도 어두운 배경에서도 끊기게 한다. */
+  border: 1px solid rgb(255 255 255 / 0.5);
+  background: #0b1017;
+  color: #ffffff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.6),
+    0 22px 60px rgb(0 0 0 / 0.55);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .window {
+    /* 길고 느리게 끝나는 곡선이라 마지막에 스르르 멎는다. 짧고 곧은 움직임은 툭 튀어나온다. */
+    animation: slideIn 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 창 안쪽 공통 */
+.head {
+  position: relative;
+  padding: 1rem 1.25rem 0.875rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.close {
+  position: absolute;
+  /* 형제가 positioned 면 z-index 없이는 DOM 순서상 뒤인 쪽이 이 버튼을 덮는다. */
+  z-index: 1;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border: 1px solid rgb(255 255 255 / 0.24);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.close:hover { background: rgb(255 255 255 / 0.26); }
+.close:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+
+.body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.rows {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  gap: 0.625rem;
+  align-items: baseline;
+}
+
+.rowLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.5);
+}
+
+.rowValue {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgb(255 255 255 / 0.94);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 1.25rem 1rem;
+}
+
+.textButton {
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.6);
+  cursor: pointer;
+}
+
+.textButton:hover { color: #ffffff; }
+.textButton:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; border-radius: 0.25rem; }
+
+/* ── 점검 안내 (호박색) ───────────────────────────── */
+.downtimeHead {
+  background: rgb(251 191 36 / 0.12);
+  border-bottom-color: rgb(251 191 36 / 0.35);
+}
+
+.downtimeBadge {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #fbbf24;
+}
+
+.downtimeTitle {
+  margin-top: 0.25rem;
+  padding-right: 2rem;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin-bottom: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.apology {
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: rgb(255 255 255 / 0.6);
+}
+
+/* ── 행사 안내 (청록) ─────────────────────────────── */
+.eventStage {
+  position: relative;
+  padding: 1.5rem 1.25rem 1.25rem;
+  text-align: center;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0.6875rem 0.6875rem 0 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(2 174 231 / 0.32) 0%, rgb(2 174 231 / 0) 62%),
+    #0b1017;
+}
+
+.figure {
+  display: block;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: 0 auto 1rem;
+  object-fit: contain;
+  /* 원본이 흰 배경 위 실루엣이라 어두운 판에서 네모가 뜨지 않게 섞는다. */
+  mix-blend-mode: screen;
+}
+
+.host {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #02aee7;
+}
+
+.eventTitle {
+  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+}
+
+.eventSubtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.vote {
+  margin-top: 1rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgb(2 174 231 / 0.45);
+  border-radius: 0.5rem;
+  background: rgb(2 174 231 / 0.1);
+}
+
+.voteLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #5fd0f4;
+}
+
+.voteValue {
+  margin-top: 0.1875rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.cta {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.6875rem 1rem;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #0b1017;
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  transition: background var(--snap-duration, 140ms) var(--snap-ease, ease);
+}
+
+.cta:hover { background: #e6ecf2; }
+/* 버튼이 흰색이라 흰 테두리는 안 보인다. 초점 표시는 청록으로 준다. */
+.cta:focus-visible { outline: 2px solid #02aee7; outline-offset: 3px; }

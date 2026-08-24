@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
-import { HackathonPopup } from "@/app/_components/hackathon-popup";
+import { LandingNotices } from "@/app/_components/landing-notices";
 import { UiLink, UiNav } from "@/shared/i18n/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
@@ -126,7 +126,7 @@ export function SignInLanding({
 }) {
   return (
     <div className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
-      <HackathonPopup />
+      <LandingNotices />
       <SmoothScroll />
 
       <section className={styles.hero}>
