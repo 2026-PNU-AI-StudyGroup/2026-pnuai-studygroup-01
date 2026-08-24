@@ -254,6 +254,12 @@ async function enqueueProjectMembershipNotification(transaction: Prisma.Transact
   createdAt: Date;
 }) {
   const href = `/projects/${input.projectId}`;
+  // 같은 두 사람 사이에서 팀장을 다시 넘기면 예전 키와 글자가 똑같아진다. dedupeKey 는 전역
+  // 유일 제약이라 두 번째 인계가 P2002 로 트랜잭션을 통째로 되돌린다. 역할 변경까지 취소되고
+  // 사용자에게는 에러 화면이 뜬다. 잘못 넘겼으니 되돌리는 조작은 행사 중에 흔하다.
+  // 시각을 붙여 인계마다 다른 키가 되게 한다. 한 트랜잭션 안에서는 createdAt 이 고정이라
+  // 재시도로 같은 알림이 두 번 쌓이는 것은 그대로 막힌다.
+  const dedupeKey = `${input.dedupeKey}:${input.createdAt.getTime()}`;
   await enqueueEmailEvents(transaction, [{
     kind: "PROJECT_MEMBERSHIP",
     recipientId: input.recipientId,
@@ -262,18 +268,19 @@ async function enqueueProjectMembershipNotification(transaction: Prisma.Transact
     titleEn: input.titleEn,
     bodyEn: input.bodyEn,
     href,
-    idempotencyKey: `email:${input.dedupeKey}`,
+    idempotencyKey: `email:${dedupeKey}`,
     createdAt: input.createdAt,
   }]);
-  await transaction.notification.create({
-    data: {
+  await transaction.notification.createMany({
+    data: [{
       recipientId: input.recipientId,
       type: "SYSTEM",
       title: input.title,
       body: input.body,
       href,
-      dedupeKey: input.dedupeKey,
+      dedupeKey,
       createdAt: input.createdAt,
-    },
+    }],
+    skipDuplicates: true,
   });
 }

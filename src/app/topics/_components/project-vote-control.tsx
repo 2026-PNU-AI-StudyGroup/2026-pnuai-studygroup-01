@@ -32,9 +32,12 @@ export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVote
   function toggle(topicId: string) {
     if (!ballot || pending) return;
     setPendingTopicId(topicId);
+    // 지금 화면이 보여 주는 상태에서 무엇을 하려는지 그대로 보낸다. "뒤집어라" 로 보내면
+    // 탭 두 개가 같은 버튼을 눌렀을 때 나중 요청이 먼저 들어간 표를 지운다.
+    const intent = selectedTopicIds.has(topicId) ? "REMOVE" as const : "ADD" as const;
     startTransition(async () => {
       try {
-        const result = await toggleProjectVoteAction({ programId: ballot.programId, topicId });
+        const result = await toggleProjectVoteAction({ programId: ballot.programId, topicId, intent });
         const nextSelectedTopicIds = result.selectedTopicIds;
         if (result.status === "success" && nextSelectedTopicIds) {
           setSelectedTopicIds(new Set(nextSelectedTopicIds));

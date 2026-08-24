@@ -7,6 +7,7 @@ import {
   type PublicProgramVotingResults,
   type ProjectVotingRepository,
   type ToggleProgramVoteOutcome,
+  type VoteIntent,
   type VoteScope,
 } from "@/modules/project-voting/application/manage-project-voting";
 import type { UserRole } from "@/modules/identity/domain/user-role";
@@ -85,7 +86,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     };
   }
 
-  async toggleVote(input: { programId: string; voterId: string; topicId: string; votedAt: Date }): Promise<ToggleProgramVoteOutcome> {
+  async setVote(input: { programId: string; voterId: string; topicId: string; intent: VoteIntent; votedAt: Date }): Promise<ToggleProgramVoteOutcome> {
     let lastError: unknown;
     for (let attempt = 1; attempt <= TOGGLE_ATTEMPTS; attempt += 1) {
       try {
@@ -134,7 +135,8 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
             FOR UPDATE
           `);
           const currentTopicIds = currentVotes.map(({ topicId }) => topicId);
-          const voted = !currentTopicIds.includes(input.topicId);
+          const alreadyVoted = currentTopicIds.includes(input.topicId);
+          const voted = input.intent === "ADD";
 
           const target = await transaction.topic.findFirst({
             where: { id: input.topicId, programId: input.programId },
@@ -165,11 +167,16 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           const others = currentTopicIds.length
             ? await transaction.topic.findMany({ where: { id: { in: currentTopicIds } }, select: { id: true, divisionId: true } })
             : [];
-          const nextTopicIds = voted
-            ? [...currentTopicIds, target.id]
-            : currentTopicIds.filter((id) => id !== target.id);
+          const nextTopicIds = alreadyVoted === voted
+            ? currentTopicIds
+            : voted
+              ? [...currentTopicIds, target.id]
+              : currentTopicIds.filter((id) => id !== target.id);
 
-          if (voted) {
+          if (alreadyVoted === voted) {
+            // 이미 원하는 상태다. 탭 두 개가 같은 버튼을 눌렀거나 새로고침이 겹친 것이다.
+            // 아무것도 하지 않고 지금 상태를 그대로 돌려준다.
+          } else if (voted) {
             const stillVotable = target.publishedAt !== null
               && target.status === VOTABLE_TOPIC_STATUS
               && (target.program.endsAt > input.votedAt || target.projectTeam?.confirmedAt != null);
@@ -188,9 +195,16 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
               }
               return { status: "INVALID_CANDIDATE" };
             }
-            await transaction.projectVote.create({
-              data: { programId: input.programId, topicId: target.id, voterId: input.voterId, createdAt: input.votedAt },
-            });
+            try {
+              await transaction.projectVote.create({
+                data: { programId: input.programId, topicId: target.id, voterId: input.voterId, createdAt: input.votedAt },
+              });
+            } catch (error) {
+              // 같은 프로젝트를 탭 두 개로 동시에 누르면 나중 트랜잭션은 시작 시점 스냅샷을 보므로
+              // 먼저 들어간 표가 안 보인다. "아직 안 찍었네" 하고 INSERT 하다 유일 제약에 막힌다.
+              // 표는 이미 원하는 대로 들어가 있으니 실패로 돌리지 않는다. 둘 다 "투표됨" 으로 끝난다.
+              if (!isUniqueViolation(error)) throw error;
+            }
           } else {
             // 취소는 후보 자격을 다시 묻지 않는다. 프로젝트가 비공개로 바뀐 뒤에도 자기 표는 뺄 수 있어야 한다.
             await transaction.projectVote.deleteMany({
@@ -398,4 +412,8 @@ function divisionSortPosition(position: number | null | undefined) {
 
 function isSerializationFailure(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }

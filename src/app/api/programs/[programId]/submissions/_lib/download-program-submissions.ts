@@ -3,20 +3,16 @@ import { NextResponse } from "next/server";
 
 import {
   buildZip,
+  MAX_ZIP_TOTAL_BYTES,
   safePathSegment,
   submissionEntryName,
   uniqueZipName,
+  ZIP_FETCH_CONCURRENCY,
   type ZipEntry,
 } from "@/app/api/teams/[teamId]/submissions/_lib/zip";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
-
-// 아카이브를 메모리에서 만들기 때문에 프로그램 전체를 받을 때 상한이 필요하다.
-// 넘으면 팀을 나눠 받도록 안내한다.
-const MAX_TOTAL_BYTES = 1_500_000_000;
-// 오브젝트 스토리지에 동시에 던지는 요청 수.
-const FETCH_CONCURRENCY = 8;
 
 export async function downloadProgramSubmissions(programId: string, teamIds: string[] | null) {
   const actor = await getCurrentActor();
@@ -62,7 +58,7 @@ export async function downloadProgramSubmissions(programId: string, teamIds: str
   }
 
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
-  if (totalBytes > MAX_TOTAL_BYTES) {
+  if (totalBytes > MAX_ZIP_TOTAL_BYTES) {
     return NextResponse.json(
       { message: "선택한 제출물이 너무 큽니다. 팀을 나눠 내려받아 주세요." },
       { status: 413 },
@@ -71,8 +67,8 @@ export async function downloadProgramSubmissions(programId: string, teamIds: str
 
   const taken = new Set<string>();
   const entries: ZipEntry[] = [];
-  for (let index = 0; index < files.length; index += FETCH_CONCURRENCY) {
-    await Promise.all(files.slice(index, index + FETCH_CONCURRENCY).map(async (file) => {
+  for (let index = 0; index < files.length; index += ZIP_FETCH_CONCURRENCY) {
+    await Promise.all(files.slice(index, index + ZIP_FETCH_CONCURRENCY).map(async (file) => {
       const object = await s3.send(new GetObjectCommand({ Bucket: objectStorageBucket, Key: file.objectKey }));
       const data = await object.Body?.transformToByteArray();
       if (!data) return;

@@ -128,8 +128,20 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         ? await transaction.programVotingPolicy.findUnique({ where: { programId: id }, select: { voteLimitScope: true } })
         : null;
       const projectCount = removed.reduce((total, division) => total + division._count.topics, 0);
-      const voteCount = removedIds.length ? await transaction.projectVote.count({ where: { programId: id } }) : 0;
       const switchesVotingScope = removedIds.length > 0 && input.divisionNames.length === 0 && policy?.voteLimitScope === "DIVISION";
+      // 지운 분과에 걸린 표만 무효다. 예전에는 프로그램 전체 표를 셌고 지웠다. 화면은 이름만
+      // 보내오므로 분과 이름을 고치는 것과 지우는 것을 구분할 수 없다. 그래서 투표 중에
+      // 오타 하나를 고치면 프로그램 표 전체가 사라졌다.
+      //
+      // 분과 단위로 한도를 세는 프로그램에서만 표가 무효가 된다. 프로그램 단위로 세는
+      // 프로그램은 분과가 없어져도 표의 의미가 그대로다. 다만 분과를 전부 없애 한도 기준이
+      // 프로그램 단위로 바뀌는 경우에는 묶음 자체가 달라지므로 전체를 초기화한다.
+      const invalidatedVoteWhere = switchesVotingScope
+        ? { programId: id }
+        : { programId: id, topic: { divisionId: { in: removedIds } } };
+      const voteCount = removedIds.length && policy?.voteLimitScope === "DIVISION"
+        ? await transaction.projectVote.count({ where: invalidatedVoteWhere })
+        : 0;
       const impact: ProgramDivisionSyncImpact = {
         divisionIds: removedIds,
         divisionNames: removed.map((division) => division.name),
@@ -174,7 +186,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           });
         }
         if (voteCount) {
-          await transaction.projectVote.deleteMany({ where: { programId: id } });
+          await transaction.projectVote.deleteMany({ where: invalidatedVoteWhere });
           await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "DIVISION_DELETED", voteCount } } });
         }
         if (switchesVotingScope) await transaction.programVotingPolicy.update({ where: { programId: id }, data: { voteLimitScope: "PROGRAM" } });
@@ -232,7 +244,36 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         if (currentPolicy) await transaction.programVotingPolicy.delete({ where: { programId: id } });
         } else if (currentPolicy) {
         const requestedScope = input.votingPolicy.voteLimitScope ?? "PROGRAM";
-        const policyChanged = currentPolicy.voteLimit !== input.votingPolicy.voteLimit || currentPolicy.voteLimitScope !== requestedScope;
+        const requestedStaffLimit = input.votingPolicy.staffVoteLimit ?? currentPolicy.staffVoteLimit;
+        // 한도를 올리는 것은 이미 던진 표를 무효로 만들지 않는다. 예전에는 3표를 5표로 늘려도
+        // "표 N개를 초기화합니다" 를 거쳐 전량 삭제됐다. 표가 무효가 되는 것은 한도를 세는
+        // 묶음 자체가 바뀔 때뿐이다.
+        const policyChanged = currentPolicy.voteLimitScope !== requestedScope;
+        // 한도를 내리면 이미 그보다 많이 찍은 사람이 생길 수 있다. 그 사람의 표를 임의로
+        // 골라 버릴 수는 없으므로 지우지 말고 거절한다. staffVoteLimit 도 함께 본다.
+        // 예전에는 이 값이 비교에서 빠져 있어 운영진 한도를 내려도 초과 표가 그대로 남았다.
+        const limitLowered = input.votingPolicy.voteLimit < currentPolicy.voteLimit
+          || requestedStaffLimit < currentPolicy.staffVoteLimit;
+        if (limitLowered && voteCount > 0) {
+          const overLimit = await transaction.$queryRaw<Array<{ one: number }>>(Prisma.sql`
+            SELECT 1 AS one
+            FROM "project_vote" AS vote
+            JOIN "user" AS voter ON voter."id" = vote."voterId"
+            LEFT JOIN "topic" AS candidate ON candidate."id" = vote."topicId"
+            WHERE vote."programId" = ${id}
+            GROUP BY
+              vote."voterId",
+              voter."role",
+              CASE WHEN ${requestedScope} = 'DIVISION'
+                THEN COALESCE(candidate."divisionId", 'UNASSIGNED')
+                ELSE 'PROGRAM' END
+            HAVING count(*) > CASE WHEN voter."role" IN ('ADMIN', 'ADVISOR')
+              THEN ${requestedStaffLimit}::int
+              ELSE ${input.votingPolicy.voteLimit}::int END
+            LIMIT 1
+          `);
+          if (overLimit.length) return "VOTE_LIMIT_CONFLICT";
+        }
         const periodChanged = currentPolicy.startsAt.getTime() !== input.votingPolicy.startsAt.getTime() ||
           currentPolicy.endsAt.getTime() !== input.votingPolicy.endsAt.getTime();
         // 기간을 옮기면 새 기간 밖으로 밀려나는 표가 생긴다. 그 표는 새 일정에서 의미가 없으므로
@@ -263,16 +304,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope },
           },
         };
-        if (!policyChanged && input.votingPolicy.voteLimit < currentPolicy.voteLimit) {
-          const voterCounts = await transaction.projectVote.groupBy({
-            by: ["voterId"],
-            where: { programId: id },
-            _count: { _all: true },
-          });
-          if (voterCounts.some(({ _count }) => _count._all > input.votingPolicy!.voteLimit)) {
-            return "VOTE_LIMIT_CONFLICT";
-          }
-        }
         if (currentPolicy.selfVotingAllowed && !input.votingPolicy.selfVotingAllowed) {
           const selfVote = await findSelfVote(transaction, id);
           if (selfVote) return "SELF_VOTE_CONFLICT";
