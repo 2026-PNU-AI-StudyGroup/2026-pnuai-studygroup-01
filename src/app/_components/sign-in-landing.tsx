@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { DevelopmentRoleSignIn } from "@/modules/identity/ui/development-role-sign-in";
 import { GoogleSignInButton } from "@/modules/identity/ui/google-sign-in-button";
+import { HackathonPopup } from "@/app/_components/hackathon-popup";
 import { UiLink, UiNav } from "@/shared/i18n/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
@@ -83,6 +84,7 @@ const FAMILY_SITES = [
   { name: "AI융합교육원", host: "swedu.pusan.ac.kr", href: "https://swedu.pusan.ac.kr/swedu/index.do" },
   { name: "PLATO", host: "plato.pusan.ac.kr", href: "https://plato.pusan.ac.kr" },
   { name: "코드플레이스", host: "code.pusan.ac.kr", href: "https://code.pusan.ac.kr" },
+  { name: "피클", host: "pickle.pusan.ac.kr", href: "https://pickle.pusan.ac.kr" },
   { name: "AI역량지원시스템", host: "swcss.pusan.ac.kr", href: "https://swcss.pusan.ac.kr" },
   { name: "공식 유튜브", host: "youtube.com/@pnuswedu", href: "https://www.youtube.com/@pnuswedu" },
   { name: "인프런", host: "inflearn.com/@pnuswedu", href: "https://www.inflearn.com/users/1370319/@pnuswedu" },
@@ -124,6 +126,7 @@ export function SignInLanding({
 }) {
   return (
     <div className={`${styles.page} min-h-screen bg-[var(--surface)] text-[var(--ink)]`}>
+      <HackathonPopup />
       <SmoothScroll />
 
       <section className={styles.hero}>
@@ -177,6 +180,9 @@ export function SignInLanding({
               </div>
               <p className={`${styles.signInNote} mt-5 text-sm`}>
                 <strong>@pusan.ac.kr</strong> <UiText>{"계정만 사용할 수 있습니다."}</UiText>
+              </p>
+              <p className={`${styles.signInNote} mt-2 text-sm`}>
+                <UiText>{"교직원 계정은 Google Workspace를 쓰지 않으면 로그인 중에 부산대학교 웹메일 화면으로 넘어갑니다. 그 화면에서 그대로 로그인하면 됩니다."}</UiText>
               </p>
               <p className={`${styles.signInNote} mt-2 text-sm`}>
                 <UiText>{"외부 자문위원은 관리자가 보낸 초대 링크로 접속합니다."}</UiText>
