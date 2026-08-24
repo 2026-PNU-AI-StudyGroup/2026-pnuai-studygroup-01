@@ -35,14 +35,14 @@ export function EmailPreferenceForm({ preference }: {
             <strong className="block text-sm"><UiText>{"프로그램 운영 알림"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"담당 프로그램의 프로젝트 등록 검토 요청을 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
-          <UiInput name="programActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.programActivityEnabled ?? true} className="mt-0.5" />
+          <UiInput name="programActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.programActivityEnabled ?? false} className="mt-0.5" />
         </label>
         <label className="flex items-start justify-between gap-5">
           <span>
             <strong className="block text-sm"><UiText>{"마감 알림"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"수행 기간과 할 일, 보고서 마감이 다가올 때 학교 이메일로 알려드립니다. 여러 팀을 맡고 있으면 팀 수만큼 옵니다."}</UiText></span>
           </span>
-          <UiInput name="deadlineEnabled" type="checkbox" value="on" defaultChecked={preference?.deadlineEnabled ?? true} className="mt-0.5" />
+          <UiInput name="deadlineEnabled" type="checkbox" value="on" defaultChecked={preference?.deadlineEnabled ?? false} className="mt-0.5" />
         </label>
       </fieldset>
       <div className="form-action-bar">
