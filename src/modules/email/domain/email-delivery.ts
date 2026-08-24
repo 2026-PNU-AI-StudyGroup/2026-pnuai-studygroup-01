@@ -34,6 +34,7 @@ export type EmailPreferenceFlags = {
   reportActivityEnabled: boolean;
   discussionEnabled: boolean;
   programActivityEnabled: boolean;
+  deadlineEnabled: boolean;
 };
 
 // 종류마다 어떤 수신 설정을 보는지 한곳에 모은다. 큐에 넣을 때와 실제로 보낼 때 두 곳에서
@@ -42,6 +43,7 @@ const PREFERENCE_FLAG_BY_KIND: Partial<Record<EmailDeliveryKind, keyof EmailPref
   REPORT_ACTIVITY: "reportActivityEnabled",
   DISCUSSION: "discussionEnabled",
   TOPIC_APPROVAL: "programActivityEnabled",
+  DEADLINE: "deadlineEnabled",
 };
 
 // 프로그램 운영 알림은 담당 관리자의 업무 메일이라 기본값이 켜짐이다.
@@ -50,6 +52,9 @@ export const EMAIL_PREFERENCE_DEFAULTS: EmailPreferenceFlags = {
   reportActivityEnabled: false,
   discussionEnabled: false,
   programActivityEnabled: true,
+  // 마감 알림은 학생에게는 필요한 안내라 기본값이 켜짐이다. 여러 팀을 맡아 같은 메일을
+  // 반복해서 받는 사람이 스스로 끌 수 있게 설정만 열어 둔다.
+  deadlineEnabled: true,
 };
 
 export function emailPreferenceFlag(kind: EmailDeliveryKind): keyof EmailPreferenceFlags | null {

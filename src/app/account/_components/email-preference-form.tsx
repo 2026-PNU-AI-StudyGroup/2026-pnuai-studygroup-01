@@ -9,7 +9,7 @@ import { UiInput } from "@/modules/translation/ui/localized-elements";
 const initialState: StudentProfileActionState = { status: "idle", message: "" };
 
 export function EmailPreferenceForm({ preference }: {
-  preference: { reportActivityEnabled: boolean; discussionEnabled: boolean; programActivityEnabled: boolean } | null;
+  preference: { reportActivityEnabled: boolean; discussionEnabled: boolean; programActivityEnabled: boolean; deadlineEnabled: boolean } | null;
 }) {
   const [state, action, pending] = useActionState(saveEmailPreferenceAction, initialState);
   return (
@@ -30,12 +30,19 @@ export function EmailPreferenceForm({ preference }: {
           </span>
           <UiInput name="discussionEnabled" type="checkbox" value="on" defaultChecked={preference?.discussionEnabled ?? false} className="mt-0.5" />
         </label>
-        <label className="flex items-start justify-between gap-5">
+        <label className="flex items-start justify-between gap-5 border-b border-[var(--line)] pb-4">
           <span>
             <strong className="block text-sm"><UiText>{"프로그램 운영 알림"}</UiText></strong>
             <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"담당 프로그램의 프로젝트 등록 검토 요청을 학교 이메일로 알려드립니다."}</UiText></span>
           </span>
           <UiInput name="programActivityEnabled" type="checkbox" value="on" defaultChecked={preference?.programActivityEnabled ?? true} className="mt-0.5" />
+        </label>
+        <label className="flex items-start justify-between gap-5">
+          <span>
+            <strong className="block text-sm"><UiText>{"마감 알림"}</UiText></strong>
+            <span className="mt-1 block text-sm leading-6 text-[var(--muted)]"><UiText>{"수행 기간과 할 일, 보고서 마감이 다가올 때 학교 이메일로 알려드립니다. 여러 팀을 맡고 있으면 팀 수만큼 옵니다."}</UiText></span>
+          </span>
+          <UiInput name="deadlineEnabled" type="checkbox" value="on" defaultChecked={preference?.deadlineEnabled ?? true} className="mt-0.5" />
         </label>
       </fieldset>
       <div className="form-action-bar">

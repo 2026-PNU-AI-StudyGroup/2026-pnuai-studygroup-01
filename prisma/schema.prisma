@@ -485,6 +485,7 @@ model EmailPreference {
   reportActivityEnabled  Boolean  @default(false)
   discussionEnabled      Boolean  @default(false)
   programActivityEnabled Boolean  @default(true)
+  deadlineEnabled        Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
