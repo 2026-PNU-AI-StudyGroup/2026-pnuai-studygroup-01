@@ -6,6 +6,15 @@ import type { ArtifactWriter } from "@/modules/report/application/report-ports";
 import type { ArtifactType } from "@/modules/report/domain/report-policy";
 import { SHOWCASE_IMAGE_MAX_BYTES } from "@/modules/file/domain/upload-policy";
 
+const THUMBNAIL_PATH_PREFIX = "/api/files/";
+
+/** 대표 이미지 주소에서 파일 식별자를 되꺼낸다. 이 주소는 setThumbnail 이 직접 만든다. */
+function thumbnailFileId(path: string | null): string | null {
+  if (!path || !path.startsWith(THUMBNAIL_PATH_PREFIX)) return null;
+  const fileId = path.slice(THUMBNAIL_PATH_PREFIX.length);
+  return fileId.length > 0 ? fileId : null;
+}
+
 export class PrismaArtifactRepository implements ArtifactWriter {
   constructor(private readonly client: PrismaClient) {}
 
@@ -65,6 +74,14 @@ export class PrismaArtifactRepository implements ArtifactWriter {
         `);
         if (files.length !== 1 || (input.type === "IMAGE" && files[0].size > SHOWCASE_IMAGE_MAX_BYTES)) return null;
       }
+      // 갤러리는 position 순으로 늘어놓는다. 자리를 안 주면 모두 0 이 되어 새 사진이
+      // 기존 첫 장 바로 뒤에 끼어든다. 방금 올린 것은 맨 뒤에 붙는 것이 자연스럽다.
+      const lastPosition = input.type === "IMAGE"
+        ? (await transaction.artifact.aggregate({
+          where: { projectTeamId: input.teamId, type: "IMAGE" },
+          _max: { position: true },
+        }))._max.position
+        : null;
       return transaction.artifact.create({
         data: {
           id: randomUUID(),
@@ -74,6 +91,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
           title: input.title,
           fileId: input.fileId,
           externalUrl: input.externalUrl,
+          position: lastPosition === null ? 0 : lastPosition + 1,
           createdAt: input.createdAt,
         },
         select: { id: true },
@@ -223,6 +241,7 @@ export class PrismaArtifactRepository implements ArtifactWriter {
     });
   }
 
+  // 대표 이미지는 아티팩트 행 없이 이 주소 문자열 하나로만 파일과 이어진다.
   setThumbnail(input: {
     teamId: string;
     actor: CurrentActor;
@@ -253,10 +272,30 @@ export class PrismaArtifactRepository implements ArtifactWriter {
         `);
         if (attached !== 1) return false;
       }
+      // 바꾸거나 지우기 전에 쓰던 파일이 무엇이었는지 먼저 본다.
+      const team = await transaction.projectTeam.findUnique({
+        where: { id: input.teamId },
+        select: { project: { select: { thumbnailPath: true } } },
+      });
+      const previousFileId = thumbnailFileId(team?.project.thumbnailPath ?? null);
+
       await transaction.projectTeam.update({
         where: { id: input.teamId },
-        data: { project: { update: { thumbnailPath: input.fileId ? `/api/files/${input.fileId}` : null } } },
+        data: { project: { update: { thumbnailPath: input.fileId ? THUMBNAIL_PATH_PREFIX + input.fileId : null } } },
       });
+
+      // 화면에서 내려도 파일은 ATTACHED 로 남아 주소를 아는 사람에게 계속 열려 있었다.
+      // 정리 작업도 ATTACHED 는 건드리지 않아 영영 지워지지 않는다. 여기서 같이 지운다.
+      // 행을 지우면 저장소 객체까지 지우는 뒷정리가 방아쇠로 걸려 있다.
+      if (previousFileId && previousFileId !== input.fileId) {
+        const stillUsed = await transaction.artifact.count({ where: { fileId: previousFileId } })
+          + await transaction.reportVersion.count({ where: { fileId: previousFileId } });
+        if (stillUsed === 0) {
+          await transaction.storedFile.deleteMany({
+            where: { id: previousFileId, projectTeamId: input.teamId, consumer: "ARTIFACT" },
+          });
+        }
+      }
       return true;
     });
   }
