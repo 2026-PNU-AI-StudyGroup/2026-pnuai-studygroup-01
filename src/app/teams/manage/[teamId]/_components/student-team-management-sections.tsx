@@ -152,7 +152,7 @@ export function StudentTeamManagementSections({
         <section aria-labelledby="leave-title" className="flex flex-col gap-5 border-t border-[#e9b6ae] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="leave-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 탈퇴"}</UiText></h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"사전 팀에서 나가도 이미 승인된 프로젝트 팀 구성은 바뀌지 않습니다."}</UiText></p>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"이 팀으로 낸 심사 대기 중인 지원에서 함께 빠집니다. 이미 승인된 프로젝트 팀 구성은 바뀌지 않습니다."}</UiText></p>
           </div>
           <LeaveStudentTeamForm teamId={team.id} teamName={team.name} />
         </section>
