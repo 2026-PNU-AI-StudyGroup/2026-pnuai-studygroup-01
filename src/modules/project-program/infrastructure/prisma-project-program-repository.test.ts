@@ -332,14 +332,20 @@ describe("Prisma 프로그램 저장소", () => {
     }) });
   });
 
-  it("프로그램 목록의 프로젝트 수에 마감된 프로젝트도 포함한다", async () => {
+  it("프로그램 목록의 프로젝트 수는 마감된 프로젝트는 세고 승인 대기와 반려는 빼고 센다", async () => {
     const repository = new PrismaProjectProgramRepository({
       projectProgram: {
         findMany: vi.fn().mockResolvedValue([{
           id: "program-1",
           name: "캡스톤",
           startsAt: new Date("2026-03-01T00:00:00Z"),
-          topics: [{ projectTeam: null }, { projectTeam: { id: "team-1" } }],
+          topics: [
+            { status: "ACTIVE", projectTeam: null },
+            { status: "ACTIVE", projectTeam: { id: "team-1" } },
+            // 승인 대기와 반려는 아직 프로젝트가 아니다. 화면 목록에도 안 나오므로 세지 않는다.
+            { status: "PENDING_APPROVAL", projectTeam: null },
+            { status: "REJECTED", projectTeam: null },
+          ],
           divisions: [],
           votingPolicy: null,
         }]),
