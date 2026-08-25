@@ -81,6 +81,16 @@ services:
       context: .
       target: runner
     env_file: ${ENV_FILE:-.env.production}
+    environment:
+      # 구글 토큰 주소는 IPv6 도 함께 내려주는데 이 서버에는 IPv6 경로가 없다.
+      # 그쪽으로 붙다 시간만 버리고 죽으므로 IPv4 를 먼저 쓴다.
+      NODE_OPTIONS: --dns-result-order=ipv4first
+    # 도커 기본값은 호스트의 systemd-resolved 스텁(127.0.0.53)으로 넘긴다. 한 단계를
+    # 더 거치면서 이름 조회가 간헐적으로 실패했고(EAI_AGAIN), 그때마다 구글 토큰 교환이
+    # 깨져 로그인이 한 번에 되지 않았다. 상위 DNS 를 직접 물려 그 단계를 없앤다.
+    dns:
+      - ${DNS_PRIMARY:-164.125.9.2}
+      - ${DNS_SECONDARY:-164.125.5.53}
     ports:
       - "${APP_HOST:-127.0.0.1}:${APP_PORT:-3000}:3000"
     extra_hosts:
