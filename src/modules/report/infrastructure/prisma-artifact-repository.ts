@@ -120,7 +120,10 @@ export class PrismaArtifactRepository implements ArtifactWriter {
       });
       if (!current || current.type === "PRESENTATION_VIDEO" || input.type === "PRESENTATION_VIDEO") return false;
       if (input.type === "IMAGE") {
-        if (current.file && current.file.size > SHOWCASE_IMAGE_MAX_BYTES) return false;
+        // 사진은 우리가 받아 둔 파일이어야 한다. 바깥 주소만 있는 항목을 사진으로 바꾸면
+        // 그 주소가 그대로 <img> 가 되어 보는 사람의 접속 정보가 남의 서버로 넘어간다.
+        if (!current.file) return false;
+        if (current.file.size > SHOWCASE_IMAGE_MAX_BYTES) return false;
       }
       const result = await transaction.artifact.updateMany({
         where: { id: input.artifactId, projectTeamId: input.teamId },

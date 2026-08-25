@@ -75,6 +75,7 @@ const programBasicInfoSchema = z.object({
   confirmedDivisionIds: z.string().optional(),
   confirmedDivisionProjectCount: z.coerce.number().int().min(0).optional(),
   confirmedDivisionVoteCount: z.coerce.number().int().min(0).optional(),
+  confirmedDivisionRubricCount: z.coerce.number().int().min(0).optional(),
   confirmedDivisionSwitchesVotingScope: z.enum(["true", "false"]).transform((value) => value === "true").optional(),
 });
 const programOperationSchema = z.object({
@@ -163,12 +164,14 @@ export async function updateProgramBasicInfoAction(_state: ProgramActionState, f
       confirmDivisionSync: input.data.confirmedDivisionIds !== undefined &&
         input.data.confirmedDivisionProjectCount !== undefined &&
         input.data.confirmedDivisionVoteCount !== undefined &&
+        input.data.confirmedDivisionRubricCount !== undefined &&
         input.data.confirmedDivisionSwitchesVotingScope !== undefined
         ? {
             divisionIds: input.data.confirmedDivisionIds.split(",").filter(Boolean),
             divisionNames: [],
             projectCount: input.data.confirmedDivisionProjectCount,
             voteCount: input.data.confirmedDivisionVoteCount,
+            rubricCount: input.data.confirmedDivisionRubricCount,
             switchesVotingScope: input.data.confirmedDivisionSwitchesVotingScope,
           }
         : undefined,

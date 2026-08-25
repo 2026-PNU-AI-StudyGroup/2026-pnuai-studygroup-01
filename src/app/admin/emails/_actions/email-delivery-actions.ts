@@ -22,7 +22,9 @@ export async function retryFailedEmailDeliveryAction(
   if (!parsed.success) return { status: "error", message: "이메일 작업 정보를 확인해 주세요." };
   const result = await prisma.emailDelivery.updateMany({
     where: { id: parsed.data.id, status: "FAILED" },
-    data: { status: "PENDING", availableAt: new Date(), lockedAt: null },
+    // 시도 횟수를 되돌리지 않으면 이미 한도에 닿은 값 그대로 다시 큐에 들어간다.
+    // 일꾼이 집는 순간 한도를 넘겨 한 번 만에 다시 실패로 떨어졌다.
+    data: { status: "PENDING", availableAt: new Date(), lockedAt: null, attempts: 0 },
   });
   if (result.count === 0) return { status: "error", message: "실패 상태인 이메일 작업만 재등록할 수 있습니다." };
   revalidatePath("/admin/emails");

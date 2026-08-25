@@ -8,7 +8,7 @@ import {
 export class AdvisorOperationError extends Error {}
 
 export interface AdvisorAdminRepository {
-  registerAdvisor(input: { name: string; email: string; actorId: string }): Promise<{ userId: string } | null>;
+  registerAdvisor(input: { name: string; email: string; actorId: string }): Promise<{ userId: string; created: boolean } | null>;
   issueToken(input: { userId: string; tokenHash: string; expiresAt: Date; actorId: string }): Promise<boolean>;
   revokeTokens(input: { userId: string; revokedAt: Date; actorId: string }): Promise<boolean>;
   assignTeams(input: { userId: string; programId: string; topicIds: string[]; grantedById: string }): Promise<boolean>;
@@ -31,6 +31,11 @@ export class AdvisorAdminService {
     }
     const advisor = await this.repository.registerAdvisor({ ...input, actorId: actor.id });
     if (!advisor) throw new AdvisorOperationError("자문위원 정보를 확인해 주세요.");
+    // 같은 주소로 다시 등록하면 새 초대 링크가 나가면서 예전 링크와 접속이 끊긴다.
+    // 채점 중인 위원이 그 순간 튕기고 적던 점수가 날아간다. 등록을 되풀이하지 않는다.
+    if (!advisor.created) {
+      throw new AdvisorOperationError("이미 등록된 자문위원입니다. 초대 링크가 필요하면 목록에서 다시 발급해 주세요.");
+    }
     const inviteToken = await this.reissueToken(actor, advisor.userId);
     return { userId: advisor.userId, inviteToken };
   }

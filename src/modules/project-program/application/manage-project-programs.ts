@@ -60,6 +60,8 @@ export type ProgramDivisionSyncImpact = {
   divisionNames: string[];
   projectCount: number;
   voteCount: number;
+  /** 지운 분과 전용 채점표 수. 항목까지 함께 사라진다. */
+  rubricCount: number;
   switchesVotingScope: boolean;
 };
 

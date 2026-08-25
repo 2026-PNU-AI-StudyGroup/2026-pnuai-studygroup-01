@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
@@ -47,6 +47,7 @@ export async function createProgramReportDefinitionAction(programId: string, _st
     refresh(programId);
     return success("보고서를 프로그램의 현재 팀에 추가했습니다.");
   } catch (cause) {
+    unstable_rethrow(cause);
     return error(cause instanceof Error ? cause.message : "보고서를 추가할 수 없습니다.");
   }
 }
@@ -61,6 +62,7 @@ export async function updateProgramReportDefinitionAction(definitionId: string, 
     refresh(programId);
     return success("보고서 설정을 변경했습니다.");
   } catch (cause) {
+    unstable_rethrow(cause);
     return error(cause instanceof Error ? cause.message : "보고서 설정을 변경할 수 없습니다.");
   }
 }
@@ -75,6 +77,7 @@ export async function moveProgramReportDefinitionAction(definitionId: string, pr
     refresh(programId);
     return success("");
   } catch (cause) {
+    unstable_rethrow(cause);
     return error(cause instanceof Error ? cause.message : "보고서 순서를 변경할 수 없습니다.");
   }
 }
@@ -89,6 +92,7 @@ export async function deleteProgramReportDefinitionAction(definitionId: string, 
     refresh(programId);
     return success("보고서를 삭제했습니다.");
   } catch (cause) {
+    unstable_rethrow(cause);
     return error(cause instanceof Error ? cause.message : "보고서를 삭제할 수 없습니다.");
   }
 }

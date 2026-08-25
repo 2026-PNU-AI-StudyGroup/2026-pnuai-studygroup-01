@@ -52,8 +52,8 @@ export class PrismaProgramDivisionRepository implements ProgramDivisionRepositor
   async impact(id: string): Promise<ProgramDivisionImpact | null> {
     const division = await this.client.programDivision.findUnique({ where: { id }, select: { programId: true, _count: { select: { topics: true } } } });
     if (!division) return null;
-    const [voteCount, divisionCount, policy] = await Promise.all([this.client.projectVote.count({ where: { programId: division.programId } }), this.client.programDivision.count({ where: { programId: division.programId } }), this.client.programVotingPolicy.findUnique({ where: { programId: division.programId }, select: { voteLimitScope: true } })]);
-    return { projectCount: division._count.topics, voteCount, switchesVotingScope: divisionCount === 1 && policy?.voteLimitScope === "DIVISION" };
+    const [voteCount, divisionCount, policy, rubricCount] = await Promise.all([this.client.projectVote.count({ where: { programId: division.programId } }), this.client.programDivision.count({ where: { programId: division.programId } }), this.client.programVotingPolicy.findUnique({ where: { programId: division.programId }, select: { voteLimitScope: true } }), this.client.rubricDefinition.count({ where: { programId: division.programId, divisionId: id } })]);
+    return { projectCount: division._count.topics, voteCount, rubricCount, switchesVotingScope: divisionCount === 1 && policy?.voteLimitScope === "DIVISION" };
   }
   async delete(id: string, actorId: string, confirmed: boolean, confirmedImpact?: ProgramDivisionImpact) {
     return this.client.$transaction(async (tx) => {
@@ -77,8 +77,10 @@ export class PrismaProgramDivisionRepository implements ProgramDivisionRepositor
       }
       const [voteCount, divisionCount, policy] = await Promise.all([tx.projectVote.count({ where: { programId: division.programId } }), tx.programDivision.count({ where: { programId: division.programId } }), tx.programVotingPolicy.findUnique({ where: { programId: division.programId } })]);
       const switchesVotingScope = divisionCount === 1 && policy?.voteLimitScope === "DIVISION";
-      const impact = { projectCount: division._count.topics, voteCount, switchesVotingScope };
-      const requiresConfirmation = Boolean(impact.projectCount || impact.voteCount || impact.switchesVotingScope);
+      // 분과 전용 채점표는 항목까지 함께 사라진다. 프로젝트도 표도 없는 분과라도
+      // 채점표가 있으면 확인을 받는다.
+      const impact = { projectCount: division._count.topics, voteCount, rubricCount: divisionRubricIds.length, switchesVotingScope };
+      const requiresConfirmation = Boolean(impact.projectCount || impact.voteCount || impact.rubricCount || impact.switchesVotingScope);
       if (requiresConfirmation && (!confirmed || !isConfirmedImpact(confirmedImpact, impact))) return "CONFIRMATION_REQUIRED" as const;
       if (divisionRubricIds.length) {
         await tx.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: divisionRubricIds } } });

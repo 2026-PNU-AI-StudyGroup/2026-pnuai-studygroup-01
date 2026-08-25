@@ -30,7 +30,7 @@ describe("PrismaAdvisorAdminRepository.registerAdvisor", () => {
     const repository = new PrismaAdvisorAdminRepository(clientWithRacingCreate({ id: "adv-1", role: "ADVISOR" }));
 
     await expect(repository.registerAdvisor({ name: "김위원", email: "advisor@example.com", actorId: "admin-1" }))
-      .resolves.toEqual({ userId: "adv-1" });
+      .resolves.toEqual({ userId: "adv-1", created: false });
   });
 
   it("레이스 후 재조회한 사용자가 ADVISOR가 아니면 거부한다", async () => {
@@ -51,7 +51,7 @@ describe("PrismaAdvisorAdminRepository.registerAdvisor", () => {
     const repository = new PrismaAdvisorAdminRepository(client);
 
     await expect(repository.registerAdvisor({ name: "김위원", email: "advisor@example.com", actorId: "admin-1" }))
-      .resolves.toEqual({ userId: "adv-9" });
+      .resolves.toEqual({ userId: "adv-9", created: true });
     expect(auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ actorId: "admin-1", action: "ADVISOR_REGISTERED", targetId: "adv-9" }),
     });

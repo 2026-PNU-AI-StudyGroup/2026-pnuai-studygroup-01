@@ -82,7 +82,6 @@ describe("PrismaArtifactRepository 결과물 갤러리", () => {
           actor,
           type: "IMAGE",
           title: `사진 ${index}`,
-          fileId: null,
           externalUrl: `https://example.com/${index}.png`,
           createdAt: new Date(),
         });

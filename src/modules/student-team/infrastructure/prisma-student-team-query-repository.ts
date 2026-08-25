@@ -9,6 +9,7 @@ export class PrismaStudentTeamQueryRepository implements StudentTeamReader {
   constructor(private readonly client: PrismaClient) {}
 
   async listMine(studentId: string): Promise<StudentTeamSummary[]> {
+    const now = new Date();
     const teams = await this.client.studentTeam.findMany({
       where: { deletedAt: null, members: { some: { studentId } } },
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
@@ -31,7 +32,9 @@ export class PrismaStudentTeamQueryRepository implements StudentTeamReader {
           orderBy: { createdAt: "desc" },
         },
         recruitmentPosts: {
-          where: { status: "OPEN" },
+          // 마감 시각이 지난 공고는 지원을 처리할 수 없다. 세어 두면 "검토 대기 N명"이
+          // 영영 남고 눌러도 빈 화면으로 간다. 처리할 수 있는 공고만 센다.
+          where: { status: "OPEN", deadlineAt: { gt: now } },
           select: {
             id: true,
             _count: {
