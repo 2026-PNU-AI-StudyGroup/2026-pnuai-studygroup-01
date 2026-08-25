@@ -34,6 +34,11 @@ export function advisorTokenAuth(): BetterAuthPlugin {
           }
           // createSession은 databaseHooks.session.create.before(accountStatus 검사)를 그대로 탄다.
           const session = await ctx.context.internalAdapter.createSession(record.user.id);
+          // 검사와 세션 생성 사이에 계정이 잠기면 훅이 생성을 거절해 세션이 비어 온다.
+          // 그대로 쿠키를 만들려 들면 500 이 난다. 로그인 거절로 돌려보낸다.
+          if (!session) {
+            throw new APIError("UNAUTHORIZED", { status: "invalid" });
+          }
           const user = await ctx.context.internalAdapter.findUserById(record.user.id);
           if (!user) {
             throw new APIError("UNAUTHORIZED", { status: "invalid" });

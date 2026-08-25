@@ -28,7 +28,7 @@ const archivedProjectSelect = {
   memberships: {
     where: { endedAt: null },
     orderBy: { joinedAt: "asc" as const },
-    select: { user: { select: { name: true } } },
+    select: { role: true, user: { select: { name: true } } },
   },
   artifacts: {
     orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
@@ -155,7 +155,11 @@ function toArchivedProject(team: ArchivedProjectRow, audience: "STUDENT" | "FACU
     professorName: team.project.manager!.name,
     advisorRole: team.project.advisorRole,
     advisorEnabled: team.project.program.advisorEnabled,
-    memberNames: team.memberships.map(({ user }) => user.name),
+    // 화면은 첫 사람을 팀장으로 보여 준다. 승인 시 모든 구성원의 합류 시각이 같아
+    // 들어온 순서만으로는 팀장이 앞에 온다는 보장이 없다. 팀장을 앞으로 끌어 둔다.
+    memberNames: [...team.memberships]
+      .sort((left, right) => Number(right.role === "LEADER") - Number(left.role === "LEADER"))
+      .map(({ user }) => user.name),
     sourceUrl: team.project.sourceUrl ?? undefined,
     thumbnailPath: team.project.thumbnailPath ?? undefined,
     posterPath: team.project.posterPath ?? undefined,

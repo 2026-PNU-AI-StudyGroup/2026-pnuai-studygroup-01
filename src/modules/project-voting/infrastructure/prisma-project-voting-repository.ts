@@ -21,6 +21,17 @@ const TOGGLE_ATTEMPTS = 3;
 
 type LockedVotingPolicy = ProgramVotingPolicyDetails & { programId: string };
 
+// 후보 목록에 넣는 조건. 총계도 같은 조건으로 세야 머리말 숫자와 목록 합계가 맞는다.
+// 투표 중에 프로젝트를 비공개로 내리면 목록에서는 빠지는데 표는 남아 있다.
+const VOTABLE_TOPIC_WHERE = (now: Date) => ({
+  publishedAt: { not: null },
+  status: VOTABLE_TOPIC_STATUS,
+  OR: [
+    { program: { endsAt: { gt: now } } },
+    { projectTeam: { confirmedAt: { not: null } } },
+  ],
+});
+
 export class PrismaProjectVotingRepository implements ProjectVotingRepository {
   constructor(private readonly client: PrismaClient) {}
 
@@ -263,7 +274,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           _count: { select: { votes: { where: { programId } } } },
         },
       }),
-      this.client.projectVote.count({ where: { programId } }),
+      this.client.projectVote.count({ where: { programId, topic: VOTABLE_TOPIC_WHERE(now) } }),
       this.client.projectVote.groupBy({ by: ["voterId"], where: { programId } }),
       this.client.projectVote.findMany({
         where: { programId },
@@ -337,7 +348,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           _count: { select: { votes: { where: { programId } } } },
         },
       }),
-      this.client.projectVote.count({ where: { programId } }),
+      this.client.projectVote.count({ where: { programId, topic: VOTABLE_TOPIC_WHERE(now) } }),
     ]);
     const sorted = topics
       .map((topic) => ({

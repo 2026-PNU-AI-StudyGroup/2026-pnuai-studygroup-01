@@ -1,6 +1,6 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 
-export type ProgramDivisionImpact = { projectCount: number; voteCount: number; switchesVotingScope: boolean };
+export type ProgramDivisionImpact = { projectCount: number; voteCount: number; rubricCount: number; switchesVotingScope: boolean };
 export type ProgramDivision = { id: string; name: string; position: number; projectCount: number };
 
 export interface ProgramDivisionRepository {

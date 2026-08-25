@@ -76,8 +76,13 @@ export class PrismaProgramReportDefinitionRepository implements ProgramReportDef
       if (!program) return "NOT_FOUND";
       const current = await tx.programReportDefinition.findFirst({ where: { id: input.definitionId, programId: input.programId }, select: { id: true, title: true, archivedAt: true } });
       if (!current || current.archivedAt) return "NOT_FOUND";
-      const versionCount = await tx.reportVersion.count({ where: { report: { definitionId: current.id } } });
-      if (versionCount) return "HAS_SUBMISSION_HISTORY";
+      // 제출본이 없어도 교수가 남긴 피드백은 있을 수 있다. 보고서를 지우면 피드백까지
+      // 연쇄로 사라지므로 둘 다 없을 때만 지운다.
+      const [versionCount, feedbackCount] = await Promise.all([
+        tx.reportVersion.count({ where: { report: { definitionId: current.id } } }),
+        tx.reportFeedback.count({ where: { report: { definitionId: current.id } } }),
+      ]);
+      if (versionCount || feedbackCount) return "HAS_SUBMISSION_HISTORY";
       await tx.report.deleteMany({ where: { definitionId: current.id } });
       await tx.programReportDefinition.delete({ where: { id: current.id } });
       await tx.auditLog.create({ data: { actorId: input.actorId, action: "PROGRAM_REPORT_DEFINITION_DELETED", targetType: "PROJECT_PROGRAM", targetId: input.programId, metadata: { definitionId: current.id, title: current.title } } });

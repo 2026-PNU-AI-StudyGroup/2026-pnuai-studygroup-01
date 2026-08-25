@@ -6,7 +6,7 @@ const student = { id: "stu-1", role: "STUDENT" as const };
 
 function repository() {
   return {
-    registerAdvisor: vi.fn().mockResolvedValue({ userId: "adv-1" }),
+    registerAdvisor: vi.fn().mockResolvedValue({ userId: "adv-1", created: true }),
     issueToken: vi.fn().mockResolvedValue(true),
     revokeTokens: vi.fn().mockResolvedValue(true),
     assignTeams: vi.fn().mockResolvedValue(true),

@@ -272,10 +272,12 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     // 사이드바 목록 맨 위 프로그램과 기본으로 열리는 프로그램을 같게 맞춘다.
-    const adminSidebarOrder = actor.role === "ADMIN"
+    // 예전에는 관리자만 맞춰 두어 학생과 교수는 맨 위와 다른 프로그램이 열렸다.
+    // 지난 프로그램은 목록에서 진행 중인 것들 뒤에 붙으므로 맨 위를 정하는 데 영향이 없다.
+    const sidebarOrder = actor.role === "ADMIN"
       ? orderedProgramSidebarIds(buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts))
-      : [];
-    const programId = resolveProgramSelection(requestedProgramId, programs, adminSidebarOrder);
+      : orderedProgramSidebarIds(buildProgramSidebarItems(sidebarPrograms, [], "active", { query }, now));
+    const programId = resolveProgramSelection(requestedProgramId, programs, sidebarOrder);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
       redirect(topicsHref({ programId, q: query, teamStatus: operationFilters?.team, reportStatus: operationFilters?.report, page: requestedPage }));

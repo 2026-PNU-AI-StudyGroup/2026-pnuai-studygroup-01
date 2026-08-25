@@ -10,7 +10,7 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
   async registerAdvisor(input: { name: string; email: string; actorId: string }) {
     const email = normalizeEmail(input.email);
     const existing = await this.client.user.findUnique({ where: { email }, select: { id: true, role: true } });
-    if (existing) return existing.role === "ADVISOR" ? { userId: existing.id } : null;
+    if (existing) return existing.role === "ADVISOR" ? { userId: existing.id, created: false } : null;
     try {
       const created = await this.client.$transaction(async (transaction) => {
         const user = await transaction.user.create({
@@ -36,12 +36,12 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
         } });
         return user;
       });
-      return { userId: created.id };
+      return { userId: created.id, created: true };
     } catch (error) {
       // 동시 등록 레이스: email @unique 충돌 시 재조회해 ADVISOR면 재사용, 아니면 거부.
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         const raced = await this.client.user.findUnique({ where: { email }, select: { id: true, role: true } });
-        return raced?.role === "ADVISOR" ? { userId: raced.id } : null;
+        return raced?.role === "ADVISOR" ? { userId: raced.id, created: false } : null;
       }
       throw error;
     }

@@ -70,8 +70,9 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
         <input type="hidden" name="confirmedDivisionIds" value={state.divisionSyncImpact.divisionIds.join(",")} />
         <input type="hidden" name="confirmedDivisionProjectCount" value={state.divisionSyncImpact.projectCount} />
         <input type="hidden" name="confirmedDivisionVoteCount" value={state.divisionSyncImpact.voteCount} />
+        <input type="hidden" name="confirmedDivisionRubricCount" value={state.divisionSyncImpact.rubricCount} />
         <input type="hidden" name="confirmedDivisionSwitchesVotingScope" value={String(state.divisionSyncImpact.switchesVotingScope)} />
-        <UiText>{`분과 ${state.divisionSyncImpact.divisionNames.join(", ")}을 삭제하면 프로젝트 ${state.divisionSyncImpact.projectCount}개가 미분과로 이동하고 투표 ${state.divisionSyncImpact.voteCount}표가 초기화됩니다.`}</UiText>
+        <UiText>{`분과 ${state.divisionSyncImpact.divisionNames.join(", ")}을 삭제하면 프로젝트 ${state.divisionSyncImpact.projectCount}개가 미분과로 이동하고 투표 ${state.divisionSyncImpact.voteCount}표와 분과 전용 채점표 ${state.divisionSyncImpact.rubricCount}개가 사라집니다. 분과 이름만 고치려던 것이면 취소하고 이름을 다시 확인해 주세요.`}</UiText>
       </div> : null}
       <ActionBar state={state} pending={pending} label={state.status === "confirm" ? "분과 삭제 확인 후 저장" : "기본 정보 저장"} />
     </form>

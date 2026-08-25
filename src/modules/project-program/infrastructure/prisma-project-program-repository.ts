@@ -143,11 +143,18 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       const voteCount = removedIds.length && policy?.voteLimitScope === "DIVISION"
         ? await transaction.projectVote.count({ where: invalidatedVoteWhere })
         : 0;
+      // 분과를 지우면 그 분과 전용 채점표와 항목도 함께 사라진다. 프로젝트도 표도 없는
+      // 분과라면 지금까지는 아무 확인 없이 조용히 지워졌다. 화면은 이름만 보내오므로
+      // 이름을 고치는 것도 지우는 것으로 읽힌다. 오타 한 번에 채점표가 날아갔다.
+      const rubricCount = removedIds.length
+        ? await transaction.rubricDefinition.count({ where: { programId: id, divisionId: { in: removedIds } } })
+        : 0;
       const impact: ProgramDivisionSyncImpact = {
         divisionIds: removedIds,
         divisionNames: removed.map((division) => division.name),
         projectCount,
         voteCount,
+        rubricCount,
         switchesVotingScope,
       };
 
@@ -167,7 +174,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           ]);
           if (staffScore || advisorEvaluation) return "SCORED_RUBRIC";
         }
-        if ((projectCount > 0 || voteCount > 0 || switchesVotingScope) && !sameDivisionSyncImpact(input.confirmDivisionSync, impact)) {
+        if ((projectCount > 0 || voteCount > 0 || rubricCount > 0 || switchesVotingScope) && !sameDivisionSyncImpact(input.confirmDivisionSync, impact)) {
           return { status: "DIVISION_SYNC_CONFIRMATION_REQUIRED", impact };
         }
 
@@ -522,7 +529,7 @@ function divisionKey(name: string) {
 }
 
 function sameDivisionSyncImpact(expected: ProgramDivisionSyncImpact | undefined, actual: ProgramDivisionSyncImpact) {
-  if (!expected || expected.projectCount !== actual.projectCount || expected.voteCount !== actual.voteCount || expected.switchesVotingScope !== actual.switchesVotingScope) return false;
+  if (!expected || expected.projectCount !== actual.projectCount || expected.voteCount !== actual.voteCount || expected.rubricCount !== actual.rubricCount || expected.switchesVotingScope !== actual.switchesVotingScope) return false;
   if (expected.divisionIds.length !== actual.divisionIds.length) return false;
   return expected.divisionIds.every((id) => actual.divisionIds.includes(id));
 }

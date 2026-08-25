@@ -25,7 +25,9 @@ export async function saveAdvisorScoresAction(_state: AdvisorReviewState, formDa
   const scores: Array<{ criterionId: string; points: number }> = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("score-")) continue;
-    const points = z.coerce.number().int().min(0).safeParse(value);
+    // 빈 칸이 0 으로 바뀌어 저장되면 채점하지 않은 항목이 0점으로 굳는다.
+    // 숫자만 받는다. 화면 밖에서 보내는 요청도 같은 문을 지난다.
+    const points = z.string().regex(/^\d+$/).transform(Number).safeParse(value);
     if (!points.success) return { status: "error", message: "점수는 0부터 항목 배점까지만 입력할 수 있습니다." };
     scores.push({ criterionId: key.slice("score-".length), points: points.data });
   }

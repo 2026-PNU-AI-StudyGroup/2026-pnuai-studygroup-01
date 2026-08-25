@@ -177,6 +177,23 @@ export class PrismaTopicApprovalRepository implements TopicApprovalRepository {
         where: { teamId: sourceStudentTeamId, status: "PENDING" },
         data: { status: "CANCELED" },
       });
+      // 초대만 막으면 모집 공고 쪽으로 같은 일이 벌어진다. 열린 공고를 닫고 대기 지원도
+      // 함께 물려야 등록 뒤에 팀이 늘어나지 않는다.
+      const openPosts = await transaction.studentTeamRecruitmentPost.findMany({
+        where: { teamId: sourceStudentTeamId, status: "OPEN" },
+        select: { id: true },
+      });
+      if (openPosts.length) {
+        const openPostIds = openPosts.map((post) => post.id);
+        await transaction.studentTeamRecruitmentApplication.updateMany({
+          where: { postId: { in: openPostIds }, status: "PENDING" },
+          data: { status: "WITHDRAWN", decidedAt: input.requestedAt },
+        });
+        await transaction.studentTeamRecruitmentPost.updateMany({
+          where: { id: { in: openPostIds } },
+          data: { status: "CLOSED" },
+        });
+      }
       await enqueueTranslations(transaction, [
         topic.title,
         topic.description,
