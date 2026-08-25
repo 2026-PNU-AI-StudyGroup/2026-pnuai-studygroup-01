@@ -144,6 +144,7 @@ export function SignInLanding({
                 className={styles.institute}
               >
                 <span aria-hidden="true" className={styles.instituteMark} />
+                <span className={styles.serviceName}>PNU AIPMS</span>
               </UiLink>
               <UiNav aria-label="페이지 안내" className="hidden items-center gap-7 text-sm md:flex">
                 <a className={styles.navLink} href="#steps"><UiText>{"이용 절차"}</UiText></a>
