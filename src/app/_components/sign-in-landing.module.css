@@ -105,7 +105,27 @@
 .institute {
   display: inline-flex;
   align-items: center;
+  gap: 0.75rem;
   min-height: 2.75rem;
+}
+
+/* 교육원 이름 옆에 서비스 이름을 붙인다. 여기가 무슨 사이트인지 로고만으로는 모른다.
+   기관 표기를 눌러 읽히게 두고 선 하나로 나눈다. */
+.serviceName {
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--hero-line);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--hero-muted);
+}
+
+/* 좁은 화면에서는 기관 표기와 나란히 두면 줄이 넘친다. 서비스 이름을 접는다. */
+@media (max-width: 26rem) {
+  .serviceName {
+    display: none;
+  }
 }
 
 .instituteMark {

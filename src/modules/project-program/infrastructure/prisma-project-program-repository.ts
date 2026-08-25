@@ -90,7 +90,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     const programs = await this.client.projectProgram.findMany({
       where, orderBy: [{ startsAt: "desc" }, { name: "asc" }],
       include: {
-        topics: { select: { projectTeam: { select: { id: true } } } },
+        topics: { select: { status: true, projectTeam: { select: { id: true } } } },
         divisions: { orderBy: { position: "asc" }, select: { id: true, name: true, position: true } },
         votingPolicy: true,
       },
@@ -99,7 +99,8 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       ...program,
       status: program.endsAt <= new Date() ? "CLOSED" : program.isPublic ? "OPEN" : "DRAFT",
       startYear: getProgramStartYear(program.startsAt),
-      topicCount: topics.length,
+      // 승인 대기와 반려된 주제는 아직 프로젝트가 아니다. 세면 화면의 목록 개수와 어긋난다.
+      topicCount: topics.filter(({ status }) => status === "ACTIVE").length,
       teamCount: topics.filter(({ projectTeam }) => projectTeam !== null).length,
     }));
   }
