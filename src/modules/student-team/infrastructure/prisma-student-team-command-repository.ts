@@ -5,6 +5,36 @@ import type { OutboxEmailEvent } from "@/modules/email/application/email-deliver
 import type { StudentTeamWriter } from "@/modules/student-team/application/student-team-ports";
 import { enqueueEmailEvents } from "@/modules/email/infrastructure/email-events";
 
+type TransactionClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
+
+/**
+ * 사전 팀에서 빠진 사람의 대기 중 팀 지원을 함께 물린다.
+ *
+ * 지원서는 낸 시점의 팀원 명단을 그대로 들고 있다. 심사 대기 중에 누가 나가도
+ * 지원서는 그대로라, 뒤늦게 승인되면 이미 팀에 없는 사람이 프로젝트 구성원으로
+ * 들어가고 작업 공간과 파일 권한까지 열린다. 나갈 때 같이 물려야 한다.
+ *
+ * 이미 승인된 프로젝트 팀은 건드리지 않는다. 화면에서도 그렇게 안내한다.
+ */
+async function withdrawPendingTeamApplications(
+  transaction: TransactionClient,
+  input: { teamId: string; studentId: string; changedAt: Date },
+): Promise<void> {
+  await transaction.topicApplication.updateMany({
+    where: {
+      studentId: input.studentId,
+      status: "PENDING",
+      group: { studentTeamId: input.teamId },
+    },
+    // 철회도 결정이 난 상태라 결정 시각이 있어야 한다. 비워 두면 DB 제약이 막는다.
+    data: {
+      status: "WITHDRAWN",
+      decidedAt: input.changedAt,
+      reviewComment: "지원한 팀에서 나가 지원이 철회되었습니다.",
+    },
+  });
+}
+
 export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
   constructor(private readonly client: PrismaClient) {}
 
@@ -323,6 +353,11 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
         },
       });
       if (result.count === 1) {
+        await withdrawPendingTeamApplications(transaction, {
+          teamId: input.teamId,
+          studentId: input.studentId,
+          changedAt: input.changedAt,
+        });
         await transaction.studentTeam.update({
           where: { id: input.teamId },
           data: { compositionVersion: { increment: 1 } },
@@ -353,6 +388,11 @@ export class PrismaStudentTeamCommandRepository implements StudentTeamWriter {
       if (!membership) return "NOT_FOUND";
       if (team.leaderId === input.studentId) return "LEADER_TRANSFER_REQUIRED";
       await transaction.studentTeamMember.delete({ where: { id: membership.id } });
+      await withdrawPendingTeamApplications(transaction, {
+        teamId: input.teamId,
+        studentId: input.studentId,
+        changedAt: input.leftAt,
+      });
       await transaction.studentTeam.update({
         where: { id: input.teamId },
         data: { compositionVersion: { increment: 1 }, updatedAt: input.leftAt },
