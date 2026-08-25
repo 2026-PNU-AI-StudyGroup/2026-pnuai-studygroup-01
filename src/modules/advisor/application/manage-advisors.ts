@@ -1,4 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
+import { isPusanEmail } from "@/modules/identity/domain/user-role";
 import {
   advisorTokenExpiry,
   generateAdvisorToken,
@@ -22,6 +23,12 @@ export class AdvisorAdminService {
 
   async register(actor: CurrentActor, input: { name: string; email: string }) {
     this.assertAdmin(actor);
+    // 자문위원은 학교 계정이 없는 외부 심사위원 몫이다. 교내 주소로 만들어 두면 그 주소의
+    // 주인이 구글로 로그인할 때 이미 다른 방식으로 만들어진 계정과 부딪혀 들어오지 못한다.
+    // 게다가 역할이 자문위원으로 굳어 학생이나 교수로 되돌아가지도 않는다.
+    if (isPusanEmail(input.email)) {
+      throw new AdvisorOperationError("부산대학교 계정은 자문위원으로 등록할 수 없습니다. 교내 구성원은 구글 로그인으로 접속한 뒤 권한을 지정해 주세요.");
+    }
     const advisor = await this.repository.registerAdvisor({ ...input, actorId: actor.id });
     if (!advisor) throw new AdvisorOperationError("자문위원 정보를 확인해 주세요.");
     const inviteToken = await this.reissueToken(actor, advisor.userId);
