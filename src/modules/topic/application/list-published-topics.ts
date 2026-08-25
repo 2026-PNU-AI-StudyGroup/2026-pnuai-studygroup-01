@@ -1,8 +1,9 @@
-import type {
-  PublicTopicPage,
-  PublicTopicLister,
-  PublicTopicQuery,
-  PublicTopicSummary,
+import {
+  PROJECT_LIST_PAGE_SIZE,
+  type PublicTopicPage,
+  type PublicTopicLister,
+  type PublicTopicQuery,
+  type PublicTopicSummary,
 } from "@/modules/topic/application/topic-ports";
 
 export class ListPublishedTopicsService {
@@ -25,7 +26,7 @@ export class ListPublishedTopicsService {
       divisionId: input.divisionId,
       query: input.query?.trim().slice(0, 100) ?? "",
       page,
-      pageSize: 10,
+      pageSize: PROJECT_LIST_PAGE_SIZE,
       now: input.now ?? new Date(),
     };
     return this.repository.listPublished(query);
