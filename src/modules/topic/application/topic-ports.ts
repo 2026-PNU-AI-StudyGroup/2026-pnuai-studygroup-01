@@ -150,6 +150,11 @@ export interface PublicTopicLister {
   findPublished(id: string): Promise<PublicTopicSummary | null>;
 }
 
+// 프로젝트 목록은 한 화면에 다 늘어놓는다. 나눠 담으면 뒷장에 실린 프로젝트가
+// 그만큼 덜 읽히고, 투표 기간에는 그 차이가 곧 표 차이가 된다.
+// 그래도 끝을 열어 두지는 않는다. 이보다 많아지면 다시 장이 나뉜다.
+export const PROJECT_LIST_PAGE_SIZE = 300;
+
 export interface AdminTopicPreviewLister {
   listPublishedForAdmin(query: AdminTopicPreviewQuery): Promise<PublicTopicPage>;
   findPublishedForAdmin(id: string): Promise<PublicTopicSummary | null>;

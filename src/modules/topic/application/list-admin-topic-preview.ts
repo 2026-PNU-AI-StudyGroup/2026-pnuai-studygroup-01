@@ -1,5 +1,5 @@
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
-import type { AdminTopicPreviewLister, AdminTopicPreviewQuery, PublicTopicPage } from "@/modules/topic/application/topic-ports";
+import { PROJECT_LIST_PAGE_SIZE, type AdminTopicPreviewLister, type AdminTopicPreviewQuery, type PublicTopicPage } from "@/modules/topic/application/topic-ports";
 
 export class ListAdminTopicPreviewService {
   constructor(private readonly repository: AdminTopicPreviewLister) {}
@@ -19,7 +19,7 @@ export class ListAdminTopicPreviewService {
       divisionId: input.divisionId,
       query: input.query?.trim().slice(0, 100) ?? "",
       page,
-      pageSize: 10,
+      pageSize: PROJECT_LIST_PAGE_SIZE,
       now: input.now ?? new Date(),
       topicIds: input.topicIds,
     };

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { PROJECT_LIST_PAGE_SIZE } from "@/modules/topic/application/topic-ports";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import type { PublicTopicLister } from "@/modules/topic/application/topic-ports";
 
@@ -11,7 +12,7 @@ describe("ListPublishedTopicsService", () => {
 
     await new ListPublishedTopicsService(repository).execute({ viewerId: "student-1", divisionId: "division-1", query: `  ${"가".repeat(120)}  `, page: -3, now });
 
-    expect(listPublished).toHaveBeenCalledWith(expect.objectContaining({ viewerId: "student-1", divisionId: "division-1", query: "가".repeat(100), page: 1, pageSize: 10, now }));
+    expect(listPublished).toHaveBeenCalledWith(expect.objectContaining({ viewerId: "student-1", divisionId: "division-1", query: "가".repeat(100), page: 1, pageSize: PROJECT_LIST_PAGE_SIZE, now }));
   });
 
   it("유효하지 않은 페이지는 첫 페이지로 안전하게 되돌린다", async () => {
