@@ -312,7 +312,9 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             to: { voteLimit: input.votingPolicy.voteLimit, voteLimitScope: requestedScope },
           },
         };
-        if (currentPolicy.selfVotingAllowed && !input.votingPolicy.selfVotingAllowed) {
+        // 표를 어차피 지우는 저장이면 남아 있던 자기 표도 함께 사라진다. 먼저 막아 세우면
+        // 초기화를 확인해도 저장 전체가 되돌아가 스위치를 영영 끄지 못한다.
+        if (!resetRequired && currentPolicy.selfVotingAllowed && !input.votingPolicy.selfVotingAllowed) {
           const selfVote = await findSelfVote(transaction, id);
           if (selfVote) return "SELF_VOTE_CONFLICT";
         }
@@ -503,6 +505,7 @@ async function findSelfVote(transaction: Prisma.TransactionClient, programId: st
     FROM "project_vote"
     JOIN "topic" ON "topic"."id" = "project_vote"."topicId"
       AND "topic"."programId" = "project_vote"."programId"
+    JOIN "user" AS "voter" ON "voter"."id" = "project_vote"."voterId"
     LEFT JOIN "project_assistant"
       ON "project_assistant"."topicId" = "topic"."id"
       AND "project_assistant"."userId" = "project_vote"."voterId"
@@ -513,6 +516,7 @@ async function findSelfVote(transaction: Prisma.TransactionClient, programId: st
       AND "project_team_membership"."userId" = "project_vote"."voterId"
       AND "project_team_membership"."endedAt" IS NULL
     WHERE "project_vote"."programId" = ${programId}
+      AND "voter"."role" <> 'ADMIN'
       AND (
         "topic"."authorId" = "project_vote"."voterId"
         OR "topic"."managerId" = "project_vote"."voterId"

@@ -18,14 +18,13 @@ describe("isOwnProject", () => {
     expect(isOwnProject({ ...base, managerId: "prof-1" }, { id: "prof-1", role: "PROFESSOR" })).toBe(true);
   });
 
-  it("관리자는 담당자로 박혀 있어도 당사자가 아니다", () => {
+  it("관리자는 어느 자리에 있어도 당사자가 아니다", () => {
     // 학생 등록 프로젝트를 관리자 경로로 승인하면 승인한 관리자가 managerId 로 박힌다.
     // 그걸 당사자로 보면 자기가 승인한 프로젝트 전부에 투표할 수 없게 된다.
     expect(isOwnProject({ ...base, managerId: "admin-1" }, { id: "admin-1", role: "ADMIN" })).toBe(false);
-  });
-
-  it("관리자라도 팀원이면 당사자다", () => {
-    expect(isOwnProject({ ...base, managerId: "admin-1", memberCount: 1 }, { id: "admin-1", role: "ADMIN" })).toBe(true);
+    // 심사하는 자리라 본인이 속한 팀에도 투표할 수 있다.
+    expect(isOwnProject({ ...base, managerId: "admin-1", memberCount: 1 }, { id: "admin-1", role: "ADMIN" })).toBe(false);
+    expect(isOwnProject({ ...base, authorId: "admin-1" }, { id: "admin-1", role: "ADMIN" })).toBe(false);
   });
 
   it("아무 관계도 없으면 당사자가 아니다", () => {
