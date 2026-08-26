@@ -1811,6 +1811,7 @@
   "팀원 중 이미 이 프로젝트에 지원했거나 프로젝트 팀에 소속된 사용자가 있습니다.": "There is already someone in this project who has applied or belongs to the team.",
   "팀원 지원을 거절했습니다.": "Member application was rejected.",
   "팀원 지원을 수락했습니다.": "Member application accepted.",
+  "팀 관리로 이동": "Go to team management",
   "팀원 초대": "Invite a member to join your team",
   "팀원 초대를 보냈습니다.": "Invitation sent to a member.",
   "팀원을 내보냈습니다.": "I've sent out all team members.",

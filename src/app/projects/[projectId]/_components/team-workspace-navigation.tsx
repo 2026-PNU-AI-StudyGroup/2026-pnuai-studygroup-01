@@ -14,6 +14,7 @@ const sections = [
   { label: "보고서", suffix: "/reports", icon: "report" },
   { label: "평가", suffix: "/evaluations", icon: "evaluation" },
   { label: "결과물", suffix: "/artifacts", icon: "artifact" },
+  { label: "팀 관리", suffix: "/team", icon: "people" },
   // 관리자만 보이는 탭. 결과물을 확인하고 그 자리에서 프로젝트를 지울 수 있게 둔다.
   { label: "프로젝트 삭제", suffix: "/delete", icon: "trash" },
 ] as const;
@@ -23,6 +24,7 @@ type WorkspaceIcon = typeof sections[number]["icon"];
 function NavigationIcon({ name }: { name: WorkspaceIcon }) {
   const paths = {
     overview: <><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z" /></>,
+    people: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M16 11a3 3 0 1 0 0-6M18 20a6 6 0 0 0-3-5.2" /></>,
     task: <><path d="M5 4v16M5 6h11l-2 3 2 3H5" /></>,
     discussion: <><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></>,
     request: <><path d="M5 5h14v15H5zM8 3v4M16 3v4M5 9h14" /><path d="m9 14 2 2 4-4" /></>,

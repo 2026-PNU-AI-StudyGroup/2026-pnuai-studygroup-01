@@ -23,7 +23,7 @@ type MemberAction = { kind: MemberActionKind; member: TeamMember } | null;
 
 const initialState: ProjectTeamMembershipActionState = { status: "idle", message: "" };
 
-export function TeamPeopleSidebar({
+export function TeamPeoplePanel({
   advisorEnabled,
   professor,
   assistants,
@@ -34,6 +34,7 @@ export function TeamPeopleSidebar({
   membershipChangesEnabled,
   canManageMembers,
   invitations,
+  layout = "page",
 }: {
   advisorEnabled: boolean;
   professor: TeamWorkspace["professor"];
@@ -45,6 +46,8 @@ export function TeamPeopleSidebar({
   membershipChangesEnabled: boolean;
   canManageMembers: boolean;
   invitations: ProjectTeamInvitationSummary[];
+  /** 페이지에서는 그대로 펼치고, 좁은 사이드바에서는 접어 둔다. */
+  layout?: "page" | "sidebar";
 }) {
   const router = useRouter();
   const detailDialogRef = useRef<HTMLDialogElement>(null);
@@ -104,6 +107,9 @@ export function TeamPeopleSidebar({
 
   return (
     <>
+      {layout === "page" ? <div>{peopleWithInvite}</div> : null}
+      {layout === "sidebar" ? (
+      <>
       <details className="group mt-4 border-t border-[var(--line)] pt-4 lg:hidden">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
           <span><UiText>{"프로젝트 구성원"}</UiText></span>
@@ -116,6 +122,8 @@ export function TeamPeopleSidebar({
       </details>
 
       <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">{peopleWithInvite}</div>
+      </>
+      ) : null}
 
       <dialog
         ref={detailDialogRef}

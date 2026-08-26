@@ -3,10 +3,8 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
 import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
-import { PrismaProjectTeamInvitationRepository } from "@/modules/project-team/infrastructure/prisma-project-team-invitation-repository";
-import { prisma } from "@/shared/infrastructure/database/prisma";
 import { TeamWorkspaceNavigation } from "@/app/projects/[projectId]/_components/team-workspace-navigation";
-import { TeamPeopleSidebar } from "@/app/projects/[projectId]/_components/team-people-sidebar";
+import { TeamRosterSummary } from "@/app/projects/[projectId]/_components/team-roster-summary";
 import { ConfirmTeamForm } from "@/app/projects/[projectId]/_components/confirm-team-form";
 import { AppShell } from "@/app/_components/app-shell";
 import { calculateReportSubmissionRate, hasReportSchedule } from "@/modules/team/domain/project-progress";
@@ -21,12 +19,6 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
     workspace.reportCount,
   );
   const reportScheduleAvailable = hasReportSchedule(workspace.reportCount);
-  // 보낸 초대는 초대를 다룰 수 있는 사람에게만 보여 준다. 남의 주소가 팀원 전체에게
-  // 보일 이유가 없다.
-  const canManageMembers = workspace.access.canSupervise || workspace.access.isTeamLeader;
-  const invitations = canManageMembers
-    ? await new PrismaProjectTeamInvitationRepository(prisma, actor).listPending(workspace.id)
-    : [];
   const status = teamStatusPresentation[workspace.status];
 
   return (
@@ -61,17 +53,12 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               </div>
             </div>
             <div className="mt-4 lg:mt-5"><TeamWorkspaceNavigation projectId={workspace.topicId} advisorEnabled={workspace.advisorEnabled} canDelete={actor.role === "ADMIN"} /></div>
-            <TeamPeopleSidebar
+            <TeamRosterSummary
+              projectId={workspace.topicId}
               advisorEnabled={workspace.advisorEnabled}
               professor={workspace.professor}
               assistants={workspace.assistants}
               members={workspace.members}
-              projectId={workspace.topicId}
-              projectTeamId={workspace.id}
-              actorId={actor.id}
-              membershipChangesEnabled={workspace.status === "IN_PROGRESS"}
-              canManageMembers={canManageMembers}
-              invitations={invitations}
             />
             <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
               {workspace.status === "FORMING" && workspace.access.canSupervise ? (
