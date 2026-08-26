@@ -119,6 +119,13 @@ enum StudentTeamMemberRole {
   MEMBER
 }
 
+enum ProjectTeamInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELED
+}
+
 enum StudentTeamInvitationStatus {
   PENDING
   ACCEPTED
@@ -342,6 +349,8 @@ model User {
   topicApplicationGroupsLed          TopicApplicationGroup[]             @relation("TopicApplicationGroupLeader")
   studentTeamsLed                    StudentTeam[]                       @relation("StudentTeamLeader")
   studentTeamMemberships             StudentTeamMember[]
+  projectTeamInvitations             ProjectTeamInvitation[]             @relation("ProjectTeamInvitee")
+  projectTeamInvitationsSent         ProjectTeamInvitation[]             @relation("ProjectTeamInviter")
   studentTeamInvitations             StudentTeamInvitation[]             @relation("StudentTeamInvitee")
   studentTeamInvitationsSent         StudentTeamInvitation[]             @relation("StudentTeamInviter")
   topicApprovalsRequested            TopicApprovalRequest[]              @relation("TopicApprovalRequester")
@@ -1085,6 +1094,7 @@ model ProjectTeam {
   updatedAt          DateTime                      @updatedAt
   project            Topic                         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   memberships        ProjectTeamMembership[]
+  invitations        ProjectTeamInvitation[]
   tasks              Task[]
   progressUpdates    ProgressUpdate[]
   discussionPosts    DiscussionPost[]
@@ -1165,6 +1175,28 @@ model StudentTeamMember {
   @@unique([teamId, studentId])
   @@index([studentId, joinedAt])
   @@map("student_team_member")
+}
+
+// 확정된 프로젝트 팀에 뒤늦게 사람을 들이는 통로. 사전 팀 초대와 같은 모양이지만
+// 붙는 곳이 다르다. 저쪽은 프로젝트 전 단계의 팀이고 이쪽은 이미 굴러가는 프로젝트다.
+model ProjectTeamInvitation {
+  id            String                      @id @default(uuid())
+  projectTeamId String
+  email         String
+  inviteeId     String?
+  invitedById   String
+  status        ProjectTeamInvitationStatus @default(PENDING)
+  respondedAt   DateTime?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  projectTeam   ProjectTeam                 @relation(fields: [projectTeamId], references: [id], onDelete: Cascade)
+  invitee       User?                       @relation("ProjectTeamInvitee", fields: [inviteeId], references: [id])
+  invitedBy     User                        @relation("ProjectTeamInviter", fields: [invitedById], references: [id])
+
+  @@unique([projectTeamId, email])
+  @@index([email, status, createdAt])
+  @@index([inviteeId, status])
+  @@map("project_team_invitation")
 }
 
 model StudentTeamInvitation {

@@ -17,6 +17,8 @@ import {
   type ProjectDashboardCounts,
   type ProjectDashboardView,
 } from "@/app/dashboard/_lib/project-dashboard-view";
+import { ProjectTeamInvitationDecisionForm } from "@/app/_components/project-team-invitation-decision-form";
+import { PrismaProjectTeamInvitationRepository } from "@/modules/project-team/infrastructure/prisma-project-team-invitation-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { TeamWorkspaceQueryService } from "@/modules/team/application/manage-team-workspace";
 import { PrismaTeamWorkspaceQueryRepository } from "@/modules/team/infrastructure/prisma-team-workspace-query-repository";
@@ -87,6 +89,9 @@ export default async function DashboardPage({
   const teamPagePromise = new TeamWorkspaceQueryService(
     new PrismaTeamWorkspaceQueryRepository(prisma),
   ).listPage(actor, view === "all" || teamStatus ? requestedPage : 1, teamStatus);
+  // 계정이 없을 때 보낸 초대는 사람 대신 주소만 달려 있어 주소로도 찾는다.
+  const teamInvitationsPromise = new PrismaProjectTeamInvitationRepository(prisma, actor)
+    .listReceived(actor.id, actor.email);
   const assistantInvitationsPromise = new ProjectAssistantQueryService(
     new PrismaProjectAssistantRepository(prisma),
   ).listPending(actor);
@@ -128,8 +133,9 @@ export default async function DashboardPage({
   const secondaryApplicationPromise = applicationService && view === "all"
     ? applicationService.execute(actor, 1, 20, "REJECTED")
     : null;
-  const [teamPage, assistantInvitations, assistantTopics, pendingApprovals, ownPendingApprovalPage, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
+  const [teamPage, teamInvitations, assistantInvitations, assistantTopics, pendingApprovals, ownPendingApprovalPage, primaryApplicationPage, secondaryApplicationPage] = await Promise.all([
     teamPagePromise,
+    teamInvitationsPromise,
     assistantInvitationsPromise,
     assistantTopicsPromise,
     pendingApprovalPromise,
@@ -162,6 +168,25 @@ export default async function DashboardPage({
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
       <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
         <div className="page-enter space-y-8 pt-5">
+          {teamInvitations.length > 0 ? (
+            <section aria-labelledby="team-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
+              <h2 id="team-invitations-title" className="text-lg font-bold"><UiText>{"프로젝트 팀 초대"}</UiText></h2>
+              <ul className="mt-3 divide-y divide-[var(--line)]">
+                {teamInvitations.map((invitation) => (
+                  <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div>
+                      <strong><UiText>{invitation.projectTitle}</UiText></strong>
+                      <p className="muted mt-1 text-sm">
+                        <UiText>{invitation.programName}</UiText>{" · "}{invitation.invitedByName}
+                        {" "}<UiText>{"님이 초대했습니다"}</UiText>
+                      </p>
+                    </div>
+                    <ProjectTeamInvitationDecisionForm invitationId={invitation.id} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           {assistantInvitations.length > 0 ? (
             <section aria-labelledby="assistant-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
               <h2 id="assistant-invitations-title" className="text-lg font-bold"><UiText>{"프로젝트 조교 초대"}</UiText></h2>

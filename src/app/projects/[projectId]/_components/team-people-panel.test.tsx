@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { describe, expect, it, vi } from "vitest";
 
 import { projectTeamMembershipAction } from "@/app/projects/[projectId]/_actions/project-team-membership-actions";
-import { TeamPeopleSidebar } from "@/app/projects/[projectId]/_components/team-people-sidebar";
+import { TeamPeoplePanel } from "@/app/projects/[projectId]/_components/team-people-panel";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -54,7 +54,7 @@ const members: TeamWorkspace["members"] = [
   },
 ];
 
-describe("TeamPeopleSidebar", () => {
+describe("TeamPeoplePanel", () => {
   const defaults = {
     advisorEnabled: false,
     professor: { id: "professor-1", name: "김교수", profileImage: null },
@@ -62,11 +62,13 @@ describe("TeamPeopleSidebar", () => {
     projectId: "50000000-0000-4000-8000-000000000001",
     projectTeamId: "60000000-0000-4000-8000-000000000001",
     membershipChangesEnabled: true,
+    invitations: [],
+    layout: "page" as const,
   };
 
   it("프로젝트 팀원 목록에서 팀장에게만 팀장 뱃지를 표시한다", () => {
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={members}
         actorId="leader-1"
@@ -84,7 +86,7 @@ describe("TeamPeopleSidebar", () => {
 
   it("별도 팀원 관리 영역 없이 권한 있는 사용자의 행 액션을 표시한다", () => {
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={members}
         actorId="professor-1"
@@ -93,14 +95,14 @@ describe("TeamPeopleSidebar", () => {
     );
 
     expect(screen.queryByRole("heading", { name: "팀원 관리" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "이팀원 팀장 위임" })).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: "이팀원 프로젝트 팀에서 제외" })).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: "김팀장 팀장 인계 후 제외" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "이팀원 팀장 위임" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "이팀원 프로젝트 팀에서 제외" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "김팀장 팀장 인계 후 제외" })).toHaveLength(1);
   });
 
   it("일반 팀원에게는 본인 탈퇴만 표시한다", () => {
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={members}
         actorId="member-1"
@@ -108,14 +110,14 @@ describe("TeamPeopleSidebar", () => {
       />,
     );
 
-    expect(screen.getAllByRole("button", { name: "이팀원 프로젝트 팀 탈퇴" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "이팀원 프로젝트 팀 탈퇴" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "김팀장 팀장 인계 후 제외" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "이팀원 팀장 위임" })).not.toBeInTheDocument();
   });
 
   it("팀장 제외 모달에서 활성 일반 팀원에게만 인계를 요구한다", () => {
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={members}
         actorId="professor-1"
@@ -132,7 +134,7 @@ describe("TeamPeopleSidebar", () => {
 
   it("인계할 팀원이 없으면 팀장 제거를 막는다", () => {
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={[members[0]]}
         actorId="professor-1"
@@ -153,7 +155,7 @@ describe("TeamPeopleSidebar", () => {
       message: "현재 구성과 충돌하여 변경하지 못했습니다.",
     });
     render(
-      <TeamPeopleSidebar
+      <TeamPeoplePanel
         {...defaults}
         members={members}
         actorId="professor-1"
