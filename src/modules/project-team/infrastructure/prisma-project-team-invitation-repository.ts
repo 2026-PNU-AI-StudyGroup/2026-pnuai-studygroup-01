@@ -22,7 +22,7 @@ type LockedTeam = {
   projectId: string;
   title: string;
   teamName: string;
-  capacity: number;
+  teamMaxSize: number;
   confirmedAt: Date | null;
   status: "PENDING_APPROVAL" | "REJECTED" | "ACTIVE";
   programEndsAt: Date;
@@ -35,7 +35,8 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
   private lockTeam(transaction: Prisma.TransactionClient, projectTeamId: string) {
     return transaction.$queryRaw<Array<LockedTeam>>(Prisma.sql`
       SELECT "project_team"."id", "project_team"."projectId", "project_team"."name" AS "teamName",
-        "topic"."title", "topic"."capacity", "project_team"."confirmedAt", "topic"."status",
+        "topic"."title", "project_program"."projectTeamMaxSize" AS "teamMaxSize",
+        "project_team"."confirmedAt", "topic"."status",
         "project_program"."endsAt" AS "programEndsAt", ${teamSupervisorSql(this.actor)} AS "canSupervise"
       FROM "project_team"
       JOIN "topic" ON "topic"."id" = "project_team"."projectId"
@@ -82,7 +83,7 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
         email,
         memberCount,
         pendingInvitationCount,
-        capacity: team.capacity,
+        teamMaxSize: team.teamMaxSize,
         inviteeAlreadyMember: Boolean(existingMembership),
       });
       if (violation) return { status: violation };
@@ -211,7 +212,7 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       const memberCount = await transaction.projectTeamMembership.count({
         where: { projectTeamId: team.id, endedAt: null },
       });
-      if (memberCount >= team.capacity) return "CAPACITY_REACHED";
+      if (memberCount >= team.teamMaxSize) return "CAPACITY_REACHED";
 
       await transaction.projectTeamMembership.create({
         data: {
