@@ -22,8 +22,12 @@ export function canInviteProjectTeamMember(access: {
 /**
  * 초대를 보낼 수 있는 상태인지 본다.
  *
- * 정원은 지금 팀에 남아 있는 사람과 아직 답을 안 한 초대를 함께 센다. 초대만 잔뜩
- * 보내 놓고 모두 수락하면 정원을 넘기 때문이다.
+ * 상한은 프로그램이 정한 팀 최대 인원이다. 주제에도 정원이 있지만 그것은 처음 사람을
+ * 모을 때 쓰는 목표치라, 세 명으로 등록한 팀은 그 값이 3 으로 굳는다. 그걸로 막으면
+ * 나중에 한 명을 더 부르는 일 자체가 되지 않는다.
+ *
+ * 지금 팀에 남아 있는 사람과 아직 답을 안 한 초대를 함께 센다. 초대만 잔뜩 보내 놓고
+ * 모두 수락하면 상한을 넘기기 때문이다.
  */
 export function checkProjectTeamInvitation(input: {
   access: { canSupervise: boolean; isTeamLeader: boolean };
@@ -32,14 +36,15 @@ export function checkProjectTeamInvitation(input: {
   email: string;
   memberCount: number;
   pendingInvitationCount: number;
-  capacity: number;
+  /** 프로그램이 정한 팀 최대 인원. 주제의 모집 정원과 다른 값이다. */
+  teamMaxSize: number;
   inviteeAlreadyMember: boolean;
 }): ProjectTeamInvitationViolation | null {
   if (!canInviteProjectTeamMember(input.access)) return "FORBIDDEN";
   if (input.programEndsAt <= input.now) return "PROGRAM_CLOSED";
   if (!isInstitutionEmail(input.email)) return "NOT_INSTITUTION_EMAIL";
   if (input.inviteeAlreadyMember) return "ALREADY_MEMBER";
-  if (input.memberCount + input.pendingInvitationCount >= input.capacity) return "CAPACITY_REACHED";
+  if (input.memberCount + input.pendingInvitationCount >= input.teamMaxSize) return "CAPACITY_REACHED";
   return null;
 }
 

@@ -154,23 +154,18 @@ describe("TeamWorkspaceLayout", () => {
     expect(screen.getAllByTestId("person-avatar-assistant-1")[0]).toHaveAttribute("data-updated-at", "2026-08-07T01:00:00.000Z");
   });
 
-  it.each([
-    ["학생", actor, workspace.access],
-    ["교수", { ...actor, id: "professor-1", role: "PROFESSOR" as const }, { ...workspace.access, isPrimaryAdvisor: true, isTeamMember: false, canSupervise: true, canContribute: false }],
-    ["관리자", { ...actor, id: "admin-1", role: "ADMIN" as const }, { ...workspace.access, isTeamMember: false, canSupervise: true, canContribute: true }],
-  ])("%s가 사이드바에서 팀원 상세 정보를 연다", async (_viewer, viewer, access) => {
-    loadActiveTeamWorkspace.mockResolvedValue({ actor: viewer, workspace: { ...workspace, access } });
+  it("사이드바는 명단만 보여 주고 팀 관리로 보낸다", async () => {
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
 
     render(await TeamWorkspaceLayout({
       children: <div>프로젝트 본문</div>,
       params: Promise.resolve({ projectId: "team-1" }),
     }));
 
-    fireEvent.click(screen.getAllByRole("button", { name: "정하늘 상세 정보" })[0]);
-
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveAttribute("open");
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("정보컴퓨터공학부");
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("haneul_id");
-    expect(screen.getByRole("dialog", { name: "정하늘" })).toHaveTextContent("010-9999-8888");
+    // 사람을 들이고 빼고 연락처를 보는 일은 팀 관리 탭으로 옮겼다. 좁은 사이드바에
+    // 손잡이를 몰아넣으면 이름이 밀려 읽기 어렵다.
+    expect(screen.queryByRole("button", { name: "정하늘 상세 정보" })).toBeNull();
+    expect(screen.getAllByRole("link", { name: "팀 관리로 이동" })[0])
+      .toHaveAttribute("href", "/projects/topic-1/team");
   });
 });

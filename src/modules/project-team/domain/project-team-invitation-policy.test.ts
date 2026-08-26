@@ -16,7 +16,7 @@ const base = {
   email: "student@pusan.ac.kr",
   memberCount: 2,
   pendingInvitationCount: 0,
-  capacity: 5,
+  teamMaxSize: 5,
   inviteeAlreadyMember: false,
 };
 
@@ -61,9 +61,15 @@ describe("checkProjectTeamInvitation", () => {
     expect(checkProjectTeamInvitation({ ...base, inviteeAlreadyMember: true })).toBe("ALREADY_MEMBER");
   });
 
-  it("아직 답을 안 한 초대까지 세어 정원을 지킨다", () => {
-    // 팀원 2명에 대기 초대 3장이면 모두 수락할 때 정원 5명을 넘지 않는 선까지 찼다.
+  it("아직 답을 안 한 초대까지 세어 상한을 지킨다", () => {
+    // 팀원 2명에 대기 초대 3장이면 모두 수락할 때 상한 5명을 넘지 않는 선까지 찼다.
     expect(checkProjectTeamInvitation({ ...base, pendingInvitationCount: 3 })).toBe("CAPACITY_REACHED");
     expect(checkProjectTeamInvitation({ ...base, pendingInvitationCount: 2 })).toBeNull();
+  });
+
+  it("주제 모집 정원이 아니라 프로그램 팀 최대 인원으로 센다", () => {
+    // 세 명으로 등록한 팀도 프로그램이 다섯 명까지 허용하면 두 명 더 부를 수 있다.
+    expect(checkProjectTeamInvitation({ ...base, memberCount: 3, teamMaxSize: 5 })).toBeNull();
+    expect(checkProjectTeamInvitation({ ...base, memberCount: 5, teamMaxSize: 5 })).toBe("CAPACITY_REACHED");
   });
 });

@@ -72,9 +72,11 @@ describe("PrismaProjectTeamInvitationRepository 프로젝트 팀 초대", () => 
           executionStartsAt: past,
           executionEndsAt: future,
           isPublic: true,
+          // 팀 최대 인원 2명. 팀장 한 명이 이미 있으니 한 자리만 남는다.
+          // 주제의 모집 정원은 일부러 넉넉히 둬서 이 값이 아니라 프로그램 값으로 막히는지 본다.
+          projectTeamMaxSize: 2,
           topics: {
-            // 정원 2명. 팀장 한 명이 이미 있으니 한 자리만 남는다.
-            create: [{ id: topicId, authorId: adminId, title: "초대 검증 주제", description: "설명", capacity: 2, status: "ACTIVE", publishedAt: past }],
+            create: [{ id: topicId, authorId: adminId, title: "초대 검증 주제", description: "설명", capacity: 9, status: "ACTIVE", publishedAt: past }],
           },
         },
       });

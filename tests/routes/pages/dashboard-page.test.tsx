@@ -26,6 +26,12 @@ vi.mock("@/modules/identity/infrastructure/current-actor", () => ({ getCurrentAc
 vi.mock("@/shared/infrastructure/database/prisma", () => ({
   prisma: { topic: { findMany: listTopics } },
 }));
+// 받은 프로젝트 팀 초대는 이 화면의 빈 상태 검사와 무관하다. 조회까지 흉내 내지 않는다.
+vi.mock("@/modules/project-team/infrastructure/prisma-project-team-invitation-repository", () => ({
+  PrismaProjectTeamInvitationRepository: class {
+    listReceived() { return Promise.resolve([]); }
+  },
+}));
 vi.mock("@/modules/team/application/manage-team-workspace", () => ({
   TeamWorkspaceQueryService: class {
     listPage() { return listTeams(); }
