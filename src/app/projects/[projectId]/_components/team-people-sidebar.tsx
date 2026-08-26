@@ -9,6 +9,8 @@ import {
 } from "@/app/projects/[projectId]/_actions/project-team-membership-actions";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { MemberContacts } from "@/modules/identity/ui/member-contacts";
+import { ProjectTeamInviteSection } from "@/app/projects/[projectId]/_components/project-team-invite-section";
+import type { ProjectTeamInvitationSummary } from "@/modules/project-team/application/project-team-invitation-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
 import { CustomSelect } from "@/shared/ui/custom-select";
@@ -31,6 +33,7 @@ export function TeamPeopleSidebar({
   actorId,
   membershipChangesEnabled,
   canManageMembers,
+  invitations,
 }: {
   advisorEnabled: boolean;
   professor: TeamWorkspace["professor"];
@@ -41,6 +44,7 @@ export function TeamPeopleSidebar({
   actorId: string;
   membershipChangesEnabled: boolean;
   canManageMembers: boolean;
+  invitations: ProjectTeamInvitationSummary[];
 }) {
   const router = useRouter();
   const detailDialogRef = useRef<HTMLDialogElement>(null);
@@ -88,6 +92,15 @@ export function TeamPeopleSidebar({
       onMemberAction={openMemberAction}
     />
   );
+  // 사람을 빼는 손잡이 바로 아래에 들이는 손잡이를 둔다. 권한도 같은 값을 쓴다.
+  const peopleWithInvite = (
+    <div className="space-y-5">
+      {people}
+      {canManageMembers && membershipChangesEnabled ? (
+        <ProjectTeamInviteSection projectId={projectId} projectTeamId={projectTeamId} invitations={invitations} />
+      ) : null}
+    </div>
+  );
 
   return (
     <>
@@ -99,10 +112,10 @@ export function TeamPeopleSidebar({
             <span aria-hidden="true" className="ml-2 inline-block transition-transform group-open:rotate-180">⌄</span>
           </span>
         </summary>
-        <div className="pb-2 pt-3">{people}</div>
+        <div className="pb-2 pt-3">{peopleWithInvite}</div>
       </details>
 
-      <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">{people}</div>
+      <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">{peopleWithInvite}</div>
 
       <dialog
         ref={detailDialogRef}

@@ -62,6 +62,7 @@ describe("TeamPeopleSidebar", () => {
     projectId: "50000000-0000-4000-8000-000000000001",
     projectTeamId: "60000000-0000-4000-8000-000000000001",
     membershipChangesEnabled: true,
+    invitations: [],
   };
 
   it("프로젝트 팀원 목록에서 팀장에게만 팀장 뱃지를 표시한다", () => {
