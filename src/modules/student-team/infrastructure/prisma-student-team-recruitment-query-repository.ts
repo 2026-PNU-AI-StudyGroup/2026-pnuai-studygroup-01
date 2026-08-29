@@ -5,6 +5,11 @@ import type {
   StudentTeamRecruitmentPostList,
   StudentTeamRecruitmentReader,
 } from "@/modules/student-team/application/manage-student-team-recruitment";
+import {
+  actionableRecruitmentApplicationCount,
+  recruitmentApplicationState,
+  recruitmentPostState,
+} from "@/modules/student-team/domain/recruitment-post-state";
 
 const pageOf = (requested: number, total: number) => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
@@ -115,19 +120,16 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       total,
       page,
       totalPages,
-      posts: posts.map(({ team, applications, _count, ...post }) => {
-        const status: "OPEN" | "CLOSED" = post.status === "OPEN" && post.deadlineAt > now ? "OPEN" : "CLOSED";
-        return {
-          ...post,
-          teamId: post.teamId,
-          status,
-          teamName: team.name,
-          topicTitle: "프로젝트 미지정 팀",
-          memberCount: team._count.members,
-          applicationCount: _count.applications,
-          pendingApplicationCount: applications.length,
-        };
-      }),
+      posts: posts.map(({ team, applications, _count, ...post }) => ({
+        ...post,
+        teamId: post.teamId,
+        status: recruitmentPostState(post, now),
+        teamName: team.name,
+        topicTitle: "프로젝트 미지정 팀",
+        memberCount: team._count.members,
+        applicationCount: _count.applications,
+        pendingApplicationCount: actionableRecruitmentApplicationCount(post, applications.length, now),
+      })),
     };
   }
 
@@ -206,9 +208,7 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       totalPages,
       applications: applications.map(({ post, ...application }) => ({
         ...application,
-        status: application.status === "PENDING" && (post.status !== "OPEN" || post.deadlineAt <= new Date())
-          ? "CLOSED" as const
-          : application.status,
+        status: recruitmentApplicationState(application.status, post, new Date()),
         postTitle: post.title,
         teamName: post.team.name,
         topicTitle: "프로젝트 미지정 팀",
@@ -245,16 +245,17 @@ export class PrismaStudentTeamRecruitmentQueryRepository
       },
     });
     if (!post) return null;
-    const status = post.status === "OPEN" && post.deadlineAt > new Date() ? "OPEN" : "CLOSED";
+    const now = new Date();
     return {
       id: post.id,
       title: post.title,
       content: post.content,
-      status,
+      status: recruitmentPostState(post, now),
       teamName: post.team.name,
       topicTitle: "프로젝트 미지정 팀",
       applications: post.applications.map(({ student, sharedContacts, ...application }) => ({
         ...application,
+        status: recruitmentApplicationState(application.status, post, now),
         studentName: student.name,
         sharedContacts: sharedContacts as SharedRecruitmentContacts,
       })),

@@ -61,6 +61,22 @@ export const EMAIL_PREFERENCE_DEFAULTS: EmailPreferenceFlags = {
   deadlineEnabled: false,
 };
 
+// 수신 설정을 읽는 Prisma select. 큐에 넣는 쪽과 보내는 쪽이 같은 값을 써야 한다.
+//
+// 판단은 위 PREFERENCE_FLAG_BY_KIND 로 모았는데 select 는 두 곳에 손으로 복사돼 있었다.
+// 그래서 deadlineEnabled 가 양쪽에서 빠진 것을 아무도 몰랐다. 필드를 안 읽으면
+// emailPreferenceAllows 가 undefined 를 받아 기본값(꺼짐)으로 떨어지므로, 마이페이지에서
+// 켠 사람에게도 마감 메일이 영원히 안 갔다. 조용히 실패하는 형태라 더 나빴다.
+//
+// satisfies 로 묶어 두면 EmailPreferenceFlags 에 설정을 더할 때 여기를 빠뜨리면 컴파일이
+// 깨진다. 같은 실수를 다시 하지 않으려면 필드 추가보다 이 잠금이 중요하다.
+export const EMAIL_PREFERENCE_SELECT = {
+  reportActivityEnabled: true,
+  discussionEnabled: true,
+  programActivityEnabled: true,
+  deadlineEnabled: true,
+} as const satisfies Record<keyof EmailPreferenceFlags, true>;
+
 export function emailPreferenceFlag(kind: EmailDeliveryKind): keyof EmailPreferenceFlags | null {
   return PREFERENCE_FLAG_BY_KIND[kind] ?? null;
 }

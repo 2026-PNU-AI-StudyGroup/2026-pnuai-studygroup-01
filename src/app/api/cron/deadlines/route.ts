@@ -2,6 +2,7 @@ import { GenerateDeadlineNotificationsService } from "@/modules/notification/app
 import { getDeadlineCronSecret, isAuthorizedCronRequest } from "@/modules/notification/infrastructure/deadline-environment";
 import { PrismaDeadlineNotificationGenerator } from "@/modules/notification/infrastructure/prisma-deadline-notification-generator";
 import { finalizeExpiredPrograms } from "@/modules/project-program/infrastructure/prisma-program-lifecycle";
+import { closeLapsedRecruitmentPosts } from "@/modules/student-team/infrastructure/prisma-recruitment-lifecycle";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export const runtime = "nodejs";
@@ -18,8 +19,9 @@ export async function POST(request: Request) {
   }
   const now = new Date();
   const finalizedPrograms = await finalizeExpiredPrograms(prisma, now);
+  const closedRecruitmentPosts = await closeLapsedRecruitmentPosts(prisma, now);
   const created = await new GenerateDeadlineNotificationsService(
     new PrismaDeadlineNotificationGenerator(prisma),
   ).execute(now);
-  return Response.json({ finalizedPrograms, created });
+  return Response.json({ finalizedPrograms, closedRecruitmentPosts, created });
 }
