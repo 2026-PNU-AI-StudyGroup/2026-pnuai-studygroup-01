@@ -148,11 +148,13 @@
 
 ![AIPMS 핵심 데이터 모델 다이어그램](docs/diagrams/core-data-model.png)
 
-프로그램이 여러 프로젝트를 담고, 프로젝트마다 확정 팀이 최대 하나 붙습니다. 할 일, 보고서, 첨부 파일, 수상 내역은 모두 확정 팀에 매답니다. 투표는 `(프로그램, 투표자, 프로젝트)` 유일 제약으로 한 사람이 같은 프로젝트에 두 번 투표하지 못하게 막습니다. 전체 65개 모델 가운데 뼈대에 해당하는 8개만 추린 그림이며, 실제 스키마는 [prisma/schema.prisma](prisma/schema.prisma)에 있습니다.
+프로그램이 여러 프로젝트를 담고, 프로젝트마다 확정 팀이 최대 하나 붙습니다. 할 일, 보고서, 첨부 파일, 수상 내역은 모두 확정 팀에 매답니다. 투표는 `(프로그램, 투표자, 프로젝트)` 유일 제약으로 한 사람이 같은 프로젝트에 두 번 투표하지 못하게 막습니다. 처음에는 코드에서만 막았는데, 탭을 두 개 열고 동시에 누르면 뚫리는 것을 확인하고 데이터베이스 제약으로 옮겼습니다. 전체 65개 모델 가운데 뼈대에 해당하는 8개만 추린 그림이며, 실제 스키마는 [prisma/schema.prisma](prisma/schema.prisma)에 있습니다.
 
 ### 마. 실제 화면
 
-프로그램, 상태, 검색어와 정렬 조건을 한 화면에서 조합하고 공개 프로젝트의 모집 현황을 확인합니다.
+운영 중인 서비스에서 그대로 찍은 화면입니다.
+
+프로그램, 상태, 검색어와 정렬 조건을 한 화면에서 조합해 공개 프로젝트의 모집 현황을 봅니다. 처음에는 조건을 고르고 적용 버튼을 한 번 더 눌러야 했는데, 저희가 써 보면서 계속 거슬려서 버튼을 없애고 바로 반영되게 바꿨습니다.
 
 <img width="1919" height="942" alt="프로젝트 현황 화면" src="https://github.com/user-attachments/assets/438eedd7-ada5-4ed5-bfb8-eaa1d4d7d39d" />
 
@@ -161,6 +163,8 @@
 <img width="2040" height="5132" alt="내 프로젝트 화면" src="https://github.com/user-attachments/assets/54dfbaaa-3fba-40e9-bc60-16a3d34abb3d" />
 
 ### 바. 디렉터리 구조
+
+라우트별 화면 코드와 업무 규칙을 섞어 두면 나중에 손댈 때 서로 끌려 나온다고 판단해, 처음부터 `app`(화면)과 `modules`(업무 규칙)를 갈라 놓고 시작했습니다.
 
 ```text
 .
@@ -192,111 +196,56 @@
 
 ## 4. 설치 및 사용방법
 
-### 가. 요구사항
+### 가. 사용 방법
 
-- Node.js `24.11.0` 이상, npm `11.6.1`
-- Docker Desktop
-- Google OAuth Web Client
-- Ollama (사용자 콘텐츠 번역을 켤 때만 필요)
+서비스가 운영 중이라 따로 설치하지 않고 바로 쓸 수 있습니다. **[aipms.pusan.ac.kr](https://aipms.pusan.ac.kr)** 에서 부산대학교 Google 계정으로 로그인하면 역할에 맞는 화면이 열립니다. 처음 들어오면 개인정보 수집·이용 동의를 한 번 받고, 학생은 학과와 학번을 입력합니다.
 
-### 나. 초기 설정
+저희가 화면을 만들면서 가장 신경 쓴 것이 "처음 들어온 사람이 무엇부터 눌러야 하는지"였습니다. 역할별로 첫 동선을 아래처럼 잡았습니다.
+
+| 역할 | 처음 할 일 | 그다음 |
+| --- | --- | --- |
+| 학생 | 사이드바 **프로젝트 찾기** 에서 열려 있는 주제를 봅니다 | 마음에 드는 주제에 지원하거나, **팀 모집** 에서 팀을 만들어 팀원을 모읍니다. 팀이 확정되면 **내 프로젝트** 에 작업 공간이 생깁니다 |
+| 교수님 | **주제 관리** 에서 담당 프로그램에 주제와 모집 정원을 등록합니다 | 들어온 지원을 검토해 팀을 확정하고, 지도 팀의 할 일과 보고서 버전을 승인하거나 수정을 요청합니다 |
+| 관리자 | **프로그램 관리** 에서 프로그램을 만들고 공개합니다 | 일정, 보고서 요구사항, 채점표, 투표 정책, 분과를 프로그램마다 설정합니다. 프로젝트 등록 승인 요청은 대시보드에서 처리합니다 |
+| 외부 자문위원 | 관리자가 보낸 **초대 링크** 로 접속합니다 | 부산대 계정 없이도 담당 프로젝트의 제출물을 열람하고 채점표 항목별로 채점하며 피드백을 남깁니다 |
+
+로그인하지 않아도 첫 화면에서 지난 기수의 결과물 아카이브를 둘러볼 수 있습니다. 화면에서 막히는 자리를 발견하면 로그인 전 화면의 **피드백 게시판** 에 남길 수 있게 해 두었습니다.
+
+### 나. 직접 실행해 보려면
+
+저장소를 내려받아 로컬에서 띄우는 것도 됩니다. Node.js `24.11.0` 이상과 Docker Desktop, Google OAuth Web Client 자격 증명이 필요합니다.
 
 ```bash
 nvm use
 npm install
-cp .env.example .env
-docker compose up -d
+cp .env.example .env     # BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, INITIAL_ADMIN_EMAIL 채우기
+docker compose up -d     # PostgreSQL, MinIO
 npm run db:generate
 npm run db:deploy
+npm run dev              # http://localhost:3000
 ```
 
-`.env`에서 다음 값을 직접 설정합니다.
-
-| 변수 | 용도 |
-| --- | --- |
-| `BETTER_AUTH_SECRET` | 32바이트 이상의 애플리케이션 인증 비밀 값 |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth Web Client 자격 증명 |
-| `INITIAL_ADMIN_EMAIL` | 최초 관리자 승격 대상 부산대학교 이메일 |
-| `CRON_SECRET` | 마감 알림, 번역 큐, 이메일 Cron 호출 인증 값 |
-| `EMAIL_DELIVERY_ENABLED` | Gmail SMTP 이메일 워커 활성화 여부. 초기 배포값은 `false` |
-| `GMAIL_SMTP_USER` | Gmail OAuth 동의를 완료한 전용 발송 계정 |
-| `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN` | Gmail OAuth2 SMTP 발송 자격 증명. refresh token은 비밀 환경변수에만 보관 |
-
-Google OAuth Redirect URI:
-
-```text
-http://localhost:3000/api/auth/callback/google
-```
-
-### 다. 최초 관리자 설정
-
-`INITIAL_ADMIN_EMAIL` 계정으로 한 번 로그인한 뒤 다음 명령을 한 번 실행합니다.
-
-```bash
-npm run db:bootstrap-admin
-```
-
-### 라. 개발 서버
-
-```bash
-npm run dev
-```
-
-| 서비스 | 주소 |
-| --- | --- |
-| 웹 | `http://localhost:3000` |
-| PostgreSQL | `localhost:5432` |
-| MinIO API | `http://localhost:9000` |
-| MinIO Console | `http://localhost:9001` |
-| Ollama API | `http://127.0.0.1:11434` |
-
-화면 검증용 로컬 데모 데이터는 다음 명령으로 생성합니다.
-
-```bash
-ALLOW_LOCAL_DEMO_SEED=true DEMO_VIEWER_EMAIL=<로그인한 학생 이메일> npm run db:seed-demo
-```
-
-더 자세한 인증과 데모 데이터, 상태 확인 방법은 [로컬 개발 문서](docs/LOCAL_DEVELOPMENT.md)를 참고하세요.
-
-### 마. 품질 검증
-
-```bash
-npm run lint
-npm run typecheck
-npm run test:architecture
-npm test
-npm run build
-```
-
-### 바. 운영 배포
-
-Docker 기반 운영 배포, 상태 확인, 정기 작업과 백업, 복구 절차는 [프로덕션 운영 문서](docs/PRODUCTION.md)를 따릅니다.
-
-```bash
-npm run notifications:deadlines
-npm run translations:process
-npm run cleanup:uploads
-```
-
-사용자 콘텐츠 자동 번역(팀 대화, 공지 본문 등)은 **기본으로 꺼져 있습니다.** 켜려면 `USER_CONTENT_TRANSLATION_ENABLED=true`를 넣고 `npm run translations:worker`를 별도 프로세스로 실행합니다. 화면 문구 번역은 사람이 작성한 카탈로그라 이 설정과 무관하게 동작합니다.
+`.env` 항목별 설명, 최초 관리자 승격, 로컬 데모 데이터 생성은 [로컬 개발 문서](docs/LOCAL_DEVELOPMENT.md)에, 운영 배포와 정기 작업·백업 절차는 [프로덕션 운영 문서](docs/PRODUCTION.md)에 정리해 두었습니다.
 
 ---
 
 ## 5. 소개 영상 또는 시연영상
 
-**실제 서비스가 운영 중입니다. 아래 주소에서 바로 확인할 수 있습니다.**
+**따로 영상을 준비하는 대신 실제로 돌아가는 서비스를 보여 드립니다.** 시연 환경이 아니라 학과에서 지금 쓰고 있는 서비스입니다.
 
 ### 🔗 [aipms.pusan.ac.kr](https://aipms.pusan.ac.kr)
 
 부산대학교 Google 계정으로 로그인하면 역할에 맞는 화면이 열립니다. 외부 자문위원은 관리자가 보낸 초대 링크로 접속합니다.
 
-지난 해커톤과 캡스톤 디자인의 실제 결과물이 아카이브에 올라가 있어 로그인 전 첫 화면에서도 둘러볼 수 있습니다.
+로그인하지 않아도 첫 화면에서 지난 해커톤과 캡스톤 디자인의 실제 결과물을 둘러볼 수 있습니다. 저희가 만든 화면에 저희가 참여한 프로젝트가 올라가 있는 것이 이번 개발에서 가장 실감이 났던 부분입니다.
 
 ---
 
 ## 6. 팀 소개
 
 소속: 부산대학교 AI융합교육원
+
+일곱 명이 각자 다른 구간을 맡았습니다. 개발만 나눈 것이 아니라 역할별 사용자 테스트와 매뉴얼 작성까지 사람을 붙였는데, 만든 사람은 길을 다 알고 있어서 막히는 자리를 스스로 찾지 못한다는 것을 중간에 알게 됐기 때문입니다.
 
 | 이름 | 담당 |
 | --- | --- |
