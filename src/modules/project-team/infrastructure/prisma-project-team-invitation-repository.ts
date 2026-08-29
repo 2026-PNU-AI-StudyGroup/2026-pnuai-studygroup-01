@@ -13,6 +13,7 @@ import type {
   RespondProjectTeamInvitationOutcome,
 } from "@/modules/project-team/application/project-team-invitation-ports";
 import {
+  canJoinProjectTeam,
   checkProjectTeamInvitation,
   normalizeInvitationEmail,
 } from "@/modules/project-team/domain/project-team-invitation-policy";
@@ -63,7 +64,7 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       }));
       const invitee = await transaction.user.findUnique({
         where: { email },
-        select: { id: true, name: true, accountStatus: true },
+        select: { id: true, name: true, accountStatus: true, role: true },
       });
       const [memberCount, pendingInvitationCount, existingMembership] = await Promise.all([
         transaction.projectTeamMembership.count({ where: { projectTeamId: team.id, endedAt: null } }),
@@ -85,6 +86,7 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
         pendingInvitationCount,
         teamMaxSize: team.teamMaxSize,
         inviteeAlreadyMember: Boolean(existingMembership),
+        invitee,
       });
       if (violation) return { status: violation };
 
@@ -208,6 +210,13 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       }
 
       if (team.programEndsAt <= input.respondedAt) return "PROGRAM_CLOSED";
+      // 보낼 때 학생이었어도 수락 전에 역할이 바뀔 수 있고, 검사가 없던 동안 보낸 초대가
+      // 남아 있을 수도 있다. 들어가는 순간의 계정으로 다시 판정한다.
+      const invitee = await transaction.user.findUnique({
+        where: { id: input.inviteeId },
+        select: { role: true, accountStatus: true },
+      });
+      if (!invitee || !canJoinProjectTeam(invitee)) return "NOT_STUDENT";
       // 보낼 때 센 정원과 수락할 때의 정원이 다를 수 있다. 들어가는 순간 다시 센다.
       const memberCount = await transaction.projectTeamMembership.count({
         where: { projectTeamId: team.id, endedAt: null },

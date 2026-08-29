@@ -28,6 +28,7 @@ export type RespondProjectTeamInvitationOutcome =
   | "ACCEPTED"
   | "DECLINED"
   | "NOT_FOUND"
+  | "NOT_STUDENT"
   | "CAPACITY_REACHED"
   | "PROGRAM_CLOSED";
 
