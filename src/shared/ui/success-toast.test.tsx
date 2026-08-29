@@ -11,7 +11,7 @@ describe("SuccessToast", () => {
     expect(toast).toHaveTextContent("저장했습니다.");
     expect(toast).toHaveAttribute("aria-live", "polite");
     expect(toast).toHaveAttribute("aria-atomic", "true");
-    expect(toast).toHaveClass("border-[var(--primary)]", "bg-white", "text-[var(--ink)]");
+    expect(toast).toHaveClass("border-[var(--primary)]", "bg-[var(--surface)]", "text-[var(--ink)]");
 
     rerender(<SuccessToast message="" />);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();

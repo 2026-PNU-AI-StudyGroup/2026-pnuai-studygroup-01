@@ -21,7 +21,8 @@ describe("AdminWorkspace", () => {
     expect(screen.queryByRole("link", { name: "프로젝트 승인" })).not.toBeInTheDocument();
     expect(screen.getByText("사용자 · 계정 관리")).toBeInTheDocument();
     expect(screen.getByText("관리 화면 본문")).toBeInTheDocument();
-    expect(container.querySelector("main > div")).toHaveClass("xl:grid-cols-[17rem_minmax(0,1fr)]");
+    // 사이드바 폭은 루트의 --shell-panel 이 정한다. 접힐 때 이 값이 0 으로 흐른다.
+    expect(container.querySelector("main > div")).toHaveClass("lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)]");
   });
 
   it("eyebrow와 설명 없이 제목만 제공할 수 있다", () => {

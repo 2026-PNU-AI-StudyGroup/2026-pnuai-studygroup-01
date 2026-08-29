@@ -9,50 +9,214 @@
 }
 
 /*
-  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 화이트 서피스 + 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
+  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
   크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준의 깔끔함(반어·잔재주 없이 정석을 높은 완성도로).
-  라이트 전용(관리자 데스크톱 종일). 데이터·수치·시각은 tabular-nums 유지.
+  데이터·수치·시각은 tabular-nums 유지.
+
+  라이트와 다크를 light-dark() 한 줄에 같이 둔다. 토큰 표를 두 벌 두면 한쪽만 고치는 사고가 난다.
+  어느 쪽을 쓸지는 color-scheme 이 정한다. 왼쪽이 라이트, 오른쪽이 다크다.
 */
 :root {
-  color-scheme: light;
-  --workspace: #f6f7f9;
-  --sidebar: #ffffff;
-  --surface: #ffffff;
-  --surface-subtle: #f1f3f7;
-  --ink: #191c22;
-  --muted: #5b616e;
-  --line: #e7e9ef;
-  --line-strong: #d5d9e2;
-  --field-border: #d0d5dd;
-  --field-border-hover: #98a1b3;
-  --field-surface: #ffffff;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-subtle: #eef0fe;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-ink: #3730a3;
-  --accent-subtle: #eef0fe;
+  /* 기본은 기기 설정을 따른다. data-theme 이 붙으면 그쪽이 이긴다. */
+  color-scheme: light dark;
+
+  --workspace: light-dark(#f6f7f9, #0f1117);
+  --sidebar: light-dark(#ffffff, #15171f);
+  --surface: light-dark(#ffffff, #15171f);
+  /* 헤더와 하단 탭바처럼 흐림 위에 얹는 반투명 면. 불투명 토큰에 투명도를 섞으면 light-dark 와 겹쳐 깨진다. */
+  --surface-glass: light-dark(rgb(255 255 255 / 0.94), rgb(21 23 31 / 0.94));
+  --surface-subtle: light-dark(#f1f3f7, #1d1f2a);
+  --surface-active: light-dark(#eef1f6, #232634);
+  --ink: light-dark(#191c22, #e7e9f0);
+  --muted: light-dark(#5b616e, #9aa2b4);
+  --line: light-dark(#e7e9ef, #262a35);
+  --line-strong: light-dark(#d5d9e2, #343947);
+  --field-border: light-dark(#d0d5dd, #343947);
+  --field-border-hover: light-dark(#98a1b3, #4c5264);
+  --field-surface: light-dark(#ffffff, #191c25);
+  --field-placeholder: light-dark(#667085, #767e91);
+  --field-disabled: light-dark(#eef0f4, #1a1d26);
+  /* 인디고는 어두운 바닥에서 가라앉는다. 다크에서는 한 단계 띄운다. */
+  --primary: light-dark(#4f46e5, #8189f8);
+  --primary-hover: light-dark(#4338ca, #9aa0fa);
+  --primary-subtle: light-dark(#eef0fe, #23263c);
+  --accent: light-dark(#4f46e5, #8189f8);
+  --accent-hover: light-dark(#4338ca, #9aa0fa);
+  --accent-ink: light-dark(#3730a3, #bcc0fc);
+  --accent-subtle: light-dark(#eef0fe, #23263c);
   --focus: var(--primary);
   --focus-halo: color-mix(in srgb, var(--focus) 22%, transparent);
   --danger-halo: color-mix(in srgb, var(--danger) 18%, transparent);
-  --success: #15803d;
-  --success-subtle: #e7f5ec;
-  --warning: #b45309;
-  --warning-ink: #92400e;
-  --warning-subtle: #fdf2e1;
-  --danger: #dc2626;
-  --danger-subtle: #fdecec;
+  --success: light-dark(#15803d, #4ade80);
+  --success-subtle: light-dark(#e7f5ec, #13291d);
+  --warning: light-dark(#b45309, #fbbf24);
+  --warning-ink: light-dark(#92400e, #fcd34d);
+  --warning-subtle: light-dark(#fdf2e1, #2a2011);
+  --danger: light-dark(#dc2626, #f87171);
+  --danger-subtle: light-dark(#fdecec, #2c1719);
+  --danger-border: light-dark(#f0b7b2, #4a2529);
+  --danger-surface: light-dark(#fff8f7, #221518);
+  --danger-surface-hover: light-dark(#fff0ee, #2c191c);
+  --danger-surface-active: light-dark(#ffe9e6, #341d21);
+  --backdrop: light-dark(rgb(23 32 51 / 0.34), rgb(0 0 0 / 0.62));
   --radius-control: 0.5rem;
   --radius-panel: 0.75rem;
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
-  --shadow-admin-panel: 0 1px 2px rgb(16 24 40 / 0.05);
-  --shadow-float: 0 12px 32px rgb(16 24 40 / 0.16);
+  /* light-dark() 는 색만 받는다. 그림자는 거리를 고정하고 색만 갈아 끼운다. */
+  --shadow-tint-weak: light-dark(rgb(16 24 40 / 0.04), rgb(0 0 0 / 0.34));
+  --shadow-tint: light-dark(rgb(16 24 40 / 0.08), rgb(0 0 0 / 0.5));
+  --shadow-tint-float: light-dark(rgb(16 24 40 / 0.16), rgb(0 0 0 / 0.62));
+  --shadow-card: 0 1px 2px var(--shadow-tint-weak), 0 1px 3px var(--shadow-tint);
+  --shadow-admin-panel: 0 1px 2px var(--shadow-tint-weak);
+  --shadow-float: 0 12px 32px var(--shadow-tint-float);
   --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
   --silk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 사용자가 직접 고른 쪽. 기기 설정보다 앞선다. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/*
+  접히는 왼쪽 영역.
+
+  아이콘 레일과 그 옆 목록 패널은 서로 다른 격자에 들어 있다. 폭을 각자 적어 두면
+  둘이 어긋나므로 루트에 폭을 하나씩 두고 양쪽 격자가 그 값을 읽게 한다.
+  @property 로 등록해야 길이로 인정받아 값이 부드럽게 흐른다. 등록하지 않으면
+  0 과 6.5rem 사이를 한 칸에 건너뛴다.
+*/
+@property --shell-rail {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 6.5rem;
+}
+
+@property --shell-panel {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 15.5rem;
+}
+
+:root {
+  /* 펼쳤을 때의 폭. 접히는 동안 안쪽 내용이 찌그러지지 않게 붙잡아 두는 기준이기도 하다. */
+  --shell-rail-open: 6.5rem;
+  --shell-panel-open: 15.5rem;
+  --shell-rail: var(--shell-rail-open);
+  --shell-panel: var(--shell-panel-open);
+  /*
+    화면 절반 가까이가 움직이는 일이라 대화상자나 알림보다 느긋해야 눈이 따라간다.
+    공용 --silk-duration 을 늘리면 작은 것들까지 굼떠지므로 여기만 따로 둔다.
+  */
+  --shell-duration: 320ms;
+  transition:
+    --shell-rail var(--shell-duration) var(--silk-ease),
+    --shell-panel var(--shell-duration) var(--silk-ease);
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --shell-panel-open: 17rem;
+  }
+}
+
+:root[data-sidebar="collapsed"] {
+  --shell-rail: 0rem;
+  --shell-panel: 0rem;
+}
+
+@media (min-width: 1024px) {
+  /*
+    칸을 못 박는다.
+
+    접으면 사이드바가 화면 밖으로 나가면서 격자 흐름에서 빠진다. 그대로 두면 본문이
+    자동 배치로 한 칸 당겨져 폭 0 인 첫 칸에 들어가 통째로 사라진다.
+
+    잘라 내지는 않는다. 안쪽 감싸개가 제 폭과 바탕색을 들고 있어서, 칸이 줄었다 늘었다
+    하는 동안 본문 위를 덮으며 미끄러지는 그림이 된다. 여기서 overflow 를 걸면
+    레일 옆으로 펼쳐지는 계정·언어 팝오버가 같이 잘려 보이지 않는다.
+  */
+  .shell-rail,
+  .shell-panel {
+    grid-column: 1;
+  }
+
+  .shell-rail ~ *,
+  .shell-panel ~ * {
+    grid-column: 2;
+  }
+
+  /*
+    접힌 뒤에는 격자에서 빼내 화면 왼쪽 밖에 세워 둔다. 왼쪽 가장자리에 손을 대면
+    그때만 미끄러져 나온다. 레일과 패널이 붙어서 같이 나와야 한 덩어리로 보인다.
+  */
+  :root[data-sidebar="collapsed"] :is(.shell-rail, .shell-panel) {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 45;
+    /* 꺼내 보는 판은 화면보다 길 수 있으니 이때만 스크롤 상자로 둔다. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform var(--shell-duration) var(--silk-ease);
+  }
+
+  :root[data-sidebar="collapsed"] .shell-rail {
+    left: 0;
+    width: var(--shell-rail-open);
+  }
+
+  :root[data-sidebar="collapsed"] .shell-panel {
+    left: var(--shell-rail-open);
+    width: var(--shell-panel-open);
+    border-right: 1px solid var(--line);
+    /*
+      제 폭만큼만 밀면 레일 자리 하나가 남아 화면 왼쪽에 띠로 걸린다.
+      레일 폭까지 더 밀어야 완전히 빠진다.
+    */
+    transform: translateX(calc(-100% - var(--shell-rail-open)));
+  }
+
+  /*
+    꺼내 보는 중.
+
+    :hover 로 판단하지 않는다. 판이 나오면 마우스 밑에 판이 들어오고 그것이 다시 판을
+    나오게 해서 여닫힘이 끝없이 되풀이된다. 여닫는 조건은 SidebarToggle 이 좌표로
+    판단해 이 속성으로 알려 준다.
+  */
+  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] :is(.shell-rail, .shell-panel) {
+    transform: none;
+    box-shadow: var(--shadow-float);
+  }
+
+  /*
+    여닫이 손잡이. 펼쳤을 때는 레일과 패널 사이 경계선 위에 걸치고, 접으면 화면
+    왼쪽 위로 내려온다. 레일 안에 두면 접힐 때 같이 사라져 다시 펼 길이 없다.
+  */
+  .shell-sidebar-toggle {
+    position: fixed;
+    top: 1.2rem;
+    left: calc(var(--shell-rail) - 0.875rem);
+    z-index: 50;
+    transition: left var(--shell-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
+  }
+
+  /* 접으면 화면 왼쪽 위로. 여는 띠(12px) 바로 오른쪽이라 손잡이를 짚어도 판이 튀어나오지 않는다. */
+  :root[data-sidebar="collapsed"] .shell-sidebar-toggle {
+    left: 0.75rem;
+  }
+
+  /* 살짝 꺼내 보는 중에는 손잡이도 나온 판 옆으로 따라가서 바로 고정할 수 있게 한다. */
+  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] .shell-sidebar-toggle {
+    left: calc(var(--shell-rail-open) - 0.875rem);
+  }
 }
 
 * {
@@ -166,7 +330,7 @@ summary::-webkit-details-marker {
     color: var(--ink);
     font-size: 0.9375rem;
     line-height: 1.5;
-    box-shadow: 0 1px 2px rgb(31 35 48 / 0.035);
+    box-shadow: 0 1px 2px var(--shadow-tint-weak);
     transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
   }
 
@@ -192,20 +356,20 @@ summary::-webkit-details-marker {
   .field:focus-visible {
     border-color: var(--focus);
     background: var(--surface);
-    box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px rgb(31 35 48 / 0.035);
+    box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px var(--shadow-tint-weak);
   }
 
   .form-control:user-invalid:focus-visible,
   .form-control[aria-invalid="true"]:focus-visible,
   .field:user-invalid:focus-visible,
   .field[aria-invalid="true"]:focus-visible {
-    box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px rgb(31 35 48 / 0.035);
+    box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px var(--shadow-tint-weak);
   }
 
 
   .form-control::placeholder,
   .field::placeholder {
-    color: #667085;
+    color: var(--field-placeholder);
     opacity: 1;
   }
 
@@ -225,7 +389,8 @@ summary::-webkit-details-marker {
     -webkit-appearance: none;
     appearance: none;
     cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23626c7f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    /* 데이터 URI 안에서는 토큰을 못 읽는다. 흰 바닥과 검은 바닥 양쪽에서 보이는 중간 회색 하나로 간다. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%238b93a5' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
     background-position: right 0.875rem center;
     background-repeat: no-repeat;
     background-size: 1.125rem;
@@ -370,7 +535,7 @@ summary::-webkit-details-marker {
   .field:disabled,
   .field[readonly] {
     cursor: not-allowed;
-    background: #eef0f4;
+    background: var(--field-disabled);
     color: var(--muted);
   }
 
@@ -384,7 +549,8 @@ summary::-webkit-details-marker {
     border-radius: var(--radius-control);
     background: var(--ink);
     padding: 0.625rem 1rem;
-    color: white;
+    /* 바탕이 --ink 라 글자는 반대쪽 바닥색이어야 한다. 다크에서 white 로 두면 흰 위 흰 글씨가 된다. */
+    color: var(--workspace);
     font-weight: 600;
   }
 
@@ -424,19 +590,19 @@ summary::-webkit-details-marker {
   }
 
   .button-secondary:hover {
-    border-color: #b8bdc7;
+    border-color: var(--field-border-hover);
     background: var(--surface-subtle);
   }
 
   .button-danger {
-    border: 1px solid #f0b7b2;
-    background: #fff8f7;
+    border: 1px solid var(--danger-border);
+    background: var(--danger-surface);
     color: var(--danger);
   }
 
   .button-danger:hover {
     border-color: var(--danger);
-    background: #fff0ee;
+    background: var(--danger-surface-hover);
   }
 
   .button-quiet {
@@ -450,11 +616,11 @@ summary::-webkit-details-marker {
 
   .button-secondary:active,
   .button-quiet:active {
-    background: #eef1f6;
+    background: var(--surface-active);
   }
 
   .button-danger:active {
-    background: #ffe9e6;
+    background: var(--danger-surface-active);
   }
 
   /* 목록 한 줄에 들어가는 버튼. 한 화면에 더 많은 행을 담으려고 높이를 줄인다.
@@ -517,7 +683,7 @@ dialog[open] {
 }
 
 dialog::backdrop {
-  background: rgb(23 32 51 / 0.34);
+  background: var(--backdrop);
   animation: backdrop-enter var(--silk-duration) ease-out both;
 }
 

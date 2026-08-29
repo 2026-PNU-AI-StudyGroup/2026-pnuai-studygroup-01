@@ -12,6 +12,11 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
+// 껍데기는 사이드바 접힘과 밝기를 쿠키에서 읽는다. 요청 없이 부르는 검사에서는 빈 쿠키로 둔다.
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ get: () => undefined })),
+}));
+
 vi.mock("@/app/_actions/notification-actions", () => ({
   openNotificationAction: vi.fn(),
 }));

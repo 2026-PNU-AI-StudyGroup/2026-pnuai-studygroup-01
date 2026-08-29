@@ -46,7 +46,7 @@ export function ReceivedApplicationList({
 
   return (
     <UiSection aria-label="지원서 목록" className="space-y-5">
-      <div className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 sm:p-6">
+      <div className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
         <form action="/professor/applications" method="get" role="search" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           {status ? <input type="hidden" name="status" value={status} /> : null}
           <label className="grid gap-2 text-sm font-bold">
@@ -76,7 +76,7 @@ export function ReceivedApplicationList({
                     className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors ${
                       selected
                         ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary-hover)]"
-                        : "border-[var(--line-strong)] bg-white text-[var(--muted)] hover:text-[var(--ink)]"
+                        : "border-[var(--line-strong)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--ink)]"
                     }`}
                   >
                     <UiText>{filter.label}</UiText><span aria-hidden="true">{count}</span>

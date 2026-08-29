@@ -41,7 +41,7 @@ function ActionFeedback({ state }: { state: ProjectGuidanceActionState }) {
   );
 }
 
-const guidanceDialogClassName = "fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]";
+const guidanceDialogClassName = "fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)]";
 
 function GuidanceDialogHeader({
   title,
@@ -61,7 +61,7 @@ function GuidanceDialogHeader({
   onClose: () => void;
 }) {
   return (
-    <header className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-[var(--line)] bg-white px-5 py-5 sm:px-7">
+    <header className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 sm:px-7">
       <div>
         <h3 id={titleId} className="text-2xl font-extrabold tracking-[-0.035em]"><UiText>{title}</UiText></h3>
         <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{description}</UiText></p>

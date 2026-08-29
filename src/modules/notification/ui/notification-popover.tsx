@@ -142,13 +142,13 @@ export function NotificationPopover({
         >
           <span
             aria-hidden="true"
-            className={`absolute z-10 size-3 rotate-45 bg-white ${
+            className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
                 : "-top-1.5 right-[7.75rem] border-l border-t border-[var(--line-strong)] sm:right-[8.5rem]"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
             <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4">
               <h2 className="text-base font-bold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
               <span className="text-xs font-semibold text-[var(--muted)]">

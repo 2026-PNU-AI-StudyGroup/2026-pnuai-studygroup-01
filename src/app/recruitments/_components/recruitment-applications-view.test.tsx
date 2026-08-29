@@ -30,6 +30,6 @@ describe("RecruitmentApplicationsView", () => {
     const state = screen.getByRole("heading", { name: "아직 지원자가 없습니다" }).closest("[data-empty-state]");
     expect(state).toHaveAttribute("data-empty-state", "section");
     expect(state).not.toHaveClass("border");
-    expect(state).not.toHaveClass("bg-white");
+    expect(state).not.toHaveClass("bg-[var(--surface)]");
   });
 });

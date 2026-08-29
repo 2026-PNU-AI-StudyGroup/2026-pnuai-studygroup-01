@@ -81,7 +81,7 @@ export function NotificationCenter({
                           aria-hidden="true"
                           className={`relative z-10 grid size-6 place-items-center rounded-full border ${
                             notification.readAt
-                              ? "border-[var(--line-strong)] bg-white text-[var(--muted)]"
+                              ? "border-[var(--line-strong)] bg-[var(--surface)] text-[var(--muted)]"
                               : "border-[var(--primary)] bg-[var(--primary)] text-white"
                           }`}
                         >

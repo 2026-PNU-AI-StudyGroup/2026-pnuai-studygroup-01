@@ -43,7 +43,7 @@ describe("StudentTeamLedger", () => {
     expect(manageLink).toHaveClass("button-secondary");
     expect(screen.getAllByRole("link")).toHaveLength(2);
     expect(container.querySelector("article")).toHaveClass("rounded-[var(--radius-panel)]");
-    expect(container.querySelector("article > div")?.className).not.toContain("bg-[#e8efff]");
+    expect(container.querySelector("article > div")?.className).not.toContain("bg-[var(--accent-subtle)]");
     expect(container.querySelector("li")).not.toHaveClass("record-row");
   });
 });

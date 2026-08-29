@@ -50,7 +50,7 @@ export function DiscussionPostForm({
   }
 
   return (
-    <form action={action} className="shrink-0 border-t border-[var(--line)] bg-white px-5 py-5 lg:px-7">
+    <form action={action} className="shrink-0 border-t border-[var(--line)] bg-[var(--surface)] px-5 py-5 lg:px-7">
       <input type="hidden" name="teamId" value={teamId} />
       <div className="flex items-start gap-3">
         <span aria-hidden="true" className="mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-white">

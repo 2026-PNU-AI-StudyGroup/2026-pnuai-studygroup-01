@@ -7,6 +7,8 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { useSignOut } from "@/modules/identity/ui/use-sign-out";
 import type { SiteLocale } from "@/modules/translation/domain/site-locale";
+import type { SiteTheme } from "@/shared/ui/appearance";
+import { ThemeChoice } from "@/shared/ui/theme-choice";
 
 export function AccountPopover({
   userName,
@@ -16,6 +18,7 @@ export function AccountPopover({
   placement = "side",
   inverse = false,
   locale,
+  theme = "system",
 }: {
   userName: string;
   roleLabel: string;
@@ -24,6 +27,7 @@ export function AccountPopover({
   placement?: "side" | "below";
   inverse?: boolean;
   locale: SiteLocale;
+  theme?: SiteTheme;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -79,7 +83,7 @@ export function AccountPopover({
               : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
         }`}
       >
-        <span aria-hidden="true" className={`grid size-9 place-items-center rounded-full ${inverse ? "bg-white/12" : "bg-[#e8ebf2]"}`}>
+        <span aria-hidden="true" className={`grid size-9 place-items-center rounded-full ${inverse ? "bg-white/12" : "bg-[var(--surface-subtle)]"}`}>
           <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
             <circle cx="12" cy="8" r="3.5" />
             <path d="M5 20c.4-4.2 2.7-6.2 7-6.2s6.6 2 7 6.2" />
@@ -101,13 +105,13 @@ export function AccountPopover({
         >
           <span
             aria-hidden="true"
-            className={`absolute z-10 size-3 rotate-45 bg-white ${
+            className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
                 : "-top-1.5 right-5 border-l border-t border-[var(--line-strong)] sm:right-8"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
             <header className="flex items-center gap-3 border-b border-[var(--line)] px-5 py-4">
               <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-subtle)] text-[var(--muted)]">
                 <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
@@ -153,6 +157,7 @@ export function AccountPopover({
                 <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
+            <ThemeChoice initialTheme={theme} />
             <button
               type="button"
               onClick={signOut}

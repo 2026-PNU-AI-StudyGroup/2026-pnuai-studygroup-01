@@ -35,7 +35,7 @@ export function StudentTeamManagementSections({
         </svg>
         <UiText>{"내 팀"}</UiText></Link>
 
-      <header className="flex flex-col gap-5 overflow-hidden rounded-[var(--radius-panel)] border border-[#d9e3fa] bg-[#f1f5ff] p-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-5 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--accent-subtle)] p-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge tone={isLeader ? "info" : "neutral"}><UiText>{isLeader ? "내가 팀장" : "팀원"}</UiText></StatusBadge>
@@ -48,7 +48,7 @@ export function StudentTeamManagementSections({
       </header>
 
       {isLeader ? (
-        <section aria-labelledby="recruitment-posts-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+        <section aria-labelledby="recruitment-posts-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
             <div>
               <h2 id="recruitment-posts-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"모집 공고"}</UiText></h2>
@@ -79,7 +79,7 @@ export function StudentTeamManagementSections({
       ) : null}
 
       <div className={`grid gap-6 ${isLeader ? "xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)] xl:items-start" : ""}`}>
-        <section aria-labelledby="members-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-7">
+        <section aria-labelledby="members-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-7">
           <div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
             <div>
               <h2 id="members-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"구성원"}</UiText></h2>
@@ -111,7 +111,7 @@ export function StudentTeamManagementSections({
         </section>
 
         {isLeader ? (
-          <section aria-labelledby="invite-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-6 sm:p-7">
+          <section aria-labelledby="invite-title" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-7">
             <div className="border-b border-[var(--line)] pb-4">
               <h2 id="invite-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{"팀원 초대"}</UiText></h2>
               <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"부산대학교 이메일로 초대를 보냅니다."}</UiText></p>
@@ -141,7 +141,7 @@ export function StudentTeamManagementSections({
       </div>
 
       {isLeader ? (
-        <section aria-labelledby="danger-title" className="flex flex-col gap-5 border-t border-[#e9b6ae] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <section aria-labelledby="danger-title" className="flex flex-col gap-5 border-t border-[var(--danger-border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="danger-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 삭제"}</UiText></h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"팀을 삭제해도 이미 결성된 프로젝트와 지난 프로젝트 기록은 유지됩니다."}</UiText></p>
@@ -149,7 +149,7 @@ export function StudentTeamManagementSections({
           <div className="shrink-0"><DeleteStudentTeamForm teamId={team.id} teamName={team.name} /></div>
         </section>
       ) : (
-        <section aria-labelledby="leave-title" className="flex flex-col gap-5 border-t border-[#e9b6ae] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <section aria-labelledby="leave-title" className="flex flex-col gap-5 border-t border-[var(--danger-border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="leave-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"팀 탈퇴"}</UiText></h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]"><UiText>{"이 팀으로 낸 심사 대기 중인 지원에서 함께 빠집니다. 이미 승인된 프로젝트 팀 구성은 바뀌지 않습니다."}</UiText></p>

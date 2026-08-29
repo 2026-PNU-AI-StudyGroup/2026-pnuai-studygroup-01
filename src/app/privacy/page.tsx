@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
-      <header className="border-b border-[var(--line)] bg-white px-5 py-5 sm:px-8">
+      <header className="border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 sm:px-8">
         <Brand href="/" />
       </header>
       <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 sm:py-14">

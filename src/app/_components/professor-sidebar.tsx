@@ -40,7 +40,7 @@ export function ProfessorSidebar({ currentPath, role }: { currentPath: string; r
 
       <UiNav aria-label={role === "STUDENT" ? "조교 업무" : "교수 업무"} className="lg:mt-5">
         <details className="group relative lg:hidden">
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-lg border border-[var(--line)] bg-white px-3 [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 [&::-webkit-details-marker]:hidden">
             <span className="flex min-w-0 items-center gap-3">
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-[var(--primary)]">
                 <ProfessorNavigationIcon name={current.icon} />
@@ -52,7 +52,7 @@ export function ProfessorSidebar({ currentPath, role }: { currentPath: string; r
             </span>
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.7] transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
           </summary>
-          <ul className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-30 space-y-1 rounded-lg border border-[var(--line)] bg-white p-1.5 shadow-[var(--shadow-float)]">
+          <ul className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-30 space-y-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-float)]">
             {items.map((item) => (
               <li key={item.href}>
                 <ProfessorNavigationLink item={item} active={isProfessorNavigationActive(item.href, currentPath)} compact />
@@ -90,7 +90,7 @@ function ProfessorNavigationLink({ item, active, compact = false }: {
           : "text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
       }`}
     >
-      <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${active ? "bg-white text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
+      <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${active ? "bg-[var(--surface)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
         <ProfessorNavigationIcon name={item.icon} />
       </span>
       <span className="min-w-0">

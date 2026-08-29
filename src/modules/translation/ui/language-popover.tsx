@@ -88,13 +88,13 @@ export function LanguagePopover({
         >
           <span
             aria-hidden="true"
-            className={`absolute z-10 size-3 rotate-45 bg-white ${
+            className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
                 : "-top-1.5 right-[4.5rem] border-l border-t border-[var(--line-strong)] sm:right-[5.25rem]"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
             <header className="border-b border-[var(--line)] px-5 py-4">
               <h2 className="text-base font-bold tracking-[-0.025em]">{copy.title}</h2>
               <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{copy.current}</p>

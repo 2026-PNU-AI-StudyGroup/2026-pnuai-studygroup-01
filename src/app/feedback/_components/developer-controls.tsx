@@ -40,7 +40,7 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
       <div className="mt-2 grid gap-3 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 sm:p-4">
         <form action={toggleFormAction} className="grid gap-2">
           <UiInput
-            className="form-control h-9 bg-white py-1 text-sm"
+            className="form-control h-9 bg-[var(--surface)] py-1 text-sm"
             type="text"
             name="note"
             maxLength={FEEDBACK_LIMITS.comment}
@@ -57,7 +57,7 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
         <form action={commentFormAction} className="grid gap-2">
           <UiTextarea
             ref={commentRef}
-            className="form-control min-h-16 bg-white text-sm leading-6"
+            className="form-control min-h-16 bg-[var(--surface)] text-sm leading-6"
             name="body"
             maxLength={FEEDBACK_LIMITS.comment}
             placeholder="처리 답변을 남겨 주세요."

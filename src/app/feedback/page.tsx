@@ -55,7 +55,7 @@ export default async function FeedbackPage({
 
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
-      <header className="border-b border-[var(--line)] bg-white px-5 py-4 sm:px-8">
+      <header className="border-b border-[var(--line)] bg-[var(--surface)] px-5 py-4 sm:px-8">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Brand href="/" />
           <UiLink href="/" className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">

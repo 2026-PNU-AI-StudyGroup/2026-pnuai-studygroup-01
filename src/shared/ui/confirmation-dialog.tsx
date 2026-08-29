@@ -61,7 +61,7 @@ export function ConfirmationDialog({
         event.preventDefault();
         onCancel();
       }}
-      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-6 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] backdrop:bg-[rgba(23,32,51,.48)]"
+      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-6 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] backdrop:bg-[var(--backdrop)]"
     >
         <h2 id={titleId} className="text-lg font-bold tracking-[-0.02em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
         <p id={descriptionId} className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p>

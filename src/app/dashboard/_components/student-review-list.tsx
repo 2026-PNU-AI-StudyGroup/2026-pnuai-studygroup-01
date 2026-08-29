@@ -83,7 +83,7 @@ export function StudentReviewList({
     : entries.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
 
   return (
-    <section aria-labelledby="student-review-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+    <section aria-labelledby="student-review-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
       <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
         <div>
           <h2 id="student-review-title" className="text-2xl font-bold tracking-[-0.03em]"><UiText>{"검토 중"}</UiText></h2>

@@ -45,7 +45,7 @@ export function SplitDialog({ dialogRef, closeButtonRef, openOnMount = false, ey
         event.preventDefault();
         if (!pending) onRequestClose();
       }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)] lg:overflow-hidden"
+      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] lg:overflow-hidden"
     >
       <div className="grid lg:max-h-[calc(100dvh-2rem)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
         <header className="border-b border-[var(--line)] bg-[var(--primary-subtle)] px-6 py-7 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:border-b-0 lg:border-r lg:px-8 lg:py-9">

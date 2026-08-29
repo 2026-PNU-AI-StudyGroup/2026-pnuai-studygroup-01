@@ -38,7 +38,7 @@ export function RecruitmentApplicationsView({
             <UiText>{"목록"}</UiText></Link>
         }
       />
-      <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+      <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
         <section aria-labelledby="recruitment-content-title" className="grid gap-6 border-b border-[var(--line)] px-7 py-7 lg:grid-cols-[12rem_minmax(0,1fr)] lg:px-9">
           <div>
             <div className="flex items-center gap-3">

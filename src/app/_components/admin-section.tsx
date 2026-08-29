@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
-export const adminRecordListClassName = "divide-y divide-[var(--line)] bg-white";
+export const adminRecordListClassName = "divide-y divide-[var(--line)] bg-[var(--surface)]";
 export const adminRecordRowClassName = "record-row px-5 py-5 sm:px-6";
 
 export function AdminSection({

@@ -28,14 +28,14 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false,
   const desktopGrid = adminSurface ? (wideLayout ? "lg:grid lg:gap-5" : "2xl:grid 2xl:gap-5") : "xl:grid xl:gap-5";
   const compactLabel = adminSurface ? (wideLayout ? "lg:hidden" : "2xl:hidden") : "xl:hidden";
   const ledger = <>
-      <div aria-hidden="true" className={`hidden px-5 py-3 text-xs font-bold text-[var(--muted)] sm:px-6 ${adminSurface ? "border-b border-[var(--line)] bg-white" : "border-y border-[var(--line)]"} ${desktopGrid} ${columns}`}>
+      <div aria-hidden="true" className={`hidden px-5 py-3 text-xs font-bold text-[var(--muted)] sm:px-6 ${adminSurface ? "border-b border-[var(--line)] bg-[var(--surface)]" : "border-y border-[var(--line)]"} ${desktopGrid} ${columns}`}>
         <span><UiText>{"프로젝트"}</UiText></span>
         <span><UiText>{"상태"}</UiText></span>
         <span><UiText>{"등록자"}</UiText></span>
         <span><UiText>{"검토 요청 대상"}</UiText></span>
         <span><UiText>{"상세"}</UiText></span>
       </div>
-      <UiUl aria-label="프로젝트 승인 요청 목록" className={adminSurface ? adminRecordListClassName : "divide-y divide-[var(--line)] border-y border-[var(--line)] bg-white xl:border-t-0"}>
+      <UiUl aria-label="프로젝트 승인 요청 목록" className={adminSurface ? adminRecordListClassName : "divide-y divide-[var(--line)] border-y border-[var(--line)] bg-[var(--surface)] xl:border-t-0"}>
         {requests.map((request) => {
           const route = request.route === "PROFESSOR"
             ? `${request.requestedProfessorName ?? "지정 교수"} 교수`

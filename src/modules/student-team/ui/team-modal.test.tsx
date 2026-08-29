@@ -26,7 +26,7 @@ describe("TeamModal", () => {
     const state = screen.getByRole("heading", { name: "응답할 초대가 없습니다" }).closest("[data-empty-state]");
     expect(state).toHaveAttribute("data-empty-state", "section");
     expect(state).not.toHaveClass("border");
-    expect(state).not.toHaveClass("bg-white");
+    expect(state).not.toHaveClass("bg-[var(--surface)]");
   });
 
   it("네이티브 모달로 열고 닫힌 뒤 원래 위치로 포커스를 돌린다", () => {
