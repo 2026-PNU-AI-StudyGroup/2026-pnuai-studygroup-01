@@ -172,8 +172,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
       <div className={`${styles.root} min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[var(--shell-rail)_minmax(0,1fr)]`}>
-        {/* 접었을 때 왼쪽 가장자리에 손을 대면 레일과 목록이 잠깐 나온다. */}
-        <div aria-hidden="true" className="shell-peek-zone hidden lg:block" />
+        {/* 접었을 때 왼쪽 가장자리에 손을 대면 레일과 목록이 잠깐 나온다. 손잡이가 함께 맡는다. */}
         <SidebarToggle initialState={sidebarState} />
         <aside className="shell-rail sticky top-0 z-40 hidden h-screen min-h-[42rem] border-r border-[var(--line)] bg-[var(--sidebar)] lg:block">
           {/*

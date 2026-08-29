@@ -179,18 +179,16 @@
     transform: translateX(calc(-100% - var(--shell-rail-open)));
   }
 
-  :root[data-sidebar="collapsed"]:has(:is(.shell-peek-zone, .shell-rail, .shell-panel):is(:hover, :focus-within)) :is(.shell-rail, .shell-panel) {
+  /*
+    꺼내 보는 중.
+
+    :hover 로 판단하지 않는다. 판이 나오면 마우스 밑에 판이 들어오고 그것이 다시 판을
+    나오게 해서 여닫힘이 끝없이 되풀이된다. 여닫는 조건은 SidebarToggle 이 좌표로
+    판단해 이 속성으로 알려 준다.
+  */
+  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] :is(.shell-rail, .shell-panel) {
     transform: none;
     box-shadow: var(--shadow-float);
-  }
-
-  /* 손을 대는 자리. 본문을 가리면 안 되므로 가장자리 12px 만 차지한다. */
-  .shell-peek-zone {
-    position: fixed;
-    inset-block: 0;
-    left: 0;
-    z-index: 44;
-    width: 0.75rem;
   }
 
   /*
@@ -199,19 +197,20 @@
   */
   .shell-sidebar-toggle {
     position: fixed;
-    top: 1.15rem;
-    left: calc(var(--shell-rail) - 1rem);
+    top: 1.2rem;
+    left: calc(var(--shell-rail) - 0.875rem);
     z-index: 50;
     transition: left var(--silk-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
   }
 
+  /* 접으면 화면 왼쪽 위로. 여는 띠(12px) 바로 오른쪽이라 손잡이를 짚어도 판이 튀어나오지 않는다. */
   :root[data-sidebar="collapsed"] .shell-sidebar-toggle {
     left: 0.75rem;
   }
 
-  /* 살짝 꺼내 보는 중에는 손잡이도 나온 패널 옆으로 따라가서 바로 고정할 수 있게 한다. */
-  :root[data-sidebar="collapsed"]:has(:is(.shell-peek-zone, .shell-rail, .shell-panel):is(:hover, :focus-within)) .shell-sidebar-toggle {
-    left: calc(var(--shell-rail-open) - 1rem);
+  /* 살짝 꺼내 보는 중에는 손잡이도 나온 판 옆으로 따라가서 바로 고정할 수 있게 한다. */
+  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] .shell-sidebar-toggle {
+    left: calc(var(--shell-rail-open) - 0.875rem);
   }
 }
 
