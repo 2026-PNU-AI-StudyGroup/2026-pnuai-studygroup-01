@@ -52,8 +52,11 @@ function client(topics: ResultTopic[] = [{
 function voteClient(role: string, voteLimit: number, staffVoteLimit: number, options: {
   currentTopicIds?: string[];
   targetPublishedAt?: Date | null;
+  /** 지금도 후보인 프로젝트. 기본은 던진 표 전부. */
+  votableTopicIds?: string[];
 } = {}) {
   const currentTopicIds = options.currentTopicIds ?? ["topic-1"];
+  const votableTopicIds = options.votableTopicIds ?? currentTopicIds;
   const transaction = {
     $queryRaw: vi.fn()
       .mockResolvedValueOnce([{ id: "voter-1", role }])
@@ -82,7 +85,14 @@ function voteClient(role: string, voteLimit: number, staffVoteLimit: number, opt
         assistants: [],
         projectTeam: null,
       }),
-      findMany: vi.fn().mockResolvedValue(currentTopicIds.map((id) => ({ id, divisionId: null }))),
+      // setVote 는 topic.findMany 를 두 번 부른다. 분과를 알아내는 조회와, 그 중 지금도
+      // 후보인 것만 고르는 조회다. 후자에는 후보 조건(publishedAt 등)이 붙는다.
+      findMany: vi.fn().mockImplementation(({ where }: { where: { id: { in: string[] }; publishedAt?: unknown } }) => {
+        const ids = where.id.in;
+        return Promise.resolve(where.publishedAt === undefined
+          ? ids.map((id) => ({ id, divisionId: null }))
+          : ids.filter((id) => votableTopicIds.includes(id)).map((id) => ({ id })));
+      }),
     },
     projectVote: {
       create: vi.fn().mockResolvedValue({ id: "vote-1" }),
@@ -106,6 +116,35 @@ describe("PrismaProjectVotingRepository 표 반영", () => {
       remainingVotes: 3,
     });
     expect(transaction.projectVote.create).toHaveBeenCalled();
+  });
+
+  // 운영진이 프로젝트를 비공개로 내리면 후보 목록에서 빠지지만 표는 남는다. 그런데 한도가
+  // 남은 표를 전부 세고 있어서, 화면에 카드가 없는 표가 자리를 계속 차지했다. 취소 버튼이
+  // 놓일 카드가 없으니 투표자는 그 자리를 되찾을 수 없었고 이유도 알 수 없었다.
+  it("후보에서 내려간 프로젝트의 표는 한도를 차지하지 않는다", async () => {
+    // 학생 한도 1표. topic-1 에 이미 던졌지만 그 프로젝트가 후보에서 내려갔다.
+    const { client, transaction } = voteClient("STUDENT", 1, 5, {
+      currentTopicIds: ["topic-1"],
+      votableTopicIds: [],
+    });
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
+      status: "SAVED",
+      voted: true,
+      selectedTopicIds: ["topic-2"],
+      remainingVotes: 0,
+    });
+    expect(transaction.projectVote.create).toHaveBeenCalled();
+  });
+
+  it("후보로 남아 있는 표는 그대로 한도를 차지한다", async () => {
+    const { client } = voteClient("STUDENT", 1, 5, {
+      currentTopicIds: ["topic-1"],
+      votableTopicIds: ["topic-1"],
+    });
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput)).resolves.toMatchObject({
+      status: "VOTE_LIMIT_REACHED",
+      voteLimit: 1,
+    });
   });
 
   it("학생은 기존 voteLimit을 넘기면 한도 초과로 돌려준다", async () => {
