@@ -101,8 +101,13 @@ export function SidebarToggle({ initialState }: { initialState: SidebarState }) 
       }}
       className="shell-sidebar-toggle hidden size-7 place-items-center rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] lg:grid"
     >
-      <svg aria-hidden="true" viewBox="0 0 20 20" className={`size-4 fill-none stroke-current stroke-[1.7] ${collapsed ? "rotate-180" : ""}`}>
-        <path d="M11 5.5 6.5 10l4.5 4.5M16 5.5 11.5 10l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/*
+        노션·클로드가 쓰는 판 모양. 네모 왼쪽을 세로선으로 갈라 사이드바 자리를 나타낸다.
+        화살표와 달리 어느 쪽으로 움직이는지가 아니라 무엇을 여닫는지를 보여 준다.
+      */}
+      <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.5]">
+        <rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2.25" />
+        <path d="M7.75 3.75v12.5" />
       </svg>
     </UiButton>
   );

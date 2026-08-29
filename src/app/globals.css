@@ -110,9 +110,14 @@
   --shell-panel-open: 15.5rem;
   --shell-rail: var(--shell-rail-open);
   --shell-panel: var(--shell-panel-open);
+  /*
+    화면 절반 가까이가 움직이는 일이라 대화상자나 알림보다 느긋해야 눈이 따라간다.
+    공용 --silk-duration 을 늘리면 작은 것들까지 굼떠지므로 여기만 따로 둔다.
+  */
+  --shell-duration: 320ms;
   transition:
-    --shell-rail var(--silk-duration) var(--silk-ease),
-    --shell-panel var(--silk-duration) var(--silk-ease);
+    --shell-rail var(--shell-duration) var(--silk-ease),
+    --shell-panel var(--shell-duration) var(--silk-ease);
 }
 
 @media (min-width: 1280px) {
@@ -160,7 +165,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     transform: translateX(-100%);
-    transition: transform var(--silk-duration) var(--silk-ease);
+    transition: transform var(--shell-duration) var(--silk-ease);
   }
 
   :root[data-sidebar="collapsed"] .shell-rail {
@@ -200,7 +205,7 @@
     top: 1.2rem;
     left: calc(var(--shell-rail) - 0.875rem);
     z-index: 50;
-    transition: left var(--silk-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
+    transition: left var(--shell-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
   }
 
   /* 접으면 화면 왼쪽 위로. 여는 띠(12px) 바로 오른쪽이라 손잡이를 짚어도 판이 튀어나오지 않는다. */
