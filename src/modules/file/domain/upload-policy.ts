@@ -20,6 +20,24 @@ const ARTIFACT_TYPES = new Set([
   "image/jpeg",
   "image/webp",
 ]);
+// 브라우저가 같은 파일에 다른 MIME 타입을 보고한다. Windows 의 Chrome·Edge 는 레지스트리
+// (HKCR\.zip 의 Content Type) 를 따라 .zip 을 application/x-zip-compressed 로 준다.
+// 허용 목록에 application/zip 만 있어서 Windows 학생은 소스 코드 zip 을 아예 올릴 수 없었고,
+// 오류 문구가 용량을 지목해 원인을 오해하게 만들었다.
+//
+// 검사 전에 표준 타입으로 바꾼다. 반환값도 정규화된 타입이라 저장·내려보내기까지 한 가지로
+// 통일된다. 확장자는 보지 않는다 — 이름을 믿는 순간 다른 문제가 생긴다.
+const CONTENT_TYPE_ALIASES = new Map([
+  ["application/x-zip-compressed", "application/zip"],
+  ["application/x-zip", "application/zip"],
+  ["image/jpg", "image/jpeg"],
+]);
+
+export function normalizeUploadContentType(contentType: string): string {
+  const trimmed = contentType.trim().toLowerCase();
+  return CONTENT_TYPE_ALIASES.get(trimmed) ?? trimmed;
+}
+
 export class InvalidUploadError extends Error {
   constructor(message = "허용되지 않은 파일입니다.") {
     super(message);
@@ -37,7 +55,7 @@ export function validateUpload(input: {
 }) {
   const originalName = input.originalName.trim();
   const consumer = input.consumer ?? input.purpose;
-  const contentType = input.contentType.trim() || "application/octet-stream";
+  const contentType = normalizeUploadContentType(input.contentType) || "application/octet-stream";
   const allowedTypes = consumer === "REPORT"
     ? REPORT_TYPES
     : consumer === "ARTIFACT"

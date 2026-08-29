@@ -357,4 +357,62 @@ describe("Prisma 프로그램 저장소", () => {
     expect(program.topicCount).toBe(2);
     expect(program.teamCount).toBe(1);
   });
+
+  // 분과 하나를 지울 때 무효표가 0건 지워지고 있었다. topic 의 divisionId 를 먼저 null 로
+  // 밀어 버려서, 그 divisionId 로 표를 찾는 조건에 맞는 topic 이 남지 않았기 때문이다.
+  // 화면과 감사 로그는 "표 N개 초기화" 라고 알리는데 표는 전부 살아남았다.
+  //
+  // 분과를 전부 지우는 경로는 조건이 { programId } 라 순서와 무관하게 동작해서,
+  // 그 경로만 보던 테스트로는 잡히지 않았다.
+  it("분과 하나를 지울 때 divisionId 를 비우기 전에 그 분과의 표를 지운다", async () => {
+    const removedDivision = { id: "division-1", name: "융합", position: 0, _count: { topics: 2 } };
+    const confirmDivisionSync = {
+      divisionIds: ["division-1"],
+      divisionNames: ["융합"],
+      projectCount: 2,
+      voteCount: 4,
+      rubricCount: 0,
+      switchesVotingScope: false,
+    };
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "program-1", isPublic: true, firstPublishedAt: new Date("2026-03-01T00:00:00Z") }]),
+      programDivision: {
+        findMany: vi.fn().mockResolvedValue([removedDivision]),
+        updateMany: vi.fn(),
+        update: vi.fn(),
+        create: vi.fn().mockResolvedValue({ id: "division-2" }),
+        deleteMany: vi.fn(),
+      },
+      programVotingPolicy: { findUnique: vi.fn().mockResolvedValue({ voteLimitScope: "DIVISION" }), update: vi.fn() },
+      projectVote: { count: vi.fn().mockResolvedValue(4), deleteMany: vi.fn() },
+      rubricDefinition: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
+      projectTeam: { findMany: vi.fn().mockResolvedValue([]) },
+      projectTeamRubricEvaluation: { deleteMany: vi.fn(), createMany: vi.fn() },
+      rubricScore: { findFirst: vi.fn().mockResolvedValue(null) },
+      advisorEvaluation: { findFirst: vi.fn().mockResolvedValue(null) },
+      topic: { updateMany: vi.fn() },
+      projectProgram: { update: vi.fn().mockResolvedValue({ id: "program-1" }) },
+      auditLog: { create: vi.fn() },
+    };
+    const repository = new PrismaProjectProgramRepository({
+      $transaction: vi.fn(async (operation) => operation(transaction)),
+    } as unknown as PrismaClient);
+
+    // 분과를 하나도 남기지 않으면 한도 기준이 프로그램 단위로 바뀌는 다른 경로를 탄다.
+    // 여기서는 "융합" 을 지우고 "창업" 을 새로 두어 개별 삭제 경로를 확인한다.
+    await expect(repository.updateBasicInfo("program-1", {
+      name: "캡스톤",
+      category: "교과",
+      isPublic: true,
+      divisionNames: ["창업"],
+      confirmDivisionSync,
+    } as never, "admin-1")).resolves.toBe("UPDATED");
+
+    expect(transaction.projectVote.deleteMany).toHaveBeenCalledWith({
+      where: { programId: "program-1", topic: { divisionId: { in: ["division-1"] } } },
+    });
+    const voteDeleteOrder = transaction.projectVote.deleteMany.mock.invocationCallOrder[0]!;
+    const divisionClearOrder = transaction.topic.updateMany.mock.invocationCallOrder[0]!;
+    expect(voteDeleteOrder).toBeLessThan(divisionClearOrder);
+  });
 });

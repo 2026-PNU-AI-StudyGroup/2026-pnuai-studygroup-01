@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { ClaimedEmailDelivery, EmailTransport } from "@/modules/email/application/email-delivery-ports";
-import { emailPreferenceAllows, isDirectEmailDeliveryKind } from "@/modules/email/domain/email-delivery";
+import { EMAIL_PREFERENCE_SELECT, emailPreferenceAllows, isDirectEmailDeliveryKind } from "@/modules/email/domain/email-delivery";
 import { renderEmailDelivery } from "@/modules/email/infrastructure/email-template";
 import { isPusanEmail } from "@/modules/identity/domain/user-role";
 
@@ -226,7 +226,7 @@ export class PrismaEmailDeliveryWorker {
         email: true,
         emailVerified: true,
         accountStatus: true,
-        emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true } },
+        emailPreference: { select: EMAIL_PREFERENCE_SELECT },
       },
     });
     if (!recipient || !recipient.emailVerified || !isPusanEmail(recipient.email)) {

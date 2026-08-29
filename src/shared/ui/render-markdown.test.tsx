@@ -75,4 +75,26 @@ describe("renderMarkdown", () => {
     const out = html("- 상위\n  - 하위");
     expect(out.match(/<ul/g)).toHaveLength(2);
   });
+
+  // 누구나 쓰는 글에서는 바깥 이미지 한 줄이 그 글을 여는 모든 사람의 접속 정보를
+  // 글쓴이에게 넘기는 통로가 된다. 피드백 게시판이 이 모드로 렌더한다.
+  describe("allowExternalImages: false", () => {
+    const untrusted = (source: string) =>
+      renderToStaticMarkup(renderMarkdown(source, { allowExternalImages: false }));
+
+    it("바깥 주소를 가리키는 이미지는 렌더하지 않는다", () => {
+      expect(untrusted("![](https://attacker.example/pixel.gif)")).not.toContain("<img");
+      expect(untrusted("![](http://attacker.example/pixel.gif)")).not.toContain("<img");
+      expect(untrusted("![](//attacker.example/pixel.gif)")).not.toContain("<img");
+    });
+
+    it("우리 서버 경로 이미지는 그대로 렌더한다", () => {
+      expect(untrusted("![](/uploads/screenshot.png)")).toContain("<img");
+    });
+
+    it("기본값에서는 바깥 이미지를 그대로 렌더한다", () => {
+      // 운영진이 쓰는 공지 등은 이 제한을 걸지 않는다.
+      expect(html("![](https://example.com/chart.png)")).toContain("<img");
+    });
+  });
 });

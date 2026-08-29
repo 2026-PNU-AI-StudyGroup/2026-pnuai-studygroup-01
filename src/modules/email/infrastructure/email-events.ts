@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { OutboxEmailEvent } from "@/modules/email/application/email-delivery-ports";
-import { emailPreferenceAllows, isDirectEmailDeliveryKind, isOptionalEmailKind, normalizeEmailHref } from "@/modules/email/domain/email-delivery";
+import { EMAIL_PREFERENCE_SELECT, emailPreferenceAllows, isDirectEmailDeliveryKind, isOptionalEmailKind, normalizeEmailHref } from "@/modules/email/domain/email-delivery";
 import { isPusanEmail } from "@/modules/identity/domain/user-role";
 
 type EmailTransaction = Pick<Prisma.TransactionClient, "user" | "emailDelivery">;
@@ -21,7 +21,7 @@ export async function enqueueEmailEvents(
           emailVerified: true,
           accountStatus: true,
           preferredLocale: true,
-          emailPreference: { select: { reportActivityEnabled: true, discussionEnabled: true, programActivityEnabled: true } },
+          emailPreference: { select: EMAIL_PREFERENCE_SELECT },
         },
       })
     : [];

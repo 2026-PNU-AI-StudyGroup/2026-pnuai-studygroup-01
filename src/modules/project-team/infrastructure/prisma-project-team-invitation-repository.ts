@@ -13,13 +13,16 @@ import type {
   RespondProjectTeamInvitationOutcome,
 } from "@/modules/project-team/application/project-team-invitation-ports";
 import {
+  canJoinProjectTeam,
   checkProjectTeamInvitation,
   normalizeInvitationEmail,
 } from "@/modules/project-team/domain/project-team-invitation-policy";
+import { activeProjectTeamMembershipInProgram } from "@/modules/project-team/domain/project-team-membership-scope";
 
 type LockedTeam = {
   id: string;
   projectId: string;
+  programId: string;
   title: string;
   teamName: string;
   teamMaxSize: number;
@@ -34,7 +37,8 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
 
   private lockTeam(transaction: Prisma.TransactionClient, projectTeamId: string) {
     return transaction.$queryRaw<Array<LockedTeam>>(Prisma.sql`
-      SELECT "project_team"."id", "project_team"."projectId", "project_team"."name" AS "teamName",
+      SELECT "project_team"."id", "project_team"."projectId", "topic"."programId",
+        "project_team"."name" AS "teamName",
         "topic"."title", "project_program"."projectTeamMaxSize" AS "teamMaxSize",
         "project_team"."confirmedAt", "topic"."status",
         "project_program"."endsAt" AS "programEndsAt", ${teamSupervisorSql(this.actor)} AS "canSupervise"
@@ -63,14 +67,26 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       }));
       const invitee = await transaction.user.findUnique({
         where: { email },
-        select: { id: true, name: true, accountStatus: true },
+        select: { id: true, name: true, accountStatus: true, role: true },
       });
-      const [memberCount, pendingInvitationCount, existingMembership] = await Promise.all([
+      const [memberCount, pendingInvitationCount, existingMembership, otherTeamMembership] = await Promise.all([
         transaction.projectTeamMembership.count({ where: { projectTeamId: team.id, endedAt: null } }),
         transaction.projectTeamInvitation.count({ where: { projectTeamId: team.id, status: "PENDING" } }),
         invitee
           ? transaction.projectTeamMembership.findFirst({
             where: { projectTeamId: team.id, userId: invitee.id, endedAt: null },
+            select: { id: true },
+          })
+          : Promise.resolve(null),
+        // 같은 프로그램의 다른 프로젝트 팀에 이미 속했는지 본다. 이 팀 안 중복만 보던
+        // 탓에 한 학생이 같은 프로그램의 팀 두 곳에 들어갈 수 있었다.
+        invitee
+          ? transaction.projectTeamMembership.findFirst({
+            where: {
+              userId: invitee.id,
+              projectTeamId: { not: team.id },
+              ...activeProjectTeamMembershipInProgram(team.programId),
+            },
             select: { id: true },
           })
           : Promise.resolve(null),
@@ -85,6 +101,8 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
         pendingInvitationCount,
         teamMaxSize: team.teamMaxSize,
         inviteeAlreadyMember: Boolean(existingMembership),
+        invitee,
+        inviteeInOtherProgramTeam: Boolean(otherTeamMembership),
       });
       if (violation) return { status: violation };
 
@@ -208,6 +226,22 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       }
 
       if (team.programEndsAt <= input.respondedAt) return "PROGRAM_CLOSED";
+      // 보낼 때 통과했어도 답하기 전에 상황이 바뀔 수 있고, 검사가 없던 동안 보낸 초대가
+      // 남아 있을 수도 있다. 들어가는 순간의 계정과 소속으로 다시 판정한다.
+      const invitee = await transaction.user.findUnique({
+        where: { id: input.inviteeId },
+        select: { role: true, accountStatus: true },
+      });
+      if (!invitee || !canJoinProjectTeam(invitee)) return "NOT_STUDENT";
+      const otherTeamMembership = await transaction.projectTeamMembership.findFirst({
+        where: {
+          userId: input.inviteeId,
+          projectTeamId: { not: team.id },
+          ...activeProjectTeamMembershipInProgram(team.programId),
+        },
+        select: { id: true },
+      });
+      if (otherTeamMembership) return "ALREADY_IN_PROGRAM_TEAM";
       // 보낼 때 센 정원과 수락할 때의 정원이 다를 수 있다. 들어가는 순간 다시 센다.
       const memberCount = await transaction.projectTeamMembership.count({
         where: { projectTeamId: team.id, endedAt: null },

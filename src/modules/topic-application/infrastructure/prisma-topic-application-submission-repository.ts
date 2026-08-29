@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import {
+  activeProjectTeamMembershipInProgram,
+  belongsToProjectTeamInProgram,
+} from "@/modules/project-team/domain/project-team-membership-scope";
 import { areActiveStudents } from "@/modules/topic-application/infrastructure/prisma-topic-application-utils";
 import type {
   CreateTopicApplicationInput,
@@ -61,7 +65,7 @@ export class PrismaTopicApplicationSubmissionRepository
       if (!areActiveStudents(students, 1)) return { outcome: "TOPIC_UNAVAILABLE" } as const;
 
       const membership = await transaction.projectTeamMembership.findFirst({
-        where: { userId: input.studentId, endedAt: null, projectTeam: { projectId: input.topicId } },
+        where: { userId: input.studentId, ...activeProjectTeamMembershipInProgram(topic.programId) },
         select: { id: true },
       });
       if (membership) {
@@ -156,7 +160,7 @@ export class PrismaTopicApplicationSubmissionRepository
       }
       const memberIds = members.map(({ studentId }) => studentId);
       const unavailable = await transaction.user.count({ where: { id: { in: memberIds }, OR: [
-        { projectTeamMemberships: { some: { endedAt: null, projectTeam: { projectId: input.topicId } } } },
+        belongsToProjectTeamInProgram(topic.programId),
         { topicApplications: { some: { topicId: input.topicId } } },
       ] } });
       if (unavailable) return { outcome: "TEAM_MEMBER_UNAVAILABLE" } as const;

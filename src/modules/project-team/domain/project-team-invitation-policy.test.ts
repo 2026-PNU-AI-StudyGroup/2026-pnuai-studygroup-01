@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   canInviteProjectTeamMember,
+  canJoinProjectTeam,
   checkProjectTeamInvitation,
   isInstitutionEmail,
 } from "@/modules/project-team/domain/project-team-invitation-policy";
@@ -18,6 +19,8 @@ const base = {
   pendingInvitationCount: 0,
   teamMaxSize: 5,
   inviteeAlreadyMember: false,
+  invitee: { role: "STUDENT", accountStatus: "ACTIVE" },
+  inviteeInOtherProgramTeam: false,
 };
 
 describe("canInviteProjectTeamMember", () => {
@@ -36,7 +39,33 @@ describe("isInstitutionEmail", () => {
   });
 });
 
+describe("canJoinProjectTeam", () => {
+  // 검사가 없던 동안 팀장이 지도교수 주소를 넣고 그 교수가 수락해 자기 팀의 팀원이 됐다.
+  it("활성 학생만 팀원이 될 수 있다", () => {
+    expect(canJoinProjectTeam({ role: "STUDENT", accountStatus: "ACTIVE" })).toBe(true);
+    expect(canJoinProjectTeam({ role: "PROFESSOR", accountStatus: "ACTIVE" })).toBe(false);
+    expect(canJoinProjectTeam({ role: "ADMIN", accountStatus: "ACTIVE" })).toBe(false);
+    expect(canJoinProjectTeam({ role: "ADVISOR", accountStatus: "ACTIVE" })).toBe(false);
+  });
+
+  it("학생이어도 활성 계정이 아니면 막는다", () => {
+    expect(canJoinProjectTeam({ role: "STUDENT", accountStatus: "WITHDRAWN" })).toBe(false);
+  });
+
+  it("아직 계정이 없는 주소는 통과시킨다", () => {
+    // 첫 로그인에 STUDENT 로 만들어지고, 수락하는 순간 같은 검사를 다시 받는다.
+    expect(canJoinProjectTeam(null)).toBe(true);
+  });
+});
+
 describe("checkProjectTeamInvitation", () => {
+  it("학생이 아닌 계정은 초대 단계에서 막는다", () => {
+    expect(checkProjectTeamInvitation({
+      ...base,
+      invitee: { role: "PROFESSOR", accountStatus: "ACTIVE" },
+    })).toBe("NOT_STUDENT");
+  });
+
   it("조건이 맞으면 막지 않는다", () => {
     expect(checkProjectTeamInvitation(base)).toBeNull();
   });
@@ -59,6 +88,12 @@ describe("checkProjectTeamInvitation", () => {
 
   it("이미 팀원이면 부를 수 없다", () => {
     expect(checkProjectTeamInvitation({ ...base, inviteeAlreadyMember: true })).toBe("ALREADY_MEMBER");
+  });
+
+  it("같은 프로그램의 다른 팀에 속한 학생은 부를 수 없다", () => {
+    // 예전 검사는 이 팀 안 중복만 봐서 한 학생이 같은 프로그램의 팀 두 곳에 들어갔다.
+    expect(checkProjectTeamInvitation({ ...base, inviteeInOtherProgramTeam: true }))
+      .toBe("ALREADY_IN_PROGRAM_TEAM");
   });
 
   it("아직 답을 안 한 초대까지 세어 상한을 지킨다", () => {

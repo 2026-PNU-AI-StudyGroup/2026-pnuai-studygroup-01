@@ -182,6 +182,21 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           await transaction.projectTeamRubricEvaluation.deleteMany({ where: { rubricId: { in: divisionRubricIds } } });
           await transaction.rubricDefinition.deleteMany({ where: { id: { in: divisionRubricIds } } });
         }
+        // 표는 topic 의 divisionId 를 지우기 전에 지운다. 순서가 뒤집혀 있었다.
+        //
+        // invalidatedVoteWhere 는 지운 분과를 참조하는 topic 으로 표를 찾는다. 아래
+        // updateMany 가 divisionId 를 먼저 null 로 밀어 버리면 그 조건에 맞는 topic 이
+        // 하나도 남지 않아 deleteMany 가 0건을 지웠다. voteCount 는 삭제 전에 세므로 값만
+        // 정상이었고, 확인창과 PROGRAM_VOTING_RESET 감사 로그는 "표 N개 초기화" 라고
+        // 알렸는데 표는 전부 살아남았다. 살아남은 표는 미분과 묶음으로 옮겨가 그 투표자의
+        // 미분과 한도를 몰래 차지하고 결과 집계에도 계속 잡혔다.
+        //
+        // 분과를 전부 지우는 경로만 조건이 { programId } 라 정상 동작했고, 단위 테스트가
+        // 그쪽만 검증해서 지금까지 걸리지 않았다.
+        if (voteCount) {
+          await transaction.projectVote.deleteMany({ where: invalidatedVoteWhere });
+          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "DIVISION_DELETED", voteCount } } });
+        }
         await transaction.topic.updateMany({ where: { programId: id, divisionId: { in: removedIds } }, data: { divisionId: null } });
         const commonRubricIds = (await transaction.rubricDefinition.findMany({
           where: { programId: id, divisionId: null, archivedAt: null, legacy: false },
@@ -192,10 +207,6 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
             data: projectTeamIds.flatMap((projectTeamId) => commonRubricIds.map((rubricId) => ({ projectTeamId, rubricId }))),
             skipDuplicates: true,
           });
-        }
-        if (voteCount) {
-          await transaction.projectVote.deleteMany({ where: invalidatedVoteWhere });
-          await transaction.auditLog.create({ data: { actorId, action: "PROGRAM_VOTING_RESET", targetType: "PROJECT_PROGRAM", targetId: id, metadata: { reason: "DIVISION_DELETED", voteCount } } });
         }
         if (switchesVotingScope) await transaction.programVotingPolicy.update({ where: { programId: id }, data: { voteLimitScope: "PROGRAM" } });
         await transaction.programDivision.deleteMany({ where: { id: { in: removedIds } } });

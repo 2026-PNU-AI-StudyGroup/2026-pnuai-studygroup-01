@@ -67,6 +67,18 @@ export class PrismaTopicCommandRepository
     topic: Omit<TopicDraft, "authorId" | "divisionId">,
   ) {
     return this.client.$transaction(async (transaction) => {
+      // 지원 제출과 지원 수락은 둘 다 topic 행을 FOR UPDATE 로 잠근 뒤 진행한다. 같은
+      // 잠금을 먼저 잡아야 아래 지원 수 검사가 방금 커밋된 지원서를 본다.
+      //
+      // 예전에는 잠금 없이 Serializable 로만 두었다. 상대가 READ COMMITTED 라 SSI 가
+      // 걸리지 않고, Serializable 은 첫 읽기에서 스냅샷을 고정하므로 새로 삽입된 지원
+      // 행이 끝까지 보이지 않았다. 그래서 지원 수를 0 으로 판단해
+      // applicationQuestions.deleteMany 가 방금 제출된 답변까지 Cascade 로 지웠다.
+      // 정원을 수락 진행 중에 그 아래로 내리는 것도 같은 이유로 통과했다.
+      const locked = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "topic" WHERE "id" = ${id} FOR UPDATE
+      `);
+      if (!locked[0]) return "NOT_FOUND" as const;
       const current = await transaction.topic.findFirst({
         where: { id, ...topicSupervisorWhere(actor) },
         select: {
@@ -119,7 +131,7 @@ export class PrismaTopicCommandRepository
         ...topic.applicationQuestions.map(({ label }) => label),
       ]);
       return "UPDATED" as const;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    });
   }
 
   findState(id: string): Promise<TopicStateRecord | null> {

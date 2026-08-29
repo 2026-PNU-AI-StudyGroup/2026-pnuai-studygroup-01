@@ -91,15 +91,19 @@ export default async function AccountPage() {
             </div>
           </section>
 
-          <section aria-labelledby="withdraw-account-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
-            <div>
-              <h2 id="withdraw-account-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"계정 탈퇴"}</UiText></h2>
-            </div>
-            <div className="min-w-0">
-              <p className="mb-4 text-sm leading-6 text-[var(--muted)]"><UiText>{"탈퇴하면 로그인 권한은 즉시 회수되며 프로젝트 이력과 작성물은 보존됩니다."}</UiText></p>
-              <AccountWithdrawalForm />
-            </div>
-          </section>
+          {/* 자문위원은 초대 토큰으로만 들어오고, 스스로 탈퇴하면 관리자도 되살릴 수 없다.
+              참여를 끝내는 일은 관리자의 초대 회수로만 처리한다. */}
+          {actor.role === "ADVISOR" ? null : (
+            <section aria-labelledby="withdraw-account-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+              <div>
+                <h2 id="withdraw-account-heading" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"계정 탈퇴"}</UiText></h2>
+              </div>
+              <div className="min-w-0">
+                <p className="mb-4 text-sm leading-6 text-[var(--muted)]"><UiText>{"탈퇴하면 로그인 권한은 즉시 회수되며 프로젝트 이력과 작성물은 보존됩니다."}</UiText></p>
+                <AccountWithdrawalForm />
+              </div>
+            </section>
+          )}
 
           {actor.role === "STUDENT" ? (
             <section aria-labelledby="project-profile-heading" className="grid gap-6 border-b border-[var(--line)] py-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">

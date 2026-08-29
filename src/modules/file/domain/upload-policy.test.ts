@@ -58,4 +58,34 @@ describe("파일 업로드 정책", () => {
     if (size === ARTIFACT_MAX_BYTES) expect(validation).not.toThrow();
     else expect(validation).toThrow(InvalidUploadError);
   });
+
+  // Windows 의 Chrome·Edge 는 레지스트리를 따라 .zip 을 application/x-zip-compressed 로
+  // 보고한다. 허용 목록에 application/zip 만 있어서 Windows 학생은 소스 코드 zip 을 아예
+  // 올릴 수 없었다.
+  it.each([
+    ["application/x-zip-compressed", "application/zip"],
+    ["application/x-zip", "application/zip"],
+    ["APPLICATION/ZIP", "application/zip"],
+    ["image/jpg", "image/jpeg"],
+  ])("브라우저가 보고하는 %s 를 %s 로 받아들인다", (reported, stored) => {
+    expect(validateUpload({
+      purpose: "ARTIFACT",
+      consumer: "ARTIFACT",
+      originalName: "artifact.zip",
+      contentType: reported,
+      size: 1024,
+      sha256: "d".repeat(64),
+    })).toMatchObject({ contentType: stored });
+  });
+
+  it("정규화해도 허용 목록에 없는 타입은 그대로 막는다", () => {
+    expect(() => validateUpload({
+      purpose: "ARTIFACT",
+      consumer: "ARTIFACT",
+      originalName: "artifact.exe",
+      contentType: "application/x-msdownload",
+      size: 1024,
+      sha256: "e".repeat(64),
+    })).toThrow(InvalidUploadError);
+  });
 });

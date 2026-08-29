@@ -104,5 +104,9 @@ async function importsIn(file: string): Promise<string[]> {
 }
 
 function topLevelRoute(relativePath: string): string {
-  return relativePath.split(path.sep)[0];
+  // 파일 경로와 임포트 지정자가 둘 다 들어온다. 앞은 path.sep 을 쓰고 뒤는 항상 "/" 다.
+  // path.sep 으로만 자르면 윈도에서 임포트 쪽이 쪼개지지 않아 문자열 전체가 최상위
+  // 라우트로 잡히고, 정상 임포트 365건이 거짓 위반으로 나왔다. 리눅스 CI 는 path.sep 이
+  // "/" 라 우연히 통과해서 윈도에서만 깨지는 기준선 실패로 오래 남아 있었다.
+  return relativePath.split(/[/\\]/)[0];
 }

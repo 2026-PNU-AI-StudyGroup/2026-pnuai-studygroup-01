@@ -61,8 +61,31 @@ const COMPONENTS: Components = {
   img: (props) => <img alt="" {...omitNode(props)} loading="lazy" className="h-auto max-w-full rounded-[var(--radius-control)]" />,
 };
 
-export function renderMarkdown(source: string): ReactNode {
-  return <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>{source}</Markdown>;
+/**
+ * 바깥 주소를 가리키는 본문 이미지를 지운다.
+ *
+ * 누구나 쓸 수 있는 글에서는 `![](https://남의서버/pixel)` 한 줄이 그 글을 여는 모든
+ * 사람의 접속 정보를 글쓴이에게 넘기는 통로가 된다. 결과물 쪽은 "우리가 받아 둔 파일만
+ * 사진으로 쓴다" 로 같은 위협을 막고 있다. 피드백 게시판은 업로드가 없으므로 바깥
+ * 이미지를 아예 렌더하지 않는다.
+ *
+ * 우리 서버 경로(`/` 로 시작)만 남긴다. 운영진이 쓰는 공지 등은 이 제한을 걸지 않는다.
+ */
+function isSameOriginSource(source: unknown): boolean {
+  return typeof source === "string" && source.startsWith("/") && !source.startsWith("//");
+}
+
+const UNTRUSTED_COMPONENTS: Components = {
+  ...COMPONENTS,
+  img: (props) => (isSameOriginSource(props.src)
+    // eslint-disable-next-line @next/next/no-img-element
+    ? <img alt="" {...omitNode(props)} loading="lazy" className="h-auto max-w-full rounded-[var(--radius-control)]" />
+    : null),
+};
+
+export function renderMarkdown(source: string, options: { allowExternalImages?: boolean } = {}): ReactNode {
+  const components = options.allowExternalImages === false ? UNTRUSTED_COMPONENTS : COMPONENTS;
+  return <Markdown remarkPlugins={[remarkGfm]} components={components}>{source}</Markdown>;
 }
 
 /** 목록 미리보기처럼 서식 없이 한 줄로 보여줄 때 쓴다. 마크다운 기호만 걷어낸다. */

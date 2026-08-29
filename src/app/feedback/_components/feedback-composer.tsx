@@ -47,11 +47,9 @@ export function FeedbackComposer() {
       />
       {open ? (
       <form ref={formRef} action={formAction} className="panel grid gap-5 p-5 sm:p-7">
+      {/* 작성자 이름은 받지 않는다. 로그인 없이 열린 게시판이라 실명이 그대로 공개되고
+          자유 입력이라 교수 이름을 적어 사칭할 수 있었다. 익명으로 등록된다. */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2">
-          <FieldLabel>{"작성자 이름"}</FieldLabel>
-          <UiInput className="form-control bg-white" name="authorName" type="text" maxLength={FEEDBACK_LIMITS.name} placeholder="이름을 입력하세요" required />
-        </label>
         <FormField label="대상 화면" required>
           <fieldset className="grid grid-cols-2 gap-2">
             <legend className="sr-only"><UiText>{"대상 화면"}</UiText></legend>

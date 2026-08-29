@@ -18,7 +18,9 @@ const INVITE_FAILURE_MESSAGE: Record<string, string> = {
   FORBIDDEN: "팀장과 지도교수, 관리자만 초대할 수 있습니다.",
   PROGRAM_CLOSED: "운영이 끝난 프로그램에는 초대할 수 없습니다.",
   NOT_INSTITUTION_EMAIL: "부산대학교 이메일만 초대할 수 있습니다.",
+  NOT_STUDENT: "학생 계정만 프로젝트 팀원으로 초대할 수 있습니다. 교수·조교는 지도 담당으로 지정해 주세요.",
   ALREADY_MEMBER: "이미 이 프로젝트의 팀원입니다.",
+  ALREADY_IN_PROGRAM_TEAM: "이 프로그램의 다른 프로젝트 팀에 이미 소속된 학생입니다. 한 프로그램에서는 한 팀에만 참여할 수 있습니다.",
   CAPACITY_REACHED: "팀 최대 인원에 도달했습니다. 보낸 초대를 철회하거나 프로그램의 팀 최대 인원을 늘려 주세요.",
 };
 
@@ -73,6 +75,8 @@ export async function cancelProjectTeamInvitationAction(
 const RESPOND_FAILURE_MESSAGE: Record<string, string> = {
   NOT_FOUND: "초대를 찾을 수 없습니다. 이미 처리되었을 수 있습니다.",
   PROGRAM_CLOSED: "운영이 끝난 프로그램이라 참여할 수 없습니다.",
+  NOT_STUDENT: "학생 계정만 프로젝트 팀원으로 참여할 수 있습니다.",
+  ALREADY_IN_PROGRAM_TEAM: "이 프로그램의 다른 프로젝트 팀에 이미 참여하고 있습니다. 한 프로그램에서는 한 팀에만 참여할 수 있습니다.",
   CAPACITY_REACHED: "팀 최대 인원에 도달해 참여할 수 없습니다.",
 };
 

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { emailPreferenceAllows, normalizeEmailHref } from "@/modules/email/domain/email-delivery";
+import {
+  EMAIL_DELIVERY_KINDS,
+  EMAIL_PREFERENCE_SELECT,
+  emailPreferenceAllows,
+  emailPreferenceFlag,
+  normalizeEmailHref,
+} from "@/modules/email/domain/email-delivery";
 
 describe("normalizeEmailHref", () => {
   it("서비스 내부 경로는 그대로 둔다", () => {
@@ -39,5 +45,18 @@ describe("emailPreferenceAllows", () => {
     expect(emailPreferenceAllows("DEADLINE", null)).toBe(false);
     expect(emailPreferenceAllows("TOPIC_APPROVAL", { programActivityEnabled: true })).toBe(true);
     expect(emailPreferenceAllows("DEADLINE", { deadlineEnabled: true })).toBe(true);
+  });
+});
+
+describe("EMAIL_PREFERENCE_SELECT", () => {
+  // 이 검사가 없어서 마감 메일이 통째로 죽어 있었다. emailPreferenceAllows 는 맞게
+  // 동작했지만 두 저장소의 select 가 deadlineEnabled 를 안 읽어 항상 undefined 였고,
+  // undefined 는 기본값(꺼짐)으로 떨어졌다. 순수 함수만 검증하면 이 배선이 안 잡힌다.
+  it("수신 설정을 보는 모든 메일 종류의 필드를 읽는다", () => {
+    const readable = Object.keys(EMAIL_PREFERENCE_SELECT);
+    for (const kind of EMAIL_DELIVERY_KINDS) {
+      const flag = emailPreferenceFlag(kind);
+      if (flag) expect(readable, `${kind} 가 보는 ${flag}`).toContain(flag);
+    }
   });
 });

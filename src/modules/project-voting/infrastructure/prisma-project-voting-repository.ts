@@ -67,7 +67,13 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           projectTeam: { select: { memberships: { where: { userId: voterId, endedAt: null }, select: { id: true } } } },
         },
       }),
-      this.client.projectVote.findMany({ where: { programId, voterId }, select: { topicId: true } }),
+      // 후보 목록과 같은 조건으로 고른다. 후보에서 내려간 프로젝트의 표는 카드가 없어
+      // 화면에 표시할 자리도, 취소할 자리도 없으므로 선택 상태에서도 뺀다. setVote 의
+      // 한도 계산도 같은 기준을 쓴다.
+      this.client.projectVote.findMany({
+        where: { programId, voterId, topic: VOTABLE_TOPIC_WHERE(now) },
+        select: { topicId: true },
+      }),
       resultsVisible
         ? this.client.projectVote.groupBy({ by: ["topicId"], where: { programId }, _count: { topicId: true } })
         : Promise.resolve([]),
@@ -178,11 +184,29 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           const others = currentTopicIds.length
             ? await transaction.topic.findMany({ where: { id: { in: currentTopicIds } }, select: { id: true, divisionId: true } })
             : [];
+          // 한도는 지금도 후보인 프로젝트에 던진 표로만 센다.
+          //
+          // 운영진이 프로젝트를 비공개로 내리면 후보 목록에서 빠지지만 표는 남는다(취소는
+          // 후보 자격을 안 묻기 때문에 일부러 남긴다). 그런데 한도는 남은 표를 전부 세고
+          // 있어서, 화면에 카드가 없는 표가 자리를 계속 차지했다. 취소 버튼이 놓일 카드가
+          // 없으니 투표자는 그 한 자리를 투표 기간 내내 되찾을 수 없었고 이유도 알 수 없었다.
+          //
+          // 결과 집계가 이미 같은 조건으로 숨은 표를 빼므로 기준을 맞춘 것이기도 하다.
+          // 프로젝트가 다시 공개되면 그 표는 자연히 다시 세어진다.
+          const votableOtherIds = new Set(
+            currentTopicIds.length
+              ? (await transaction.topic.findMany({
+                where: { id: { in: currentTopicIds }, ...VOTABLE_TOPIC_WHERE(input.votedAt) },
+                select: { id: true },
+              })).map(({ id }) => id)
+              : [],
+          );
+          const countedTopicIds = currentTopicIds.filter((id) => votableOtherIds.has(id));
           const nextTopicIds = alreadyVoted === voted
-            ? currentTopicIds
+            ? countedTopicIds
             : voted
-              ? [...currentTopicIds, target.id]
-              : currentTopicIds.filter((id) => id !== target.id);
+              ? [...countedTopicIds, target.id]
+              : countedTopicIds.filter((id) => id !== target.id);
 
           if (alreadyVoted === voted) {
             // 이미 원하는 상태다. 탭 두 개가 같은 버튼을 눌렀거나 새로고침이 겹친 것이다.
