@@ -69,7 +69,7 @@ export function TeamProjectInfoEditDialog({
         ref={dialogRef}
         aria-labelledby={titleId}
         onCancel={(event) => { if (pending) event.preventDefault(); }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100%-2rem))] overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100%-2rem))] overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)]"
       >
         <header className="flex items-start justify-between gap-5 border-b border-[var(--line)] px-5 py-5 sm:px-6">
           <div className="min-w-0">

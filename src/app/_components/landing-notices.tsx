@@ -48,5 +48,5 @@ const ITEMS: NoticeItem[] = [
 
 /** 로그인 전 첫 화면 오른쪽 아래에 쌓이는 안내 창. */
 export function LandingNotices() {
-  return <NoticeStack items={ITEMS} placement="bottom-right" />;
+  return <NoticeStack items={ITEMS} placement="bottom-right" scheme="light" />;
 }

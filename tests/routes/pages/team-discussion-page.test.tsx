@@ -99,7 +99,7 @@ describe("TeamDiscussionPage", () => {
       "overflow-hidden",
       "rounded-[var(--radius-panel)]",
       "border",
-      "bg-white",
+      "bg-[var(--surface)]",
     );
     expect(messageLog).toHaveAttribute("tabindex", "0");
     expect(discussionPanel).toContainElement(messageLog);

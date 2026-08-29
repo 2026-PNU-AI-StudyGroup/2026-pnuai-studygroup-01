@@ -31,7 +31,7 @@ export function ReceivedRecruitmentApplicationsView({
           action={<Link className="button-secondary" href={teamId ? `/teams/manage/${teamId}` : "/teams"}><UiText>{teamId ? "팀 관리" : "내 팀"}</UiText></Link>}
         />
       ) : (
-        <ol className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+        <ol className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
           {applications.map((application) => (
             <li id={`application-${application.id}`} key={application.id} className="border-b border-[var(--line)] px-6 py-6 last:border-b-0 sm:px-7">
               <article className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">

@@ -34,7 +34,7 @@
   font-size: 0.9375rem;
   font-weight: 550;
   text-align: left;
-  box-shadow: 0 1px 2px rgb(31 35 48 / 0.035);
+  box-shadow: 0 1px 2px var(--shadow-tint-weak);
   transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
 }
 
@@ -53,7 +53,7 @@
 
 .trigger:focus-visible,
 .trigger[aria-expanded="true"] {
-  box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px rgb(31 35 48 / 0.035);
+  box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px var(--shadow-tint-weak);
 }
 
 .trigger[data-invalid="true"],
@@ -63,7 +63,7 @@
 }
 
 .trigger[data-invalid="true"]:focus-visible {
-  box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px rgb(31 35 48 / 0.035);
+  box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px var(--shadow-tint-weak);
 }
 
 .trigger:disabled {
@@ -93,7 +93,7 @@
   inset: auto;
   z-index: 70;
   overflow-y: auto;
-  border: 1px solid #dfe3eb;
+  border: 1px solid var(--line);
   border-radius: 0.875rem;
   background: var(--surface);
   padding: 0.625rem;

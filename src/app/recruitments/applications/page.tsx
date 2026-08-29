@@ -61,7 +61,7 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             {data.applications.length === 0 ? (
               <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"모집 공고 둘러보기"}</UiText></Link>} />
             ) : (
-              <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+              <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
                 <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">
                   <span><UiText>{"지원한 모집"}</UiText></span>
                   <span><UiText>{"지원일"}</UiText></span>

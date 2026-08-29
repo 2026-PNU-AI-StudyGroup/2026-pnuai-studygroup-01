@@ -23,8 +23,10 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)] lg:pb-0">
-        <UiAside aria-label="프로젝트 정보와 메뉴" className="min-w-0 bg-white px-5 pb-5 pt-5 sm:px-8 lg:border-r lg:border-[var(--line)] lg:px-5 lg:py-8">
+      <main className="grid w-full grid-cols-[minmax(0,1fr)] pb-28 lg:min-h-screen lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)] lg:pb-0">
+        <UiAside aria-label="프로젝트 정보와 메뉴" className="shell-panel min-w-0 bg-[var(--surface)] lg:border-r lg:border-[var(--line)]">
+          {/* 여백을 안쪽으로 옮겼다. 칸이 0 으로 줄 때 바깥에 있으면 여백부터 찌그러진다. */}
+          <div className="w-full bg-[var(--surface)] px-5 pb-5 pt-5 sm:px-8 lg:min-h-screen lg:w-[var(--shell-panel-open)] lg:px-5 lg:py-8">
           <div className="lg:sticky lg:top-8">
             <UiLink
               href="/dashboard"
@@ -70,6 +72,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
                 <ConfirmTeamForm teamId={workspace.id} buttonClassName="button-primary w-full" />
               ) : null}
             </div>
+          </div>
           </div>
         </UiAside>
         <div className="min-w-0 px-5 pb-16 pt-5 sm:px-8 sm:pt-8 lg:px-10 lg:py-10 xl:px-12">

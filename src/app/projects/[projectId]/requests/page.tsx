@@ -81,7 +81,7 @@ export default async function ProjectGuidanceRequestsPage({
       />
 
       {canCreate ? (
-        <section aria-labelledby="new-guidance-request-title" className="grid gap-5 rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6">
+        <section aria-labelledby="new-guidance-request-title" className="grid gap-5 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6">
           <div>
             <h2 id="new-guidance-request-title" className="text-xl font-extrabold tracking-[-0.025em]"><UiText>{"회의나 검토가 필요하신가요?"}</UiText></h2>
             <p className="muted mt-1.5 text-sm leading-6"><UiText>{"같은 유형의 요청은 교수 답변을 받은 뒤 다시 보낼 수 있습니다."}</UiText></p>
@@ -91,7 +91,7 @@ export default async function ProjectGuidanceRequestsPage({
           />
         </section>
       ) : workspace.access.isTeamMember ? (
-        <UiAside aria-label="새 요청 제한" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-white px-5 py-4 shadow-[0_12px_34px_rgba(31,35,48,0.04)] sm:px-6">
+        <UiAside aria-label="새 요청 제한" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 shadow-[0_12px_34px_rgba(31,35,48,0.04)] sm:px-6">
           <p className="text-sm font-bold"><UiText>{workspace.status === "FORMING"
             ? "팀 확정 후 새 요청을 보낼 수 있습니다."
             : "종료된 프로젝트에서는 요청 이력만 확인할 수 있습니다."}</UiText></p>
@@ -104,7 +104,7 @@ export default async function ProjectGuidanceRequestsPage({
             <p className="text-xs font-bold tracking-[0.12em] text-[var(--primary)]"><UiText>{"요청 이력"}</UiText></p>
             <h2 id="guidance-request-history-title" className="mt-1 text-2xl font-bold tracking-[-0.04em]"><UiText>{"회의와 검토 요청"}</UiText></h2>
           </div>
-          <p className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-bold text-[var(--ink)]"><UiText>{"전체"}</UiText>{" "}{requestPage.total}<UiText>{"건"}</UiText></p>
+          <p className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm font-bold text-[var(--ink)]"><UiText>{"전체"}</UiText>{" "}{requestPage.total}<UiText>{"건"}</UiText></p>
         </div>
 
         {requestPage.items.length === 0 ? (
@@ -167,7 +167,7 @@ function RequestRecord({
       <UiArticle
         aria-labelledby={titleId}
         data-request-state={request.status.toLowerCase()}
-        className={`space-y-5 rounded-[var(--radius-panel)] border bg-white p-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:p-6 ${cardTone}`}
+        className={`space-y-5 rounded-[var(--radius-panel)] border bg-[var(--surface)] p-5 shadow-[0_12px_34px_rgba(31,35,48,0.06)] sm:p-6 ${cardTone}`}
       >
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

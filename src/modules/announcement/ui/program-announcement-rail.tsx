@@ -186,7 +186,7 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
                 <button
                   type="button"
                   onClick={(event) => openAnnouncement(event, announcement)}
-                  className={`group flex h-full min-h-48 w-full flex-col rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] ${dragging ? "cursor-grabbing transition-none" : "cursor-pointer transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-panel)]"}`}
+                  className={`group flex h-full min-h-48 w-full flex-col rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] ${dragging ? "cursor-grabbing transition-none" : "cursor-pointer transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-panel)]"}`}
                 >
                   <div className="flex flex-wrap items-center gap-1.5">
                     {announcement.pinned ? (
@@ -195,7 +195,7 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
                         <span className="sr-only"><UiText>{"고정"}</UiText></span>
                       </span>
                     ) : null}
-                    <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
+                    <span className="inline-flex items-center rounded-full bg-[var(--surface)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
                       <UiText>{announcement.visibility === "AUTHENTICATED" ? "전체 공개" : "구성원 전용"}</UiText>
                     </span>
                   </div>
@@ -243,7 +243,7 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
           setSelectedAnnouncement(null);
           dialogTriggerRef.current?.focus({ preventScroll: true });
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)] sm:max-h-[min(42rem,calc(100dvh-4rem))]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] sm:max-h-[min(42rem,calc(100dvh-4rem))]"
       >
         {selectedAnnouncement ? (
           <article>
@@ -256,7 +256,7 @@ export function ProgramAnnouncementRail({ announcements, createHref, manageableA
                       <span className="sr-only"><UiText>{"고정"}</UiText></span>
                     </span>
                   ) : null}
-                  <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
+                  <span className="inline-flex items-center rounded-full bg-[var(--surface)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
                     <UiText>{selectedAnnouncement.visibility === "AUTHENTICATED" ? "전체 공개" : "구성원 전용"}</UiText>
                   </span>
                 </div>

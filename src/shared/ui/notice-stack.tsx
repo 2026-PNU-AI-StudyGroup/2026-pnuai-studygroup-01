@@ -59,9 +59,17 @@ function rememberDismissal(key: string) {
 export function NoticeStack({
   items,
   placement,
+  scheme = "auto",
 }: {
   items: NoticeItem[];
   placement: NoticePlacement;
+  /**
+   * 창 자체의 밝기.
+   *
+   * 로그인 전 첫 화면은 밝기 설정과 무관하게 늘 어둡다. 거기 얹는 창까지 어두워지면
+   * 바탕과 붙어 읽히지 않으므로 그 자리에서만 밝은 쪽으로 못 박는다.
+   */
+  scheme?: "auto" | "light";
 }) {
   const [order, setOrder] = useState<string[]>([]);
   const openerRef = useRef<Element | null>(null);
@@ -113,7 +121,7 @@ export function NoticeStack({
   // 화면 안에 그대로 두면 position: fixed 가 뷰포트가 아니라 변형이 걸린 조상 기준으로
   // 잡혀 엉뚱한 자리로 밀려난다. body 로 빼내야 항상 같은 구석에 붙는다.
   return createPortal(
-    <ul className={`${styles.stack} ${placement === "center" ? styles.center : styles.bottomRight}`}>
+    <ul className={`${styles.stack} ${placement === "center" ? styles.center : styles.bottomRight} ${scheme === "light" ? styles.lightScheme : ""}`}>
       {order.map((id, index) => {
         const item = items.find((candidate) => candidate.id === id);
         if (!item) return null;

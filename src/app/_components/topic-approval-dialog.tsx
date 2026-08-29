@@ -82,9 +82,9 @@ export function TopicApprovalDialog({
         ref={dialogRef}
         aria-labelledby={titleId}
         onClose={() => triggerRef.current?.focus({ preventScroll: true })}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[rgba(23,32,51,.48)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[var(--backdrop)]"
       >
-        <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-white px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
+        <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
           <div className="flex items-center gap-2">
             <StatusBadge tone={status[request.status][1]}>{status[request.status][0]}</StatusBadge>
             <p className="truncate text-xs font-bold text-[var(--primary)]"><UiText>{request.programName}</UiText></p>

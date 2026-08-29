@@ -124,7 +124,7 @@
 }
 
 .dialog::backdrop {
-  background: rgb(23 32 51 / .38);
+  background: var(--backdrop);
 }
 
 .dialogSurface {

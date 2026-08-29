@@ -226,7 +226,7 @@ function CategoryProgramGroup({
                       href={programManagementHref(program.id)}
                       tabIndex={open ? undefined : -1}
                       aria-label={`${program.name} 설정`}
-                      className="absolute right-1 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-white hover:text-[var(--primary)] focus-visible:bg-white focus-visible:text-[var(--primary)]"
+                      className="absolute right-1 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface)] focus-visible:text-[var(--primary)]"
                     >
                       <SettingsIcon className="size-[1.1rem]" />
                     </UiLink>
@@ -328,7 +328,7 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
         <div className="mb-3 flex items-center justify-between gap-3 px-2">
           <strong className="text-xs font-bold text-[var(--muted)]"><UiText>{"프로그램 선택"}</UiText></strong>
           {showSettings ? (
-            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-white text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]" />
+            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]" />
           ) : null}
         </div>
         <UiNav aria-label="프로그램 선택 모바일">
@@ -343,7 +343,7 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
         <div className="mb-4 flex shrink-0 items-center justify-between gap-3 px-2">
           <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{title}</UiText></h2>
           {showSettings ? (
-            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-white text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
+            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
           ) : null}
         </div>
         <UiNav aria-label="프로그램 선택" className="flex min-h-0 flex-1 flex-col">

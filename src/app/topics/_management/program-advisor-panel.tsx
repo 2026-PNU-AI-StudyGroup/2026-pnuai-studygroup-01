@@ -30,9 +30,9 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
       <section className={styles.section}>
         <SectionHeader title="자문위원 목록" />
         {advisors.length === 0 ? (
-          <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-white p-6 text-center text-sm text-[var(--muted)]"><UiText>{"등록된 자문위원이 없습니다."}</UiText></p>
+          <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"등록된 자문위원이 없습니다."}</UiText></p>
         ) : (
-          <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
+          <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]">
             {advisors.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
           </ul>
         )}
@@ -169,7 +169,7 @@ function AssignmentForm({ programId, advisor, topics }: { programId: string; adv
   const [state, action, pending] = useActionState(assignAdvisorTeamsAction, idleState);
   const assigned = new Set(advisor.assignedTopicIds);
   return (
-    <details className="group rounded-xl border border-[var(--line)] bg-white">
+    <details className="group rounded-xl border border-[var(--line)] bg-[var(--surface)]">
       <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-5 py-4">
         <span className="min-w-0">
           <strong className="font-bold text-[var(--ink)]">{advisor.name}</strong>
@@ -216,11 +216,11 @@ function ScoreMatrix({ matrix }: { matrix: AdvisorScoreMatrixRow[] }) {
   const advisorColumns = new Map<string, string>();
   for (const row of matrix) for (const score of row.scores) advisorColumns.set(score.advisorId, score.advisorName);
   if (matrix.length === 0 || advisorColumns.size === 0) {
-    return <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-white p-6 text-center text-sm text-[var(--muted)]"><UiText>{"아직 채점한 자문위원이 없습니다."}</UiText></p>;
+    return <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"아직 채점한 자문위원이 없습니다."}</UiText></p>;
   }
   const columns = [...advisorColumns.entries()];
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-white">
+    <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
       <table className="w-full min-w-max border-collapse text-sm">
         <thead>
           <tr className="border-b border-[var(--line)] bg-[var(--surface-subtle)] text-left">

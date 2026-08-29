@@ -41,7 +41,7 @@ export function ProjectSearchForm({
           defaultValue={query}
           maxLength={100}
           placeholder="프로젝트 검색"
-          className="form-control min-h-10 w-full bg-white pl-11 text-sm"
+          className="form-control min-h-10 w-full bg-[var(--surface)] pl-11 text-sm"
         />
       </label>
     </form>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
@@ -19,7 +20,14 @@ import { I18nProvider } from "@/modules/translation/ui/i18n-provider";
 import { AppToaster } from "@/shared/ui/app-toaster";
 import { LanguagePopover } from "@/modules/translation/ui/language-popover";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import {
+  SIDEBAR_COOKIE,
+  THEME_COOKIE,
+  normalizeSidebarState,
+  normalizeSiteTheme,
+} from "@/shared/ui/appearance";
 import { Brand } from "@/shared/ui/brand";
+import { SidebarToggle } from "@/shared/ui/sidebar-toggle";
 
 type NavigationItem = {
   href: string;
@@ -154,12 +162,25 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
   const shellCopy = locale === "ko"
     ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
     : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
+  // 접힘 여부와 밝기는 루트 레이아웃이 html 에 이미 적어 두었다. 여기서는 손잡이와
+  // 테마 고르는 자리가 처음부터 같은 값을 들고 있도록 같은 쿠키를 한 번 더 읽는다.
+  const cookieStore = await cookies();
+  const sidebarState = normalizeSidebarState(cookieStore.get(SIDEBAR_COOKIE)?.value);
+  const theme = normalizeSiteTheme(cookieStore.get(THEME_COOKIE)?.value);
   return (
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>
     <div className="min-h-screen bg-[var(--workspace)]">
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
-      <div className={`${styles.root} min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[6.5rem_minmax(0,1fr)]`}>
-        <aside className="sticky top-0 z-40 hidden h-screen min-h-[42rem] flex-col items-center border-r border-[var(--line)] bg-[var(--sidebar)] px-2 py-6 lg:flex">
+      <div className={`${styles.root} min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[var(--shell-rail)_minmax(0,1fr)]`}>
+        {/* 접었을 때 왼쪽 가장자리에 손을 대면 레일과 목록이 잠깐 나온다. */}
+        <div aria-hidden="true" className="shell-peek-zone hidden lg:block" />
+        <SidebarToggle initialState={sidebarState} />
+        <aside className="shell-rail sticky top-0 z-40 hidden h-screen min-h-[42rem] border-r border-[var(--line)] bg-[var(--sidebar)] lg:block">
+          {/*
+            칸이 0 으로 줄어드는 동안 안쪽은 제 폭과 바탕색을 지킨다. 그래야 여닫는 동안
+            본문 위를 덮으며 미끄러지는 그림이 되고, 글자만 붕 떠 보이지 않는다.
+          */}
+          <div className="flex h-full w-[var(--shell-rail-open)] flex-col items-center bg-[var(--sidebar)] px-2 py-6">
           <Brand href="/topics" variant="sidebar" />
           <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-1">
             {navigation.map((item) => {
@@ -179,11 +200,12 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
               openNotification={openNotificationAction}
             />
             <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} />
-            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} theme={theme} />
+          </div>
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">
-          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/94 backdrop-blur-xl lg:hidden">
+          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface-glass)] backdrop-blur-xl lg:hidden">
             <div className="flex h-[4.5rem] items-center justify-between gap-5 px-5 sm:px-8">
               <div><Brand href="/topics" ariaLabel={shellCopy.mobileBrand} /></div>
               <div className="flex items-center gap-2">
@@ -194,13 +216,13 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
                   openNotification={openNotificationAction}
                 />
                 <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} placement="below" />
-                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} />
+                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} theme={theme} />
               </div>
             </div>
           </header>
           <div id="main-content" tabIndex={-1} className={styles.mainContent}><UiText>{children}</UiText></div>
         </div>
-        <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-white/94 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
+        <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-[var(--surface-glass)] px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
           {navigation.map((item) => {
             const active = isNavigationActive(item, currentPath, role);
             return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;

@@ -1708,7 +1708,6 @@
   "투표 결과 공개 설정": "Set public voting results",
   "투표 결과 닫기": "Close voting results",
   "투표 결과 정렬": "Voting results sort",
-  "투표 기간": "Voting period",
   "투표 기간 종료": "Voting period has ended",
   "투표 기간과 정책을 다시 확인해 주세요.": "Please review your voting period and policies again.",
   "투표 마감 후 결과 공개": "Results announced after voting closes",
@@ -2363,5 +2362,10 @@
   "회의와 검토 요청": "Meeting and review requests",
   "휴대폰 번호": "Phone number",
   "희망 역할": "Desired role",
-  "희망 역할과 지원 내용을 입력해 주세요.": "Please enter your desired role and application details."
+  "희망 역할과 지원 내용을 입력해 주세요.": "Please enter your desired role and application details.",
+  "사이드바 펼치기": "Expand sidebar",
+  "사이드바 접기": "Collapse sidebar",
+  "화면 테마": "Appearance",
+  "밝게": "Light",
+  "어둡게": "Dark"
 }

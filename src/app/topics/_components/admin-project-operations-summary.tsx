@@ -95,10 +95,10 @@ function FilterGroup<TFilter extends AdminProjectTeamFilter | AdminProjectReport
               aria-label={`${card.label} ${operations.summary[card.count]}개`}
               className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${selected
                 ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]"
-                : "border-[var(--line)] bg-white text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
+                : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
             >
               <UiText>{card.label}</UiText>
-              <strong className={`grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[0.6875rem] leading-4 ${selected ? "bg-white text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--ink)]"}`}>{operations.summary[card.count]}</strong>
+              <strong className={`grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[0.6875rem] leading-4 ${selected ? "bg-[var(--surface)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--ink)]"}`}>{operations.summary[card.count]}</strong>
             </Link>
           );
         })}

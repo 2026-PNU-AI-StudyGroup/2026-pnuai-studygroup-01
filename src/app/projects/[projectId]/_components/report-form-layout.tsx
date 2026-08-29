@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CloseIcon } from "@/app/projects/[projectId]/_components/workspace-icons";
 
-export const reportDialogClassName = "fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[rgba(23,32,51,.48)]";
+export const reportDialogClassName = "fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)]";
 
 export function ReportFormDialogHeader({ eyebrow, title, description, titleId, closeLabel, pending, allowPendingCancel = false, onClose }: {
   eyebrow?: ReactNode;

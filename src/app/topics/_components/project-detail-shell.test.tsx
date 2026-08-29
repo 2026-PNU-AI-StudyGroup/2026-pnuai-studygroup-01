@@ -20,7 +20,7 @@ describe("ProjectDetailShell", () => {
 
     const article = screen.getByRole("article");
     expect(article).not.toHaveClass("rounded-[var(--radius-panel)]");
-    expect(article).not.toHaveClass("bg-white");
+    expect(article).not.toHaveClass("bg-[var(--surface)]");
     expect(screen.getByText("cover").parentElement?.className).not.toContain("min-h-");
     expect(screen.getByRole("heading", { name: "프로젝트 제목" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "프로젝트 일정" })).toBeInTheDocument();

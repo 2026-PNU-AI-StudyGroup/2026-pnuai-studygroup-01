@@ -48,7 +48,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
         <p className="muted text-sm"><strong className="font-semibold text-[var(--ink)]">{participantCount}<UiText>{"명"}</UiText></strong> {" "}<UiText>{"참여 · 메시지"}</UiText>{" "}{workspace.discussionTotal}<UiText>{"개"}</UiText></p>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white shadow-[0_12px_34px_rgba(31,35,48,0.06)]">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] shadow-[0_12px_34px_rgba(31,35,48,0.06)]">
         <div className="flex h-full min-h-[38rem] min-w-0 flex-col lg:min-h-0">
           {workspace.discussionTotalPages > 1 ? (
             <UiNav aria-label="팀 대화 페이지" className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6 lg:px-7">

@@ -227,7 +227,7 @@ export default async function DashboardPage({
           {actor.role === "PROFESSOR" && pendingApprovals.length > 0 ? (
             <ProjectApprovalLedger requests={pendingApprovals} student={false} />
           ) : actor.role === "PROFESSOR" && view === "all" ? (
-            <section aria-labelledby="approval-empty-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+            <section aria-labelledby="approval-empty-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
               <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-6">
                 <h2 id="approval-empty-title" className="text-lg font-bold tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
                 <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>

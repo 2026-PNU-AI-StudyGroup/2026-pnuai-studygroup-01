@@ -138,7 +138,7 @@ export function ProjectVoteStatusPill({ selection }: { selection: ProjectVoteSel
     <span
       role="status"
       aria-label="투표 현황"
-      className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-white px-3 text-xs font-bold text-[var(--ink)]"
+      className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-bold text-[var(--ink)]"
     >
       <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${indicatorTone}`} />
       <UiText>{label}</UiText>

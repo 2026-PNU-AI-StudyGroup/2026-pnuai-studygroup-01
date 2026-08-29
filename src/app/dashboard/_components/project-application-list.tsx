@@ -108,7 +108,7 @@ export function ProjectApplicationList({
   return (
     <section
       aria-labelledby={`${view}-projects-title`}
-      className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white"
+      className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]"
     >
       <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
         <div>

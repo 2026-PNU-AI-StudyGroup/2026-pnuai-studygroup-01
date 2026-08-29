@@ -27,7 +27,7 @@ describe("AdminSection", () => {
     expect(section).toHaveClass("admin-panel", "overflow-hidden");
     expect(screen.getByText("가입한 구성원을 관리합니다.")).toBeInTheDocument();
     expect(screen.getByText("총 2명")).toBeInTheDocument();
-    expect(screen.getByRole("list")).toHaveClass("divide-y", "bg-white");
+    expect(screen.getByRole("list")).toHaveClass("divide-y", "bg-[var(--surface)]");
     expect(screen.getByRole("listitem")).toHaveClass("record-row", "px-5", "py-5");
   });
 

@@ -94,7 +94,7 @@
   align-content: start;
   gap: 1.5rem;
   padding: 1.25rem;
-  box-shadow: 0 6px 20px rgb(31 35 48 / 0.035);
+  box-shadow: 0 6px 20px var(--shadow-tint-weak);
 }
 
 .header {
@@ -181,7 +181,7 @@
 
 .choice:hover {
   border-color: var(--field-border-hover);
-  background: #fcfdff;
+  background: var(--surface);
 }
 
 .choice:has(input:disabled) {
@@ -356,7 +356,7 @@
   align-items: center;
   border: 1px solid var(--field-border);
   border-radius: 999px;
-  background: #9ba3af;
+  background: var(--field-border-hover);
   padding: 0.125rem;
   transition: border-color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
 }

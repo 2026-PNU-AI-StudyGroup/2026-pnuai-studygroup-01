@@ -43,7 +43,7 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
       <ProfessorWorkspace currentPath="/professor/topics" role={actor.role} title="프로젝트 관리" description={canCreateTopics ? "학생이 수행할 프로젝트의 목표, 지원 조건, 일정을 관리합니다." : "조교로 배정된 프로젝트의 공개 내용과 운영 상태를 확인합니다."} actions={canCreateTopics ? <>{topics.total && programs.length ? <Link href="/professor/topics/new" className="button-primary gap-2"><AddIcon className="size-4 shrink-0" /><UiText>{"새 프로젝트 등록"}</UiText></Link> : null}<Link href="/dashboard" className="button-secondary gap-2"><DocumentIcon className="size-4 shrink-0" /><UiText>{"학생 등록 검토"}</UiText></Link></> : undefined}>
         {canCreateTopics && programs.length === 0 ? <p role="status" className="border-l-2 border-[var(--warning)] bg-[var(--warning-subtle)] p-4 text-sm text-[var(--warning-ink)]"><UiText>{"프로젝트 등록 기간인 공개 프로그램이 생기면 새 프로젝트를 만들 수 있습니다."}</UiText></p> : null}
         <section aria-labelledby="topic-list-title">
-          <div className="overflow-hidden lg:rounded-[var(--radius-panel)] lg:border lg:border-[var(--line)] lg:bg-white lg:shadow-[var(--shadow-admin-panel)]">
+          <div className="overflow-hidden lg:rounded-[var(--radius-panel)] lg:border lg:border-[var(--line)] lg:bg-[var(--surface)] lg:shadow-[var(--shadow-admin-panel)]">
             <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4 lg:bg-[var(--surface-subtle)] lg:px-6 lg:py-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--primary)]"><UiText>{"프로젝트 관리"}</UiText></p>
@@ -63,7 +63,7 @@ export default async function ProfessorTopicsPage({ searchParams }: { searchPara
                 />
               </div>
             ) : (
-              <ul className="divide-y divide-[var(--line)] bg-white">
+              <ul className="divide-y divide-[var(--line)] bg-[var(--surface)]">
                 {topics.items.map((topic) => (
                   <li
                     key={topic.id}

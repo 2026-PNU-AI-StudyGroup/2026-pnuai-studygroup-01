@@ -19,7 +19,7 @@ export function ProjectDeleteForm({ topicId, title }: { topicId: string; title: 
   const ready = confirmedTitle.trim() === title.trim() && reason.trim().length > 0;
 
   return (
-    <section aria-labelledby="project-delete-title" className="rounded-[var(--radius-panel)] border border-[#f0b7b2] bg-[#fff8f7] p-5 sm:p-6">
+    <section aria-labelledby="project-delete-title" className="rounded-[var(--radius-panel)] border border-[var(--danger-border)] bg-[var(--danger-surface)] p-5 sm:p-6">
       <h2 id="project-delete-title" className="text-base font-extrabold tracking-[-0.02em] text-[var(--danger)]">
         <UiText>{"프로젝트 삭제"}</UiText>
       </h2>

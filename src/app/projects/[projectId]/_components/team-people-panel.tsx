@@ -129,7 +129,7 @@ export function TeamPeoplePanel({
         ref={detailDialogRef}
         aria-labelledby={detailTitleId}
         onClose={() => setActiveMember(null)}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-white p-0 text-[var(--ink)] shadow-[0_28px_90px_rgba(31,35,48,.25)] backdrop:bg-[var(--ink)]/45"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_28px_90px_rgba(31,35,48,.25)] backdrop:bg-[var(--ink)]/45"
       >
         {activeMember ? (
           <div className="p-6 sm:p-8">
@@ -386,7 +386,7 @@ function MembershipActionDialog({
       aria-labelledby={titleId}
       onCancel={(event) => { if (pending) event.preventDefault(); }}
       onClose={onClose}
-      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] backdrop:bg-[rgba(23,32,51,.48)]"
+      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] backdrop:bg-[var(--backdrop)]"
     >
       {memberAction && copy ? (
         <form action={action}>

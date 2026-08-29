@@ -55,10 +55,10 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
           setOpen(false);
           triggerRef.current?.focus({ preventScroll: true });
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-white p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[rgba(23,32,51,.48)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.22)] backdrop:bg-[var(--backdrop)]"
       >
         {open ? <AutoRefresh intervalMs={10_000} /> : null}
-        <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-white px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
+        <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 pr-16 sm:px-7 sm:py-6 sm:pr-20">
           <p className="text-xs font-bold text-[var(--primary)]"><UiText>{results.programName}</UiText></p>
           <h2 id="project-vote-results-title" className="mt-1 text-2xl font-bold tracking-[-0.035em]">
             <UiText>{"투표 결과"}</UiText>
@@ -127,7 +127,7 @@ function ViewButton({ selected, onClick, children }: {
       onClick={onClick}
       className={`min-h-9 rounded-lg px-3 text-xs font-bold transition-colors ${
         selected
-          ? "bg-white text-[var(--primary)] shadow-sm"
+          ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm"
           : "text-[var(--muted)] hover:text-[var(--ink)]"
       }`}
     >
@@ -205,9 +205,9 @@ function VoterTable({ voters }: { voters: ProgramVoteResult["voters"] }) {
   return (
     <div>
       <p className="mb-2 text-xs font-bold text-[var(--muted)]"><UiText>{`투표자 ${voters.length}명`}</UiText></p>
-      <div className="overflow-hidden rounded-lg border border-[var(--line)] bg-white">
+      <div className="overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)]">
         <table className="w-full table-fixed text-left text-sm">
-          <thead className="border-b border-[var(--line)] bg-white text-xs text-[var(--muted)]">
+          <thead className="border-b border-[var(--line)] bg-[var(--surface)] text-xs text-[var(--muted)]">
             <tr>
               <th scope="col" className="w-1/4 px-3 py-2 font-bold"><UiText>{"이름"}</UiText></th>
               <th scope="col" className="w-1/2 px-3 py-2 font-bold"><UiText>{"이메일"}</UiText></th>

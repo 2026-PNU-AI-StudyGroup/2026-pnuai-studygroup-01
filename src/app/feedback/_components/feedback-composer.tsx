@@ -80,11 +80,11 @@ export function FeedbackComposer() {
       </div>
       <label className="grid gap-2">
         <FieldLabel>{"제목"}</FieldLabel>
-        <UiInput className="form-control bg-white" name="title" type="text" maxLength={FEEDBACK_LIMITS.title} placeholder="제목을 입력하세요" required />
+        <UiInput className="form-control bg-[var(--surface)]" name="title" type="text" maxLength={FEEDBACK_LIMITS.title} placeholder="제목을 입력하세요" required />
       </label>
       <label className="grid gap-2">
         <FieldLabel>{"내용 (마크다운 지원)"}</FieldLabel>
-        <UiTextarea className="form-control min-h-44 bg-white leading-7" name="body" maxLength={FEEDBACK_LIMITS.body} placeholder="무엇을 개선하면 좋을지 자유롭게 적어 주세요. 마크다운을 사용할 수 있습니다." required />
+        <UiTextarea className="form-control min-h-44 bg-[var(--surface)] leading-7" name="body" maxLength={FEEDBACK_LIMITS.body} placeholder="무엇을 개선하면 좋을지 자유롭게 적어 주세요. 마크다운을 사용할 수 있습니다." required />
       </label>
 
       {state.message ? (

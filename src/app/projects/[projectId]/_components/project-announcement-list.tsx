@@ -19,7 +19,7 @@ export function ProjectAnnouncementList({
   }
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white">
+    <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
       <ol className="divide-y divide-[var(--line)]">
         {items.map((announcement) => (
           <li key={announcement.id}>

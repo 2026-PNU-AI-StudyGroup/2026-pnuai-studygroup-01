@@ -49,7 +49,7 @@ describe("프로그램 투표 상태 알약", () => {
 
     const status = screen.getByRole("status", { name: "투표 현황" });
     expect(status).toHaveTextContent("투표 가능 1/3");
-    expect(status).toHaveClass("rounded-[var(--radius-control)]", "border", "bg-white");
+    expect(status).toHaveClass("rounded-[var(--radius-control)]", "border", "bg-[var(--surface)]");
   });
 
   it("분과별 투표는 전체 선택 수 대신 분과별 고정 한도를 표시한다", () => {

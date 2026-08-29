@@ -4,10 +4,8 @@
   창은 전부 같은 크기다. 크기가 제각각이면 겹쳤을 때 어긋난 모서리가 들쭉날쭉해
   카드 무더기로 안 보이고 그냥 어질러진 것으로 보인다. 본문이 길면 창 안에서 굴린다.
 
-  판은 화면 어디에 놓이든 흰색이다. 어두운 첫 화면 위에서는 그대로 대비가 되고,
-  로그인 후 밝은 화면에서는 본문 카드와 같은 결로 얹힌다. 꾸미지 않는다.
-  그러데이션도, 유리 흐림도, 색색의 강조도 없다. 서비스 카드와 같은 모서리와
-  같은 그림자를 쓴다.
+  판은 본문 카드와 같은 결로 얹힌다. 꾸미지 않는다. 그러데이션도, 유리 흐림도,
+  색색의 강조도 없다. 서비스 카드와 같은 모서리와 같은 그림자를 쓴다.
 */
 
 .stack {
@@ -23,6 +21,29 @@
   /* 창 크기를 맞춰 두면 뒷장이 앞장 뒤로 정확히 숨는다. */
   width: min(calc(var(--width) + var(--reserve)), calc(100vw - 2rem));
   height: min(calc(var(--height) + var(--reserve)), calc(100dvh - 3rem));
+}
+
+/*
+  로그인 전 첫 화면은 밝기 설정과 상관없이 늘 어둡다. 그 위에 얹는 창까지 어두워지면
+  바탕과 붙어 안 읽히므로 이 판만 밝은 쪽으로 못 박는다.
+
+  color-scheme 만 바꿔서는 안 된다. 토큰은 :root 에서 이미 한쪽 값으로 굳은 뒤
+  내려오기 때문에 여기서 밝기를 뒤집어도 값이 따라오지 않는다. 쓰는 토큰만 다시 적는다.
+  값은 globals.css 의 light-dark() 왼쪽과 같아야 한다.
+*/
+.lightScheme {
+  color-scheme: light;
+  --surface: #ffffff;
+  --surface-subtle: #f1f3f7;
+  --ink: #191c22;
+  --muted: #5b616e;
+  --line: #e7e9ef;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --warning: #b45309;
+  --warning-ink: #92400e;
+  --warning-subtle: #fdf2e1;
+  --shadow-tint-float: rgb(16 24 40 / 0.16);
 }
 
 /* 로그인 전 첫 화면. 구석에 비켜 두고 본문을 가리지 않는다. */
@@ -97,7 +118,7 @@
   /* 어두운 첫 화면 위에서는 흰 테두리가, 밝은 화면 위에서는 회색 선이 경계를 만든다.
      둘 다 살도록 바깥에 흰 선을 한 겹 두르고 그 밖에 부드러운 그림자를 깐다. */
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.55),
+    0 0 0 1px light-dark(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.1)),
     var(--shadow-float);
 }
 
@@ -140,12 +161,12 @@
 
 /* 급한 소식 하나만 색을 쓴다. 창마다 색이 다르면 그것부터 눈에 들어온다. */
 .warning {
-  background: #fff8ec;
-  border-bottom-color: #f2dcb4;
+  background: var(--warning-subtle);
+  border-bottom-color: color-mix(in srgb, var(--warning) 35%, transparent);
 }
 
 .warning .badge {
-  color: #a4650b;
+  color: var(--warning-ink);
 }
 
 .close {
@@ -205,7 +226,7 @@
 .rowLabel {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #868d9c;
+  color: var(--muted);
 }
 
 .rowValue {

@@ -15,7 +15,7 @@ export function StudentTeamLedger({ teams, actorId }: {
         const isLeader = team.leaderId === actorId;
         return (
           <li key={team.id}>
-            <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition-[border-color,box-shadow] duration-200 hover:border-[#aabced] hover:shadow-[0_16px_34px_rgb(35_71_184_/_0.08)]">
+            <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--line-strong)] hover:shadow-[0_16px_34px_rgb(35_71_184_/_0.08)]">
               <div className="px-5 pb-5 pt-6 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-3.5">

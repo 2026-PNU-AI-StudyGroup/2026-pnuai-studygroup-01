@@ -14,8 +14,8 @@ const historyStatus = {
 } as const;
 
 const posterTheme = {
-  background: "bg-[#e8efff]",
-  accent: "text-[#315fd8]",
+  background: "bg-[var(--accent-subtle)]",
+  accent: "text-[var(--accent-ink)]",
 } as const;
 
 function CapacityIcon() {
@@ -35,7 +35,7 @@ function RecruitmentCard({ post, actorId, contactOptions }: {
   const isMine = post.authorId === actorId;
   return (
     <li>
-      <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-white transition duration-200 hover:border-[#c8d2e5]">
+      <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] transition duration-200 hover:border-[var(--line-strong)]">
         <div className={`border-b border-[var(--line)] px-5 py-4 sm:px-6 ${isMine ? "bg-[var(--surface-subtle)]" : posterTheme.background}`}>
           <div className="flex items-start justify-between gap-4">
             <p className={`text-sm font-bold ${isMine ? "text-[var(--muted)]" : posterTheme.accent}`}>{post.teamName}</p>
