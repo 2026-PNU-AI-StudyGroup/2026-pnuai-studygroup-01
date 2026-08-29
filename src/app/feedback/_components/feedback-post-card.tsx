@@ -79,7 +79,8 @@ export function FeedbackPostCard({ post, canModerate = false }: { post: Feedback
         </p>
       </div>
 
-      <LocalizedMarkdown text={post.body} className="text-[0.95rem] text-[var(--ink)]" />
+      {/* 로그인 없이 누구나 쓰는 글이라 바깥 이미지를 렌더하지 않는다. */}
+      <LocalizedMarkdown text={post.body} className="text-[0.95rem] text-[var(--ink)]" allowExternalImages={false} />
 
       {resolved && post.resolvedAt ? (
         <p className="rounded-[var(--radius-control)] bg-[var(--success-subtle)] px-3 py-2 text-xs font-semibold text-[var(--success)]">

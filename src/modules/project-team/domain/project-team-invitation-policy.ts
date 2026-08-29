@@ -10,6 +10,7 @@ export type ProjectTeamInvitationViolation =
   | "NOT_INSTITUTION_EMAIL"
   | "NOT_STUDENT"
   | "ALREADY_MEMBER"
+  | "ALREADY_IN_PROGRAM_TEAM"
   | "CAPACITY_REACHED";
 
 /**
@@ -59,12 +60,15 @@ export function checkProjectTeamInvitation(input: {
   inviteeAlreadyMember: boolean;
   /** 초대할 사람의 계정. 아직 계정이 없는 주소면 null. */
   invitee: { role: string; accountStatus: string } | null;
+  /** 같은 프로그램의 다른 프로젝트 팀에 이미 속해 있는지. 한 프로그램에 한 팀만 허용한다. */
+  inviteeInOtherProgramTeam: boolean;
 }): ProjectTeamInvitationViolation | null {
   if (!canInviteProjectTeamMember(input.access)) return "FORBIDDEN";
   if (input.programEndsAt <= input.now) return "PROGRAM_CLOSED";
   if (!isInstitutionEmail(input.email)) return "NOT_INSTITUTION_EMAIL";
   if (!canJoinProjectTeam(input.invitee)) return "NOT_STUDENT";
   if (input.inviteeAlreadyMember) return "ALREADY_MEMBER";
+  if (input.inviteeInOtherProgramTeam) return "ALREADY_IN_PROGRAM_TEAM";
   if (input.memberCount + input.pendingInvitationCount >= input.teamMaxSize) return "CAPACITY_REACHED";
   return null;
 }

@@ -20,6 +20,7 @@ const base = {
   teamMaxSize: 5,
   inviteeAlreadyMember: false,
   invitee: { role: "STUDENT", accountStatus: "ACTIVE" },
+  inviteeInOtherProgramTeam: false,
 };
 
 describe("canInviteProjectTeamMember", () => {
@@ -87,6 +88,12 @@ describe("checkProjectTeamInvitation", () => {
 
   it("이미 팀원이면 부를 수 없다", () => {
     expect(checkProjectTeamInvitation({ ...base, inviteeAlreadyMember: true })).toBe("ALREADY_MEMBER");
+  });
+
+  it("같은 프로그램의 다른 팀에 속한 학생은 부를 수 없다", () => {
+    // 예전 검사는 이 팀 안 중복만 봐서 한 학생이 같은 프로그램의 팀 두 곳에 들어갔다.
+    expect(checkProjectTeamInvitation({ ...base, inviteeInOtherProgramTeam: true }))
+      .toBe("ALREADY_IN_PROGRAM_TEAM");
   });
 
   it("아직 답을 안 한 초대까지 세어 상한을 지킨다", () => {

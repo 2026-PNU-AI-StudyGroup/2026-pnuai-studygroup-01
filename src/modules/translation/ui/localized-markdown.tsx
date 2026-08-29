@@ -6,7 +6,12 @@ import { useI18n } from "@/shared/i18n/i18n-provider";
 import { UiButton } from "@/shared/i18n/localized-elements";
 import { renderMarkdown } from "@/shared/ui/render-markdown";
 
-export function LocalizedMarkdown({ text, className = "" }: { text: string; className?: string }) {
+export function LocalizedMarkdown({ text, className = "", allowExternalImages = true }: {
+  text: string;
+  className?: string;
+  /** 누구나 쓸 수 있는 글에는 false 를 넘긴다. 바깥 이미지가 열람자 추적 통로가 된다. */
+  allowExternalImages?: boolean;
+}) {
   const { locale, t } = useI18n();
   const [showOriginal, setShowOriginal] = useState(false);
   const translation = t(text);
@@ -32,7 +37,7 @@ export function LocalizedMarkdown({ text, className = "" }: { text: string; clas
           </svg>
         </UiButton>
       ) : null}
-      {renderMarkdown(content)}
+      {renderMarkdown(content, { allowExternalImages })}
     </div>
   );
 }

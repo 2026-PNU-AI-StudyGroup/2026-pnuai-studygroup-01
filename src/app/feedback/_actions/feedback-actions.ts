@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
+
+import {
+  checkFeedbackRateLimit,
+  feedbackClientKey,
+} from "@/app/feedback/_lib/feedback-rate-limit";
 
 import {
   FEEDBACK_AREAS,
@@ -17,11 +23,14 @@ import {
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
-const name = z.string().trim().min(1).max(FEEDBACK_LIMITS.name);
 const idSchema = z.string().uuid();
 
+// 글쓴이 이름은 받지 않는다. 자유 입력이라 아무나 교수 이름을 적어 사칭할 수 있었고,
+// 로그인 없이 열린 게시판에서 실명이 그대로 공개됐다. 새 글은 익명으로만 남는다.
+// (이미 등록된 글의 이름은 사용자가 직접 적어 넣은 값이라 건드리지 않는다.)
+const ANONYMOUS_AUTHOR = "익명";
+
 const postSchema = z.object({
-  authorName: name,
   targetScreen: z.enum(TARGET_SCREEN_VALUES as [string, ...string[]]),
   area: z.enum(FEEDBACK_AREAS as unknown as [string, ...string[]]),
   type: z.enum(FEEDBACK_TYPE_VALUES as [string, ...string[]]),
@@ -41,8 +50,15 @@ export async function createFeedbackPostAction(
   _previous: FeedbackActionState,
   formData: FormData,
 ): Promise<FeedbackActionState> {
+  const client = feedbackClientKey(await headers());
+  const rate = checkFeedbackRateLimit(client);
+  if (!rate.allowed) {
+    return {
+      status: "error",
+      message: `등록이 너무 잦습니다. ${rate.retryAfterSeconds}초 뒤에 다시 시도해 주세요.`,
+    };
+  }
   const parsed = postSchema.safeParse({
-    authorName: formData.get("authorName"),
     targetScreen: formData.get("targetScreen"),
     area: formData.get("area"),
     type: formData.get("type"),
@@ -51,12 +67,13 @@ export async function createFeedbackPostAction(
     body: formData.get("body"),
   });
   if (!parsed.success) {
-    return { status: "error", message: "이름·대상 화면·유형·우선순위·제목·내용을 모두 확인해 주세요." };
+    return { status: "error", message: "대상 화면·유형·우선순위·제목·내용을 모두 확인해 주세요." };
   }
 
   await prisma.feedbackPost.create({
     data: {
       ...parsed.data,
+      authorName: ANONYMOUS_AUTHOR,
       targetScreen: parsed.data.targetScreen as TargetScreenValue,
       type: parsed.data.type as FeedbackTypeValue,
       priority: parsed.data.priority as FeedbackPriorityValue,
