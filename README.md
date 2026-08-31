@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/brand/pusan-national-university.png" width="88" alt="부산대학교 심볼" />
+  <img src="public/brand/ai-convergence-education-institute.png" width="320" alt="부산대학교 AI융합교육원" />
   <h1>PNU AIPMS</h1>
   <p>
     프로그램 개설부터 주제 탐색, 팀 활동, 보고서 승인과 결과물 아카이브까지<br />
