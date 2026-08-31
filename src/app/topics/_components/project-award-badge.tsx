@@ -21,7 +21,21 @@ const AWARD_TONE: Array<[RegExp, string]> = [
 
 const FALLBACK_TONE = "border-white/25 bg-[rgba(31,35,48,.88)] text-white";
 
+/*
+  한 팀이 상을 둘 받는 일이 있다. 인기상은 표로 정해지는 상이라 등수 상과 겹쳐서 받는다.
+  그런데 수상 내역은 한 칸짜리 문자열이고, 옮겨 온 자료도 import-opus-archive 가
+  "대상 · 인기상" 처럼 이어 붙여 넣는다. 통째로 한 알약에 담으면 두 번째 상이 묻힌다.
+  가운뎃점이나 쉼표로 끊어 낱개로 그린다. 상마다 제 색을 받는다.
+*/
+const AWARD_SEPARATOR = /\s*[·,]\s*/;
+
 export function ProjectAwardBadge({ award }: { award: string }) {
+  const awards = award.split(AWARD_SEPARATOR).map((name) => name.trim()).filter(Boolean);
+  if (awards.length === 0) return null;
+  return <>{awards.map((name) => <AwardPill key={name} award={name} />)}</>;
+}
+
+function AwardPill({ award }: { award: string }) {
   const tone = AWARD_TONE.find(([pattern]) => pattern.test(award))?.[1] ?? FALLBACK_TONE;
   return (
     <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold tracking-[-0.01em] backdrop-blur-sm ${tone}`}>
