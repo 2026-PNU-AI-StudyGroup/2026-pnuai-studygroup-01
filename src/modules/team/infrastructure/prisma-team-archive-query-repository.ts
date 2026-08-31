@@ -5,6 +5,10 @@ import type {
   ArchiveFilters,
 } from "@/modules/team/application/archive-projects";
 import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
+import {
+  canShowPopularAward,
+  pickPopularAwardTopicIds,
+} from "@/modules/project-voting/domain/project-voting-policy";
 
 const archivedProjectSelect = {
   id: true,
@@ -122,7 +126,56 @@ export class PrismaTeamArchiveQueryRepository
       take: input.limit,
       select: archivedProjectSelect,
     });
-    return teams.map((team) => toArchivedProject(team, this.audience));
+    const popular = await this.popularAwardTopicIds(teams);
+    return teams.map((team) => toArchivedProject(team, this.audience, popular));
+  }
+
+  /**
+   * 인기상을 받는 주제를 프로그램별로 골라 둔다.
+   *
+   * 수상 내역에 적힌 값이 아니라 표에서 뽑는다. 손으로 넣어 두면 표가 바뀔 때마다 따라
+   * 고쳐야 하고, 그 일이 곧 3차 피드백에서 지적받은 "부수적인 업무"가 된다.
+   *
+   * 이 시스템에서 투표를 돌린 프로그램만 본다. 옮겨 온 지난 대회는 투표 설정이 없어
+   * 순위를 만들어 낼 근거가 없고, 없던 상을 새로 붙이게 된다.
+   */
+  private async popularAwardTopicIds(teams: ArchivedProjectRow[]): Promise<Set<string>> {
+    const programIds = [...new Set(teams.map((team) => team.project.program.id))];
+    if (programIds.length === 0) return new Set();
+
+    const now = new Date();
+    const policies = await this.client.programVotingPolicy.findMany({
+      where: { programId: { in: programIds } },
+      select: {
+        programId: true,
+        startsAt: true,
+        endsAt: true,
+        voteLimit: true,
+        selfVotingAllowed: true,
+        resultsVisibleDuringVoting: true,
+        resultsVisibleAfterVoting: true,
+      },
+    });
+    const openPrograms = policies.filter((policy) => canShowPopularAward(policy, now)).map(({ programId }) => programId);
+    if (openPrograms.length === 0) return new Set();
+
+    const tallies = await this.client.projectVote.groupBy({
+      by: ["programId", "topicId"],
+      where: { programId: { in: openPrograms } },
+      _count: { _all: true },
+    });
+    const byProgram = new Map<string, { topicId: string; votes: number }[]>();
+    for (const row of tallies) {
+      const entries = byProgram.get(row.programId) ?? [];
+      entries.push({ topicId: row.topicId, votes: row._count._all });
+      byProgram.set(row.programId, entries);
+    }
+
+    const picked = new Set<string>();
+    for (const entries of byProgram.values()) {
+      for (const topicId of pickPopularAwardTopicIds(entries)) picked.add(topicId);
+    }
+    return picked;
   }
 
   async findClosed(id: string): Promise<ArchivedProject | null> {
@@ -134,12 +187,17 @@ export class PrismaTeamArchiveQueryRepository
       },
       select: archivedProjectSelect,
     });
-    return team ? toArchivedProject(team, this.audience) : null;
+    if (!team) return null;
+    return toArchivedProject(team, this.audience, await this.popularAwardTopicIds([team]));
   }
 
 }
 
-function toArchivedProject(team: ArchivedProjectRow, audience: "STUDENT" | "FACULTY" | "ADMIN"): ArchivedProject {
+function toArchivedProject(
+  team: ArchivedProjectRow,
+  audience: "STUDENT" | "FACULTY" | "ADMIN",
+  popularAwardTopicIds: Set<string>,
+): ArchivedProject {
   return {
     id: team.project.id,
     topicId: team.project.id,
@@ -165,6 +223,8 @@ function toArchivedProject(team: ArchivedProjectRow, audience: "STUDENT" | "FACU
     posterPath: team.project.posterPath ?? undefined,
     showcaseIntro: team.showcaseIntro ?? undefined,
     award: team.award ?? undefined,
+    // 손으로 이미 적어 둔 팀에는 겹쳐 붙이지 않는다. 같은 상이 두 번 뜬다.
+    popularAward: popularAwardTopicIds.has(team.project.id) && !(team.award ?? "").includes("인기상"),
     archivedVoteCount: canSeeVoteCount(team.project.program.votingPolicy, audience)
       ? team.archivedVoteCount ?? undefined
       : undefined,

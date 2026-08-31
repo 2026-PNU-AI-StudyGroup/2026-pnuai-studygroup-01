@@ -21,6 +21,11 @@ export type ArchivedProject = {
   posterPath?: string;
   showcaseIntro?: string;
   award?: string;
+  /**
+   * 인기상은 심사가 아니라 표로 정해진다. 그래서 수상 내역에 적어 두지 않고 득표에서 뽑는다.
+   * 투표가 끝나고 결과를 공개하는 프로그램에서만 참이 된다.
+   */
+  popularAward?: boolean;
   // 관리자에게만 채워 준다. 학생·교원은 정확한 득표수를 보지 않는다.
   archivedVoteCount?: number;
   artifacts: Array<{
