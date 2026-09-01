@@ -4,6 +4,7 @@ export const programManagementTabs = [
   "schedule",
   "votes",
   "rubric",
+  "results",
   "reports",
   "advisors",
 ] as const;
