@@ -113,6 +113,7 @@ describe("프로젝트 투표 결과 모달", () => {
       "분과",
       "팀명",
       "득표수",
+      "득표 그래프",
     ]);
     const projectRows = within(table).getAllByRole("row").slice(1);
     expect(projectRows.map((row) => within(row).getByRole("rowheader").textContent)).toEqual([
