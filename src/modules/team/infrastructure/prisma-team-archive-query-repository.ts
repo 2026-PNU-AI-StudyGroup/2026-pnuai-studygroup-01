@@ -136,8 +136,12 @@ export class PrismaTeamArchiveQueryRepository
    * 수상 내역에 적힌 값이 아니라 표에서 뽑는다. 손으로 넣어 두면 표가 바뀔 때마다 따라
    * 고쳐야 하고, 그 일이 곧 3차 피드백에서 지적받은 "부수적인 업무"가 된다.
    *
-   * 이 시스템에서 투표를 돌린 프로그램만 본다. 옮겨 온 지난 대회는 투표 설정이 없어
-   * 순위를 만들어 낼 근거가 없고, 없던 상을 새로 붙이게 된다.
+   * 투표를 돌린 프로그램은 그 설정을 따른다. 투표가 끝나고 결과를 공개하기로 한 곳에서만
+   * 붙인다. 옮겨 온 지난 대회는 설정이 없는 대신 이미 끝난 행사이고, 여기 오는 프로그램은
+   * 모두 종료된 것들이라 그대로 쓴다.
+   *
+   * 표를 세는 곳이 두 군데다. 이 시스템에서 투표한 대회는 `ProjectVote` 에 한 장씩 남고,
+   * 옮겨 온 대회는 팀에 합계(`archivedVoteCount`)만 적혀 있다. 둘 다 봐야 한다.
    */
   private async popularAwardTopicIds(teams: ArchivedProjectRow[]): Promise<Set<string>> {
     const programIds = [...new Set(teams.map((team) => team.project.program.id))];
@@ -156,24 +160,44 @@ export class PrismaTeamArchiveQueryRepository
         resultsVisibleAfterVoting: true,
       },
     });
-    const openPrograms = policies.filter((policy) => canShowPopularAward(policy, now)).map(({ programId }) => programId);
-    if (openPrograms.length === 0) return new Set();
-
-    const tallies = await this.client.projectVote.groupBy({
-      by: ["programId", "topicId"],
-      where: { programId: { in: openPrograms } },
-      _count: { _all: true },
+    const policyByProgram = new Map(policies.map((policy) => [policy.programId, policy]));
+    const eligible = programIds.filter((programId) => {
+      const policy = policyByProgram.get(programId);
+      return policy ? canShowPopularAward(policy, now) : true;
     });
-    const byProgram = new Map<string, { topicId: string; votes: number }[]>();
-    for (const row of tallies) {
-      const entries = byProgram.get(row.programId) ?? [];
-      entries.push({ topicId: row.topicId, votes: row._count._all });
-      byProgram.set(row.programId, entries);
-    }
+    if (eligible.length === 0) return new Set();
+
+    // 화면에 보이는 팀만이 아니라 프로그램 전체를 세야 순위가 맞는다. 목록은 쪽으로 나뉜다.
+    const [tallies, archived] = await Promise.all([
+      this.client.projectVote.groupBy({
+        by: ["programId", "topicId"],
+        where: { programId: { in: eligible } },
+        _count: { _all: true },
+      }),
+      this.client.projectTeam.findMany({
+        where: {
+          confirmedAt: { not: null },
+          archivedVoteCount: { not: null },
+          project: { programId: { in: eligible } },
+        },
+        select: { archivedVoteCount: true, project: { select: { id: true, programId: true } } },
+      }),
+    ]);
+
+    const byProgram = new Map<string, Map<string, number>>();
+    const put = (programId: string, topicId: string, votes: number) => {
+      const entries = byProgram.get(programId) ?? new Map<string, number>();
+      entries.set(topicId, votes);
+      byProgram.set(programId, entries);
+    };
+    for (const team of archived) put(team.project.programId, team.project.id, team.archivedVoteCount!);
+    // 실제로 들어온 표가 있으면 그쪽이 이긴다. 보관 합계는 옮겨 올 때 한 번 적힌 값이다.
+    for (const row of tallies) put(row.programId, row.topicId, row._count._all);
 
     const picked = new Set<string>();
     for (const entries of byProgram.values()) {
-      for (const topicId of pickPopularAwardTopicIds(entries)) picked.add(topicId);
+      const rows = [...entries].map(([topicId, votes]) => ({ topicId, votes }));
+      for (const topicId of pickPopularAwardTopicIds(rows)) picked.add(topicId);
     }
     return picked;
   }
