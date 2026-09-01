@@ -4,18 +4,9 @@ import { useMemo, useState } from "react";
 
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
 type SortKey = "combined" | "staff" | "advisor" | "vote" | "team";
-
-const SORT_LABEL: Record<SortKey, string> = {
-  combined: "합계",
-  staff: "내부 심사",
-  advisor: "자문 평균",
-  vote: "득표",
-  team: "팀",
-};
 
 export function ProgramScoreboardPanel({ programName, rows }: {
   programName: string;
@@ -35,46 +26,28 @@ export function ProgramScoreboardPanel({ programName, rows }: {
 
   return (
     <div className="grid gap-4">
-      <UiDiv role="group" aria-label={"집계 기준"} className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold text-[var(--muted)]"><UiText>{"줄 세우는 기준"}</UiText></span>
-        <div className="inline-flex flex-wrap rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-1">
-          {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={sortKey === key}
-              onClick={() => setSortKey(key)}
-              className={`min-h-9 rounded-lg px-3 text-xs font-bold transition-colors ${
-                sortKey === key ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--ink)]"
-              }`}
-            >
-              <UiText>{SORT_LABEL[key]}</UiText>
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-xs text-[var(--muted)]"><UiText>{"열 이름을 눌러 줄을 세웁니다. 합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다."}</UiText></p>
         <button type="button" onClick={() => downloadCsv(programName, ranked, advisorColumns)} className="button-secondary ml-auto min-h-9 px-3 text-xs">
           <UiText>{"CSV 내려받기"}</UiText>
         </button>
-      </UiDiv>
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
         <table className="w-full min-w-max border-collapse text-sm">
-          <caption className="px-4 py-3 text-left text-xs text-[var(--muted)]">
-            <UiText>{"합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다. 순위는 고른 기준을 따릅니다."}</UiText>
-          </caption>
           <thead>
-            <tr className="border-y border-[var(--line)] bg-[var(--surface-subtle)] text-left">
+            <tr className="border-b border-[var(--line)] bg-[var(--surface-subtle)] text-left">
               <th scope="col" className="w-12 px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀"}</UiText></th>
+              <SortHeader label="팀" columnKey="team" sortKey={sortKey} onSort={setSortKey} />
               <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
               <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"내부 심사"}</UiText></th>
+              <SortHeader label="내부 심사" columnKey="staff" sortKey={sortKey} onSort={setSortKey} align="right" />
               {advisorColumns.map(([advisorId, advisorName]) => (
                 <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]">{advisorName}</th>
               ))}
-              <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"자문 평균"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"득표"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"합계"}</UiText></th>
+              <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
+              <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
+              <SortHeader label="합계" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
             </tr>
           </thead>
           <tbody>
@@ -105,6 +78,41 @@ export function ProgramScoreboardPanel({ programName, rows }: {
         </table>
       </div>
     </div>
+  );
+}
+
+/**
+ * 줄 세우기는 열 이름 자체가 단추다.
+ *
+ * 따로 기준 고르는 단추 줄을 두었더니 눌러도 표가 그대로인 열(값이 다 비어 있는 열)에서
+ * 아무 일도 안 일어난 것처럼 보였다. 열에 화살표를 붙이면 무엇으로 세웠는지가 표 안에서
+ * 바로 보이고, 엑셀에서 하던 동작과도 같다.
+ */
+function SortHeader({ label, columnKey, sortKey, onSort, align = "left" }: {
+  label: string;
+  columnKey: SortKey;
+  sortKey: SortKey;
+  onSort: (key: SortKey) => void;
+  align?: "left" | "right";
+}) {
+  const active = sortKey === columnKey;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (columnKey === "team" ? "ascending" : "descending") : "none"}
+      className={`px-4 py-3 text-xs font-semibold ${align === "right" ? "text-right" : "text-left"} ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(columnKey)}
+        className={`inline-flex min-h-8 items-center gap-1 font-semibold hover:text-[var(--ink)] ${align === "right" ? "flex-row-reverse" : ""}`}
+      >
+        <UiText>{label}</UiText>
+        <svg aria-hidden="true" viewBox="0 0 12 12" className={`size-3 shrink-0 fill-current ${active ? "" : "opacity-25"}`}>
+          {active && columnKey === "team" ? <path d="M6 2 10 8H2z" /> : <path d="M6 10 2 4h8z" />}
+        </svg>
+      </button>
+    </th>
   );
 }
 

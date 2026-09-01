@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ProgramScoreboardPanel, buildScoreboardCsv, combinedScore, sortRows } from "@/app/topics/_management/program-scoreboard-panel";
@@ -51,6 +51,20 @@ describe("집계표 줄 세우기", () => {
 
     expect(screen.getByRole("columnheader", { name: "순위" })).toBeInTheDocument();
     expect(screen.getByRole("rowheader", { name: /가팀/ })).toBeInTheDocument();
+  });
+
+  it("열 이름을 누르면 그 열로 줄을 세우고 눌린 열을 표시한다", () => {
+    render(<ProgramScoreboardPanel programName="캡스톤" rows={rows} />);
+
+    const teamOrder = () => screen.getAllByRole("rowheader").map((cell) => cell.textContent);
+    expect(teamOrder()).toEqual(["나팀", "가팀", "다팀"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "득표" }));
+
+    expect(teamOrder()).toEqual(["나팀", "다팀", "가팀"]);
+    // 값이 모두 같아 순서가 안 바뀌는 열도 있다. 눌렸다는 표시가 열에 남아야 한다.
+    expect(screen.getByRole("columnheader", { name: "득표" })).toHaveAttribute("aria-sort", "descending");
+    expect(screen.getByRole("columnheader", { name: "합계" })).toHaveAttribute("aria-sort", "none");
   });
 
   it("CSV 는 엑셀이 읽도록 BOM 을 앞에 두고 쉼표가 든 값을 감싼다", () => {
