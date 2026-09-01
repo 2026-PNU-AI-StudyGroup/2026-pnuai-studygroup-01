@@ -68,6 +68,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
               <>
                 <ProjectGalleryStatusBadge label="완료" tone="neutral" />
                 {project.award ? <ProjectAwardBadge award={project.award} /> : null}
+                {project.popularAward ? <ProjectAwardBadge award="인기상" /> : null}
               </>
             )}
             coverOverlay={(() => {

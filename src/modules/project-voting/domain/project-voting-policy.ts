@@ -14,6 +14,36 @@ export function canViewPublicVotingResults(policy: ProgramVotingPolicyDetails, n
   return phase === "OPEN" ? policy.resultsVisibleDuringVoting : policy.resultsVisibleAfterVoting;
 }
 
+/** 인기상을 받는 팀 수. 심사로 정해지는 상과 달리 표만으로 갈린다. */
+export const POPULAR_AWARD_TEAM_COUNT = 2;
+
+/**
+ * 인기상을 드러내도 되는 때인지.
+ *
+ * 투표가 끝나고 결과를 공개하기로 한 프로그램에서만 보인다. 진행 중에 순위를 보여 주면
+ * 뒤처진 팀이 표를 몰아 달라고 움직이게 되고, 그 순간 인기 투표가 아니라 동원 경쟁이 된다.
+ * 진행 중 득표 공개(resultsVisibleDuringVoting)를 켜 두었더라도 상 이름은 끝난 뒤에 붙인다.
+ */
+export function canShowPopularAward(policy: ProgramVotingPolicyDetails, now: Date): boolean {
+  return getProgramVotingPhase(policy, now) === "CLOSED" && policy.resultsVisibleAfterVoting;
+}
+
+/**
+ * 득표 상위 팀을 고른다.
+ *
+ * 경계에서 표가 같으면 모두 넣는다. 같은 표를 받았는데 정원에 걸린다는 이유로 하나만
+ * 자르면 상을 임의로 뺏는 셈이다. 한 표도 못 받은 팀은 넣지 않는다.
+ */
+export function pickPopularAwardTopicIds(
+  entries: ReadonlyArray<{ topicId: string; votes: number }>,
+  limit: number = POPULAR_AWARD_TEAM_COUNT,
+): Set<string> {
+  const ranked = entries.filter(({ votes }) => votes > 0).sort((left, right) => right.votes - left.votes);
+  if (ranked.length === 0 || limit <= 0) return new Set();
+  const cutoff = ranked[Math.min(limit, ranked.length) - 1]!.votes;
+  return new Set(ranked.filter(({ votes }) => votes >= cutoff).map(({ topicId }) => topicId));
+}
+
 // 이 사람이 이 프로젝트의 당사자인지. 당사자면 selfVotingAllowed 가 꺼진 프로그램에서 투표할 수 없다.
 //
 // managerId 를 무조건 당사자로 보면 안 된다. 학생이 등록한 프로젝트를 관리자 경로로 승인하면
