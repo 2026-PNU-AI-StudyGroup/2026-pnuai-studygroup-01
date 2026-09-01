@@ -2370,5 +2370,19 @@
   "어둡게": "Dark",
   "소스와 문서": "Source and docs",
   "README 보러 가기": "Open the README",
-  "인기상": "Popularity award"
+  "인기상": "Popularity award",
+  "득표": "Votes",
+  "득표 그래프": "Vote chart",
+  "집계": "Tally",
+  "심사 집계": "Judging tally",
+  "내부 채점표·자문위원 점수·득표를 한 표로 모읍니다. 순위를 매기는 값은 심사가 정합니다.": "Gathers internal scorecards, advisor scores, and votes into one table. The judges decide which value sets the ranking.",
+  "합계": "Total",
+  "내부 심사": "Internal judging",
+  "자문 평균": "Advisor average",
+  "팀이 확정되면 집계표가 채워집니다.": "The tally fills in once teams are confirmed.",
+  "CSV 내려받기": "Download CSV",
+  "순위": "Rank",
+  "채점자": "Scored by",
+  "{0}-집계표.csv": "{0}-tally.csv",
+  "열 이름을 눌러 줄을 세웁니다. 합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다.": "Press a column name to order the table. The total adds the advisor average to the internal judging total."
 }

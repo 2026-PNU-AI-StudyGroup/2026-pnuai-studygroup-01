@@ -24,11 +24,13 @@ import { ProgramApprovalLink } from "@/app/topics/_components/program-approval-l
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
 import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
+import { programScoreboard } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
+import { ProgramScoreboardPanel } from "@/app/topics/_management/program-scoreboard-panel";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiLink, UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
-import { AccountIcon } from "@/shared/ui/workspace-icons";
+import { AccountIcon, BarChartIcon } from "@/shared/ui/workspace-icons";
 
 const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
   { key: "settings", label: "기본 정보" },
@@ -36,13 +38,15 @@ const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
   { key: "schedule", label: "일정" },
   { key: "votes", label: "투표" },
   { key: "rubric", label: "채점표" },
+  { key: "results", label: "집계" },
   { key: "reports", label: "보고서" },
   { key: "advisors", label: "자문위원" },
 ];
 
 function ManagementTabIcon({ tab }: { tab: ProgramManagementTab }) {
   if (tab === "advisors") return <AccountIcon />;
-  const section: Record<Exclude<ProgramManagementTab, "advisors">, ProgramSectionNavIconName> = {
+  if (tab === "results") return <BarChartIcon />;
+  const section: Record<Exclude<ProgramManagementTab, "advisors" | "results">, ProgramSectionNavIconName> = {
     settings: "basic",
     operation: "operation",
     schedule: "schedule",
@@ -172,6 +176,9 @@ export async function ProgramManagementWorkspace({
     const divisions: RubricDivisionRow[] = divisionRecords;
     const rubrics: RubricRow[] = rubricRecords.map(({ evaluations, advisorEvaluations, ...rubric }) => ({ ...rubric, scoreCount: evaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) + advisorEvaluations.reduce((sum, evaluation) => sum + evaluation._count.scores, 0) }));
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"채점표"}</UiText></h2></header><RubricManager programId={program.id} divisions={divisions} rubrics={rubrics} /></section></div>;
+  } else if (tab === "results") {
+    const scoreboard = await programScoreboard(prisma, program.id);
+    content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"심사 집계"}</UiText></h2><p><UiText>{"내부 채점표·자문위원 점수·득표를 한 표로 모읍니다. 순위를 매기는 값은 심사가 정합니다."}</UiText></p></header><ProgramScoreboardPanel programName={program.name} rows={scoreboard} /></section></div>;
   } else if (tab === "reports") {
     const [records, teamRecords] = await Promise.all([
       prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } }),

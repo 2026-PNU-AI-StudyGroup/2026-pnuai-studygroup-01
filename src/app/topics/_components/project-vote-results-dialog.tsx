@@ -25,6 +25,7 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
   // 열려 있는 동안만 서버 데이터를 다시 읽는다. 닫아 두고 계속 조회하면 낭비다.
   const [open, setOpen] = useState(false);
   const sortedResults = sortByVotes(results.results);
+  const maxVotes = results.results.reduce((most, result) => Math.max(most, result.voteCount), 0);
   const divisionGroups = groupByDivision(results.results);
   const votersByTopic = resultsView.mode === "ADMIN"
     ? new Map(resultsView.results.results.map((result) => [result.topicId, result.voters]))
@@ -90,20 +91,21 @@ export function ProjectVoteResultsDialog({ view: resultsView, triggerLabel = "�
             <EmptyState variant="section" title="투표 후보 프로젝트가 없습니다" description="공개된 후보 프로젝트가 생기면 이곳에 표시됩니다." />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-[var(--line)]">
-              <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
+              <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
                 <thead className="bg-[var(--surface-subtle)] text-xs text-[var(--muted)]">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-bold"><UiText>{"프로젝트명"}</UiText></th>
                     <th scope="col" className="px-4 py-3 font-bold"><UiText>{"분과"}</UiText></th>
                     <th scope="col" className="px-4 py-3 font-bold"><UiText>{"팀명"}</UiText></th>
                     <th scope="col" className="w-24 px-4 py-3 text-right font-bold"><UiText>{"득표수"}</UiText></th>
+                    <th scope="col" className="w-56 px-4 py-3 font-bold"><UiText>{"득표 그래프"}</UiText></th>
                   </tr>
                 </thead>
                 <tbody>
                   {view === "overall"
-                    ? sortedResults.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} />)
+                    ? sortedResults.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} maxVotes={maxVotes} />)
                     : divisionGroups.map((group) => (
-                      <DivisionRows key={group.key} name={group.name} results={group.results} votersByTopic={votersByTopic} />
+                      <DivisionRows key={group.key} name={group.name} results={group.results} votersByTopic={votersByTopic} maxVotes={maxVotes} />
                     ))}
                 </tbody>
               </table>
@@ -136,24 +138,25 @@ function ViewButton({ selected, onClick, children }: {
   );
 }
 
-function DivisionRows({ name, results, votersByTopic }: {
+function DivisionRows({ name, results, votersByTopic, maxVotes }: {
   name: string;
   results: PublicProgramVoteResult[];
   votersByTopic: Map<string, ProgramVoteResult["voters"]> | null;
+  maxVotes: number;
 }) {
   return (
     <>
       <tr className="border-t border-[var(--line)] bg-[var(--primary-subtle)] first:border-t-0">
-        <th colSpan={4} scope="rowgroup" className="px-4 py-2.5 text-xs font-bold text-[var(--primary)]">
+        <th colSpan={5} scope="rowgroup" className="px-4 py-2.5 text-xs font-bold text-[var(--primary)]">
           <UiText>{name === "미분과" ? name : `${name} 분과`}</UiText>
         </th>
       </tr>
-      {results.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} />)}
+      {results.map((result) => <ResultRow key={result.topicId} result={result} voters={votersByTopic?.get(result.topicId)} maxVotes={maxVotes} />)}
     </>
   );
 }
 
-function ResultRow({ result, voters }: { result: PublicProgramVoteResult; voters?: ProgramVoteResult["voters"] }) {
+function ResultRow({ result, voters, maxVotes }: { result: PublicProgramVoteResult; voters?: ProgramVoteResult["voters"]; maxVotes: number }) {
   const [expanded, setExpanded] = useState(false);
   const votersId = useId();
   if (!voters) {
@@ -163,6 +166,7 @@ function ResultRow({ result, voters }: { result: PublicProgramVoteResult; voters
         <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.divisionName ?? "미분과"}</UiText></td>
         <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.teamName ?? "팀 미구성"}</UiText></td>
         <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{result.voteCount}<UiText>{"표"}</UiText></td>
+        <VoteBarCell voteCount={result.voteCount} maxVotes={maxVotes} />
       </tr>
     );
   }
@@ -186,15 +190,28 @@ function ResultRow({ result, voters }: { result: PublicProgramVoteResult; voters
         <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.divisionName ?? "미분과"}</UiText></td>
         <td className="px-4 py-3 text-[var(--muted)]"><UiText>{result.teamName ?? "팀 미구성"}</UiText></td>
         <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{result.voteCount}<UiText>{"표"}</UiText></td>
+        <VoteBarCell voteCount={result.voteCount} maxVotes={maxVotes} />
       </tr>
       {expanded ? (
         <tr id={votersId} className="border-t border-[var(--line)] bg-[var(--surface-subtle)]">
-          <td colSpan={4} className="px-4 py-4">
+          <td colSpan={5} className="px-4 py-4">
             <VoterTable voters={voters} />
           </td>
         </tr>
       ) : null}
     </>
+  );
+}
+
+// 막대 길이는 최다 득표를 기준으로 잡는다. 절대 표 수가 아니라 서로 얼마나 벌어졌는지를 본다.
+function VoteBarCell({ voteCount, maxVotes }: { voteCount: number; maxVotes: number }) {
+  const ratio = maxVotes > 0 ? voteCount / maxVotes : 0;
+  return (
+    <td className="px-4 py-3">
+      <div aria-hidden="true" className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-subtle)]">
+        <div className="h-full rounded-full bg-[var(--primary)] transition-[width] duration-500" style={{ width: `${ratio * 100}%` }} />
+      </div>
+    </td>
   );
 }
 
