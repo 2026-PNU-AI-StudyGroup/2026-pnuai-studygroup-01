@@ -54,6 +54,13 @@ describe("programScoreboard", () => {
     expect(rows.map((row) => row.voteCount)).toEqual([7, 0]);
   });
 
+  it("표를 한 장씩 갖고 있지 않은 지난 대회는 팀에 적힌 합계를 쓴다", async () => {
+    const archived = { ...team, archivedVoteCount: 12 };
+    const [row] = await programScoreboard(clientWith([archived], []), "program-1");
+
+    expect(row.voteCount).toBe(12);
+  });
+
   it("채점이 하나도 없으면 총점과 평균을 0이 아니라 비워 둔다", async () => {
     const blank = { ...team, rubricEvaluations: [], advisorEvaluations: [] };
     const [row] = await programScoreboard(clientWith([blank], []), "program-1");

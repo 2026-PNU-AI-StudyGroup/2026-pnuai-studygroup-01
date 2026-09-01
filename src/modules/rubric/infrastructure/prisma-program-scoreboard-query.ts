@@ -35,6 +35,7 @@ export async function programScoreboard(
       select: {
         id: true,
         name: true,
+        archivedVoteCount: true,
         project: {
           select: {
             id: true,
@@ -91,7 +92,8 @@ export async function programScoreboard(
       advisorAverage: advisorScores.length
         ? advisorScores.reduce((sum, score) => sum + score.total, 0) / advisorScores.length
         : null,
-      voteCount: votesByTopic.get(team.project.id) ?? 0,
+      // 옮겨 온 지난 대회는 표를 한 장씩 갖고 있지 않고 합계만 팀에 적혀 있다.
+      voteCount: votesByTopic.get(team.project.id) ?? team.archivedVoteCount ?? 0,
     };
   });
 }

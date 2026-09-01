@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ProgramScoreboardPanel, combinedScore, sortRows } from "@/app/topics/_management/program-scoreboard-panel";
+import { ProgramScoreboardPanel, buildScoreboardCsv, combinedScore, sortRows } from "@/app/topics/_management/program-scoreboard-panel";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 
 function row(overrides: Partial<ProgramScoreboardRow> & { teamName: string }): ProgramScoreboardRow {
@@ -51,6 +51,14 @@ describe("집계표 줄 세우기", () => {
 
     expect(screen.getByRole("columnheader", { name: "순위" })).toBeInTheDocument();
     expect(screen.getByRole("rowheader", { name: /가팀/ })).toBeInTheDocument();
+  });
+
+  it("CSV 는 엑셀이 읽도록 BOM 을 앞에 두고 쉼표가 든 값을 감싼다", () => {
+    const commaTitle = row({ teamName: "마팀", projectTitle: "AI, 그리고 교육", staffTotal: 70, staffScorerNames: ["김교수"] });
+    const csv = buildScoreboardCsv([commaTitle], [["adv-1", "박위원"]]);
+
+    expect(csv.startsWith("﻿순위,팀,프로젝트,분과,내부 심사,채점자,박위원,자문 평균,득표,합계\r\n")).toBe(true);
+    expect(csv).toContain('1,마팀,"AI, 그리고 교육",미분과,70,김교수,,,0,70.0');
   });
 
   it("팀이 없으면 빈 상태를 알린다", () => {

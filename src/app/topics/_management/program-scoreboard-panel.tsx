@@ -124,7 +124,7 @@ export function sortRows(rows: ProgramScoreboardRow[], key: SortKey): ProgramSco
   return [...rows].sort((left, right) => value(right) - value(left) || byName(left, right));
 }
 
-function downloadCsv(programName: string, rows: ProgramScoreboardRow[], advisorColumns: Array<[string, string]>) {
+export function buildScoreboardCsv(rows: ProgramScoreboardRow[], advisorColumns: Array<[string, string]>): string {
   const header = ["순위", "팀", "프로젝트", "분과", "내부 심사", "채점자", ...advisorColumns.map(([, name]) => name), "자문 평균", "득표", "합계"];
   const lines = rows.map((row, index) => {
     const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score.total]));
@@ -142,8 +142,11 @@ function downloadCsv(programName: string, rows: ProgramScoreboardRow[], advisorC
     ];
   });
   // 엑셀이 UTF-8 로 열도록 BOM 을 앞에 둔다. 없으면 한글이 깨진다.
-  const csv = `﻿${[header, ...lines].map((cells) => cells.map(csvCell).join(",")).join("\r\n")}\r\n`;
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  return `﻿${[header, ...lines].map((cells) => cells.map(csvCell).join(",")).join("\r\n")}\r\n`;
+}
+
+function downloadCsv(programName: string, rows: ProgramScoreboardRow[], advisorColumns: Array<[string, string]>) {
+  const url = URL.createObjectURL(new Blob([buildScoreboardCsv(rows, advisorColumns)], { type: "text/csv;charset=utf-8" }));
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `${programName}-집계표.csv`;
