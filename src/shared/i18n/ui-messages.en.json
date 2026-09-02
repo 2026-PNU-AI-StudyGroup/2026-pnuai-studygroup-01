@@ -2394,5 +2394,7 @@
   "대분류 순서를 바꿨습니다.": "The category order changed.",
   "대분류가 없습니다": "No categories yet",
   "프로그램에 분류를 지정하면 이곳에 나타납니다.": "Categories appear here once programs are assigned to them.",
-  "개 프로그램": " programs"
+  "개 프로그램": " programs",
+  "최근에 가입한 사람이 맨 위에 옵니다.": "The most recently registered people come first.",
+  "마지막 로그인": "Last sign-in"
 }

@@ -9,6 +9,7 @@ type ManagedUser = {
   isActive: boolean;
   accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
   createdAt: Date;
+  lastSignedInAt?: Date;
   activeResponsibilityCount: number;
 };
 

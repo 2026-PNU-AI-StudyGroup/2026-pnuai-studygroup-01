@@ -24,11 +24,23 @@ export class PrismaUserAdministrationRepository implements UserAdministrationRep
     const page = Math.min(requestedPage, totalPages);
     const users = await this.client.user.findMany({
       where,
-      orderBy: [{ accountStatus: "asc" }, { role: "asc" }, { name: "asc" }, { id: "asc" }],
+      // 권한을 주려고 이 목록을 본다. 방금 들어온 사람이 맨 위에 있어야 찾는다.
+      // 가나다순이면 새로 가입한 교수를 이름으로 짚어 내야 해서 쓸모가 없다.
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: { id: true, name: true, email: true, role: true, accountStatus: true, createdAt: true },
     });
+    // 마지막 로그인은 세션에서 뽑는다. 사용자 표에 따로 적어 두는 칸이 없다.
+    // 만료된 세션이 지워지면 값이 사라지므로 없으면 비워 둔다.
+    const lastSignIns = users.length
+      ? await this.client.session.groupBy({
+        by: ["userId"],
+        where: { userId: { in: users.map(({ id }) => id) } },
+        _max: { createdAt: true },
+      })
+      : [];
+    const lastSignInByUserId = new Map(lastSignIns.map((row) => [row.userId, row._max.createdAt]));
     const professorIds = users.filter(({ role }) => role === "PROFESSOR").map(({ id }) => id);
     const activeTopics = professorIds.length
       ? await this.client.topic.findMany({
@@ -52,6 +64,7 @@ export class PrismaUserAdministrationRepository implements UserAdministrationRep
       isActive: user.accountStatus === "ACTIVE",
       accountStatus: user.accountStatus,
       createdAt: user.createdAt,
+      lastSignedInAt: lastSignInByUserId.get(user.id) ?? undefined,
       activeResponsibilityCount: responsibilityIdsByUserId.get(user.id)?.size ?? 0,
     }));
     return { items, page, totalPages, total };
