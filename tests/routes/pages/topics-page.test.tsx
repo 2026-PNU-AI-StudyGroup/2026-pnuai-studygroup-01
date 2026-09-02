@@ -99,6 +99,7 @@ vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
 
 vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", () => ({ PrismaAnnouncementRepository: class {} }));
 vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({ PrismaProjectProgramRepository: class {} }));
+vi.mock("@/modules/project-program/infrastructure/prisma-program-category-order-repository", () => ({ listProgramCategoryOrder: vi.fn(async () => []) }));
 vi.mock("@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository", () => ({
   PrismaStudentTeamRecruitmentQueryRepository: class { listLeaderTeams = vi.fn().mockResolvedValue([]); },
 }));

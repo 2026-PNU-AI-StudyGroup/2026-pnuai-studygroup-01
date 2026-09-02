@@ -241,12 +241,13 @@ function CategoryProgramGroup({
   );
 }
 
-export function ProgramSidebar({ items, selectedId, title = "프로그램", showSettings = false, selectedItemLinkable = false }: {
+export function ProgramSidebar({ items, selectedId, title = "프로그램", showSettings = false, selectedItemLinkable = false, categoryOrder = [] }: {
   items: ProgramSidebarItem[];
   selectedId?: string;
   title?: ReactNode;
   showSettings?: boolean;
   selectedItemLinkable?: boolean;
+  categoryOrder?: string[];
 }) {
   const votingPrograms = items.filter((item) => item.votingEndsAt && item.visibility !== "private");
   const votingProgramCount = votingPrograms.length;
@@ -259,7 +260,7 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
   }, new Map<string, ProgramSidebarItem[]>());
   // 정렬 규칙은 기본 프로그램 선택과 공유한다. 두 곳이 어긋나면
   // 목록 맨 위와 눌렀을 때 열리는 프로그램이 달라진다.
-  const categories = orderProgramSidebarCategories(items);
+  const categories = orderProgramSidebarCategories(items, categoryOrder);
   const categoriesKey = categories.join(":");
   const selectedCategory = items.find((item) => item.id === selectedId)?.category;
   const selectedProgram = items.find((item) => item.id === selectedId);

@@ -37,6 +37,7 @@ vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
     listAdminPendingCountsByProgram = listAdminPendingCountsByProgram;
   },
 }));
+vi.mock("@/modules/project-program/infrastructure/prisma-program-category-order-repository", () => ({ listProgramCategoryOrder: vi.fn(async () => []) }));
 vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({
   PrismaProjectProgramRepository: class {},
 }));

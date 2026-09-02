@@ -200,7 +200,19 @@ export async function renameProgramCategoryAction(formData: FormData): Promise<P
   if (from === to) return { status: "error", message: "새 이름이 기존 이름과 같습니다." };
 
   const merging = await prisma.projectProgram.count({ where: { category: to } });
-  const { count } = await prisma.projectProgram.updateMany({ where: { category: from }, data: { category: to } });
+  // 화면에 세우는 차례는 분류 이름을 열쇠로 쓴다. 이름을 바꾸는 자리가 여기뿐이라
+  // 같은 트랜잭션에서 함께 옮긴다. 따로 두면 이름을 바꾼 순간 차례가 사라진다.
+  const [{ count }] = await prisma.$transaction([
+    prisma.projectProgram.updateMany({ where: { category: from }, data: { category: to } }),
+    ...(merging > 0
+      // 합칠 때는 받는 쪽 차례를 그대로 두고 넘어오는 쪽 행만 버린다.
+      ? [prisma.programCategoryOrder.deleteMany({ where: { name: from } })]
+      // 이름만 바꿀 때도 받는 쪽 이름의 행이 남아 있을 수 있다. 이름이 기본키라 먼저 비운다.
+      : [
+        prisma.programCategoryOrder.deleteMany({ where: { name: to } }),
+        prisma.programCategoryOrder.updateMany({ where: { name: from }, data: { name: to } }),
+      ]),
+  ]);
   if (count === 0) return { status: "error", message: "이미 사라진 분류입니다. 화면을 새로 고쳐 주세요." };
 
   revalidatePath("/topics");

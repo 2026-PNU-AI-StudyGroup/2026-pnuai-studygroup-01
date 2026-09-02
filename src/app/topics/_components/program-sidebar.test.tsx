@@ -29,15 +29,18 @@ const items = [{
   href: "/topics?view=past&programId=capstone-2025",
 }];
 
+// 대분류 차례는 운영자가 정한다. 시험도 정해진 차례를 넘겨 눈에 보이는 순서를 못 박는다.
+const categoryOrder = ["PNU 창의융합해커톤", "캡스톤"];
+
 describe("ProgramSidebar", () => {
   it("프로그램을 대분류별 접이식 목록으로 묶고 분류 안에서 연도별로 정리한다", () => {
-    const { container } = render(<ProgramSidebar items={items} />);
+    const { container } = render(<ProgramSidebar items={items} categoryOrder={categoryOrder} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     // 대분류가 최상위 그룹 헤더로 노출된다.
     expect(within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" })).toBeInTheDocument();
     expect(within(navigation).getByRole("button", { name: "캡스톤" })).toBeInTheDocument();
-    // 첫 대분류(최근 연도 보유)가 열려 있고 그 안에 프로그램이 최신순으로 보인다.
+    // 운영자가 첫째로 둔 대분류가 열려 있고 그 안에 프로그램이 최신순으로 보인다.
     const openGroup = within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" });
     expect(openGroup).toHaveAttribute("aria-expanded", "true");
     expect(within(navigation).getByText("창의융합 해커톤 2026")).toBeInTheDocument();
@@ -46,9 +49,9 @@ describe("ProgramSidebar", () => {
     expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
   });
 
-  it("투표 중인 분류를 맨 위로 올린다", () => {
-    // 관리자가 들어오자마자 지금 손볼 분류가 보여야 한다.
-    render(<ProgramSidebar items={[
+  it("운영자가 정한 차례를 그대로 따른다", () => {
+    // 투표 중이라고 저절로 올라오지 않는다. 목록 맨 위는 운영자가 정한다.
+    render(<ProgramSidebar categoryOrder={["캡스톤", "해커톤"]} items={[
       { id: "p-1", name: "캡스톤 2026", category: "캡스톤", icon: "FOLDER", startYear: 2026, status: "active", href: "/topics?programId=p-1" },
       { id: "p-2", name: "제7회 해커톤", category: "해커톤", icon: "FOLDER", startYear: 2026, status: "active", href: "/topics?programId=p-2", votingEndsAt: new Date("2026-08-28T16:00:00Z") },
     ]} />);
@@ -56,8 +59,8 @@ describe("ProgramSidebar", () => {
     const headers = screen.getAllByRole("button").map((button) => button.textContent ?? "");
     const hackathonIndex = headers.findIndex((text) => text.includes("해커톤"));
     const capstoneIndex = headers.findIndex((text) => text.includes("캡스톤"));
-    expect(hackathonIndex).toBeGreaterThanOrEqual(0);
-    expect(hackathonIndex).toBeLessThan(capstoneIndex);
+    expect(capstoneIndex).toBeGreaterThanOrEqual(0);
+    expect(capstoneIndex).toBeLessThan(hackathonIndex);
   });
 
   it("선택된 프로그램의 대분류를 펼치고 링크 선택 상태를 표시한다", () => {
@@ -151,7 +154,7 @@ describe("ProgramSidebar", () => {
   });
 
   it("다른 대분류를 열 때 기존 대분류를 닫고 링크를 키보드 탐색에서 제외한다", () => {
-    render(<ProgramSidebar items={items} />);
+    render(<ProgramSidebar items={items} categoryOrder={categoryOrder} />);
     const navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
 
     const hackathon = within(navigation).getByRole("button", { name: "PNU 창의융합해커톤" });
@@ -172,13 +175,14 @@ describe("ProgramSidebar", () => {
   });
 
   it("현재 열린 대분류가 새 items 집합에서 사라지면 첫 새 대분류를 연다", () => {
-    const { rerender } = render(<ProgramSidebar items={items} />);
+    const { rerender } = render(<ProgramSidebar items={items} categoryOrder={categoryOrder} />);
     let navigation = screen.getByRole("navigation", { name: "프로그램 선택" });
     fireEvent.click(within(navigation).getByRole("button", { name: "캡스톤" }));
     expect(within(navigation).getByRole("button", { name: "캡스톤" })).toHaveAttribute("aria-expanded", "true");
 
     rerender(
       <ProgramSidebar
+        categoryOrder={categoryOrder}
         items={[
           { ...items[0], id: "contest-2024", name: "AI 경진대회 2024", category: "AI 경진대회", startYear: 2024 },
         ]}
