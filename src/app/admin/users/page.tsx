@@ -126,6 +126,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
         <AdminSection
           id="user-list-title"
           title="가입 사용자"
+          description="최근에 가입한 사람이 맨 위에 옵니다."
           meta={<><UiText>{"총"}</UiText>{" "}{data.total}<UiText>{"명"}</UiText></>}
         >
           {data.items.length === 0 ? (
@@ -146,10 +147,18 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                     {user.isActive ? null : <StatusBadge tone="danger"><UiText>{"비활성"}</UiText></StatusBadge>}
                   </div>
                   <p className="muted min-w-0 truncate text-sm">{user.email}</p>
-                  <time className="muted text-sm md:whitespace-nowrap" dateTime={user.createdAt.toISOString()}>
-                    <span className="sr-only"><UiText>{"가입일"}</UiText>{" "}</span>
-                    <UiDate value={user.createdAt} mode="date" />
-                  </time>
+                  <div className="grid gap-0.5 md:whitespace-nowrap">
+                    <time className="muted text-sm" dateTime={user.createdAt.toISOString()}>
+                      <span className="sr-only"><UiText>{"가입일"}</UiText>{" "}</span>
+                      <UiDate value={user.createdAt} mode="date" />
+                    </time>
+                    {user.lastSignedInAt ? (
+                      <time className="text-xs text-[var(--muted)]" dateTime={user.lastSignedInAt.toISOString()}>
+                        <span className="sr-only"><UiText>{"마지막 로그인"}</UiText>{" "}</span>
+                        <UiText>{"로그인"}</UiText>{" "}<UiDate value={user.lastSignedInAt} mode="date" />
+                      </time>
+                    ) : null}
+                  </div>
                   {user.id === actor.id ? (
                     <StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge>
                   ) : (
