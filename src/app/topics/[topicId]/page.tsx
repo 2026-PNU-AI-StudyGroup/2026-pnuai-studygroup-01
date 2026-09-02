@@ -20,6 +20,7 @@ import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
 import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
@@ -46,11 +47,12 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const archivedProject = await new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma, audience)).find(topicId);
 
   if (archivedProject) {
-    const [sidebarItems, ballot] = await Promise.all([
+    const [sidebarItems, ballot, categoryOrder] = await Promise.all([
       loadProgramSidebarItems("past", {}, audience),
       new ProjectVotingService(new PrismaProjectVotingRepository(prisma)).getBallot(actor, archivedProject.programId),
+      listProgramCategoryOrder(prisma),
     ]);
-    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`}><ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} />}>{/* 지난 프로젝트 화면은 진행 중 화면과 코드가 따로다. 관리 진입 버튼도 양쪽에 둔다. */}
+    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`}><ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>{/* 지난 프로젝트 화면은 진행 중 화면과 코드가 따로다. 관리 진입 버튼도 양쪽에 둔다. */}
       {actor.role === "ADMIN" ? <UiNav aria-label="프로젝트 관리" className="mb-5 flex justify-end"><Link href={`/projects/${archivedProject.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link></UiNav> : null}
       <ArchivedProjectDetail project={archivedProject} ballot={ballot ?? undefined} /></ExplorerLayout></AppShell>;
   }
@@ -62,11 +64,12 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   if (!topic) notFound();
 
   const now = new Date();
-  const sidebarItems = await (
+  const [sidebarItems, categoryOrder] = await Promise.all([
     actor.role === "ADMIN"
       ? new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor).then((programs) => buildAdminProgramSidebarItems(programs, now))
-      : loadProgramSidebarItems("active", {}, audience)
-  );
+      : loadProgramSidebarItems("active", {}, audience),
+    listProgramCategoryOrder(prisma),
+  ]);
   const directApplicationsEnabled = !topic.studentProjectCreationEnabled;
   const { media, embeddedIds, galleryIds } = buildShowcaseMedia({
     artifacts: topic.artifacts,
@@ -80,7 +83,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const teamMembers = topic.teamMembers?.filter(({ role }) => role === "MEMBER") ?? [];
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
       {/* 관리자는 좌측 메뉴에서 개별 프로젝트 관리 화면에 닿을 길이 없었다.
           진행 현황으로 보낸다. 그 안에 관리자에게만 프로젝트 삭제 탭이 생긴다. */}
       <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{actor.role === "ADMIN" ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link> : null}</UiNav>

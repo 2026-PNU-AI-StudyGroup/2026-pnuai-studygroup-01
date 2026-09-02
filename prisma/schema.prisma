@@ -677,6 +677,19 @@ model ProjectProgram {
   @@map("project_program")
 }
 
+// 대분류(프로그램 category)를 화면에 세우는 순서.
+//
+// 분류는 프로그램의 문자열 칸이라 엔티티가 없다. 순서만 따로 적어 둔다. 여기에 없는
+// 분류는 뒤에 가나다순으로 붙는다. 프로그램이 모두 빠져나가 사라진 분류의 행이 남아도
+// 정렬은 실제로 있는 분류만 세우므로 그냥 무시된다.
+model ProgramCategoryOrder {
+  name      String   @id
+  position  Int
+  updatedAt DateTime @updatedAt
+
+  @@map("program_category_order")
+}
+
 model ProgramDivision {
   id                String             @id @default(uuid())
   programId         String

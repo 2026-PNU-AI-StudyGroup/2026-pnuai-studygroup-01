@@ -33,6 +33,7 @@ import { announcementDeleteControls } from "@/app/_components/announcement-delet
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
 import { parseProgramManagementTab, programCreateHref, programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
@@ -119,6 +120,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   const view: ProjectView = firstSearchParam(params.view) === "past" ? "past" : "active";
   const requestedMode = firstSearchParam(params.mode);
   const now = new Date();
+  // 대분류를 세우는 차례는 운영자가 정한다. 사이드바와 기본 선택이 같은 값을 봐야 한다.
+  const categoryOrder = await listProgramCategoryOrder(prisma);
   const requestedPage = Number(firstSearchParam(params.page) ?? "1");
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
   const requestedTeamStatus = firstSearchParam(params.teamStatus);
@@ -239,7 +242,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
         <ProjectExplorerView
           view="past"
           program={selectedProgram}
@@ -275,8 +278,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     // 예전에는 관리자만 맞춰 두어 학생과 교수는 맨 위와 다른 프로그램이 열렸다.
     // 지난 프로그램은 목록에서 진행 중인 것들 뒤에 붙으므로 맨 위를 정하는 데 영향이 없다.
     const sidebarOrder = actor.role === "ADMIN"
-      ? orderedProgramSidebarIds(buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts))
-      : orderedProgramSidebarIds(buildProgramSidebarItems(sidebarPrograms, [], "active", { query }, now));
+      ? orderedProgramSidebarIds(buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts), categoryOrder)
+      : orderedProgramSidebarIds(buildProgramSidebarItems(sidebarPrograms, [], "active", { query }, now), categoryOrder);
     const programId = resolveProgramSelection(requestedProgramId, programs, sidebarOrder);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
@@ -345,7 +348,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
         <ProjectExplorerView
           view="active"
           program={selectedProgram}

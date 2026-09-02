@@ -5,6 +5,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 const adminNavigationItems = [
   { href: "/admin/professors", label: "교수 권한", icon: "professor" },
   { href: "/admin/users", label: "사용자", icon: "users" },
+  { href: "/admin/categories", label: "대분류 순서", hint: "사이드바에 세우는 차례", icon: "order" },
   { href: "/admin/emails", label: "이메일 전송", hint: "대기열과 실패 작업", icon: "email" },
   { href: "/admin/audit", label: "관리 이력", hint: "주요 변경 기록", icon: "audit" },
 ] as const;
@@ -19,6 +20,7 @@ function AdminNavigationIcon({ name }: { name: (typeof adminNavigationItems)[num
     users: <><circle cx="7" cy="7" r="3" /><path d="M2 17c.3-4 2-6 5-6s4.7 2 5 6m2-10c2 0 3 1.3 3 3s-1 2.7-2.5 3M15 13c2.2.3 3.3 1.6 3.5 4" /></>,
     email: <><rect x="2.5" y="4" width="15" height="12" rx="1.5" /><path d="m3.5 5 6.5 5 6.5-5" /></>,
     audit: <><circle cx="10" cy="10" r="7" /><path d="M10 6v4l3 2M15.5 15.5 18 18" /></>,
+    order: <><path d="M4 5h9M4 10h6M4 15h3M14.5 7v9m0 0 2.5-2.5M14.5 16 12 13.5" /></>,
   };
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]">

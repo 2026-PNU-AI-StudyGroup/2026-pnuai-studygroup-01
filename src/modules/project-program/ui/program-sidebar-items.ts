@@ -110,31 +110,33 @@ export function buildAdminProgramSidebarItems(
 }
 
 /**
- * 사이드바에 보이는 순서. 대분류를 투표 중 → 진행 중 → 초안 → 종료로 세우고,
- * 같으면 최근 연도, 그다음 가나다순으로 둔다.
+ * 사이드바에 보이는 대분류 순서. 운영자가 정해 둔 차례를 그대로 따른다.
+ *
+ * 예전에는 투표 중 → 진행 중 → 초안 → 종료로 저절로 세웠다. 그 규칙을 걷어냈다.
+ * 목록 맨 위가 곧 첫 진입점이고 사이트의 얼굴이라, 행사 일정에 따라 저절로 바뀌는
+ * 것보다 운영자가 잡아 두는 편이 낫다. 투표 중인 프로그램은 위쪽 배너로 따로 보인다.
+ *
+ * 순서에 없는 분류는 뒤에 가나다순으로 붙는다. 새 분류를 만들자마자 화면이 흐트러지지
+ * 않게 하려는 것이다.
  *
  * 화면 정렬과 기본 선택이 서로 다른 규칙을 쓰면 "목록 맨 위는 해커톤인데 눌러 보면
  * 다른 프로그램이 열리는" 어긋남이 생긴다. 두 곳이 이 함수를 함께 쓴다.
  */
-export function orderProgramSidebarCategories(items: readonly ProgramSidebarItem[]): string[] {
-  const groups = new Map<string, ProgramSidebarItem[]>();
-  for (const item of items) {
-    groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
-  }
-  const rank = (category: string) => {
-    const group = groups.get(category)!;
-    if (group.some((item) => item.votingEndsAt)) return 0;
-    if (group.some((item) => item.status === "active")) return 1;
-    if (group.some((item) => item.status === "draft")) return 2;
-    return 3;
-  };
-  const maxYear = (category: string) => Math.max(...groups.get(category)!.map((item) => item.startYear));
-  return [...groups.keys()].sort((a, b) =>
-    rank(a) - rank(b) || maxYear(b) - maxYear(a) || a.localeCompare(b, "ko"));
+export function orderProgramSidebarCategories(
+  items: readonly ProgramSidebarItem[],
+  categoryOrder: readonly string[] = [],
+): string[] {
+  const rank = new Map(categoryOrder.map((category, index) => [category, index]));
+  const unranked = rank.size;
+  return [...new Set(items.map((item) => item.category))].sort((left, right) =>
+    (rank.get(left) ?? unranked) - (rank.get(right) ?? unranked) || left.localeCompare(right, "ko"));
 }
 
 /** 사이드바에 보이는 순서대로 늘어놓은 프로그램 id 목록. */
-export function orderedProgramSidebarIds(items: readonly ProgramSidebarItem[]): string[] {
-  const order = orderProgramSidebarCategories(items);
+export function orderedProgramSidebarIds(
+  items: readonly ProgramSidebarItem[],
+  categoryOrder: readonly string[] = [],
+): string[] {
+  const order = orderProgramSidebarCategories(items, categoryOrder);
   return order.flatMap((category) => items.filter((item) => item.category === category).map((item) => item.id));
 }

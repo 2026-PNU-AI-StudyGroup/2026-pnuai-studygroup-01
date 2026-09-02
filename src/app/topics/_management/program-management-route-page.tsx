@@ -10,6 +10,7 @@ import {
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
+import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
 import {
   resolveProgramManagementTab,
   programCreateHref,
@@ -91,9 +92,10 @@ export async function ProgramManagementRoutePage({
     now,
     pendingApprovalCounts,
   );
+  const categoryOrder = await listProgramCategoryOrder(prisma);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programManagementHref(selectedProgramId, tab)}>
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings selectedItemLinkable />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings selectedItemLinkable categoryOrder={categoryOrder} />}>
         <ProgramManagementWorkspace
           actor={actor}
           programId={selectedProgramId}
@@ -115,9 +117,10 @@ export async function ProgramCreateRoutePage() {
     now,
     pendingApprovalCounts,
   );
+  const categoryOrder = await listProgramCategoryOrder(prisma);
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programCreateHref()}>
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} title="프로그램 관리" showSettings />}>
+      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} title="프로그램 관리" showSettings categoryOrder={categoryOrder} />}>
         <ProgramCreateWorkspace cancelHref={fallbackProgramId ? programManagementHref(fallbackProgramId) : "/topics"} />
       </ExplorerLayout>
     </AppShell>

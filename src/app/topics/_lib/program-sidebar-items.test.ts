@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
+import { orderProgramSidebarCategories, orderedProgramSidebarIds } from "@/modules/project-program/ui/program-sidebar-items";
 
 describe("buildProgramSidebarItems", () => {
   const archivedProgramPeriod = {
@@ -116,5 +117,49 @@ describe("buildProgramSidebarItems", () => {
       pendingApprovalCount: 3,
       href: "/topics?programId=open-2026",
     }));
+  });
+});
+
+describe("대분류 차례", () => {
+  const item = (id: string, category: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    name: id,
+    category,
+    icon: "FOLDER" as const,
+    startYear: 2026,
+    status: "active" as const,
+    href: `/topics?programId=${id}`,
+    ...extra,
+  });
+
+  it("운영자가 정한 차례를 그대로 쓴다", () => {
+    const items = [item("a", "캡스톤"), item("b", "해커톤"), item("c", "학습공동체")];
+
+    expect(orderProgramSidebarCategories(items, ["해커톤", "학습공동체", "캡스톤"]))
+      .toEqual(["해커톤", "학습공동체", "캡스톤"]);
+  });
+
+  it("차례에 없는 분류는 뒤에 가나다순으로 붙는다", () => {
+    // 새 분류를 만들자마자 목록 맨 위가 흐트러지면 안 된다.
+    const items = [item("a", "캡스톤"), item("b", "해커톤"), item("c", "AI 부스터")];
+
+    expect(orderProgramSidebarCategories(items, ["해커톤"]))
+      .toEqual(["해커톤", "캡스톤", "AI 부스터"]);
+  });
+
+  it("정해 둔 차례가 없으면 가나다순으로만 세운다", () => {
+    // 투표 중이라고 저절로 올라오지 않는다. 예전 자동 규칙을 걷어냈다.
+    const items = [
+      item("a", "캡스톤"),
+      item("b", "해커톤", { votingEndsAt: new Date("2026-08-28T16:00:00Z") }),
+    ];
+
+    expect(orderProgramSidebarCategories(items)).toEqual(["캡스톤", "해커톤"]);
+  });
+
+  it("기본으로 열리는 프로그램은 목록 맨 위와 같다", () => {
+    const items = [item("a", "캡스톤"), item("b", "해커톤")];
+
+    expect(orderedProgramSidebarIds(items, ["해커톤", "캡스톤"])).toEqual(["b", "a"]);
   });
 });
