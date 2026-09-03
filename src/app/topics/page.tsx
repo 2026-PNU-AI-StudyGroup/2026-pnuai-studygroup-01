@@ -18,6 +18,10 @@ import { topicsHref, type ProjectView } from "@/app/topics/_lib/topics-query";
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { orderedProgramSidebarIds } from "@/modules/project-program/ui/program-sidebar-items";
 import { hideGraduationProgramsForStudent } from "@/app/topics/_lib/hidden-graduation-programs";
+import { keepInvitedProgramsForAdvisor } from "@/app/topics/_lib/advisor-invited-programs";
+import { listInvitedProgramIds } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
+import { findAdvisorProgramBanner } from "@/modules/advisor/infrastructure/prisma-advisor-workspace-banner-query";
+import { AdvisorProgramBannerView } from "@/modules/advisor/ui/advisor-program-banner";
 import { isProgramVotingOpen } from "@/modules/project-program/domain/project-program-policy";
 import { resolveProgramSelection } from "@/app/topics/_lib/resolve-program-selection";
 import {
@@ -56,6 +60,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
+import { EmptyState } from "@/shared/ui/page-primitives";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -180,6 +185,32 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ])
     : [undefined, []];
   const pendingApprovalCounts = new Map(adminPendingApprovalCounts.map(({ programId, count }) => [programId, count]));
+  // 자문위원은 불려 온 프로그램만 본다. 프로그램 목록을 여기서 한 번 좁혀 두면 사이드바·기본
+  // 선택·주제 목록이 전부 같은 범위를 보게 된다.
+  const invitedProgramIds = new Set(
+    actor.role === "ADVISOR" ? await listInvitedProgramIds(prisma, actor.id) : [],
+  );
+  const forAdvisor = <T extends { id: string }>(programs: T[]) =>
+    keepInvitedProgramsForAdvisor(programs, actor.role, invitedProgramIds);
+  const advisorBanner = async (programId: string | undefined) => {
+    if (actor.role !== "ADVISOR" || !programId) return undefined;
+    const banner = await findAdvisorProgramBanner(prisma, { userId: actor.id, programId }, now);
+    return banner ? <AdvisorProgramBannerView banner={banner} now={now} /> : undefined;
+  };
+  // 초대가 하나도 없으면 프로그램을 고르지 못해 필터가 풀린 목록(=전체 프로젝트)이 나간다.
+  // 여기서 끊어 회수된 위원이 남의 프로그램을 훑지 못하게 한다.
+  if (actor.role === "ADVISOR" && invitedProgramIds.size === 0) {
+    return (
+      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
+        <main className="content-shell page-enter">
+          <EmptyState
+            title="심사할 프로그램이 없습니다"
+            description="초대가 회수되었거나 아직 배정되지 않았습니다. 초대 링크를 보낸 담당자에게 문의해 주세요."
+          />
+        </main>
+      </AppShell>
+    );
+  }
 
   if (actor.role === "ADMIN" && requestedMode === "create") {
     redirect(programCreateHref());
@@ -204,8 +235,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       actor.role === "ADMIN" ? Promise.resolve([]) : programService.listSidebarVisible(now),
     ]);
     // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
-    initialArchive.programs = hideGraduationProgramsForStudent(initialArchive.programs, actor.role);
-    const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
+    initialArchive.programs = forAdvisor(hideGraduationProgramsForStudent(initialArchive.programs, actor.role));
+    const sidebarPrograms = forAdvisor(hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role));
     // 종료된 프로그램은 사이드바(공개 프로그램)엔 있지만 아카이브 목록(닫힌 팀 보유 프로그램)엔
     // 없을 수 있다. 선택 후보를 둘의 합집합으로 넓혀야 클릭 시 다른 프로그램으로 튕기지 않는다.
     const adminClosedPrograms = adminPrograms?.filter((program) => program.endsAt <= now) ?? [];
@@ -248,6 +279,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           program={selectedProgram}
           search={<ProjectSearchForm view="past" programId={programId} query={query} divisionId={divisionId} />}
           titleAction={manageAction}
+          banner={await advisorBanner(programId)}
           announcementRail={(
             <ProgramAnnouncementRail
               announcements={programAnnouncements}
@@ -271,8 +303,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
     const programs = actor.role === "ADMIN"
       ? (adminPrograms ?? []).filter((program) => program.endsAt > now)
-      : hideGraduationProgramsForStudent(programsRaw, actor.role);
-    const sidebarPrograms = hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role);
+      : forAdvisor(hideGraduationProgramsForStudent(programsRaw, actor.role));
+    const sidebarPrograms = forAdvisor(hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role));
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     // 사이드바 목록 맨 위 프로그램과 기본으로 열리는 프로그램을 같게 맞춘다.
     // 예전에는 관리자만 맞춰 두어 학생과 교수는 맨 위와 다른 프로그램이 열렸다.
@@ -339,7 +371,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     if (divisionId === "UNASSIGNED" && !hasUnassigned) {
       redirect(topicsHref({ programId, q: query, teamStatus: projectFilters.team, reportStatus: projectFilters.report, page: requestedPage }));
     }
-    const archivedPrograms = hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role);
+    const archivedPrograms = forAdvisor(hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role));
     const sidebarItems = actor.role === "ADMIN"
       ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
@@ -354,6 +386,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           program={selectedProgram}
           search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} teamStatus={projectFilters.team} reportStatus={projectFilters.report} />}
           titleAction={manageAction}
+          banner={await advisorBanner(programId)}
           privatePreview={actor.role === "ADMIN" && selectedProgram?.isPublic === false}
           announcementRail={(
             <ProgramAnnouncementRail

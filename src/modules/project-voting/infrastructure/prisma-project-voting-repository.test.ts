@@ -54,6 +54,8 @@ function voteClient(role: string, voteLimit: number, staffVoteLimit: number, opt
   targetPublishedAt?: Date | null;
   /** 지금도 후보인 프로젝트. 기본은 던진 표 전부. */
   votableTopicIds?: string[];
+  /** 자문위원이 이 프로그램에 불려 있는지. 기본은 초대돼 있다고 본다. */
+  advisorInvited?: boolean;
 } = {}) {
   const currentTopicIds = options.currentTopicIds ?? ["topic-1"];
   const votableTopicIds = options.votableTopicIds ?? currentTopicIds;
@@ -98,6 +100,9 @@ function voteClient(role: string, voteLimit: number, staffVoteLimit: number, opt
       create: vi.fn().mockResolvedValue({ id: "vote-1" }),
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
+    programAdvisorInvitation: {
+      findFirst: vi.fn().mockResolvedValue((options.advisorInvited ?? true) ? { id: "invitation-1" } : null),
+    },
   };
   const client = { $transaction: vi.fn(async (run: (value: typeof transaction) => unknown) => run(transaction)) };
   return { client: client as unknown as PrismaClient, transaction };
@@ -116,6 +121,16 @@ describe("PrismaProjectVotingRepository 표 반영", () => {
       remainingVotes: 3,
     });
     expect(transaction.projectVote.create).toHaveBeenCalled();
+  });
+
+  // 화면에서 감추는 것만으로는 부족하다. 링크를 아는 위원이 다른 프로그램에 직접 요청을
+  // 보낼 수 있으므로 표를 쓰는 자리에서 초대를 다시 확인한다.
+  it("초대받지 않은 프로그램에서는 자문위원의 표를 받지 않는다", async () => {
+    const { client, transaction } = voteClient("ADVISOR", 1, 5, { advisorInvited: false });
+    await expect(new PrismaProjectVotingRepository(client).setVote(addInput))
+      .resolves.toEqual({ status: "NOT_INVITED" });
+    expect(transaction.projectVote.create).not.toHaveBeenCalled();
+    expect(transaction.projectVote.deleteMany).not.toHaveBeenCalled();
   });
 
   // 운영진이 프로젝트를 비공개로 내리면 후보 목록에서 빠지지만 표는 남는다. 그런데 한도가
@@ -402,7 +417,7 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
 
     const results = await new PrismaProjectVotingRepository(value).findPublicResults(
       "program-1",
-      "STUDENT",
+      { id: "student-1", role: "STUDENT" },
       new Date("2026-08-10T00:00:00Z"),
     );
 
@@ -439,8 +454,8 @@ describe("PrismaProjectVotingRepository 결과 조회", () => {
     });
     const repository = new PrismaProjectVotingRepository(value);
 
-    await expect(repository.findPublicResults("program-1", "STUDENT", new Date("2026-08-10T00:00:00Z"))).resolves.toBeNull();
-    await expect(repository.findPublicResults("program-1", "PROFESSOR", new Date("2026-09-01T00:00:00Z"))).resolves.toBeNull();
+    await expect(repository.findPublicResults("program-1", { id: "student-1", role: "STUDENT" }, new Date("2026-08-10T00:00:00Z"))).resolves.toBeNull();
+    await expect(repository.findPublicResults("program-1", { id: "prof-1", role: "PROFESSOR" }, new Date("2026-09-01T00:00:00Z"))).resolves.toBeNull();
     expect(value.topic.findMany).not.toHaveBeenCalled();
     expect(value.projectVote.count).not.toHaveBeenCalled();
   });

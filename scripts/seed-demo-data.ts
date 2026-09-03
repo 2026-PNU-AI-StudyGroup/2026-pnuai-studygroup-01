@@ -307,7 +307,8 @@ async function seed() {
     await tx.advisorScore.deleteMany({ where: { evaluation: { advisorId: ids.externalAdvisor } } });
     await tx.advisorEvaluation.deleteMany({ where: { advisorId: ids.externalAdvisor } });
     await tx.advisorFeedback.deleteMany({ where: { advisorId: ids.externalAdvisor } });
-    await tx.advisorAccessToken.deleteMany({ where: { userId: ids.externalAdvisor } });
+    // 초대를 지우면 거기 달린 링크도 함께 지워진다(onDelete: Cascade).
+    await tx.programAdvisorInvitation.deleteMany({ where: { userId: ids.externalAdvisor } });
     await tx.projectAdvisor.deleteMany({ where: { userId: ids.externalAdvisor } });
     await tx.artifact.deleteMany({ where: { id: { in: [...ids.artifacts, ...ids.activeArtifacts] } } });
     await tx.approvalDecision.deleteMany({ where: { id: { in: [...ids.approvalDecisions, ...ids.activeApprovalDecisions] } } });
@@ -829,12 +830,19 @@ async function seed() {
       grantedById: ids.admin,
       createdAt: new Date("2026-07-12T15:00:00+09:00"),
     })) });
-    await tx.advisorAccessToken.create({ data: {
-      id: "32000000-0000-4000-8000-000000000001",
+    // 초대는 프로그램 하나를 가리킨다. 데모 위원은 첫 번째 진행 프로그램에만 부른다.
+    await tx.programAdvisorInvitation.create({ data: {
+      id: "33000000-0000-4000-8000-000000000001",
+      programId: activePrograms[0].id,
       userId: ids.externalAdvisor,
-      tokenHash: createHash("sha256").update(DEMO_ADVISOR_INVITE_TOKEN).digest("hex"),
-      expiresAt: new Date("2027-12-31T14:59:00+09:00"),
+      invitedById: ids.admin,
       createdAt: new Date("2026-07-12T15:00:00+09:00"),
+      tokens: { create: {
+        id: "32000000-0000-4000-8000-000000000001",
+        tokenHash: createHash("sha256").update(DEMO_ADVISOR_INVITE_TOKEN).digest("hex"),
+        expiresAt: new Date("2027-12-31T14:59:00+09:00"),
+        createdAt: new Date("2026-07-12T15:00:00+09:00"),
+      } },
     } });
     const advisorRubric = await tx.rubricDefinition.upsert({
       where: { id: ids.advisorRubric },

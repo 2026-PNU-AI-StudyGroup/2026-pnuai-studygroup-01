@@ -21,30 +21,40 @@ export function advisorTokenAuth(): BetterAuthPlugin {
             select: {
               expiresAt: true,
               revokedAt: true,
-              user: { select: { id: true, role: true, accountStatus: true } },
+              invitation: {
+                select: {
+                  programId: true,
+                  revokedAt: true,
+                  user: { select: { id: true, role: true, accountStatus: true } },
+                },
+              },
             },
           });
+          // 초대를 거둔 뒤에도 링크가 살아 있으면 회수가 회수가 아니게 된다. 링크와 초대를 둘 다 본다.
           if (
             !record ||
             !isTokenUsable(record) ||
-            record.user.role !== "ADVISOR" ||
-            record.user.accountStatus !== "ACTIVE"
+            record.invitation.revokedAt !== null ||
+            record.invitation.user.role !== "ADVISOR" ||
+            record.invitation.user.accountStatus !== "ACTIVE"
           ) {
             throw new APIError("UNAUTHORIZED", { status: "invalid" });
           }
+          const invitee = record.invitation.user;
           // createSession은 databaseHooks.session.create.before(accountStatus 검사)를 그대로 탄다.
-          const session = await ctx.context.internalAdapter.createSession(record.user.id);
+          const session = await ctx.context.internalAdapter.createSession(invitee.id);
           // 검사와 세션 생성 사이에 계정이 잠기면 훅이 생성을 거절해 세션이 비어 온다.
           // 그대로 쿠키를 만들려 들면 500 이 난다. 로그인 거절로 돌려보낸다.
           if (!session) {
             throw new APIError("UNAUTHORIZED", { status: "invalid" });
           }
-          const user = await ctx.context.internalAdapter.findUserById(record.user.id);
+          const user = await ctx.context.internalAdapter.findUserById(invitee.id);
           if (!user) {
             throw new APIError("UNAUTHORIZED", { status: "invalid" });
           }
           await setSessionCookie(ctx, { session, user });
-          return ctx.json({ status: "ok" });
+          // 어느 프로그램에 불려 왔는지 화면이 알아야 그 프로그램으로 곧장 데려갈 수 있다.
+          return ctx.json({ status: "ok", programId: record.invitation.programId });
         },
       ),
     },
