@@ -79,7 +79,8 @@ export type ToggleProgramVoteFailure =
   | "INACTIVE_VOTER"
   | "NOT_OPEN"
   | "INVALID_CANDIDATE"
-  | "SELF_VOTE_FORBIDDEN";
+  | "SELF_VOTE_FORBIDDEN"
+  | "NOT_INVITED";
 
 /** 한도를 세는 묶음. 프로그램 전체이거나 분과 하나. */
 export type VoteScope = { type: "PROGRAM" | "DIVISION"; divisionName: string | null };
@@ -110,7 +111,7 @@ export interface ProjectVotingRepository {
    */
   setVote(input: { programId: string; voterId: string; topicId: string; intent: VoteIntent; votedAt: Date }): Promise<ToggleProgramVoteOutcome>;
   findResults(programId: string, now: Date): Promise<ProgramVotingResults | null>;
-  findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR" | "ADVISOR", now: Date): Promise<PublicProgramVotingResults | null>;
+  findPublicResults(programId: string, viewer: { id: string; role: "STUDENT" | "PROFESSOR" | "ADVISOR" }, now: Date): Promise<PublicProgramVotingResults | null>;
 }
 
 export class ProjectVotingOperationError extends Error {}
@@ -138,6 +139,7 @@ export class ProjectVotingService {
       NOT_OPEN: "현재 투표 가능한 기간이 아닙니다.",
       INVALID_CANDIDATE: "공개 이력이 있는 같은 프로그램 프로젝트만 선택할 수 있습니다.",
       SELF_VOTE_FORBIDDEN: "자기 프로젝트에는 투표할 수 없습니다.",
+      NOT_INVITED: "초대받은 프로그램에서만 투표할 수 있습니다.",
     };
     throw new ProjectVotingOperationError(message[outcome.status]);
   }
@@ -149,7 +151,7 @@ export class ProjectVotingService {
 
   async getPublicResults(actor: CurrentUser, programId: string) {
     if (actor.role === "ADMIN") throw new ProjectVotingOperationError("관리자는 상세 득표현황을 조회해 주세요.");
-    return this.repository.findPublicResults(programId, actor.role, this.now());
+    return this.repository.findPublicResults(programId, { id: actor.id, role: actor.role }, this.now());
   }
 }
 

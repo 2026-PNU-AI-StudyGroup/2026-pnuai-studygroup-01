@@ -9,6 +9,7 @@ export function ProjectExplorerView({
   search,
   titleAction,
   privatePreview = false,
+  banner,
   announcementRail,
   children,
   overlays,
@@ -18,12 +19,15 @@ export function ProjectExplorerView({
   search?: ReactNode;
   titleAction?: ReactNode;
   privatePreview?: boolean;
+  /** 화면 맨 위에 세우는 머리띠. 자문위원처럼 이 화면 하나로만 들어오는 사람에게 쓴다. */
+  banner?: ReactNode;
   announcementRail: ReactNode;
   children: ReactNode;
   overlays?: ReactNode;
 }) {
   return (
     <>
+      {banner}
       <ProjectPortalHero view={view} program={program} search={search} titleAction={titleAction} />
       {privatePreview ? (
         <aside role="status" className="mt-5 flex items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold text-[var(--muted)]">

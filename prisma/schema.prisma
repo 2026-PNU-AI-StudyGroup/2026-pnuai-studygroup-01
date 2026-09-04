@@ -363,7 +363,8 @@ model User {
   profileImage                       UserProfileImage?
   profileImageUploads                ProfileImageUpload[]                @relation("ProfileImageUploadOwner")
   projectVotes                       ProjectVote[]
-  advisorAccessTokens                AdvisorAccessToken[]
+  advisorInvitations                 ProgramAdvisorInvitation[]          @relation("ProgramAdvisorInvitee")
+  sentAdvisorInvitations             ProgramAdvisorInvitation[]          @relation("ProgramAdvisorInviter")
   projectAdvisors                    ProjectAdvisor[]                    @relation("ProjectAdvisorUser")
   grantedProjectAdvisors             ProjectAdvisor[]                    @relation("ProjectAdvisorGrantor")
   advisorEvaluations                 AdvisorEvaluation[]
@@ -670,6 +671,7 @@ model ProjectProgram {
   rubricDefinitions             RubricDefinition[]
   announcements                 Announcement[]
   managers                      ProgramManager[]
+  advisorInvitations            ProgramAdvisorInvitation[]
 
   @@unique([name, startsAt])
   @@index([endsAt, endProcessedAt])
@@ -926,16 +928,36 @@ model ProjectAssistantInvitation {
   @@map("project_assistant_invitation")
 }
 
-model AdvisorAccessToken {
-  id        String    @id @default(uuid())
-  userId    String
-  tokenHash String    @unique
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+// 자문위원을 프로그램 하나에 부른 기록. 초대는 프로그램 단위라 같은 사람이 여러 프로그램에
+// 불려도 계정은 하나로 둔다. 링크(AdvisorAccessToken)는 이 초대에 매달리므로, 링크가 만료돼
+// 재발급을 받아도 "이 프로그램의 자문위원"이라는 사실은 그대로 남는다.
+model ProgramAdvisorInvitation {
+  id          String               @id @default(uuid())
+  programId   String
+  userId      String
+  invitedById String
+  createdAt   DateTime             @default(now())
+  revokedAt   DateTime?
+  program     ProjectProgram       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user        User                 @relation("ProgramAdvisorInvitee", fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy   User                 @relation("ProgramAdvisorInviter", fields: [invitedById], references: [id], onDelete: Restrict)
+  tokens      AdvisorAccessToken[]
 
-  @@index([userId, createdAt])
+  @@unique([programId, userId])
+  @@index([userId, revokedAt])
+  @@map("program_advisor_invitation")
+}
+
+model AdvisorAccessToken {
+  id           String                   @id @default(uuid())
+  invitationId String
+  tokenHash    String                   @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime                 @default(now())
+  invitation   ProgramAdvisorInvitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId, createdAt])
   @@map("advisor_access_token")
 }
 

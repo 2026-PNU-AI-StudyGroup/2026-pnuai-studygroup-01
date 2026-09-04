@@ -28,9 +28,9 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
     <div className={styles.form}>
       <RegisterSection programId={programId} />
       <section className={styles.section}>
-        <SectionHeader title="자문위원 목록" />
+        <SectionHeader title="자문위원 목록" description="이 프로그램에 초대한 위원만 나옵니다." />
         {advisors.length === 0 ? (
-          <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"등록된 자문위원이 없습니다."}</UiText></p>
+          <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 초대한 자문위원이 없습니다."}</UiText></p>
         ) : (
           <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]">
             {advisors.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
@@ -40,7 +40,7 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
       <section className={styles.section}>
         <SectionHeader title="팀 할당" description="팀이 있는 프로젝트만 담당자로 배정할 수 있습니다." />
         {advisors.length === 0 ? (
-          <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"자문위원을 먼저 등록해 주세요."}</UiText></p>
+          <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"자문위원을 먼저 초대해 주세요."}</UiText></p>
         ) : topics.length === 0 ? (
           <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 등록된 프로젝트가 없습니다."}</UiText></p>
         ) : (
@@ -108,7 +108,7 @@ function RegisterSection({ programId }: { programId: string }) {
   const [state, action, pending] = useActionState(registerAdvisorAction, idleState);
   return (
     <section className={styles.section}>
-      <SectionHeader title="자문위원 등록" description="등록 후 초대 링크를 발급해 전달합니다." />
+      <SectionHeader title="자문위원 초대" description="이 프로그램의 심사에만 쓰이는 링크가 발급됩니다. 다른 프로그램에 있는 위원도 같은 이메일로 부를 수 있습니다." />
       <form action={action} aria-busy={pending} className="grid gap-4">
         <input type="hidden" name="programId" value={programId} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -120,7 +120,7 @@ function RegisterSection({ programId }: { programId: string }) {
           </FormField>
         </div>
         <div>
-          <button type="submit" className="button-primary" disabled={pending}><UiText>{pending ? "등록 중" : "자문위원 등록"}</UiText></button>
+          <button type="submit" className="button-primary" disabled={pending}><UiText>{pending ? "초대 중" : "자문위원 초대"}</UiText></button>
         </div>
         <ActionResult state={state} />
       </form>
@@ -149,14 +149,14 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
             {advisor.activeToken ? (
               <><UiText>{"만료 "}</UiText><UiDate value={advisor.activeToken.expiresAt} mode="dateTime" /></>
             ) : (
-              <UiText>{"회수됨/없음"}</UiText>
+              <UiText>{"링크 없음 · 재발급 필요"}</UiText>
             )}
           </span>
           <form action={action} className="flex items-center gap-2">
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="userId" value={advisor.userId} />
             <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
-            <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending || !advisor.activeToken}><UiText>{"회수"}</UiText></button>
+            <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending}><UiText>{"초대 회수"}</UiText></button>
           </form>
         </div>
       </div>

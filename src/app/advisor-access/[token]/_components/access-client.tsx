@@ -16,10 +16,17 @@ export function AdvisorAccessClient({ token }: { token: string }) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ token }),
     })
-      .then((response) => {
+      .then(async (response) => {
         if (cancelled) return;
-        if (response.ok) router.replace("/advisor");
-        else setFailed(true);
+        if (!response.ok) {
+          setFailed(true);
+          return;
+        }
+        // 초대는 프로그램 하나를 가리킨다. 어디로 불려 왔는지 알고 들어왔으니 그 프로그램
+        // 화면으로 곧장 데려간다. 프로그램을 못 받으면 담당 프로젝트 목록으로 떨어뜨린다.
+        const body = await response.json().catch(() => null) as { programId?: string } | null;
+        if (cancelled) return;
+        router.replace(body?.programId ? `/topics?programId=${encodeURIComponent(body.programId)}` : "/advisor");
       })
       .catch(() => {
         if (!cancelled) setFailed(true);

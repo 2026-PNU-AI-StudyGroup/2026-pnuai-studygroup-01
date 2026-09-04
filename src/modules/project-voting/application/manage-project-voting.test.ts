@@ -162,7 +162,7 @@ describe("프로그램 프로젝트 투표", () => {
 
     await expect(service.getPublicResults({ id: "student-1", role: "STUDENT", name: "학생", email: "student@example.com", image: null }, "program-1"))
       .resolves.toBe(publicResults);
-    expect(value.findPublicResults).toHaveBeenCalledWith("program-1", "STUDENT", now);
+    expect(value.findPublicResults).toHaveBeenCalledWith("program-1", { id: "student-1", role: "STUDENT" }, now);
     expect(value.findResults).not.toHaveBeenCalled();
   });
 

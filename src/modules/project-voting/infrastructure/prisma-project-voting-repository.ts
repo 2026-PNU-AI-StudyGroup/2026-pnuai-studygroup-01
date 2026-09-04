@@ -11,6 +11,7 @@ import {
   type VoteScope,
 } from "@/modules/project-voting/application/manage-project-voting";
 import type { UserRole } from "@/modules/identity/domain/user-role";
+import { hasActiveAdvisorInvitation } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import { canViewPublicVotingResults, isOwnProject, normalizeVoteSelection, ProjectVotingPolicyError, withEffectiveVoteLimit } from "@/modules/project-voting/domain/project-voting-policy";
 
 const VOTABLE_TOPIC_STATUS = "ACTIVE" as const;
@@ -46,6 +47,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
       },
     });
     if (!program?.votingPolicy || !isVisibleTo(program, voterRole)) return null;
+    // 자문위원은 불려 온 프로그램만 심사한다. 투표용지를 아예 만들지 않아야 다른 프로그램
+    // 화면에서 투표 칸이 보이지 않는다.
+    if (voterRole === "ADVISOR" && !await hasActiveAdvisorInvitation(this.client, { userId: voterId, programId })) return null;
     const policy = program.votingPolicy;
     const resultsVisible = voterRole === "ADMIN" || canViewPublicVotingResults(policy, now);
     const [candidates, votes, tallies] = await Promise.all([
@@ -116,6 +120,11 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
           const voter = voters[0];
           if (!voter) return { status: "INACTIVE_VOTER" };
           const voterRole = voter.role as UserRole;
+
+          // 화면을 숨기는 것만으로는 부족하다. 초대받지 않은 프로그램의 표는 여기서 막는다.
+          if (voterRole === "ADVISOR" && !await hasActiveAdvisorInvitation(transaction, { userId: input.voterId, programId: input.programId })) {
+            return { status: "NOT_INVITED" };
+          }
 
           const visibility = voterRole === "ADMIN"
             ? Prisma.sql`TRUE`
@@ -341,7 +350,7 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
     };
   }
 
-  async findPublicResults(programId: string, viewerRole: "STUDENT" | "PROFESSOR" | "ADVISOR", now: Date): Promise<PublicProgramVotingResults | null> {
+  async findPublicResults(programId: string, viewer: { id: string; role: "STUDENT" | "PROFESSOR" | "ADVISOR" }, now: Date): Promise<PublicProgramVotingResults | null> {
     const program = await this.client.projectProgram.findUnique({
       where: { id: programId },
       select: {
@@ -351,7 +360,9 @@ export class PrismaProjectVotingRepository implements ProjectVotingRepository {
         votingPolicy: true,
       },
     });
-    if (!program?.votingPolicy || !isVisibleTo(program, viewerRole) || !canViewPublicVotingResults(program.votingPolicy, now)) return null;
+    if (!program?.votingPolicy || !isVisibleTo(program, viewer.role) || !canViewPublicVotingResults(program.votingPolicy, now)) return null;
+    // 투표하지 못하는 프로그램의 득표현황도 자문위원에게는 닫는다.
+    if (viewer.role === "ADVISOR" && !await hasActiveAdvisorInvitation(this.client, { userId: viewer.id, programId })) return null;
 
     const policy = program.votingPolicy;
     const phase = getProgramVotingPhase(policy, now);

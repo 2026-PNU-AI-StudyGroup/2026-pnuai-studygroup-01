@@ -8,26 +8,31 @@ export type ProgramAdvisorRow = {
   activeToken: { expiresAt: Date } | null;
 };
 
-// 프로그램 화면용: 전체 ADVISOR + 이 프로그램 topic 할당 현황.
+// 프로그램 화면용: 이 프로그램에 불러 둔 위원 + 이 프로그램 topic 할당 현황.
+// 다른 프로그램 위원은 여기 나오지 않는다. 운영자가 이 화면에서 보는 것은 이 프로그램의 심사단이다.
 export async function listProgramAdvisors(client: PrismaClient, programId: string): Promise<ProgramAdvisorRow[]> {
-  const advisors = await client.user.findMany({
-    where: { role: "ADVISOR", accountStatus: "ACTIVE" },
+  const invitations = await client.programAdvisorInvitation.findMany({
+    where: { programId, revokedAt: null, user: { accountStatus: "ACTIVE" } },
     orderBy: { createdAt: "asc" },
     select: {
-      id: true, name: true, email: true,
-      projectAdvisors: { where: { topic: { programId } }, select: { topicId: true } },
-      advisorAccessTokens: {
+      tokens: {
         where: { revokedAt: null, expiresAt: { gt: new Date() } },
         orderBy: { createdAt: "desc" }, take: 1, select: { expiresAt: true },
       },
+      user: {
+        select: {
+          id: true, name: true, email: true,
+          projectAdvisors: { where: { topic: { programId } }, select: { topicId: true } },
+        },
+      },
     },
   });
-  return advisors.map((advisor) => ({
-    userId: advisor.id,
-    name: advisor.name,
-    email: advisor.email,
-    assignedTopicIds: advisor.projectAdvisors.map((row) => row.topicId),
-    activeToken: advisor.advisorAccessTokens[0] ?? null,
+  return invitations.map((invitation) => ({
+    userId: invitation.user.id,
+    name: invitation.user.name,
+    email: invitation.user.email,
+    assignedTopicIds: invitation.user.projectAdvisors.map((row) => row.topicId),
+    activeToken: invitation.tokens[0] ?? null,
   }));
 }
 
