@@ -4,7 +4,9 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { PrismaUserAdministrationRepository } from "@/modules/identity/infrastructure/prisma-user-administration-repository";
 
 function clientWith(users: Array<{ id: string; name: string; createdAt: Date }>, sessions: Array<{ userId: string; createdAt: Date | null }> = []) {
-  const findMany = vi.fn(async (_args: { orderBy?: unknown }) => users.map((user) => ({
+  type UserRow = { id: string; name: string; createdAt: Date; email: string; role: "STUDENT"; accountStatus: "ACTIVE" };
+  // 인자 자리를 적어 두어야 mock.calls 에서 orderBy 를 꺼내 볼 수 있다.
+  const findMany = vi.fn<(args: { orderBy?: unknown }) => Promise<UserRow[]>>(async () => users.map((user) => ({
     ...user,
     email: `${user.id}@pusan.ac.kr`,
     role: "STUDENT" as const,

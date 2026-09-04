@@ -45,7 +45,7 @@ import { ListAdminTopicPreviewService } from "@/modules/topic/application/list-a
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { TopicApprovalService } from "@/modules/topic-approval/application/manage-topic-approvals";
 import { PrismaTopicApprovalRepository } from "@/modules/topic-approval/infrastructure/prisma-topic-approval-repository";
-import { ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
+import { ARCHIVE_LIST_PAGE_SIZE, ListArchivedProjectsService } from "@/modules/team/application/archive-projects";
 import { ListAdminProjectCardDataService } from "@/modules/team/application/list-admin-project-card-data";
 import {
   ListAdminProgramProjectOperationsService,
@@ -231,7 +231,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const requestedArchiveProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     const [initialArchive, sidebarProgramsRaw] = await Promise.all([
-      archiveService.execute(requestedPage, 18, { query, programId: requestedArchiveProgramId }),
+      archiveService.execute(requestedPage, ARCHIVE_LIST_PAGE_SIZE, { query, programId: requestedArchiveProgramId }),
       actor.role === "ADMIN" ? Promise.resolve([]) : programService.listSidebarVisible(now),
     ]);
     // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
@@ -254,7 +254,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       redirect(topicsHref({ view: "past", programId, q: query, page: requestedPage }));
     }
     const archive = divisionId
-      ? await archiveService.execute(requestedPage, 18, { query, programId, divisionId })
+      ? await archiveService.execute(requestedPage, ARCHIVE_LIST_PAGE_SIZE, { query, programId, divisionId })
       : initialArchive;
     const closeAnnouncementHref = topicsHref({ view: "past", programId, divisionId, q: query, page: requestedPage });
     const [ballot, votingResults, programAnnouncements, announcementCreateHref] = await Promise.all([

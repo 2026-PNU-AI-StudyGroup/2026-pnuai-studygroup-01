@@ -68,6 +68,14 @@ export interface ArchivedProjectReader {
   findClosed(id: string): Promise<ArchivedProject | null>;
 }
 
+/**
+ * 지난 프로젝트 한 쪽에 담는 개수.
+ *
+ * 18개씩 끊어 3열 카드로 보여 주니 한 대회를 훑는 데 쪽을 계속 넘겨야 했다.
+ * 한 대회가 대개 20~50팀이라 이 크기면 대부분 한 쪽에 들어온다.
+ */
+export const ARCHIVE_LIST_PAGE_SIZE = 50;
+
 export class ListArchivedProjectsService {
   constructor(private readonly reader: ArchivedProjectReader) {}
 
@@ -75,10 +83,10 @@ export class ListArchivedProjectsService {
     return this.reader.listPrograms();
   }
 
-  async execute(page = 1, pageSize = 18, filters: ArchiveFilters = {}) {
+  async execute(page = 1, pageSize = ARCHIVE_LIST_PAGE_SIZE, filters: ArchiveFilters = {}) {
     const normalizedPageSize = Number.isInteger(pageSize) && pageSize > 0
-      ? Math.min(pageSize, 50)
-      : 20;
+      ? Math.min(pageSize, ARCHIVE_LIST_PAGE_SIZE)
+      : ARCHIVE_LIST_PAGE_SIZE;
     const normalizedFilters: ArchiveFilters = {
       query: filters.query?.trim().slice(0, 100) || undefined,
       programId: filters.programId?.trim().slice(0, 200) || undefined,

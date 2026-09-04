@@ -58,6 +58,7 @@ vi.mock("@/modules/topic/application/list-published-topics", () => ({
 }));
 vi.mock("@/modules/topic/application/list-admin-topic-preview", () => ({ ListAdminTopicPreviewService: class {} }));
 vi.mock("@/modules/team/application/archive-projects", () => ({
+  ARCHIVE_LIST_PAGE_SIZE: 50,
   ListArchivedProjectsService: class {
     execute = listArchived;
     listPrograms = listArchivedPrograms;
@@ -219,8 +220,8 @@ describe("TopicsPage", () => {
 
     render(await TopicsPage({ searchParams: Promise.resolve({ view: "past", programId: "program-1", divisionId: "division-1" }) }));
 
-    expect(listArchived).toHaveBeenNthCalledWith(1, 1, 18, { query: "", programId: "program-1" });
-    expect(listArchived).toHaveBeenNthCalledWith(2, 1, 18, { query: "", programId: "program-1", divisionId: "division-1" });
+    expect(listArchived).toHaveBeenNthCalledWith(1, 1, 50, { query: "", programId: "program-1" });
+    expect(listArchived).toHaveBeenNthCalledWith(2, 1, 50, { query: "", programId: "program-1", divisionId: "division-1" });
     expect(pastProjectsView).toHaveBeenCalledWith(expect.objectContaining({
       programId: "program-1",
       divisionId: "division-1",
