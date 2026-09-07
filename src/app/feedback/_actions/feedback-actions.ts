@@ -25,11 +25,6 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 
 const idSchema = z.string().uuid();
 
-// 글쓴이 이름은 받지 않는다. 자유 입력이라 아무나 교수 이름을 적어 사칭할 수 있었고,
-// 로그인 없이 열린 게시판에서 실명이 그대로 공개됐다. 새 글은 익명으로만 남는다.
-// (이미 등록된 글의 이름은 사용자가 직접 적어 넣은 값이라 건드리지 않는다.)
-const ANONYMOUS_AUTHOR = "익명";
-
 const postSchema = z.object({
   targetScreen: z.enum(TARGET_SCREEN_VALUES as [string, ...string[]]),
   area: z.enum(FEEDBACK_AREAS as unknown as [string, ...string[]]),
@@ -58,6 +53,12 @@ export async function createFeedbackPostAction(
       message: `등록이 너무 잦습니다. ${rate.retryAfterSeconds}초 뒤에 다시 시도해 주세요.`,
     };
   }
+  // 글쓴이는 로그인 세션에서 받는다. 자유 입력이던 때는 아무나 교수 이름을 적어
+  // 사칭할 수 있었다. 읽기는 열어 두고 글쓰기만 막는다.
+  const actor = await getCurrentActor();
+  if (!actor) {
+    return { status: "error", message: "피드백을 남기려면 로그인해 주세요." };
+  }
   const parsed = postSchema.safeParse({
     targetScreen: formData.get("targetScreen"),
     area: formData.get("area"),
@@ -73,7 +74,9 @@ export async function createFeedbackPostAction(
   await prisma.feedbackPost.create({
     data: {
       ...parsed.data,
-      authorName: ANONYMOUS_AUTHOR,
+      authorName: actor.name,
+      authorId: actor.id,
+      authorEmail: actor.email,
       targetScreen: parsed.data.targetScreen as TargetScreenValue,
       type: parsed.data.type as FeedbackTypeValue,
       priority: parsed.data.priority as FeedbackPriorityValue,

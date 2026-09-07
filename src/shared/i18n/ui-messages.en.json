@@ -2422,5 +2422,8 @@
   "다른 프로그램에 있던 자문위원을 이 프로그램에도 초대했습니다. 이름은 기존 계정 것을 씁니다. 초대 링크를 복사해 전달하세요.": "An advisor from another program has also been invited here. The name on the existing account is kept. Copy the invitation link and send it to them.",
   "이 프로그램 초대를 회수했습니다. 담당 팀 배정도 함께 해제했습니다.": "The invitation to this program has been withdrawn, along with the advisor's team assignments.",
   "이미 이 프로그램에 초대된 자문위원입니다. 초대 링크가 필요하면 목록에서 다시 발급해 주세요.": "This advisor is already invited to this program. If a link is needed, reissue it from the list.",
-  "이미 다른 역할로 쓰이고 있는 이메일입니다. 주소를 확인해 주세요.": "This email address is already in use for another role. Please check the address."
+  "이미 다른 역할로 쓰이고 있는 이메일입니다. 주소를 확인해 주세요.": "This email address is already in use for another role. Please check the address.",
+  "피드백을 남기려면 로그인해 주세요.": "Please sign in to leave feedback.",
+  "피드백을 남기려면 로그인해 주세요. 등록된 피드백은 로그인 없이도 읽을 수 있습니다.": "Please sign in to leave feedback. Anyone can read the posts without signing in.",
+  "글쓴이": "Posted by"
 }

@@ -12,6 +12,7 @@ describe("FeedbackPostCard", () => {
     render(<FeedbackPostCard post={{
       id: "post-1",
       authorName: "김사용자",
+      authorEmail: "kim@pusan.ac.kr",
       targetScreen: "COMMON",
       area: "기타",
       type: "BUG",

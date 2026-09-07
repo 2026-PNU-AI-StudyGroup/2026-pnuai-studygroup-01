@@ -335,6 +335,7 @@ model User {
   approvalDecisions                  ApprovalDecision[]
   reportFeedback                     ReportFeedback[]                    @relation("ReportFeedbackAuthor")
   feedbackPostsResolved              FeedbackPost[]                      @relation("FeedbackPostResolver")
+  feedbackPostsWritten               FeedbackPost[]                      @relation("FeedbackPostAuthor")
   feedbackStatusChanges              FeedbackStatusChange[]              @relation("FeedbackStatusChangeActor")
   feedbackComments                   FeedbackComment[]                   @relation("FeedbackCommentAuthor")
   artifactsRegistered                Artifact[]
@@ -1571,7 +1572,11 @@ model Artifact {
 
 model FeedbackPost {
   id             String                 @id @default(uuid())
+  // 글쓴이는 로그인 세션에서 받는다. 옛 글은 자유 입력이나 익명으로 남아 있어
+  // 계정과 메일이 비어 있을 수 있다.
   authorName     String
+  authorId       String?
+  authorEmail    String?
   targetScreen   FeedbackTargetScreen
   area           String
   type           FeedbackType
@@ -1586,6 +1591,7 @@ model FeedbackPost {
   comments       FeedbackComment[]
   statusChanges  FeedbackStatusChange[]
   resolvedBy     User?                  @relation("FeedbackPostResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  author         User?                  @relation("FeedbackPostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([status, priority, createdAt])
   @@map("feedback_post")

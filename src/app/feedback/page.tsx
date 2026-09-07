@@ -65,7 +65,7 @@ export default async function FeedbackPage({
       </header>
 
       <main className="mx-auto grid max-w-4xl gap-8 px-5 py-8 sm:px-8 sm:py-10">
-        <FeedbackComposer />
+        <FeedbackComposer signedInAs={actor ? { name: actor.name, email: actor.email } : undefined} />
 
         <section className="grid gap-4">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
