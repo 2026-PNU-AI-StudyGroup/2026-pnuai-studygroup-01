@@ -186,7 +186,6 @@ async function main() {
     const programId = stableId("program", contest.contestId);
     const program = {
       name: contest.contestName,
-      category: period.category,
       startsAt,
       endsAt,
       projectRegistrationStartsAt: startsAt,
@@ -204,9 +203,14 @@ async function main() {
       endProcessedAt: endsAt,
       icon: "TROPHY" as const,
     };
+    // 대분류는 처음 만들 때만 넣는다.
+    //
+    // 운영자가 화면에서 대분류를 합치거나 이름을 바꿀 수 있다(`renameProgramCategoryAction`).
+    // 갱신에 끼워 두면 이관을 다시 돌릴 때마다 그 정리가 되돌아가 같은 행사가 두 대분류로
+    // 갈라진다. 실제로 제6회가 제7회와 다른 대분류로 떨어졌다.
     await prisma.projectProgram.upsert({
       where: { id: programId },
-      create: { id: programId, ...program },
+      create: { id: programId, category: period.category, ...program },
       update: program,
     });
 
