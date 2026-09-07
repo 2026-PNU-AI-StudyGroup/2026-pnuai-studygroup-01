@@ -188,11 +188,12 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
         select: { id: true },
       }));
       if (!team.canSupervise && !isTeamLeader) return false;
-      await transaction.projectTeamInvitation.update({
-        where: { id: invitation.id },
+      // 수락과 같은 경주가 반대 방향으로도 있다. 이미 수락된 초대를 철회로 되돌리지 않는다.
+      const canceled = await transaction.projectTeamInvitation.updateMany({
+        where: { id: invitation.id, status: "PENDING" },
         data: { status: "CANCELED", respondedAt: input.canceledAt },
       });
-      return true;
+      return canceled.count > 0;
     });
   }
 
@@ -218,11 +219,11 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       if (!team || team.status !== "ACTIVE" || !team.confirmedAt) return "NOT_FOUND";
 
       if (!input.accept) {
-        await transaction.projectTeamInvitation.update({
-          where: { id: invitation.id },
+        const declined = await transaction.projectTeamInvitation.updateMany({
+          where: { id: invitation.id, status: "PENDING" },
           data: { status: "DECLINED", respondedAt: input.respondedAt },
         });
-        return "DECLINED";
+        return declined.count === 0 ? "NOT_FOUND" : "DECLINED";
       }
 
       if (team.programEndsAt <= input.respondedAt) return "PROGRAM_CLOSED";
@@ -248,6 +249,19 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
       });
       if (memberCount >= team.teamMaxSize) return "CAPACITY_REACHED";
 
+      // PENDING 을 조건에 넣어 한 트랜잭션만 상태를 넘기게 한다.
+      //
+      // 앞의 findFirst 는 행을 잠그지 않는다. 읽고 나서 팀 잠금을 기다리는 사이에 팀장이
+      // 초대를 철회하면, 깨어난 쪽이 낡은 스냅샷을 들고 CANCELED 를 ACCEPTED 로 덮어써
+      // 철회된 초대로 팀에 들어갔다. 같은 저장소의 학생팀 쪽은 초대 행을 FOR UPDATE 로
+      // 잠그는 올바른 방식을 이미 쓰고 있었는데 이 모듈이 따라가지 않았다.
+      //
+      // 합류보다 먼저 넘긴다. 뒤에 두면 못 넘긴 것을 알았을 때 이미 팀원이 만들어져 있다.
+      const accepted = await transaction.projectTeamInvitation.updateMany({
+        where: { id: invitation.id, status: "PENDING" },
+        data: { status: "ACCEPTED", respondedAt: input.respondedAt, inviteeId: input.inviteeId },
+      });
+      if (accepted.count === 0) return "NOT_FOUND";
       await transaction.projectTeamMembership.create({
         data: {
           projectTeamId: team.id,
@@ -255,10 +269,6 @@ export class PrismaProjectTeamInvitationRepository implements ProjectTeamInvitat
           role: "MEMBER",
           joinedAt: input.respondedAt,
         },
-      });
-      await transaction.projectTeamInvitation.update({
-        where: { id: invitation.id },
-        data: { status: "ACCEPTED", respondedAt: input.respondedAt, inviteeId: input.inviteeId },
       });
       await transaction.auditLog.create({
         data: {
