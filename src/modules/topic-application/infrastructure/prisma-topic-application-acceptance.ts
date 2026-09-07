@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createApplicationResultNotification } from "@/modules/notification/infrastructure/notification-events";
+import { activeProjectTeamMembershipInProgram } from "@/modules/project-team/domain/project-team-membership-scope";
 import { assignProgramDeliverablesToTeam } from "@/modules/report/infrastructure/program-deliverable-assignment";
 import { roleForAcceptedTeamMember } from "@/modules/team/domain/team-leadership";
 import type {
@@ -125,11 +126,15 @@ export class PrismaTopicApplicationAcceptance {
           return "FORBIDDEN";
         }
 
+        // 이 주제가 아니라 이 프로그램 전체를 본다.
+        //
+        // 지원할 때는 프로그램 단위로 막는데 승인할 때는 그 주제 팀만 봤다. 한 프로그램의
+        // 서로 다른 주제 둘에 지원해 두면 둘 다 승인돼 같은 학생이 프로젝트 팀 두 곳에
+        // 소속됐다. 초대 수락 경로는 이미 프로그램 단위로 막고 있었다.
         const existingMembership = await transaction.projectTeamMembership.findFirst({
           where: {
             userId: application.studentId,
-            endedAt: null,
-            projectTeam: { projectId: application.topicId },
+            ...activeProjectTeamMembershipInProgram(application.topic.programId),
           },
           select: { id: true },
         });
@@ -313,8 +318,9 @@ export class PrismaTopicApplicationAcceptance {
     `);
     if (!areActiveStudents(participants, studentIds.length)) return "CONFLICT";
 
+    // 팀 지원도 같다. 팀원 중 한 명이라도 이 프로그램의 다른 팀에 이미 들어가 있으면 막는다.
     const existingMemberships = await transaction.projectTeamMembership.count({
-      where: { userId: { in: studentIds }, endedAt: null, projectTeam: { projectId: topic.id } },
+      where: { userId: { in: studentIds }, ...activeProjectTeamMembershipInProgram(topic.programId) },
     });
     if (existingMemberships > 0) return "STUDENT_ALREADY_IN_PROJECT";
 

@@ -2425,5 +2425,6 @@
   "이미 다른 역할로 쓰이고 있는 이메일입니다. 주소를 확인해 주세요.": "This email address is already in use for another role. Please check the address.",
   "피드백을 남기려면 로그인해 주세요.": "Please sign in to leave feedback.",
   "피드백을 남기려면 로그인해 주세요. 등록된 피드백은 로그인 없이도 읽을 수 있습니다.": "Please sign in to leave feedback. Anyone can read the posts without signing in.",
-  "글쓴이": "Posted by"
+  "글쓴이": "Posted by",
+  "학생이 이 프로그램의 다른 프로젝트 팀에 이미 소속되어 있습니다.": "This student already belongs to another project team in this program."
 }

@@ -64,7 +64,7 @@ export class DecideTopicApplicationService {
     }
     if (outcome === "STUDENT_ALREADY_IN_PROJECT") {
       throw new TopicApplicationDecisionConflictError(
-        "학생이 이미 이 프로젝트 팀에 소속되어 있습니다.",
+        "학생이 이 프로그램의 다른 프로젝트 팀에 이미 소속되어 있습니다.",
       );
     }
     if (outcome === "CONFLICT") {
