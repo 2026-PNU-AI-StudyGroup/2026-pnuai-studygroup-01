@@ -23,7 +23,7 @@ function FieldLabel({ children }: { children: string }) {
   return <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{children}</UiText></span>;
 }
 
-export function FeedbackComposer() {
+export function FeedbackComposer({ signedInAs }: { signedInAs?: { name: string; email: string } }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     createFeedbackPostAction,
@@ -39,16 +39,27 @@ export function FeedbackComposer() {
     <>
       <PageHeader
         title="피드백 게시판"
-        actions={!open ? (
+        actions={!open && signedInAs ? (
         <button className="button-primary gap-2" type="button" onClick={() => setOpen(true)}>
           <AddIcon className="size-4 shrink-0" /><UiText>{"게시글 쓰기"}</UiText>
         </button>
         ) : undefined}
       />
-      {open ? (
+      {/* 읽기는 열어 두고 글쓰기만 로그인을 받는다. 세션이 없으면 이름·메일을 가져올 데가 없다. */}
+      {!signedInAs ? (
+        <p role="status" className="panel p-5 text-sm text-[var(--muted)] sm:p-7">
+          <UiText>{"피드백을 남기려면 로그인해 주세요. 등록된 피드백은 로그인 없이도 읽을 수 있습니다."}</UiText>
+        </p>
+      ) : null}
+      {open && signedInAs ? (
       <form ref={formRef} action={formAction} className="panel grid gap-5 p-5 sm:p-7">
-      {/* 작성자 이름은 받지 않는다. 로그인 없이 열린 게시판이라 실명이 그대로 공개되고
-          자유 입력이라 교수 이름을 적어 사칭할 수 있었다. 익명으로 등록된다. */}
+      {/* 글쓴이는 로그인 세션에서 받는다. 자유 입력이던 때는 아무나 교수 이름을 적어
+          사칭할 수 있었다. 누구 이름으로 남는지 쓰기 전에 알려 준다. */}
+      <p className="text-sm text-[var(--muted)]">
+        <UiText>{"글쓴이"}</UiText>{" "}
+        <strong className="font-semibold text-[var(--ink)]">{signedInAs?.name}</strong>
+        {" "}<span className="break-all">{signedInAs?.email}</span>
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="대상 화면" required>
           <fieldset className="grid grid-cols-2 gap-2">

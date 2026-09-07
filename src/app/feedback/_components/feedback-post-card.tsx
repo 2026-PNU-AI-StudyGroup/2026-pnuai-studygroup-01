@@ -29,6 +29,7 @@ type FeedbackStatusChangeView = {
 export type FeedbackPostView = {
   id: string;
   authorName: string;
+  authorEmail: string | null;
   targetScreen: TargetScreenValue;
   area: string;
   type: FeedbackTypeValue;
@@ -74,6 +75,8 @@ export function FeedbackPostCard({ post, canModerate = false }: { post: Feedback
         <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]"><UiText>{post.title}</UiText></h2>
         <p className="mt-1 text-xs text-[var(--muted)]">
           <span className="font-semibold text-[var(--ink)]">{post.authorName}</span>
+          {/* 메일 주소는 누구나 읽는 게시판에 그대로 두지 않는다. 답변할 사람에게만 보인다. */}
+          {canModerate && post.authorEmail ? <>{" "}<span className="break-all">{post.authorEmail}</span></> : null}
           {" · "}
           <UiDate value={post.createdAt} mode="dateTime" />
         </p>
