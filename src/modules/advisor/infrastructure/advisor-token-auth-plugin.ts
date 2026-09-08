@@ -4,6 +4,10 @@ import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
 
 import { hashAdvisorToken, isTokenUsable } from "@/modules/advisor/domain/advisor-access-token";
+import {
+  ADVISOR_INVITE_PROGRAM_COOKIE,
+  ADVISOR_INVITE_PROGRAM_COOKIE_MAX_AGE_SECONDS,
+} from "@/modules/advisor/domain/advisor-invite-cookie";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 // 초대 토큰을 검증해 자문위원 세션을 발급하는 better-auth 플러그인.
@@ -54,6 +58,15 @@ export function advisorTokenAuth(): BetterAuthPlugin {
           }
           await setSessionCookie(ctx, { session, user });
           // 어느 프로그램에 불려 왔는지 화면이 알아야 그 프로그램으로 곧장 데려갈 수 있다.
+          // 첫 방문은 처리방침 동의를 거치면서 주소의 programId 를 잃는다. 그 사이를 넘기도록
+          // 서버만 읽는 쿠키에 같은 값을 남긴다. 동의 뒤 초대 기록으로 다시 확인하고 지운다.
+          ctx.setCookie(ADVISOR_INVITE_PROGRAM_COOKIE, record.invitation.programId, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            maxAge: ADVISOR_INVITE_PROGRAM_COOKIE_MAX_AGE_SECONDS,
+          });
           return ctx.json({ status: "ok", programId: record.invitation.programId });
         },
       ),

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { SignInLanding } from "@/app/_components/sign-in-landing";
+import { findAdvisorLandingPath } from "@/modules/advisor/infrastructure/prisma-advisor-landing-query";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/development-mock-auth";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -29,8 +30,9 @@ export default async function Home({
     ) {
       redirect("/onboarding");
     }
-    // 자문위원은 배정된 프로젝트만 다루므로 담당 프로젝트 화면이 첫 화면이다.
-    if (actor.role === "ADVISOR") redirect("/advisor");
+    // 자문위원은 담당 프로젝트 배정과 프로그램 초대 중 무엇을 받았는지에 따라 첫 화면이
+    // 갈린다. 초대만 받은 위원에게 담당 목록은 언제나 비어 있다.
+    if (actor.role === "ADVISOR") redirect(await findAdvisorLandingPath(prisma, actor.id));
     redirect("/topics");
   }
 
