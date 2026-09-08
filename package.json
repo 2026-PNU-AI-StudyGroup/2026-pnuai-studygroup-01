@@ -86,6 +86,8 @@
   },
   "overrides": {
     "@hono/node-server": "1.19.13",
+    "browserslist": "4.28.9",
+    "mysql2": "3.24.3",
     "postcss": "8.5.23"
   }
 }
