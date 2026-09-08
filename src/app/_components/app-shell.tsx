@@ -8,6 +8,7 @@ import { updateLanguageAction } from "@/app/_actions/language-actions";
 import { NotificationIndicatorContainer } from "@/app/_components/notification-indicator-container";
 import { PopupAnnouncements } from "@/app/_components/popup-announcements";
 import styles from "@/app/_components/app-shell.module.css";
+import { hasAdvisorProjectAssignments } from "@/modules/advisor/infrastructure/prisma-advisor-landing-query";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 import { AccountPopover } from "@/modules/identity/ui/account-popover";
 import { requireCompletedStudentOnboarding } from "@/modules/identity/infrastructure/student-onboarding-guard";
@@ -36,7 +37,7 @@ type NavigationItem = {
   icon: "home" | "search" | "users" | "notice" | "approval" | "settings";
 };
 
-function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
+function navigationFor(role: UserRole, locale: SiteLocale, advisorHasAssignments = true): NavigationItem[] {
   const label = locale === "ko"
     ? {
         explore: "프로젝트 찾기",
@@ -77,6 +78,12 @@ function navigationFor(role: UserRole, locale: SiteLocale): NavigationItem[] {
     ];
   }
   if (role === "ADVISOR") {
+    // 담당 프로젝트는 관리자가 프로젝트를 하나하나 배정해야 채워진다. 프로그램 초대만 받은
+    // 위원에게는 영원히 빈 목록이라, 그 자리를 첫 메뉴로 세워 두면 링크를 타고 들어온
+    // 위원이 처음 누르는 곳이 빈 화면이 된다. 배정이 있을 때만 메뉴에 세운다.
+    if (!advisorHasAssignments) {
+      return [{ href: "/topics", label: label.explore, icon: "search" }];
+    }
     return [
       { href: "/advisor", label: locale === "ko" ? "담당 프로젝트" : "My assignments", icon: "home" },
       { href: "/topics", label: label.explore, icon: "search" },
@@ -145,7 +152,10 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     locale,
     new ReadStoredTranslationService(new PrismaStoredTranslationReader(prisma)),
   );
-  const navigation = navigationFor(role, locale);
+  // 자문위원 메뉴는 담당 프로젝트 배정 여부에 따라 달라진다.
+  const advisorHasAssignments = role !== "ADVISOR"
+    || await hasAdvisorProjectAssignments(prisma, userId);
+  const navigation = navigationFor(role, locale, advisorHasAssignments);
   if (
     role === "STUDENT" &&
     await prisma.projectAssistant.count({ where: { userId } }) > 0
