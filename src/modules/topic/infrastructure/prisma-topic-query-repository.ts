@@ -21,7 +21,7 @@ const publicTopicInclude = {
   author: { select: { name: true, role: true } },
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
+  program: { select: { name: true, category: true, icon: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
   projectTeam: { select: { confirmedAt: true, showcaseIntro: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } }, artifacts: { orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }], select: { id: true, type: true, title: true, fileId: true, externalUrl: true, position: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
@@ -79,7 +79,7 @@ const managedTopicSelect = {
       },
     },
   },
-  program: { select: { name: true, category: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
+  program: { select: { name: true, category: true, icon: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
 } satisfies Prisma.TopicSelect;
 
 type ManagedTopicRow = Prisma.TopicGetPayload<{
@@ -288,6 +288,7 @@ function toTopicSummary(
     // 주제 작성자는 학생·교수·관리자만 화면에서 생성할 수 있어 ADVISOR가 올 수 없다.
     authorRole: author.role as "STUDENT" | "PROFESSOR" | "ADMIN",
     programName: program.name,
+    programIcon: program.icon,
     programCategory: program.category,
     effectiveStatus: effectiveProjectStatus({ status: topic.status, programEndsAt: program.endsAt, confirmedAt: projectTeam?.confirmedAt ?? null }),
     divisionName: division?.name ?? null,
@@ -320,6 +321,7 @@ function toPublicTopic(
     professorName: program.advisorEnabled ? manager?.name ?? null : null,
     startYear: getProgramStartYear(program.startsAt),
     programName: program.name,
+    programIcon: program.icon,
     programCategory: program.category,
     effectiveStatus: effectiveProjectStatus({ status: topic.status, programEndsAt: program.endsAt, confirmedAt: projectTeam?.confirmedAt ?? null }),
     divisionName: division?.name ?? null,

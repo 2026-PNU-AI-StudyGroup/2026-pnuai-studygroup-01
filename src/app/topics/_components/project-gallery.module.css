@@ -34,11 +34,34 @@
   object-fit: cover;
 }
 
+/* 대표 이미지가 없는 프로젝트의 표지.
+   색은 프로젝트 id 로 고른다. 여덟 가지를 돌려 쓰며 저장하지 않는다.
+   전부 같은 회색이면 목록에서 카드가 서로 구분되지 않는다. */
 .fallbackCover {
   display: flex;
   align-items: flex-end;
   padding: 1.35rem;
-  background: var(--surface-subtle);
+  background: var(--cover-bg, var(--surface-subtle));
+}
+
+.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#eef0fe, #232742); --cover-ink: light-dark(#3730a3, #c2c6fb); }
+.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#e4f4ef, #16302a); --cover-ink: light-dark(#0f6e56, #7fd8bd); }
+.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#fdeee7, #33211a); --cover-ink: light-dark(#993c1d, #efa588); }
+.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#fceaf1, #331d27); --cover-ink: light-dark(#993556, #eda3bd); }
+.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#e7f0fb, #182838); --cover-ink: light-dark(#185fa5, #92c2ee); }
+.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#ecf4e0, #1e2a16); --cover-ink: light-dark(#3b6d11, #a9cf78); }
+.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#fbf0dc, #332616); --cover-ink: light-dark(#854f0b, #e3ae5c); }
+.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#f1efe8, #2a2a26); --cover-ink: light-dark(#5f5e5a, #c2c0b6); }
+
+/* 프로그램이 고른 아이콘을 크게 얹는다. 멀리서도 어느 행사인지 갈라 볼 수 있다. */
+.fallbackIcon {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.25rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--cover-ink, var(--muted));
+  opacity: 0.45;
 }
 
 .fallbackCover::before,
@@ -67,7 +90,7 @@
 .fallbackEyebrow {
   display: block;
   overflow: hidden;
-  color: var(--muted);
+  color: var(--cover-ink, var(--muted));
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -80,7 +103,7 @@
   display: -webkit-box;
   margin-top: 0.3rem;
   overflow: hidden;
-  color: var(--ink);
+  color: var(--cover-ink, var(--ink));
   font-size: 1.05rem;
   font-weight: 750;
   letter-spacing: -0.025em;

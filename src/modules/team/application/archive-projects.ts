@@ -7,6 +7,7 @@ export type ArchivedProject = {
   teamName: string;
   programId: string;
   programName: string;
+  programIcon: ProgramIconKey;
   programCategory: string;
   divisionId?: string | null;
   divisionName?: string | null;

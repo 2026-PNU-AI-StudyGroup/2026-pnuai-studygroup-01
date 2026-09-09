@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import styles from "@/app/topics/_components/project-gallery.module.css";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
@@ -10,6 +11,7 @@ export function ProjectGalleryCardShell({
   title,
   href,
   programName,
+  programIcon,
   divisionName,
   description,
   imagePath,
@@ -23,6 +25,7 @@ export function ProjectGalleryCardShell({
   title: string;
   href: string;
   programName: string;
+  programIcon?: ProgramIconKey;
   divisionName?: string | null;
   description: string;
   imagePath?: string;
@@ -37,7 +40,7 @@ export function ProjectGalleryCardShell({
   return (
     <article aria-labelledby={titleId} className={styles.card}>
       <div className="relative">
-        <ProjectGalleryCover imagePath={imagePath} programName={programName} title={title} />
+        <ProjectGalleryCover imagePath={imagePath} programName={programName} programIcon={programIcon} title={title} seed={id} />
         {coverStatus ? <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap items-center gap-1.5">{coverStatus}</div> : null}
         {coverOverlay}
       </div>

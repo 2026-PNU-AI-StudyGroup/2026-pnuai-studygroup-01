@@ -26,7 +26,7 @@ const archivedProjectSelect = {
     posterPath: true,
     divisionId: true,
     division: { select: { name: true } },
-    program: { select: { id: true, name: true, category: true, advisorEnabled: true, startsAt: true, votingPolicy: { select: { endsAt: true, resultsVisibleAfterVoting: true } } } },
+    program: { select: { id: true, name: true, category: true, icon: true, advisorEnabled: true, startsAt: true, votingPolicy: { select: { endsAt: true, resultsVisibleAfterVoting: true } } } },
     manager: { select: { name: true } },
   } },
   memberships: {
@@ -229,6 +229,7 @@ function toArchivedProject(
     teamName: team.name,
     programId: team.project.program.id,
     programName: team.project.program.name,
+    programIcon: team.project.program.icon,
     programCategory: team.project.program.category,
     divisionId: team.project.divisionId,
     divisionName: team.project.division?.name ?? null,

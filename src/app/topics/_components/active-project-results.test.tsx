@@ -43,6 +43,7 @@ function topics(memberCount = 1): PublicTopicPage {
       effectiveStatus: "FORMING",
       publishedAt: new Date("2026-07-01T00:00:00Z"),
       programName: "캡스톤",
+      programIcon: "FOLDER" as const,
       programCategory: "교과",
       programStatus: "OPEN",
       advisorEnabled: true,

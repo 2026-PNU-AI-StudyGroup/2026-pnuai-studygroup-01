@@ -61,6 +61,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             title={project.topicTitle}
             href={`/topics/${project.topicId}`}
             programName={project.programName}
+            programIcon={project.programIcon}
             divisionName={project.divisionName}
             description={project.topicDescription}
             imagePath={project.thumbnailPath}
