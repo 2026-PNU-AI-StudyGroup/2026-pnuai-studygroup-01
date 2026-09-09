@@ -20,6 +20,7 @@ import { ProgramVotingResultVisibilityFields } from "@/app/topics/_management/pr
 import { CategorySelect } from "@/app/topics/_management/category-select";
 import { ChoiceCard, FormField, FormSection, NumberField, Toggle } from "@/shared/ui/form-system";
 import { TagInput } from "@/shared/ui/tag-input";
+import { ProgramIconSelect } from "@/app/topics/_management/program-icon-select";
 
 const PROGRAM_FORM_SECTIONS = [
   { id: "program-basic", label: "기본 정보" },
@@ -144,7 +145,9 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
             if (names.length === 0) setVoteLimitScope("PROGRAM");
           }} maxLength={40} placeholder="예: 창업 트랙, 융합 트랙" />
         </FormField>
-        <input type="hidden" name="icon" value="FOLDER" />
+        <FormField id="program-icon" label="아이콘" description="사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다." className={styles.fullRow}>
+          <ProgramIconSelect />
+        </FormField>
       </FormSection>
 
       <FormSection id="program-operation" hidden={activeSection !== "program-operation"} title="2. 운영 설정" description="프로그램의 운영 방식을 설정하세요." className={styles.section} contentClassName={styles.operationGrid} density="compact" sectionMarker="program-create">

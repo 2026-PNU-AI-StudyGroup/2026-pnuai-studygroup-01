@@ -154,7 +154,7 @@ export async function ProgramManagementWorkspace({
     const assignedIds = new Set(managers.map(({ userId }) => userId));
     const managerCandidates: ProgramManagerCandidate[] = admins.map((admin) => ({ ...admin, assigned: assignedIds.has(admin.id) }));
     content = <>
-      <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />
+      <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, icon: program.icon, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />
       <ProgramManagerPanel programId={program.id} candidates={managerCandidates} />
     </>;
   } else if (tab === "operation") {

@@ -69,6 +69,7 @@ const programCategoryRenameSchema = z.object({
 });
 const programBasicInfoSchema = z.object({
   name: z.string().trim().min(1).max(200),
+  icon: programIconSchema,
   category: z.string().trim().min(1).max(100),
   visibility: programVisibilitySchema,
   divisionNames: z.string(),
@@ -176,6 +177,8 @@ export async function updateProgramBasicInfoAction(_state: ProgramActionState, f
           }
         : undefined,
     });
+    // 아이콘은 이미 있는 changeIcon 을 그대로 쓴다. 기본 정보 저장 한 번으로 같이 넘어간다.
+    await service().changeIcon(await actor(), programId.data, input.data.icon);
   } catch (error) {
     if (error instanceof ProgramDivisionSyncConfirmationRequiredError) {
       return { status: "confirm", message: error.message, divisionSyncImpact: error.impact };
