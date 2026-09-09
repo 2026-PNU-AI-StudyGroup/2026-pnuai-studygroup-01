@@ -196,7 +196,7 @@ export function SignInLanding({
             </section>
 
             <p className={`${styles.lede} mt-12 text-sm`}>
-              <UiText>{"뒤에 보이는 것은 지난 해커톤과 캡스톤 디자인에서 실제로 제출된 결과물입니다."}</UiText>
+              <UiText>{"뒤에 보이는 것은 지난 해커톤에서 실제로 제출된 결과물입니다."}</UiText>
             </p>
           </div>
         </div>

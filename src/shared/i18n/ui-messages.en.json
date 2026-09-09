@@ -547,7 +547,7 @@
   "동의하고 시작하기": "Agree and continue",
   "되돌릴 할 일을 다시 확인해 주세요.": "Please check the task to reopen.",
   "둘러보기": "Browse",
-  "뒤에 보이는 것은 지난 해커톤과 캡스톤 디자인에서 실제로 제출된 결과물입니다.": "The work behind this text was actually submitted in past hackathons and capstone design programs.",
+  "뒤에 보이는 것은 지난 해커톤에서 실제로 제출된 결과물입니다.": "The work behind this text was actually submitted in past hackathons.",
   "득표 {0}표": "Votes by {0}",
   "득표수": "Votes",
   "득표현황": "Vote Results",
