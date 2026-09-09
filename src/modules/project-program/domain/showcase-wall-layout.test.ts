@@ -53,26 +53,41 @@ describe("showcaseWallTiles", () => {
 
 describe("pickShowcaseWallPaths", () => {
   const rowsOf = (programId: string, count: number) =>
-    Array.from({ length: count }, (_unused, index) => ({ programId, path: `${programId}-${index}` }));
+    Array.from({ length: count }, (_unused, index) => ({
+      programId,
+      title: `${programId}-${index}`,
+      path: `${programId}-${index}`,
+    }));
 
-  it("한 프로그램이 벽을 다 먹지 못하게 번갈아 집는다", () => {
-    // 새것부터 자르기만 하면 앞 프로그램이 칸을 다 채운다.
-    const picked = pickShowcaseWallPaths([...rowsOf("hackathon", 40), ...rowsOf("booster", 16)]);
+  it("한 회차가 벽을 다 먹지 못하게 번갈아 집는다", () => {
+    // 새것부터 자르기만 하면 앞 회차가 칸을 다 채운다.
+    const picked = pickShowcaseWallPaths([...rowsOf("sixth", 40), ...rowsOf("seventh", 16)]);
 
     expect(picked).toHaveLength(SHOWCASE_WALL_TILE_COUNT);
-    expect(picked.filter((path) => path.startsWith("booster"))).toHaveLength(SHOWCASE_WALL_TILE_COUNT / 2);
-    expect(picked.slice(0, 4)).toEqual(["hackathon-0", "booster-0", "hackathon-1", "booster-1"]);
+    expect(picked.filter((path) => path.startsWith("seventh"))).toHaveLength(SHOWCASE_WALL_TILE_COUNT / 2);
+    expect(picked.slice(0, 4)).toEqual(["sixth-0", "seventh-0", "sixth-1", "seventh-1"]);
   });
 
-  it("떨어진 프로그램은 건너뛰고 남은 쪽에서 채운다", () => {
-    const picked = pickShowcaseWallPaths([...rowsOf("hackathon", 40), ...rowsOf("booster", 2)]);
+  it("표지가 떨어진 회차는 건너뛰고 남은 쪽에서 채운다", () => {
+    const picked = pickShowcaseWallPaths([...rowsOf("sixth", 40), ...rowsOf("seventh", 2)]);
 
     expect(picked).toHaveLength(SHOWCASE_WALL_TILE_COUNT);
-    expect(picked.filter((path) => path.startsWith("booster"))).toEqual(["booster-0", "booster-1"]);
+    expect(picked.filter((path) => path.startsWith("seventh"))).toEqual(["seventh-0", "seventh-1"]);
+  });
+
+  it("같은 이름의 프로젝트는 한 번만 쓴다", () => {
+    // 같은 행사가 프로그램으로 두 번 들어가 있으면 표지 파일이 둘로 갈린다.
+    const picked = pickShowcaseWallPaths([
+      { programId: "sixth-a", title: "ForinK", path: "file-1" },
+      { programId: "sixth-b", title: "ForinK", path: "file-2" },
+      { programId: "sixth-b", title: "Moti", path: "file-3" },
+    ]);
+
+    expect(picked).toEqual(["file-1", "file-3"]);
   });
 
   it("전부 합쳐도 칸보다 적으면 있는 것만 돌려준다", () => {
-    expect(pickShowcaseWallPaths(rowsOf("booster", 3))).toEqual(["booster-0", "booster-1", "booster-2"]);
+    expect(pickShowcaseWallPaths(rowsOf("seventh", 3))).toEqual(["seventh-0", "seventh-1", "seventh-2"]);
     expect(pickShowcaseWallPaths([])).toEqual([]);
   });
 });
