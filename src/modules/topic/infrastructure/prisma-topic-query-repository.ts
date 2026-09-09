@@ -218,7 +218,7 @@ export class PrismaTopicQueryRepository
       ? await this.client.topic.findMany({ where: { id: { in: pageIds } }, include: publicTopicInclude })
       : await this.client.topic.findMany({
         where,
-        orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+        orderBy: listOrder(query.programId),
         skip: (page - 1) * query.pageSize,
         take: query.pageSize,
         include: publicTopicInclude,
@@ -277,6 +277,21 @@ export class PrismaTopicQueryRepository
     });
     return topic ? toPublicTopic(topic, null, this.audience) : null;
   }
+}
+
+/**
+ * 목록 정렬.
+ *
+ * 프로그램 하나를 보고 있으면 관리자가 매긴 분과 번호대로 묶는다. 표지 색도 분과로
+ * 묶이므로 목록이 덩어리로 읽힌다. 분과 없는 주제는 NULL 이라 뒤로 밀리고, 분과를
+ * 안 쓰는 프로그램은 전부 NULL 이라 예전처럼 최신순이다.
+ *
+ * 프로그램을 안 고른 전체 목록에서는 쓰지 않는다. 번호가 프로그램 안에서만 뜻이 있어
+ * 여러 프로그램을 섞으면 1번끼리 뭉쳐 순서가 뒤죽박죽이 된다.
+ */
+function listOrder(programId?: string): Prisma.TopicOrderByWithRelationInput[] {
+  const recent: Prisma.TopicOrderByWithRelationInput[] = [{ publishedAt: "desc" }, { id: "desc" }];
+  return programId ? [{ division: { position: "asc" } }, ...recent] : recent;
 }
 
 function toTopicSummary(

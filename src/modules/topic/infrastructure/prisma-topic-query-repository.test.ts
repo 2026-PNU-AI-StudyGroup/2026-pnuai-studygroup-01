@@ -82,4 +82,42 @@ describe("PrismaTopicQueryRepository 관리자 종료 프로젝트 조회", () =
       take: 10,
     }));
   });
+
+  it("프로그램 하나를 보면 분과 순서를 최신순 앞에 둔다", async () => {
+    const findMany = vi.fn(async () => []);
+    const repository = new PrismaTopicQueryRepository({
+      topic: { count: vi.fn(async () => 0), findMany },
+    } as unknown as PrismaClient, "STUDENT");
+
+    await repository.listPublished({
+      programId: "program-1",
+      query: "",
+      page: 1,
+      pageSize: 10,
+      now: new Date("2026-09-09T00:00:00Z"),
+    });
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [{ division: { position: "asc" } }, { publishedAt: "desc" }, { id: "desc" }],
+    }));
+  });
+
+  it("프로그램을 고르지 않은 전체 목록은 분과 순서를 쓰지 않는다", async () => {
+    // 분과 번호는 프로그램 안에서만 뜻이 있다. 섞으면 1번끼리 뭉쳐 순서가 무너진다.
+    const findMany = vi.fn(async () => []);
+    const repository = new PrismaTopicQueryRepository({
+      topic: { count: vi.fn(async () => 0), findMany },
+    } as unknown as PrismaClient, "STUDENT");
+
+    await repository.listPublished({
+      query: "",
+      page: 1,
+      pageSize: 10,
+      now: new Date("2026-09-09T00:00:00Z"),
+    });
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    }));
+  });
 });
