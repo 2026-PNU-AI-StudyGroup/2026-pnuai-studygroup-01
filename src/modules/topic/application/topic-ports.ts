@@ -50,6 +50,7 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   programName: string;
   programIcon: ProgramIconKey;
   programCategory: string;
+  divisionId?: string | null;
   divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;

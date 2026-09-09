@@ -12,6 +12,7 @@ export function ProjectGalleryCardShell({
   href,
   programName,
   programIcon,
+  divisionId,
   divisionName,
   description,
   imagePath,
@@ -26,6 +27,7 @@ export function ProjectGalleryCardShell({
   href: string;
   programName: string;
   programIcon?: ProgramIconKey;
+  divisionId?: string | null;
   divisionName?: string | null;
   description: string;
   imagePath?: string;
@@ -40,7 +42,7 @@ export function ProjectGalleryCardShell({
   return (
     <article aria-labelledby={titleId} className={styles.card}>
       <div className="relative">
-        <ProjectGalleryCover imagePath={imagePath} programName={programName} programIcon={programIcon} title={title} seed={id} />
+        <ProjectGalleryCover imagePath={imagePath} programName={programName} programIcon={programIcon} title={title} seed={divisionId ?? id} />
         {coverStatus ? <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap items-center gap-1.5">{coverStatus}</div> : null}
         {coverOverlay}
       </div>

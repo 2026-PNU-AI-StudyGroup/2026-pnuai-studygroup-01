@@ -11,7 +11,13 @@ export function ProjectGalleryCover({ imagePath, programName, programIcon, title
   programName: string;
   programIcon?: ProgramIconKey;
   title: string;
-  /** 표지 색을 고르는 씨앗. 프로젝트 id 를 넣는다. */
+  /**
+   * 표지 색을 고르는 씨앗.
+   *
+   * 분과가 있으면 분과 id 를 넣는다. 같은 분과 프로젝트가 한 색으로 묶여 목록에서
+   * 덩어리로 보인다. 색이 장식이 아니라 분과를 말하게 된다.
+   * 분과를 안 쓰는 프로그램은 프로젝트 id 로 떨어져 카드마다 다른 색이 된다.
+   */
   seed?: string;
 }) {
   if (imagePath) {

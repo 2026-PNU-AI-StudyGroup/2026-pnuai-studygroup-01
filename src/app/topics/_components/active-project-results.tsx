@@ -102,6 +102,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
       href={href}
       programName={topic.programName}
       programIcon={topic.programIcon}
+      divisionId={topic.divisionId}
       divisionName={topic.divisionName}
       description={topic.description}
       imagePath={topic.thumbnailPath ?? undefined}
