@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -10,6 +10,7 @@ vi.mock("@/app/topics/_management/program-actions", () => ({
 }));
 
 import { ProgramForm } from "@/app/topics/_management/program-form";
+import { PROGRAM_ICON_KEYS } from "@/modules/project-program/domain/program-icon";
 
 describe("ProgramForm", () => {
   function renderForm() {
@@ -83,11 +84,19 @@ describe("ProgramForm", () => {
     expect(screen.getByRole("button", { name: "다음" })).toBeEnabled();
   });
 
-  it("아이콘 선택 UI 없이 기본 아이콘 계약을 유지한다", () => {
+  it("아이콘을 고를 수 있고 고르지 않으면 기본값이 넘어간다", () => {
+    // 예전에는 FOLDER 를 숨은 값으로 박아 두어 손으로 만든 프로그램이 전부 같은 아이콘이었다.
     renderForm();
 
-    expect(screen.queryByRole("group", { name: "프로그램 아이콘" })).not.toBeInTheDocument();
-    expect(document.querySelector('input[type="hidden"][name="icon"]')).toHaveValue("FOLDER");
+    const group = screen.getByRole("radiogroup", { name: "프로그램 아이콘" });
+    const options = within(group).getAllByRole("radio");
+
+    expect(options).toHaveLength(PROGRAM_ICON_KEYS.length);
+    expect(new FormData(document.querySelector("form")!).get("icon")).toBe("FOLDER");
+
+    fireEvent.click(within(group).getByRole("radio", { name: "경진대회" }));
+
+    expect(new FormData(document.querySelector("form")!).get("icon")).toBe("TROPHY");
   });
 
   it("채점표 단계는 빈 항목이 있어도 다음 단계로 이동하고 최종 등록에서만 검사한다", () => {
