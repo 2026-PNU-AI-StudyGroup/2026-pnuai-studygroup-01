@@ -26,9 +26,13 @@
 }
 
 /*
-  지난 프로젝트 결과물의 벽. 한 장으로 이어붙인 4x4 블록을 배경으로 무한 반복시키고,
+  지난 프로젝트 결과물의 벽. 한 장으로 이어붙인 6x4 블록을 배경으로 무한 반복시키고,
   그 층을 정확히 한 블록만큼 좌상단에서 우하단으로 옮긴다. 반복 배경이라 되돌아오는
   자리에 같은 그림이 놓여 이음매가 보이지 않는다. DOM 은 두 칸뿐이다.
+
+  블록은 서버가 굽는다. 확정된 해커톤 팀의 표지를 모아 한 장으로 만들어 내려주므로
+  새 표지가 올라오면 알아서 벽에 들어온다. 칸 수와 칸 크기는 showcase-wall-layout.ts
+  와 맞물려 있다. 한쪽만 고치면 그림이 잘린다.
 */
 .mosaic {
   position: absolute;
@@ -40,7 +44,7 @@
 }
 
 .mosaicLayer {
-  --block-w: 640px;
+  --block-w: 960px;
   --block-h: 406px;
   position: absolute;
   top: calc(-1 * var(--block-h));
@@ -48,17 +52,18 @@
   width: calc(100% + var(--block-w));
   height: calc(100% + var(--block-h));
   background-color: var(--hero-ground-deep);
-  background-image: url("/landing/showcase-wall.webp");
+  background-image: url("/api/landing/showcase-wall");
   background-repeat: repeat;
   background-size: var(--block-w) var(--block-h);
   opacity: 0.4;
-  animation: flow 34s linear infinite;
+  /* 블록이 넓어져 대각선 거리가 늘었다. 카드가 흐르는 속도를 그대로 두려고 시간도 늘린다. */
+  animation: flow 46s linear infinite;
   will-change: transform;
 }
 
 @media (min-width: 64rem) {
   .mosaicLayer {
-    --block-w: 920px;
+    --block-w: 1380px;
     --block-h: 584px;
   }
 }

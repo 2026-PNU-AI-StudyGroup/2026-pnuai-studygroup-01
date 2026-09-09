@@ -2436,5 +2436,8 @@
   "학생이 이 프로그램의 다른 프로젝트 팀에 이미 소속되어 있습니다.": "This student already belongs to another project team in this program.",
   "아이콘": "Icon",
   "사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다.": "Used in the sidebar and on covers for projects without an image.",
-  "프로그램 아이콘": "Program icon"
+  "프로그램 아이콘": "Program icon",
+  "해커톤": "Hackathon",
+  "부스터": "Booster",
+  "public 밖의 경로입니다.": "This path is outside the public directory."
 }
