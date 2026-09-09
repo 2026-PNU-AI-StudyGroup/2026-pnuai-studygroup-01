@@ -17,6 +17,7 @@ const project: ArchivedProject = {
   teamName: "모두의 길",
   programId: "program-1",
   programName: "CSE 캡스톤디자인 2025",
+  programIcon: "FOLDER" as const,
   programCategory: "CSE 캡스톤 디자인",
   divisionId: "division-1",
   divisionName: "융합",

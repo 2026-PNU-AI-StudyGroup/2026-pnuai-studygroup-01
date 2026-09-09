@@ -1,3 +1,4 @@
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import type {
   TopicDetails,
 } from "@/modules/topic/domain/topic-policy";
@@ -47,7 +48,9 @@ export type TopicSummary = Omit<TopicDraft, "applicationQuestions"> & {
   effectiveStatus: "PENDING_APPROVAL" | "REJECTED" | "FORMING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
   publishedAt: Date | null;
   programName: string;
+  programIcon: ProgramIconKey;
   programCategory: string;
+  divisionId?: string | null;
   divisionName?: string | null;
   programStatus: "DRAFT" | "OPEN" | "CLOSED";
   advisorEnabled: boolean;
