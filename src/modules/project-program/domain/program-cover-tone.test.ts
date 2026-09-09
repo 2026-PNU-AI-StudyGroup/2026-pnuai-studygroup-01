@@ -26,6 +26,18 @@ describe("표지 색 고르기", () => {
     expect(used.size).toBe(PROGRAM_COVER_TONE_COUNT);
   });
 
+  it("UUID 씨앗도 고루 흩는다", () => {
+    // 실제 씨앗은 프로젝트 id 다. 16진수라 글자가 16가지뿐이어서 낮은 자리만 보는 해시는
+    // 몇 군데로 쏠렸다. 24개를 나눠 보고 여덟 색이 다 나오는지, 한 색이 몰리지 않는지 본다.
+    const ids = Array.from({ length: 24 }, (_, index) =>
+      `4000${index.toString(16).padStart(4, "0")}-0000-4000-8000-${index.toString(16).padStart(12, "0")}`);
+    const counts = new Map<number, number>();
+    for (const id of ids) counts.set(programCoverTone(id), (counts.get(programCoverTone(id)) ?? 0) + 1);
+
+    expect(counts.size).toBe(PROGRAM_COVER_TONE_COUNT);
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(6);
+  });
+
   it("빈 문자열도 색을 낸다", () => {
     expect(programCoverTone("")).toBeGreaterThanOrEqual(1);
   });

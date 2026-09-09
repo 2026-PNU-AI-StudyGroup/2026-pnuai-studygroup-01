@@ -15,10 +15,19 @@ export const PROGRAM_COVER_TONE_COUNT = 8;
 export type ProgramCoverTone = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export function programCoverTone(seed: string): ProgramCoverTone {
-  // 문자열을 고르게 흩는 정도면 충분하다. 암호용이 아니라 색을 나누는 용도다.
-  let hash = 0;
+  // FNV-1a 뒤에 섞는 단계를 한 번 더 둔다.
+  //
+  // 흔한 `hash * 31 + charCode` 는 낮은 자리가 마지막 몇 글자에 끌려간다. 씨앗이 UUID 라
+  // 글자가 16가지뿐이어서 8로 나눈 나머지가 몇 군데로 쏠렸다. 실제로 16개를 만들어 보니
+  // 여덟 색 중 다섯만 나왔고 하나가 여섯 번 겹쳤다. 섞는 단계가 높은 자리를 낮은 자리로
+  // 끌어내려 준다.
+  let hash = 2166136261;
   for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash * 31 + seed.charCodeAt(index)) | 0;
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
   }
-  return (Math.abs(hash) % PROGRAM_COVER_TONE_COUNT) + 1 as ProgramCoverTone;
+  hash ^= hash >>> 15;
+  hash = Math.imul(hash, 2246822507);
+  hash ^= hash >>> 13;
+  return ((hash >>> 0) % PROGRAM_COVER_TONE_COUNT) + 1 as ProgramCoverTone;
 }
