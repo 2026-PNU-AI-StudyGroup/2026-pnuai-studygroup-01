@@ -44,14 +44,16 @@
   background: var(--cover-bg, var(--surface-subtle));
 }
 
-.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#eef0fe, #232742); --cover-ink: light-dark(#3730a3, #c2c6fb); }
-.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#e4f4ef, #16302a); --cover-ink: light-dark(#0f6e56, #7fd8bd); }
-.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#fdeee7, #33211a); --cover-ink: light-dark(#993c1d, #efa588); }
-.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#fceaf1, #331d27); --cover-ink: light-dark(#993556, #eda3bd); }
-.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#e7f0fb, #182838); --cover-ink: light-dark(#185fa5, #92c2ee); }
-.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#ecf4e0, #1e2a16); --cover-ink: light-dark(#3b6d11, #a9cf78); }
-.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#fbf0dc, #332616); --cover-ink: light-dark(#854f0b, #e3ae5c); }
-.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#f1efe8, #2a2a26); --cover-ink: light-dark(#5f5e5a, #c2c0b6); }
+/* 여덟 색은 색상환을 고르게 나눠 잡는다. 앞선 값은 너무 옅어 나란히 놓으면
+   전부 흰 카드로 보였다. 배경은 채도를 올리고 글자는 같은 계열의 진한 값을 쓴다. */
+.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#d7d9fb, #2c2c74); --cover-ink: light-dark(#2f2792, #c9c7ff); }
+.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#c2eddf, #0f4a3b); --cover-ink: light-dark(#065f49, #7fe6c6); }
+.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#ffdbcb, #5d2a15); --cover-ink: light-dark(#963310, #ffb392); }
+.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#fbd4e3, #58203c); --cover-ink: light-dark(#93264f, #ffa5c5); }
+.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#cee3fb, #103a62); --cover-ink: light-dark(#0b5395, #92c8f7); }
+.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#daedbc, #26431a); --cover-ink: light-dark(#31620a, #abdc78); }
+.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#fbe3b4, #4c3410); --cover-ink: light-dark(#7a4604, #f2bf62); }
+.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#ead4f9, #3f2259); --cover-ink: light-dark(#682899, #daaff6); }
 
 /* 프로그램이 고른 아이콘을 크게 얹는다. 멀리서도 어느 행사인지 갈라 볼 수 있다. */
 .fallbackIcon {
