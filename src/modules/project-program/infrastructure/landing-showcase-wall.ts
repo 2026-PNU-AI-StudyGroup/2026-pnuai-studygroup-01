@@ -16,14 +16,14 @@ import {
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
 
 /**
- * 벽에 올릴 프로그램.
+ * 벽에 올릴 대분류.
  *
- * 해커톤과 AI 부스터 표지에 품이 가장 많이 들어가 있어 그 둘만 쓴다. 대분류 이름을
- * 통째로 바꾸면 여기도 같이 봐야 한다. 하나도 안 걸리면 손으로 만든 예비 그림으로 넘어간다.
+ * 해커톤 표지에 품이 가장 많이 들어가 있어 그것만 쓴다. 대분류 이름을 통째로 바꾸면
+ * 여기도 같이 봐야 한다. 하나도 안 걸리면 손으로 만든 예비 그림으로 넘어간다.
  */
-const WALL_CATEGORY_KEYWORDS = ["해커톤", "부스터"];
+const WALL_CATEGORY_KEYWORD = "해커톤";
 
-/** 후보를 넉넉히 받아 두고 고르기는 도메인에 맡긴다. 프로그램을 번갈아 집으려면 한쪽만 봐서는 안 된다. */
+/** 후보를 넉넉히 받아 두고 고르기는 도메인에 맡긴다. 회차를 번갈아 집으려면 한쪽만 봐서는 안 된다. */
 const CANDIDATE_LIMIT = 200;
 
 /** 앱에서 올린 표지는 `/api/files/<파일 id>` 로 저장된다. 그 라우트는 로그인을 요구하므로 랜딩은 못 쓴다. */
@@ -64,15 +64,12 @@ async function listWallThumbnails(client: PrismaClient): Promise<WallThumbnail[]
       confirmedAt: { not: null },
       project: {
         thumbnailPath: { not: null },
-        program: {
-          isPublic: true,
-          OR: WALL_CATEGORY_KEYWORDS.map((keyword) => ({ category: { contains: keyword } })),
-        },
+        program: { isPublic: true, category: { contains: WALL_CATEGORY_KEYWORD } },
       },
     },
     orderBy: { confirmedAt: "desc" },
     take: CANDIDATE_LIMIT,
-    select: { project: { select: { programId: true, thumbnailPath: true } } },
+    select: { project: { select: { programId: true, title: true, thumbnailPath: true } } },
   });
   const fileIds = teams
     .map(({ project }) => project.thumbnailPath!)
@@ -85,7 +82,7 @@ async function listWallThumbnails(client: PrismaClient): Promise<WallThumbnail[]
   })).map(({ id, objectKey }) => [id, objectKey]));
 
   const readable = new Map<string, WallThumbnail>();
-  const candidates: Array<{ programId: string; path: string }> = [];
+  const candidates: Array<{ programId: string; title: string; path: string }> = [];
   for (const { project } of teams) {
     const thumbnailPath = project.thumbnailPath!;
     if (thumbnailPath.startsWith(STORED_FILE_PREFIX)) {
@@ -95,7 +92,7 @@ async function listWallThumbnails(client: PrismaClient): Promise<WallThumbnail[]
     } else {
       readable.set(thumbnailPath, { path: thumbnailPath, read: () => readPublicFile(thumbnailPath) });
     }
-    candidates.push({ programId: project.programId, path: thumbnailPath });
+    candidates.push({ programId: project.programId, title: project.title, path: thumbnailPath });
   }
   return pickShowcaseWallPaths(candidates).map((thumbnailPath) => readable.get(thumbnailPath)!);
 }

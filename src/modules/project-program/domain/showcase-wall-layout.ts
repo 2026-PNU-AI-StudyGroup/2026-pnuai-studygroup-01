@@ -16,15 +16,21 @@ export const SHOWCASE_WALL_HEIGHT = SHOWCASE_WALL_ROWS * SHOWCASE_WALL_TILE_HEIG
 /**
  * 프로그램을 돌아가며 하나씩 골라 칸을 채운다.
  *
- * 새것부터 그냥 스물넷을 자르면 가장 최근 행사 하나가 벽을 다 먹는다. 실제로 제6회
- * 해커톤 표지가 스물넷을 그대로 채웠다. 프로그램을 번갈아 집으면 행사마다 자리가 돌아간다.
+ * 새것부터 그냥 스물넷을 자르면 가장 최근 회차 하나가 벽을 다 먹는다. 실제로 제6회
+ * 해커톤 표지가 스물넷을 그대로 채웠다. 프로그램을 번갈아 집으면 회차마다 자리가 돌아간다.
  * 프로그램 차례는 팀을 늦게 확정한 쪽이 먼저다. 다 떨어진 프로그램은 건너뛴다.
+ *
+ * 같은 이름의 프로젝트는 한 번만 쓴다. 같은 행사가 프로그램으로 두 번 들어가 있으면
+ * 표지 파일이 둘로 갈려 벽에 같은 그림이 짝으로 보인다. 파일 id 로는 못 걸러 이름으로 건다.
  */
 export function pickShowcaseWallPaths(
-  rows: readonly { programId: string; path: string }[],
+  rows: readonly { programId: string; title: string; path: string }[],
 ): string[] {
   const queues = new Map<string, string[]>();
-  for (const { programId, path } of rows) {
+  const seenTitles = new Set<string>();
+  for (const { programId, title, path } of rows) {
+    if (seenTitles.has(title)) continue;
+    seenTitles.add(title);
     const queue = queues.get(programId);
     if (queue) queue.push(path);
     else queues.set(programId, [path]);
