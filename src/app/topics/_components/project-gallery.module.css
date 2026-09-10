@@ -16,9 +16,17 @@
     이미 밝아서 흰빛을 얹어도 아무 일이 없다. 그쪽은 강조색을 옅게 써 채도가 오르는
     것으로 대신한다. 표지 색이 여덟 가지라 특정 색을 얹으면 어떤 칸에서는 색이 튄다.
   */
-  --spot-tint: light-dark(
-    color-mix(in oklab, var(--primary) 24%, transparent),
-    color-mix(in oklab, white 22%, transparent)
+  --spot-core: light-dark(
+    color-mix(in oklab, var(--primary) 34%, transparent),
+    color-mix(in oklab, white 40%, transparent)
+  );
+  --spot-halo: light-dark(
+    color-mix(in oklab, var(--primary) 12%, transparent),
+    color-mix(in oklab, white 13%, transparent)
+  );
+  --spot-edge: light-dark(
+    color-mix(in oklab, var(--primary) 85%, transparent),
+    color-mix(in oklab, white 78%, transparent)
   );
 }
 
@@ -42,19 +50,50 @@
   z-index: 3;
   content: "";
   inset: 0;
+  /* 가운데를 세게 잡고 빠르게 떨어뜨린다. 한 단으로 펴면 빛이 아니라 얇은 안개로 보인다. */
   background: radial-gradient(
-    18rem 18rem at var(--spot-x, 50%) var(--spot-y, 50%),
-    var(--spot-tint),
-    transparent 70%
+    17rem 17rem at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--spot-core),
+    var(--spot-halo) 34%,
+    transparent 72%
   );
   opacity: 0;
   pointer-events: none;
   transition: opacity 220ms ease;
 }
 
+/*
+  빛이 테두리까지 번진다.
+
+  카드 테두리 폭만큼의 띠에만 같은 빛을 깐다. 두 겹 마스크로 안쪽(content-box)을 도려내
+  테두리 자리만 남긴다. 마우스가 가까운 쪽 테두리가 밝아져 빛이 카드 밖으로 새어 나가는
+  것처럼 보인다. 테두리 색을 직접 바꾸는 것으로는 한쪽만 밝히지 못한다.
+*/
+.card::before {
+  position: absolute;
+  z-index: 4;
+  padding: 1px;
+  border-radius: inherit;
+  content: "";
+  inset: 0;
+  background: radial-gradient(
+    11rem 11rem at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--spot-edge),
+    transparent 68%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+  mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  mask-clip: content-box, border-box;
+  mask-composite: exclude;
+}
+
 /* 키보드로 짚어 온 사람도 같은 것을 본다. 좌표가 없으니 가운데에서 켜진다. */
 .card:hover .cover::after,
-.card:focus-within .cover::after {
+.card:focus-within .cover::after,
+.card:hover::before,
+.card:focus-within::before {
   opacity: 1;
 }
 
@@ -70,7 +109,8 @@
     box-shadow: none;
   }
 
-  .cover::after {
+  .cover::after,
+  .card::before {
     display: none;
   }
 }
@@ -119,7 +159,7 @@
 .fallbackIcon {
   position: absolute;
   top: 1.1rem;
-  left: 1.25rem;
+  right: 1.25rem;
   width: 3.25rem;
   height: 3.25rem;
   color: var(--cover-ink, var(--muted));
