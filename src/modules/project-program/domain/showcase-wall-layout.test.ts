@@ -32,17 +32,21 @@ describe("showcaseWallTiles", () => {
     expect(tiles.at(-1)?.fileId).toBe(`file-${SHOWCASE_WALL_TILE_COUNT - 1}`);
   });
 
-  it("표지가 적으면 돌려 쓰되 같은 그림을 옆에 붙이지 않는다", () => {
-    // 열 수와 나눠지지 않는 수라 줄마다 한 칸씩 밀린다.
-    const tiles = showcaseWallTiles(ids(5));
-
-    expect(tiles).toHaveLength(SHOWCASE_WALL_TILE_COUNT);
-    for (let index = 1; index < tiles.length; index += 1) {
-      expect(tiles[index]!.fileId).not.toBe(tiles[index - 1]!.fileId);
-    }
-    const above = tiles.slice(SHOWCASE_WALL_COLUMNS);
-    for (const [index, tile] of above.entries()) {
-      expect(tile.fileId).not.toBe(tiles[index]!.fileId);
+  it("표지가 몇 장이든 돌려 쓸 때 같은 그림이 옆이나 위아래에 붙지 않는다", () => {
+    // 한 장만 있으면 방법이 없으니 두 장부터 본다. 예전에는 열 수 6으로 나누어떨어지는
+    // 1·2·3·6장에서 위아래가 같은 그림이었다.
+    for (let pool = 2; pool <= SHOWCASE_WALL_TILE_COUNT; pool += 1) {
+      const tiles = showcaseWallTiles(ids(pool));
+      expect(tiles).toHaveLength(SHOWCASE_WALL_TILE_COUNT);
+      for (const [index, tile] of tiles.entries()) {
+        const column = index % SHOWCASE_WALL_COLUMNS;
+        const right = column + 1 < SHOWCASE_WALL_COLUMNS ? tiles[index + 1] : undefined;
+        const below = tiles[index + SHOWCASE_WALL_COLUMNS];
+        expect({ pool, index, side: "가로", id: right?.fileId })
+          .not.toEqual({ pool, index, side: "가로", id: tile.fileId });
+        expect({ pool, index, side: "세로", id: below?.fileId })
+          .not.toEqual({ pool, index, side: "세로", id: tile.fileId });
+      }
     }
   });
 
