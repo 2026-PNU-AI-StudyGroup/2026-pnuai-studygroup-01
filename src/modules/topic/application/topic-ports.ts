@@ -120,6 +120,8 @@ export type PublicTopicSummary = TopicSummary & {
     position: number;
   }>;
   startYear: number;
+  /** 팀을 꾸린 뒤 붙은 이름. 아직 팀이 없는 주제는 null 이다. */
+  teamName?: string | null;
   memberCount: number;
   teamMembers?: Array<{ name: string; role: "LEADER" | "MEMBER" }>;
   ownApplicationStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | null;

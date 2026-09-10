@@ -64,6 +64,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             programIcon={project.programIcon}
             divisionId={project.divisionId}
             divisionName={project.divisionName}
+            teamName={project.teamName}
             description={project.topicDescription}
             imagePath={project.thumbnailPath}
             coverStatus={(

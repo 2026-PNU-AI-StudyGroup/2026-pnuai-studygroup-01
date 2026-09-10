@@ -23,6 +23,9 @@
 .cover {
   position: relative;
   isolation: isolate;
+  /* 글씨 크기를 카드 폭에 맞춘다. 3열과 4열에서 카드 폭이 크게 갈리는데 화면 폭(vw)으로
+     재면 열 수가 바뀌는 지점에서 글씨가 거꾸로 작아진다. */
+  container-type: inline-size;
   aspect-ratio: 640 / 433;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
@@ -44,31 +47,29 @@
   background: var(--cover-bg, var(--surface-subtle));
 }
 
-/* 여덟 색은 색상환을 고르게 나눠 잡는다. 앞선 값은 너무 옅어 나란히 놓으면
-   전부 흰 카드로 보였다. 배경은 채도를 올리고 글자는 같은 계열의 진한 값을 쓴다. */
-.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#d7d9fb, #2c2c74); --cover-ink: light-dark(#2f2792, #c9c7ff); }
-.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#c2eddf, #0f4a3b); --cover-ink: light-dark(#065f49, #7fe6c6); }
-.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#ffdbcb, #5d2a15); --cover-ink: light-dark(#963310, #ffb392); }
-.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#fbd4e3, #58203c); --cover-ink: light-dark(#93264f, #ffa5c5); }
-.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#cee3fb, #103a62); --cover-ink: light-dark(#0b5395, #92c8f7); }
-.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#daedbc, #26431a); --cover-ink: light-dark(#31620a, #abdc78); }
-.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#fbe3b4, #4c3410); --cover-ink: light-dark(#7a4604, #f2bf62); }
-.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#ead4f9, #3f2259); --cover-ink: light-dark(#682899, #daaff6); }
+/* 여덟 색은 색상환을 고르게 나눠 잡는다.
+
+   앞선 값은 어두운 화면에서 갈색·올리브처럼 우중충하게 앉았다. 배경을 중간 밝기의
+   맑은 색으로 올리고 글자는 같은 계열의 아주 옅은 값을 쓴다. 밝은 화면은 파스텔
+   배경에 진한 글자다. 여덟 쌍 모두 대비 4.5 이상이다(가장 낮은 것이 4.52). */
+.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#dedcff, #3b39ad); --cover-ink: light-dark(#2c25a6, #eceaff); }
+.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#c2f3e5, #0b7a5f); --cover-ink: light-dark(#006951, #c2f8ea); }
+.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#ffd8ca, #a33912); --cover-ink: light-dark(#ad3712, #ffe0d1); }
+.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#ffd3e6, #a82c68); --cover-ink: light-dark(#a82568, #ffd8ec); }
+.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#cce6ff, #0a63a8); --cover-ink: light-dark(#005fae, #d3e9ff); }
+.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#dcf5bb, #417a12); --cover-ink: light-dark(#3d7207, #e0f7bd); }
+.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#ffe7ae, #8c5c05); --cover-ink: light-dark(#8a5000, #ffe5ad); }
+.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#eed7ff, #6c31a3); --cover-ink: light-dark(#7028ad, #f0dbff); }
 
 /* 프로그램이 고른 아이콘을 크게 얹는다. 멀리서도 어느 행사인지 갈라 볼 수 있다. */
 .fallbackIcon {
   position: absolute;
   top: 1.1rem;
-  left: 1.25rem;
+  right: 1.25rem;
   width: 3.25rem;
   height: 3.25rem;
   color: var(--cover-ink, var(--muted));
   opacity: 0.45;
-}
-
-.fallbackCover::before,
-.fallbackCover::after {
-  display: none;
 }
 
 .fallbackMark {
@@ -86,32 +87,51 @@
 }
 
 .fallbackContent {
-  max-width: min(100%, 28rem);
+  width: 100%;
 }
 
 .fallbackEyebrow {
   display: block;
   overflow: hidden;
   color: var(--cover-ink, var(--muted));
-  font-size: 0.6875rem;
+  font-size: clamp(0.75rem, 4cqw, 1.0625rem);
   font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.4;
+  opacity: 0.86;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* 표지에 올라가는 것은 분과·주제명·팀명 셋이다.
+
+   주제명이 주인이다. 칸을 글씨로 채우면 먼저 읽히는 것이 색이 아니라 글씨가 된다.
+   세 줄까지 흘리고 카드 폭에 맞춰 크기를 잡는다. */
 .fallbackTitle {
   display: -webkit-box;
-  margin-top: 0.3rem;
+  margin-top: 0.4rem;
   overflow: hidden;
   color: var(--cover-ink, var(--ink));
-  font-size: 1.05rem;
-  font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.35;
+  font-size: clamp(1.3rem, 10.5cqw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+  text-wrap: balance;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
+}
+
+.fallbackTeam {
+  display: block;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  color: var(--cover-ink, var(--muted));
+  font-size: clamp(0.75rem, 4cqw, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.82;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .body {

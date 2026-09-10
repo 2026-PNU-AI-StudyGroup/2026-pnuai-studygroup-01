@@ -22,7 +22,7 @@ const publicTopicInclude = {
   manager: { select: { name: true } },
   division: { select: { id: true, name: true } },
   program: { select: { name: true, category: true, icon: true, isPublic: true, endsAt: true, advisorEnabled: true, studentProjectCreationEnabled: true, projectTeamMinSize: true, projectTeamMaxSize: true, startsAt: true, recruitmentStartsAt: true, recruitmentEndsAt: true, executionStartsAt: true, executionEndsAt: true, votingPolicy: { select: { startsAt: true, endsAt: true } } } },
-  projectTeam: { select: { confirmedAt: true, showcaseIntro: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } }, artifacts: { orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }], select: { id: true, type: true, title: true, fileId: true, externalUrl: true, position: true } } } },
+  projectTeam: { select: { name: true, confirmedAt: true, showcaseIntro: true, _count: { select: { memberships: { where: { endedAt: null } } } }, memberships: { where: { endedAt: null }, orderBy: { joinedAt: "asc" as const }, select: { role: true, user: { select: { name: true } } } }, artifacts: { orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }], select: { id: true, type: true, title: true, fileId: true, externalUrl: true, position: true } } } },
   applicationQuestions: {
     orderBy: { position: "asc" as const },
     select: {
@@ -359,6 +359,7 @@ function toPublicTopic(
       fileId: fileId ?? undefined,
       externalUrl: externalUrl ?? undefined,
     })),
+    teamName: projectTeam?.name ?? null,
     memberCount: projectTeam?._count.memberships ?? 0,
     teamMembers: projectTeam?.memberships.map(({ role, user }) => ({ name: user.name, role })) ?? [],
     ownApplicationStatus,

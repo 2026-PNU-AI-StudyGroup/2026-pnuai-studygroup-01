@@ -63,17 +63,54 @@ describe("ProjectGalleryCardShell", () => {
     expect(other).not.toBe(first);
   });
 
-  it("분과가 없으면 프로젝트마다 색이 갈린다", () => {
-    // 분과를 안 쓰는 프로그램에서도 카드가 서로 구분돼야 한다.
-    const card = (id: string) => (
-      <ProjectGalleryCardShell id={id} title={id} href={`/topics/${id}`} programName="캡스톤" divisionName={null} description="설명" />
+  it("대표 이미지가 없으면 표지에 분과·주제명·팀명을 올린다", () => {
+    // 칸을 글씨로 채워야 먼저 읽히는 것이 색이 아니라 글씨가 된다.
+    render(
+      <ProjectGalleryCardShell
+        id="topic-1"
+        title="캠퍼스 이동약자를 위한 실내 길찾기"
+        href="/topics/topic-1"
+        programName="캡스톤"
+        divisionId="division-a"
+        divisionName="융합"
+        teamName="길잡이"
+        description="설명"
+      />,
     );
-    const tone = () => document.querySelector("[data-cover-tone]")!.getAttribute("data-cover-tone");
 
-    const { rerender } = render(card("topic-1"));
-    const first = tone();
-    rerender(card("topic-2"));
+    const cover = document.querySelector("[data-project-cover-fallback]")!;
+    expect([...cover.children].map((line) => line.textContent)).toEqual([
+      "융합",
+      "캠퍼스 이동약자를 위한 실내 길찾기",
+      "길잡이",
+    ]);
+  });
 
-    expect(tone()).not.toBe(first);
+  it("팀을 아직 안 꾸린 주제는 팀명 줄을 그리지 않는다", () => {
+    render(
+      <ProjectGalleryCardShell id="topic-1" title="주제" href="/topics/topic-1" programName="캡스톤" divisionName="융합" description="설명" />,
+    );
+
+    const cover = document.querySelector("[data-project-cover-fallback]")!;
+    expect(cover.children).toHaveLength(2);
+  });
+
+  it("분과를 안 쓰는 프로그램은 표지 첫 줄에 프로그램 이름을 올린다", () => {
+    render(
+      <ProjectGalleryCardShell id="topic-1" title="주제" href="/topics/topic-1" programName="캡스톤" divisionName={null} description="설명" />,
+    );
+
+    expect(document.querySelector("[data-project-cover-fallback]")!.firstElementChild!.textContent).toBe("캡스톤");
+  });
+
+  it("분과가 없으면 색을 입히지 않는다", () => {
+    // 색은 분과를 말하는 값이다. 분과가 없는데 카드마다 색을 흩어 놓으면 목록이 요란해지고
+    // 미분과 프로젝트가 남의 분과 색을 입어 오히려 잘못 읽힌다. 예전 회색으로 둔다.
+    render(
+      <ProjectGalleryCardShell id="topic-1" title="주제" href="/topics/topic-1" programName="캡스톤" divisionName={null} description="설명" />,
+    );
+
+    expect(document.querySelector("[data-cover-tone]")).toBeNull();
+    expect(document.querySelector("[data-project-cover]")).not.toBeNull();
   });
 });

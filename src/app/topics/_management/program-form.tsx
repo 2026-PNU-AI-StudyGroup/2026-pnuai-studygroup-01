@@ -145,7 +145,7 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
             if (names.length === 0) setVoteLimitScope("PROGRAM");
           }} maxLength={40} placeholder="예: 창업 트랙, 융합 트랙" />
         </FormField>
-        <FormField id="program-icon" label="아이콘" description="사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다." className={styles.fullRow}>
+        <FormField label="아이콘" description="사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다." className={styles.fullRow}>
           <ProgramIconSelect />
         </FormField>
       </FormSection>

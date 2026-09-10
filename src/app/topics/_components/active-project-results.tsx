@@ -104,6 +104,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
       programIcon={topic.programIcon}
       divisionId={topic.divisionId}
       divisionName={topic.divisionName}
+      teamName={topic.teamName}
       description={topic.description}
       imagePath={topic.thumbnailPath ?? undefined}
       coverStatus={<ProjectStatusBadge topic={topic} recruiting={recruiting} />}

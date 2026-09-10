@@ -55,17 +55,34 @@ export type ShowcaseWallTile = {
 };
 
 /**
+ * 줄을 바꿀 때마다 건너뛰는 칸 수.
+ *
+ * 그냥 순서대로 깔면 세로로 이웃한 칸의 간격이 열 수인 6이 된다. 표지가 6장이거나 그
+ * 약수(1·2·3)면 6으로 나누어떨어져 위아래가 같은 그림이 된다. 표지 6장에서 열여덟 군데가
+ * 붙었다. 줄마다 23칸을 더 밀면 세로 간격이 29가 된다. 29는 칸 수 24보다 큰 소수라
+ * 표지가 몇 장이든 나누어떨어지지 않는다. 가로 간격은 언제나 1이라 원래 안 겹친다.
+ * 표지가 한 장뿐이면 어차피 방법이 없다.
+ */
+const ROW_STEP = 23;
+
+/**
  * 받은 표지를 왼쪽 위부터 차례로 깐다.
  *
- * 표지가 칸보다 적으면 앞에서부터 다시 돌려 쓴다. 열 수와 나눠지지 않는 수만큼
- * 밀리므로 같은 그림이 옆이나 위아래로 붙지 않고 어긋난 줄로 흩어진다.
+ * 표지가 칸보다 적으면 앞에서부터 다시 돌려 쓰되 줄마다 밀어서 같은 그림이 옆이나
+ * 위아래로 붙지 않게 한다.
  * 표지가 하나도 없으면 빈 배열이다. 부르는 쪽이 손으로 만든 예비 그림으로 넘긴다.
  */
 export function showcaseWallTiles(fileIds: readonly string[]): ShowcaseWallTile[] {
   if (fileIds.length === 0) return [];
-  return Array.from({ length: SHOWCASE_WALL_TILE_COUNT }, (_unused, index) => ({
-    fileId: fileIds[index % fileIds.length]!,
-    left: (index % SHOWCASE_WALL_COLUMNS) * SHOWCASE_WALL_TILE_WIDTH,
-    top: Math.floor(index / SHOWCASE_WALL_COLUMNS) * SHOWCASE_WALL_TILE_HEIGHT,
-  }));
+  // 칸을 채우고도 남으면 앞에서부터 그대로 쓴다. 밀어 봐야 뒤쪽 표지를 버리고 앞쪽을
+  // 두 번 쓰게 될 뿐이다. 모자랄 때만 민다.
+  const cycling = fileIds.length < SHOWCASE_WALL_TILE_COUNT;
+  return Array.from({ length: SHOWCASE_WALL_TILE_COUNT }, (_unused, index) => {
+    const row = Math.floor(index / SHOWCASE_WALL_COLUMNS);
+    return {
+      fileId: fileIds[cycling ? (index + row * ROW_STEP) % fileIds.length : index]!,
+      left: (index % SHOWCASE_WALL_COLUMNS) * SHOWCASE_WALL_TILE_WIDTH,
+      top: row * SHOWCASE_WALL_TILE_HEIGHT,
+    };
+  });
 }

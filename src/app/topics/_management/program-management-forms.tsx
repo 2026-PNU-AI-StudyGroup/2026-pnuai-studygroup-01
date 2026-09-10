@@ -64,7 +64,7 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
             <TextInput id="management-program-name" name="name" defaultValue={program.name} maxLength={200} required placeholder="예: 창의융합 해커톤" />
           </FormField>
           <ProgramVisibilitySettings value={visibility} onValueChange={setVisibility} />
-          <FormField id="management-program-icon" label="아이콘" description="사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다." className={formStyles.fullRow}>
+          <FormField label="아이콘" description="사이드바와 대표 이미지가 없는 프로젝트 표지에 쓰입니다." className={formStyles.fullRow}>
             <ProgramIconSelect defaultValue={program.icon} />
           </FormField>
           <FormField id="management-program-division-names" label="분과 설정" description="이름을 입력하고 Enter를 누르면 여러 분과를 추가할 수 있습니다." className={formStyles.fullRow}>
