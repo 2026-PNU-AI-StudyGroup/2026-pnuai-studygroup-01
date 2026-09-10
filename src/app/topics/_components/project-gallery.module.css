@@ -8,11 +8,71 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
-  transition: border-color 180ms ease;
+  transition: border-color 180ms ease, transform 220ms ease, box-shadow 220ms ease;
+  /*
+    빛의 색.
+
+    어두운 화면에서는 흰빛을 얹으면 밝아지는 것이 그대로 빛으로 읽힌다. 밝은 화면은
+    이미 밝아서 흰빛을 얹어도 아무 일이 없다. 그쪽은 강조색을 옅게 써 채도가 오르는
+    것으로 대신한다. 표지 색이 여덟 가지라 특정 색을 얹으면 어떤 칸에서는 색이 튄다.
+  */
+  --spot-tint: light-dark(
+    color-mix(in oklab, var(--primary) 24%, transparent),
+    color-mix(in oklab, white 22%, transparent)
+  );
 }
 
 .card:hover {
   border-color: var(--field-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -14px color-mix(in oklab, var(--ink) 34%, transparent);
+}
+
+/*
+  마우스가 얹힌 자리에 빛을 비춘다.
+
+  쉴 때는 아무것도 없다. 카드가 스물넷 깔리는 화면이라 가만히 있을 때 요란하면 무엇도
+  눈에 안 들어온다. 얹힌 카드 하나만 살아나면 지금 무엇을 보고 있는지가 분명해진다.
+
+  자리는 ProjectCardSpotlight 가 --spot-x, --spot-y 로 적어 준다. 아직 안 적혔으면
+  카드 가운데에서 시작한다. 빛 자체는 여기서만 그리므로 자바스크립트는 좌표만 넘긴다.
+*/
+.cover::after {
+  position: absolute;
+  z-index: 3;
+  content: "";
+  inset: 0;
+  background: radial-gradient(
+    18rem 18rem at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--spot-tint),
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+/* 키보드로 짚어 온 사람도 같은 것을 본다. 좌표가 없으니 가운데에서 켜진다. */
+.card:hover .cover::after,
+.card:focus-within .cover::after {
+  opacity: 1;
+}
+
+/* 움직임을 줄여 달라고 한 사람에게는 들썩임과 따라다니는 빛을 주지 않는다.
+   테두리 색만 바뀌는 예전 동작으로 남는다. */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: border-color 180ms ease;
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .cover::after {
+    display: none;
+  }
 }
 
 .card:focus-within {
@@ -64,11 +124,6 @@
   height: 3.25rem;
   color: var(--cover-ink, var(--muted));
   opacity: 0.45;
-}
-
-.fallbackCover::before,
-.fallbackCover::after {
-  display: none;
 }
 
 .fallbackMark {
