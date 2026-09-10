@@ -6,11 +6,15 @@ import { programCoverTone } from "@/modules/project-program/domain/program-cover
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 
-export function ProjectGalleryCover({ imagePath, programName, programIcon, title, divisionId }: {
+export function ProjectGalleryCover({ imagePath, programName, programIcon, title, divisionId, divisionName, teamName }: {
   imagePath?: string;
   programName: string;
   programIcon?: ProgramIconKey;
   title: string;
+  /** 표지 첫 줄. 분과를 쓰는 프로그램은 분과가, 안 쓰면 프로그램 이름이 올라간다. */
+  divisionName?: string | null;
+  /** 표지 마지막 줄. 팀을 아직 안 꾸린 주제는 없어서 줄을 그리지 않는다. */
+  teamName?: string | null;
   /**
    * 표지 색을 고르는 값.
    *
@@ -55,8 +59,9 @@ export function ProjectGalleryCover({ imagePath, programName, programIcon, title
         <span aria-hidden="true" data-pnu-mark className={styles.fallbackMark} />
       )}
       <div data-project-cover-fallback className={styles.fallbackContent}>
-        <span className={styles.fallbackEyebrow}><UiText>{programName}</UiText></span>
+        <span className={styles.fallbackEyebrow}><UiText>{divisionName ?? programName}</UiText></span>
         <strong className={styles.fallbackTitle}><UiText>{title}</UiText></strong>
+        {teamName ? <span className={styles.fallbackTeam}><UiText>{teamName}</UiText></span> : null}
       </div>
     </div>
   );

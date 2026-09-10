@@ -8,111 +8,11 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
-  transition: border-color 180ms ease, transform 220ms ease, box-shadow 220ms ease;
-  /*
-    빛의 색.
-
-    어두운 화면에서는 흰빛을 얹으면 밝아지는 것이 그대로 빛으로 읽힌다. 밝은 화면은
-    이미 밝아서 흰빛을 얹어도 아무 일이 없다. 그쪽은 강조색을 옅게 써 채도가 오르는
-    것으로 대신한다. 표지 색이 여덟 가지라 특정 색을 얹으면 어떤 칸에서는 색이 튄다.
-  */
-  --spot-core: light-dark(
-    color-mix(in oklab, var(--primary) 34%, transparent),
-    color-mix(in oklab, white 40%, transparent)
-  );
-  --spot-halo: light-dark(
-    color-mix(in oklab, var(--primary) 12%, transparent),
-    color-mix(in oklab, white 13%, transparent)
-  );
-  --spot-edge: light-dark(
-    color-mix(in oklab, var(--primary) 85%, transparent),
-    color-mix(in oklab, white 78%, transparent)
-  );
+  transition: border-color 180ms ease;
 }
 
 .card:hover {
   border-color: var(--field-border-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -14px color-mix(in oklab, var(--ink) 34%, transparent);
-}
-
-/*
-  마우스가 얹힌 자리에 빛을 비춘다.
-
-  쉴 때는 아무것도 없다. 카드가 스물넷 깔리는 화면이라 가만히 있을 때 요란하면 무엇도
-  눈에 안 들어온다. 얹힌 카드 하나만 살아나면 지금 무엇을 보고 있는지가 분명해진다.
-
-  자리는 ProjectCardSpotlight 가 --spot-x, --spot-y 로 적어 준다. 아직 안 적혔으면
-  카드 가운데에서 시작한다. 빛 자체는 여기서만 그리므로 자바스크립트는 좌표만 넘긴다.
-*/
-.cover::after {
-  position: absolute;
-  z-index: 3;
-  content: "";
-  inset: 0;
-  /* 가운데를 세게 잡고 빠르게 떨어뜨린다. 한 단으로 펴면 빛이 아니라 얇은 안개로 보인다. */
-  background: radial-gradient(
-    17rem 17rem at var(--spot-x, 50%) var(--spot-y, 50%),
-    var(--spot-core),
-    var(--spot-halo) 34%,
-    transparent 72%
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms ease;
-}
-
-/*
-  빛이 테두리까지 번진다.
-
-  카드 테두리 폭만큼의 띠에만 같은 빛을 깐다. 두 겹 마스크로 안쪽(content-box)을 도려내
-  테두리 자리만 남긴다. 마우스가 가까운 쪽 테두리가 밝아져 빛이 카드 밖으로 새어 나가는
-  것처럼 보인다. 테두리 색을 직접 바꾸는 것으로는 한쪽만 밝히지 못한다.
-*/
-.card::before {
-  position: absolute;
-  z-index: 4;
-  padding: 1px;
-  border-radius: inherit;
-  content: "";
-  inset: 0;
-  background: radial-gradient(
-    11rem 11rem at var(--spot-x, 50%) var(--spot-y, 50%),
-    var(--spot-edge),
-    transparent 68%
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms ease;
-  mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
-  mask-clip: content-box, border-box;
-  mask-composite: exclude;
-}
-
-/* 키보드로 짚어 온 사람도 같은 것을 본다. 좌표가 없으니 가운데에서 켜진다. */
-.card:hover .cover::after,
-.card:focus-within .cover::after,
-.card:hover::before,
-.card:focus-within::before {
-  opacity: 1;
-}
-
-/* 움직임을 줄여 달라고 한 사람에게는 들썩임과 따라다니는 빛을 주지 않는다.
-   테두리 색만 바뀌는 예전 동작으로 남는다. */
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    transition: border-color 180ms ease;
-  }
-
-  .card:hover {
-    transform: none;
-    box-shadow: none;
-  }
-
-  .cover::after,
-  .card::before {
-    display: none;
-  }
 }
 
 .card:focus-within {
@@ -123,6 +23,9 @@
 .cover {
   position: relative;
   isolation: isolate;
+  /* 글씨 크기를 카드 폭에 맞춘다. 3열과 4열에서 카드 폭이 크게 갈리는데 화면 폭(vw)으로
+     재면 열 수가 바뀌는 지점에서 글씨가 거꾸로 작아진다. */
+  container-type: inline-size;
   aspect-ratio: 640 / 433;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
@@ -144,16 +47,19 @@
   background: var(--cover-bg, var(--surface-subtle));
 }
 
-/* 여덟 색은 색상환을 고르게 나눠 잡는다. 앞선 값은 너무 옅어 나란히 놓으면
-   전부 흰 카드로 보였다. 배경은 채도를 올리고 글자는 같은 계열의 진한 값을 쓴다. */
-.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#d7d9fb, #2c2c74); --cover-ink: light-dark(#2f2792, #c9c7ff); }
-.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#c2eddf, #0f4a3b); --cover-ink: light-dark(#065f49, #7fe6c6); }
-.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#ffdbcb, #5d2a15); --cover-ink: light-dark(#963310, #ffb392); }
-.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#fbd4e3, #58203c); --cover-ink: light-dark(#93264f, #ffa5c5); }
-.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#cee3fb, #103a62); --cover-ink: light-dark(#0b5395, #92c8f7); }
-.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#daedbc, #26431a); --cover-ink: light-dark(#31620a, #abdc78); }
-.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#fbe3b4, #4c3410); --cover-ink: light-dark(#7a4604, #f2bf62); }
-.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#ead4f9, #3f2259); --cover-ink: light-dark(#682899, #daaff6); }
+/* 여덟 색은 색상환을 고르게 나눠 잡는다.
+
+   앞선 값은 어두운 화면에서 갈색·올리브처럼 우중충하게 앉았다. 배경을 중간 밝기의
+   맑은 색으로 올리고 글자는 같은 계열의 아주 옅은 값을 쓴다. 밝은 화면은 파스텔
+   배경에 진한 글자다. 여덟 쌍 모두 대비 4.5 이상이다(가장 낮은 것이 4.52). */
+.fallbackCover[data-cover-tone="1"] { --cover-bg: light-dark(#dedcff, #3b39ad); --cover-ink: light-dark(#2c25a6, #eceaff); }
+.fallbackCover[data-cover-tone="2"] { --cover-bg: light-dark(#c2f3e5, #0b7a5f); --cover-ink: light-dark(#006951, #c2f8ea); }
+.fallbackCover[data-cover-tone="3"] { --cover-bg: light-dark(#ffd8ca, #a33912); --cover-ink: light-dark(#ad3712, #ffe0d1); }
+.fallbackCover[data-cover-tone="4"] { --cover-bg: light-dark(#ffd3e6, #a82c68); --cover-ink: light-dark(#a82568, #ffd8ec); }
+.fallbackCover[data-cover-tone="5"] { --cover-bg: light-dark(#cce6ff, #0a63a8); --cover-ink: light-dark(#005fae, #d3e9ff); }
+.fallbackCover[data-cover-tone="6"] { --cover-bg: light-dark(#dcf5bb, #417a12); --cover-ink: light-dark(#3d7207, #e0f7bd); }
+.fallbackCover[data-cover-tone="7"] { --cover-bg: light-dark(#ffe7ae, #8c5c05); --cover-ink: light-dark(#8a5000, #ffe5ad); }
+.fallbackCover[data-cover-tone="8"] { --cover-bg: light-dark(#eed7ff, #6c31a3); --cover-ink: light-dark(#7028ad, #f0dbff); }
 
 /* 프로그램이 고른 아이콘을 크게 얹는다. 멀리서도 어느 행사인지 갈라 볼 수 있다. */
 .fallbackIcon {
@@ -181,32 +87,51 @@
 }
 
 .fallbackContent {
-  max-width: min(100%, 28rem);
+  width: 100%;
 }
 
 .fallbackEyebrow {
   display: block;
   overflow: hidden;
   color: var(--cover-ink, var(--muted));
-  font-size: 0.6875rem;
+  font-size: clamp(0.75rem, 4cqw, 1.0625rem);
   font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.4;
+  opacity: 0.86;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* 표지에 올라가는 것은 분과·주제명·팀명 셋이다.
+
+   주제명이 주인이다. 칸을 글씨로 채우면 먼저 읽히는 것이 색이 아니라 글씨가 된다.
+   세 줄까지 흘리고 카드 폭에 맞춰 크기를 잡는다. */
 .fallbackTitle {
   display: -webkit-box;
-  margin-top: 0.3rem;
+  margin-top: 0.4rem;
   overflow: hidden;
   color: var(--cover-ink, var(--ink));
-  font-size: 1.05rem;
-  font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.35;
+  font-size: clamp(1.3rem, 10.5cqw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+  text-wrap: balance;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
+}
+
+.fallbackTeam {
+  display: block;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  color: var(--cover-ink, var(--muted));
+  font-size: clamp(0.75rem, 4cqw, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.82;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .body {

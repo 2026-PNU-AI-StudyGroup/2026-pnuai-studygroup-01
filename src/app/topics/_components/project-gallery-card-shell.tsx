@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { ProjectCardSpotlight } from "@/app/topics/_components/project-card-spotlight";
 import { ProjectGalleryCover } from "@/app/topics/_components/project-gallery-cover";
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import styles from "@/app/topics/_components/project-gallery.module.css";
@@ -15,6 +14,7 @@ export function ProjectGalleryCardShell({
   programIcon,
   divisionId,
   divisionName,
+  teamName,
   description,
   imagePath,
   coverStatus,
@@ -30,6 +30,7 @@ export function ProjectGalleryCardShell({
   programIcon?: ProgramIconKey;
   divisionId?: string | null;
   divisionName?: string | null;
+  teamName?: string | null;
   description: string;
   imagePath?: string;
   coverStatus?: ReactNode;
@@ -41,9 +42,9 @@ export function ProjectGalleryCardShell({
   const titleId = id;
   const programLabel = divisionName ? `${programName} · ${divisionName}` : programName;
   return (
-    <ProjectCardSpotlight ariaLabelledBy={titleId} className={styles.card}>
+    <article aria-labelledby={titleId} className={styles.card}>
       <div className="relative">
-        <ProjectGalleryCover imagePath={imagePath} programName={programName} programIcon={programIcon} title={title} divisionId={divisionId} />
+        <ProjectGalleryCover imagePath={imagePath} programName={programName} programIcon={programIcon} title={title} divisionId={divisionId} divisionName={divisionName} teamName={teamName} />
         {coverStatus ? <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap items-center gap-1.5">{coverStatus}</div> : null}
         {coverOverlay}
       </div>
@@ -61,6 +62,6 @@ export function ProjectGalleryCardShell({
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p>
         {actions ? <div className={`mt-auto pt-5 ${styles.actionLayer}`}>{actions}</div> : null}
       </div>
-    </ProjectCardSpotlight>
+    </article>
   );
 }
