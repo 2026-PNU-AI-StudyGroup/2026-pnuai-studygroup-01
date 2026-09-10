@@ -6,19 +6,19 @@ import { programCoverTone } from "@/modules/project-program/domain/program-cover
 import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 
-export function ProjectGalleryCover({ imagePath, programName, programIcon, title, seed }: {
+export function ProjectGalleryCover({ imagePath, programName, programIcon, title, divisionId }: {
   imagePath?: string;
   programName: string;
   programIcon?: ProgramIconKey;
   title: string;
   /**
-   * 표지 색을 고르는 씨앗.
+   * 표지 색을 고르는 값.
    *
-   * 분과가 있으면 분과 id 를 넣는다. 같은 분과 프로젝트가 한 색으로 묶여 목록에서
-   * 덩어리로 보인다. 색이 장식이 아니라 분과를 말하게 된다.
-   * 분과를 안 쓰는 프로그램은 프로젝트 id 로 떨어져 카드마다 다른 색이 된다.
+   * 분과 id 하나만 받는다. 같은 분과 프로젝트가 한 색으로 묶여 목록에서 덩어리로 보이고,
+   * 색이 장식이 아니라 분과를 말하게 된다. 분과가 없으면 색을 입히지 않고 예전 회색으로
+   * 둔다. 카드마다 색을 흩어 놓으면 목록이 요란해지기만 하고 무엇도 뜻하지 않는다.
    */
-  seed?: string;
+  divisionId?: string | null;
 }) {
   if (imagePath) {
     return (
@@ -38,10 +38,10 @@ export function ProjectGalleryCover({ imagePath, programName, programIcon, title
 
   // 대표 이미지를 안 올린 프로젝트의 기본 표지.
   //
-  // 예전에는 전부 같은 회색에 PNU 심볼만 박혀 있어 목록을 훑을 때 카드가 구분되지 않았다.
-  // 프로젝트 id 로 색을 고르고 프로그램이 고른 아이콘을 크게 얹는다. 색은 저장하지 않고
-  // 매번 다시 만들기 때문에 칸을 늘리거나 이미지를 준비할 일이 없다.
-  const tone = programCoverTone(seed ?? title);
+  // 프로그램이 고른 아이콘을 크게 얹고, 분과가 있으면 분과 색을 깐다. 색은 저장하지 않고
+  // 분과 id 에서 매번 다시 만들기 때문에 칸을 늘리거나 이미지를 준비할 일이 없다.
+  // 분과가 없으면 data-cover-tone 을 붙이지 않는다. CSS 변수가 비어 예전 회색으로 떨어진다.
+  const tone = divisionId ? programCoverTone(divisionId) : undefined;
   return (
     <div
       aria-hidden="true"
