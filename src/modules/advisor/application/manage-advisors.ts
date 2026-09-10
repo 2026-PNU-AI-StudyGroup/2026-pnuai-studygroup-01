@@ -20,8 +20,16 @@ export interface AdvisorAdminRepository {
     | { status: "INVITED"; userId: string; invitationId: string; reusedAccount: boolean }
     | { status: "ALREADY_INVITED" }
     | { status: "EMAIL_TAKEN" }
+    /** 운영자가 사용자 관리에서 직접 잠근 계정. 초대로 풀지 않는다. */
+    | { status: "ACCOUNT_DISABLED" }
   >;
-  findActiveInvitation(target: AdvisorInvitationTarget): Promise<{ id: string } | null>;
+  /**
+   * 살아 있는 초대. 계정 상태를 함께 돌려준다.
+   *
+   * 비활성 계정에는 토큰 로그인이 막혀 있어, 상태를 모르고 링크를 내주면 눌러도 열리지
+   * 않는 링크가 나간다. 재발급을 막을 근거로 쓴다.
+   */
+  findActiveInvitation(target: AdvisorInvitationTarget): Promise<{ id: string; accountStatus: string } | null>;
   issueToken(input: { invitationId: string; tokenHash: string; expiresAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
   revokeTokens(input: { invitationId: string; revokedAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
   /** 초대 자체를 거둔다. 이 프로그램의 팀 배정도 함께 정리한다. */
@@ -53,6 +61,10 @@ export class AdvisorAdminService {
     if (invited.status === "ALREADY_INVITED") {
       throw new AdvisorOperationError("이미 이 프로그램에 초대된 자문위원입니다. 초대 링크가 필요하면 목록에서 다시 발급해 주세요.");
     }
+    // 잠긴 계정에 초대만 붙이면 링크가 열리지 않는다. 재발급과 같은 자리로 안내한다.
+    if (invited.status === "ACCOUNT_DISABLED") {
+      throw new AdvisorOperationError("비활성 상태인 계정입니다. 사용자 관리에서 계정을 다시 활성화한 뒤 초대해 주세요.");
+    }
     const inviteToken = await this.issueTokenFor(actor, {
       invitationId: invited.invitationId,
       target: { programId: input.programId, userId: invited.userId },
@@ -64,6 +76,11 @@ export class AdvisorAdminService {
     this.assertAdmin(actor);
     const invitation = await this.repository.findActiveInvitation(target);
     if (!invitation) throw new AdvisorOperationError("이 프로그램에 초대된 자문위원이 아닙니다.");
+    // 비활성 계정에 링크를 내주면 위원에게는 "만료되었거나 회수되었습니다" 만 보이고
+    // 운영자 화면에는 오류가 없다. 왜 안 되는지 알 수 없는 재발급이 반복되므로 여기서 끊는다.
+    if (invitation.accountStatus !== "ACTIVE") {
+      throw new AdvisorOperationError("비활성 상태인 계정입니다. 사용자 관리에서 계정을 다시 활성화한 뒤 링크를 발급해 주세요.");
+    }
     const now = new Date();
     await this.repository.revokeTokens({ invitationId: invitation.id, revokedAt: now, actorId: actor.id, target });
     return this.issueTokenFor(actor, { invitationId: invitation.id, target }, now);

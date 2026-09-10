@@ -13,8 +13,26 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
     const email = normalizeEmail(input.email);
     try {
       return await this.client.$transaction(async (transaction) => {
-        const existing = await transaction.user.findUnique({ where: { email }, select: { id: true, role: true } });
+        const existing = await transaction.user.findUnique({
+          where: { email },
+          select: { id: true, role: true, accountStatus: true },
+        });
         if (existing && existing.role !== "ADVISOR") return { status: "EMAIL_TAKEN" as const };
+        // 운영자가 사용자 관리에서 직접 잠근 계정은 초대로 풀지 않는다.
+        //
+        // 회수와 정리 마이그레이션은 살아 있는 초대가 0일 때만 계정을 내린다. 그래서 "살아
+        // 있는 초대가 있는데 비활성" 은 setActive 로만 만들어진다 -- 이 조건이 수동 차단의
+        // 표지다. 그대로 되살리면 그 위원이 이미 들고 있던 다른 프로그램 링크와 팀 배정까지
+        // 함께 열린다. setActive 는 세션만 지우고 토큰은 회수하지 않기 때문이다. 잠근 운영자는
+        // 통보를 받지 못하고, 초대하는 운영자는 계정이 잠겨 있었다는 사실조차 보지 못한다.
+        //
+        // 링크 재발급을 같은 이유로 거절하고 있으므로 초대도 같은 자리로 안내한다.
+        if (existing?.accountStatus === "DISABLED") {
+          const liveInvitations = await transaction.programAdvisorInvitation.count({
+            where: { userId: existing.id, revokedAt: null },
+          });
+          if (liveInvitations > 0) return { status: "ACCOUNT_DISABLED" as const };
+        }
         const userId = existing
           ? existing.id
           : await this.createAdvisorUser(transaction, { email, name: input.name, actorId: input.actorId });
@@ -24,6 +42,19 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
           actorId: input.actorId,
         });
         if (!invitation) return { status: "ALREADY_INVITED" as const };
+        // 여기까지 온 비활성 계정은 살아 있는 초대가 없다. 회수가 내려 둔 상태이므로 다시
+        // 부를 때 되살린다. 그러지 않으면 새 링크가 발급되어도 토큰 로그인이 accountStatus
+        // 검사에서 막혀 위원에게는 "만료되었거나 회수되었습니다" 만 보인다. 운영자 화면에는
+        // 오류가 없어서 재발급을 반복하게 되는, 원인이 드러나지 않는 고리가 된다.
+        //
+        // 되살려도 예전 링크가 함께 열리지는 않는다. 초대가 모두 회수돼 있어 토큰 로그인이
+        // invitation.revokedAt 검사에서 먼저 걸린다. 탈퇴 계정은 그대로 둔다.
+        if (existing?.accountStatus === "DISABLED") {
+          await transaction.user.updateMany({
+            where: { id: userId, role: "ADVISOR", accountStatus: "DISABLED" },
+            data: { accountStatus: "ACTIVE" },
+          });
+        }
         return { status: "INVITED" as const, userId, invitationId: invitation.id, reusedAccount: Boolean(existing) };
       });
     } catch (error) {
@@ -82,10 +113,11 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
   }
 
   async findActiveInvitation(target: AdvisorInvitationTarget) {
-    return this.client.programAdvisorInvitation.findFirst({
+    const invitation = await this.client.programAdvisorInvitation.findFirst({
       where: { programId: target.programId, userId: target.userId, revokedAt: null },
-      select: { id: true },
+      select: { id: true, user: { select: { accountStatus: true } } },
     });
+    return invitation ? { id: invitation.id, accountStatus: invitation.user.accountStatus } : null;
   }
 
   async issueToken(input: { invitationId: string; tokenHash: string; expiresAt: Date; actorId: string; target: AdvisorInvitationTarget }) {
@@ -153,6 +185,15 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
       const remaining = await transaction.programAdvisorInvitation.count({ where: { userId, revokedAt: null } });
       if (remaining === 0) {
         await transaction.session.deleteMany({ where: { userId, user: { role: "ADVISOR" } } });
+        // 초대가 하나도 남지 않은 위원은 들어올 길이 없다. 링크도 세션도 끊겼고 자문위원은
+        // 구글 로그인을 쓸 수 없다. 그런데 계정만 활성으로 남아 사용자 목록은 "아직 접속할
+        // 수 있는 사람" 으로 보여 주었다. 실제와 목록을 맞춘다.
+        //
+        // 탈퇴한 계정은 건드리지 않는다. 탈퇴는 비활성화보다 무거운 상태라 되돌려선 안 된다.
+        await transaction.user.updateMany({
+          where: { id: userId, role: "ADVISOR", accountStatus: "ACTIVE" },
+          data: { accountStatus: "DISABLED" },
+        });
       }
       await transaction.auditLog.create({ data: {
         actorId: input.actorId,

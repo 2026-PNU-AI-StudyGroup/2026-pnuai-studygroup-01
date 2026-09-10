@@ -8,7 +8,7 @@ const target = { programId: "prog-1", userId: "adv-1" };
 function repository() {
   return {
     inviteAdvisor: vi.fn().mockResolvedValue({ status: "INVITED", userId: "adv-1", invitationId: "inv-1", reusedAccount: false }),
-    findActiveInvitation: vi.fn().mockResolvedValue({ id: "inv-1" }),
+    findActiveInvitation: vi.fn().mockResolvedValue({ id: "inv-1", accountStatus: "ACTIVE" }),
     issueToken: vi.fn().mockResolvedValue(true),
     revokeTokens: vi.fn().mockResolvedValue(true),
     revokeInvitation: vi.fn().mockResolvedValue(true),
@@ -83,6 +83,38 @@ describe("AdvisorAdminService", () => {
     await expect(service.reissueToken(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
     await expect(service.revoke(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
     expect(repo.issueToken).not.toHaveBeenCalled();
+  });
+
+  it("운영자가 잠근 계정은 초대로 풀지 않고 사용자 관리로 안내한다", async () => {
+    const repo = repository();
+    repo.inviteAdvisor.mockResolvedValue({ status: "ACCOUNT_DISABLED" });
+    const service = new AdvisorAdminService(repo);
+
+    await expect(service.invite(admin, { programId: "prog-1", name: "김위원", email: "advisor@example.com" }))
+      .rejects.toBeInstanceOf(AdvisorOperationError);
+    // 링크를 내주면 열리지 않는 링크가 나간다.
+    expect(repo.issueToken).not.toHaveBeenCalled();
+  });
+
+  it("비활성 계정에는 링크를 재발급하지 않는다", async () => {
+    // 링크를 내줘도 토큰 로그인이 accountStatus 검사에서 막힌다. 위원에게는 "만료되었거나
+    // 회수되었습니다" 만 보이고 운영자 화면에는 오류가 없어, 원인을 모르는 재발급이 반복된다.
+    const repo = repository();
+    repo.findActiveInvitation.mockResolvedValue({ id: "inv-1", accountStatus: "DISABLED" });
+    const service = new AdvisorAdminService(repo);
+
+    await expect(service.reissueToken(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+    expect(repo.revokeTokens).not.toHaveBeenCalled();
+    expect(repo.issueToken).not.toHaveBeenCalled();
+  });
+
+  it("활성 계정에는 예전처럼 재발급한다", async () => {
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+
+    await service.reissueToken(admin, target);
+
+    expect(repo.issueToken).toHaveBeenCalledOnce();
   });
 
   it("assignTeams가 programId·grantedById를 리포지토리에 전달한다", async () => {

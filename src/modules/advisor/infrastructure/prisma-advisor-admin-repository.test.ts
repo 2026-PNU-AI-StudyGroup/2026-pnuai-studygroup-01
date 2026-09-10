@@ -96,3 +96,148 @@ describe("PrismaAdvisorAdminRepository.inviteAdvisor", () => {
     );
   });
 });
+
+// 회수는 초대행·토큰·팀배정·세션·계정상태·감사로그를 한 트랜잭션에서 다룬다.
+function clientForRevoke(input: { remainingInvitations: number; invitationFound?: boolean }) {
+  const programAdvisorInvitation = {
+    findFirst: vi.fn().mockResolvedValue(input.invitationFound === false ? null : { id: "inv-1" }),
+    update: vi.fn().mockResolvedValue({}),
+    count: vi.fn().mockResolvedValue(input.remainingInvitations),
+  };
+  const advisorAccessToken = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+  const projectAdvisor = { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) };
+  const session = { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) };
+  const user = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+  const auditLog = { create: vi.fn().mockResolvedValue({}) };
+  const transaction = { programAdvisorInvitation, advisorAccessToken, projectAdvisor, session, user, auditLog };
+  const client = {
+    ...transaction,
+    $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback(transaction)),
+  } as unknown as PrismaClient;
+  return { client, programAdvisorInvitation, advisorAccessToken, projectAdvisor, session, user, auditLog };
+}
+
+const revokeInput = {
+  revokedAt: new Date("2026-09-08T00:00:00Z"),
+  actorId: "admin-1",
+  target: { programId: "prog-1", userId: "adv-1" },
+};
+
+describe("PrismaAdvisorAdminRepository.revokeInvitation", () => {
+  it("초대가 하나도 남지 않으면 계정도 비활성으로 내린다", async () => {
+    // 링크와 세션만 끊고 계정을 활성으로 두면 사용자 목록이 "아직 접속할 수 있는 사람" 으로 보여 준다.
+    const { client, user, session } = clientForRevoke({ remainingInvitations: 0 });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.revokeInvitation(revokeInput)).resolves.toBe(true);
+
+    expect(session.deleteMany).toHaveBeenCalled();
+    expect(user.updateMany).toHaveBeenCalledWith({
+      where: { id: "adv-1", role: "ADVISOR", accountStatus: "ACTIVE" },
+      data: { accountStatus: "DISABLED" },
+    });
+  });
+
+  it("다른 프로그램 초대가 남아 있으면 계정을 건드리지 않는다", async () => {
+    // 한쪽을 거뒀다고 다른 프로그램 심사 중인 위원을 잠글 이유는 없다.
+    const { client, user, session } = clientForRevoke({ remainingInvitations: 1 });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.revokeInvitation(revokeInput)).resolves.toBe(true);
+
+    expect(session.deleteMany).not.toHaveBeenCalled();
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("탈퇴 계정은 되돌리지 않는다", async () => {
+    // 조건에 accountStatus: ACTIVE 를 둬서 탈퇴·이미 비활성 계정은 갱신 대상에서 빠진다.
+    const { client, user } = clientForRevoke({ remainingInvitations: 0 });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await repository.revokeInvitation(revokeInput);
+
+    expect(user.updateMany.mock.calls[0][0].where.accountStatus).toBe("ACTIVE");
+  });
+
+  it("초대가 없으면 아무것도 건드리지 않는다", async () => {
+    const { client, user, advisorAccessToken } = clientForRevoke({ remainingInvitations: 0, invitationFound: false });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.revokeInvitation(revokeInput)).resolves.toBe(false);
+
+    expect(advisorAccessToken.updateMany).not.toHaveBeenCalled();
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+// 재초대는 회수가 내려 둔 계정을 되살려야 한다. 그러지 않으면 새 링크가 열리지 않는다.
+function clientWithExistingAdvisor(accountStatus: string, liveInvitations = 0) {
+  const user = {
+    findUnique: vi.fn().mockResolvedValue({ id: "adv-1", role: "ADVISOR", accountStatus }),
+    create: vi.fn(),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+  };
+  const auditLog = { create: vi.fn().mockResolvedValue({}) };
+  const programAdvisorInvitation = {
+    findUnique: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockResolvedValue({ id: "inv-9" }),
+    update: vi.fn(),
+    count: vi.fn().mockResolvedValue(liveInvitations),
+  };
+  const transaction = { user, auditLog, programAdvisorInvitation };
+  const client = {
+    ...transaction,
+    $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback(transaction)),
+  } as unknown as PrismaClient;
+  return { client, user, programAdvisorInvitation };
+}
+
+describe("PrismaAdvisorAdminRepository.inviteAdvisor 계정 되살리기", () => {
+  it("회수로 비활성이 된 계정을 다시 부르면 활성으로 되돌린다", async () => {
+    // 되살리지 않으면 링크가 발급돼도 토큰 로그인이 accountStatus 검사에서 막힌다.
+    const { client, user } = clientWithExistingAdvisor("DISABLED");
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.inviteAdvisor(invite))
+      .resolves.toEqual({ status: "INVITED", userId: "adv-1", invitationId: "inv-9", reusedAccount: true });
+    expect(user.updateMany).toHaveBeenCalledWith({
+      where: { id: "adv-1", role: "ADVISOR", accountStatus: "DISABLED" },
+      data: { accountStatus: "ACTIVE" },
+    });
+  });
+
+  it("이미 활성인 계정은 갱신하지 않는다", async () => {
+    const { client, user } = clientWithExistingAdvisor("ACTIVE");
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await repository.inviteAdvisor(invite);
+
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("탈퇴 계정은 되살리지 않는다", async () => {
+    // 탈퇴는 비활성화보다 무거운 상태라 초대만으로 뒤집어선 안 된다.
+    const { client, user } = clientWithExistingAdvisor("WITHDRAWN");
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await repository.inviteAdvisor(invite);
+
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("살아 있는 초대가 있는 비활성 계정은 운영자가 직접 잠근 것이므로 초대를 거절한다", async () => {
+    // 회수와 정리 마이그레이션은 살아 있는 초대가 0일 때만 계정을 내린다. 그래서 이 조합은
+    // setActive 로만 만들어진다. 되살리면 그 위원이 들고 있던 다른 프로그램 링크와 팀 배정까지
+    // 함께 열린다 -- setActive 는 세션만 지우고 토큰은 회수하지 않는다.
+    const { client, user, programAdvisorInvitation } = clientWithExistingAdvisor("DISABLED", 1);
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.inviteAdvisor(invite)).resolves.toEqual({ status: "ACCOUNT_DISABLED" });
+
+    expect(user.updateMany).not.toHaveBeenCalled();
+    expect(programAdvisorInvitation.create).not.toHaveBeenCalled();
+    expect(programAdvisorInvitation.count).toHaveBeenCalledWith({
+      where: { userId: "adv-1", revokedAt: null },
+    });
+  });
+});

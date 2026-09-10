@@ -4,15 +4,20 @@ export type ProgramAdvisorRow = {
   userId: string;
   name: string;
   email: string;
+  accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
   assignedTopicIds: string[];
   activeToken: { expiresAt: Date } | null;
 };
 
 // 프로그램 화면용: 이 프로그램에 불러 둔 위원 + 이 프로그램 topic 할당 현황.
 // 다른 프로그램 위원은 여기 나오지 않는다. 운영자가 이 화면에서 보는 것은 이 프로그램의 심사단이다.
+//
+// 계정이 비활성인 위원도 목록에 남긴다. 예전에는 활성 계정만 골라 사용자 관리에서 비활성화한
+// 순간 이 목록에서 사라졌고, 운영자는 초대가 살아 있는 위원이 왜 안 보이는지 알 수 없었다.
+// 걸러 내지 않고 상태를 함께 실어 화면이 표시하게 한다.
 export async function listProgramAdvisors(client: PrismaClient, programId: string): Promise<ProgramAdvisorRow[]> {
   const invitations = await client.programAdvisorInvitation.findMany({
-    where: { programId, revokedAt: null, user: { accountStatus: "ACTIVE" } },
+    where: { programId, revokedAt: null },
     orderBy: { createdAt: "asc" },
     select: {
       tokens: {
@@ -21,7 +26,7 @@ export async function listProgramAdvisors(client: PrismaClient, programId: strin
       },
       user: {
         select: {
-          id: true, name: true, email: true,
+          id: true, name: true, email: true, accountStatus: true,
           projectAdvisors: { where: { topic: { programId } }, select: { topicId: true } },
         },
       },
@@ -31,6 +36,7 @@ export async function listProgramAdvisors(client: PrismaClient, programId: strin
     userId: invitation.user.id,
     name: invitation.user.name,
     email: invitation.user.email,
+    accountStatus: invitation.user.accountStatus,
     assignedTopicIds: invitation.user.projectAdvisors.map((row) => row.topicId),
     activeToken: invitation.tokens[0] ?? null,
   }));

@@ -137,11 +137,19 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
         : reissueAdvisorTokenAction(previous, formData),
     idleState,
   );
+  // 비활성 계정에는 토큰 로그인이 막혀 있어 링크를 내줘도 열리지 않는다. 서버도 거절하지만,
+  // 눌러 본 뒤에야 알게 하지 말고 버튼을 먼저 막고 이유를 옆에 적는다. 회수는 그대로 둔다.
+  const accountDisabled = advisor.accountStatus !== "ACTIVE";
   return (
     <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-bold text-[var(--ink)]">{advisor.name}</p>
+          <p className="flex flex-wrap items-center gap-2 font-bold text-[var(--ink)]">
+            {advisor.name}
+            {accountDisabled ? (
+              <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-xs font-semibold text-[var(--muted)]"><UiText>{"계정 비활성"}</UiText></span>
+            ) : null}
+          </p>
           <p className="mt-0.5 text-sm text-[var(--muted)]">{advisor.email}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -155,11 +163,14 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
           <form action={action} className="flex items-center gap-2">
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="userId" value={advisor.userId} />
-            <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
+            <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending || accountDisabled}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
             <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending}><UiText>{"초대 회수"}</UiText></button>
           </form>
         </div>
       </div>
+      {accountDisabled ? (
+        <p className="text-xs text-[var(--muted)]"><UiText>{"사용자 관리에서 계정을 다시 활성화하면 링크를 발급할 수 있습니다."}</UiText></p>
+      ) : null}
       <ActionResult state={state} />
     </li>
   );
