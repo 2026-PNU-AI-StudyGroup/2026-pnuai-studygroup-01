@@ -1,18 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 
+import { saveProgramAwardsAction } from "@/app/topics/_management/program-actions";
+import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { EmptyState } from "@/shared/ui/page-primitives";
+import { TextInput } from "@/shared/ui/form-system";
 
 type SortKey = "combined" | "staff" | "advisor" | "vote" | "team";
 
-export function ProgramScoreboardPanel({ programName, rows }: {
+export function ProgramScoreboardPanel({ programId, programName, rows }: {
+  programId: string;
   programName: string;
   rows: ProgramScoreboardRow[];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("combined");
+  const [awardState, saveAwards, savingAwards] = useActionState(saveProgramAwardsAction, initialProgramActionState);
   const advisorColumns = useMemo(() => {
     const columns = new Map<string, string>();
     for (const row of rows) for (const score of row.advisorScores) columns.set(score.advisorId, score.advisorName);
@@ -33,6 +38,9 @@ export function ProgramScoreboardPanel({ programName, rows }: {
         </button>
       </div>
 
+      {/* 상은 이 표를 보고 정한다. 입력칸을 같은 표에 두면 팀 이름을 옮겨 적을 일이 없다. */}
+      <form action={saveAwards}>
+      <input type="hidden" name="programId" value={programId} />
       <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
@@ -48,6 +56,7 @@ export function ProgramScoreboardPanel({ programName, rows }: {
               <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="합계" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
+              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
             </tr>
           </thead>
           <tbody>
@@ -71,12 +80,36 @@ export function ProgramScoreboardPanel({ programName, rows }: {
                   <td className="px-4 py-3 text-right tabular-nums">{row.advisorAverage === null ? "–" : row.advisorAverage.toFixed(1)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{row.voteCount}</td>
                   <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{combinedScore(row).toFixed(1)}</td>
+                  <td className="px-4 py-2">
+                    <TextInput
+                      name={`award:${row.teamId}`}
+                      defaultValue={row.award ?? ""}
+                      maxLength={60}
+                      placeholder="예: 대상"
+                      aria-label={`${row.teamName} 수상 내역`}
+                      className="min-w-40"
+                    />
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <p className="text-xs text-[var(--muted)]">
+          <UiText>{"상 이름은 그대로 배지에 찍힙니다. 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
+        </p>
+        {awardState.message ? (
+          <p role={awardState.status === "error" ? "alert" : "status"} aria-live="polite" className={`text-xs ${awardState.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+            {awardState.message}
+          </p>
+        ) : null}
+        <button type="submit" className="button-primary ml-auto min-h-9 px-3 text-xs" disabled={savingAwards}>
+          <UiText>{savingAwards ? "저장 중" : "수상 내역 저장"}</UiText>
+        </button>
+      </div>
+      </form>
     </div>
   );
 }

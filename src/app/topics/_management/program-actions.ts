@@ -7,6 +7,8 @@ import { InvalidProjectProgramError } from "@/modules/project-program/domain/pro
 import { PROGRAM_ICON_KEYS } from "@/modules/project-program/domain/program-icon";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
+import { ProgramAwardService } from "@/modules/team/application/manage-program-awards";
+import { PrismaProgramAwardRepository } from "@/modules/team/infrastructure/prisma-program-award-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { koreanLocalDateTime } from "@/modules/topic/ui/create-topic-input";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -404,4 +406,37 @@ export async function changeProgramStatusAction(_state: ProgramActionState, form
   revalidatePath("/topics");
   revalidatePath(programManagementHref(parsed.data.programId));
   return { status: "success", message: parsed.data.operation === "CLOSE" ? "프로그램 운영을 마감했습니다." : parsed.data.visible === "true" ? "공개했습니다." : "비공개로 전환했습니다." };
+}
+
+
+/** 집계표에서 보낸 팀별 수상 칸. 이름은 `award:<팀 id>` 로 온다. */
+const AWARD_FIELD_PREFIX = "award:";
+
+/**
+ * 오프라인 심사 결과를 집계표에서 한 번에 적는다.
+ *
+ * 상은 그 표를 보고 정하므로 입력칸도 같은 표에 둔다. 팀 이름을 손으로 옮겨 적을 일이
+ * 없어 `5 Guys` 와 `5Guys` 처럼 띄어쓰기가 어긋나 엉뚱한 팀이 상을 받는 사고가 안 난다.
+ * 빈 칸은 상을 지운다는 뜻이라 그대로 보낸다.
+ */
+export async function saveProgramAwardsAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = z.string().min(1).max(200).safeParse(formData.get("programId"));
+  if (!programId.success) return { status: "error", message: "저장할 프로그램을 찾을 수 없습니다." };
+  const awardSchema = z.string().trim().max(60);
+  const entries: Array<{ teamId: string; award: string | null }> = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith(AWARD_FIELD_PREFIX) || typeof value !== "string") continue;
+    const award = awardSchema.safeParse(value);
+    if (!award.success) return { status: "error", message: "수상 내역은 60자까지 적을 수 있습니다." };
+    entries.push({ teamId: key.slice(AWARD_FIELD_PREFIX.length), award: award.data || null });
+  }
+  if (entries.length === 0) return { status: "error", message: "저장할 팀이 없습니다." };
+  try {
+    await new ProgramAwardService(new PrismaProgramAwardRepository(prisma)).save(await actor(), programId.data, entries);
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data, "results");
+  return { status: "success", message: "수상 내역을 저장했습니다." };
 }
