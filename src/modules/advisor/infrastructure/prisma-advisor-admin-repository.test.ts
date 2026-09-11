@@ -215,30 +215,30 @@ describe("PrismaAdvisorAdminRepository.inviteAdvisor 계정 되살리기", () =>
     expect(user.updateMany).not.toHaveBeenCalled();
   });
 
-  it("탈퇴 계정은 되살리지 않는다", async () => {
+  it("탈퇴 계정은 되살리지 않고 초대도 만들지 않는다", async () => {
     // 탈퇴는 비활성화보다 무거운 상태라 초대만으로 뒤집어선 안 된다.
-    const { client, user } = clientWithExistingAdvisor("WITHDRAWN");
-    const repository = new PrismaAdvisorAdminRepository(client);
-
-    await repository.inviteAdvisor(invite);
-
-    expect(user.updateMany).not.toHaveBeenCalled();
-  });
-
-  it("살아 있는 초대가 있는 비활성 계정은 운영자가 직접 잠근 것이므로 초대를 거절한다", async () => {
-    // 회수와 정리 마이그레이션은 살아 있는 초대가 0일 때만 계정을 내린다. 그래서 이 조합은
-    // setActive 로만 만들어진다. 되살리면 그 위원이 들고 있던 다른 프로그램 링크와 팀 배정까지
-    // 함께 열린다 -- setActive 는 세션만 지우고 토큰은 회수하지 않는다.
-    const { client, user, programAdvisorInvitation } = clientWithExistingAdvisor("DISABLED", 1);
+    const { client, user, programAdvisorInvitation } = clientWithExistingAdvisor("WITHDRAWN");
     const repository = new PrismaAdvisorAdminRepository(client);
 
     await expect(repository.inviteAdvisor(invite)).resolves.toEqual({ status: "ACCOUNT_DISABLED" });
 
     expect(user.updateMany).not.toHaveBeenCalled();
     expect(programAdvisorInvitation.create).not.toHaveBeenCalled();
-    expect(programAdvisorInvitation.count).toHaveBeenCalledWith({
-      where: { userId: "adv-1", revokedAt: null },
+  });
+
+  it("다른 프로그램 초대가 살아 있어도 부르면 계정을 연다", async () => {
+    // 사용자 관리에는 자문위원 활성화 버튼이 없다. 여기서 열지 않으면 빠져나갈 길이 없다.
+    const { client, user, programAdvisorInvitation } = clientWithExistingAdvisor("DISABLED", 1);
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.inviteAdvisor(invite))
+      .resolves.toEqual({ status: "INVITED", userId: "adv-1", invitationId: "inv-9", reusedAccount: true });
+
+    expect(user.updateMany).toHaveBeenCalledWith({
+      where: { id: "adv-1", role: "ADVISOR", accountStatus: "DISABLED" },
+      data: { accountStatus: "ACTIVE" },
     });
+    expect(programAdvisorInvitation.create).toHaveBeenCalled();
   });
 });
 
@@ -290,18 +290,22 @@ describe("PrismaAdvisorAdminRepository.reinviteAdvisor", () => {
     });
   });
 
-  it("살아 있는 초대가 있는 비활성 계정은 운영자가 잠근 것이므로 되살리지 않는다", async () => {
-    // inviteAdvisor 와 같은 표지를 쓴다. 두 경로가 다르게 판단하면 한쪽으로 우회할 수 있다.
+  it("다른 프로그램 초대가 살아 있어도 다시 부르면 계정을 연다", async () => {
+    // 운영자가 사용자 관리에서 잠근 계정도 이 자리에서 열린다. 그 화면에는 자문위원
+    // 활성화 버튼이 없어 여기서 막으면 복구할 방법이 없어진다.
     const { client, programAdvisorInvitation, user } = clientForReinvite(
       { revokedAt: new Date("2026-09-01T00:00:00Z"), accountStatus: "DISABLED" },
       1,
     );
     const repository = new PrismaAdvisorAdminRepository(client);
 
-    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "ACCOUNT_DISABLED" });
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "INVITED", invitationId: "inv-1" });
 
-    expect(programAdvisorInvitation.update).not.toHaveBeenCalled();
-    expect(user.updateMany).not.toHaveBeenCalled();
+    expect(programAdvisorInvitation.update).toHaveBeenCalled();
+    expect(user.updateMany).toHaveBeenCalledWith({
+      where: { id: "adv-1", role: "ADVISOR", accountStatus: "DISABLED" },
+      data: { accountStatus: "ACTIVE" },
+    });
   });
 
   it("탈퇴 계정은 되살리지 않는다", async () => {
