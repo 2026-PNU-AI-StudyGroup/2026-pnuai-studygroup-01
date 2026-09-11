@@ -64,7 +64,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             programIcon={project.programIcon}
             divisionId={project.divisionId}
             divisionName={project.divisionName}
-            teamName={project.teamName}
+            teamName={project.teamNumber === null ? project.teamName : `${project.teamNumber}. ${project.teamName}`}
             description={project.topicDescription}
             imagePath={project.thumbnailPath}
             coverStatus={(
@@ -81,7 +81,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
             })()}
             details={(
               <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">
-                <span className="text-[var(--ink)]">{project.teamName} <UiText>{"팀"}</UiText></span>
+                <span className="text-[var(--ink)]">{project.teamNumber === null ? project.teamName : `${project.teamNumber}. ${project.teamName}`} <UiText>{"팀"}</UiText></span>
                 {project.advisorEnabled ? <>{" · "}{project.professorName} <UiText>{project.advisorRole}</UiText></> : null}
               </p>
             )}

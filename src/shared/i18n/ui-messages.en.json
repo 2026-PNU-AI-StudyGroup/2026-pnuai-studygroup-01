@@ -2460,5 +2460,11 @@
   "예: 대상": "e.g. Grand Prize",
   "{0} 수상 내역": "{0} award",
   "상 이름은 그대로 배지에 찍힙니다. 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다.": "The award name is printed on the badge as written. Join two awards for one team with a middle dot. Leave out the popularity award; it comes from the vote count.",
-  "수상 내역 저장": "Save awards"
+  "수상 내역 저장": "Save awards",
+  "팀 번호는 1부터 9999 사이의 숫자로 적어 주세요.": "Enter a team number between 1 and 9999.",
+  "팀 번호와 수상 내역을 저장했습니다.": "Saved the team numbers and awards.",
+  "번호": "No.",
+  "{0} 팀 번호": "{0} team number",
+  "번호는 지난 프로젝트 목록의 차례가 됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다.": "The number sets the order in the past project list. The award name is printed on the badge as written; join two awards for one team with a middle dot. Leave out the popularity award; it comes from the vote count.",
+  "번호·수상 저장": "Save numbers and awards"
 }

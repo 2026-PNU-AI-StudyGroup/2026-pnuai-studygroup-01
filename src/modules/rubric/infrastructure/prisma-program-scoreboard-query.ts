@@ -3,6 +3,8 @@ import type { PrismaClient } from "@/generated/prisma/client";
 export type ProgramScoreboardRow = {
   teamId: string;
   teamName: string;
+  /** 행사에서 매기는 번호. 이 표에서 적는다. */
+  teamNumber: number | null;
   /** 오프라인 심사로 정해진 수상 내역. 이 표에서 적는다. */
   award: string | null;
   projectId: string;
@@ -37,6 +39,7 @@ export async function programScoreboard(
       select: {
         id: true,
         name: true,
+        number: true,
         award: true,
         archivedVoteCount: true,
         project: {
@@ -85,6 +88,7 @@ export async function programScoreboard(
     return {
       teamId: team.id,
       teamName: team.name,
+      teamNumber: team.number,
       award: team.award,
       projectId: team.project.id,
       projectTitle: team.project.title,

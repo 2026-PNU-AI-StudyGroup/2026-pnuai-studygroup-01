@@ -5,6 +5,8 @@ export type ArchivedProject = {
   topicId: string;
   startYear: number;
   teamName: string;
+  /** 행사에서 매긴 번호. 번호를 안 쓰는 프로그램은 null 이다. */
+  teamNumber: number | null;
   programId: string;
   programName: string;
   programIcon: ProgramIconKey;

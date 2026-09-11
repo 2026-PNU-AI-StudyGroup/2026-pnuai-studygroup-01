@@ -1142,6 +1142,9 @@ model ProjectTeam {
   guidanceRequests   ProjectGuidanceRequest[]
   announcements      Announcement[]
   showcaseIntro      String?
+  // 행사에서 팀에 매기는 번호. 프로그램마다 쓰기도 하고 안 쓰기도 해서 비워 둘 수 있다.
+  // 예전에는 담을 칸이 없어 이름 앞에 "A-1. " 처럼 적어 왔고, 그 값을 여기로 옮겼다.
+  number             Int?
   // 오프라인 심사로 정해지는 수상 내역. 이전 시스템에서 옮겨 온 값도 여기에 들어간다.
   award              String?
   // 이전 시스템에서 옮겨 온 득표수. 투표 이력이 없어 집계할 수 없으므로 값만 보관한다.
