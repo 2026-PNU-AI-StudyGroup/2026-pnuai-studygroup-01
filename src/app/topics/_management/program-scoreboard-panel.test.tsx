@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// 서버 액션을 그대로 들이면 prisma 까지 딸려 와 DATABASE_URL 을 찾는다. 화면만 본다.
+vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramAwardsAction: vi.fn() }));
 
 import { ProgramScoreboardPanel, buildScoreboardCsv, combinedScore, sortRows } from "@/app/topics/_management/program-scoreboard-panel";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
@@ -9,6 +12,7 @@ function row(overrides: Partial<ProgramScoreboardRow> & { teamName: string }): P
     teamId: overrides.teamName,
     projectId: `${overrides.teamName}-topic`,
     projectTitle: `${overrides.teamName} 프로젝트`,
+    award: null,
     divisionName: null,
     divisionPosition: 0,
     staffTotal: null,
@@ -47,14 +51,14 @@ describe("집계표 줄 세우기", () => {
   });
 
   it("팀이 있으면 표를 그린다", () => {
-    render(<ProgramScoreboardPanel programName="캡스톤" rows={rows} />);
+    render(<ProgramScoreboardPanel programId="program-1" programName="캡스톤" rows={rows} />);
 
     expect(screen.getByRole("columnheader", { name: "순위" })).toBeInTheDocument();
     expect(screen.getByRole("rowheader", { name: /가팀/ })).toBeInTheDocument();
   });
 
   it("열 이름을 누르면 그 열로 줄을 세우고 눌린 열을 표시한다", () => {
-    render(<ProgramScoreboardPanel programName="캡스톤" rows={rows} />);
+    render(<ProgramScoreboardPanel programId="program-1" programName="캡스톤" rows={rows} />);
 
     const teamOrder = () => screen.getAllByRole("rowheader").map((cell) => cell.textContent);
     expect(teamOrder()).toEqual(["나팀", "가팀", "다팀"]);
@@ -76,7 +80,7 @@ describe("집계표 줄 세우기", () => {
   });
 
   it("팀이 없으면 빈 상태를 알린다", () => {
-    render(<ProgramScoreboardPanel programName="캡스톤" rows={[]} />);
+    render(<ProgramScoreboardPanel programId="program-1" programName="캡스톤" rows={[]} />);
 
     expect(screen.getByText("팀이 없습니다")).toBeInTheDocument();
   });

@@ -178,7 +178,7 @@ export async function ProgramManagementWorkspace({
     content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"채점표"}</UiText></h2></header><RubricManager programId={program.id} divisions={divisions} rubrics={rubrics} /></section></div>;
   } else if (tab === "results") {
     const scoreboard = await programScoreboard(prisma, program.id);
-    content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"심사 집계"}</UiText></h2><p><UiText>{"내부 채점표·자문위원 점수·득표를 한 표로 모읍니다. 순위를 매기는 값은 심사가 정합니다."}</UiText></p></header><ProgramScoreboardPanel programName={program.name} rows={scoreboard} /></section></div>;
+    content = <div className={styles.panel}><section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"심사 집계"}</UiText></h2><p><UiText>{"내부 채점표·자문위원 점수·득표를 한 표로 모읍니다. 순위를 매기는 값은 심사가 정합니다."}</UiText></p></header><ProgramScoreboardPanel programId={program.id} programName={program.name} rows={scoreboard} /></section></div>;
   } else if (tab === "reports") {
     const [records, teamRecords] = await Promise.all([
       prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } }),
