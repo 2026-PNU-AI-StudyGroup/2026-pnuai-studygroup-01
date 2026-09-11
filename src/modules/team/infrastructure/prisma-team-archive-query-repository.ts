@@ -5,6 +5,7 @@ import type {
   ArchiveFilters,
 } from "@/modules/team/application/archive-projects";
 import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
+import { orderArchivedTeamIds } from "@/modules/team/domain/archive-order";
 import {
   canShowPopularAward,
   pickPopularAwardTopicIds,
@@ -115,17 +116,29 @@ export class PrismaTeamArchiveQueryRepository
     limit: number;
     filters: ArchiveFilters;
   }): Promise<ArchivedProject[]> {
-    const teams = await this.client.projectTeam.findMany({
-      where: closedProjectWhere(input.filters, this.audience),
-      orderBy: [
-        { project: { program: { startsAt: "desc" } } },
-        { name: "asc" },
-        { id: "asc" },
-      ],
-      skip: input.offset,
-      take: input.limit,
+    // 차례를 DB 로 못 정한다. 상 이름이 자유 문자열이라 등급을 CASE 없이 셀 수 없고,
+    // 팀 번호도 칸이 아니라 이름 앞에 붙은 글자라 숫자로 세려면 잘라 내야 한다.
+    // 조건에 맞는 id 를 먼저 받아 순서를 정하고 그 쪽만 다시 읽는다. 한 행사의 팀 수는
+    // 수십 개라 id 목록을 받는 비용이 작다. 투표 기간 셔플이 쓰는 방법과 같다.
+    const where = closedProjectWhere(input.filters, this.audience);
+    const candidates = await this.client.projectTeam.findMany({
+      where,
+      select: { id: true, name: true, award: true, project: { select: { program: { select: { startsAt: true } } } } },
+    });
+    const pageIds = orderArchivedTeamIds(candidates.map((team) => ({
+      id: team.id,
+      teamName: team.name,
+      award: team.award,
+      programStartsAt: team.project.program.startsAt,
+    }))).slice(input.offset, input.offset + input.limit);
+    if (pageIds.length === 0) return [];
+    const rows = await this.client.projectTeam.findMany({
+      where: { id: { in: pageIds } },
       select: archivedProjectSelect,
     });
+    // in 조회는 순서를 보장하지 않는다. 정한 차례로 다시 세운다.
+    const byId = new Map(rows.map((team) => [team.id, team]));
+    const teams = pageIds.flatMap((id) => { const team = byId.get(id); return team ? [team] : []; });
     const popular = await this.popularAwardTopicIds(teams);
     return teams.map((team) => toArchivedProject(team, this.audience, popular));
   }

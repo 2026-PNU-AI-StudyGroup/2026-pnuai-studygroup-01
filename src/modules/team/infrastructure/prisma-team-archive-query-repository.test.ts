@@ -71,7 +71,10 @@ describe("지난 프로젝트 기술 검색", () => {
   });
 
   it("아카이브 명단에는 종료되지 않은 멤버십만 포함한다", async () => {
-    const findMany = vi.fn(async () => []);
+    // 차례를 정하는 후보 조회가 먼저다. 하나는 돌려줘야 페이지 조회까지 간다.
+    const findMany = vi.fn()
+      .mockResolvedValueOnce([{ id: "team-1", name: "가", award: null, project: { program: { startsAt: new Date("2025-03-01") } } }])
+      .mockResolvedValue([]);
     const client = {
       projectTeam: { findMany },
     } as unknown as PrismaClient;
@@ -134,8 +137,10 @@ describe("인기상 자동 표시", () => {
     tallies?: unknown[];
     archived?: unknown[];
   }) {
-    // listClosed 가 첫 번째 호출, 보관 득표 조회가 두 번째 호출이다.
+    // listClosed 가 차례를 정하려고 후보를 먼저 받고(첫 번째), 그 페이지를 다시 읽는다(두 번째).
+    // 보관 득표 조회가 세 번째다.
     const findMany = vi.fn()
+      .mockResolvedValueOnce(input.teams)
       .mockResolvedValueOnce(input.teams)
       .mockResolvedValueOnce(input.archived ?? []);
     return {
@@ -165,13 +170,13 @@ describe("인기상 자동 표시", () => {
 
     const projects = await listClosed(client);
 
-    expect(projects.map((project) => [project.topicTitle, project.popularAward])).toEqual([
-      ["온기", true],
-      ["반짝이", true],
-      ["손길모아", false],
-    ]);
+    expect(Object.fromEntries(projects.map((project) => [project.topicTitle, project.popularAward]))).toEqual({
+      온기: true,
+      반짝이: true,
+      손길모아: false,
+    });
     // 이미 받은 상은 그대로 두고 인기상만 얹는다.
-    expect(projects[0]!.award).toBe("최우수상");
+    expect(projects.find((project) => project.topicTitle === "온기")!.award).toBe("최우수상");
   });
 
   it("실제로 들어온 표가 있으면 보관 합계보다 그쪽을 쓴다", async () => {
@@ -201,11 +206,11 @@ describe("인기상 자동 표시", () => {
 
     const projects = await listClosed(client);
 
-    expect(projects.map((project) => [project.topicTitle, project.popularAward])).toEqual([
-      ["온기", true],
-      ["반짝이", true],
-      ["손길모아", false],
-    ]);
+    expect(Object.fromEntries(projects.map((project) => [project.topicTitle, project.popularAward]))).toEqual({
+      온기: true,
+      반짝이: true,
+      손길모아: false,
+    });
   });
 
   it("투표가 아직 안 끝난 프로그램에는 붙이지 않는다", async () => {
