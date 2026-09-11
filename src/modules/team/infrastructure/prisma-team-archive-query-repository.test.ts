@@ -233,4 +233,29 @@ describe("인기상 자동 표시", () => {
 
     expect(project!.popularAward).toBe(false);
   });
+
+  it("득표를 감춘 프로그램도 인기상은 붙이되 득표수는 감춘다", async () => {
+    // 제7회가 표 수를 감추려고 "마감 후 득표 공개" 를 껐더니 상까지 사라졌다.
+    // 상은 시상식에서 이미 부른 것이고, 감추려던 것은 몇 표인지다. 둘을 따로 판단한다.
+    const closedPolicy = { endsAt: new Date("2020-01-02"), resultsVisibleAfterVoting: false };
+    const client = clientWith({
+      teams: [archivedTeam({ topicId: "topic-1", name: "온기", votingPolicy: closedPolicy })],
+      policies: [{
+        programId: "program-1",
+        startsAt: new Date("2020-01-01"),
+        endsAt: new Date("2020-01-02"),
+        voteLimit: 2,
+        selfVotingAllowed: false,
+        resultsVisibleDuringVoting: false,
+        resultsVisibleAfterVoting: false,
+      }],
+      tallies: [{ programId: "program-1", topicId: "topic-1", _count: { _all: 9 } }],
+    });
+
+    const [project] = await new PrismaTeamArchiveQueryRepository(client, "STUDENT")
+      .listClosed({ offset: 0, limit: 20, filters: {} });
+
+    expect(project!.popularAward).toBe(true);
+    expect(project!.archivedVoteCount).toBeUndefined();
+  });
 });
