@@ -20,12 +20,17 @@ export const POPULAR_AWARD_TEAM_COUNT = 2;
 /**
  * 인기상을 드러내도 되는 때인지.
  *
- * 투표가 끝나고 결과를 공개하기로 한 프로그램에서만 보인다. 진행 중에 순위를 보여 주면
- * 뒤처진 팀이 표를 몰아 달라고 움직이게 되고, 그 순간 인기 투표가 아니라 동원 경쟁이 된다.
- * 진행 중 득표 공개(resultsVisibleDuringVoting)를 켜 두었더라도 상 이름은 끝난 뒤에 붙인다.
+ * 투표가 끝나야 붙는다. 진행 중에 순위를 보여 주면 뒤처진 팀이 표를 몰아 달라고 움직이게
+ * 되고, 그 순간 인기 투표가 아니라 동원 경쟁이 된다. 진행 중 득표 공개
+ * (resultsVisibleDuringVoting)를 켜 두었더라도 상 이름은 끝난 뒤에 붙인다.
+ *
+ * 끝난 뒤에는 "마감 후 득표 공개"(resultsVisibleAfterVoting)와 상관없이 붙인다. 그 설정은
+ * 몇 표를 받았는지를 공개할지 정하는 것이고, 인기상은 시상식에서 이미 불린 상이다. 실제로
+ * 제7회는 표 수를 감추려고 그 설정을 껐는데 상까지 같이 사라졌다. 득표수는 여기가 아니라
+ * 조회하는 쪽의 canSeeVoteCount 가 따로 막는다.
  */
 export function canShowPopularAward(policy: ProgramVotingPolicyDetails, now: Date): boolean {
-  return getProgramVotingPhase(policy, now) === "CLOSED" && policy.resultsVisibleAfterVoting;
+  return getProgramVotingPhase(policy, now) === "CLOSED";
 }
 
 /**

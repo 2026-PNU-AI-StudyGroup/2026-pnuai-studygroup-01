@@ -46,7 +46,7 @@ describe("canShowPopularAward", () => {
     resultsVisibleAfterVoting: true,
   };
 
-  it("투표가 끝나고 결과를 공개하는 프로그램에서만 붙인다", () => {
+  it("투표가 끝나면 붙인다", () => {
     expect(canShowPopularAward(policy, new Date("2026-08-29T00:00:00Z"))).toBe(true);
   });
 
@@ -56,8 +56,10 @@ describe("canShowPopularAward", () => {
     expect(canShowPopularAward(policy, new Date("2026-08-27T10:00:00Z"))).toBe(false);
   });
 
-  it("결과를 공개하지 않기로 했으면 끝나도 붙이지 않는다", () => {
-    expect(canShowPopularAward({ ...policy, resultsVisibleAfterVoting: false }, new Date("2026-08-29T00:00:00Z"))).toBe(false);
+  it("득표를 감춘 프로그램에서도 붙인다", () => {
+    // "마감 후 득표 공개" 는 몇 표인지를 감추는 설정이다. 상까지 같이 감추면 시상식에서
+    // 이미 부른 상이 사이트에만 없다. 제7회가 표를 감추려다 상이 사라진 적이 있다.
+    expect(canShowPopularAward({ ...policy, resultsVisibleAfterVoting: false }, new Date("2026-08-29T00:00:00Z"))).toBe(true);
   });
 });
 
