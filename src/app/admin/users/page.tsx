@@ -12,6 +12,7 @@ import {
   adminRecordListClassName,
 } from "@/app/_components/admin-section";
 import { UserRoleForm } from "@/app/admin/users/_components/user-role-form";
+import { AdvisorProgramHistory } from "@/app/admin/users/_components/advisor-program-history";
 import { UserStatusForm } from "@/app/admin/users/_components/user-status-form";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import {
@@ -25,6 +26,7 @@ import {
 } from "@/modules/identity/application/manage-users";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { PrismaUserAdministrationRepository } from "@/modules/identity/infrastructure/prisma-user-administration-repository";
+import { listAdvisorProgramHistory } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { AppShell } from "@/app/_components/app-shell";
@@ -66,6 +68,12 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
   const roleFilter = resolveUserListRoleFilter(firstSearchParam(params.role));
   const statusFilter = resolveUserListStatusFilter(firstSearchParam(params.status));
   const data = await new UserAdministrationService(new PrismaUserAdministrationRepository(prisma)).list(actor, query, requestedPage, { role: roleFilter, status: statusFilter });
+  // 자문위원은 계정만 봐서는 무엇을 하는 사람인지 알 수 없다. 어느 프로그램 심사단이었는지가
+  // 그 계정의 내용이고, 계정 상태도 거기서 나온다. 사람마다 조회하지 않고 이 쪽 전원을 한 번에 받는다.
+  const advisorHistory = await listAdvisorProgramHistory(
+    prisma,
+    data.items.filter((user) => user.role === "ADVISOR").map((user) => user.id),
+  );
   const filtered = roleFilter !== "ALL" || statusFilter !== "ALL";
   // 필터를 바꾸면 결과 수가 달라지므로 페이지는 항상 처음으로 되돌린다.
   const listHref = (next: { role?: UserListRoleFilter; status?: UserListStatusFilter; page?: number }) => {
@@ -163,8 +171,15 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                     <StatusBadge tone="info"><UiText>{"내 계정"}</UiText></StatusBadge>
                   ) : (
                     <div className="flex flex-wrap items-center gap-3">
-                      <UserStatusForm userId={user.id} name={user.name} isActive={user.isActive} activeResponsibilityCount={user.activeResponsibilityCount} />
+                      <UserStatusForm
+                        userId={user.id}
+                        name={user.name}
+                        isActive={user.isActive}
+                        activeResponsibilityCount={user.activeResponsibilityCount}
+                        canReactivate={user.role !== "ADVISOR"}
+                      />
                       {user.isActive ? <UserRoleForm userId={user.id} name={user.name} role={user.role} isSelf={false} /> : null}
+                      {user.role === "ADVISOR" ? <AdvisorProgramHistory name={user.name} history={advisorHistory.get(user.id) ?? []} /> : null}
                     </div>
                   )}
                 </li>

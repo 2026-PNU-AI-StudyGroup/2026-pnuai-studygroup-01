@@ -182,7 +182,8 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
         </div>
       </div>
       {accountDisabled ? (
-        <p className="text-xs text-[var(--muted)]"><UiText>{"사용자 관리에서 계정을 다시 활성화하면 링크를 발급할 수 있습니다."}</UiText></p>
+        // 사용자 관리에는 자문위원 활성화 버튼을 두지 않는다. 되살리는 길은 이 화면뿐이다.
+        <p className="text-xs text-[var(--muted)]"><UiText>{"계정이 비활성 상태입니다. 초대를 회수한 뒤 다시 초대하면 계정도 함께 활성화되고 새 링크가 발급됩니다."}</UiText></p>
       ) : null}
       <ActionResult state={state} />
     </li>
