@@ -29,6 +29,13 @@ export interface AdvisorAdminRepository {
    * 비활성 계정에는 토큰 로그인이 막혀 있어, 상태를 모르고 링크를 내주면 눌러도 열리지
    * 않는 링크가 나간다. 재발급을 막을 근거로 쓴다.
    */
+  /** 거둔 초대를 되살린다. 팀 배정은 되살리지 않는다. */
+  reinviteAdvisor(input: { programId: string; userId: string; actorId: string }): Promise<
+    | { status: "INVITED"; invitationId: string }
+    | { status: "ALREADY_INVITED" }
+    | { status: "NOT_FOUND" }
+    | { status: "ACCOUNT_DISABLED" }
+  >;
   findActiveInvitation(target: AdvisorInvitationTarget): Promise<{ id: string; accountStatus: string } | null>;
   issueToken(input: { invitationId: string; tokenHash: string; expiresAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
   revokeTokens(input: { invitationId: string; revokedAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
@@ -70,6 +77,27 @@ export class AdvisorAdminService {
       target: { programId: input.programId, userId: invited.userId },
     });
     return { userId: invited.userId, reusedAccount: invited.reusedAccount, inviteToken };
+  }
+
+  /**
+   * 거둔 초대를 되살리고 새 링크를 낸다.
+   *
+   * 회수가 링크까지 거둬 두었으니 초대만 세워서는 위원이 들어올 수 없다. 초대와 링크를
+   * 한 번에 처리해 운영자가 곧바로 전달할 수 있게 한다.
+   */
+  async reinvite(actor: CurrentActor, target: AdvisorInvitationTarget) {
+    this.assertAdmin(actor);
+    const revived = await this.repository.reinviteAdvisor({ ...target, actorId: actor.id });
+    if (revived.status === "NOT_FOUND") {
+      throw new AdvisorOperationError("이 프로그램에서 회수한 자문위원이 아닙니다.");
+    }
+    if (revived.status === "ALREADY_INVITED") {
+      throw new AdvisorOperationError("이미 이 프로그램에 초대된 자문위원입니다. 초대 링크가 필요하면 목록에서 다시 발급해 주세요.");
+    }
+    if (revived.status === "ACCOUNT_DISABLED") {
+      throw new AdvisorOperationError("비활성 상태인 계정입니다. 사용자 관리에서 계정을 다시 활성화한 뒤 초대해 주세요.");
+    }
+    return this.issueTokenFor(actor, { invitationId: revived.invitationId, target });
   }
 
   async reissueToken(actor: CurrentActor, target: AdvisorInvitationTarget) {

@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import {
   assignAdvisorTeamsAction,
   registerAdvisorAction,
+  reinviteAdvisorAction,
   reissueAdvisorTokenAction,
   revokeAdvisorTokenAction,
   type AdvisorActionState,
@@ -24,28 +25,40 @@ type ProgramAdvisorPanelProps = {
 };
 
 export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: ProgramAdvisorPanelProps) {
+  // 회수한 위원은 심사단이 아니지만 화면에서 지우지는 않는다. 사라지면 다시 부르는 길이
+  // 어디에도 없어 막힌 것처럼 보인다. 목록과 팀 할당은 지금 심사단만, 되살리기는 아래 따로.
+  const serving = advisors.filter((advisor) => advisor.revokedAt === null);
+  const revoked = advisors.filter((advisor) => advisor.revokedAt !== null);
   return (
     <div className={styles.form}>
       <RegisterSection programId={programId} />
       <section className={styles.section}>
         <SectionHeader title="자문위원 목록" description="이 프로그램에 초대한 위원만 나옵니다." />
-        {advisors.length === 0 ? (
+        {serving.length === 0 ? (
           <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 초대한 자문위원이 없습니다."}</UiText></p>
         ) : (
           <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]">
-            {advisors.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
+            {serving.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
           </ul>
         )}
       </section>
+      {revoked.length > 0 ? (
+        <section className={styles.section}>
+          <SectionHeader title="회수한 위원" description="초대를 거둔 위원입니다. 다시 부르면 새 링크가 발급되고, 담당 팀은 다시 배정해야 합니다." />
+          <ul className="overflow-hidden rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface-subtle)]">
+            {revoked.map((advisor) => <RevokedAdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
+          </ul>
+        </section>
+      ) : null}
       <section className={styles.section}>
         <SectionHeader title="팀 할당" description="팀이 있는 프로젝트만 담당자로 배정할 수 있습니다." />
-        {advisors.length === 0 ? (
+        {serving.length === 0 ? (
           <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"자문위원을 먼저 초대해 주세요."}</UiText></p>
         ) : topics.length === 0 ? (
           <p role="status" className="text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 등록된 프로젝트가 없습니다."}</UiText></p>
         ) : (
           <div className="grid gap-3">
-            {advisors.map((advisor) => <AssignmentForm key={advisor.userId} programId={programId} advisor={advisor} topics={topics} />)}
+            {serving.map((advisor) => <AssignmentForm key={advisor.userId} programId={programId} advisor={advisor} topics={topics} />)}
           </div>
         )}
       </section>
@@ -170,6 +183,44 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
       </div>
       {accountDisabled ? (
         <p className="text-xs text-[var(--muted)]"><UiText>{"사용자 관리에서 계정을 다시 활성화하면 링크를 발급할 수 있습니다."}</UiText></p>
+      ) : null}
+      <ActionResult state={state} />
+    </li>
+  );
+}
+
+function RevokedAdvisorRow({ programId, advisor }: { programId: string; advisor: ProgramAdvisorRow }) {
+  const [state, action, pending] = useActionState(reinviteAdvisorAction, idleState);
+  // 운영자가 사용자 관리에서 직접 잠근 계정은 초대로 풀지 않는다. 서버도 거절하지만 눌러 본
+  // 뒤에야 알게 하지 않는다. 회수로 내려간 계정은 다시 부를 때 함께 되살아나므로 막지 않는다.
+  const lockedByOperator = advisor.accountStatus === "WITHDRAWN";
+  return (
+    <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-center gap-2 font-bold text-[var(--ink)]">
+            {advisor.name}
+            <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-xs font-semibold text-[var(--muted)]"><UiText>{"초대 회수됨"}</UiText></span>
+          </p>
+          <p className="mt-0.5 text-sm text-[var(--muted)]">{advisor.email}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {advisor.revokedAt ? (
+            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+              <UiText>{"회수 "}</UiText><UiDate value={advisor.revokedAt} mode="dateTime" />
+            </span>
+          ) : null}
+          <form action={action}>
+            <input type="hidden" name="programId" value={programId} />
+            <input type="hidden" name="userId" value={advisor.userId} />
+            <button type="submit" className="button-secondary text-sm" disabled={pending || lockedByOperator}>
+              <UiText>{pending ? "처리 중" : "다시 초대"}</UiText>
+            </button>
+          </form>
+        </div>
+      </div>
+      {lockedByOperator ? (
+        <p className="text-xs text-[var(--muted)]"><UiText>{"탈퇴한 계정은 다시 초대할 수 없습니다."}</UiText></p>
       ) : null}
       <ActionResult state={state} />
     </li>
