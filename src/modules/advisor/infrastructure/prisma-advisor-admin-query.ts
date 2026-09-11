@@ -5,6 +5,8 @@ export type ProgramAdvisorRow = {
   name: string;
   email: string;
   accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
+  /** 초대를 거둔 시각. null 이면 지금 이 프로그램의 심사단이다. */
+  revokedAt: Date | null;
   assignedTopicIds: string[];
   activeToken: { expiresAt: Date } | null;
 };
@@ -12,14 +14,21 @@ export type ProgramAdvisorRow = {
 // 프로그램 화면용: 이 프로그램에 불러 둔 위원 + 이 프로그램 topic 할당 현황.
 // 다른 프로그램 위원은 여기 나오지 않는다. 운영자가 이 화면에서 보는 것은 이 프로그램의 심사단이다.
 //
-// 계정이 비활성인 위원도 목록에 남긴다. 예전에는 활성 계정만 골라 사용자 관리에서 비활성화한
-// 순간 이 목록에서 사라졌고, 운영자는 초대가 살아 있는 위원이 왜 안 보이는지 알 수 없었다.
-// 걸러 내지 않고 상태를 함께 실어 화면이 표시하게 한다.
+// 계정이 비활성인 위원도, 초대를 거둔 위원도 걸러 내지 않는다.
+//
+// 예전에는 활성 계정 + 살아 있는 초대만 골랐다. 그래서 초대를 거두면 그 위원이 화면에서
+// 사라졌고, 운영자가 사용자 관리에서 계정을 다시 활성화해도 이 목록 어디에도 돌아오지
+// 않았다. 되살리는 길(같은 이메일로 다시 초대)이 화면에 드러나지 않아 막힌 것처럼 보였다.
+//
+// 상태를 함께 실어 화면이 현재 심사단과 거둔 위원을 나눠 세우게 한다. 초대는
+// (programId, userId) 유니크라 사람당 한 행이어서 거둔 이력이 무한정 쌓이지 않는다.
 export async function listProgramAdvisors(client: PrismaClient, programId: string): Promise<ProgramAdvisorRow[]> {
   const invitations = await client.programAdvisorInvitation.findMany({
-    where: { programId, revokedAt: null },
-    orderBy: { createdAt: "asc" },
+    where: { programId },
+    // 살아 있는 초대가 먼저, 거둔 초대는 최근에 거둔 것부터.
+    orderBy: [{ revokedAt: { sort: "desc", nulls: "first" } }, { createdAt: "asc" }],
     select: {
+      revokedAt: true,
       tokens: {
         where: { revokedAt: null, expiresAt: { gt: new Date() } },
         orderBy: { createdAt: "desc" }, take: 1, select: { expiresAt: true },
@@ -37,6 +46,7 @@ export async function listProgramAdvisors(client: PrismaClient, programId: strin
     name: invitation.user.name,
     email: invitation.user.email,
     accountStatus: invitation.user.accountStatus,
+    revokedAt: invitation.revokedAt,
     assignedTopicIds: invitation.user.projectAdvisors.map((row) => row.topicId),
     activeToken: invitation.tokens[0] ?? null,
   }));

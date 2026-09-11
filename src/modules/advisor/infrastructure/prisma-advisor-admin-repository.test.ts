@@ -241,3 +241,98 @@ describe("PrismaAdvisorAdminRepository.inviteAdvisor 계정 되살리기", () =>
     });
   });
 });
+
+// 다시 초대: 거둔 초대행을 그 자리에서 되살린다.
+function clientForReinvite(invitation: { revokedAt: Date | null; role?: string; accountStatus?: string } | null, liveInvitations = 0) {
+  const programAdvisorInvitation = {
+    findUnique: vi.fn().mockResolvedValue(invitation && {
+      id: "inv-1",
+      revokedAt: invitation.revokedAt,
+      user: { role: invitation.role ?? "ADVISOR", accountStatus: invitation.accountStatus ?? "ACTIVE" },
+    }),
+    update: vi.fn().mockResolvedValue({}),
+    count: vi.fn().mockResolvedValue(liveInvitations),
+  };
+  const user = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+  const auditLog = { create: vi.fn().mockResolvedValue({}) };
+  const transaction = { programAdvisorInvitation, user, auditLog };
+  const client = {
+    ...transaction,
+    $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback(transaction)),
+  } as unknown as PrismaClient;
+  return { client, programAdvisorInvitation, user };
+}
+
+const reinvite = { programId: "prog-1", userId: "adv-1", actorId: "admin-1" };
+
+describe("PrismaAdvisorAdminRepository.reinviteAdvisor", () => {
+  it("거둔 초대를 되살린다", async () => {
+    const { client, programAdvisorInvitation } = clientForReinvite({ revokedAt: new Date("2026-09-01T00:00:00Z") });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "INVITED", invitationId: "inv-1" });
+
+    expect(programAdvisorInvitation.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "inv-1" }, data: expect.objectContaining({ revokedAt: null }) }),
+    );
+  });
+
+  it("회수로 내려간 계정은 다시 부를 때 함께 되살린다", async () => {
+    // 계정이 비활성인 채로 링크를 내주면 토큰 로그인이 accountStatus 검사에서 막힌다.
+    const { client, user } = clientForReinvite({ revokedAt: new Date("2026-09-01T00:00:00Z"), accountStatus: "DISABLED" });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "INVITED", invitationId: "inv-1" });
+
+    expect(user.updateMany).toHaveBeenCalledWith({
+      where: { id: "adv-1", role: "ADVISOR", accountStatus: "DISABLED" },
+      data: { accountStatus: "ACTIVE" },
+    });
+  });
+
+  it("살아 있는 초대가 있는 비활성 계정은 운영자가 잠근 것이므로 되살리지 않는다", async () => {
+    // inviteAdvisor 와 같은 표지를 쓴다. 두 경로가 다르게 판단하면 한쪽으로 우회할 수 있다.
+    const { client, programAdvisorInvitation, user } = clientForReinvite(
+      { revokedAt: new Date("2026-09-01T00:00:00Z"), accountStatus: "DISABLED" },
+      1,
+    );
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "ACCOUNT_DISABLED" });
+
+    expect(programAdvisorInvitation.update).not.toHaveBeenCalled();
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("탈퇴 계정은 되살리지 않는다", async () => {
+    const { client, programAdvisorInvitation } = clientForReinvite({ revokedAt: new Date("2026-09-01T00:00:00Z"), accountStatus: "WITHDRAWN" });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "ACCOUNT_DISABLED" });
+
+    expect(programAdvisorInvitation.update).not.toHaveBeenCalled();
+  });
+
+  it("이미 살아 있는 초대는 되살릴 것이 없다", async () => {
+    const { client, programAdvisorInvitation } = clientForReinvite({ revokedAt: null });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "ALREADY_INVITED" });
+
+    expect(programAdvisorInvitation.update).not.toHaveBeenCalled();
+  });
+
+  it("이 프로그램에 초대 이력이 없으면 거절한다", async () => {
+    const { client } = clientForReinvite(null);
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "NOT_FOUND" });
+  });
+
+  it("자문위원이 아닌 계정은 거절한다", async () => {
+    const { client } = clientForReinvite({ revokedAt: new Date("2026-09-01T00:00:00Z"), role: "STUDENT" });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await expect(repository.reinviteAdvisor(reinvite)).resolves.toEqual({ status: "NOT_FOUND" });
+  });
+});

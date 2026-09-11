@@ -112,6 +112,49 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
     });
   }
 
+  /**
+   * 거둔 초대를 그 자리에서 다시 세운다.
+   *
+   * 되살리는 길이 초대 폼에 이름과 이메일을 다시 적는 것뿐이었다. 거둔 위원은 화면에서
+   * 사라져 있어 운영자는 그 길이 있는지도 몰랐다. 목록에 남은 행에서 바로 부를 수 있게 한다.
+   *
+   * 팀 배정은 되살리지 않는다. 회수가 지운 것이고, 파일 접근과 채점 화면이 초대가 아니라
+   * 팀 배정만 보기 때문이다. 다시 배정하는 것은 운영자가 고를 일이다.
+   */
+  async reinviteAdvisor(input: { programId: string; userId: string; actorId: string }) {
+    const { programId, userId } = input;
+    return this.client.$transaction(async (transaction) => {
+      const invitation = await transaction.programAdvisorInvitation.findUnique({
+        where: { programId_userId: { programId, userId } },
+        select: { id: true, revokedAt: true, user: { select: { role: true, accountStatus: true } } },
+      });
+      if (!invitation || invitation.user.role !== "ADVISOR") return { status: "NOT_FOUND" as const };
+      if (invitation.revokedAt === null) return { status: "ALREADY_INVITED" as const };
+      // inviteAdvisor 와 같은 기준이다. 살아 있는 초대가 있는데 비활성이면 운영자가 사용자
+      // 관리에서 직접 잠근 계정이므로 초대로 풀지 않는다.
+      if (invitation.user.accountStatus === "DISABLED") {
+        const liveInvitations = await transaction.programAdvisorInvitation.count({
+          where: { userId, revokedAt: null },
+        });
+        if (liveInvitations > 0) return { status: "ACCOUNT_DISABLED" as const };
+      }
+      if (invitation.user.accountStatus === "WITHDRAWN") return { status: "ACCOUNT_DISABLED" as const };
+      await transaction.programAdvisorInvitation.update({
+        where: { id: invitation.id },
+        data: { revokedAt: null, invitedById: input.actorId, createdAt: new Date() },
+      });
+      if (invitation.user.accountStatus === "DISABLED") {
+        await transaction.user.updateMany({
+          where: { id: userId, role: "ADVISOR", accountStatus: "DISABLED" },
+          data: { accountStatus: "ACTIVE" },
+        });
+      }
+      // 감사 기록은 뒤따르는 링크 발급(ADVISOR_TOKEN_ISSUED)이 남긴다. 이메일 폼으로 다시
+      // 부를 때도 기존 계정이면 등록 기록 없이 발급 기록만 남으므로 같은 자리에 맞춘다.
+      return { status: "INVITED" as const, invitationId: invitation.id };
+    });
+  }
+
   async findActiveInvitation(target: AdvisorInvitationTarget) {
     const invitation = await this.client.programAdvisorInvitation.findFirst({
       where: { programId: target.programId, userId: target.userId, revokedAt: null },

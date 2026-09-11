@@ -8,6 +8,7 @@ const target = { programId: "prog-1", userId: "adv-1" };
 function repository() {
   return {
     inviteAdvisor: vi.fn().mockResolvedValue({ status: "INVITED", userId: "adv-1", invitationId: "inv-1", reusedAccount: false }),
+    reinviteAdvisor: vi.fn().mockResolvedValue({ status: "INVITED", invitationId: "inv-1" }),
     findActiveInvitation: vi.fn().mockResolvedValue({ id: "inv-1", accountStatus: "ACTIVE" }),
     issueToken: vi.fn().mockResolvedValue(true),
     revokeTokens: vi.fn().mockResolvedValue(true),
@@ -115,6 +116,36 @@ describe("AdvisorAdminService", () => {
     await service.reissueToken(admin, target);
 
     expect(repo.issueToken).toHaveBeenCalledOnce();
+  });
+
+  it("회수한 위원을 다시 부르면 초대를 되살리고 링크까지 낸다", async () => {
+    // 회수가 링크도 거둬 갔으니 초대만 세워서는 위원이 들어올 수 없다.
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+
+    await service.reinvite(admin, target);
+
+    expect(repo.reinviteAdvisor).toHaveBeenCalledWith({ ...target, actorId: "admin-1" });
+    expect(repo.issueToken).toHaveBeenCalledOnce();
+  });
+
+  it("관리자만 다시 초대할 수 있다", async () => {
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+
+    await expect(service.reinvite(student, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+    expect(repo.reinviteAdvisor).not.toHaveBeenCalled();
+  });
+
+  it("회수 이력이 없거나 이미 초대돼 있으면 링크를 내지 않는다", async () => {
+    for (const status of ["NOT_FOUND", "ALREADY_INVITED", "ACCOUNT_DISABLED"] as const) {
+      const repo = repository();
+      repo.reinviteAdvisor.mockResolvedValue({ status });
+      const service = new AdvisorAdminService(repo);
+
+      await expect(service.reinvite(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+      expect(repo.issueToken).not.toHaveBeenCalled();
+    }
   });
 
   it("assignTeams가 programId·grantedById를 리포지토리에 전달한다", async () => {

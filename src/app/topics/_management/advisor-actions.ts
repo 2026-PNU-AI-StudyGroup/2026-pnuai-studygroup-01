@@ -67,6 +67,27 @@ export async function reissueAdvisorTokenAction(_state: AdvisorActionState, form
   }
 }
 
+export async function reinviteAdvisorAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = targetSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "다시 초대할 자문위원을 확인해 주세요." };
+  try {
+    const token = await service().reinvite(actor, parsed.data);
+    revalidatePath(programManagementHref(parsed.data.programId, "advisors"));
+    return {
+      status: "success",
+      // 회수가 팀 배정을 지웠고 초대만으로는 돌아오지 않는다. 말없이 넘어가면 운영자는
+      // 예전 담당 팀이 그대로 붙어 있는 줄 안다.
+      message: "이 프로그램에 다시 초대했습니다. 담당 팀은 해제된 상태이니 팀 할당을 다시 저장해 주세요. 초대 링크를 복사해 전달하세요.",
+      inviteLink: inviteLink(token),
+    };
+  } catch (error) {
+    if (error instanceof AdvisorOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+}
+
 export async function revokeAdvisorTokenAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
