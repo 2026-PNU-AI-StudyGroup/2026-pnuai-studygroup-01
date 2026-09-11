@@ -14,6 +14,7 @@ import {
 const archivedProjectSelect = {
   id: true,
   name: true,
+  number: true,
   showcaseIntro: true,
   award: true,
   archivedVoteCount: true,
@@ -123,11 +124,12 @@ export class PrismaTeamArchiveQueryRepository
     const where = closedProjectWhere(input.filters, this.audience);
     const candidates = await this.client.projectTeam.findMany({
       where,
-      select: { id: true, name: true, award: true, project: { select: { program: { select: { startsAt: true } } } } },
+      select: { id: true, name: true, number: true, award: true, project: { select: { program: { select: { startsAt: true } } } } },
     });
     const pageIds = orderArchivedTeamIds(candidates.map((team) => ({
       id: team.id,
       teamName: team.name,
+      teamNumber: team.number,
       award: team.award,
       programStartsAt: team.project.program.startsAt,
     }))).slice(input.offset, input.offset + input.limit);
@@ -240,6 +242,7 @@ function toArchivedProject(
     topicId: team.project.id,
     startYear: getProgramStartYear(team.project.program.startsAt),
     teamName: team.name,
+    teamNumber: team.number,
     programId: team.project.program.id,
     programName: team.project.program.name,
     programIcon: team.project.program.icon,

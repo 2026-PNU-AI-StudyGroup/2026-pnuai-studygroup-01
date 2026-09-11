@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 
-import { saveProgramAwardsAction } from "@/app/topics/_management/program-actions";
+import { saveProgramTeamResultsAction } from "@/app/topics/_management/program-actions";
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -17,7 +17,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
   rows: ProgramScoreboardRow[];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("combined");
-  const [awardState, saveAwards, savingAwards] = useActionState(saveProgramAwardsAction, initialProgramActionState);
+  const [resultState, saveResults, savingResults] = useActionState(saveProgramTeamResultsAction, initialProgramActionState);
   const advisorColumns = useMemo(() => {
     const columns = new Map<string, string>();
     for (const row of rows) for (const score of row.advisorScores) columns.set(score.advisorId, score.advisorName);
@@ -39,13 +39,14 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
       </div>
 
       {/* 상은 이 표를 보고 정한다. 입력칸을 같은 표에 두면 팀 이름을 옮겨 적을 일이 없다. */}
-      <form action={saveAwards}>
+      <form action={saveResults}>
       <input type="hidden" name="programId" value={programId} />
       <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
             <tr className="border-b border-[var(--line)] bg-[var(--surface-subtle)] text-left">
               <th scope="col" className="w-12 px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
+              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
               <SortHeader label="팀" columnKey="team" sortKey={sortKey} onSort={setSortKey} />
               <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
               <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
@@ -65,6 +66,18 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
               return (
                 <tr key={row.teamId} className="border-t border-[var(--line)] first:border-t-0">
                   <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--muted)]">{index + 1}</td>
+                  <td className="px-4 py-2">
+                    <TextInput
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={9999}
+                      name={`number:${row.teamId}`}
+                      defaultValue={row.teamNumber ?? ""}
+                      aria-label={`${row.teamName} 팀 번호`}
+                      className="w-20 text-right tabular-nums"
+                    />
+                  </td>
                   <th scope="row" className="px-4 py-3 text-left font-semibold text-[var(--ink)]">
                     {row.teamName}
                     {row.staffScorerNames.length ? (
@@ -98,15 +111,15 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <p className="text-xs text-[var(--muted)]">
-          <UiText>{"상 이름은 그대로 배지에 찍힙니다. 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
+          <UiText>{"번호는 지난 프로젝트 목록의 차례가 됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
         </p>
-        {awardState.message ? (
-          <p role={awardState.status === "error" ? "alert" : "status"} aria-live="polite" className={`text-xs ${awardState.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
-            {awardState.message}
+        {resultState.message ? (
+          <p role={resultState.status === "error" ? "alert" : "status"} aria-live="polite" className={`text-xs ${resultState.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+            {resultState.message}
           </p>
         ) : null}
-        <button type="submit" className="button-primary ml-auto min-h-9 px-3 text-xs" disabled={savingAwards}>
-          <UiText>{savingAwards ? "저장 중" : "수상 내역 저장"}</UiText>
+        <button type="submit" className="button-primary ml-auto min-h-9 px-3 text-xs" disabled={savingResults}>
+          <UiText>{savingResults ? "저장 중" : "번호·수상 저장"}</UiText>
         </button>
       </div>
       </form>

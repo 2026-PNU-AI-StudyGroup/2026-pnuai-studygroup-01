@@ -15,6 +15,7 @@ const project: ArchivedProject = {
   topicId: "50000000-0000-4000-8000-000000000001",
   startYear: 2025,
   teamName: "모두의 길",
+  teamNumber: null,
   programId: "program-1",
   programName: "CSE 캡스톤디자인 2025",
   programIcon: "FOLDER" as const,

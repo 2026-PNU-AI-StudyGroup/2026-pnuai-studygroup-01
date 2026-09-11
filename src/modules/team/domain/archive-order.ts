@@ -30,38 +30,21 @@ export function awardRank(award: string | null | undefined): number {
   return found === -1 ? OTHER_AWARD_RANK : found;
 }
 
-/**
- * 팀 이름 앞에 붙은 번호를 뽑는다.
- *
- * 번호를 담는 칸이 따로 없어 프로그램마다 이름 앞에 적어 왔다. `1. 404Found` 도 있고
- * `A-1. Broom` 도 있다. 글자로만 세우면 A-1, A-10, A-11, A-2 처럼 열 번대가 두 번째로
- * 끼어든다. 글자 부분과 숫자 부분을 갈라 숫자는 숫자로 센다.
- *
- * 번호가 없는 이름은 `null` 이다. 부르는 쪽이 이름 자체로 세운다.
- */
-export function teamNumberKey(name: string): { group: string; number: number } | null {
-  const matched = /^\s*([A-Za-z]*)[\s\-_.]*(\d+)\s*[.\-)]/.exec(name);
-  if (!matched) return null;
-  return { group: matched[1]!.toUpperCase(), number: Number(matched[2]) };
-}
-
 export type ArchiveOrderRow = {
   id: string;
   teamName: string;
+  /** 행사에서 매긴 번호. 번호를 안 쓰는 프로그램은 null 이다. */
+  teamNumber: number | null;
   award: string | null;
   programStartsAt: Date;
 };
 
-/** 이름 하나를 비교한다. 번호가 있는 쪽이 먼저 서고, 번호가 없으면 가나다순이다. */
-function compareTeamName(left: string, right: string): number {
-  const leftKey = teamNumberKey(left);
-  const rightKey = teamNumberKey(right);
-  if (leftKey && rightKey) {
-    return leftKey.group.localeCompare(rightKey.group) || leftKey.number - rightKey.number;
-  }
-  if (leftKey) return -1;
-  if (rightKey) return 1;
-  return left.localeCompare(right, "ko");
+/** 번호를 매긴 팀이 먼저 서고, 번호가 없으면 이름 가나다순이다. */
+function compareTeam(left: ArchiveOrderRow, right: ArchiveOrderRow): number {
+  if (left.teamNumber !== null && right.teamNumber !== null) return left.teamNumber - right.teamNumber;
+  if (left.teamNumber !== null) return -1;
+  if (right.teamNumber !== null) return 1;
+  return left.teamName.localeCompare(right.teamName, "ko");
 }
 
 export function orderArchivedTeamIds(rows: readonly ArchiveOrderRow[]): string[] {
@@ -69,7 +52,7 @@ export function orderArchivedTeamIds(rows: readonly ArchiveOrderRow[]): string[]
     .sort((left, right) =>
       right.programStartsAt.getTime() - left.programStartsAt.getTime()
       || awardRank(left.award) - awardRank(right.award)
-      || compareTeamName(left.teamName, right.teamName)
+      || compareTeam(left, right)
       || left.id.localeCompare(right.id))
     .map(({ id }) => id);
 }

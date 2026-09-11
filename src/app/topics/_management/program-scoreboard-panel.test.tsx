@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // 서버 액션을 그대로 들이면 prisma 까지 딸려 와 DATABASE_URL 을 찾는다. 화면만 본다.
-vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramAwardsAction: vi.fn() }));
+vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramTeamResultsAction: vi.fn() }));
 
 import { ProgramScoreboardPanel, buildScoreboardCsv, combinedScore, sortRows } from "@/app/topics/_management/program-scoreboard-panel";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
@@ -13,6 +13,7 @@ function row(overrides: Partial<ProgramScoreboardRow> & { teamName: string }): P
     projectId: `${overrides.teamName}-topic`,
     projectTitle: `${overrides.teamName} 프로젝트`,
     award: null,
+    teamNumber: null,
     divisionName: null,
     divisionPosition: 0,
     staffTotal: null,
