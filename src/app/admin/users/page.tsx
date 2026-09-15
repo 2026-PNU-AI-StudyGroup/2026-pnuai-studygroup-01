@@ -176,7 +176,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                         name={user.name}
                         isActive={user.isActive}
                         activeResponsibilityCount={user.activeResponsibilityCount}
-                        canReactivate={user.role !== "ADVISOR"}
+                        managedByInvitations={user.role === "ADVISOR"}
                       />
                       {user.isActive ? <UserRoleForm userId={user.id} name={user.name} role={user.role} isSelf={false} /> : null}
                       {user.role === "ADVISOR" ? <AdvisorProgramHistory name={user.name} history={advisorHistory.get(user.id) ?? []} /> : null}

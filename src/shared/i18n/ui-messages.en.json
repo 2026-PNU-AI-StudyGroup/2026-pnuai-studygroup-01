@@ -284,6 +284,7 @@
   "계정 비활성": "Account disabled",
   "계정 상태": "Account status",
   "계정 상태 필터": "Account status filter",
+  "계정 상태는 프로그램 초대로 관리합니다.": "Account status follows the program invitations.",
   "계정 역할": "Account role",
   "계정 이름과 사진은 Google Workspace에서 관리됩니다.": "Account name and photo are managed in Google Workspace.",
   "계정 탈퇴": "Account withdrawal",

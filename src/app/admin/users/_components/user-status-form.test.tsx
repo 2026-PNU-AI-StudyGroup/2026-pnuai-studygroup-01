@@ -8,16 +8,18 @@ const base = { userId: "60000000-0000-4000-8000-000000000001", name: "정민서"
 describe("UserStatusForm", () => {
   it("자문위원 비활성 계정에는 활성화 버튼을 두지 않고 되살리는 자리를 알린다", () => {
     // 계정만 켜도 초대와 링크가 회수된 채라 들어올 수 없다. 아무 일도 없는 길을 내밀지 않는다.
-    render(<UserStatusForm {...base} isActive={false} canReactivate={false} />);
+    render(<UserStatusForm {...base} isActive={false} managedByInvitations />);
 
     expect(screen.queryByRole("button", { name: "다시 활성화" })).not.toBeInTheDocument();
     expect(screen.getByText("프로그램 자문위원 화면에서 다시 초대하면 계정도 함께 활성화됩니다.")).toBeInTheDocument();
   });
 
-  it("자문위원도 활성 상태에서는 비활성화할 수 있다", () => {
-    render(<UserStatusForm {...base} isActive canReactivate={false} />);
+  it("자문위원은 활성 상태에서도 여기서 끄지 않는다", () => {
+    // 초대는 살아 있는데 계정만 꺼진, 두 축이 어긋난 상태를 만들지 않는다. 끄려면 초대를 회수한다.
+    render(<UserStatusForm {...base} isActive managedByInvitations />);
 
-    expect(screen.getByRole("button", { name: "비활성화" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "비활성화" })).not.toBeInTheDocument();
+    expect(screen.getByText("계정 상태는 프로그램 초대로 관리합니다.")).toBeInTheDocument();
   });
 
   it("다른 역할의 비활성 계정은 예전처럼 다시 활성화한다", () => {
