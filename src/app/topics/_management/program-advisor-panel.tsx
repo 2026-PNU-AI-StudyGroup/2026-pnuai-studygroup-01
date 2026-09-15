@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 
 import {
   assignAdvisorTeamsAction,
+  blockAdvisorAccessAction,
   registerAdvisorAction,
   reinviteAdvisorAction,
   reissueAdvisorTokenAction,
@@ -144,10 +145,12 @@ function RegisterSection({ programId }: { programId: string }) {
 function AdvisorRow({ programId, advisor }: { programId: string; advisor: ProgramAdvisorRow }) {
   // 재발급·회수를 한 상태로 묶어야 회수 뒤에도 죽은 초대 링크가 화면에 남지 않는다.
   const [state, action, pending] = useActionState(
-    (previous: AdvisorActionState, formData: FormData) =>
-      formData.get("intent") === "revoke"
-        ? revokeAdvisorTokenAction(previous, formData)
-        : reissueAdvisorTokenAction(previous, formData),
+    (previous: AdvisorActionState, formData: FormData) => {
+      const intent = formData.get("intent");
+      if (intent === "revoke") return revokeAdvisorTokenAction(previous, formData);
+      if (intent === "block") return blockAdvisorAccessAction(previous, formData);
+      return reissueAdvisorTokenAction(previous, formData);
+    },
     idleState,
   );
   // 비활성 계정에는 토큰 로그인이 막혀 있어 링크를 내줘도 열리지 않는다. 서버도 거절하지만,
@@ -177,6 +180,11 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="userId" value={advisor.userId} />
             <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending || accountDisabled}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
+            {/* 링크가 살아 있을 때만 끊을 것이 있다. 회수보다 가벼운 수단이라 회수 왼쪽에 둔다.
+                초대와 담당 팀은 남으므로 되돌릴 때 재배정이 필요 없다. */}
+            {advisor.activeToken ? (
+              <button type="submit" name="intent" value="block" className="button-quiet text-sm" disabled={pending}><UiText>{"접속 차단"}</UiText></button>
+            ) : null}
             <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending}><UiText>{"초대 회수"}</UiText></button>
           </form>
         </div>

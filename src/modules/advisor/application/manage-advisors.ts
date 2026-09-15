@@ -114,6 +114,29 @@ export class AdvisorAdminService {
     return this.issueTokenFor(actor, { invitationId: invitation.id, target }, now);
   }
 
+  /**
+   * 링크만 끊는다. 초대와 담당 팀은 그대로 둔다.
+   *
+   * 링크가 새어 나갔거나 잠시 손을 떼게 해야 할 때 쓴다. 초대를 회수하면 담당 팀 배정까지
+   * 지워져 되돌릴 수 없으므로, 그보다 가벼운 수단이 필요하다. 토큰을 거두고 세션을 끊으면
+   * 자문위원은 들어올 길이 없다 -- 구글 로그인을 쓸 수 없고 링크로만 들어오기 때문이다.
+   *
+   * 계정 상태는 건드리지 않는다. 이 위원은 여전히 이 프로그램 심사단이고, 계정 상태를
+   * 초대와 따로 움직이면 "참여 중인데 계정은 꺼짐" 같은 어긋난 상태가 생긴다.
+   * 되돌리는 것은 같은 자리의 링크 재발급이다.
+   */
+  async blockAccess(actor: CurrentActor, target: AdvisorInvitationTarget) {
+    this.assertAdmin(actor);
+    const invitation = await this.repository.findActiveInvitation(target);
+    if (!invitation) throw new AdvisorOperationError("이 프로그램에 초대된 자문위원이 아닙니다.");
+    await this.repository.revokeTokens({
+      invitationId: invitation.id,
+      revokedAt: new Date(),
+      actorId: actor.id,
+      target,
+    });
+  }
+
   async revoke(actor: CurrentActor, target: AdvisorInvitationTarget) {
     this.assertAdmin(actor);
     const revoked = await this.repository.revokeInvitation({ revokedAt: new Date(), actorId: actor.id, target });

@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import type { AdvisorProgramHistoryRow } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
@@ -30,12 +33,22 @@ export function AdvisorProgramHistory({ name, history }: { name: string; history
       <ul aria-label={`${name} 자문위원 참여 프로그램`} className="mt-2 grid gap-1.5">
         {history.map((row) => (
           <li key={row.programId} className="flex flex-wrap items-center gap-2 text-xs">
-            {row.revokedAt === null ? (
+            {row.revokedAt !== null ? (
+              <StatusBadge>{"회수됨"}</StatusBadge>
+            ) : row.hasActiveLink ? (
               <StatusBadge tone="success">{"참여 중"}</StatusBadge>
             ) : (
-              <StatusBadge>{"회수됨"}</StatusBadge>
+              // 심사단이지만 링크가 없어 지금은 들어올 수 없다. 접속 차단이거나 만료된 경우다.
+              <StatusBadge tone="warning">{"참여 중 · 링크 없음"}</StatusBadge>
             )}
-            <span className="min-w-0 font-semibold text-[var(--ink)] [overflow-wrap:anywhere]"><UiText>{row.programName}</UiText></span>
+            {/* 잠그거나 다시 부르는 일은 프로그램 화면에서 한다. 여기서는 그 자리로 보낸다 --
+                어느 프로그램인지 알아도 찾아가는 것이 일이었다. */}
+            <Link
+              href={programManagementHref(row.programId, "advisors")}
+              className="min-w-0 font-semibold text-[var(--ink)] underline underline-offset-4 [overflow-wrap:anywhere] hover:text-[var(--primary)]"
+            >
+              <UiText>{row.programName}</UiText>
+            </Link>
             <span className="text-[var(--muted)]">
               <UiText>{"초대"}</UiText>{" "}<UiDate value={row.invitedAt} mode="date" />
               {row.revokedAt ? (

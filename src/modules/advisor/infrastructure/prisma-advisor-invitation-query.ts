@@ -29,6 +29,8 @@ export type AdvisorProgramHistoryRow = {
   programName: string;
   invitedAt: Date;
   revokedAt: Date | null;
+  /** 살아 있는 초대 링크가 있는지. 없으면 심사단이어도 지금은 들어올 수 없다. */
+  hasActiveLink: boolean;
 };
 
 /**
@@ -44,6 +46,7 @@ export async function listAdvisorProgramHistory(
 ): Promise<Map<string, AdvisorProgramHistoryRow[]>> {
   const grouped = new Map<string, AdvisorProgramHistoryRow[]>();
   if (userIds.length === 0) return grouped;
+  const now = new Date();
   const invitations = await client.programAdvisorInvitation.findMany({
     where: { userId: { in: [...userIds] } },
     // 살아 있는 초대가 먼저, 거둔 초대는 최근에 거둔 것부터.
@@ -54,6 +57,11 @@ export async function listAdvisorProgramHistory(
       createdAt: true,
       revokedAt: true,
       program: { select: { name: true } },
+      tokens: {
+        where: { revokedAt: null, expiresAt: { gt: now } },
+        take: 1,
+        select: { id: true },
+      },
     },
   });
   for (const invitation of invitations) {
@@ -63,6 +71,7 @@ export async function listAdvisorProgramHistory(
       programName: invitation.program.name,
       invitedAt: invitation.createdAt,
       revokedAt: invitation.revokedAt,
+      hasActiveLink: invitation.tokens.length > 0,
     });
     grouped.set(invitation.userId, rows);
   }
