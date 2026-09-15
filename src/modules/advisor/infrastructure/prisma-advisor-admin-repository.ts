@@ -18,21 +18,8 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
           select: { id: true, role: true, accountStatus: true },
         });
         if (existing && existing.role !== "ADVISOR") return { status: "EMAIL_TAKEN" as const };
-        // 운영자가 사용자 관리에서 직접 잠근 계정은 초대로 풀지 않는다.
-        //
-        // 회수와 정리 마이그레이션은 살아 있는 초대가 0일 때만 계정을 내린다. 그래서 "살아
-        // 있는 초대가 있는데 비활성" 은 setActive 로만 만들어진다 -- 이 조건이 수동 차단의
-        // 표지다. 그대로 되살리면 그 위원이 이미 들고 있던 다른 프로그램 링크와 팀 배정까지
-        // 함께 열린다. setActive 는 세션만 지우고 토큰은 회수하지 않기 때문이다. 잠근 운영자는
-        // 통보를 받지 못하고, 초대하는 운영자는 계정이 잠겨 있었다는 사실조차 보지 못한다.
-        //
-        // 링크 재발급을 같은 이유로 거절하고 있으므로 초대도 같은 자리로 안내한다.
-        if (existing?.accountStatus === "DISABLED") {
-          const liveInvitations = await transaction.programAdvisorInvitation.count({
-            where: { userId: existing.id, revokedAt: null },
-          });
-          if (liveInvitations > 0) return { status: "ACCOUNT_DISABLED" as const };
-        }
+        // 탈퇴한 계정은 초대로 되살리지 않는다. 비활성보다 무거운 상태다.
+        if (existing?.accountStatus === "WITHDRAWN") return { status: "ACCOUNT_DISABLED" as const };
         const userId = existing
           ? existing.id
           : await this.createAdvisorUser(transaction, { email, name: input.name, actorId: input.actorId });
@@ -42,13 +29,12 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
           actorId: input.actorId,
         });
         if (!invitation) return { status: "ALREADY_INVITED" as const };
-        // 여기까지 온 비활성 계정은 살아 있는 초대가 없다. 회수가 내려 둔 상태이므로 다시
-        // 부를 때 되살린다. 그러지 않으면 새 링크가 발급되어도 토큰 로그인이 accountStatus
-        // 검사에서 막혀 위원에게는 "만료되었거나 회수되었습니다" 만 보인다. 운영자 화면에는
-        // 오류가 없어서 재발급을 반복하게 되는, 원인이 드러나지 않는 고리가 된다.
+        // 부르면 계정이 열린다. 자문위원 계정 상태는 초대로만 관리한다.
         //
-        // 되살려도 예전 링크가 함께 열리지는 않는다. 초대가 모두 회수돼 있어 토큰 로그인이
-        // invitation.revokedAt 검사에서 먼저 걸린다. 탈퇴 계정은 그대로 둔다.
+        // 비활성인 채로 링크를 내주면 토큰 로그인이 accountStatus 검사에서 막혀 위원에게는
+        // "만료되었거나 회수되었습니다" 만 보이고, 운영자 화면에는 오류가 없어 원인을 모르는
+        // 재발급이 반복된다. 사용자 관리에는 자문위원 활성화 버튼이 없으므로 여기서 열지
+        // 않으면 빠져나갈 길이 없다.
         if (existing?.accountStatus === "DISABLED") {
           await transaction.user.updateMany({
             where: { id: userId, role: "ADVISOR", accountStatus: "DISABLED" },
@@ -130,19 +116,14 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
       });
       if (!invitation || invitation.user.role !== "ADVISOR") return { status: "NOT_FOUND" as const };
       if (invitation.revokedAt === null) return { status: "ALREADY_INVITED" as const };
-      // inviteAdvisor 와 같은 기준이다. 살아 있는 초대가 있는데 비활성이면 운영자가 사용자
-      // 관리에서 직접 잠근 계정이므로 초대로 풀지 않는다.
-      if (invitation.user.accountStatus === "DISABLED") {
-        const liveInvitations = await transaction.programAdvisorInvitation.count({
-          where: { userId, revokedAt: null },
-        });
-        if (liveInvitations > 0) return { status: "ACCOUNT_DISABLED" as const };
-      }
+      // 탈퇴한 계정은 초대로 되살리지 않는다. 비활성보다 무거운 상태다.
       if (invitation.user.accountStatus === "WITHDRAWN") return { status: "ACCOUNT_DISABLED" as const };
       await transaction.programAdvisorInvitation.update({
         where: { id: invitation.id },
         data: { revokedAt: null, invitedById: input.actorId, createdAt: new Date() },
       });
+      // 다시 부르면 계정도 함께 열린다. 운영자가 사용자 관리에서 잠근 계정도 여기서 열린다
+      // -- 그 화면에는 자문위원 활성화 버튼이 없으므로 이 자리가 유일한 복구 경로다.
       if (invitation.user.accountStatus === "DISABLED") {
         await transaction.user.updateMany({
           where: { id: userId, role: "ADVISOR", accountStatus: "DISABLED" },

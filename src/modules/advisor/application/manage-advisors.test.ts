@@ -148,6 +148,28 @@ describe("AdvisorAdminService", () => {
     }
   });
 
+  it("접속 차단은 링크만 끊고 초대는 건드리지 않는다", async () => {
+    // 회수와 달리 담당 팀 배정이 남는다. 되돌릴 때 재배정이 필요 없어야 가벼운 수단이 된다.
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+
+    await service.blockAccess(admin, target);
+
+    expect(repo.revokeTokens).toHaveBeenCalledWith(expect.objectContaining({ invitationId: "inv-1", target }));
+    expect(repo.revokeInvitation).not.toHaveBeenCalled();
+    expect(repo.issueToken).not.toHaveBeenCalled();
+  });
+
+  it("관리자만 접속을 차단할 수 있고 초대가 없으면 차단할 것도 없다", async () => {
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+    await expect(service.blockAccess(student, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+
+    repo.findActiveInvitation.mockResolvedValue(null);
+    await expect(service.blockAccess(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+    expect(repo.revokeTokens).not.toHaveBeenCalled();
+  });
+
   it("assignTeams가 programId·grantedById를 리포지토리에 전달한다", async () => {
     const repo = repository();
     const service = new AdvisorAdminService(repo);
