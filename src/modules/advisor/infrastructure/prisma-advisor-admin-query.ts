@@ -7,6 +7,8 @@ export type ProgramAdvisorRow = {
   accountStatus: "ACTIVE" | "DISABLED" | "WITHDRAWN";
   /** 초대를 거둔 시각. null 이면 지금 이 프로그램의 심사단이다. */
   revokedAt: Date | null;
+  /** 멈춰 둔 시각. 링크는 살아 있지만 접속은 막혀 있다. */
+  suspendedAt: Date | null;
   assignedTopicIds: string[];
   activeToken: { expiresAt: Date } | null;
 };
@@ -29,6 +31,7 @@ export async function listProgramAdvisors(client: PrismaClient, programId: strin
     orderBy: [{ revokedAt: { sort: "desc", nulls: "first" } }, { createdAt: "asc" }],
     select: {
       revokedAt: true,
+      suspendedAt: true,
       tokens: {
         where: { revokedAt: null, expiresAt: { gt: new Date() } },
         orderBy: { createdAt: "desc" }, take: 1, select: { expiresAt: true },
@@ -47,6 +50,7 @@ export async function listProgramAdvisors(client: PrismaClient, programId: strin
     email: invitation.user.email,
     accountStatus: invitation.user.accountStatus,
     revokedAt: invitation.revokedAt,
+    suspendedAt: invitation.suspendedAt,
     assignedTopicIds: invitation.user.projectAdvisors.map((row) => row.topicId),
     activeToken: invitation.tokens[0] ?? null,
   }));

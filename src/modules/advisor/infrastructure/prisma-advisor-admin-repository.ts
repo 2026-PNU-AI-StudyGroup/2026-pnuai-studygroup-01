@@ -136,12 +136,54 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
     });
   }
 
+  /**
+   * 심사를 잠시 멈추거나 다시 연다.
+   *
+   * 링크는 건드리지 않는다. 링크 원문은 저장하지 않아 운영자가 다시 보여 줄 수 없으므로,
+   * 토큰을 거두면 풀 때 반드시 새 링크를 전달해야 한다. 이 칸만 채우고 비우면 위원이 가진
+   * 그 링크가 그대로 열린다. 초대와 담당 팀 배정도 처음부터 끝까지 남는다.
+   *
+   * 멈출 때는 세션을 끊는다. 이미 들어와 있는 화면까지 닫아야 멈춘 것이다.
+   */
+  async setInvitationSuspended(input: {
+    target: AdvisorInvitationTarget;
+    suspendedAt: Date | null;
+    actorId: string;
+  }) {
+    const { programId, userId } = input.target;
+    return this.client.$transaction(async (transaction) => {
+      const invitation = await transaction.programAdvisorInvitation.findFirst({
+        where: { programId, userId, revokedAt: null },
+        select: { id: true, suspendedAt: true },
+      });
+      if (!invitation) return false;
+      await transaction.programAdvisorInvitation.update({
+        where: { id: invitation.id },
+        data: { suspendedAt: input.suspendedAt },
+      });
+      if (input.suspendedAt) {
+        await transaction.session.deleteMany({ where: { userId, user: { role: "ADVISOR" } } });
+      }
+      await transaction.auditLog.create({ data: {
+        actorId: input.actorId,
+        action: "ADVISOR_TOKEN_REVOKED",
+        targetType: "ADVISOR",
+        targetId: userId,
+        metadata: { programId, suspended: input.suspendedAt !== null },
+        createdAt: input.suspendedAt ?? new Date(),
+      } });
+      return true;
+    });
+  }
+
   async findActiveInvitation(target: AdvisorInvitationTarget) {
     const invitation = await this.client.programAdvisorInvitation.findFirst({
       where: { programId: target.programId, userId: target.userId, revokedAt: null },
-      select: { id: true, user: { select: { accountStatus: true } } },
+      select: { id: true, suspendedAt: true, user: { select: { accountStatus: true } } },
     });
-    return invitation ? { id: invitation.id, accountStatus: invitation.user.accountStatus } : null;
+    return invitation
+      ? { id: invitation.id, accountStatus: invitation.user.accountStatus, suspendedAt: invitation.suspendedAt }
+      : null;
   }
 
   async issueToken(input: { invitationId: string; tokenHash: string; expiresAt: Date; actorId: string; target: AdvisorInvitationTarget }) {

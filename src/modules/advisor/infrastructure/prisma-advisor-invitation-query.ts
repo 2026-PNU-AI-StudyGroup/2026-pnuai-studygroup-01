@@ -31,6 +31,8 @@ export type AdvisorProgramHistoryRow = {
   revokedAt: Date | null;
   /** 살아 있는 초대 링크가 있는지. 없으면 심사단이어도 지금은 들어올 수 없다. */
   hasActiveLink: boolean;
+  /** 멈춰 둔 시각. 링크는 있어도 접속은 막혀 있다. */
+  suspendedAt: Date | null;
 };
 
 /**
@@ -56,6 +58,7 @@ export async function listAdvisorProgramHistory(
       programId: true,
       createdAt: true,
       revokedAt: true,
+      suspendedAt: true,
       program: { select: { name: true } },
       tokens: {
         where: { revokedAt: null, expiresAt: { gt: now } },
@@ -72,6 +75,7 @@ export async function listAdvisorProgramHistory(
       invitedAt: invitation.createdAt,
       revokedAt: invitation.revokedAt,
       hasActiveLink: invitation.tokens.length > 0,
+      suspendedAt: invitation.suspendedAt,
     });
     grouped.set(invitation.userId, rows);
   }

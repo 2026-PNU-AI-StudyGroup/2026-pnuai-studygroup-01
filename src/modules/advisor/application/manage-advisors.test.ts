@@ -9,7 +9,8 @@ function repository() {
   return {
     inviteAdvisor: vi.fn().mockResolvedValue({ status: "INVITED", userId: "adv-1", invitationId: "inv-1", reusedAccount: false }),
     reinviteAdvisor: vi.fn().mockResolvedValue({ status: "INVITED", invitationId: "inv-1" }),
-    findActiveInvitation: vi.fn().mockResolvedValue({ id: "inv-1", accountStatus: "ACTIVE" }),
+    findActiveInvitation: vi.fn().mockResolvedValue({ id: "inv-1", accountStatus: "ACTIVE", suspendedAt: null }),
+    setInvitationSuspended: vi.fn().mockResolvedValue(true),
     issueToken: vi.fn().mockResolvedValue(true),
     revokeTokens: vi.fn().mockResolvedValue(true),
     revokeInvitation: vi.fn().mockResolvedValue(true),
@@ -101,7 +102,7 @@ describe("AdvisorAdminService", () => {
     // 링크를 내줘도 토큰 로그인이 accountStatus 검사에서 막힌다. 위원에게는 "만료되었거나
     // 회수되었습니다" 만 보이고 운영자 화면에는 오류가 없어, 원인을 모르는 재발급이 반복된다.
     const repo = repository();
-    repo.findActiveInvitation.mockResolvedValue({ id: "inv-1", accountStatus: "DISABLED" });
+    repo.findActiveInvitation.mockResolvedValue({ id: "inv-1", accountStatus: "DISABLED", suspendedAt: null });
     const service = new AdvisorAdminService(repo);
 
     await expect(service.reissueToken(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
@@ -148,26 +149,52 @@ describe("AdvisorAdminService", () => {
     }
   });
 
-  it("접속 차단은 링크만 끊고 초대는 건드리지 않는다", async () => {
-    // 회수와 달리 담당 팀 배정이 남는다. 되돌릴 때 재배정이 필요 없어야 가벼운 수단이 된다.
+  it("심사 멈춤은 링크도 초대도 건드리지 않는다", async () => {
+    // 링크를 거두면 풀 때 새 링크를 전달해야 한다. 원문을 저장하지 않아 다시 보여 줄 수 없기 때문이다.
     const repo = repository();
     const service = new AdvisorAdminService(repo);
 
-    await service.blockAccess(admin, target);
+    await service.suspend(admin, target);
 
-    expect(repo.revokeTokens).toHaveBeenCalledWith(expect.objectContaining({ invitationId: "inv-1", target }));
+    expect(repo.setInvitationSuspended).toHaveBeenCalledWith({
+      target,
+      suspendedAt: expect.any(Date),
+      actorId: "admin-1",
+    });
+    expect(repo.revokeTokens).not.toHaveBeenCalled();
     expect(repo.revokeInvitation).not.toHaveBeenCalled();
     expect(repo.issueToken).not.toHaveBeenCalled();
   });
 
-  it("관리자만 접속을 차단할 수 있고 초대가 없으면 차단할 것도 없다", async () => {
+  it("다시 열 때도 새 링크를 내지 않는다", async () => {
+    // 위원이 가진 그 링크가 그대로 열려야 멈춤이 가벼운 수단이 된다.
     const repo = repository();
     const service = new AdvisorAdminService(repo);
-    await expect(service.blockAccess(student, target)).rejects.toBeInstanceOf(AdvisorOperationError);
 
-    repo.findActiveInvitation.mockResolvedValue(null);
-    await expect(service.blockAccess(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
-    expect(repo.revokeTokens).not.toHaveBeenCalled();
+    await service.resume(admin, target);
+
+    expect(repo.setInvitationSuspended).toHaveBeenCalledWith({ target, suspendedAt: null, actorId: "admin-1" });
+    expect(repo.issueToken).not.toHaveBeenCalled();
+  });
+
+  it("관리자만 멈추고 열 수 있으며 초대가 없으면 멈출 것도 없다", async () => {
+    const repo = repository();
+    const service = new AdvisorAdminService(repo);
+    await expect(service.suspend(student, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+    await expect(service.resume(student, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+
+    repo.setInvitationSuspended.mockResolvedValue(false);
+    await expect(service.suspend(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+  });
+
+  it("멈춰 둔 심사에는 링크를 재발급하지 않는다", async () => {
+    // 새 링크를 내줘도 멈춤 검사에서 걸린다. 먼저 다시 열어야 한다.
+    const repo = repository();
+    repo.findActiveInvitation.mockResolvedValue({ id: "inv-1", accountStatus: "ACTIVE", suspendedAt: new Date() });
+    const service = new AdvisorAdminService(repo);
+
+    await expect(service.reissueToken(admin, target)).rejects.toBeInstanceOf(AdvisorOperationError);
+    expect(repo.issueToken).not.toHaveBeenCalled();
   });
 
   it("assignTeams가 programId·grantedById를 리포지토리에 전달한다", async () => {

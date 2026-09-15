@@ -29,16 +29,21 @@ export function advisorTokenAuth(): BetterAuthPlugin {
                 select: {
                   programId: true,
                   revokedAt: true,
+                  suspendedAt: true,
                   user: { select: { id: true, role: true, accountStatus: true } },
                 },
               },
             },
           });
           // 초대를 거둔 뒤에도 링크가 살아 있으면 회수가 회수가 아니게 된다. 링크와 초대를 둘 다 본다.
+          //
+          // 멈춰 둔 심사도 여기서 막는다. 링크는 일부러 살려 두었으므로 -- 풀면 위원이 가진
+          // 그 링크가 그대로 열려야 한다 -- 토큰만 보면 통과해 버린다.
           if (
             !record ||
             !isTokenUsable(record) ||
             record.invitation.revokedAt !== null ||
+            record.invitation.suspendedAt !== null ||
             record.invitation.user.role !== "ADVISOR" ||
             record.invitation.user.accountStatus !== "ACTIVE"
           ) {
