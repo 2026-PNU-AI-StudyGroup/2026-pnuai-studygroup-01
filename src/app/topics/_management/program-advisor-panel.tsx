@@ -4,11 +4,12 @@ import { useActionState, useState } from "react";
 
 import {
   assignAdvisorTeamsAction,
-  blockAdvisorAccessAction,
+  resumeAdvisorAction,
   registerAdvisorAction,
   reinviteAdvisorAction,
   reissueAdvisorTokenAction,
   revokeAdvisorTokenAction,
+  suspendAdvisorAction,
   type AdvisorActionState,
 } from "@/app/topics/_management/advisor-actions";
 import styles from "@/app/topics/_management/program-management.module.css";
@@ -148,7 +149,8 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
     (previous: AdvisorActionState, formData: FormData) => {
       const intent = formData.get("intent");
       if (intent === "revoke") return revokeAdvisorTokenAction(previous, formData);
-      if (intent === "block") return blockAdvisorAccessAction(previous, formData);
+      if (intent === "suspend") return suspendAdvisorAction(previous, formData);
+      if (intent === "resume") return resumeAdvisorAction(previous, formData);
       return reissueAdvisorTokenAction(previous, formData);
     },
     idleState,
@@ -156,6 +158,9 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
   // 비활성 계정에는 토큰 로그인이 막혀 있어 링크를 내줘도 열리지 않는다. 서버도 거절하지만,
   // 눌러 본 뒤에야 알게 하지 말고 버튼을 먼저 막고 이유를 옆에 적는다. 회수는 그대로 둔다.
   const accountDisabled = advisor.accountStatus !== "ACTIVE";
+  // 멈춘 동안에는 링크를 살려 둔다. 다시 열면 위원이 가진 그 링크가 그대로 열려야 하므로
+  // 재발급으로 링크를 바꾸지 않는다.
+  const suspended = advisor.suspendedAt !== null;
   return (
     <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -169,8 +174,10 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
           <p className="mt-0.5 text-sm text-[var(--muted)]">{advisor.email}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${advisor.activeToken ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
-            {advisor.activeToken ? (
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${advisor.activeToken && !suspended ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
+            {suspended ? (
+              <UiText>{"심사 멈춤"}</UiText>
+            ) : advisor.activeToken ? (
               <><UiText>{"만료 "}</UiText><UiDate value={advisor.activeToken.expiresAt} mode="dateTime" /></>
             ) : (
               <UiText>{"링크 없음 · 재발급 필요"}</UiText>
@@ -179,16 +186,20 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
           <form action={action} className="flex items-center gap-2">
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="userId" value={advisor.userId} />
-            <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending || accountDisabled}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
-            {/* 링크가 살아 있을 때만 끊을 것이 있다. 회수보다 가벼운 수단이라 회수 왼쪽에 둔다.
-                초대와 담당 팀은 남으므로 되돌릴 때 재배정이 필요 없다. */}
-            {advisor.activeToken ? (
-              <button type="submit" name="intent" value="block" className="button-quiet text-sm" disabled={pending}><UiText>{"접속 차단"}</UiText></button>
-            ) : null}
+            {/* 멈춰 둔 동안에는 재발급을 막는다. 새 링크를 내줘도 멈춤 검사에서 걸리고,
+                다시 열면 기존 링크가 그대로 열리므로 바꿀 이유가 없다. */}
+            <button type="submit" name="intent" value="reissue" className="button-secondary text-sm" disabled={pending || accountDisabled || suspended}><UiText>{pending ? "처리 중" : "링크 재발급"}</UiText></button>
+            {/* 회수보다 가벼운 수단이라 회수 왼쪽에 둔다. 링크·초대·담당 팀이 모두 남는다. */}
+            <button type="submit" name="intent" value={suspended ? "resume" : "suspend"} className="button-quiet text-sm" disabled={pending}>
+              <UiText>{suspended ? "심사 다시 열기" : "심사 멈춤"}</UiText>
+            </button>
             <button type="submit" name="intent" value="revoke" className="button-quiet text-sm" disabled={pending}><UiText>{"초대 회수"}</UiText></button>
           </form>
         </div>
       </div>
+      {suspended ? (
+        <p className="text-xs text-[var(--muted)]"><UiText>{"심사를 멈춰 두었습니다. 링크와 담당 팀은 그대로라 다시 열면 기존 링크가 그대로 열립니다."}</UiText></p>
+      ) : null}
       {accountDisabled ? (
         // 사용자 관리에는 자문위원 활성화 버튼을 두지 않는다. 되살리는 길은 이 화면뿐이다.
         <p className="text-xs text-[var(--muted)]"><UiText>{"계정이 비활성 상태입니다. 초대를 회수한 뒤 다시 초대하면 계정도 함께 활성화되고 새 링크가 발급됩니다."}</UiText></p>

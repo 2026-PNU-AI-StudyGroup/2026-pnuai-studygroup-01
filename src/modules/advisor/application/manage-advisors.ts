@@ -36,7 +36,9 @@ export interface AdvisorAdminRepository {
     | { status: "NOT_FOUND" }
     | { status: "ACCOUNT_DISABLED" }
   >;
-  findActiveInvitation(target: AdvisorInvitationTarget): Promise<{ id: string; accountStatus: string } | null>;
+  findActiveInvitation(target: AdvisorInvitationTarget): Promise<{ id: string; accountStatus: string; suspendedAt: Date | null } | null>;
+  /** 심사를 잠시 멈추거나 다시 연다. 링크와 담당 팀은 건드리지 않는다. */
+  setInvitationSuspended(input: { target: AdvisorInvitationTarget; suspendedAt: Date | null; actorId: string }): Promise<boolean>;
   issueToken(input: { invitationId: string; tokenHash: string; expiresAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
   revokeTokens(input: { invitationId: string; revokedAt: Date; actorId: string; target: AdvisorInvitationTarget }): Promise<boolean>;
   /** 초대 자체를 거둔다. 이 프로그램의 팀 배정도 함께 정리한다. */
@@ -109,32 +111,44 @@ export class AdvisorAdminService {
     if (invitation.accountStatus !== "ACTIVE") {
       throw new AdvisorOperationError("비활성 상태인 계정입니다. 초대를 회수한 뒤 다시 초대하면 계정도 함께 활성화되고 새 링크가 발급됩니다.");
     }
+    // 멈춰 둔 심사에 새 링크를 내주면 그것도 열리지 않는다. 먼저 다시 열어야 한다.
+    if (invitation.suspendedAt !== null) {
+      throw new AdvisorOperationError("심사를 멈춰 둔 자문위원입니다. 다시 열면 기존 링크가 그대로 열립니다.");
+    }
     const now = new Date();
     await this.repository.revokeTokens({ invitationId: invitation.id, revokedAt: now, actorId: actor.id, target });
     return this.issueTokenFor(actor, { invitationId: invitation.id, target }, now);
   }
 
   /**
-   * 링크만 끊는다. 초대와 담당 팀은 그대로 둔다.
+   * 심사를 잠시 멈춘다. 링크도 초대도 담당 팀도 그대로 둔다.
    *
-   * 링크가 새어 나갔거나 잠시 손을 떼게 해야 할 때 쓴다. 초대를 회수하면 담당 팀 배정까지
-   * 지워져 되돌릴 수 없으므로, 그보다 가벼운 수단이 필요하다. 토큰을 거두고 세션을 끊으면
-   * 자문위원은 들어올 길이 없다 -- 구글 로그인을 쓸 수 없고 링크로만 들어오기 때문이다.
+   * 잠시 손을 떼게 해야 할 때 쓴다. 초대를 회수하면 담당 팀 배정까지 지워져 되돌릴 수 없고,
+   * 토큰을 거두면 풀 때 새 링크를 전달해야 한다 -- 링크 원문은 저장하지 않아 운영자가 예전
+   * 링크를 다시 보여 줄 수 없기 때문이다. 멈춤은 그 둘을 남긴 채 접속만 막는다.
    *
-   * 계정 상태는 건드리지 않는다. 이 위원은 여전히 이 프로그램 심사단이고, 계정 상태를
+   * 계정 상태도 건드리지 않는다. 이 위원은 여전히 이 프로그램 심사단이고, 계정 상태를
    * 초대와 따로 움직이면 "참여 중인데 계정은 꺼짐" 같은 어긋난 상태가 생긴다.
-   * 되돌리는 것은 같은 자리의 링크 재발급이다.
    */
-  async blockAccess(actor: CurrentActor, target: AdvisorInvitationTarget) {
+  async suspend(actor: CurrentActor, target: AdvisorInvitationTarget) {
     this.assertAdmin(actor);
-    const invitation = await this.repository.findActiveInvitation(target);
-    if (!invitation) throw new AdvisorOperationError("이 프로그램에 초대된 자문위원이 아닙니다.");
-    await this.repository.revokeTokens({
-      invitationId: invitation.id,
-      revokedAt: new Date(),
-      actorId: actor.id,
+    const suspended = await this.repository.setInvitationSuspended({
       target,
+      suspendedAt: new Date(),
+      actorId: actor.id,
     });
+    if (!suspended) throw new AdvisorOperationError("이 프로그램에 초대된 자문위원이 아닙니다.");
+  }
+
+  /** 멈춰 둔 심사를 다시 연다. 위원이 가진 그 링크가 그대로 열린다. */
+  async resume(actor: CurrentActor, target: AdvisorInvitationTarget) {
+    this.assertAdmin(actor);
+    const resumed = await this.repository.setInvitationSuspended({
+      target,
+      suspendedAt: null,
+      actorId: actor.id,
+    });
+    if (!resumed) throw new AdvisorOperationError("이 프로그램에 초대된 자문위원이 아닙니다.");
   }
 
   async revoke(actor: CurrentActor, target: AdvisorInvitationTarget) {
