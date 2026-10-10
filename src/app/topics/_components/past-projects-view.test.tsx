@@ -223,8 +223,10 @@ describe("PastProjectsView", () => {
     const article = screen.getByRole("link", { name: "실내 길찾기" }).closest("article");
     expect(article?.querySelector("[data-project-cover]")).toBeInTheDocument();
     expect(article?.querySelector("[data-project-cover-fallback]")).toBeInTheDocument();
-    expect(article?.querySelector("[data-project-cover] [data-pnu-mark]")).toBeInTheDocument();
-    expect(article?.querySelector("[data-project-cover-fallback]")).toHaveTextContent("CSE 캡스톤디자인 2025");
+    expect(article?.querySelector("[data-project-cover] svg")).toBeInTheDocument();
+    expect(article?.querySelector("[data-project-cover] [data-pnu-mark]")).not.toBeInTheDocument();
+    // 표지는 분과, 주제명, 팀명 순으로 채운다. 분과가 있으면 프로그램명 대신 분과를 쓴다.
+    expect(article?.querySelector("[data-project-cover-fallback]")).toHaveTextContent("융합실내 길찾기모두의 길");
     expect(article?.querySelector("img")).not.toBeInTheDocument();
   });
 
