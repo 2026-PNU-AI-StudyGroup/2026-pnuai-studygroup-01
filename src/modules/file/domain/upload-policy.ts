@@ -33,6 +33,32 @@ const CONTENT_TYPE_ALIASES = new Map([
   ["image/jpg", "image/jpeg"],
 ]);
 
+const RASTER_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export type RasterImageType = (typeof RASTER_IMAGE_TYPES)[number];
+
+/**
+ * 파일 앞부분 바이트로 실제 이미지 형식을 읽는다. 아니면 null.
+ *
+ * 형식 칸은 브라우저가 보낸 값이라 믿을 수 없다. png 로 속인 SVG 를 sharp 가 받으면
+ * 내용을 보고 SVG 로 읽어 librsvg 까지 간다.
+ */
+export function detectRasterImageType(bytes: Uint8Array): RasterImageType | null {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if ([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((value, index) => bytes[index] === value)) return "image/png";
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) return "image/webp";
+  return null;
+}
+
+/** 이미지라고 올린 파일이면 내용도 그 형식이어야 한다. 이미지가 아니면 보지 않는다. */
+export function matchesDeclaredImageType(contentType: string, prefix: Uint8Array): boolean {
+  if (!(RASTER_IMAGE_TYPES as readonly string[]).includes(contentType)) return true;
+  return detectRasterImageType(prefix) === contentType;
+}
+
 export function normalizeUploadContentType(contentType: string): string {
   const trimmed = contentType.trim().toLowerCase();
   return CONTENT_TYPE_ALIASES.get(trimmed) ?? trimmed;

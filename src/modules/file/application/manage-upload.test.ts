@@ -35,6 +35,7 @@ function dependencies() {
   const storage: ObjectStorage = {
     write: vi.fn(async () => undefined),
     inspect: vi.fn(),
+    readPrefix: vi.fn(async () => new Uint8Array()),
     remove: vi.fn(async () => undefined),
     promote: vi.fn(async () => undefined),
   };
@@ -184,6 +185,29 @@ describe("파일 업로드", () => {
     ).rejects.toBeInstanceOf(UploadNotFoundError);
     expect(deps.storage.remove).not.toHaveBeenCalled();
     expect(deps.repository.deletePending).not.toHaveBeenCalled();
+  });
+
+  it("png 라고 올렸는데 내용이 png 가 아니면 완료를 거부한다", async () => {
+    // 형식 칸은 브라우저가 보낸 값이다. png 로 속인 SVG 가 남으면 랜딩 벽의 sharp 가 SVG 로 읽는다.
+    const deps = dependencies();
+    const meta = { contentType: "image/png", size: 100, sha256: "a".repeat(64) };
+    vi.mocked(deps.repository.findPendingForOwner).mockResolvedValue({
+      id: "upload-1",
+      objectKey: "teams/team-1/files/upload-1",
+      uploadObjectKey: "staging/team-1/upload-1",
+      ...meta,
+      expiresAt: new Date("2026-01-02T00:00:00Z"),
+      cleanupAfter: new Date("2026-01-03T00:00:00Z"),
+    });
+    vi.mocked(deps.storage.inspect).mockResolvedValue(meta);
+    vi.mocked(deps.storage.readPrefix).mockResolvedValue(new TextEncoder().encode("<svg xmlns="));
+    const service = new UploadService(deps.repository, deps.storage);
+
+    await expect(
+      service.complete({ id: "student-1", role: "STUDENT" }, "upload-1", new Date("2026-01-01T00:00:00Z")),
+    ).rejects.toBeInstanceOf(UploadNotFoundError);
+    expect(deps.storage.readPrefix).toHaveBeenCalledWith("staging/team-1/upload-1", 16);
+    expect(deps.repository.finalizeWithScopeLock).not.toHaveBeenCalled();
   });
 
   it("만료 예약과 24시간 동안 첨부되지 않은 완료 파일을 정리한다", async () => {

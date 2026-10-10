@@ -5,6 +5,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
 import type { PrismaClient } from "@/generated/prisma/client";
+import { detectRasterImageType } from "@/modules/file/domain/upload-policy";
 import {
   SHOWCASE_WALL_HEIGHT,
   SHOWCASE_WALL_TILE_HEIGHT,
@@ -98,14 +99,18 @@ async function listWallThumbnails(client: PrismaClient): Promise<WallThumbnail[]
 }
 
 async function composeWall(client: PrismaClient): Promise<Buffer | null> {
-  const thumbnails = await listWallThumbnails(client);
-  const tiles = showcaseWallTiles(thumbnails.map(({ path: thumbnailPath }) => thumbnailPath));
+  // sharp 는 내용을 보고 형식을 정한다. 업로드 검사가 생기기 전에 올라간 파일도 있으니
+  // 여기서 한 번 더 거른다. 걸러진 표지는 칸에서 빠질 뿐 벽 전체를 멈추지 않는다.
+  const thumbnails = (await Promise.all((await listWallThumbnails(client))
+    .map(async ({ path: thumbnailPath, read }) => ({ thumbnailPath, bytes: await read() }))))
+    .filter(({ bytes }) => detectRasterImageType(bytes) !== null);
+  const tiles = showcaseWallTiles(thumbnails.map(({ thumbnailPath }) => thumbnailPath));
   if (tiles.length === 0) return null;
 
   // 표지가 칸보다 적으면 같은 것이 여러 칸에 들어간다. 표지별로 한 번만 읽고 한 번만 줄인다.
-  const scaled = new Map(await Promise.all(thumbnails.map(async ({ path: thumbnailPath, read }) => [
+  const scaled = new Map(await Promise.all(thumbnails.map(async ({ thumbnailPath, bytes }) => [
     thumbnailPath,
-    await sharp(await read())
+    await sharp(bytes)
       .resize(SHOWCASE_WALL_TILE_WIDTH, SHOWCASE_WALL_TILE_HEIGHT, { fit: "cover", position: "centre" })
       .webp({ quality: 80 })
       .toBuffer(),
