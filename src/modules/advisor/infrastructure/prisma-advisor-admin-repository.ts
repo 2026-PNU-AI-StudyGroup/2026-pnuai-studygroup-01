@@ -143,7 +143,9 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
    * 토큰을 거두면 풀 때 반드시 새 링크를 전달해야 한다. 이 칸만 채우고 비우면 위원이 가진
    * 그 링크가 그대로 열린다. 초대와 담당 팀 배정도 처음부터 끝까지 남는다.
    *
-   * 멈출 때는 세션을 끊는다. 이미 들어와 있는 화면까지 닫아야 멈춘 것이다.
+   * 멈출 때는 세션을 끊는다. 이미 들어와 있는 화면까지 닫아야 멈춘 것이다. 다만 다른
+   * 프로그램 심사가 살아 있으면 세션은 둔다. 회수와 같은 이유다. 멈춘 프로그램은 세션이
+   * 남아도 usableAssignmentWhere 와 hasActiveAdvisorInvitation 에서 걸린다.
    */
   async setInvitationSuspended(input: {
     target: AdvisorInvitationTarget;
@@ -162,7 +164,12 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
         data: { suspendedAt: input.suspendedAt },
       });
       if (input.suspendedAt) {
-        await transaction.session.deleteMany({ where: { userId, user: { role: "ADVISOR" } } });
+        const otherLive = await transaction.programAdvisorInvitation.count({
+          where: { userId, revokedAt: null, suspendedAt: null, NOT: { id: invitation.id } },
+        });
+        if (otherLive === 0) {
+          await transaction.session.deleteMany({ where: { userId, user: { role: "ADVISOR" } } });
+        }
       }
       await transaction.auditLog.create({ data: {
         actorId: input.actorId,
@@ -238,7 +245,9 @@ export class PrismaAdvisorAdminRepository implements AdvisorAdminRepository {
       if (!invitation) return false;
       await transaction.programAdvisorInvitation.update({
         where: { id: invitation.id },
-        data: { revokedAt: input.revokedAt },
+        // 멈춤도 함께 푼다. 남기면 다시 초대해도 토큰 로그인이 멈춤 검사에서 걸려, 새 링크가
+        // 열리지 않는데 운영자 화면에는 이유가 안 보인다.
+        data: { revokedAt: input.revokedAt, suspendedAt: null },
       });
       await transaction.advisorAccessToken.updateMany({
         where: { invitationId: invitation.id, revokedAt: null },

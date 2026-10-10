@@ -168,6 +168,45 @@ describe("PrismaAdvisorAdminRepository.revokeInvitation", () => {
     expect(advisorAccessToken.updateMany).not.toHaveBeenCalled();
     expect(user.updateMany).not.toHaveBeenCalled();
   });
+
+  it("멈춰 둔 심사도 회수하면 멈춤을 풀어, 다시 초대한 링크가 열린다", async () => {
+    // 남기면 새 링크가 토큰 로그인의 멈춤 검사에서 걸리는데 운영자 화면에는 이유가 없다.
+    const { client, programAdvisorInvitation } = clientForRevoke({ remainingInvitations: 0 });
+    const repository = new PrismaAdvisorAdminRepository(client);
+
+    await repository.revokeInvitation(revokeInput);
+
+    expect(programAdvisorInvitation.update).toHaveBeenCalledWith({
+      where: { id: "inv-1" },
+      data: { revokedAt: revokeInput.revokedAt, suspendedAt: null },
+    });
+  });
+});
+
+describe("PrismaAdvisorAdminRepository.setInvitationSuspended", () => {
+  const suspendInput = { target: revokeInput.target, suspendedAt: new Date("2026-10-10T00:00:00Z"), actorId: "admin-1" };
+
+  it("다른 심사가 없으면 세션까지 끊는다", async () => {
+    const { client, session } = clientForRevoke({ remainingInvitations: 0 });
+    await expect(new PrismaAdvisorAdminRepository(client).setInvitationSuspended(suspendInput)).resolves.toBe(true);
+    expect(session.deleteMany).toHaveBeenCalled();
+  });
+
+  it("다른 프로그램 심사가 살아 있으면 세션은 둔다", async () => {
+    // 회수와 같다. 멈춘 프로그램은 세션이 남아도 접근 조건에서 걸린다.
+    const { client, session, programAdvisorInvitation } = clientForRevoke({ remainingInvitations: 1 });
+    await new PrismaAdvisorAdminRepository(client).setInvitationSuspended(suspendInput);
+    expect(programAdvisorInvitation.count).toHaveBeenCalledWith({
+      where: { userId: "adv-1", revokedAt: null, suspendedAt: null, NOT: { id: "inv-1" } },
+    });
+    expect(session.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("다시 열 때는 세션을 건드리지 않는다", async () => {
+    const { client, session } = clientForRevoke({ remainingInvitations: 0 });
+    await new PrismaAdvisorAdminRepository(client).setInvitationSuspended({ ...suspendInput, suspendedAt: null });
+    expect(session.deleteMany).not.toHaveBeenCalled();
+  });
 });
 
 // 재초대는 회수가 내려 둔 계정을 되살려야 한다. 그러지 않으면 새 링크가 열리지 않는다.
