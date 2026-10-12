@@ -3,10 +3,16 @@
 # 사용: ops/backup.sh            (기본값: ~/aipms-backups, 30일 보관)
 #       BACKUP_DIR=/srv/backup KEEP_DAYS=14 ops/backup.sh
 #
-# BACKUP_PASSPHRASE_FILE 에 암호가 들어 있으면 AES256 으로 암호화해 .gpg 로 남긴다.
+# BACKUP_PASSPHRASE_FILE 의 암호로 AES256 암호화해 .gpg 로 남긴다. 암호 파일이 없으면 멈춘다.
+# 개인정보 처리방침 제8조가 백업 암호화를 약속하므로 평문 백업은 만들지 않는다.
+# (로컬 시험처럼 정말 평문이 필요하면 ALLOW_PLAINTEXT_BACKUP=1 을 준다.)
 # 복구: gpg --decrypt --passphrase-file <암호파일> --batch pg-….dump.gpg > pg.dump
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# 백업 파일과 폴더를 이 계정만 읽게 한다. 같은 서버의 다른 계정도 접근하지 못해야
+# 처리방침의 "접근이 통제된 위치" 가 된다.
+umask 077
 
 BACKUP_DIR="${BACKUP_DIR:-$HOME/aipms-backups}"
 KEEP_DAYS="${KEEP_DAYS:-30}"
@@ -43,9 +49,15 @@ if [ -s "$BACKUP_PASSPHRASE_FILE" ]; then
   fi
   suffix=".gpg"
   seal() { gpg --batch --quiet --yes --symmetric --cipher-algo AES256 --passphrase-file "$BACKUP_PASSPHRASE_FILE"; }
-else
-  echo "⚠ $BACKUP_PASSPHRASE_FILE 이 없어 백업을 평문으로 남긴다. 개인정보가 그대로 들어 있다." >&2
+elif [ "${ALLOW_PLAINTEXT_BACKUP:-}" = "1" ]; then
+  echo "⚠ ALLOW_PLAINTEXT_BACKUP=1 이라 백업을 평문으로 남긴다. 개인정보가 그대로 들어 있다." >&2
   seal() { cat; }
+else
+  # 예전에는 경고만 찍고 평문으로 남겼다. 타이머 로그를 아무도 안 보면 처리방침과 다른
+  # 평문 백업이 매일 쌓인다. 멈추면 systemd 에 실패로 남아 드러난다.
+  echo "✗ $BACKUP_PASSPHRASE_FILE 이 없어 암호화할 수 없다. 평문 백업은 만들지 않는다." >&2
+  echo "  암호 파일을 만들려면 docs/PRODUCTION.md 의 백업 절을 본다." >&2
+  exit 1
 fi
 
 # 1) PostgreSQL — custom 포맷은 자체 압축되며 pg_restore 로 부분 복구가 된다.
