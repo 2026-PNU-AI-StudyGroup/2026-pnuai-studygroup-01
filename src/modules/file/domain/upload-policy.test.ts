@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ARTIFACT_MAX_BYTES, InvalidUploadError, validateUpload } from "@/modules/file/domain/upload-policy";
+import { ARTIFACT_MAX_BYTES, InvalidUploadError, matchesDeclaredImageType, validateUpload } from "@/modules/file/domain/upload-policy";
 
 const valid = {
   purpose: "REPORT" as const,
@@ -87,5 +87,20 @@ describe("파일 업로드 정책", () => {
       size: 1024,
       sha256: "e".repeat(64),
     })).toThrow(InvalidUploadError);
+  });
+});
+
+describe("matchesDeclaredImageType", () => {
+  const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const svg = new TextEncoder().encode("<svg xmlns=\"http://www.w3.org/2000/svg\">");
+
+  it("이미지라고 올린 파일은 내용도 그 형식이어야 한다", () => {
+    expect(matchesDeclaredImageType("image/png", png)).toBe(true);
+    expect(matchesDeclaredImageType("image/png", svg)).toBe(false);
+    expect(matchesDeclaredImageType("image/jpeg", png)).toBe(false);
+  });
+
+  it("이미지가 아닌 파일은 내용을 보지 않는다", () => {
+    expect(matchesDeclaredImageType("application/pdf", svg)).toBe(true);
   });
 });

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import {
   type FilePurpose,
+  matchesDeclaredImageType,
   type UploadConsumer,
   validateUpload,
 } from "@/modules/file/domain/upload-policy";
@@ -62,6 +63,7 @@ export interface ObjectStorage {
     size?: number;
     sha256?: string;
   }>;
+  readPrefix(objectKey: string, length: number): Promise<Uint8Array>;
   remove(objectKey: string): Promise<void>;
   promote(uploadObjectKey: string, objectKey: string): Promise<void>;
 }
@@ -159,7 +161,8 @@ export class UploadService {
     if (
       actual.contentType !== intent.contentType ||
       actual.size !== intent.size ||
-      actual.sha256 !== intent.sha256
+      actual.sha256 !== intent.sha256 ||
+      !matchesDeclaredImageType(intent.contentType, await this.storage.readPrefix(intent.uploadObjectKey, 16))
     ) {
       throw new UploadNotFoundError();
     }
