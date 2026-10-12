@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { usableAssignmentWhere } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-workspace-authorization";
 
@@ -9,7 +10,7 @@ import { teamActorWhere } from "@/modules/team/infrastructure/prisma-team-worksp
 export function teamFileAccessWhere(actor: CurrentActor): Prisma.ProjectTeamWhereInput {
   if (actor.role === "ADMIN") return {};
   if (actor.role === "ADVISOR") {
-    return { project: { advisors: { some: { userId: actor.id } } } };
+    return { project: { advisors: { some: usableAssignmentWhere(actor.id) } } };
   }
   return teamActorWhere(actor);
 }

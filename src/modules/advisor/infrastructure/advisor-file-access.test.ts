@@ -7,9 +7,12 @@ describe("teamFileAccessWhere", () => {
     expect(teamFileAccessWhere({ id: "u1", role: "ADMIN" })).toEqual({});
   });
 
-  it("ADVISOR는 배정된 topic의 팀만 접근한다", () => {
+  it("ADVISOR는 배정된 topic의 팀만, 심사를 멈춘 프로그램은 빼고 접근한다", () => {
     expect(teamFileAccessWhere({ id: "adv-1", role: "ADVISOR" })).toEqual({
-      project: { advisors: { some: { userId: "adv-1" } } },
+      project: { advisors: { some: {
+        userId: "adv-1",
+        topic: { program: { advisorInvitations: { none: { userId: "adv-1", suspendedAt: { not: null } } } } },
+      } } },
     });
   });
 

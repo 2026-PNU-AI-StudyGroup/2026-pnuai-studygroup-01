@@ -35,6 +35,9 @@ export function AdvisorProgramHistory({ name, history }: { name: string; history
           <li key={row.programId} className="flex flex-wrap items-center gap-2 text-xs">
             {row.revokedAt !== null ? (
               <StatusBadge>{"회수됨"}</StatusBadge>
+            ) : row.suspendedAt !== null ? (
+              // 링크를 살려 둔 채 막은 상태다. 다시 열면 그 링크가 그대로 열린다.
+              <StatusBadge tone="warning">{"참여 중 · 멈춤"}</StatusBadge>
             ) : row.hasActiveLink ? (
               <StatusBadge tone="success">{"참여 중"}</StatusBadge>
             ) : (

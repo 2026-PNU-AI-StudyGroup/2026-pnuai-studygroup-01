@@ -939,6 +939,8 @@ model ProgramAdvisorInvitation {
   invitedById String
   createdAt   DateTime             @default(now())
   revokedAt   DateTime?
+  /// 잠시 멈춘 심사. 링크는 살려 두고 접속만 막아, 풀면 위원이 가진 그 링크가 그대로 열린다.
+  suspendedAt DateTime?
   program     ProjectProgram       @relation(fields: [programId], references: [id], onDelete: Cascade)
   user        User                 @relation("ProgramAdvisorInvitee", fields: [userId], references: [id], onDelete: Cascade)
   invitedBy   User                 @relation("ProgramAdvisorInviter", fields: [invitedById], references: [id], onDelete: Restrict)

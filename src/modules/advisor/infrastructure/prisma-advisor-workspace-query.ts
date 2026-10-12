@@ -1,10 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { usableAssignmentWhere } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import { findTeamRubrics } from "@/modules/advisor/infrastructure/prisma-advisor-review-repository";
 
 // 자문위원 담당 목록.
 export async function listAssignedProjects(client: PrismaClient, advisorId: string) {
   const rows = await client.projectAdvisor.findMany({
-    where: { userId: advisorId },
+    where: usableAssignmentWhere(advisorId),
     orderBy: { createdAt: "asc" },
     select: {
       topic: {
@@ -22,8 +23,8 @@ export async function listAssignedProjects(client: PrismaClient, advisorId: stri
 
 // 상세: 할당 검증 포함(비할당이면 null → notFound).
 export async function findAssignedProject(client: PrismaClient, advisorId: string, topicId: string) {
-  const assignment = await client.projectAdvisor.findUnique({
-    where: { topicId_userId: { topicId, userId: advisorId } },
+  const assignment = await client.projectAdvisor.findFirst({
+    where: { topicId, ...usableAssignmentWhere(advisorId) },
     select: {
       topic: {
         select: {

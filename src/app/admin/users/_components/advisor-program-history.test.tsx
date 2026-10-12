@@ -9,6 +9,7 @@ const serving = {
   invitedAt: new Date("2026-09-01T00:00:00Z"),
   revokedAt: null,
   hasActiveLink: true,
+  suspendedAt: null,
 };
 
 const withdrawn = {
@@ -17,6 +18,7 @@ const withdrawn = {
   invitedAt: new Date("2026-08-01T00:00:00Z"),
   revokedAt: new Date("2026-09-05T00:00:00Z"),
   hasActiveLink: false,
+  suspendedAt: null,
 };
 
 describe("AdvisorProgramHistory", () => {
@@ -59,6 +61,13 @@ describe("AdvisorProgramHistory", () => {
 
     expect(screen.getByText("참여 중 · 링크 없음")).toBeInTheDocument();
     expect(screen.queryByText("회수됨")).not.toBeInTheDocument();
+  });
+
+  it("멈춰 둔 심사는 링크가 있어도 멈춤으로 적는다", () => {
+    // 링크를 살려 둔 채 막은 상태다. "링크 없음" 과 구분해야 다시 열면 그 링크가 열린다는 것이 읽힌다.
+    render(<AdvisorProgramHistory name="정민서" history={[{ ...serving, suspendedAt: new Date("2026-09-10T00:00:00Z") }]} />);
+
+    expect(screen.getByText("참여 중 · 멈춤")).toBeInTheDocument();
   });
 
   it("초대 이력이 없으면 펼칠 것을 만들지 않는다", () => {

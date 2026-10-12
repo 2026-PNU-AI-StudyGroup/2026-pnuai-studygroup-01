@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AdvisorAssignmentContext, AdvisorReviewRepository } from "@/modules/advisor/application/advisor-review";
+import { usableAssignmentWhere } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 
 // 프로젝트 팀에 이미 배정된 채점표(ProjectTeamRubricEvaluation)를 그대로 사용한다.
 // 공통 채점표와 해당 분과 채점표는 팀 생성 시 함께 배정되므로 여기서 다시 계산하지 않는다.
@@ -25,8 +26,8 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
   constructor(private readonly client: PrismaClient) {}
 
   async findAssignment(advisorId: string, topicId: string): Promise<AdvisorAssignmentContext | null> {
-    const assignment = await this.client.projectAdvisor.findUnique({
-      where: { topicId_userId: { topicId, userId: advisorId } },
+    const assignment = await this.client.projectAdvisor.findFirst({
+      where: { topicId, ...usableAssignmentWhere(advisorId) },
       select: { topic: { select: { program: { select: { endsAt: true } }, projectTeam: { select: { id: true } } } } },
     });
     const topic = assignment?.topic;

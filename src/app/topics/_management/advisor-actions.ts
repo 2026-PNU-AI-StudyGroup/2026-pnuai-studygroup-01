@@ -88,18 +88,33 @@ export async function reinviteAdvisorAction(_state: AdvisorActionState, formData
   }
 }
 
-export async function blockAdvisorAccessAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
+export async function suspendAdvisorAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const parsed = targetSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "접속을 차단할 자문위원을 확인해 주세요." };
+  if (!parsed.success) return { status: "error", message: "심사를 멈출 자문위원을 확인해 주세요." };
   try {
-    await service().blockAccess(actor, parsed.data);
+    await service().suspend(actor, parsed.data);
     revalidatePath(programManagementHref(parsed.data.programId, "advisors"));
     return {
       status: "success",
-      message: "접속을 차단했습니다. 심사단과 담당 팀은 그대로입니다. 다시 열려면 링크를 재발급해 주세요.",
+      message: "심사를 멈췄습니다. 링크와 담당 팀은 그대로라 다시 열면 기존 링크가 그대로 열립니다.",
     };
+  } catch (error) {
+    if (error instanceof AdvisorOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+}
+
+export async function resumeAdvisorAction(_state: AdvisorActionState, formData: FormData): Promise<AdvisorActionState> {
+  const actor = await getCurrentActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = targetSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "다시 열 자문위원을 확인해 주세요." };
+  try {
+    await service().resume(actor, parsed.data);
+    revalidatePath(programManagementHref(parsed.data.programId, "advisors"));
+    return { status: "success", message: "심사를 다시 열었습니다. 위원이 가진 기존 링크가 그대로 열립니다." };
   } catch (error) {
     if (error instanceof AdvisorOperationError) return { status: "error", message: error.message };
     throw error;

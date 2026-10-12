@@ -8,16 +8,27 @@ export async function hasActiveAdvisorInvitation(
   input: { userId: string; programId: string },
 ): Promise<boolean> {
   const invitation = await client.programAdvisorInvitation.findFirst({
-    where: { userId: input.userId, programId: input.programId, revokedAt: null },
+    where: { userId: input.userId, programId: input.programId, revokedAt: null, suspendedAt: null },
     select: { id: true },
   });
   return invitation !== null;
 }
 
+/**
+ * 담당 배정 가운데 지금 쓸 수 있는 것.
+ *
+ * 심사를 멈춰도 배정은 남긴다. 풀었을 때 다시 배정할 일이 없어야 해서다. 그래서 배정만
+ * 보면 멈춘 프로그램의 채점 화면과 파일이 그대로 열린다. 한 프로그램만 불린 위원은 링크와
+ * 세션이 함께 막혀 문제가 없지만, 다른 프로그램 링크로 들어온 위원은 여기서만 걸러진다.
+ */
+export function usableAssignmentWhere(userId: string): Prisma.ProjectAdvisorWhereInput {
+  return { userId, topic: { program: { advisorInvitations: { none: { userId, suspendedAt: { not: null } } } } } };
+}
+
 /** 이 위원이 불려 있는 프로그램들. 화면에서 그 밖의 프로그램은 아예 걸러 낸다. */
 export async function listInvitedProgramIds(client: Client, userId: string): Promise<string[]> {
   const invitations = await client.programAdvisorInvitation.findMany({
-    where: { userId, revokedAt: null },
+    where: { userId, revokedAt: null, suspendedAt: null },
     orderBy: { createdAt: "desc" },
     select: { programId: true },
   });
@@ -31,6 +42,8 @@ export type AdvisorProgramHistoryRow = {
   revokedAt: Date | null;
   /** 살아 있는 초대 링크가 있는지. 없으면 심사단이어도 지금은 들어올 수 없다. */
   hasActiveLink: boolean;
+  /** 멈춰 둔 시각. 링크는 있어도 접속은 막혀 있다. */
+  suspendedAt: Date | null;
 };
 
 /**
@@ -56,6 +69,7 @@ export async function listAdvisorProgramHistory(
       programId: true,
       createdAt: true,
       revokedAt: true,
+      suspendedAt: true,
       program: { select: { name: true } },
       tokens: {
         where: { revokedAt: null, expiresAt: { gt: now } },
@@ -72,6 +86,7 @@ export async function listAdvisorProgramHistory(
       invitedAt: invitation.createdAt,
       revokedAt: invitation.revokedAt,
       hasActiveLink: invitation.tokens.length > 0,
+      suspendedAt: invitation.suspendedAt,
     });
     grouped.set(invitation.userId, rows);
   }

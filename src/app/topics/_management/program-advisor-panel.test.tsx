@@ -12,6 +12,7 @@ const serving: ProgramAdvisorRow = {
   email: "kim@example.com",
   accountStatus: "ACTIVE",
   revokedAt: null,
+  suspendedAt: null,
   assignedTopicIds: [],
   activeToken: { expiresAt: new Date("2026-12-01T00:00:00Z") },
 };
@@ -22,6 +23,7 @@ const withdrawn: ProgramAdvisorRow = {
   email: "park@example.com",
   accountStatus: "DISABLED",
   revokedAt: new Date("2026-09-05T00:00:00Z"),
+  suspendedAt: null,
   assignedTopicIds: [],
   activeToken: null,
 };
@@ -66,6 +68,16 @@ describe("ProgramAdvisorPanel", () => {
     const assignSection = sectionFor("팀 할당");
     expect(within(assignSection).getByText("김위원")).toBeInTheDocument();
     expect(within(assignSection).queryByText("박위원")).not.toBeInTheDocument();
+  });
+
+  it("멈춰 둔 위원은 멈춤으로 표시하고 다시 열기를 내민다", () => {
+    // 링크는 살아 있으므로 재발급으로 바꾸지 않는다. 다시 열면 그 링크가 그대로 열린다.
+    render(panel([{ ...serving, suspendedAt: new Date("2026-09-10T00:00:00Z") }]));
+
+    const listSection = sectionFor("자문위원 목록");
+    expect(within(listSection).getByText("심사 멈춤")).toBeInTheDocument();
+    expect(within(listSection).getByRole("button", { name: "심사 다시 열기" })).toBeEnabled();
+    expect(within(listSection).getByRole("button", { name: "링크 재발급" })).toBeDisabled();
   });
 
   it("회수한 위원이 없으면 그 자리를 만들지 않는다", () => {
