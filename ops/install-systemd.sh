@@ -120,7 +120,11 @@ write_unit aipms-backup.timer \
   '[Install]' \
   'WantedBy=timers.target'
 
-install -d -o "$RUN_USER" -g "$RUN_USER" "$BACKUP_DIR"
+install -d -m 700 -o "$RUN_USER" -g "$RUN_USER" "$BACKUP_DIR"
+if [ ! -s "$BACKUP_PASSPHRASE_FILE" ]; then
+  echo "  ⚠ 백업 암호 파일이 없다: $BACKUP_PASSPHRASE_FILE"
+  echo "    없으면 백업이 실패한다. docs/PRODUCTION.md 의 '백업 암호' 절대로 만든다."
+fi
 
 # 메일 발송이 꺼져 있으면 /api/cron/emails 가 503 을 돌려줘 타이머가 1분마다 실패로 남는다.
 # 유닛은 써 두되 활성화는 EMAIL_DELIVERY_ENABLED=true 일 때만 한다.

@@ -83,6 +83,26 @@ docker compose -f compose.production.yaml --env-file .env.production \
 sudo BACKUP_DIR=/srv/aipms-backups KEEP_DAYS=14 ops/install-systemd.sh
 ```
 
+### 백업 암호
+
+백업에는 전체 개인정보가 들어 있어 AES256 으로 암호화한다(처리방침 제8조). 암호 파일이
+없으면 `ops/backup.sh` 는 평문으로 남기지 않고 실패한다. 처음 한 번 만든다. 암호는 화면에
+찍지 않는다.
+
+```bash
+mkdir -p ~/.config/aipms && chmod 700 ~/.config/aipms
+( umask 077 && openssl rand -base64 48 > ~/.config/aipms/backup-passphrase )
+```
+
+이 암호를 **서버 밖에도 따로 보관한다.** 서버 디스크가 망가져 백업으로 복구해야 할 때 암호가
+서버에만 있으면 백업을 열 수 없다.
+
+암호화가 실제로 됐는지는 최근 파일을 `file` 로 본다. `GPG symmetrically encrypted data (AES256 cipher)` 가 나와야 한다.
+
+```bash
+file "$(ls -t ~/aipms-backups/* | head -1)"
+```
+
 상태 확인:
 
 ```bash
