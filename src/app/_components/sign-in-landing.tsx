@@ -164,7 +164,7 @@ export function SignInLanding({
             </h1>
             <p className={`${styles.lede} mt-7 text-base sm:text-lg`}>
               <UiText>
-                {"부산대학교 AI융합교육원의 프로젝트 관리 시스템입니다. 프로그램 참여부터 보고서 승인, 결과물 아카이브까지 한 화면에서 이어집니다."}
+                {"프로그램 참여부터 보고서 승인, 결과물 아카이브까지 한 화면에서 이어집니다."}
               </UiText>
             </p>
 
@@ -183,10 +183,7 @@ export function SignInLanding({
                 <strong>@pusan.ac.kr</strong> <UiText>{"계정만 사용할 수 있습니다."}</UiText>
               </p>
               <p className={`${styles.signInNote} mt-2 text-sm`}>
-                <UiText>{"교직원 계정은 Google Workspace를 쓰지 않으면 로그인 중에 부산대학교 웹메일 화면으로 넘어갑니다. 그 화면에서 그대로 로그인하면 됩니다."}</UiText>
-              </p>
-              <p className={`${styles.signInNote} mt-2 text-sm`}>
-                <UiText>{"외부 자문위원은 관리자가 보낸 초대 링크로 접속합니다."}</UiText>
+                <UiText>{"교직원은 웹메일 로그인 화면이 나오면 그대로 로그인하면 됩니다."}</UiText>
               </p>
               {showDevelopmentLogin ? (
                 <div className="mt-7 max-w-[26rem] rounded-[var(--radius-panel)] bg-[var(--surface)] p-5 text-[var(--ink)]">
