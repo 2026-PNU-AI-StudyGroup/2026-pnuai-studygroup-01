@@ -19,7 +19,9 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { DocumentIcon, UndoIcon } from "@/shared/ui/workspace-icons";
 
-const cardGridClassName = "grid gap-5 md:grid-cols-2 2xl:grid-cols-3";
+// 화면 폭이 아니라 목록 폭으로 열 수를 정한다. 사이드바를 접고 펴면 같은 화면에서도 목록 폭이
+// 달라진다. 목록이 48rem 이상이면 세 장(1280px 화면에서 장당 약 250px)까지 놓는다.
+const cardGridClassName = "grid gap-5 @xl:grid-cols-2 @3xl:grid-cols-3";
 
 export type ProjectResultsEmptyState = {
   unfilteredTitle: string;
@@ -65,7 +67,7 @@ export function ProjectResultsLayout<T>({
 }) {
   const voteSelection = useProjectVoteSelection(ballot);
   return (
-    <section id="project-results" aria-labelledby="project-results-title" className="scroll-mt-32 pt-5">
+    <section id="project-results" aria-labelledby="project-results-title" className="@container scroll-mt-32 pt-5">
       <div className="mb-4 flex min-h-9 flex-wrap items-center gap-3">
         {headerAction}
         <ProjectVoteStatusPill selection={voteSelection} />
