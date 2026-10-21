@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { PrivacyNoticeStep } from "@/app/onboarding/_components/privacy-notice-step";
@@ -11,8 +12,33 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
+// 탭 제목과 본문 제목이 같은 판단을 쓴다. 동의만 받는 화면인데 탭에 "가입 정보 입력" 이
+// 뜨던 것을 고친다. cache 로 묶어 한 요청 안에서 사용자를 한 번만 읽는다.
+const loadOnboarding = cache(async () => {
+  const actor = await getCurrentActor();
+  if (!actor) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: actor.id },
+    select: {
+      name: true,
+      privacyConsentAt: true,
+      onboardingRequired: true,
+      onboardingCompletedAt: true,
+    },
+  });
+  if (!user) return null;
+  // 자문위원은 초대 링크를 받아 심사하러 온 외부 인원이다. "로그인" 이라는 말도, 학생용
+  // 가입 안내도 이들이 겪는 절차와 다르다.
+  return { actor, user, needsPrivacyNotice: !user.privacyConsentAt, isAdvisor: actor.role === "ADVISOR" };
+});
+
+function onboardingTitle(state: { needsPrivacyNotice: boolean; isAdvisor: boolean } | null) {
+  if (!state?.needsPrivacyNotice) return "가입 정보 입력";
+  return state.isAdvisor ? "심사 전 동의" : "이용 전 동의";
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("가입 정보 입력");
+  return getLocalizedMetadata(onboardingTitle(await loadOnboarding()));
 }
 
 // 자문위원의 첫 화면은 담당 프로젝트 배정 여부에 따라 갈린다. 초대만 받은 위원에게
@@ -23,44 +49,23 @@ async function landingPathFor(role: string, userId: string) {
 }
 
 export default async function OnboardingPage() {
-  const actor = await getCurrentActor();
-  if (!actor) redirect("/");
-
-  const user = await prisma.user.findUnique({
-    where: { id: actor.id },
-    select: {
-      name: true,
-      privacyConsentAt: true,
-      onboardingRequired: true,
-      onboardingCompletedAt: true,
-    },
-  });
-  if (!user) redirect("/");
+  const state = await loadOnboarding();
+  if (!state) redirect("/");
+  const { actor, user, needsPrivacyNotice, isAdvisor } = state;
 
   // 처리방침 동의가 먼저고, 학생만 그 뒤 가입 정보를 채운다. 둘 다 끝났으면 각자 첫 화면으로 보낸다.
-  const needsPrivacyNotice = !user.privacyConsentAt;
   const needsStudentProfile =
     actor.role === "STUDENT" && user.onboardingRequired && !user.onboardingCompletedAt;
   if (!needsPrivacyNotice && !needsStudentProfile) {
     redirect(await landingPathFor(actor.role, actor.id));
   }
 
-  // 자문위원은 초대 링크를 받아 심사하러 온 외부 인원이다. "로그인" 이라는 말도, 학생용
-  // 가입 안내도 이들이 겪는 절차와 다르다.
-  const isAdvisor = actor.role === "ADVISOR";
-
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/onboarding">
       <main className="content-shell page-enter pb-24 lg:pb-12">
         <div className="mx-auto max-w-4xl">
           <ExplorerHero
-            title={
-              <UiText>
-                {needsPrivacyNotice
-                  ? isAdvisor ? "심사 전 동의" : "이용 전 동의"
-                  : "가입 정보 입력"}
-              </UiText>
-            }
+            title={<UiText>{onboardingTitle(state)}</UiText>}
             description={
               <UiText>
                 {needsPrivacyNotice
