@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { acceptPrivacyConsentAction } from "@/app/onboarding/_actions/accept-privacy-consent-action";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiInput } from "@/modules/translation/ui/localized-elements";
 import { PRIVACY_POLICY_EFFECTIVE_DATE } from "@/shared/content/privacy-policy";
+import { ChoiceCard } from "@/shared/ui/form-system";
 
 export type PrivacyNoticeVariant = "member" | "advisor";
 
@@ -62,21 +62,17 @@ export function PrivacyNoticeStep({ variant = "member" }: { variant?: PrivacyNot
       </p>
       {/* 서비스 이용에 반드시 필요한 항목이라 선택 동의는 두지 않는다. 대신 필수임을 분명히 밝힌다. */}
       <form action={acceptPrivacyConsentAction} className="mt-6 grid gap-4">
-        <label className="flex items-start gap-2.5 text-[0.9375rem] leading-6">
-          <UiInput
-            name="privacyConsent"
-            type="checkbox"
-            value="on"
-            required
-            checked={agreed}
-            onChange={(event) => setAgreed(event.target.checked)}
-            className="mt-0.5"
-          />
-          <span>
-            <strong className="font-bold text-[var(--ink)]"><UiText>{"[필수]"}</UiText></strong>{" "}
-            <UiText>{"위 내용과 개인정보 처리방침을 확인했으며, 개인정보 수집·이용에 동의합니다."}</UiText>
-          </span>
-        </label>
+        {/* 맨 체크박스는 어두운 화면에서 거의 안 보였다. 칸 전체를 눌러 체크하고, 체크하면 테두리가 바뀐다. */}
+        <ChoiceCard
+          type="checkbox"
+          name="privacyConsent"
+          value="on"
+          required
+          checked={agreed}
+          onChange={(event) => setAgreed(event.target.checked)}
+          label="[필수] 개인정보 수집 및 이용에 동의합니다"
+          description="위 내용과 개인정보 처리방침을 확인했습니다"
+        />
         <div>
           {/* 체크 전에는 버튼을 막는다. required 만 두면 눌러 본 뒤에야 막힌 걸 안다. */}
           <button type="submit" className="button-primary" disabled={!agreed}>

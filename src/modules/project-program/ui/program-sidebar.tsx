@@ -334,8 +334,8 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
         </div>
         <UiNav aria-label="프로그램 선택 모바일">
           <div className="space-y-4">
-            {programList("mobile")}
             {voteBox}
+            {programList("mobile")}
           </div>
         </UiNav>
       </ResponsiveSectionNavigation>
@@ -348,10 +348,11 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
           ) : null}
         </div>
         <UiNav aria-label="프로그램 선택" className="flex min-h-0 flex-1 flex-col">
+          {/* 투표는 기간이 짧아 놓치면 끝이다. 프로그램 목록이 길어도 묻히지 않게 맨 위에 둔다. */}
+          {voteBox ? <div className="mb-4 shrink-0">{voteBox}</div> : null}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {programList("desktop")}
           </div>
-          {voteBox ? <div className="mt-4 shrink-0">{voteBox}</div> : null}
         </UiNav>
       </div>
     </div>
