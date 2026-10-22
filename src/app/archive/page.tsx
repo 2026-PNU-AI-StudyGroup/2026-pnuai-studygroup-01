@@ -54,7 +54,7 @@ export default async function PublicArchivePage({ searchParams }: {
                   key={category.name}
                   href={`/archive?category=${encodeURIComponent(category.name)}`}
                   aria-current={selected ? "page" : undefined}
-                  className={selected ? "button-primary" : "button-secondary"}
+                  className={`${selected ? "button-primary" : "button-secondary"} gap-2`}
                 >
                   <UiText>{category.name}</UiText> <span className="tabular-nums">{category.count}</span>
                 </Link>
