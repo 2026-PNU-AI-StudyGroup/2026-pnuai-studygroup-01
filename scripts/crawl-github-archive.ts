@@ -7,6 +7,7 @@ import {
   type ArchiveTeam,
   type SnapshotProgram,
   type SnapshotRepo,
+  compareSnapshotRepos,
   isTemplateRepo,
   mergeSnapshot,
   pickTitle,
@@ -105,9 +106,7 @@ async function crawl(source: ProgramSource): Promise<SnapshotProgram> {
     });
   }
   // PR diff 가 매번 같은 차례로 나오게 팀 번호, 없으면 레포 이름 순으로 둔다.
-  repos.sort((left, right) =>
-    (left.teamNumber ?? Number.MAX_SAFE_INTEGER) - (right.teamNumber ?? Number.MAX_SAFE_INTEGER)
-    || left.fullName.localeCompare(right.fullName));
+  repos.sort(compareSnapshotRepos);
   const missing = teams ? Object.keys(teams).filter((name) => !repos.some(({ fullName }) => fullName.endsWith(`/${name}`))) : [];
   if (missing.length) console.warn(`  설정에는 있는데 못 찾은 레포: ${missing.join(", ")}`);
   return { program, repos };

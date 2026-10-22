@@ -103,6 +103,16 @@ describe("README 제목과 요약", () => {
   it("이메일과 학번을 지운다", () => {
     expect(scrubPersonalInfo("홍길동 202412345 gildong@pusan.ac.kr 이 만들었다")).toBe("홍길동 이 만들었다");
   });
+
+  it("팀 소개 섹션은 제목으로도 요약으로도 쓰지 않는다", () => {
+    expect(readmeTitleAndSummary("# 프로젝트 소개\n# 팀 소개\n- 홍길동 (팀장)\n- 김철수")).toEqual({ title: null, summary: "" });
+    expect(readmeTitleAndSummary("# gridi\n## 팀원\n| 홍길동 | 팀장 |").summary).toBe("");
+    expect(readmeTitleAndSummary("# Contributors\n홍길동")).toEqual({ title: null, summary: "" });
+  });
+
+  it("전화번호를 지운다", () => {
+    expect(scrubPersonalInfo("문의 010-1234-5678 로 연락")).toBe("문의 로 연락");
+  });
 });
 
 describe("제목 고르기", () => {
@@ -147,6 +157,14 @@ describe("스냅샷 합치기", () => {
       ["org/team-01", "손으로 고친 제목"],
       ["org/team-02", "제휴"],
     ]);
+  });
+
+  it("합친 뒤에도 팀 번호 차례를 지킨다", () => {
+    const repo = (teamNumber: number) => ({ fullName: `org/team-${teamNumber}`, url: "u", teamNumber, teamName: "t", title: "t", summary: "" });
+    const existing: SnapshotProgram[] = [{ program, repos: [repo(1), repo(18)] }];
+    const crawled: SnapshotProgram[] = [{ program, repos: [repo(4)] }];
+    const [merged] = mergeSnapshot(existing, crawled);
+    expect(merged!.repos.map(({ teamNumber }) => teamNumber)).toEqual([1, 4, 18]);
   });
 
   it("설정에서 빠진 프로그램도 스냅샷에서는 지우지 않는다", () => {

@@ -35,12 +35,15 @@ const TEMPLATE_REPO = /template|^\.github$|\.github\.io$|-team-00$/i;
 const GENERIC_HEADING = /^\d+[.)]|프로젝트\s*소개|목차|개요|readme|introduction|table of contents/i;
 const GOAL_HEADING = /^#{1,6}\s.*목표/;
 const ANY_HEADING = /^#{1,6}\s/;
+// 팀원 명단이 들어 있는 소제목. 제목으로도 요약으로도 쓰지 않는다.
+const TEAM_HEADING = /팀\s*(?:소개|원|구성)|구성원|멤버|contributors?|members?|\bteam\b/i;
 const TOP_HEADING = /^#{1,2}\s+(.+)$/;
 // "개발목표", "1 ) 개발 목표", "개발 배경 및 필요성", "주요 내용" 처럼 소제목 노릇만 하는 줄. 요약에 넣지 않는다.
 const LABEL_LINE = /^(?:\d+\s*[.)]\s*)?(?:개발\s*(?:목표|배경)(?:\s*및\s*(?:주요\s*내용|필요성))?|주요\s*내용)$/;
-const CLASSROOM_DESCRIPTION =/created by GitHub Classroom/i;
+const CLASSROOM_DESCRIPTION = /created by GitHub Classroom/i;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 const STUDENT_ID = /\b20\d{7}\b/g;
+const PHONE = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/g;
 const SUMMARY_LENGTH = 200;
 
 /** 템플릿과 조직 소개 레포는 결과물이 아니다. */
@@ -64,23 +67,29 @@ function plainText(line: string): string {
     .trim();
 }
 
-/** 요약에 이메일과 학번이 섞여 나가지 않게 지운다. 실제 졸업과제 README 에 둘 다 있었다. */
+/** 요약에 이메일, 학번, 전화번호가 섞여 나가지 않게 지운다. 실제 졸업과제 README 에 이메일과 학번이 있었다. */
 export function scrubPersonalInfo(text: string): string {
-  return text.replace(EMAIL, " ").replace(STUDENT_ID, " ").replace(/\s+/g, " ").trim();
+  return text.replace(EMAIL, " ").replace(STUDENT_ID, " ").replace(PHONE, " ").replace(/\s+/g, " ").trim();
 }
 
 function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-/** start 줄부터 처음으로 글자가 남는 문단 하나를 모은다. 소제목과 "개발목표" 같은 낱말 줄은 소제목처럼 취급한다. */
+/**
+ * start 줄부터 처음으로 글자가 남는 문단 하나를 모은다. 소제목과 "개발목표" 같은 낱말 줄은 소제목처럼 취급한다.
+ * 팀 소개 소제목 아래는 start 앞에서 이어졌더라도 통째로 건너뛴다.
+ */
 function firstParagraph(lines: readonly string[], start: number): string {
   const collected: string[] = [];
-  for (const line of lines.slice(start)) {
+  let inTeamSection = false;
+  for (const [index, line] of lines.entries()) {
     if (ANY_HEADING.test(line)) {
-      if (collected.length) break;
+      if (index >= start && collected.length) break;
+      inTeamSection = TEAM_HEADING.test(plainText(line));
       continue;
     }
+    if (index < start || inTeamSection) continue;
     const text = plainText(line);
     if (!text) {
       if (collected.length) break;
@@ -109,7 +118,7 @@ export function readmeTitleAndSummary(markdown: string): { title: string | null;
   for (const [index, line] of lines.entries()) {
     const heading = line.match(TOP_HEADING);
     const text = heading ? plainText(heading[1]!) : "";
-    if (text && !GENERIC_HEADING.test(text)) {
+    if (text && !GENERIC_HEADING.test(text) && !TEAM_HEADING.test(text)) {
       title = text;
       titleIndex = index;
       break;
@@ -118,7 +127,9 @@ export function readmeTitleAndSummary(markdown: string): { title: string | null;
   const goalIndex = lines.findIndex((line) => GOAL_HEADING.test(line));
   const firstHeadingIndex = lines.findIndex((line) => ANY_HEADING.test(line));
   const start = titleIndex >= 0 ? titleIndex + 1 : goalIndex >= 0 ? goalIndex + 1 : firstHeadingIndex + 1;
-  return { title, summary: truncate(scrubPersonalInfo(firstParagraph(lines, start)), SUMMARY_LENGTH) };
+  // 한 줄짜리 거대한 문단이 이메일 정규식을 느리게 만들지 못하게 지우기 전에 먼저 자른다.
+  const paragraph = firstParagraph(lines, start).slice(0, 1000);
+  return { title, summary: truncate(scrubPersonalInfo(paragraph), SUMMARY_LENGTH) };
 }
 
 /** README 제목, 레포 설명, 레포 이름 순. Classroom 이 넣은 기본 설명은 의미가 없어 건너뛴다. */
@@ -127,6 +138,12 @@ export function pickTitle(input: { readmeTitle: string | null; description: stri
   const description = input.description?.trim();
   if (description && !CLASSROOM_DESCRIPTION.test(description)) return description;
   return input.repoName;
+}
+
+/** 팀 번호 순, 번호 없는 레포는 뒤로 보내고 같으면 레포 이름 순. 크롤링 결과와 합친 스냅샷이 같은 차례를 쓴다. */
+export function compareSnapshotRepos(left: SnapshotRepo, right: SnapshotRepo): number {
+  return (left.teamNumber ?? Number.MAX_SAFE_INTEGER) - (right.teamNumber ?? Number.MAX_SAFE_INTEGER)
+    || left.fullName.localeCompare(right.fullName);
 }
 
 /** 같은 저장소를 같은 문자열로 맞춘다. 중복 판단에 쓴다. */
@@ -153,7 +170,8 @@ export function mergeSnapshot(existing: readonly SnapshotProgram[], crawled: rea
   const merged = crawled.map(({ program, repos }) => {
     const kept = previous.get(program.key)?.repos ?? [];
     const known = new Set(kept.map(({ fullName }) => fullName.toLowerCase()));
-    return { program, repos: [...kept, ...repos.filter(({ fullName }) => !known.has(fullName.toLowerCase()))] };
+    const added = repos.filter(({ fullName }) => !known.has(fullName.toLowerCase()));
+    return { program, repos: [...kept, ...added].sort(compareSnapshotRepos) };
   });
   const crawledKeys = new Set(crawled.map(({ program }) => program.key));
   return [...merged, ...existing.filter(({ program }) => !crawledKeys.has(program.key))];
