@@ -123,7 +123,7 @@ export function buildAdminProgramSidebarItems(
  * 다른 프로그램이 열리는" 어긋남이 생긴다. 두 곳이 이 함수를 함께 쓴다.
  */
 export function orderProgramSidebarCategories(
-  items: readonly ProgramSidebarItem[],
+  items: readonly Pick<ProgramSidebarItem, "category">[],
   categoryOrder: readonly string[] = [],
 ): string[] {
   const rank = new Map(categoryOrder.map((category, index) => [category, index]));
