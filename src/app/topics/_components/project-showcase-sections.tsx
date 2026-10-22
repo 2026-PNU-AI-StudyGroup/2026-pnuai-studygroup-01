@@ -1,5 +1,7 @@
 import type { ProjectMediaItem } from "@/app/topics/_components/project-media-carousel";
+import { resolveShowcaseRepository } from "@/modules/team/domain/showcase-repository";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { GithubIcon } from "@/shared/ui/github-icon";
 import { DocumentIcon, ExternalLinkIcon } from "@/shared/ui/workspace-icons";
 
 // 진행 중 프로젝트와 지난 프로젝트가 같은 결과물을 같은 모양으로 보여주도록 한곳에 둔다.
@@ -28,41 +30,8 @@ export function toYoutubeEmbedUrl(url: string | null | undefined): string | null
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 }
 
-export function parseGithubRepo(url: string | null | undefined): { owner: string; repo: string } | null {
-  if (!url) return null;
-  const match = url.match(/github\.com\/([^/\s]+)\/([^/?#\s]+)/i);
-  return match ? { owner: match[1]!, repo: match[2]!.replace(/\.git$/i, "") } : null;
-}
-
-export function GithubIcon({ className }: { className?: string }) {
-  return <svg aria-hidden="true" viewBox="0 0 16 16" className={className}><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.02-1.49-2.22.48-2.69-.94-2.69-.94-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.87.88 2.33.67.07-.52.28-.88.51-1.08-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.27.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>;
-}
-
-/**
- * 화면에 내보일 저장소를 고른다.
- *
- * 주제에 적어 둔 주소가 먼저고, 없으면 소스 코드 결과물에서 찾는다. 심사가 리드미를
- * 읽고 이뤄지므로 이 값을 화면 맨 위에서도 쓰고 아래 결과물 목록에서도 쓴다. 두 곳이
- * 서로 다른 저장소를 가리키지 않도록 고르는 자리를 하나로 둔다.
- */
-export function resolveShowcaseRepository(input: { artifacts: ShowcaseArtifact[]; sourceUrl?: string | null }): {
-  url: string;
-  owner: string;
-  repo: string;
-  artifactId?: string;
-} | null {
-  const sourceArtifact = input.artifacts.find(
-    (artifact) => artifact.type === "SOURCE_CODE" && /github\.com/i.test(artifact.externalUrl ?? ""),
-  );
-  const url = /github\.com/i.test(input.sourceUrl ?? "") ? input.sourceUrl : sourceArtifact?.externalUrl;
-  const parsed = parseGithubRepo(url);
-  if (!parsed || !url) return null;
-  return {
-    url,
-    ...parsed,
-    artifactId: url === sourceArtifact?.externalUrl ? sourceArtifact?.id : undefined,
-  };
-}
+// 공개 아카이브도 같은 규칙을 써야 해서 고르는 자리를 모듈로 옮겼다. 상세 화면은 여기서 계속 가져간다.
+export { resolveShowcaseRepository };
 
 /**
  * 저장소로 보내는 첫 손잡이.
