@@ -57,6 +57,26 @@ describe("README 제목과 요약", () => {
     expect(readmeTitleAndSummary(markdown)).toEqual({ title: null, summary: "흩어진 부산대 공지를 한곳에 모아 보여 줍니다." });
   });
 
+  it("목표 소제목 아래 굵은 글씨 낱말은 건너뛰고 본문을 쓴다", () => {
+    const markdown = [
+      "### 1.2. 개발목표 및 주요내용",
+      "**개발목표**",
+      "",
+      "흩어진 공지를 한곳에 모읍니다.",
+    ].join("\n");
+    expect(readmeTitleAndSummary(markdown).summary).toBe("흩어진 공지를 한곳에 모읍니다.");
+  });
+
+  it("빈 줄 없이 이어진 목록 낱말도 건너뛴다", () => {
+    const markdown = [
+      "#### 1.2. 개발목표 및 주요 내용",
+      "- 개발목표",
+      "  > 대학생 시간표에 맞춰 알바를 추천합니다.",
+      "- 주요 내용",
+    ].join("\n");
+    expect(readmeTitleAndSummary(markdown).summary).toBe("대학생 시간표에 맞춰 알바를 추천합니다.");
+  });
+
   it("졸업과제 형식: 번호 붙은 범용 제목은 건너뛰고 첫 소제목 아래 문단, 팀 소개는 안 들어간다", () => {
     const markdown = [
       "[![Review Assignment Due Date](https://classroom.github.com/assets/deadline.svg)](https://classroom.github.com/a/x)",

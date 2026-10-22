@@ -36,7 +36,9 @@ const GENERIC_HEADING = /^\d+[.)]|프로젝트\s*소개|목차|개요|readme|int
 const GOAL_HEADING = /^#{1,6}\s.*목표/;
 const ANY_HEADING = /^#{1,6}\s/;
 const TOP_HEADING = /^#{1,2}\s+(.+)$/;
-const CLASSROOM_DESCRIPTION = /created by GitHub Classroom/i;
+// "개발목표", "1 ) 개발 목표", "개발 배경 및 필요성", "주요 내용" 처럼 소제목 노릇만 하는 줄. 요약에 넣지 않는다.
+const LABEL_LINE = /^(?:\d+\s*[.)]\s*)?(?:개발\s*(?:목표|배경)(?:\s*및\s*(?:주요\s*내용|필요성))?|주요\s*내용)$/;
+const CLASSROOM_DESCRIPTION =/created by GitHub Classroom/i;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 const STUDENT_ID = /\b20\d{7}\b/g;
 const SUMMARY_LENGTH = 200;
@@ -71,7 +73,7 @@ function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-/** start 줄부터 처음으로 글자가 남는 문단 하나를 모은다. 소제목을 만나면 끝낸다. */
+/** start 줄부터 처음으로 글자가 남는 문단 하나를 모은다. 소제목과 "개발목표" 같은 낱말 줄은 소제목처럼 취급한다. */
 function firstParagraph(lines: readonly string[], start: number): string {
   const collected: string[] = [];
   for (const line of lines.slice(start)) {
@@ -81,6 +83,10 @@ function firstParagraph(lines: readonly string[], start: number): string {
     }
     const text = plainText(line);
     if (!text) {
+      if (collected.length) break;
+      continue;
+    }
+    if (LABEL_LINE.test(text)) {
       if (collected.length) break;
       continue;
     }
