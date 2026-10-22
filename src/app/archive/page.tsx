@@ -42,7 +42,7 @@ export default async function PublicArchivePage({ searchParams }: {
           <UiText>{"부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. GitHub 버튼을 누르면 저장소로 이동합니다."}</UiText>
         </p>
         <p className="mt-2 text-sm tabular-nums text-[var(--muted)]">
-          <UiText>{`사업 ${view.categories.length}개, 프로젝트 ${view.totalProjects}개`}</UiText>
+          <UiText>{`사업 ${view.categories.length}개, 프로젝트 ${view.totalProjects}건`}</UiText>
         </p>
 
         {view.categories.length ? (

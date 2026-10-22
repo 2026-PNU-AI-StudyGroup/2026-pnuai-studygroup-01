@@ -2489,7 +2489,7 @@
   "사업별 결과물": "Results by program",
   "사업": "Programs",
   "부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. GitHub 버튼을 누르면 저장소로 이동합니다.": "Results from programs run by the PNU AI Convergence Education Center. Use the GitHub button to open each repository.",
-  "사업 {0}개, 프로젝트 {1}개": "{0} programs, {1} projects",
+  "사업 {0}개, 프로젝트 {1}건": "{0} programs, {1} projects",
   "아직 공개된 결과물이 없습니다.": "No public results yet.",
   "{0}년": "{0}",
   "GitHub에서 보기": "View on GitHub",
