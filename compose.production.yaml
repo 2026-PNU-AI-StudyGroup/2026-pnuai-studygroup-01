@@ -76,6 +76,20 @@ services:
     command: ["./node_modules/.bin/tsx", "scripts/import-opus-archive.ts", "--confirm"]
     restart: "no"
 
+  # GitHub 에서 긁은 지난 사업 결과물(scripts/github-archive/snapshot.json)을 넣는다.
+  # 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm import-github
+  import-github:
+    build:
+      context: .
+      target: demo-seeder
+    env_file: ${ENV_FILE:-.env.production}
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["./node_modules/.bin/tsx", "scripts/import-github-archive.ts", "--confirm"]
+    restart: "no"
+
   app:
     build:
       context: .
