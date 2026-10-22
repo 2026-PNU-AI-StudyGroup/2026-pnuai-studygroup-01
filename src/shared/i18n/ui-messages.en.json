@@ -2485,5 +2485,15 @@
   "번호": "No.",
   "{0} 팀 번호": "{0} team number",
   "번호는 지난 프로젝트 목록의 차례가 됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다.": "The number sets the order in the past project list. The award name is printed on the badge as written; join two awards for one team with a middle dot. Leave out the popularity award; it comes from the vote count.",
-  "번호·수상 저장": "Save numbers and awards"
+  "번호·수상 저장": "Save numbers and awards",
+  "사업별 결과물": "Results by program",
+  "사업": "Programs",
+  "부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. GitHub 버튼을 누르면 저장소로 이동합니다.": "Results from programs run by the PNU AI Convergence Education Center. Use the GitHub button to open each repository.",
+  "사업 {0}개, 프로젝트 {1}개": "{0} programs, {1} projects",
+  "아직 공개된 결과물이 없습니다.": "No public results yet.",
+  "{0}년": "{0}",
+  "GitHub에서 보기": "View on GitHub",
+  "졸업과제": "Capstone projects",
+  "정보컴퓨터공학부 졸업과제는 연도별 GitHub 조직에서 볼 수 있습니다.": "Capstone projects from the School of Computer Science and Engineering are on GitHub, organized by year.",
+  "{0}년 졸업과제": "{0} capstone projects"
 }
