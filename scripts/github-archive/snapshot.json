@@ -1,0 +1,142 @@
+[
+  {
+    "program": {
+      "key": "pnu-convergence-sw-hackathon-5",
+      "org": "The-5th-PNU-Convergence-SW-Hackathon",
+      "programName": "제5회 PNU 창의융합SW해커톤",
+      "category": "PNU 창의융합 해커톤",
+      "startsAt": "2024-05-01",
+      "endsAt": "2024-09-07"
+    },
+    "repos": [
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-01",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-01",
+        "teamNumber": 1,
+        "teamName": "삼위일체",
+        "title": "부산대 모든 공지사항",
+        "summary": "이 프로젝트의 개발 목표는 부산대학교 학생들이 흩어져 있는 다양한 공지사항을 효율적으로 확인할 수 있도록 돕고, 신뢰할 수 있는 팀 빌딩을 지원하는 웹사이트를 구축하는 것입니다. 이를 통해 학생들이 중요한 정보를 놓치지 않고, 더 나은 협업 기회를 가질 수 있도록 돕는 것을 최종 목표로 삼고 있습니다."
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-02",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-02",
+        "teamNumber": 2,
+        "teamName": "스근하게",
+        "title": "부산대 제휴 업체를 한눈에",
+        "summary": "개발목표"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-03",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-03",
+        "teamNumber": 3,
+        "teamName": "따뜻한청년들2",
+        "title": "시니어 돌봄 매칭 플랫폼",
+        "summary": "개발목표 ‘노인 돌봄 공백 해소’ 해당 서비스의 개발 목표는 바로 노인 돌봄 공백 해소입니다. 노인 돌봄 매칭 플랫폼을 앱 형식으로 개발하여, 간단한 돌봄 서비스를 제공하는 것입니다. 이는 우리 부산대학교에서 진행하고 있는 여러 멘토링 시스템과 유사합니다. 전문 간병 인력이나 사회 복지 인력을 대체 및 보조 가능한 대학생 위주의 청년층을 플랫폼에 유입시켜…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-05",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-05",
+        "teamNumber": 5,
+        "teamName": "인사이드아웃",
+        "title": "우울감 관리 플랫폼",
+        "summary": "청년 우울감 해소를 최종 목표로 한 지속적인 감정 관리 어플"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-06",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-06",
+        "teamNumber": 6,
+        "teamName": "아이엠그루트",
+        "title": "글쓰기를 통한 식물 테라피",
+        "summary": "개발 목표 안정된 정서 형성과 긍정적인 일상을 유도하는 일일 문답을 통해 세상을 밝고 긍정적이게 바라보게 함으로써 사용자의 심리적 안정 및 긍정적 정서 형성에 도움 앱을 통해 자신의 마음과 생각을 담아 키운 특별하고 소중한 반려 식물을 실제로 제공받아 교감하여 기르면서 외로움 및 스트레스 완화 많은 사람들이 자연스럽게 식물을 키우는 문화를 만들어 지역사회…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-07",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-07",
+        "teamNumber": 7,
+        "teamName": "피누",
+        "title": "가족 소통 어플리케이션",
+        "summary": "1인가구의 증가: 통계청, 「인구총조사」 각 연도 2가구 중 1가구: 동아일보(2020) 아이보다 노인이 많은 한국…2가구 중 1가구 부모랑 안살아 (https://www.donga.com/news/Economy/article/all/20200828/102691897/1) 1.5배 응답 결과 : 인크루트 자체 조사 결과 (2023.05.06) 성인남녀 :…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-08",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-08",
+        "teamNumber": 8,
+        "teamName": "포포",
+        "title": "지역 유기동물 문제 해결 플랫폼",
+        "summary": "PNU 창의융합 SW해커톤 진행 기간(5월 9월)"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-09",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-09",
+        "teamNumber": 9,
+        "teamName": "구은생선",
+        "title": "대학생 맞춤 알바 구직 서비스",
+        "summary": "개발목표 대학생의 학업 시간표를 입력받아 이를 분석하여 구하고자 하는 알바의 시간대와 겹치지 않도록 확인하고, 알바 시급 또는 장소를 포함하여 알바를 추천해주는 알고리즘을 개발하고자 한다. 또한, 양산에서 알바를 구하고자 하는 사업자들의 협력을 통해 여러 알바 정보를 제공한다. 우리가 개발할 앱을 통해 부산대학교 양산캠퍼스에 재학중인 학생들이 알바를 더욱…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-10",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-10",
+        "teamNumber": 10,
+        "teamName": "히론",
+        "title": "유학생들을 위한 여행, 생활 도움 서비스",
+        "summary": "1. 프로젝트 명 히론(Heron): 철새였지만 한국의 자연환경에 적응하여 정착한 왜가리(Heron)에서 이름을 착안. 부산대학교를 선택한 외국인 유학생들이 왜가리처럼 부산에 잘 적응하고, 오랜 기간 생활을 이어나가길 바라는 의미를 담았음 2. 개발목표 및 주요 내용 개발목표 부산대학교 외국인 유학생의 문화적응도 및 유학 만족도 향상 서비스의 핵심 사용자…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-11",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-11",
+        "teamNumber": 11,
+        "teamName": "피벗",
+        "title": "부산대 맞춤형 중고거래 서비스",
+        "summary": "개발 목표"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-12",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-12",
+        "teamNumber": 12,
+        "teamName": "이륙허가",
+        "title": "부산대 공유 택시 서비스",
+        "summary": "1 ) 개발목표"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-13",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-13",
+        "teamNumber": 13,
+        "teamName": "OwO",
+        "title": "HPE를 통한 환자 관리 모듈 개발",
+        "summary": "개발목표 '사생활을 보호하되, 지속적인 관찰을 통한 독거노인들의 고독사 방지' 고독사 및 고령화로 인한 사회적인 문제가 발생하고 있다. 이를 해결하기 위하여 HPE(Human Pose Estimation) 기술이 도입된 카메라를 이용해 특정 장소에서 환자, 독거노인 등 관리가 필요한 대상을 단순 센서를 기반으로 예측하는 기존 방식과 달리 실시간으로 확인하…"
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-14",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-14",
+        "teamNumber": 14,
+        "teamName": "자스민",
+        "title": "사기피해 예방 안심 결제 시스템",
+        "summary": "최근 몇 년간 장기 결제를 통해 고객을 유치하는 업계에서 '먹튀' 사건이 빈번하게 발생(필라테스/헬스장 및 체육 시설, 인터넷 강의를 제공하는 사이트 등) 경영상 어려움을 이유로 돌연 폐업을 결정한 뒤, 수강료를 돌려주지 않는 이러한 사건들은 피해자들에게 금전적 손실을 안기고 관련업종의 신뢰도를 저하함."
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-16",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-16",
+        "teamNumber": 16,
+        "teamName": "Mizi",
+        "title": "청년을 위한 미래 자산 관리 서비스",
+        "summary": "본 연구의 목표는 IT 기술과 마이데이터를 결합하여 청년층의 경제적 불안감을 해소하고, 생애 주기에 맞춘 장기적인 금융 설계를 지원하는 맞춤형 자산관리 서비스를 개발하는 것이다."
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-17",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-17",
+        "teamNumber": 17,
+        "teamName": "구름",
+        "title": "부산대 프로젝트 배포 플랫폼",
+        "summary": "서버리스 프로젝트 배포 시스템을 개발하여 학생들이 비용이나 기술적 장벽 없이 자유롭게 자신의 프로젝트를 배포하고 공유할 수 있도록 하는 것을 지원하고자 한다."
+      },
+      {
+        "fullName": "The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-18",
+        "url": "https://github.com/The-5th-PNU-Convergence-SW-Hackathon/PNUSW-2024-team-18",
+        "teamNumber": 18,
+        "teamName": "어웨이크",
+        "title": "졸음운전 예방을 위한 LLM 대화모델",
+        "summary": "전체 운전자의 90% 이상이 졸음운전을 경험했다고 한다. 또한 실제 자차를 운용하고 있는 어웨이크 팀장의 경우에도 졸음운전으로 인해 위험했던 순간이 한두번이 아니었지만, 막상 우리주변에는 졸음운전을 해결할 수 있는 솔루션이 존재하지 않는다는 점에서 졸음운전에 관심을 가지게 되었다. 실제 통계결과를 보았을 경우에도 졸음운전으로 인한 고속도로 사망률은 전체의…"
+      }
+    ]
+  }
+]
