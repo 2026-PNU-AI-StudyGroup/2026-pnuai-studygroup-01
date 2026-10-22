@@ -5,12 +5,15 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Prisma, PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
 import { normalizeRepoUrl, stableArchiveId, type SnapshotProgram } from "./github-archive";
 
 // scripts/github-archive/snapshot.json 을 지난 프로그램과 프로젝트로 넣는다.
-// OPUS 이관(import-opus-archive.ts)과 같은 방식이다. 모든 ID 를 저장소 이름에서 유도해
-// 몇 번을 돌려도 같은 행이 갱신될 뿐 늘지 않는다. 팀원 계정과 사진은 넣지 않는다.
+// OPUS 이관(import-opus-archive.ts)과 같이 모든 ID 를 저장소 이름에서 유도해 몇 번을 돌려도 행이 늘지 않는다.
+// 만들기만 하고 이미 있는 프로그램과 프로젝트는 건드리지 않는다. 운영자가 화면에서 바꾸거나 지운 것이
+// 다시 돌려도 살아남는다. 그래서 다시 돌리면 스냅샷에 새로 생긴 레포만 들어간다.
+// 프로젝트를 내리려면 화면에서 숨기거나 지우고 snapshot.json 에서도 뺀다. 빼지 않으면
+// 다음에 돌릴 때 지운 프로젝트가 다시 생긴다. 팀원 계정과 사진은 넣지 않는다.
 // 운영 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm import-github
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -25,14 +28,6 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 
 const ARCHIVE_USER_ID = "github-archive-importer";
 const ARCHIVE_USER_EMAIL = "github-archive@aipms.pusan.ac.kr";
-
-// artifact 는 BEFORE INSERT 트리거가 붙어 있다. prisma upsert 는 INSERT ... ON CONFLICT 라
-// 이미 있는 행에도 INSERT 트리거가 먼저 돌아 실패한다. OPUS 이관과 같이 갈라 보낸다.
-async function ensureArtifact(id: string, data: Prisma.ArtifactUncheckedCreateInput): Promise<void> {
-  const existing = await prisma.artifact.findUnique({ where: { id }, select: { id: true } });
-  if (existing) await prisma.artifact.update({ where: { id }, data });
-  else await prisma.artifact.create({ data: { ...data, id } });
-}
 
 /** 이 이관분이 아닌 프로젝트가 이미 쓰는 저장소 주소. OPUS 이관분과 PMS 운영분이 여기 걸린다. */
 async function repositoriesTakenElsewhere(ownTopicIds: string[]): Promise<Set<string>> {
@@ -103,53 +98,64 @@ async function main() {
         endProcessedAt: endsAt,
         icon: "TROPHY" as const,
       };
-      // 대분류는 처음 만들 때만 넣는다. 운영자가 화면에서 합친 대분류를 되돌리지 않는다.
+      // 모든 값을 처음 만들 때만 넣는다. 운영자가 화면에서 바꾼 이름, 기간, 공개 여부, 대분류는
+      // 다시 돌려도 되돌아가지 않는다.
       await prisma.projectProgram.upsert({
         where: { id: programId },
         create: { id: programId, category: source.category, ...program },
-        update: program,
+        update: {},
       });
     }
 
-    let imported = 0;
+    let created = 0;
+    let existing = 0;
+    let duplicate = 0;
     for (const repo of repos) {
-      if (taken.has(normalizeRepoUrl(repo.url))) {
-        console.log(`  이미 다른 프로젝트에 있어 건너뜀: ${repo.fullName}`);
+      const topicId = stableArchiveId("topic", repo.fullName);
+      if (await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } })) {
+        console.log(`  이미 넣은 프로젝트라 건너뜀: ${repo.fullName}`);
+        existing += 1;
         continue;
       }
-      const topicId = stableArchiveId("topic", repo.fullName);
+      if (taken.has(normalizeRepoUrl(repo.url))) {
+        console.log(`  이미 다른 프로젝트에 있어 건너뜀: ${repo.fullName}`);
+        duplicate += 1;
+        continue;
+      }
       const projectTeamId = stableArchiveId("team", repo.fullName);
-      const topic = {
-        programId,
-        authorId: ARCHIVE_USER_ID,
-        // 지난 프로젝트 조회가 담당자 이름을 그대로 읽는다. 비워 두면 조회가 실패한다.
-        managerId: ARCHIVE_USER_ID,
-        title: repo.title,
-        description: repo.summary || repo.title,
-        capacity: 1,
-        status: "ACTIVE" as const,
-        publishedAt: startsAt,
-        recruitmentEnabled: false,
-        sourceUrl: repo.url,
-      };
-      await prisma.topic.upsert({ where: { id: topicId }, create: { id: topicId, ...topic }, update: topic });
-      const team = { name: repo.teamName, number: repo.teamNumber, confirmedAt: startsAt };
-      await prisma.projectTeam.upsert({
-        where: { id: projectTeamId },
-        create: { id: projectTeamId, projectId: topicId, ...team },
-        update: team,
+      await prisma.topic.create({
+        data: {
+          id: topicId,
+          programId,
+          authorId: ARCHIVE_USER_ID,
+          // 지난 프로젝트 조회가 담당자 이름을 그대로 읽는다. 비워 두면 조회가 실패한다.
+          managerId: ARCHIVE_USER_ID,
+          title: repo.title,
+          description: repo.summary || repo.title,
+          capacity: 1,
+          status: "ACTIVE",
+          publishedAt: startsAt,
+          recruitmentEnabled: false,
+          sourceUrl: repo.url,
+        },
       });
-      await ensureArtifact(stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"), {
-        projectTeamId,
-        registeredById: ARCHIVE_USER_ID,
-        type: "SOURCE_CODE",
-        title: "소스 코드",
-        externalUrl: repo.url,
-        position: 1,
+      await prisma.projectTeam.create({
+        data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, confirmedAt: startsAt },
       });
-      imported += 1;
+      await prisma.artifact.create({
+        data: {
+          id: stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"),
+          projectTeamId,
+          registeredById: ARCHIVE_USER_ID,
+          type: "SOURCE_CODE",
+          title: "소스 코드",
+          externalUrl: repo.url,
+          position: 1,
+        },
+      });
+      created += 1;
     }
-    console.log(`${source.programName}: ${imported}/${repos.length}개 넣음`);
+    console.log(`${source.programName}: 새로 ${created}개, 이미 있음 ${existing}개, 다른 프로젝트와 겹쳐 건너뜀 ${duplicate}개`);
   }
 }
 
