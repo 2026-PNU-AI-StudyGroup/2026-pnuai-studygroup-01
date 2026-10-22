@@ -42,6 +42,26 @@ export type ArchivedProject = {
   }>;
 };
 
+/**
+ * 로그인 없이 보는 공개 아카이브의 카드 한 장.
+ *
+ * 평가위원이 사업별 결과물을 훑고 저장소로 넘어가는 화면이라 그 일에 필요한 것만 담는다.
+ * 팀원과 담당자 이름, 소개 글은 칸 자체가 없다. 옮겨 온 소개 글에는 팀원 이름이 들어 있다.
+ */
+export type PublicArchivedProject = {
+  id: string;
+  programId: string;
+  programName: string;
+  programCategory: string;
+  startYear: number;
+  teamName: string;
+  teamNumber: number | null;
+  title: string;
+  description: string;
+  award: string | null;
+  repositoryUrl: string | null;
+};
+
 export type ArchiveFilters = {
   query?: string;
   programId?: string;

@@ -259,3 +259,73 @@ describe("인기상 자동 표시", () => {
     expect(project!.archivedVoteCount).toBeUndefined();
   });
 });
+
+describe("공개 아카이브 조회", () => {
+  it("공개되고 끝난 프로그램의 확정 팀만 읽고, 숨김 졸업과제와 이름 칸은 빼고 고른다", async () => {
+    const findMany = vi.fn(async () => []);
+    const client = { projectTeam: { findMany } } as unknown as PrismaClient;
+
+    await new PrismaTeamArchiveQueryRepository(client).listPublic();
+
+    // select 를 통째로 비교한다. 회원, 담당자, 소개 글 같은 칸이 끼어들면 여기서 깨진다.
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        confirmedAt: { not: null },
+        project: { program: {
+          isPublic: true,
+          endsAt: { lte: expect.any(Date) },
+          category: { not: "CSE 캡스톤 디자인" },
+        } },
+      },
+      select: {
+        id: true,
+        name: true,
+        number: true,
+        award: true,
+        project: { select: {
+          title: true,
+          description: true,
+          sourceUrl: true,
+          program: { select: { id: true, name: true, category: true, startsAt: true } },
+        } },
+        artifacts: {
+          where: { type: "SOURCE_CODE" },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: { id: true, type: true, externalUrl: true },
+        },
+      },
+    });
+  });
+
+  it("저장소 주소를 고르고 상 받은 팀을 앞에 세운다", async () => {
+    const program = { id: "p5", name: "제5회", category: "해커톤", startsAt: new Date("2024-04-30T15:00:00Z") };
+    const findMany = vi.fn(async () => [
+      {
+        id: "t2", name: "스근하게", number: 2, award: null,
+        project: { title: "제휴 업체", description: "설명", sourceUrl: null, program },
+        artifacts: [{ id: "a2", type: "SOURCE_CODE", externalUrl: "https://github.com/org/team-02" }],
+      },
+      {
+        id: "t1", name: "삼위일체", number: 1, award: "대상",
+        project: { title: "공지사항", description: "설명", sourceUrl: "https://github.com/org/team-01", program },
+        artifacts: [],
+      },
+    ]);
+    const client = { projectTeam: { findMany } } as unknown as PrismaClient;
+
+    const projects = await new PrismaTeamArchiveQueryRepository(client).listPublic();
+
+    expect(projects).toEqual([
+      {
+        id: "t1", programId: "p5", programName: "제5회", programCategory: "해커톤", startYear: 2024,
+        teamName: "삼위일체", teamNumber: 1, title: "공지사항", description: "설명", award: "대상",
+        repositoryUrl: "https://github.com/org/team-01",
+      },
+      {
+        id: "t2", programId: "p5", programName: "제5회", programCategory: "해커톤", startYear: 2024,
+        teamName: "스근하게", teamNumber: 2, title: "제휴 업체", description: "설명", award: null,
+        repositoryUrl: "https://github.com/org/team-02",
+      },
+    ]);
+  });
+});
