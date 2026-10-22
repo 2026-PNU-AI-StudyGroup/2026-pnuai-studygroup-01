@@ -151,6 +151,7 @@ export function SignInLanding({
                 <a className={styles.navLink} href="#screens"><UiText>{"실제 화면"}</UiText></a>
                 <a className={styles.navLink} href="#features"><UiText>{"주요 기능"}</UiText></a>
                 <a className={styles.navLink} href="#roles"><UiText>{"역할별 안내"}</UiText></a>
+                <Link className={styles.navLink} href="/archive"><UiText>{"사업별 결과물"}</UiText></Link>
                 <a className={styles.navLink} href={MANUAL_URL} target="_blank" rel="noreferrer">
                   <UiText>{"사용 매뉴얼"}</UiText>
                 </a>
@@ -354,6 +355,9 @@ export function SignInLanding({
 
       <footer className={`${styles.footerDark} px-5 py-9 sm:px-8`}>
         <div className="mx-auto flex w-full max-w-[76rem] flex-wrap items-center gap-x-7 gap-y-3 text-sm">
+          <Link href="/archive" className="underline underline-offset-4">
+            <UiText>{"사업별 결과물"}</UiText>
+          </Link>
           <a href={MANUAL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-4">
             <UiText>{"사용 매뉴얼"}</UiText>
           </a>
