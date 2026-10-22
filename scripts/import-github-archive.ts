@@ -123,35 +123,39 @@ async function main() {
         continue;
       }
       const projectTeamId = stableArchiveId("team", repo.fullName);
-      await prisma.topic.create({
-        data: {
-          id: topicId,
-          programId,
-          authorId: ARCHIVE_USER_ID,
-          // 지난 프로젝트 조회가 담당자 이름을 그대로 읽는다. 비워 두면 조회가 실패한다.
-          managerId: ARCHIVE_USER_ID,
-          title: repo.title,
-          description: repo.summary || repo.title,
-          capacity: 1,
-          status: "ACTIVE",
-          publishedAt: startsAt,
-          recruitmentEnabled: false,
-          sourceUrl: repo.url,
-        },
-      });
-      await prisma.projectTeam.create({
-        data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, confirmedAt: startsAt },
-      });
-      await prisma.artifact.create({
-        data: {
-          id: stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"),
-          projectTeamId,
-          registeredById: ARCHIVE_USER_ID,
-          type: "SOURCE_CODE",
-          title: "소스 코드",
-          externalUrl: repo.url,
-          position: 1,
-        },
+      // 셋을 한 번에 넣는다. 주제만 들어가고 멈추면 다음 실행이 "이미 있음" 으로 건너뛰어
+      // 팀 없는 주제가 화면에 영영 안 나온다.
+      await prisma.$transaction(async (tx) => {
+        await tx.topic.create({
+          data: {
+            id: topicId,
+            programId,
+            authorId: ARCHIVE_USER_ID,
+            // 지난 프로젝트 조회가 담당자 이름을 그대로 읽는다. 비워 두면 조회가 실패한다.
+            managerId: ARCHIVE_USER_ID,
+            title: repo.title,
+            description: repo.summary || repo.title,
+            capacity: 1,
+            status: "ACTIVE",
+            publishedAt: startsAt,
+            recruitmentEnabled: false,
+            sourceUrl: repo.url,
+          },
+        });
+        await tx.projectTeam.create({
+          data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, confirmedAt: startsAt },
+        });
+        await tx.artifact.create({
+          data: {
+            id: stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"),
+            projectTeamId,
+            registeredById: ARCHIVE_USER_ID,
+            type: "SOURCE_CODE",
+            title: "소스 코드",
+            externalUrl: repo.url,
+            position: 1,
+          },
+        });
       });
       created += 1;
     }
