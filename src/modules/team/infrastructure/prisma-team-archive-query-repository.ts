@@ -3,9 +3,12 @@ import type {
   ArchivedProject,
   ArchivedProjectReader,
   ArchiveFilters,
+  PublicArchivedProject,
 } from "@/modules/team/application/archive-projects";
+import { HIDDEN_GRADUATION_PROGRAM_CATEGORY } from "@/modules/project-program/domain/hidden-graduation-program";
 import { getProgramStartYear } from "@/modules/project-program/domain/project-program-policy";
 import { orderArchivedTeamIds } from "@/modules/team/domain/archive-order";
+import { resolveShowcaseRepository } from "@/modules/team/domain/showcase-repository";
 import {
   canShowPopularAward,
   pickPopularAwardTopicIds,
@@ -52,6 +55,30 @@ const archivedProjectSelect = {
 
 type ArchivedProjectRow = Prisma.ProjectTeamGetPayload<{
   select: typeof archivedProjectSelect;
+}>;
+
+// 공개 아카이브가 읽는 칸. 이름이 들어가는 칸(회원, 담당자, 작성자, 소개 글)은 고르지 않는다.
+// 화면에서 실수로 꺼내 쓸 길을 조회 단계에서 막아 둔다.
+const publicArchivedProjectSelect = {
+  id: true,
+  name: true,
+  number: true,
+  award: true,
+  project: { select: {
+    title: true,
+    description: true,
+    sourceUrl: true,
+    program: { select: { id: true, name: true, category: true, startsAt: true } },
+  } },
+  artifacts: {
+    where: { type: "SOURCE_CODE" as const },
+    orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
+    select: { id: true, type: true, externalUrl: true },
+  },
+} satisfies Prisma.ProjectTeamSelect;
+
+type PublicArchivedProjectRow = Prisma.ProjectTeamGetPayload<{
+  select: typeof publicArchivedProjectSelect;
 }>;
 
 export class PrismaTeamArchiveQueryRepository
@@ -230,6 +257,34 @@ export class PrismaTeamArchiveQueryRepository
     return toArchivedProject(team, this.audience, await this.popularAwardTopicIds([team]));
   }
 
+  /**
+   * 로그인 없이 보는 공개 아카이브 목록.
+   *
+   * 학생에게 보이는 범위(공개, 종료, 확정 팀)에서 숨김 졸업과제 분류를 뺀다.
+   * 차례는 지난 프로젝트 목록과 같다. 최근 프로그램이 먼저, 그 안에서 상 받은 팀, 팀 번호 순.
+   */
+  async listPublic(): Promise<PublicArchivedProject[]> {
+    // ponytail: 한 번에 다 읽는다. 수백 건 수준이다. 천 건을 넘기면 대분류별로 나눠 읽는다.
+    const rows = await this.client.projectTeam.findMany({
+      where: {
+        confirmedAt: { not: null },
+        project: { program: {
+          isPublic: true,
+          endsAt: { lte: new Date() },
+          category: { not: HIDDEN_GRADUATION_PROGRAM_CATEGORY },
+        } },
+      },
+      select: publicArchivedProjectSelect,
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return orderArchivedTeamIds(rows.map((row) => ({
+      id: row.id,
+      teamName: row.name,
+      teamNumber: row.number,
+      award: row.award,
+      programStartsAt: row.project.program.startsAt,
+    }))).map((id) => toPublicArchivedProject(byId.get(id)!));
+  }
 }
 
 function toArchivedProject(
@@ -278,6 +333,22 @@ function toArchivedProject(
       externalUrl: artifact.externalUrl ?? undefined,
       position: artifact.position,
     })),
+  };
+}
+
+function toPublicArchivedProject(row: PublicArchivedProjectRow): PublicArchivedProject {
+  return {
+    id: row.id,
+    programId: row.project.program.id,
+    programName: row.project.program.name,
+    programCategory: row.project.program.category,
+    startYear: getProgramStartYear(row.project.program.startsAt),
+    teamName: row.name,
+    teamNumber: row.number,
+    title: row.project.title,
+    description: row.project.description,
+    award: row.award,
+    repositoryUrl: resolveShowcaseRepository({ artifacts: row.artifacts, sourceUrl: row.project.sourceUrl })?.url ?? null,
   };
 }
 
