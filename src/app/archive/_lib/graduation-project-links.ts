@@ -8,5 +8,4 @@ export const GRADUATION_PROJECT_LINKS = [
   { year: 2026, url: "https://github.com/pnucse-capstone2026" },
   { year: 2025, url: "https://github.com/pnucse-capstone2025" },
   { year: 2023, url: "https://github.com/pnucse-capstone" },
-  { year: 2022, url: "https://github.com/PNUCSE" },
 ] as const;
