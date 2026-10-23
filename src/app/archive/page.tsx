@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { PublicArchiveCard } from "@/app/archive/_components/public-archive-card";
+import { ArchivePanel, ArchiveRow, PublicArchiveRow } from "@/app/archive/_components/public-archive-row";
 import { GRADUATION_PROJECT_LINKS } from "@/app/archive/_lib/graduation-project-links";
 import { groupPublicArchive } from "@/app/archive/_lib/group-public-archive";
 import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
@@ -11,10 +11,21 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/shared/i18n/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { Brand } from "@/shared/ui/brand";
-import { GithubIcon } from "@/shared/ui/github-icon";
 
 // 졸업과제는 PMS 에 넣지 않아 대분류가 없다. 다른 사업과 같은 줄에 서도록 탭만 하나 따로 둔다.
 const GRADUATION_TAB = "졸업과제";
+
+const tabClass = (selected: boolean) =>
+  `inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-3 pt-1 text-[0.9375rem] font-semibold transition-colors ${
+    selected
+      ? "border-[var(--primary)] text-[var(--ink)]"
+      : "border-transparent text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
+  }`;
+
+const countClass = (selected: boolean) =>
+  `rounded-full px-2 py-0.5 text-xs tabular-nums ${
+    selected ? "bg-[var(--primary-subtle)] text-[var(--accent-ink)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"
+  }`;
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("사업별 결과물");
@@ -37,99 +48,103 @@ export default async function PublicArchivePage({ searchParams }: {
 
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
-      <header className="border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 sm:px-8">
-        <Brand href="/" />
+      <header className="border-b border-[var(--line)] bg-[var(--surface)]">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-5 py-3 sm:px-8">
+          <Brand href="/" />
+          <span className="text-sm font-semibold text-[var(--ink)]"><UiText>{"부산대학교 AI융합교육원"}</UiText></span>
+        </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-        <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
+      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
+        <h1 className="text-[clamp(1.625rem,2.6vw,2rem)] font-bold leading-tight tracking-[-0.035em] [text-wrap:balance]">
           <UiText>{"사업별 결과물"}</UiText>
         </h1>
-        <p className="mt-3 max-w-2xl text-[0.9375rem] leading-7 text-[var(--muted)]">
-          <UiText>{"부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. GitHub 버튼을 누르면 저장소로 이동합니다."}</UiText>
-        </p>
-        <p className="mt-2 text-sm tabular-nums text-[var(--muted)]">
-          <UiText>{`사업 ${view.categories.length + 1}개, 프로젝트 ${view.totalProjects}건`}</UiText>
+        <p className="mt-2 max-w-[44rem] text-[0.9375rem] leading-7 text-[var(--muted)]">
+          <UiText>{"부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. 줄을 누르면 GitHub 저장소가 새 창으로 열립니다."}</UiText>
+          {" "}
+          <span className="whitespace-nowrap tabular-nums"><UiText>{`사업 ${view.categories.length + 1}개, 프로젝트 ${view.totalProjects}건`}</UiText></span>
         </p>
 
-        <UiNav aria-label="사업" className="mt-8 flex flex-wrap gap-2 border-b border-[var(--line)] pb-4">
-          {view.categories.map((category) => {
-            const selected = !showGraduation && category.name === view.selectedCategory;
-            return (
+        <UiNav aria-label="사업" className="mt-7">
+          {/* 바닥선을 안쪽 그림자로 그려 선택 탭의 밑줄이 그 위에 겹친다. 좁은 화면에서는 옆으로 민다. */}
+          <ul className="flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_var(--line)] [scrollbar-width:none]">
+            {view.categories.map((category) => {
+              const selected = !showGraduation && category.name === view.selectedCategory;
+              return (
+                <li key={category.name} className="flex shrink-0">
+                  <Link
+                    href={`/archive?category=${encodeURIComponent(category.name)}`}
+                    aria-current={selected ? "page" : undefined}
+                    className={tabClass(selected)}
+                  >
+                    <UiText>{category.name}</UiText>
+                    <span className={countClass(selected)}>{category.count}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li className="flex shrink-0">
               <Link
-                key={category.name}
-                href={`/archive?category=${encodeURIComponent(category.name)}`}
-                aria-current={selected ? "page" : undefined}
-                className={`${selected ? "button-primary" : "button-secondary"} gap-2`}
+                href={`/archive?category=${encodeURIComponent(GRADUATION_TAB)}`}
+                aria-current={showGraduation ? "page" : undefined}
+                className={tabClass(showGraduation)}
               >
-                <UiText>{category.name}</UiText> <span className="tabular-nums">{category.count}</span>
+                <UiText>{GRADUATION_TAB}</UiText>
               </Link>
-            );
-          })}
-          <Link
-            href={`/archive?category=${encodeURIComponent(GRADUATION_TAB)}`}
-            aria-current={showGraduation ? "page" : undefined}
-            className={showGraduation ? "button-primary" : "button-secondary"}
-          >
-            <UiText>{GRADUATION_TAB}</UiText>
-          </Link>
+            </li>
+          </ul>
         </UiNav>
 
         {showGraduation ? (
-          <section aria-labelledby="archive-graduation" className="mt-10">
-            <h2 id="archive-graduation" className="text-xl font-bold tracking-[-0.03em]">
-              <UiText>{GRADUATION_TAB}</UiText>
-            </h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
+          <section className="mt-8">
+            <p className="mb-3 text-sm text-[var(--muted)]">
               <UiText>{"정보컴퓨터공학부 졸업과제는 연도별 GitHub 조직에서 볼 수 있습니다."}</UiText>
             </p>
-            <ul className="mt-4 flex flex-wrap gap-2">
+            <ArchivePanel name={<UiText>{GRADUATION_TAB}</UiText>}>
               {GRADUATION_PROJECT_LINKS.map((link) => (
                 <li key={link.url}>
-                  <a href={link.url} target="_blank" rel="noreferrer" className="button-secondary inline-flex items-center gap-2">
-                    <GithubIcon className="size-4 shrink-0" />
-                    <UiText>{`${link.year}년 졸업과제`}</UiText>
-                  </a>
+                  <ArchiveRow
+                    href={link.url}
+                    lead={<UiText>{`${link.year}년`}</UiText>}
+                    title={<UiText>{`${link.year}년 졸업과제`}</UiText>}
+                    summary={link.url.replace(/^https?:\/\//, "")}
+                  />
                 </li>
               ))}
-            </ul>
+            </ArchivePanel>
           </section>
         ) : (
-          <div className="mt-10 lg:grid lg:grid-cols-[9rem_minmax(0,1fr)] lg:gap-10">
+          <div className="mt-8 lg:grid lg:grid-cols-[8.5rem_minmax(0,1fr)] lg:gap-10">
             {/* 한 사업에 여러 해가 쌓이면 스크롤이 길어진다. 연도로 바로 내려가는 길을 둔다. */}
             {view.years.length > 1 ? (
               <UiNav aria-label="연도" className="mb-8 lg:sticky lg:top-8 lg:mb-0 lg:self-start">
-                <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
+                <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-0.5">
                   {view.years.map((year) => (
                     <li key={year.year}>
-                      <a href={`#archive-year-${year.year}`} className="button-secondary gap-2 lg:w-full lg:justify-between">
+                      <a
+                        href={`#archive-year-${year.year}`}
+                        className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-subtle)] lg:border-transparent lg:bg-transparent lg:py-2"
+                      >
                         <UiText>{`${year.year}년`}</UiText>
-                        <span className="tabular-nums">{year.programs.reduce((sum, program) => sum + program.projects.length, 0)}</span>
+                        <span className="text-xs font-medium tabular-nums text-[var(--muted)]">
+                          {year.programs.reduce((sum, program) => sum + program.projects.length, 0)}
+                        </span>
                       </a>
                     </li>
                   ))}
                 </ul>
               </UiNav>
             ) : null}
-            <div className="grid gap-12 lg:col-start-2">
-              {view.years.map((year) => (
-                <section key={year.year} aria-labelledby={`archive-year-${year.year}`} className="scroll-mt-8">
-                  <h2 id={`archive-year-${year.year}`} className="text-xl font-bold tracking-[-0.03em]">
-                    <UiText>{`${year.year}년`}</UiText>
-                  </h2>
-                  {year.programs.map((program) => (
-                    <div key={program.id} className="mt-5">
-                      <h3 className="text-sm font-semibold text-[var(--muted)]">
-                        <UiText>{program.name}</UiText> <span className="tabular-nums">{program.projects.length}</span>
-                      </h3>
-                      <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {program.projects.map((project) => (
-                          <li key={project.id}><PublicArchiveCard project={project} /></li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+            <div className="grid min-w-0 grid-cols-1 gap-6 lg:col-start-2">
+              {view.years.flatMap((year) => year.programs.map((program, index) => (
+                // 연도 목록이 가리키는 자리는 그 해의 첫 대회다.
+                <section key={program.id} id={index === 0 ? `archive-year-${year.year}` : undefined} className="scroll-mt-8">
+                  <ArchivePanel year={year.year} name={<UiText>{program.name}</UiText>} count={program.projects.length}>
+                    {program.projects.map((project) => (
+                      <PublicArchiveRow key={project.id} project={project} />
+                    ))}
+                  </ArchivePanel>
                 </section>
-              ))}
+              )))}
             </div>
           </div>
         )}

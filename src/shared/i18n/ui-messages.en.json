@@ -2489,10 +2489,11 @@
   "사업별 결과물": "Results by program",
   "사업": "Programs",
   "연도": "Years",
-  "부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. GitHub 버튼을 누르면 저장소로 이동합니다.": "Results from programs run by the PNU AI Convergence Education Center. Use the GitHub button to open each repository.",
+  "부산대학교 AI융합교육원이 운영한 사업의 결과물입니다. 줄을 누르면 GitHub 저장소가 새 창으로 열립니다.": "Results from programs run by the PNU AI Convergence Education Center. Select a row to open its GitHub repository in a new tab.",
+  "새 창에서 열림": "opens in a new tab",
+  "{0}개 팀": "{0} teams",
   "사업 {0}개, 프로젝트 {1}건": "{0} programs, {1} projects",
   "{0}년": "{0}",
-  "GitHub에서 보기": "View on GitHub",
   "졸업과제": "Capstone projects",
   "정보컴퓨터공학부 졸업과제는 연도별 GitHub 조직에서 볼 수 있습니다.": "Capstone projects from the School of Computer Science and Engineering are on GitHub, organized by year.",
   "{0}년 졸업과제": "{0} capstone projects"
