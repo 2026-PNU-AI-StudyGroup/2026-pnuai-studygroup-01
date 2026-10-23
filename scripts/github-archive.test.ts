@@ -142,13 +142,13 @@ describe("스냅샷 합치기", () => {
   it("이미 있는 레포는 손으로 고친 그대로 두고 새 레포만 붙인다", () => {
     const existing: SnapshotProgram[] = [{
       program,
-      repos: [{ fullName: "org/team-01", url: "u1", teamNumber: 1, teamName: "삼위일체", title: "손으로 고친 제목", summary: "고친 요약" }],
+      repos: [{ fullName: "org/team-01", url: "u1", teamNumber: 1, teamName: "삼위일체", title: "손으로 고친 제목", summary: "고친 요약", award: null }],
     }];
     const crawled: SnapshotProgram[] = [{
       program: { ...program, programName: "제5회 새 이름" },
       repos: [
-        { fullName: "org/team-01", url: "u1", teamNumber: 1, teamName: "삼위일체", title: "새로 뽑은 제목", summary: "새 요약" },
-        { fullName: "org/team-02", url: "u2", teamNumber: 2, teamName: "스근하게", title: "제휴", summary: "" },
+        { fullName: "org/team-01", url: "u1", teamNumber: 1, teamName: "삼위일체", title: "새로 뽑은 제목", summary: "새 요약", award: null },
+        { fullName: "org/team-02", url: "u2", teamNumber: 2, teamName: "스근하게", title: "제휴", summary: "", award: null },
       ],
     }];
     const [merged] = mergeSnapshot(existing, crawled);
@@ -160,7 +160,7 @@ describe("스냅샷 합치기", () => {
   });
 
   it("합친 뒤에도 팀 번호 차례를 지킨다", () => {
-    const repo = (teamNumber: number) => ({ fullName: `org/team-${teamNumber}`, url: "u", teamNumber, teamName: "t", title: "t", summary: "" });
+    const repo = (teamNumber: number) => ({ fullName: `org/team-${teamNumber}`, url: "u", teamNumber, teamName: "t", title: "t", summary: "", award: null });
     const existing: SnapshotProgram[] = [{ program, repos: [repo(1), repo(18)] }];
     const crawled: SnapshotProgram[] = [{ program, repos: [repo(4)] }];
     const [merged] = mergeSnapshot(existing, crawled);

@@ -143,7 +143,7 @@ async function main() {
           },
         });
         await tx.projectTeam.create({
-          data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, confirmedAt: startsAt },
+          data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, award: repo.award, confirmedAt: startsAt },
         });
         await tx.artifact.create({
           data: {

@@ -28,27 +28,29 @@ const PROGRAMS: ProgramSource[] = [
     key: "pnu-convergence-sw-hackathon-5",
     org: "The-5th-PNU-Convergence-SW-Hackathon",
     programName: "제5회 PNU 창의융합SW해커톤",
-    // OPUS 로 옮긴 제6회와 같은 대분류. 운영에서 이름을 바꿨으면 넣은 뒤 화면에서 합친다.
-    category: "PNU 창의융합 해커톤",
+    // 운영의 제6회, 제7회와 같은 대분류(2026-10-23 운영 DB 확인). 다르면 5회만 탭이 따로 생긴다.
+    category: "PNU 창의융합AI해커톤",
     startsAt: "2024-05-01",
     endsAt: "2024-09-07",
+    // 팀 이름과 제목은 2024-09-04 swedu 공지 "최종 결과물 온라인 투표안내", 상은 2024-09-11 swedu
+    // 홍보자료 "[제5회 PNU 창의융합 SW해커톤] 성료" 의 수상 현황표에서 옮겼다.
     teams: {
       "PNUSW-2024-team-01": { teamNumber: 1, teamName: "삼위일체", title: "부산대 모든 공지사항" },
-      "PNUSW-2024-team-02": { teamNumber: 2, teamName: "스근하게", title: "부산대 제휴 업체를 한눈에" },
-      "PNUSW-2024-team-03": { teamNumber: 3, teamName: "따뜻한청년들2", title: "시니어 돌봄 매칭 플랫폼" },
-      "PNUSW-2024-team-05": { teamNumber: 5, teamName: "인사이드아웃", title: "우울감 관리 플랫폼" },
-      "PNUSW-2024-team-06": { teamNumber: 6, teamName: "아이엠그루트", title: "글쓰기를 통한 식물 테라피" },
-      "PNUSW-2024-team-07": { teamNumber: 7, teamName: "피누", title: "가족 소통 어플리케이션" },
-      "PNUSW-2024-team-08": { teamNumber: 8, teamName: "포포", title: "지역 유기동물 문제 해결 플랫폼" },
-      "PNUSW-2024-team-09": { teamNumber: 9, teamName: "구은생선", title: "대학생 맞춤 알바 구직 서비스" },
-      "PNUSW-2024-team-10": { teamNumber: 10, teamName: "히론", title: "유학생들을 위한 여행, 생활 도움 서비스" },
-      "PNUSW-2024-team-11": { teamNumber: 11, teamName: "피벗", title: "부산대 맞춤형 중고거래 서비스" },
+      "PNUSW-2024-team-02": { teamNumber: 2, teamName: "스근하게", title: "부산대 제휴 업체를 한눈에", award: "장려상" },
+      "PNUSW-2024-team-03": { teamNumber: 3, teamName: "따뜻한청년들2", title: "시니어 돌봄 매칭 플랫폼", award: "대상" },
+      "PNUSW-2024-team-05": { teamNumber: 5, teamName: "인사이드아웃", title: "우울감 관리 플랫폼", award: "장려상" },
+      "PNUSW-2024-team-06": { teamNumber: 6, teamName: "아이엠그루트", title: "글쓰기를 통한 식물 테라피", award: "장려상" },
+      "PNUSW-2024-team-07": { teamNumber: 7, teamName: "피누", title: "가족 소통 어플리케이션", award: "우수상" },
+      "PNUSW-2024-team-08": { teamNumber: 8, teamName: "포포", title: "지역 유기동물 문제 해결 플랫폼", award: "우수상" },
+      "PNUSW-2024-team-09": { teamNumber: 9, teamName: "구은생선", title: "대학생 맞춤 알바 구직 서비스", award: "장려상" },
+      "PNUSW-2024-team-10": { teamNumber: 10, teamName: "히론", title: "유학생들을 위한 여행, 생활 도움 서비스", award: "장려상" },
+      "PNUSW-2024-team-11": { teamNumber: 11, teamName: "피벗", title: "부산대 맞춤형 중고거래 서비스", award: "장려상" },
       "PNUSW-2024-team-12": { teamNumber: 12, teamName: "이륙허가", title: "부산대 공유 택시 서비스" },
       "PNUSW-2024-team-13": { teamNumber: 13, teamName: "OwO", title: "HPE를 통한 환자 관리 모듈 개발" },
-      "PNUSW-2024-team-14": { teamNumber: 14, teamName: "자스민", title: "사기피해 예방 안심 결제 시스템" },
+      "PNUSW-2024-team-14": { teamNumber: 14, teamName: "자스민", title: "사기피해 예방 안심 결제 시스템", award: "우수상" },
       "PNUSW-2024-team-16": { teamNumber: 16, teamName: "Mizi", title: "청년을 위한 미래 자산 관리 서비스" },
-      "PNUSW-2024-team-17": { teamNumber: 17, teamName: "구름", title: "부산대 프로젝트 배포 플랫폼" },
-      "PNUSW-2024-team-18": { teamNumber: 18, teamName: "어웨이크", title: "졸음운전 예방을 위한 LLM 대화모델" },
+      "PNUSW-2024-team-17": { teamNumber: 17, teamName: "구름", title: "부산대 프로젝트 배포 플랫폼", award: "우수상" },
+      "PNUSW-2024-team-18": { teamNumber: 18, teamName: "어웨이크", title: "졸음운전 예방을 위한 LLM 대화모델", award: "최우수상" },
     },
   },
 ];
@@ -103,6 +105,7 @@ async function crawl(source: ProgramSource): Promise<SnapshotProgram> {
       teamName: team?.teamName ?? repo.name,
       title: team?.title ?? pickTitle({ readmeTitle: extracted.title, description: repo.description, repoName: repo.name }),
       summary: extracted.summary,
+      award: team?.award ?? null,
     });
   }
   // PR diff 가 매번 같은 차례로 나오게 팀 번호, 없으면 레포 이름 순으로 둔다.

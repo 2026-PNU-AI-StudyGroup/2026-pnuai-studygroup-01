@@ -18,7 +18,7 @@ export type ArchiveProgram = {
   programId?: string;
 };
 
-export type ArchiveTeam = { teamNumber?: number; teamName: string; title: string };
+export type ArchiveTeam = { teamNumber?: number; teamName: string; title: string; award?: string };
 
 export type SnapshotRepo = {
   fullName: string;
@@ -27,6 +27,8 @@ export type SnapshotRepo = {
   teamName: string;
   title: string;
   summary: string;
+  /** 공식 발표에서 옮긴 상 이름. 상이 없으면 null. */
+  award: string | null;
 };
 
 export type SnapshotProgram = { program: ArchiveProgram; repos: SnapshotRepo[] };
