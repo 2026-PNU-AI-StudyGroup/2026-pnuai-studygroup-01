@@ -228,4 +228,20 @@ describe("PrismaTeamWorkspaceQueryRepository", () => {
       }),
     }));
   });
+
+  it("상세에서 작업 공간으로 보낼지는 작업 공간을 여는 조건과 같은 조건으로 판단한다", async () => {
+    const count = vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    const repository = new PrismaTeamWorkspaceQueryRepository({ projectTeam: { count } } as never);
+    const student = { id: "student-1", role: "STUDENT" as const };
+
+    await expect(repository.canOpenWorkspace("topic-1", student)).resolves.toBe(true);
+    await expect(repository.canOpenWorkspace("topic-2", student)).resolves.toBe(false);
+    expect(count).toHaveBeenCalledWith({
+      where: { AND: [
+        { projectId: "topic-1" },
+        expect.objectContaining({ AND: expect.any(Array) }),
+        { project: { status: { not: "PENDING_APPROVAL" } } },
+      ] },
+    });
+  });
 });

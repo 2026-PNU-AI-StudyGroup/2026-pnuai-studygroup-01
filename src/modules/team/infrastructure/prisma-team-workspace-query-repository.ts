@@ -44,6 +44,14 @@ export class PrismaTeamWorkspaceQueryRepository
 {
   constructor(private readonly client: PrismaClient) {}
 
+  // 작업 공간을 여는 조건과 같은 조건이다. 둘이 어긋나면 상세에서 넘겨 보낸 곳이 404 가 된다.
+  async canOpenWorkspace(projectId: string, actor: CurrentActor): Promise<boolean> {
+    const count = await this.client.projectTeam.count({
+      where: { AND: [{ projectId }, teamActorWhere(actor), { project: { status: { not: "PENDING_APPROVAL" } } }] },
+    });
+    return count > 0;
+  }
+
   async findWorkspaceForActor(
     teamId: string,
     actor: CurrentActor,

@@ -6,6 +6,7 @@ import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-wo
 import { TeamWorkspaceNavigation } from "@/app/projects/[projectId]/_components/team-workspace-navigation";
 import { TeamRosterSummary } from "@/app/projects/[projectId]/_components/team-roster-summary";
 import { ConfirmTeamForm } from "@/app/projects/[projectId]/_components/confirm-team-form";
+import { TeamProjectInfoEditDialog } from "@/app/projects/[projectId]/_components/team-project-info-form";
 import { AppShell } from "@/app/_components/app-shell";
 import { calculateReportSubmissionRate, hasReportSchedule } from "@/modules/team/domain/project-progress";
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
@@ -20,6 +21,7 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
   );
   const reportScheduleAvailable = hasReportSchedule(workspace.reportCount);
   const status = teamStatusPresentation[workspace.status];
+  const canEditProjectInfo = workspace.access.canSupervise || workspace.access.isTeamLeader;
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
@@ -38,13 +40,29 @@ export default async function TeamWorkspaceLayout({ children, params }: { childr
               </svg>
               <UiText>{"프로젝트 목록"}</UiText>
             </UiLink>
+            {/*
+              프로젝트가 누구인지는 여기 한 곳에만 적는다. 탭마다 머리말에 다시 적으면 모바일에서
+              한 화면에 같은 이름이 두 번 보인다. 이름 순서는 다른 화면과 같게 프로젝트명이 먼저, 팀 이름이 다음이다.
+            */}
             <div className="lg:border-b lg:border-[var(--line)] lg:pb-6">
-              <div className="flex min-w-0 items-start justify-between gap-4 lg:block">
-                <div className="min-w-0">
-                  <p className="truncate text-base font-bold tracking-[-0.025em]">{workspace.name}</p>
-                  <p className="muted mt-1 line-clamp-1 text-xs leading-5 lg:line-clamp-2"><UiText>{workspace.topicTitle}</UiText></p>
-                </div>
+              <p className="eyebrow truncate"><UiText>{workspace.programName}</UiText></p>
+              <div className="mt-1.5 flex min-w-0 items-start justify-between gap-3">
+                <p className="min-w-0 text-base font-bold leading-snug tracking-[-0.025em] [overflow-wrap:anywhere]"><UiText>{workspace.topicTitle}</UiText></p>
+                {workspace.status === "IN_PROGRESS" && (canEditProjectInfo || workspace.access.isTeamMember) ? (
+                  <TeamProjectInfoEditDialog
+                    teamId={workspace.id}
+                    programName={workspace.programName}
+                    title={workspace.topicTitle}
+                    description={workspace.topicDescription}
+                    disabled={!canEditProjectInfo}
+                  />
+                ) : null}
+              </div>
+              {workspace.name !== workspace.topicTitle ? <p className="muted mt-1 truncate text-xs font-semibold"><UiText>{workspace.name}</UiText></p> : null}
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <StatusBadge tone={status.tone}><UiText>{status.label}</UiText></StatusBadge>
+                {/* 작업 공간을 여는 사람은 프로젝트 상세로 가도 이리로 돌아온다. 방문자 눈에 어떻게 보이는지는 여기서 연다. */}
+                <UiLink href={`/topics/${workspace.topicId}?view=public`} className="text-xs font-bold text-[var(--primary)] hover:underline"><UiText>{"방문자 화면 보기"}</UiText></UiLink>
               </div>
               <div className="mt-4 hidden lg:block">
                 {reportScheduleAvailable ? (

@@ -85,7 +85,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
       <ShowcaseVideoCard teamId={workspace.id} video={showcaseVideo} canManage={canRegisterArtifact} />
       {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} /> : null}
       {canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : null}
-      {canRegisterArtifact ? <ShowcaseSaveAllBar teamId={workspace.id} /> : null}
+      {canRegisterArtifact ? <ShowcaseSaveAllBar teamId={workspace.id} topicId={workspace.topicId} /> : null}
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"

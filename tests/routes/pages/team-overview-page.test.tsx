@@ -117,10 +117,10 @@ describe("TeamOverviewPage", () => {
 
     render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
 
-    const projectHeading = screen.getByRole("heading", { level: 1, name: "모두의 길" });
-    expect(projectHeading.previousElementSibling).toHaveClass("eyebrow");
-    expect(projectHeading.previousElementSibling).toHaveTextContent("2026 캡스톤디자인");
-    expect(screen.getByText("실내 길찾기")).toBeInTheDocument();
+    // 프로젝트 이름과 프로그램은 왼쪽 칸에만 보인다. 본문 제목은 화면 낭독기용으로만 둔다.
+    expect(screen.getByRole("heading", { level: 1, name: "실내 길찾기" })).toHaveClass("sr-only");
+    expect(screen.queryByText("2026 캡스톤디자인")).not.toBeInTheDocument();
+    expect(screen.queryByText("모두의 길")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "프로그램 일정" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "팀원 1명" })).not.toBeInTheDocument();
     expect(screen.queryByText("student@pusan.ac.kr")).not.toBeInTheDocument();
@@ -142,64 +142,6 @@ describe("TeamOverviewPage", () => {
     expect(screen.queryByRole("heading", { name: "조교 1명" })).not.toBeInTheDocument();
     expect(screen.queryByText("박조교")).not.toBeInTheDocument();
     expect(screen.queryByText("assistant@pusan.ac.kr")).not.toBeInTheDocument();
-  });
-
-  it("감독자 헤더에는 프로젝트 정보 수정만 둔다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
-      workspace: {
-        ...workspace,
-        advisorEnabled: true,
-        access: {
-          ...workspace.access,
-          isPrimaryAdvisor: true,
-          isTeamMember: false,
-          canSupervise: true,
-          canContribute: false,
-        },
-      },
-    });
-
-    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
-
-    // 조교 관리는 주제 관리 화면에서 한다. 진행 현황에 두면 여기서 할 일과 섞인다.
-    expect(screen.queryByRole("link", { name: "조교 관리" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "프로젝트 정보 수정" })).toBeEnabled();
-    expect(screen.queryByText("프로젝트 운영 중")).not.toBeInTheDocument();
-  });
-
-  it("팀장은 프로젝트 정보 수정 링크를 사용할 수 있다", async () => {
-    loadTeamWorkspace.mockResolvedValue({
-      workspace: {
-        ...workspace,
-        access: { ...workspace.access, isTeamLeader: true },
-      },
-    });
-
-    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
-
-    const editButton = screen.getByRole("button", { name: "프로젝트 정보 수정" });
-    expect(editButton).toBeEnabled();
-    expect(editButton).not.toHaveTextContent("프로젝트 정보 수정");
-
-    fireEvent.click(editButton);
-
-    const dialog = screen.getByRole("dialog", { name: "프로젝트 정보 수정" });
-    expect(dialog).toBeVisible();
-    expect(dialog).toHaveClass("w-[min(36rem,calc(100%-2rem))]");
-    expect(screen.getByRole("textbox", { name: "프로젝트명" })).toHaveValue("모두의 길");
-    expect(screen.getByRole("textbox", { name: "프로젝트 설명" })).toHaveValue("누구나 이동할 수 있는 길을 안내합니다.");
-    expect(screen.getByRole("textbox", { name: "프로젝트 설명" })).toHaveClass("min-h-40");
-  });
-
-  it("일반 팀원에게 프로젝트 정보 수정 버튼과 팀장 권한 안내를 보여준다", async () => {
-    loadTeamWorkspace.mockResolvedValue({ workspace });
-
-    render(await TeamOverviewPage({ params: Promise.resolve({ projectId: "team-1" }) }));
-
-    const button = screen.getByRole("button", { name: "프로젝트 정보 수정" });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute("title", "팀장만 수정할 수 있습니다");
-    expect(screen.queryByRole("link", { name: "프로젝트 정보 수정" })).not.toBeInTheDocument();
   });
 
   it("감독자에게도 팀 대화와 보고서 목적지를 본문에서 반복하지 않는다", async () => {

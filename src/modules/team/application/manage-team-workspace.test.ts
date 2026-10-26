@@ -16,6 +16,7 @@ import { InvalidTaskError } from "@/modules/team/domain/team-workspace-policy";
 function dependencies() {
   const reader: TeamWorkspaceReader = {
     findWorkspaceForActor: vi.fn(),
+    canOpenWorkspace: vi.fn(),
     listForStudent: vi.fn(),
     listForProfessor: vi.fn(),
     listAll: vi.fn(),
