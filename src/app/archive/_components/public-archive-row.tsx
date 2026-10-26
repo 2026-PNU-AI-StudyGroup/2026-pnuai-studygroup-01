@@ -85,12 +85,14 @@ export function ArchivePanel({ year, name, count, children }: {
 }
 
 export function PublicArchiveRow({ project }: { project: PublicArchivedProject }) {
-  const teamLabel = project.teamNumber === null ? project.teamName : `${project.teamNumber}. ${project.teamName}`;
+  // 카테캠처럼 팀 이름이 "5팀", "10조" 인 사업은 이름이 곧 번호다. 번호와 "팀" 을 또 붙이면 "5. 5팀 팀" 이 된다.
+  const numberedName = /[팀조]$/.test(project.teamName);
+  const teamLabel = project.teamNumber === null || numberedName ? project.teamName : `${project.teamNumber}. ${project.teamName}`;
   return (
     <li>
       <ArchiveRow
         href={project.repositoryUrl}
-        lead={<>{teamLabel} <UiText>{"팀"}</UiText></>}
+        lead={numberedName ? teamLabel : <>{teamLabel} <UiText>{"팀"}</UiText></>}
         title={project.title}
         // 소개가 마크다운일 수 있어서 미리보기에서는 문법 기호를 걷어낸다.
         summary={markdownToPlainText(project.description)}

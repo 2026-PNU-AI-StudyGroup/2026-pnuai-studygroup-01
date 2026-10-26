@@ -18,7 +18,14 @@ export type ArchiveProgram = {
   programId?: string;
 };
 
-export type ArchiveTeam = { teamNumber?: number; teamName: string; title: string; award?: string };
+export type ArchiveTeam = {
+  teamNumber?: number;
+  teamName: string;
+  title: string;
+  award?: string;
+  /** README 첫 문단이 목차나 레포 이름뿐일 때 README 본문에서 옮겨 적은 소개. 없으면 README 에서 뽑는다. */
+  summary?: string;
+};
 
 export type SnapshotRepo = {
   fullName: string;
