@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 import { ArchivePanel, ArchiveRow, PublicArchiveRow } from "@/app/archive/_components/public-archive-row";
 import { GRADUATION_PROJECT_LINKS } from "@/app/archive/_lib/graduation-project-links";
-import { groupPublicArchive } from "@/app/archive/_lib/group-public-archive";
+import { graduationTabIndex, groupPublicArchive } from "@/app/archive/_lib/group-public-archive";
 import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
 import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
@@ -45,6 +45,7 @@ export default async function PublicArchivePage({ searchParams }: {
   const view = groupPublicArchive(projects, categoryOrder, graduationRequested ? undefined : requestedCategory);
   // 공개된 프로젝트가 하나도 없으면 열 사업 탭이 없으니 졸업과제 탭을 연다.
   const showGraduation = graduationRequested || view.selectedCategory === null;
+  const graduationAt = graduationTabIndex(view.categories);
 
   return (
     <div className="min-h-screen bg-[var(--workspace)] text-[var(--ink)]">
@@ -67,7 +68,25 @@ export default async function PublicArchivePage({ searchParams }: {
         <UiNav aria-label="사업" className="mt-7">
           {/* 바닥선을 안쪽 그림자로 그려 선택 탭의 밑줄이 그 위에 겹친다. 좁은 화면에서는 옆으로 민다. */}
           <ul className="flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_var(--line)] [scrollbar-width:none]">
-            {view.categories.map((category) => {
+            {[
+              ...view.categories.slice(0, graduationAt).map((category) => ({ kind: "category" as const, category })),
+              { kind: "graduation" as const },
+              ...view.categories.slice(graduationAt).map((category) => ({ kind: "category" as const, category })),
+            ].map((tab) => {
+              if (tab.kind === "graduation") {
+                return (
+                  <li key={GRADUATION_TAB} className="flex shrink-0">
+                    <Link
+                      href={`/archive?category=${encodeURIComponent(GRADUATION_TAB)}`}
+                      aria-current={showGraduation ? "page" : undefined}
+                      className={tabClass(showGraduation)}
+                    >
+                      <UiText>{GRADUATION_TAB}</UiText>
+                    </Link>
+                  </li>
+                );
+              }
+              const { category } = tab;
               const selected = !showGraduation && category.name === view.selectedCategory;
               return (
                 <li key={category.name} className="flex shrink-0">
@@ -82,15 +101,6 @@ export default async function PublicArchivePage({ searchParams }: {
                 </li>
               );
             })}
-            <li className="flex shrink-0">
-              <Link
-                href={`/archive?category=${encodeURIComponent(GRADUATION_TAB)}`}
-                aria-current={showGraduation ? "page" : undefined}
-                className={tabClass(showGraduation)}
-              >
-                <UiText>{GRADUATION_TAB}</UiText>
-              </Link>
-            </li>
           </ul>
         </UiNav>
 

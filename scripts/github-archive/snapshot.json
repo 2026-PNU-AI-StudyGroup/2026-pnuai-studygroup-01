@@ -154,5 +154,186 @@
         "award": "최우수상"
       }
     ]
+  },
+  {
+    "program": {
+      "key": "kakao-tech-campus-2",
+      "org": "kakao-tech-campus-2nd-step3",
+      "programName": "카카오테크 캠퍼스 2기",
+      "category": "카카오테크 캠퍼스",
+      "startsAt": "2024-08-22",
+      "endsAt": "2024-11-30"
+    },
+    "repos": [
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team10_FE",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team10_FE",
+        "teamNumber": 10,
+        "teamName": "10조",
+        "title": "품앗이: 농산물로 지역을 잇는 플랫폼",
+        "summary": "농민과 소비자를 직접 연결하는 농산물 온라인 직거래 플랫폼입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team11_BE",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team11_BE",
+        "teamNumber": 11,
+        "teamName": "11조",
+        "title": "부메랑: 전세사기 피해자를 위한 대처 플랫폼",
+        "summary": "부메랑 은 전세사기 피해자들을 위한 전세사기 대처 웹 플랫폼 입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team12_BE",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team12_BE",
+        "teamNumber": 12,
+        "teamName": "12조",
+        "title": "Ditto: 경쟁을 곁들인 스터디 관리 플랫폼",
+        "summary": "스터디 관리에 경쟁 요소를 더한 플랫폼입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team13_FE",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team13_FE",
+        "teamNumber": 13,
+        "teamName": "13조",
+        "title": "돌봄다리: 요양원 관리 서비스",
+        "summary": "보호자는 가족의 상태를 실시간으로 확인하고, 요양보호사는 손쉽게 기록하는 요양원 관리 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team24_Android",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team24_Android",
+        "teamNumber": 24,
+        "teamName": "24조",
+        "title": "Challenge On Air: 실시간 챌린지 플랫폼",
+        "summary": "함께 도전하며 성장하는 실시간 챌린지 플랫폼",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-2nd-step3/Team25_Android",
+        "url": "https://github.com/kakao-tech-campus-2nd-step3/Team25_Android",
+        "teamNumber": 25,
+        "teamName": "25조",
+        "title": "메디투게더: 병원 동행 서비스 매칭 플랫폼",
+        "summary": "도움이 필요한 환자와 병원 동행 매니저를 매칭해 병원 이용을 돕는 서비스입니다.",
+        "award": null
+      }
+    ]
+  },
+  {
+    "program": {
+      "key": "kakao-tech-campus-3",
+      "org": "kakao-tech-campus-3rd-step3",
+      "programName": "카카오테크 캠퍼스 3기",
+      "category": "카카오테크 캠퍼스",
+      "startsAt": "2025-08-18",
+      "endsAt": "2025-11-07"
+    },
+    "repos": [
+      {
+        "fullName": "kakao-tech-campus-3rd-step3/Team10_FE",
+        "url": "https://github.com/kakao-tech-campus-3rd-step3/Team10_FE",
+        "teamNumber": 1,
+        "teamName": "1팀",
+        "title": "이게머니: 쉽고 정확하게, 나만의 경제 교과서",
+        "summary": "최근 사회 초년생과 청년층 사이에서 금융 문맹(금융지식 부족) 문제가 심화되고 있습니다. 금융 지식이 부족한 상태에서 대출, 투자, 소비를 시작하면서 실제로 피해를 입는 사례가 점점 늘어나고 있습니다. 잘못된 금융 판단은 과소비, 부채 누적, 금융사기 피해 등으로 이어질 수 있습니다. 하지만 정규 교육과정에서는 실질적인 금융 교육의 기회가 여전히 부족하며…",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-3rd-step3/Team11_BE",
+        "url": "https://github.com/kakao-tech-campus-3rd-step3/Team11_BE",
+        "teamNumber": 2,
+        "teamName": "2팀",
+        "title": "Momeet: 즉석 만남 매칭 서비스",
+        "summary": "가까운 곳에서 즉석 번개 모임을 만들고 참여하는 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-3rd-step3/Team12_FE",
+        "url": "https://github.com/kakao-tech-campus-3rd-step3/Team12_FE",
+        "teamNumber": 3,
+        "teamName": "3팀",
+        "title": "UniSchedule: 대학생 팀 프로젝트 일정 조율",
+        "summary": "대학생들의 복잡한 팀 프로젝트와 개인 일정을 한 번에 관리해주는 대학생 맞춤형 일정 관리 서비스입니다. 조별 과제, 동아리, 스터디 등 팀 활동에 최적화된 기능을 제공하여 일정 조율의 효율을 높이고 커뮤니케이션 비용을 절감하는 것을 목표로 합니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-3rd-step3/Team13_BE",
+        "url": "https://github.com/kakao-tech-campus-3rd-step3/Team13_BE",
+        "teamNumber": 4,
+        "teamName": "4팀",
+        "title": "P-Ting: 교내 스포츠 매칭 플랫폼",
+        "summary": "운동 파트너를 찾기 어려운 대학생을 시간, 장소, 실력에 맞춰 매칭하는 교내 스포츠 플랫폼입니다.",
+        "award": null
+      },
+      {
+        "fullName": "kakao-tech-campus-3rd-step3/Team14_FE",
+        "url": "https://github.com/kakao-tech-campus-3rd-step3/Team14_FE",
+        "teamNumber": 5,
+        "teamName": "5팀",
+        "title": "FestaPick: 모두가 함께 만드는 축제",
+        "summary": "모두가 함께 만들어 가는 축제 플랫폼입니다.",
+        "award": "우수상"
+      }
+    ]
+  },
+  {
+    "program": {
+      "key": "pnu-ai-studygroup-2026",
+      "org": "2026-PNU-AI-StudyGroup",
+      "programName": "AI학습공동체 2026",
+      "programId": "4a8393fa-1690-4acc-8fa8-3965e1889c03",
+      "category": "PNU AI학습공동체",
+      "startsAt": "2026-07-01",
+      "endsAt": "2026-09-30"
+    },
+    "repos": [
+      {
+        "fullName": "2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-01",
+        "url": "https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-01",
+        "teamNumber": 1,
+        "teamName": "1팀",
+        "title": "PNU AIPMS: 학과 프로젝트 관리 플랫폼",
+        "summary": "프로그램 개설부터 팀 활동, 보고서 승인, 결과물 아카이브까지 학과 프로젝트의 흐름을 잇는 플랫폼입니다. aipms.pusan.ac.kr 에서 운영 중입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-02",
+        "url": "https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-02",
+        "teamNumber": 2,
+        "teamName": "잇(IT)다",
+        "title": "냉장고 데이터를 부탁해: 식재료 기반 레시피 추천",
+        "summary": "식재료 데이터를 바탕으로 레시피를 추천하는 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-03",
+        "url": "https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-03",
+        "teamNumber": 3,
+        "teamName": "AIdios",
+        "title": "WakeBook: 잠자는 도서를 깨우는 AI 추천",
+        "summary": "공공도서관에서 이용이 적은 잠자는 도서를 찾아 AI 추천과 큐레이션으로 이용자에게 다시 잇는 웹 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-04",
+        "url": "https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-04",
+        "teamNumber": 4,
+        "teamName": "노예(진)",
+        "title": "뇌 MRI 병변 Segmentation (CBAS)",
+        "summary": "뇌 MRI 영상에서 병변을 찾아내는 Segmentation 모델과 데이터 수집, 전처리 파이프라인입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-05",
+        "url": "https://github.com/2026-PNU-AI-StudyGroup/2026-pnuai-studygroup-05",
+        "teamNumber": 5,
+        "teamName": "5팀",
+        "title": "산복도로 골든타임: 응급 취약지 분석과 AED 최적 배치",
+        "summary": "부산 산복도로 일대에서 심정지 골든타임을 지키기 위해 응급 취약성과 구급차 도달 지연을 분석하고 AED 최적 배치를 도출합니다.",
+        "award": null
+      }
+    ]
   }
 ]
