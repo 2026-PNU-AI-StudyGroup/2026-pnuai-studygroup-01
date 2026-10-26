@@ -8,8 +8,12 @@ import { ProgramManagerPanel, type ProgramManagerCandidate } from "@/app/topics/
 import { ProgramForm } from "@/app/topics/_management/program-form";
 import {
   type ProgramManagementTab,
+  programEvaluationTabs,
   programManagementHref,
 } from "@/modules/project-program/ui/program-management-route";
+import { ProgramReportMatrixTable } from "@/app/topics/_management/program-report-matrix";
+import { ProgramStatusForm } from "@/app/topics/_management/program-status-form";
+import { programReportMatrix } from "@/modules/report/infrastructure/prisma-program-report-matrix-query";
 import { topicsHref } from "@/app/topics/_lib/topics-query";
 import { ProgramReportRequirementForm } from "@/app/topics/_management/program-report-requirement-form";
 import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
@@ -33,28 +37,32 @@ import { EmptyState } from "@/shared/ui/page-primitives";
 import { AccountIcon, BarChartIcon } from "@/shared/ui/workspace-icons";
 
 export const PROGRAM_MANAGEMENT_TABS: Array<{ key: ProgramManagementTab; label: string }> = [
-  { key: "settings", label: "기본 정보" },
-  { key: "operation", label: "운영 설정" },
-  { key: "schedule", label: "일정" },
+  { key: "settings", label: "설정" },
+  { key: "reports", label: "보고서" },
   { key: "votes", label: "투표" },
   { key: "rubric", label: "채점표" },
   { key: "results", label: "집계" },
-  { key: "reports", label: "보고서" },
   { key: "advisors", label: "자문위원" },
 ];
 
-function ManagementTabIcon({ tab }: { tab: ProgramManagementTab }) {
+/*
+  위 줄은 세 칸이다. 여덟 칸을 두 줄에 깔면 무엇이 어디 있는지 매번 다시 읽어야 했다.
+  설정(기본 정보, 운영, 일정, 종료)은 한 화면으로 합쳤고, 평가에 쓰는 네 화면은 평가 아래로 묶었다.
+*/
+const TOP_TABS: Array<{ key: ProgramManagementTab; label: string; icon: ProgramSectionNavIconName }> = [
+  { key: "settings", label: "설정", icon: "basic" },
+  { key: "reports", label: "보고서", icon: "reports" },
+  { key: "votes", label: "평가", icon: "rubric" },
+];
+
+function isEvaluationTab(tab: ProgramManagementTab) {
+  return (programEvaluationTabs as readonly ProgramManagementTab[]).includes(tab);
+}
+
+function EvaluationTabIcon({ tab }: { tab: ProgramManagementTab }) {
   if (tab === "advisors") return <AccountIcon />;
   if (tab === "results") return <BarChartIcon />;
-  const section: Record<Exclude<ProgramManagementTab, "advisors" | "results">, ProgramSectionNavIconName> = {
-    settings: "basic",
-    operation: "operation",
-    schedule: "schedule",
-    votes: "voting",
-    rubric: "rubric",
-    reports: "reports",
-  };
-  return <ProgramSectionNavIcon section={section[tab]} />;
+  return <ProgramSectionNavIcon section={tab === "votes" ? "voting" : "rubric"} />;
 }
 
 export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: {
@@ -91,17 +99,34 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
         </div>
       </header>
       <UiNav aria-label="프로그램 관리 탭" className={`mt-5 ${navStyles.root} ${navStyles.management}`}>
-        {PROGRAM_MANAGEMENT_TABS.map((entry) => (
-          <Link
-            key={entry.key}
-            href={programManagementHref(program.id, entry.key)}
-            aria-current={entry.key === tab ? "page" : undefined}
-            className={`${navStyles.item} ${entry.key === tab ? navStyles.itemActive : ""} ${entry.key === "advisors" ? navStyles.admin : ""}`}
-          >
-            <ManagementTabIcon tab={entry.key} /><UiText>{entry.label}</UiText>{entry.key === "advisors" ? <small><UiText>{"관리 전용"}</UiText></small> : null}
-          </Link>
-        ))}
+        {TOP_TABS.map((entry) => {
+          const active = entry.key === "votes" ? isEvaluationTab(tab) : entry.key === tab;
+          return (
+            <Link
+              key={entry.key}
+              href={programManagementHref(program.id, entry.key)}
+              aria-current={active ? "page" : undefined}
+              className={`${navStyles.item} ${active ? navStyles.itemActive : ""}`}
+            >
+              <ProgramSectionNavIcon section={entry.icon} /><UiText>{entry.label}</UiText>
+            </Link>
+          );
+        })}
       </UiNav>
+      {isEvaluationTab(tab) ? (
+        <UiNav aria-label="평가 화면" className={navStyles.subnav}>
+          {PROGRAM_MANAGEMENT_TABS.filter(({ key }) => isEvaluationTab(key)).map((entry) => (
+            <Link
+              key={entry.key}
+              href={programManagementHref(program.id, entry.key)}
+              aria-current={entry.key === tab ? "page" : undefined}
+              className={`${navStyles.subItem} ${entry.key === tab ? navStyles.subItemActive : ""}`}
+            >
+              <EvaluationTabIcon tab={entry.key} /><UiText>{entry.label}</UiText>
+            </Link>
+          ))}
+        </UiNav>
+      ) : null}
     </>
   );
 }
@@ -153,14 +178,15 @@ export async function ProgramManagementWorkspace({
     const tracks = divisions.map((division) => ({ name: division.name }));
     const assignedIds = new Set(managers.map(({ userId }) => userId));
     const managerCandidates: ProgramManagerCandidate[] = admins.map((admin) => ({ ...admin, assigned: assignedIds.has(admin.id) }));
-    content = <>
-      <ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, icon: program.icon, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} />
+    // 칸마다 저장 단추가 따로 있다. 서로 다른 검사(분과 삭제 확인, 직접 지원 전환)를 거쳐서다.
+    // 되돌릴 수 없는 운영 종료는 저장 단추들 사이에 두지 않고 맨 아래에 따로 둔다.
+    content = <div className="grid gap-7">
+      <div id="basic" className="scroll-mt-24"><ProgramBasicInfoPanel program={{ id: program.id, name: program.name, category: program.category, icon: program.icon, isPublic: program.isPublic === true, endsAt: program.endsAt }} categoryOptions={categoryOptions} tracks={tracks} /></div>
       <ProgramManagerPanel programId={program.id} candidates={managerCandidates} />
-    </>;
-  } else if (tab === "operation") {
-    content = <ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, projectTeamMinSize: program.projectTeamMinSize ?? 2, projectTeamMaxSize: program.projectTeamMaxSize ?? 6 }} />;
-  } else if (tab === "schedule") {
-    content = <ProgramSchedulePanel targetMode={targetMode} program={{ id: program.id, startsAt: program.startsAt, endsAt: program.endsAt, registrationStartsAt: program.projectRegistrationStartsAt ?? program.startsAt, registrationEndsAt: program.projectRegistrationEndsAt ?? program.endsAt, recruitmentStartsAt: program.recruitmentStartsAt, recruitmentEndsAt: program.recruitmentEndsAt, executionStartsAt: program.executionStartsAt, executionEndsAt: program.executionEndsAt, studentProjectCreationEnabled: program.studentProjectCreationEnabled }} />;
+      <div id="operation" className="scroll-mt-24"><ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, projectTeamMinSize: program.projectTeamMinSize ?? 2, projectTeamMaxSize: program.projectTeamMaxSize ?? 6 }} /></div>
+      <div id="schedule" className="scroll-mt-24"><ProgramSchedulePanel targetMode={targetMode} program={{ id: program.id, startsAt: program.startsAt, endsAt: program.endsAt, registrationStartsAt: program.projectRegistrationStartsAt ?? program.startsAt, registrationEndsAt: program.projectRegistrationEndsAt ?? program.endsAt, recruitmentStartsAt: program.recruitmentStartsAt, recruitmentEndsAt: program.recruitmentEndsAt, executionStartsAt: program.executionStartsAt, executionEndsAt: program.executionEndsAt, studentProjectCreationEnabled: program.studentProjectCreationEnabled }} /></div>
+      <div id="close" className={`scroll-mt-24 ${styles.panel}`}><section className={styles.section}><ProgramStatusForm id={program.id} isPublic={program.isPublic === true} endsAt={program.endsAt} showVisibility={false} /></section></div>
+    </div>;
   } else if (tab === "votes") {
     const refreshedAt = new Date();
     const votingResults = program.votingPolicy ? await new ProjectVotingService(new PrismaProjectVotingRepository(prisma), () => refreshedAt).getResults(actor, program.id) : null;
@@ -186,8 +212,10 @@ export async function ProgramManagementWorkspace({
     ]);
     const definitions = records.map(({ reports, ...definition }) => ({ ...definition, versionCount: reports.reduce((sum, report) => sum + report._count.versions, 0) }));
     const submissionTeams = teamRecords.map((team) => ({ id: team.id, name: team.name, projectTitle: team.project.title, fileCount: team._count.storedFiles }));
+    const matrix = await programReportMatrix(prisma, program.id, new Date());
     content = <div className={styles.panel}>
-      <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section>
+      <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"팀별 제출 현황"}</UiText></h2></header><ProgramReportMatrixTable matrix={matrix} /></section>
+      <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"보고서와 마감일"}</UiText></h2></header><ProgramReportRequirementForm programId={program.id} definitions={definitions} /></section>
       <section className={styles.section}><header className={styles.sectionHeader}><h2><UiText>{"제출물 다운로드"}</UiText></h2><p><UiText>{"팀을 선택해 보고서와 결과물을 ZIP으로 내려받습니다. 관리자만 사용할 수 있습니다."}</UiText></p></header><ProgramSubmissionDownload programId={program.id} teams={submissionTeams} /></section>
     </div>;
   } else if (tab === "advisors") {

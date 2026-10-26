@@ -1,6 +1,7 @@
 "use client";
 
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
 import { ActiveProjectFilters } from "@/app/topics/_components/active-project-filters";
@@ -50,7 +51,7 @@ export function PastProjectsView({ projects, total, page, totalPages, query, pro
       hrefForPage={(targetPage) => topicsHref({ view: "past", programId, divisionId, q: query, page: targetPage })}
       ballot={ballot}
       votingResults={votingResults}
-      showSubmissionManagement={adminProjectData !== undefined}
+      submissionHref={adminProjectData !== undefined && programId ? programManagementHref(programId, "reports") : undefined}
       renderItem={(project, voteSelection) => {
         const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === project.topicId);
         const cardData = adminDataByTopicId.get(project.topicId);

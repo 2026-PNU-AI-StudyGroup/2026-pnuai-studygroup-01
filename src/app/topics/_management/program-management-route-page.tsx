@@ -13,7 +13,9 @@ import { ProjectProgramService } from "@/modules/project-program/application/man
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
 import {
+  legacyProgramManagementAnchor,
   resolveProgramManagementTab,
+  type LegacyProgramManagementTab,
   programCreateHref,
   programManagementHref,
   programManagementTabs,
@@ -65,7 +67,7 @@ function defaultProgramId(
 function canonicalManagementTab(tabSegments: string[] | undefined): {
   tab: ProgramManagementTab;
   canonical: boolean;
-  legacy: "tracks" | null;
+  legacy: LegacyProgramManagementTab | null;
 } {
   if (!tabSegments?.length) return { tab: "settings", canonical: true, legacy: null };
   if (tabSegments.length !== 1) return { tab: "settings", canonical: false, legacy: null };
@@ -98,7 +100,9 @@ export async function ProgramManagementRoutePage({
     : fallbackProgramId;
   const { tab, canonical, legacy } = canonicalManagementTab(tabSegments);
   if (selectedProgramId !== requestedProgramId || !canonical) {
-    redirect(`${programManagementHref(selectedProgramId, tab)}${legacy === "tracks" ? "#divisions" : ""}`);
+    // 예전 일정 탭으로 직접 지원 전환을 이어 가던 링크는 targetMode 를 들고 온다. 설정으로 옮겨도 이어지게 남긴다.
+    const query = targetMode === "DIRECT" ? "?targetMode=DIRECT" : "";
+    redirect(`${programManagementHref(selectedProgramId, tab)}${query}${legacyProgramManagementAnchor(legacy)}`);
   }
 
   const sidebarItems = buildAdminProgramSidebarItems(

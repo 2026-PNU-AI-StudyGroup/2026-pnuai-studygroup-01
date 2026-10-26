@@ -17,7 +17,6 @@ import { ProgramPeriodRow, ProgramTeamSizeRange, ProgramVisibilitySettings, type
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import formStyles from "@/app/topics/_management/program-form.module.css";
 import styles from "@/app/topics/_management/program-management.module.css";
-import { ProgramStatusForm } from "@/app/topics/_management/program-status-form";
 import { ProgramVotingResultVisibilityFields } from "@/app/topics/_management/program-voting-result-visibility";
 import type { ProgramVotingPolicyDetails } from "@/modules/project-program/domain/project-program-policy";
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
@@ -81,9 +80,6 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
       </div> : null}
       <ActionBar state={state} pending={pending} label={state.status === "confirm" ? "분과 삭제 확인 후 저장" : "기본 정보 저장"} />
     </form>
-    <section className={styles.section}>
-      <ProgramStatusForm id={program.id} isPublic={program.isPublic} endsAt={program.endsAt} showVisibility={false} />
-    </section>
   </div>;
 }
 
@@ -118,7 +114,7 @@ export function ProgramOperationPanel({ program }: { program: { id: string; advi
       </FormSection>
       {requiresSchedule ? <div className={styles.transitionNotice}>
         <p><UiText>{"직접 지원 방식으로 바꾸려면 모집 기간을 함께 설정해야 합니다."}</UiText></p>
-        {hasUnsavedAdvisorChange ? <><input type="hidden" name="operationIntent" value="ADVISOR_ONLY" /><ActionBar state={state} pending={pending} label="지도교수 설정 저장" /></> : <Link className="button-primary" href={`${programManagementHref(program.id, "schedule")}?targetMode=DIRECT`}><UiText>{"모집 기간 설정으로 이동"}</UiText></Link>}
+        {hasUnsavedAdvisorChange ? <><input type="hidden" name="operationIntent" value="ADVISOR_ONLY" /><ActionBar state={state} pending={pending} label="지도교수 설정 저장" /></> : <Link className="button-primary" href={`${programManagementHref(program.id)}?targetMode=DIRECT#schedule`}><UiText>{"모집 기간 설정으로 이동"}</UiText></Link>}
       </div> : <ActionBar state={state} pending={pending} label="운영 설정 저장" />}
     </form>
   </div>;

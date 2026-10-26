@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { isTopicRecruiting, ProjectApplicationAction } from "@/app/topics/_components/project-application-action";
@@ -155,7 +156,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       headerAction={registrationAction}
       ballot={ballot}
       votingResults={votingResults}
-      showSubmissionManagement={adminProjectData !== undefined}
+      submissionHref={adminProjectData !== undefined && programId ? programManagementHref(programId, "reports") : undefined}
       renderItem={(topic, voteSelection) => (
         <ProjectCard
           topic={topic}

@@ -270,7 +270,7 @@ export async function updateProgramOperationAction(_state: ProgramActionState, f
     if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
     throw error;
   }
-  refreshManagement(programId.data, "operation");
+  refreshManagement(programId.data);
   return input.data.operationIntent === "ADVISOR_ONLY"
     ? { status: "success", message: "지도교수 설정을 저장했습니다.", savedAdvisorEnabled: input.data.advisorEnabled }
     : { status: "success", message: "운영 설정을 저장했습니다." };
@@ -297,7 +297,7 @@ export async function updateProgramScheduleAction(_state: ProgramActionState, fo
     if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
     throw error;
   }
-  refreshManagement(programId.data, "schedule");
+  refreshManagement(programId.data);
   return { status: "success", message: "일정을 저장했습니다." };
 }
 
