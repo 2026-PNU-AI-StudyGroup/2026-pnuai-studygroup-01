@@ -107,17 +107,28 @@ describe("ProgramManagementRoutePage", () => {
     }));
   });
 
-  it("직접 지원 전환을 위한 일정 탭 상태를 관리 화면에 전달한다", async () => {
+  it("직접 지원 전환 상태를 설정 화면에 전달한다", async () => {
     render(await ProgramManagementRoutePage({
       requestedProgramId: "program-1",
-      tabSegments: ["schedule"],
       targetMode: "DIRECT",
     }));
 
     expect(programManagementWorkspace).toHaveBeenCalledWith(expect.objectContaining({
-      tab: "schedule",
+      tab: "settings",
       targetMode: "DIRECT",
     }));
+  });
+
+  it("예전 일정 탭 주소는 직접 지원 전환을 들고 설정의 일정 칸으로 보낸다", async () => {
+    redirect.mockImplementationOnce((target: string) => {
+      throw new Error(`REDIRECT:${target}`);
+    });
+
+    await expect(ProgramManagementRoutePage({
+      requestedProgramId: "program-1",
+      tabSegments: ["schedule"],
+      targetMode: "DIRECT",
+    })).rejects.toThrow("REDIRECT:/topics/manage/program-1?targetMode=DIRECT#schedule");
   });
 
   it.each([
@@ -125,6 +136,7 @@ describe("ProgramManagementRoutePage", () => {
     { programId: "program-1", tabSegments: ["unknown"], href: "/topics/manage/program-1" },
     { programId: "missing", tabSegments: ["votes"], href: "/topics/manage/program-1/votes" },
     { programId: "program-1", tabSegments: ["tracks"], href: "/topics/manage/program-1#divisions" },
+    { programId: "program-1", tabSegments: ["operation"], href: "/topics/manage/program-1#operation" },
   ])("비정식 주소를 $href로 정규화한다", async ({ programId, tabSegments, href }) => {
     redirect.mockImplementationOnce((target: string) => {
       throw new Error(`REDIRECT:${target}`);

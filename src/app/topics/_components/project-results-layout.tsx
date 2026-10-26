@@ -46,7 +46,7 @@ export function ProjectResultsLayout<T>({
   headerAction,
   ballot,
   votingResults,
-  showSubmissionManagement,
+  submissionHref,
 }: {
   items: T[];
   itemKey: (item: T) => string;
@@ -63,7 +63,8 @@ export function ProjectResultsLayout<T>({
   headerAction?: ReactNode;
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
-  showSubmissionManagement?: boolean;
+  /** 관리자에게만 넘긴다. 팀 x 보고서 현황표로 간다. */
+  submissionHref?: string;
 }) {
   const voteSelection = useProjectVoteSelection(ballot);
   return (
@@ -72,7 +73,7 @@ export function ProjectResultsLayout<T>({
         {headerAction}
         <ProjectVoteStatusPill selection={voteSelection} />
         {votingResults ? <ProjectVoteResultsDialog view={votingResults} /> : null}
-        {showSubmissionManagement ? <button type="button" className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs" disabled><DocumentIcon className="size-4 shrink-0" /><UiText>{"제출물 관리"}</UiText></button> : null}
+        {submissionHref ? <Link href={submissionHref} className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs"><DocumentIcon className="size-4 shrink-0" /><UiText>{"보고서 현황"}</UiText></Link> : null}
         <h2 id="project-results-title" className="sr-only"><UiText>{listLabel}</UiText></h2>
         <p className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]">
           <UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText>

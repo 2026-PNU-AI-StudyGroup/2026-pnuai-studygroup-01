@@ -59,10 +59,26 @@
 .itemActive { color: var(--primary); }
 .itemActive::after { background: var(--primary); }
 
-.management { grid-template-columns: repeat(7, minmax(max-content, 1fr)); }
+/* 관리 탭은 세 칸이라 폭을 나눠 늘이지 않고 왼쪽부터 붙인다. */
+.management { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; justify-content: start; }
 
-.admin { flex: 0 0 auto; border-left: 1px solid var(--line); margin-left: .25rem; }
-.admin small { color: var(--muted); font-size: .625rem; font-weight: 700; }
+/* 평가 아래 네 화면. 위 줄과 구분되게 작은 알약으로 둔다. */
+.subnav { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: 1rem; }
+.subItem {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: .4rem;
+  border-radius: var(--radius-control);
+  padding: 0 .875rem;
+  color: var(--muted);
+  font-size: .8125rem;
+  font-weight: 700;
+  transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
+}
+.subItem svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.subItem:hover, .subItem:focus-visible { background: var(--surface-subtle); color: var(--ink); }
+.subItemActive, .subItemActive:hover { background: var(--primary-subtle); color: var(--primary); }
 
 @media (max-width: 63.9375rem) {
   .root { top: 4.5rem; }

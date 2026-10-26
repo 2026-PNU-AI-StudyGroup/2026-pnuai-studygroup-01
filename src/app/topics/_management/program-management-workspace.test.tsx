@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProgramManagementHeader } from "@/app/topics/_management/program-management-workspace";
@@ -40,11 +40,22 @@ describe("ProgramManagementHeader", () => {
     );
   });
 
-  it("숫자 없이 여섯 설정 탭과 관리 전용 자문위원 탭을 표시한다", () => {
-    render(<ProgramManagementHeader program={program} tab="operation" pendingApprovalCount={0} />);
+  it("위 줄에는 설정, 보고서, 평가 세 칸만 둔다", () => {
+    render(<ProgramManagementHeader program={program} tab="settings" pendingApprovalCount={0} />);
 
-    expect(screen.getByRole("link", { name: "기본 정보" })).toHaveAttribute("href", "/topics/manage/program-1");
-    expect(screen.getByRole("link", { name: "운영 설정" })).toHaveAttribute("href", "/topics/manage/program-1/operation");
-    expect(screen.getByRole("link", { name: "자문위원관리 전용" })).toHaveAttribute("href", "/topics/manage/program-1/advisors");
+    const tabs = screen.getByRole("navigation", { name: "프로그램 관리 탭" });
+    expect(within(tabs).getAllByRole("link").map((link) => link.textContent)).toEqual(["설정", "보고서", "평가"]);
+    expect(within(tabs).getByRole("link", { name: "설정" })).toHaveAttribute("aria-current", "page");
+    expect(within(tabs).getByRole("link", { name: "평가" })).toHaveAttribute("href", "/topics/manage/program-1/votes");
+    expect(screen.queryByRole("navigation", { name: "평가 화면" })).not.toBeInTheDocument();
+  });
+
+  it("평가 안에서는 투표, 채점표, 집계, 자문위원을 아래 줄로 나눈다", () => {
+    render(<ProgramManagementHeader program={program} tab="advisors" pendingApprovalCount={0} />);
+
+    expect(within(screen.getByRole("navigation", { name: "프로그램 관리 탭" })).getByRole("link", { name: "평가" })).toHaveAttribute("aria-current", "page");
+    const evaluation = screen.getByRole("navigation", { name: "평가 화면" });
+    expect(within(evaluation).getAllByRole("link").map((link) => link.textContent)).toEqual(["투표", "채점표", "집계", "자문위원"]);
+    expect(within(evaluation).getByRole("link", { name: "자문위원" })).toHaveAttribute("aria-current", "page");
   });
 });
