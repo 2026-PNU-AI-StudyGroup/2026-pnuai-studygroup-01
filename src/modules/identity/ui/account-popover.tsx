@@ -7,8 +7,6 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { useSignOut } from "@/modules/identity/ui/use-sign-out";
 import type { SiteLocale } from "@/modules/translation/domain/site-locale";
-import type { SiteTheme } from "@/shared/ui/appearance";
-import { ThemeChoice } from "@/shared/ui/theme-choice";
 
 export function AccountPopover({
   userName,
@@ -18,7 +16,6 @@ export function AccountPopover({
   placement = "side",
   inverse = false,
   locale,
-  theme = "system",
 }: {
   userName: string;
   roleLabel: string;
@@ -27,7 +24,6 @@ export function AccountPopover({
   placement?: "side" | "below";
   inverse?: boolean;
   locale: SiteLocale;
-  theme?: SiteTheme;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -157,7 +153,6 @@ export function AccountPopover({
                 <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <ThemeChoice initialTheme={theme} />
             <button
               type="button"
               onClick={signOut}

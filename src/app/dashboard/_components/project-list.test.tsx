@@ -77,6 +77,31 @@ describe("내 프로젝트 통합 화면", () => {
     expect(screen.queryByText("보고서")).not.toBeInTheDocument();
   });
 
+  it("작업 공간과 같은 규칙으로 기한 지난 할 일을 먼저 보이고 기한 초과로 표시한다", () => {
+    const now = new Date("2026-08-10T00:00:00Z");
+    const [first, second] = team.tasks;
+    const tasks = [
+      first,
+      second,
+      { id: "task-3", title: "프로토타입 테스트", status: "IN_PROGRESS" as const, completedAt: null, dueAt: new Date("2026-08-20T00:00:00Z"), assignees: [] },
+      { id: "task-4", title: "중간 발표 자료", status: "TODO" as const, completedAt: null, dueAt: new Date("2026-08-05T00:00:00Z"), assignees: [] },
+    ];
+    render(<ProjectList role="STUDENT" teams={[{ ...team, tasks }]} view="active" now={now} />);
+
+    expect(screen.getByText("다음 할 일")).toBeInTheDocument();
+    expect(screen.getByText("중간 발표 자료")).toBeInTheDocument();
+    expect(screen.queryByText("프로토타입 테스트")).not.toBeInTheDocument();
+    expect(screen.getByText("기한 초과")).toBeInTheDocument();
+  });
+
+  it("기한이 남은 할 일에는 기한 초과를 붙이지 않는다", () => {
+    const now = new Date("2026-08-01T00:00:00Z");
+    render(<ProjectList role="STUDENT" teams={[team]} view="active" now={now} />);
+
+    expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
+    expect(screen.queryByText("기한 초과")).not.toBeInTheDocument();
+  });
+
   it("할 일이 없으면 다음 할 일 없음 상태를 표시한다", () => {
     render(<ProjectList role="STUDENT" teams={[{ ...team, taskCount: 0, completedTaskCount: 0, tasks: [] }]} />);
 

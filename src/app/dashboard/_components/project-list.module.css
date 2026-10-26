@@ -46,7 +46,7 @@
   gap: 1.25rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  background: white;
+  background: var(--surface);
   padding: 1.4rem;
   transition:
     border-color var(--snap-duration) var(--snap-ease),
@@ -199,6 +199,9 @@
 }
 
 .nextTask > span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 800;
@@ -226,6 +229,10 @@
 .nextTask time {
   flex: 0 0 auto;
   font-weight: 750;
+}
+
+.nextTask time[data-overdue] {
+  color: var(--danger);
 }
 
 .cardLink {

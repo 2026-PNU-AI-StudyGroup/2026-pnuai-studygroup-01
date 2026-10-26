@@ -46,7 +46,13 @@ describe("ProgramSidebar", () => {
     expect(within(navigation).getByText("창의융합 해커톤 2026")).toBeInTheDocument();
     expect(within(navigation).getByText("진행 중")).toBeInTheDocument();
     expect(within(navigation).getAllByText("종료").length).toBeGreaterThan(0);
-    expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 없음");
+    expect(container.querySelector("summary")).toHaveTextContent("프로그램프로그램 선택");
+  });
+
+  it("고른 프로그램이 목록에 없으면 넘겨받은 이름을 접힌 칸에 보인다", () => {
+    const { container } = render(<ProgramSidebar items={items} selectedId="ended-program" selectedName="제5회 해커톤" categoryOrder={categoryOrder} />);
+
+    expect(container.querySelector("summary")).toHaveTextContent("프로그램제5회 해커톤");
   });
 
   it("운영자가 정한 차례를 그대로 따른다", () => {

@@ -5,7 +5,7 @@ import {
   presentTasks,
   schedulePhaseState,
   type TaskPageItem,
-} from "@/app/projects/[projectId]/_lib/task-page-presentation";
+} from "@/modules/team/ui/task-presentation";
 
 function task(
   id: string,

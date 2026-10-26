@@ -101,4 +101,15 @@ describe("공지 대상 스코프 where", () => {
     });
   });
 
+  it("팝업은 마지막으로 고친 날부터 14일 안의 공지만 띄운다", async () => {
+    const findMany = vi.fn(async () => []);
+    const repository = new PrismaAnnouncementRepository({ announcement: { findMany } } as unknown as PrismaClient);
+
+    await repository.listPopups(new Date("2026-10-26T00:00:00.000Z"));
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ popup: true, updatedAt: { gte: new Date("2026-10-12T00:00:00.000Z") } }),
+    }));
+  });
+
 });

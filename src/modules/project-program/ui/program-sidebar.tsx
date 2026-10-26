@@ -241,9 +241,11 @@ function CategoryProgramGroup({
   );
 }
 
-export function ProgramSidebar({ items, selectedId, title = "프로그램", showSettings = false, selectedItemLinkable = false, categoryOrder = [] }: {
+export function ProgramSidebar({ items, selectedId, selectedName, title = "프로그램", showSettings = false, selectedItemLinkable = false, categoryOrder = [] }: {
   items: ProgramSidebarItem[];
   selectedId?: string;
+  /** 고른 프로그램이 목록에 없을 때(종료된 프로그램의 프로젝트 등) 접힌 칸에 보일 이름. */
+  selectedName?: string;
   title?: ReactNode;
   showSettings?: boolean;
   selectedItemLinkable?: boolean;
@@ -323,7 +325,7 @@ export function ProgramSidebar({ items, selectedId, title = "프로그램", show
     <div className="flex flex-col px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:px-3 lg:py-8">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{title}</UiText>}
-        label={<UiText>{selectedProgram?.name ?? "프로그램 없음"}</UiText>}
+        label={<UiText>{selectedProgram?.name ?? selectedName ?? "프로그램 선택"}</UiText>}
         meta={selectedProgram ? <UiText>{selectedProgram.visibility === "private" ? "비공개" : selectedProgram.votingEndsAt ? "투표 중" : selectedProgram.status === "active" ? "진행 중" : selectedProgram.status === "draft" ? "초안" : "종료"}</UiText> : undefined}
       >
         <div className="mb-3 flex items-center justify-between gap-3 px-2">

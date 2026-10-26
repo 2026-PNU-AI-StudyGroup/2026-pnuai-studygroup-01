@@ -63,8 +63,10 @@ import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
 
+// 관리자 메뉴 이름이 "프로젝트 현황"이라 탭 제목도 같은 이름을 쓴다.
 export async function generateMetadata(): Promise<Metadata> {
-  return getLocalizedMetadata("프로젝트 찾기");
+  const actor = await getCurrentActor();
+  return getLocalizedMetadata(actor?.role === "ADMIN" ? "프로젝트 현황" : "프로젝트 찾기");
 }
 
 type TopicsSearchParams = {

@@ -32,7 +32,7 @@ import { prisma } from "@/shared/infrastructure/database/prisma";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { AccountIcon, BarChartIcon } from "@/shared/ui/workspace-icons";
 
-const TABS: Array<{ key: ProgramManagementTab; label: string }> = [
+export const PROGRAM_MANAGEMENT_TABS: Array<{ key: ProgramManagementTab; label: string }> = [
   { key: "settings", label: "기본 정보" },
   { key: "operation", label: "운영 설정" },
   { key: "schedule", label: "일정" },
@@ -91,7 +91,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
         </div>
       </header>
       <UiNav aria-label="프로그램 관리 탭" className={`mt-5 ${navStyles.root} ${navStyles.management}`}>
-        {TABS.map((entry) => (
+        {PROGRAM_MANAGEMENT_TABS.map((entry) => (
           <Link
             key={entry.key}
             href={programManagementHref(program.id, entry.key)}

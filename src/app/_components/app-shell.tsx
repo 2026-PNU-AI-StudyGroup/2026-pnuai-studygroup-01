@@ -21,12 +21,7 @@ import { I18nProvider } from "@/modules/translation/ui/i18n-provider";
 import { AppToaster } from "@/shared/ui/app-toaster";
 import { LanguagePopover } from "@/modules/translation/ui/language-popover";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import {
-  SIDEBAR_COOKIE,
-  THEME_COOKIE,
-  normalizeSidebarState,
-  normalizeSiteTheme,
-} from "@/shared/ui/appearance";
+import { SIDEBAR_COOKIE, normalizeSidebarState } from "@/shared/ui/appearance";
 import { Brand } from "@/shared/ui/brand";
 import { SidebarToggle } from "@/shared/ui/sidebar-toggle";
 
@@ -172,11 +167,10 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
   const shellCopy = locale === "ko"
     ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
     : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
-  // 접힘 여부와 밝기는 루트 레이아웃이 html 에 이미 적어 두었다. 여기서는 손잡이와
-  // 테마 고르는 자리가 처음부터 같은 값을 들고 있도록 같은 쿠키를 한 번 더 읽는다.
+  // 접힘 여부는 루트 레이아웃이 html 에 이미 적어 두었다. 여기서는 손잡이가
+  // 처음부터 같은 값을 들고 있도록 같은 쿠키를 한 번 더 읽는다.
   const cookieStore = await cookies();
   const sidebarState = normalizeSidebarState(cookieStore.get(SIDEBAR_COOKIE)?.value);
-  const theme = normalizeSiteTheme(cookieStore.get(THEME_COOKIE)?.value);
   return (
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>
     <div className="min-h-screen bg-[var(--workspace)]">
@@ -209,7 +203,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
               openNotification={openNotificationAction}
             />
             <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} />
-            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} theme={theme} />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} />
           </div>
           </div>
         </aside>
@@ -225,7 +219,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
                   openNotification={openNotificationAction}
                 />
                 <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} placement="below" />
-                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} theme={theme} />
+                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} />
               </div>
             </div>
           </header>
