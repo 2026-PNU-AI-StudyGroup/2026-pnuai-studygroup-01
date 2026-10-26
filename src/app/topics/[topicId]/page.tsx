@@ -83,7 +83,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ to
   const teamMembers = topic.teamMembers?.filter(({ role }) => role === "MEMBER") ?? [];
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} selectedName={topic.programName} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
       {/* 관리자는 좌측 메뉴에서 개별 프로젝트 관리 화면에 닿을 길이 없었다.
           진행 현황으로 보낸다. 그 안에 관리자에게만 프로젝트 삭제 탭이 생긴다. */}
       <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{actor.role === "ADMIN" ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link> : null}</UiNav>

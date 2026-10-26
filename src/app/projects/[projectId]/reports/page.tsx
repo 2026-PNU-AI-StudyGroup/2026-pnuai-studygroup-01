@@ -101,7 +101,11 @@ function ReportCard({
         <EmptyState variant="compact" title="아직 제출된 버전이 없습니다" description="보고서를 제출하면 버전별 검토 이력이 표시됩니다." />
       )}
 
-      <section className="mt-5 border-t border-[var(--line)] pt-5">
+      {/*
+        피드백이 없을 때 빈 상태를 띄우면 바로 위 승인 의견과 부딪혀 의견이 없는 것처럼 읽힌다.
+        남길 사람에게만 빈 자리를 보이고, 읽는 사람에게는 있을 때만 보인다.
+      */}
+      {report.feedback.length || canReview ? <section className="mt-5 border-t border-[var(--line)] pt-5">
         <h3 className="text-sm font-bold"><UiText>{"피드백"}</UiText></h3>
         {report.feedback.length ? (
           <ul className="mt-3 grid gap-2">
@@ -112,9 +116,9 @@ function ReportCard({
               </li>
             ))}
           </ul>
-        ) : <EmptyState variant="compact" title="아직 피드백이 없습니다" />}
+        ) : null}
         {canReview ? <ReportFeedbackForm teamId={teamId} reportId={report.id} /> : null}
-      </section>
+      </section> : null}
     </article>
   );
 }

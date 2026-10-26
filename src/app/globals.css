@@ -17,8 +17,12 @@
   어느 쪽을 쓸지는 color-scheme 이 정한다. 왼쪽이 라이트, 오른쪽이 다크다.
 */
 :root {
-  /* 기본은 기기 설정을 따른다. data-theme 이 붙으면 그쪽이 이긴다. */
-  color-scheme: light dark;
+  /*
+    밝은 화면만 쓴다. 화면 곳곳에 흰색 같은 고정 색이 100곳 넘게 남아 있어서 기기가
+    어두운 모드면 흰 카드 위 옅은 글자가 거의 안 보였다. 어두운 쪽 값은 지우지 않고
+    남겨 둔다. 고정 색을 다 걷어낸 뒤 여기를 light dark 로 바꾸면 다시 살아난다.
+  */
+  color-scheme: light;
 
   --workspace: light-dark(#f6f7f9, #0f1117);
   --sidebar: light-dark(#ffffff, #15171f);
@@ -73,15 +77,6 @@
   --snap-ease: cubic-bezier(0.2, 0, 0, 1);
   --silk-duration: 220ms;
   --silk-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 사용자가 직접 고른 쪽. 기기 설정보다 앞선다. */
-:root[data-theme="light"] {
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
 }
 
 /*

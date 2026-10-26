@@ -186,7 +186,7 @@ export function AnnouncementForm({
         <div className="grid gap-1">
           <Toggle name="popup" defaultChecked={initialPopup} label="로그인 후 화면에 팝업으로 띄우기" />
           <p className="text-xs font-medium text-[var(--muted)]">
-            <UiText>{"대상을 지정하지 않은 전체 공지에만 적용됩니다. 읽는 사람은 창을 닫거나 오늘 하루 보지 않을 수 있습니다."}</UiText>
+            <UiText>{"대상을 지정하지 않은 전체 공지에만 적용됩니다. 올리거나 고친 날부터 14일 동안 뜨고, 읽는 사람은 창을 닫거나 오늘 하루 보지 않을 수 있습니다."}</UiText>
           </p>
         </div>
         {uploadProgress ? (

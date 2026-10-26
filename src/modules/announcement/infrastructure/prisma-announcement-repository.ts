@@ -14,6 +14,9 @@ import { isAnnouncementAttachmentSetAllowed } from "@/modules/announcement/domai
 import { allowsPopup } from "@/modules/announcement/domain/announcement-policy";
 import type { UserRole } from "@/modules/identity/domain/user-role";
 
+/** 팝업 공지가 뜨는 날수. 공지 작성 화면 안내 문구와 맞춘다. */
+const POPUP_DAYS = 14;
+
 const selectAnnouncement = {
   id: true,
   authorId: true,
@@ -163,9 +166,12 @@ export class PrismaAnnouncementRepository implements AnnouncementRepository {
   }
 
   // 팝업은 화면을 가리므로 몇 장까지만 띄운다. 더 있어도 겹쳐서 읽지 못한다.
-  async listPopups(): Promise<AnnouncementRecord[]> {
+  // 종료일 칸이 없어 마지막으로 고친 날부터 정해진 날수만 띄운다. 지난 마감 안내가
+  // 두 달 뒤에도 뜨는 일을 막는다. 다시 띄우려면 공지를 고쳐 저장한다.
+  async listPopups(now = new Date()): Promise<AnnouncementRecord[]> {
+    const since = new Date(now.getTime() - POPUP_DAYS * 24 * 60 * 60 * 1000);
     const announcements = await this.client.announcement.findMany({
-      where: { popup: true, projectTeamId: null, programId: null, visibility: "AUTHENTICATED" },
+      where: { popup: true, projectTeamId: null, programId: null, visibility: "AUTHENTICATED", updatedAt: { gte: since } },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }, { id: "desc" }],
       take: 3,
       select: selectAnnouncement,

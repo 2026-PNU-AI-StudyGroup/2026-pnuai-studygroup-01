@@ -7,31 +7,27 @@ import {
   calculateReportSubmissionRate,
   hasReportSchedule,
 } from "@/modules/team/domain/project-progress";
+import { presentTasks, taskDeadlineState } from "@/modules/team/ui/task-presentation";
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { StatusBadge } from "@/shared/ui/page-primitives";
 
-function nextTask(team: TeamListItem) {
-  return [...team.tasks]
-    .filter(({ status }) => status !== "DONE")
-    .sort((left, right) => {
-      const statusOrder = Number(right.status === "IN_PROGRESS") -
-        Number(left.status === "IN_PROGRESS");
-      return statusOrder || left.dueAt.getTime() - right.dueAt.getTime();
-    })[0];
-}
-
 function ProjectCard({
   role,
   team,
+  now,
 }: {
   role: UserRole;
   team: TeamListItem;
+  now: Date;
 }) {
   const titleId = `project-${team.id}-title`;
   const actionId = `project-${team.id}-action`;
   const status = teamStatusPresentation[team.status];
-  const task = nextTask(team);
+  // 작업 공간과 같은 규칙으로 고른다. 따로 고르면 카드는 앞으로 할 일처럼 보이는데
+  // 들어가면 기한 초과로 뜨는 어긋남이 생긴다.
+  const task = presentTasks(team.tasks, now).focus;
+  const overdue = task ? taskDeadlineState(task, now) === "OVERDUE" : false;
   const progress = calculateReportSubmissionRate(
     team.submittedReportCount,
     team.reportCount,
@@ -81,13 +77,16 @@ function ProjectCard({
       </div>
 
       <div className={styles.nextTask}>
-        <span><UiText>{team.status === "COMPLETED" ? "마지막 현황" : "다가오는 할 일"}</UiText></span>
+        <span>
+          <UiText>{team.status === "COMPLETED" ? "마지막 현황" : "다음 할 일"}</UiText>
+          {overdue ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
+        </span>
         {task ? (
           <>
             <strong><UiText>{task.title}</UiText></strong>
             <p>
               <UiText>{task.assignees.map(({ name }) => name).join(", ") || "담당자 미정"}</UiText>
-              <time dateTime={task.dueAt.toISOString()}><UiDate value={task.dueAt} mode="date" /></time>
+              <time dateTime={task.dueAt.toISOString()} data-overdue={overdue || undefined}><UiDate value={task.dueAt} mode="date" /></time>
             </p>
           </>
         ) : (
@@ -110,10 +109,12 @@ export function ProjectList({
   role,
   teams,
   view = "all",
+  now = new Date(),
 }: {
   role: UserRole;
   teams: TeamListItem[];
   view?: "all" | "active" | "completed";
+  now?: Date;
 }) {
   const visibleTeams = teams.filter((team) => {
     if (view === "active") return team.status === "IN_PROGRESS";
@@ -141,7 +142,7 @@ export function ProjectList({
       </div>
       <div className={styles.projectGrid}>
         {visibleTeams.map((team) => (
-          <ProjectCard key={team.id} role={role} team={team} />
+          <ProjectCard key={team.id} role={role} team={team} now={now} />
         ))}
       </div>
     </section>

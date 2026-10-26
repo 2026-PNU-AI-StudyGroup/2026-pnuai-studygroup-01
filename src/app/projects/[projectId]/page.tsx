@@ -10,7 +10,7 @@ import {
   presentTasks,
   schedulePhaseState,
   type SchedulePhaseState,
-} from "@/app/projects/[projectId]/_lib/task-page-presentation";
+} from "@/modules/team/ui/task-presentation";
 import { loadTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
@@ -110,7 +110,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
       >
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 id="next-action-title" className="text-base font-bold tracking-[-0.02em]"><UiText>{"다가오는 할 일"}</UiText></h2>
+            <h2 id="next-action-title" className="text-base font-bold tracking-[-0.02em]"><UiText>{"다음 할 일"}</UiText></h2>
             {nextTask ? (
               <>
                 <StatusBadge tone={taskStatusView[nextTask.status].tone}><UiText>{taskStatusView[nextTask.status].label}</UiText></StatusBadge>

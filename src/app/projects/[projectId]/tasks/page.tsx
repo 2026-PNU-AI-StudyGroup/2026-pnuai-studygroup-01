@@ -10,7 +10,7 @@ import {
   taskDeadlineState,
   presentTasks,
   type TaskPageItem,
-} from "@/app/projects/[projectId]/_lib/task-page-presentation";
+} from "@/modules/team/ui/task-presentation";
 import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
