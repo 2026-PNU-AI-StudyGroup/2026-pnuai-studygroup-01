@@ -308,13 +308,19 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       : forAdvisor(hideGraduationProgramsForStudent(programsRaw, actor.role));
     const sidebarPrograms = forAdvisor(hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role));
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
-    // 사이드바 목록 맨 위 프로그램과 기본으로 열리는 프로그램을 같게 맞춘다.
-    // 예전에는 관리자만 맞춰 두어 학생과 교수는 맨 위와 다른 프로그램이 열렸다.
-    // 지난 프로그램은 목록에서 진행 중인 것들 뒤에 붙으므로 맨 위를 정하는 데 영향이 없다.
-    const sidebarOrder = actor.role === "ADMIN"
-      ? orderedProgramSidebarIds(buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts), categoryOrder)
-      : orderedProgramSidebarIds(buildProgramSidebarItems(sidebarPrograms, [], "active", { query }, now), categoryOrder);
-    const programId = resolveProgramSelection(requestedProgramId, programs, sidebarOrder);
+    // 프로그램을 고르지 않고 들어오면 사이드바 맨 위 프로그램을 연다. 운영자가 정한 대분류
+    // 차례가 곧 처음 화면이다. 예전에는 진행 중인 것만 골라, 맨 위 대분류가 모두 끝났으면
+    // 아래쪽 대분류의 프로그램이 열려 차례를 정한 보람이 없었다. 맨 위가 끝난 프로그램이면
+    // 지난 프로젝트 화면으로 연다.
+    if (!requestedProgramId || !programs.some(({ id }) => id === requestedProgramId)) {
+      const items = actor.role === "ADMIN"
+        ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
+        : buildProgramSidebarItems(sidebarPrograms, forAdvisor(hideGraduationProgramsForStudent(await archiveService.listPrograms(), actor.role)), "active", { query }, now);
+      const topId = orderedProgramSidebarIds(items, categoryOrder)[0];
+      const top = items.find(({ id }) => id === topId);
+      if (top) redirect(top.status === "past" ? topicsHref({ view: "past", programId: top.id, q: query }) : topicsHref({ programId: top.id, q: query }));
+    }
+    const programId = resolveProgramSelection(requestedProgramId, programs);
     const requestedDivisionId = firstSearchParam(params.divisionId)?.trim().slice(0, 200) || undefined;
     if (programId && programId !== requestedProgramId) {
       redirect(topicsHref({ programId, q: query, teamStatus: operationFilters?.team, reportStatus: operationFilters?.report, page: requestedPage }));

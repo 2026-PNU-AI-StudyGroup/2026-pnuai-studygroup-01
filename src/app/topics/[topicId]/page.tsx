@@ -47,16 +47,15 @@ export default async function TopicDetailPage({ params, searchParams }: { params
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { topicId } = await params;
-  // 작업 공간에 들어갈 수 있는 사람(팀원, 지도교수, 관리자)에게 프로젝트 주소는 하나다.
-  // 소개와 작업 공간이 따로 있으면 둘 사이를 오가며 같은 정보를 두 번 읽는다.
-  // 방문자에게 어떻게 보이는지는 작업 공간에서 ?view=public 으로 연다.
-  // 자문위원은 권한 조건상 작업 공간이 열리지만 심사는 /advisor 화면에서 한다. 팀 대화와 할 일이
-  // 있는 작업 공간으로 보내지 않고 예전처럼 소개를 보여 준다.
+  // 팀원과 담당 교수, 조교에게 프로젝트 주소는 하나다. 소개와 작업 공간이 따로 있으면 둘 사이를
+  // 오가며 같은 정보를 두 번 읽는다. 방문자에게 어떻게 보이는지는 작업 공간에서 ?view=public 으로 연다.
+  // 관리자는 모든 작업 공간이 열리지만 상세를 보며 평가하는 일이 많아 바로 보내지 않고 버튼만 둔다.
+  // 자문위원도 권한 조건상 작업 공간이 열리지만 심사는 /advisor 화면에서 하므로 버튼도 두지 않는다.
   const canOpenWorkspace = actor.role !== "ADVISOR"
     && await new TeamWorkspaceQueryService(new PrismaTeamWorkspaceQueryRepository(prisma)).canOpen(actor, topicId);
-  if (canOpenWorkspace && (await searchParams).view !== "public") redirect(`/projects/${topicId}`);
+  if (canOpenWorkspace && actor.role !== "ADMIN" && (await searchParams).view !== "public") redirect(`/projects/${topicId}`);
   const workspaceLink = canOpenWorkspace
-    ? <UiNav aria-label="프로젝트 관리" className="mb-5 flex justify-end"><Link href={`/projects/${topicId}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"작업 공간으로"}</UiText></Link></UiNav>
+    ? <UiNav aria-label="프로젝트 관리" className="mb-5 flex justify-end"><Link href={`/projects/${topicId}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link></UiNav>
     : null;
   const audience = actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT";
   const archivedProject = await new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma, audience)).find(topicId);
@@ -109,7 +108,7 @@ export default async function TopicDetailPage({ params, searchParams }: { params
 
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
     <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} selectedName={topic.programName} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
-      <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{canOpenWorkspace ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"작업 공간으로"}</UiText></Link> : null}</UiNav>
+      <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{canOpenWorkspace ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link> : null}</UiNav>
       <ProjectDetailShell
         headerAside={repository ? <ProjectRepositoryCallout repository={repository} /> : undefined}
         heading={<div className="mx-auto w-full max-w-4xl"><p className="text-sm font-semibold text-[var(--muted)]">{topic.programName}{topic.divisionName ? ` · ${topic.divisionName}` : ""}</p><h1 className="mt-3 text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{topic.title}</UiText></h1><div className="mt-6 space-y-2.5">{topic.studentProjectCreationEnabled ? <>{teamLeader ? <div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀장"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{teamLeader.name}</span></div> : null}{teamMembers.length ? <div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀원"}</UiText></span>{teamMembers.map(({ name }) => <span key={name} className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{name}</span>)}</div> : null}</> : <><div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"등록자"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{topic.authorName}</span></div><div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 현황"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></span></div></>}</div>{joinGuide ? <div className="mt-6">{joinGuide}</div> : null}<div className="mt-6 max-w-xs empty:hidden">{applicationAction}</div></div>}
