@@ -248,7 +248,7 @@ export class PrismaTopicQueryRepository
     };
   }
 
-  async findPublished(id: string): Promise<PublicTopicSummary | null> {
+  async findPublished(id: string, viewerId?: string): Promise<PublicTopicSummary | null> {
     const topic = await this.client.topic.findFirst({
       where: {
         id,
@@ -261,7 +261,11 @@ export class PrismaTopicQueryRepository
       },
       include: publicTopicInclude,
     });
-    return topic ? toPublicTopic(topic, null, this.audience) : null;
+    if (!topic) return null;
+    const ownApplication = viewerId
+      ? await this.client.topicApplication.findFirst({ where: { studentId: viewerId, topicId: id }, select: { status: true } })
+      : null;
+    return toPublicTopic(topic, ownApplication?.status ?? null, this.audience);
   }
 
   async findPublishedForAdmin(id: string): Promise<PublicTopicSummary | null> {

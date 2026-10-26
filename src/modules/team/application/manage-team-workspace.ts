@@ -44,6 +44,11 @@ export class TeamWorkspaceQueryService {
     return workspace;
   }
 
+  /** 프로젝트 상세를 여는 사람이 이 프로젝트의 작업 공간에도 들어갈 수 있는지. */
+  canOpen(actor: CurrentActor, projectId: string): Promise<boolean> {
+    return this.workspaceReader.canOpenWorkspace(projectId, actor);
+  }
+
   list(actor: CurrentActor): Promise<TeamListItem[]> {
     return this.workspaceReader.listForActor(actor);
   }

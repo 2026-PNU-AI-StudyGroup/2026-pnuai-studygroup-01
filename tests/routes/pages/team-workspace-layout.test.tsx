@@ -17,6 +17,9 @@ vi.mock("@/app/projects/[projectId]/_actions/team-workspace-actions", () => ({
 vi.mock("@/app/projects/[projectId]/_actions/project-team-membership-actions", () => ({
   projectTeamMembershipAction: vi.fn(),
 }));
+vi.mock("@/app/projects/[projectId]/_actions/team-project-info-actions", () => ({
+  updateTeamProjectInfoAction: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/app/_components/app-shell", () => ({
   AppShell: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -49,7 +52,9 @@ const workspace = {
   id: "team-1",
   topicId: "topic-1",
   name: "모두의 길",
+  programName: "2026 캡스톤디자인",
   topicTitle: "실내 길찾기",
+  topicDescription: "누구나 이동할 수 있는 길을 안내합니다.",
   status: "IN_PROGRESS" as const,
   memberCount: 1,
   taskCount: 0,
@@ -110,6 +115,39 @@ const workspace = {
 };
 
 describe("TeamWorkspaceLayout", () => {
+  it("프로젝트명을 먼저, 팀 이름을 다음에 한 번만 적고 방문자 화면으로 보낸다", async () => {
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
+
+    render(await TeamWorkspaceLayout({ children: <p>프로젝트 본문</p>, params: Promise.resolve({ projectId: "topic-1" }) }));
+
+    const title = screen.getByText("실내 길찾기");
+    expect(title.parentElement?.previousElementSibling).toHaveTextContent("2026 캡스톤디자인");
+    expect(screen.getAllByText("모두의 길")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "방문자 화면 보기" })).toHaveAttribute("href", "/topics/topic-1?view=public");
+  });
+
+  it("팀장은 프로젝트명을 현재 프로젝트명으로 채운 수정 창을 연다", async () => {
+    HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace: { ...workspace, access: { ...workspace.access, isTeamLeader: true } } });
+
+    render(await TeamWorkspaceLayout({ children: <p>프로젝트 본문</p>, params: Promise.resolve({ projectId: "topic-1" }) }));
+
+    fireEvent.click(screen.getByRole("button", { name: "프로젝트 정보 수정" }));
+    // 저장하면 주제 제목이 바뀐다. 팀 이름을 채워 두면 그대로 저장할 때 프로젝트명이 팀 이름으로 덮인다.
+    expect(screen.getByRole("textbox", { name: "프로젝트명" })).toHaveValue("실내 길찾기");
+    expect(screen.getByRole("textbox", { name: "프로젝트 설명" })).toHaveValue("누구나 이동할 수 있는 길을 안내합니다.");
+  });
+
+  it("일반 팀원에게는 수정 단추를 막고 팀장 권한을 알린다", async () => {
+    loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
+
+    render(await TeamWorkspaceLayout({ children: <p>프로젝트 본문</p>, params: Promise.resolve({ projectId: "topic-1" }) }));
+
+    const button = screen.getByRole("button", { name: "프로젝트 정보 수정" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("title", "팀장만 수정할 수 있습니다");
+  });
+
   it("보고서 일정이 없으면 0/0 진행률 대신 명시적 상태를 보여준다", async () => {
     loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
 

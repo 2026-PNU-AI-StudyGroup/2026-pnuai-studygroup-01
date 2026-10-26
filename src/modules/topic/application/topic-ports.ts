@@ -152,7 +152,7 @@ export type PublicTopicPage = {
 
 export interface PublicTopicLister {
   listPublished(query: PublicTopicQuery): Promise<PublicTopicPage>;
-  findPublished(id: string): Promise<PublicTopicSummary | null>;
+  findPublished(id: string, viewerId?: string): Promise<PublicTopicSummary | null>;
 }
 
 // 프로젝트 목록은 한 화면에 다 늘어놓는다. 나눠 담으면 뒷장에 실린 프로젝트가

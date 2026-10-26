@@ -32,7 +32,8 @@ export class ListPublishedTopicsService {
     return this.repository.listPublished(query);
   }
 
-  find(id: string): Promise<PublicTopicSummary | null> {
-    return this.repository.findPublished(id);
+  /** viewerId 를 넘기면 그 학생의 지원 상태를 함께 싣는다. */
+  find(id: string, viewerId?: string): Promise<PublicTopicSummary | null> {
+    return this.repository.findPublished(id, viewerId);
   }
 }

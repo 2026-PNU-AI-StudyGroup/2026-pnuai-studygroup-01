@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
-import { TeamProjectInfoEditDialog } from "@/app/projects/[projectId]/_components/team-project-info-form";
 import { announcementDeleteControls } from "@/app/_components/announcement-delete-controls";
 import { ProgramAnnouncementRail } from "@/modules/announcement/ui/program-announcement-rail";
 import {
@@ -81,28 +79,11 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
     schedule.map(([label, start, end]) => ({ label, start, end, state: schedulePhaseState(start, end, now) })),
     now,
   );
-  const canEditProjectInfo = workspace.access.canSupervise || workspace.access.isTeamLeader;
-  const projectInfoEditAction = workspace.status === "IN_PROGRESS" && (canEditProjectInfo || workspace.access.isTeamMember)
-    ? <TeamProjectInfoEditDialog
-        teamId={workspace.id}
-        programName={workspace.programName}
-        title={workspace.name}
-        description={workspace.topicDescription}
-        disabled={!canEditProjectInfo}
-      />
-    : null;
-  // 조교 관리는 주제 관리 화면에서 한다. 진행 현황에 두면 여기서 할 일과 섞인다.
-  const headerActions = projectInfoEditAction ?? undefined;
 
+  // 프로젝트 이름과 수정 단추는 왼쪽 칸에 있다. 개요는 바로 할 일부터 보인다.
   return (
     <div className="mx-auto max-w-6xl space-y-7">
-      <WorkspacePageHeader
-        eyebrow={workspace.programName}
-        title={workspace.name}
-        description={workspace.topicTitle !== workspace.name ? workspace.topicTitle : undefined}
-        bordered={false}
-        actions={headerActions}
-      />
+      <h1 className="sr-only"><UiText>{workspace.topicTitle}</UiText></h1>
 
       <section
         aria-labelledby="next-action-title"

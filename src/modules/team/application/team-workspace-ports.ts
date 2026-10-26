@@ -101,6 +101,7 @@ export interface TeamWorkspaceReader {
     actor: CurrentActor,
     discussionPage?: number,
   ): Promise<TeamWorkspace | null>;
+  canOpenWorkspace(projectId: string, actor: CurrentActor): Promise<boolean>;
   listForStudent(studentId: string): Promise<TeamListItem[]>;
   listForProfessor(professorId: string): Promise<TeamListItem[]>;
   listAll(): Promise<TeamListItem[]>;

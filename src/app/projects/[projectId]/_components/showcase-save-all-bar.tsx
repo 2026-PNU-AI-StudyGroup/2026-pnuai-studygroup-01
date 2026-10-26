@@ -8,9 +8,9 @@ import { initialReportActionState } from "@/app/projects/[projectId]/_lib/report
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 // 소개 글·영상 링크 폼은 각자 저장 버튼을 갖고 있다. 이 버튼은 그 폼들의 값을 한 번에 모아
-// 저장하고 프로젝트 찾기 화면으로 보낸다. 사진·대표 이미지·자료는 고르는 즉시 올라가므로
+// 저장하고 방문자에게 보이는 프로젝트 상세로 보낸다. 사진·대표 이미지·자료는 고르는 즉시 올라가므로
 // 여기서 다시 저장할 것이 없다.
-export function ShowcaseSaveAllBar({ teamId }: { teamId: string }) {
+export function ShowcaseSaveAllBar({ teamId, topicId }: { teamId: string; topicId: string }) {
   const router = useRouter();
   const [state, setState] = useState(initialReportActionState);
   const [pending, startTransition] = useTransition();
@@ -26,7 +26,7 @@ export function ShowcaseSaveAllBar({ teamId }: { teamId: string }) {
       }
       data.set("teamId", teamId);
       const result = await saveShowcaseBasicsAction(data);
-      if (result.status === "success") router.push("/topics");
+      if (result.status === "success") router.push(`/topics/${topicId}?view=public`);
       else setState(result);
     });
   }
@@ -38,7 +38,7 @@ export function ShowcaseSaveAllBar({ teamId }: { teamId: string }) {
         {state.status === "error" ? (
           <p role="alert" className="mt-1 text-sm font-semibold leading-6 text-[var(--danger)]"><UiText>{state.message}</UiText></p>
         ) : (
-          <p className="muted mt-1 text-sm leading-6"><UiText>{"소개 글과 영상 링크를 저장하고 프로젝트 찾기로 이동합니다."}</UiText></p>
+          <p className="muted mt-1 text-sm leading-6"><UiText>{"소개 글과 영상 링크를 저장하고 방문자 화면으로 이동합니다."}</UiText></p>
         )}
       </div>
       <button type="button" className="button-primary shrink-0" disabled={pending} onClick={saveAll}>

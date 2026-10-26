@@ -26,7 +26,6 @@ export function ProjectMediaCarousel({ items }: { items: ProjectMediaItem[] }) {
         {isEmpty ? (
           <div className="grid w-full place-items-center gap-1 text-center">
             <span className="text-sm font-semibold text-[var(--muted)]"><UiText>{"프로젝트 이미지 준비 중"}</UiText></span>
-            <span className="text-xs font-medium text-[var(--muted)]"><UiText>{"내 프로젝트 > 프로젝트 > 결과물에서 등록할 수 있습니다."}</UiText></span>
           </div>
         ) : current?.kind === "image" ? (
           // /api/files 는 로그인 쿠키를 요구한다. 이미지 최적화 서버는 쿠키 없이 가져가 401 을 받는다.

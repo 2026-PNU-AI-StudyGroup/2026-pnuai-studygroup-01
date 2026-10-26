@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
-import { TopicApplicationEditor } from "@/app/topics/_components/topic-application-editor";
+import { isTopicRecruiting, ProjectApplicationAction } from "@/app/topics/_components/project-application-action";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
 import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
 import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
@@ -22,12 +21,6 @@ import { calculateReportSubmissionRate } from "@/modules/team/domain/project-pro
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
 
-const applicationAction = {
-  PENDING: { label: "지원서 검토 중", href: "/dashboard?view=pending" },
-  REJECTED: { label: "지원 결과 확인", href: "/dashboard?view=rejected" },
-  WITHDRAWN: { label: "철회한 지원 확인", href: "/dashboard?view=rejected" },
-} as const;
-
 type TopicItem = PublicTopicPage["items"][number];
 
 const projectStatusPresentation = {
@@ -35,10 +28,6 @@ const projectStatusPresentation = {
   REJECTED: { label: "반려됨", tone: "danger" },
   ...teamStatusPresentation,
 } as const;
-
-function ArrowIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-2 size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
 
 function AdminProjectCardProgress({ data }: { data: AdminProjectCardData }) {
   const { requiredCount, submittedCount, overdueCount } = data.reportProgress;
@@ -77,7 +66,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
 }) {
   const href = `/topics/${topic.id}`;
   const hasRecruitmentPeriod = Boolean(topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt);
-  const recruiting = !topic.studentProjectCreationEnabled && hasRecruitmentPeriod && topic.recruitmentEnabled && topic.programRecruitmentStartsAt! <= now && topic.programRecruitmentEndsAt! > now && topic.memberCount < topic.capacity;
+  const recruiting = isTopicRecruiting(topic, now);
   const application = topic.ownApplicationStatus;
   const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === topic.id);
   const hasProjectAction = Boolean(application || (canApply && recruiting));
@@ -115,26 +104,7 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
         <>
             {adminData ? <AdminProjectCardProgress data={adminData} /> : null}
             {adminDataEnabled ? <AdminProjectCardActions projectTitle={topic.title} data={adminData} /> : null}
-            {application === "ACCEPTED" ? (
-              <Link href="/dashboard?view=active" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
-                <UiText>{"내 프로젝트"}</UiText> <ArrowIcon />
-              </Link>
-            ) : application ? (
-              <Link href={applicationAction[application].href} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
-                <UiText>{applicationAction[application].label}</UiText> <ArrowIcon />
-              </Link>
-            ) : canApply && recruiting ? (
-              <TopicApplicationEditor
-                topicId={topic.id}
-                topicTitle={topic.title}
-                applicationMode={topic.applicationMode}
-                applicationQuestions={topic.applicationQuestions}
-                capacity={topic.capacity}
-                memberCount={topic.memberCount}
-                teamMaxSize={topic.projectTeamMaxSize ?? 6}
-                leaderTeams={leaderTeams}
-              />
-            ) : null}
+            <ProjectApplicationAction topic={topic} canApply={canApply} recruiting={recruiting} leaderTeams={leaderTeams} />
             {voteCandidate ? (
               <div className={hasProjectAction || adminDataEnabled ? "mt-2" : ""}>
                 <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
