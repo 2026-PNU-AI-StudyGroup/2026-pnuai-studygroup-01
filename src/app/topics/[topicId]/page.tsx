@@ -47,14 +47,13 @@ export default async function TopicDetailPage({ params, searchParams }: { params
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
   const { topicId } = await params;
-  // 작업 공간에 들어갈 수 있는 사람(팀원, 지도교수, 관리자)에게 프로젝트 주소는 하나다.
-  // 소개와 작업 공간이 따로 있으면 둘 사이를 오가며 같은 정보를 두 번 읽는다.
-  // 방문자에게 어떻게 보이는지는 작업 공간에서 ?view=public 으로 연다.
-  // 자문위원은 권한 조건상 작업 공간이 열리지만 심사는 /advisor 화면에서 한다. 팀 대화와 할 일이
-  // 있는 작업 공간으로 보내지 않고 예전처럼 소개를 보여 준다.
+  // 팀원과 담당 교수, 조교에게 프로젝트 주소는 하나다. 소개와 작업 공간이 따로 있으면 둘 사이를
+  // 오가며 같은 정보를 두 번 읽는다. 방문자에게 어떻게 보이는지는 작업 공간에서 ?view=public 으로 연다.
+  // 관리자는 모든 작업 공간이 열리지만 상세를 보며 평가하는 일이 많아 바로 보내지 않고 버튼만 둔다.
+  // 자문위원도 권한 조건상 작업 공간이 열리지만 심사는 /advisor 화면에서 하므로 버튼도 두지 않는다.
   const canOpenWorkspace = actor.role !== "ADVISOR"
     && await new TeamWorkspaceQueryService(new PrismaTeamWorkspaceQueryRepository(prisma)).canOpen(actor, topicId);
-  if (canOpenWorkspace && (await searchParams).view !== "public") redirect(`/projects/${topicId}`);
+  if (canOpenWorkspace && actor.role !== "ADMIN" && (await searchParams).view !== "public") redirect(`/projects/${topicId}`);
   const workspaceLink = canOpenWorkspace
     ? <UiNav aria-label="프로젝트 관리" className="mb-5 flex justify-end"><Link href={`/projects/${topicId}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"작업 공간으로"}</UiText></Link></UiNav>
     : null;

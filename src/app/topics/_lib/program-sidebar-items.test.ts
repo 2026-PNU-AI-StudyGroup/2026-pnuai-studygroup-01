@@ -162,4 +162,14 @@ describe("대분류 차례", () => {
 
     expect(orderedProgramSidebarIds(items, ["해커톤", "캡스톤"])).toEqual(["b", "a"]);
   });
+
+  it("대분류 안에서는 사이드바처럼 최근 연도가 위다", () => {
+    const items = [
+      item("old", "해커톤", { startYear: 2024 }),
+      item("new", "해커톤", { startYear: 2026 }),
+      item("other", "인턴십", { startYear: 2026 }),
+    ];
+
+    expect(orderedProgramSidebarIds(items, ["해커톤", "인턴십"])).toEqual(["new", "old", "other"]);
+  });
 });

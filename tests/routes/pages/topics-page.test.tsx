@@ -20,6 +20,7 @@ const {
   listAdminPendingApprovalCounts,
   parseProgramManagementTab,
   redirect,
+  listProgramCategoryOrder,
 } = vi.hoisted(() => ({
   getCurrentActor: vi.fn(),
   listArchived: vi.fn(),
@@ -39,6 +40,7 @@ const {
       ? value
       : "settings"),
   redirect: vi.fn(),
+  listProgramCategoryOrder: vi.fn(async (): Promise<string[]> => []),
 }));
 
 vi.mock("next/navigation", () => ({ redirect }));
@@ -100,7 +102,7 @@ vi.mock("@/modules/topic-approval/application/manage-topic-approvals", () => ({
 
 vi.mock("@/modules/announcement/infrastructure/prisma-announcement-repository", () => ({ PrismaAnnouncementRepository: class {} }));
 vi.mock("@/modules/project-program/infrastructure/prisma-project-program-repository", () => ({ PrismaProjectProgramRepository: class {} }));
-vi.mock("@/modules/project-program/infrastructure/prisma-program-category-order-repository", () => ({ listProgramCategoryOrder: vi.fn(async () => []) }));
+vi.mock("@/modules/project-program/infrastructure/prisma-program-category-order-repository", () => ({ listProgramCategoryOrder }));
 vi.mock("@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository", () => ({
   PrismaStudentTeamRecruitmentQueryRepository: class { listLeaderTeams = vi.fn().mockResolvedValue([]); },
 }));
@@ -227,6 +229,19 @@ describe("TopicsPage", () => {
       divisionId: "division-1",
       divisions: program.divisions,
     }));
+  });
+
+  it("프로그램을 고르지 않으면 맨 위 대분류의 프로그램을 열고, 끝난 프로그램이면 지난 프로젝트로 연다", async () => {
+    // 운영 데이터 모양: 맨 위 대분류(해커톤)는 모두 끝났고 아래 대분류에만 진행 중인 프로그램이 있다.
+    const ongoing = { id: "agentic", name: "Agentic AI", category: "에이전틱AI프로젝트", icon: "FOLDER", startYear: 2026, endsAt: new Date("2099-12-31T00:00:00Z"), divisions: [], isPublic: true };
+    const ended = { id: "hackathon-7", name: "제7회 해커톤", category: "PNU 창의융합AI해커톤", icon: "FOLDER", startYear: 2026, endsAt: new Date("2026-08-28T00:00:00Z") };
+    listPrograms.mockResolvedValue([ongoing]);
+    listSidebarPrograms.mockResolvedValue([ongoing]);
+    listArchivedPrograms.mockResolvedValue([ended]);
+    listProgramCategoryOrder.mockResolvedValueOnce(["PNU 창의융합AI해커톤", "에이전틱AI프로젝트"]);
+    redirect.mockImplementationOnce((target: string) => { throw new Error(`REDIRECT:${target}`); });
+
+    await expect(TopicsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("REDIRECT:/topics?view=past&programId=hackathon-7");
   });
 
   it("기존 모달 URL을 프로젝트 등록 URL로 정규화한다", async () => {

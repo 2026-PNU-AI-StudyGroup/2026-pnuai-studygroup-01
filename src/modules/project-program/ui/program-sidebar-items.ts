@@ -132,11 +132,18 @@ export function orderProgramSidebarCategories(
     (rank.get(left) ?? unranked) - (rank.get(right) ?? unranked) || left.localeCompare(right, "ko"));
 }
 
-/** 사이드바에 보이는 순서대로 늘어놓은 프로그램 id 목록. */
+/**
+ * 사이드바에 보이는 순서대로 늘어놓은 프로그램 id 목록.
+ *
+ * 대분류 안에서는 사이드바처럼 시작 연도가 최근인 것이 위다. 같은 연도는 들어온 차례를 지킨다.
+ */
 export function orderedProgramSidebarIds(
   items: readonly ProgramSidebarItem[],
   categoryOrder: readonly string[] = [],
 ): string[] {
   const order = orderProgramSidebarCategories(items, categoryOrder);
-  return order.flatMap((category) => items.filter((item) => item.category === category).map((item) => item.id));
+  return order.flatMap((category) => items
+    .filter((item) => item.category === category)
+    .sort((left, right) => right.startYear - left.startYear)
+    .map((item) => item.id));
 }
