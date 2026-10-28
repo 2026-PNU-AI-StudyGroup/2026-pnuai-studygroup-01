@@ -77,7 +77,8 @@ services:
     restart: "no"
 
   # GitHub 에서 긁은 지난 사업 결과물(scripts/github-archive/snapshot.json)을 넣는다.
-  # 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm import-github
+  # tools 프로필이라 deploy.sh 가 이미지를 다시 만들지 않는다. 새 스냅샷을 읽으려면 --build 를 붙인다.
+  # 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm --build import-github
   import-github:
     build:
       context: .
@@ -86,6 +87,9 @@ services:
     profiles: ["tools"]
     depends_on:
       postgres:
+        condition: service_healthy
+      # 썸네일을 객체 저장소에 올린다.
+      minio:
         condition: service_healthy
     command: ["./node_modules/.bin/tsx", "scripts/import-github-archive.ts", "--confirm"]
     restart: "no"
