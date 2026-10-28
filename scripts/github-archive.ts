@@ -16,6 +16,8 @@ export type ArchiveProgram = {
   endsAt: string;
   /** 이미 만들어 둔 빈 프로그램에 채울 때만 쓴다. 있으면 프로그램 행은 건드리지 않는다. */
   programId?: string;
+  /** 없으면 TROPHY. */
+  icon?: "TROPHY" | "GRADUATION_CAP";
 };
 
 export type ArchiveTeam = {
@@ -40,7 +42,7 @@ export type SnapshotRepo = {
 
 export type SnapshotProgram = { program: ArchiveProgram; repos: SnapshotRepo[] };
 
-const TEMPLATE_REPO = /template|^\.github$|\.github\.io$|-team-00$/i;
+const TEMPLATE_REPO = /template|^\.github$|\.github\.io$|-team-00$|-test$/i;
 const GENERIC_HEADING = /^\d+[.)]|프로젝트\s*소개|목차|개요|readme|introduction|table of contents/i;
 const GOAL_HEADING = /^#{1,6}\s.*목표/;
 const ANY_HEADING = /^#{1,6}\s/;

@@ -96,7 +96,7 @@ async function main() {
         isPublic: true,
         firstPublishedAt: startsAt,
         endProcessedAt: endsAt,
-        icon: "TROPHY" as const,
+        icon: source.icon ?? "TROPHY",
       };
       // 모든 값을 처음 만들 때만 넣는다. 운영자가 화면에서 바꾼 이름, 기간, 공개 여부, 대분류는
       // 다시 돌려도 되돌아가지 않는다.
