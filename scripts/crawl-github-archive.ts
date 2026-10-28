@@ -27,6 +27,9 @@ type ProgramSource = ArchiveProgram & {
 
 // 정보컴퓨터공학부 졸업과제. 공개 아카이브에서는 빠지는 대분류다(hidden-graduation-program.ts).
 // 기간은 학기 시작부터 조직에 마지막 레포가 생긴 달 말까지로 잡았다. 2024 조직은 템플릿뿐이다.
+// 2025 는 조직에 남은 레포가 30개뿐이라 OPUS 스냅샷(opus-project-catalog.ts)의 48팀으로 채웠다.
+// 팀 이름, 과제명, 발표 영상은 OPUS, 소개는 README 에서 옮겼다. 나머지 18개는 학생 계정으로 옮겨졌고
+// 조직 주소가 그쪽으로 넘겨 준다. 다시 긁어도 이미 있는 레포는 그대로 둔다.
 const GRADUATION = { category: "CSE 캡스톤 디자인", icon: "GRADUATION_CAP", teamNumberFromRepoName: true } as const;
 
 const PROGRAMS: ProgramSource[] = [

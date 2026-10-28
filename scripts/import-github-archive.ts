@@ -117,7 +117,7 @@ async function main() {
         existing += 1;
         continue;
       }
-      if (taken.has(normalizeRepoUrl(repo.url))) {
+      if (repo.url && taken.has(normalizeRepoUrl(repo.url))) {
         console.log(`  이미 다른 프로젝트에 있어 건너뜀: ${repo.fullName}`);
         duplicate += 1;
         continue;
@@ -145,17 +145,32 @@ async function main() {
         await tx.projectTeam.create({
           data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, award: repo.award, confirmedAt: startsAt },
         });
-        await tx.artifact.create({
-          data: {
-            id: stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"),
-            projectTeamId,
-            registeredById: ARCHIVE_USER_ID,
-            type: "SOURCE_CODE",
-            title: "소스 코드",
-            externalUrl: repo.url,
-            position: 1,
-          },
-        });
+        if (repo.url) {
+          await tx.artifact.create({
+            data: {
+              id: stableArchiveId("artifact", repo.fullName, "SOURCE_CODE"),
+              projectTeamId,
+              registeredById: ARCHIVE_USER_ID,
+              type: "SOURCE_CODE",
+              title: "소스 코드",
+              externalUrl: repo.url,
+              position: 1,
+            },
+          });
+        }
+        if (repo.videoUrl) {
+          await tx.artifact.create({
+            data: {
+              id: stableArchiveId("artifact", repo.fullName, "PRESENTATION_VIDEO"),
+              projectTeamId,
+              registeredById: ARCHIVE_USER_ID,
+              type: "PRESENTATION_VIDEO",
+              title: "발표 영상",
+              externalUrl: repo.videoUrl,
+              position: 2,
+            },
+          });
+        }
       });
       created += 1;
     }
