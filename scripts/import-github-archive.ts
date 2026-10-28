@@ -1,12 +1,15 @@
 import "dotenv/config";
 
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { PrismaClient } from "../src/generated/prisma/client";
-import { normalizeRepoUrl, stableArchiveId, type SnapshotProgram } from "./github-archive";
+import { objectStorageBucket, s3 } from "../src/shared/infrastructure/object-storage/s3";
+import { normalizeRepoUrl, stableArchiveId, type SnapshotProgram, type SnapshotRepo } from "./github-archive";
 
 // scripts/github-archive/snapshot.json 을 지난 프로그램과 프로젝트로 넣는다.
 // OPUS 이관(import-opus-archive.ts)과 같이 모든 ID 를 저장소 이름에서 유도해 몇 번을 돌려도 행이 늘지 않는다.
@@ -45,6 +48,57 @@ async function repositoriesTakenElsewhere(ownTopicIds: string[]): Promise<Set<st
     ...topics.map(({ sourceUrl }) => sourceUrl!),
     ...artifacts.map(({ externalUrl }) => externalUrl!),
   ].map(normalizeRepoUrl));
+}
+
+/**
+ * 썸네일이 비어 있는 프로젝트에만 스냅샷 썸네일을 건다. 이미 넣은 프로젝트에도 채우되, 운영자가
+ * 화면에서 올린 썸네일은 건드리지 않는다. 파일 행과 객체는 OPUS 이관과 같은 모양으로 만든다.
+ */
+async function ensureThumbnail(repo: SnapshotRepo, startsAt: Date): Promise<boolean> {
+  if (!repo.thumbnail) return false;
+  const topicId = stableArchiveId("topic", repo.fullName);
+  const projectTeamId = stableArchiveId("team", repo.fullName);
+  const [topic, team] = await Promise.all([
+    prisma.topic.findUnique({ where: { id: topicId }, select: { thumbnailPath: true } }),
+    prisma.projectTeam.findUnique({ where: { id: projectTeamId }, select: { id: true } }),
+  ]);
+  if (!topic || !team || topic.thumbnailPath) return false;
+  const fileId = stableArchiveId("file", repo.fullName, "thumbnail");
+  const objectKey = `teams/${projectTeamId}/files/${fileId}`;
+  const bytes = await readFile(join(here, "github-archive", "images", repo.thumbnail));
+  // 행만 남고 객체가 없는 중단 상태에서도 다시 돌리면 복구되도록 객체는 항상 올린다.
+  await s3.send(new PutObjectCommand({
+    Bucket: objectStorageBucket,
+    Key: objectKey,
+    Body: bytes,
+    ContentType: "image/webp",
+    ChecksumSHA256: createHash("sha256").update(bytes).digest("base64"),
+  }));
+  if (!await prisma.storedFile.findUnique({ where: { id: fileId }, select: { id: true } })) {
+    await prisma.storedFile.create({
+      data: {
+        id: fileId,
+        objectKey,
+        uploadObjectKey: `staging/${objectKey}`,
+        projectTeamId,
+        ownerId: ARCHIVE_USER_ID,
+        purpose: "ARTIFACT",
+        consumer: "ARTIFACT",
+        // 대표 이미지는 연결되는 아티팩트 행이 없어 처음부터 ATTACHED 로 넣는다.
+        status: "ATTACHED",
+        originalName: repo.thumbnail,
+        contentType: "image/webp",
+        size: bytes.length,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+        // 스테이징 만료와 정리 시각은 첨부된 파일에 쓰이지 않지만 하루 이상 간격이라는 제약이 있다.
+        expiresAt: startsAt,
+        cleanupAfter: new Date(startsAt.getTime() + 2 * 86_400_000),
+        readyAt: startsAt,
+      },
+    });
+  }
+  await prisma.topic.update({ where: { id: topicId }, data: { thumbnailPath: `/api/files/${fileId}` } });
+  return true;
 }
 
 async function main() {
@@ -110,11 +164,13 @@ async function main() {
     let created = 0;
     let existing = 0;
     let duplicate = 0;
+    let thumbnails = 0;
     for (const repo of repos) {
       const topicId = stableArchiveId("topic", repo.fullName);
       if (await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } })) {
         console.log(`  이미 넣은 프로젝트라 건너뜀: ${repo.fullName}`);
         existing += 1;
+        if (await ensureThumbnail(repo, startsAt)) thumbnails += 1;
         continue;
       }
       if (repo.url && taken.has(normalizeRepoUrl(repo.url))) {
@@ -173,8 +229,9 @@ async function main() {
         }
       });
       created += 1;
+      if (await ensureThumbnail(repo, startsAt)) thumbnails += 1;
     }
-    console.log(`${source.programName}: 새로 ${created}개, 이미 있음 ${existing}개, 다른 프로젝트와 겹쳐 건너뜀 ${duplicate}개`);
+    console.log(`${source.programName}: 새로 ${created}개, 이미 있음 ${existing}개, 다른 프로젝트와 겹쳐 건너뜀 ${duplicate}개, 썸네일 새로 ${thumbnails}개`);
   }
 }
 

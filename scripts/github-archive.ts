@@ -42,6 +42,8 @@ export type SnapshotRepo = {
   award: string | null;
   /** 발표 영상 주소. OPUS 에서 옮긴 졸업과제 2025 에만 있다. */
   videoUrl?: string | null;
+  /** github-archive/images 아래 썸네일 파일. 유튜브 대표 이미지나 README 사진을 webp 로 줄인 것. */
+  thumbnail?: string;
 };
 
 export type SnapshotProgram = { program: ArchiveProgram; repos: SnapshotRepo[] };
