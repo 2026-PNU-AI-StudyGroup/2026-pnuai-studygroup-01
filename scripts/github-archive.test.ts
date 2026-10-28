@@ -17,7 +17,7 @@ const program = {
 
 describe("템플릿 레포 거르기", () => {
   it("템플릿과 조직 소개 레포를 뺀다", () => {
-    for (const name of ["StarterTemplate", "Capstone-Template-2025", "capstone2024-template", "PNUSW-2025-team-00", ".github", "org.github.io"]) {
+    for (const name of ["StarterTemplate", "Capstone-Template-2025", "capstone2024-template", "PNUSW-2025-team-00", "Capstone-2025-team-test", ".github", "org.github.io"]) {
       expect(isTemplateRepo(name), name).toBe(true);
     }
     expect(isTemplateRepo("PNUSW-2024-team-01")).toBe(false);

@@ -16,6 +16,8 @@ export type ArchiveProgram = {
   endsAt: string;
   /** 이미 만들어 둔 빈 프로그램에 채울 때만 쓴다. 있으면 프로그램 행은 건드리지 않는다. */
   programId?: string;
+  /** 없으면 TROPHY. */
+  icon?: "TROPHY" | "GRADUATION_CAP";
 };
 
 export type ArchiveTeam = {
@@ -28,19 +30,23 @@ export type ArchiveTeam = {
 };
 
 export type SnapshotRepo = {
+  /** ID 를 유도하는 고정 키. url 이 없어도 그대로 둔다. */
   fullName: string;
-  url: string;
+  /** 소스 코드 주소. 출처가 엉뚱한 레포를 가리켜 링크를 걸 수 없으면 null. */
+  url: string | null;
   teamNumber: number | null;
   teamName: string;
   title: string;
   summary: string;
   /** 공식 발표에서 옮긴 상 이름. 상이 없으면 null. */
   award: string | null;
+  /** 발표 영상 주소. OPUS 에서 옮긴 졸업과제 2025 에만 있다. */
+  videoUrl?: string | null;
 };
 
 export type SnapshotProgram = { program: ArchiveProgram; repos: SnapshotRepo[] };
 
-const TEMPLATE_REPO = /template|^\.github$|\.github\.io$|-team-00$/i;
+const TEMPLATE_REPO = /template|^\.github$|\.github\.io$|-team-00$|-test$/i;
 const GENERIC_HEADING = /^\d+[.)]|프로젝트\s*소개|목차|개요|readme|introduction|table of contents/i;
 const GOAL_HEADING = /^#{1,6}\s.*목표/;
 const ANY_HEADING = /^#{1,6}\s/;

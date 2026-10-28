@@ -21,7 +21,16 @@ import {
 type ProgramSource = ArchiveProgram & {
   /** 공지 등에서 확인한 팀. 있으면 여기 적힌 레포만 넣고 팀 번호, 팀 이름, 제목을 여기서 쓴다. */
   teams?: Record<string, ArchiveTeam>;
+  /** 팀 설정이 없을 때 레포 이름 끝 숫자를 조 번호로 쓴다. "capstone-2026-team-07" 은 7조. */
+  teamNumberFromRepoName?: boolean;
 };
+
+// 정보컴퓨터공학부 졸업과제. 공개 아카이브에서는 빠지는 대분류다(hidden-graduation-program.ts).
+// 기간은 학기 시작부터 조직에 마지막 레포가 생긴 달 말까지로 잡았다. 2024 조직은 템플릿뿐이다.
+// 2025 는 조직에 남은 레포가 30개뿐이라 OPUS 스냅샷(opus-project-catalog.ts)의 48팀으로 채웠다.
+// 팀 이름, 과제명, 발표 영상은 OPUS, 소개는 README 에서 옮겼다. 나머지 18개는 학생 계정으로 옮겨졌고
+// 조직 주소가 그쪽으로 넘겨 준다. 다시 긁어도 이미 있는 레포는 그대로 둔다.
+const GRADUATION = { category: "CSE 캡스톤 디자인", icon: "GRADUATION_CAP", teamNumberFromRepoName: true } as const;
 
 const PROGRAMS: ProgramSource[] = [
   {
@@ -109,6 +118,9 @@ const PROGRAMS: ProgramSource[] = [
       "2026-pnuai-studygroup-05": { teamNumber: 5, teamName: "5팀", title: "산복도로 골든타임: 응급 취약지 분석과 AED 최적 배치", summary: "부산 산복도로 일대에서 심정지 골든타임을 지키기 위해 응급 취약성과 구급차 도달 지연을 분석하고 AED 최적 배치를 도출합니다." },
     },
   },
+  { key: "pnu-cse-capstone-2023", org: "pnucse-capstone", programName: "정보컴퓨터공학부 졸업과제 2023", startsAt: "2023-03-02", endsAt: "2023-10-31", ...GRADUATION },
+  { key: "pnu-cse-capstone-2025", org: "pnucse-capstone2025", programName: "정보컴퓨터공학부 졸업과제 2025", startsAt: "2025-03-04", endsAt: "2025-09-30", ...GRADUATION },
+  { key: "pnu-cse-capstone-2026", org: "pnucse-capstone2026", programName: "정보컴퓨터공학부 졸업과제 2026", startsAt: "2026-03-03", endsAt: "2026-09-30", ...GRADUATION },
 ];
 
 const token = process.env.GITHUB_TOKEN;
@@ -141,7 +153,7 @@ async function readme(fullName: string): Promise<string | null> {
 }
 
 async function crawl(source: ProgramSource): Promise<SnapshotProgram> {
-  const { teams, ...program } = source;
+  const { teams, teamNumberFromRepoName, ...program } = source;
   const repos: SnapshotRepo[] = [];
   for (const repo of await listPublicRepos(source.org)) {
     // 포크는 빼지 않는다. 제5회 조직의 레포는 전부 팀 레포를 포크해 모은 것이다.
@@ -154,11 +166,12 @@ async function crawl(source: ProgramSource): Promise<SnapshotProgram> {
       continue;
     }
     const extracted = readmeTitleAndSummary(markdown);
+    const numbered = teamNumberFromRepoName ? Number(repo.name.match(/(\d+)$/)?.[1]) || null : null;
     repos.push({
       fullName: repo.full_name,
       url: repo.html_url,
-      teamNumber: team?.teamNumber ?? null,
-      teamName: team?.teamName ?? repo.name,
+      teamNumber: team?.teamNumber ?? numbered,
+      teamName: team?.teamName ?? (numbered ? `${numbered}조` : repo.name),
       title: team?.title ?? pickTitle({ readmeTitle: extracted.title, description: repo.description, repoName: repo.name }),
       summary: team?.summary ?? extracted.summary,
       award: team?.award ?? null,
