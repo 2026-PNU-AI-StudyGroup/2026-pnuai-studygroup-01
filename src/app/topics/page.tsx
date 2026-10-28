@@ -17,7 +17,6 @@ import { StudentProjectRegistrationLink } from "@/app/topics/_components/student
 import { topicsHref, type ProjectView } from "@/app/topics/_lib/topics-query";
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { orderedProgramSidebarIds } from "@/modules/project-program/ui/program-sidebar-items";
-import { hideGraduationProgramsForStudent } from "@/app/topics/_lib/hidden-graduation-programs";
 import { keepInvitedProgramsForAdvisor } from "@/app/topics/_lib/advisor-invited-programs";
 import { listInvitedProgramIds } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import { findAdvisorProgramBanner } from "@/modules/advisor/infrastructure/prisma-advisor-workspace-banner-query";
@@ -236,9 +235,8 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       archiveService.execute(requestedPage, ARCHIVE_LIST_PAGE_SIZE, { query, programId: requestedArchiveProgramId }),
       actor.role === "ADMIN" ? Promise.resolve([]) : programService.listSidebarVisible(now),
     ]);
-    // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
-    initialArchive.programs = forAdvisor(hideGraduationProgramsForStudent(initialArchive.programs, actor.role));
-    const sidebarPrograms = forAdvisor(hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role));
+    initialArchive.programs = forAdvisor(initialArchive.programs);
+    const sidebarPrograms = forAdvisor(sidebarProgramsRaw);
     // 종료된 프로그램은 사이드바(공개 프로그램)엔 있지만 아카이브 목록(닫힌 팀 보유 프로그램)엔
     // 없을 수 있다. 선택 후보를 둘의 합집합으로 넓혀야 클릭 시 다른 프로그램으로 튕기지 않는다.
     const adminClosedPrograms = adminPrograms?.filter((program) => program.endsAt <= now) ?? [];
@@ -302,11 +300,10 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       actor.role === "ADMIN" ? Promise.resolve(adminPrograms ?? []) : programService.listPublic(),
       actor.role === "ADMIN" ? Promise.resolve([]) : programService.listSidebarVisible(now),
     ]);
-    // 졸업과제는 다른 사이트로 이관 — 학생 탐색에서 졸업과제/캡스톤 프로그램 숨김.
     const programs = actor.role === "ADMIN"
       ? (adminPrograms ?? []).filter((program) => program.endsAt > now)
-      : forAdvisor(hideGraduationProgramsForStudent(programsRaw, actor.role));
-    const sidebarPrograms = forAdvisor(hideGraduationProgramsForStudent(sidebarProgramsRaw, actor.role));
+      : forAdvisor(programsRaw);
+    const sidebarPrograms = forAdvisor(sidebarProgramsRaw);
     const requestedProgramId = firstSearchParam(params.programId)?.trim().slice(0, 200) || undefined;
     // 프로그램을 고르지 않고 들어오면 사이드바 맨 위 프로그램을 연다. 운영자가 정한 대분류
     // 차례가 곧 처음 화면이다. 예전에는 진행 중인 것만 골라, 맨 위 대분류가 모두 끝났으면
@@ -315,7 +312,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     if (!requestedProgramId || !programs.some(({ id }) => id === requestedProgramId)) {
       const items = actor.role === "ADMIN"
         ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
-        : buildProgramSidebarItems(sidebarPrograms, forAdvisor(hideGraduationProgramsForStudent(await archiveService.listPrograms(), actor.role)), "active", { query }, now);
+        : buildProgramSidebarItems(sidebarPrograms, forAdvisor(await archiveService.listPrograms()), "active", { query }, now);
       const topId = orderedProgramSidebarIds(items, categoryOrder)[0];
       const top = items.find(({ id }) => id === topId);
       if (top) redirect(top.status === "past" ? topicsHref({ view: "past", programId: top.id, q: query }) : topicsHref({ programId: top.id, q: query }));
@@ -379,7 +376,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     if (divisionId === "UNASSIGNED" && !hasUnassigned) {
       redirect(topicsHref({ programId, q: query, teamStatus: projectFilters.team, reportStatus: projectFilters.report, page: requestedPage }));
     }
-    const archivedPrograms = forAdvisor(hideGraduationProgramsForStudent(archivedProgramsRaw, actor.role));
+    const archivedPrograms = forAdvisor(archivedProgramsRaw);
     const sidebarItems = actor.role === "ADMIN"
       ? buildAdminProgramSidebarItems(adminPrograms ?? [], now, pendingApprovalCounts)
       : buildProgramSidebarItems(sidebarPrograms, archivedPrograms, "active", { query }, now);
