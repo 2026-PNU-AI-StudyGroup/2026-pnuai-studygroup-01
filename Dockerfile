@@ -1,4 +1,4 @@
-FROM node:24.11.0-alpine3.22 AS base
+FROM node:24.22.2-alpine3.23 AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1

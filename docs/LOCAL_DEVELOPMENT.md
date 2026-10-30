@@ -2,7 +2,7 @@
 
 ## 사전 요구사항
 
-- Node.js `24.11.0` (`.nvmrc`)
+- Node.js `24.22.2` (`.nvmrc`)
 - npm `11.6.1`
 - Docker Desktop
 - macOS 네이티브 Ollama
