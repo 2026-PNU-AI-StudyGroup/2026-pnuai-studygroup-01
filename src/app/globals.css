@@ -9,9 +9,10 @@
 }
 
 /*
-  Canon (사용자 선택) — 잘 만든 SaaS 관리자 대시보드. 정제된 인디고 악센트 + 소프트 섀도우 카드 + 둥근 모서리.
-  크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준의 깔끔함(반어·잔재주 없이 정석을 높은 완성도로).
-  데이터·수치·시각은 tabular-nums 유지.
+  방향(사용자 확정, 2026-11-01): taste-skill 의 accent ladder. 부산대 엠블럼 파랑(#0658a0) 한 색으로
+  사다리를 만든다. 진한 파랑은 작은 표시(주 버튼, 데이터, 선택된 메뉴 아이콘)에만, 넓은 면은 옅은 단계만 쓴다.
+  쉬고 있는 카드에는 그림자가 없다. 면은 1px 선이나 한 단계 다른 바탕으로 나눈다.
+  데이터, 수치, 시각은 tabular-nums 유지.
 
   라이트와 다크를 light-dark() 한 줄에 같이 둔다. 토큰 표를 두 벌 두면 한쪽만 고치는 사고가 난다.
   어느 쪽을 쓸지는 color-scheme 이 정한다. 왼쪽이 라이트, 오른쪽이 다크다.
@@ -24,53 +25,56 @@
   */
   color-scheme: light;
 
-  --workspace: light-dark(#f6f7f9, #0f1117);
+  --workspace: light-dark(#f7f9fc, #0f1117);
   --sidebar: light-dark(#ffffff, #15171f);
   --surface: light-dark(#ffffff, #15171f);
   /* 헤더와 하단 탭바처럼 흐림 위에 얹는 반투명 면. 불투명 토큰에 투명도를 섞으면 light-dark 와 겹쳐 깨진다. */
   --surface-glass: light-dark(rgb(255 255 255 / 0.94), rgb(21 23 31 / 0.94));
-  --surface-subtle: light-dark(#f1f3f7, #1d1f2a);
-  --surface-active: light-dark(#eef1f6, #232634);
-  --ink: light-dark(#191c22, #e7e9f0);
-  --muted: light-dark(#5b616e, #9aa2b4);
-  --line: light-dark(#e7e9ef, #262a35);
-  --line-strong: light-dark(#d5d9e2, #343947);
-  --field-border: light-dark(#d0d5dd, #343947);
-  --field-border-hover: light-dark(#98a1b3, #4c5264);
+  --surface-subtle: light-dark(#f3f5f8, #1d1f2a);
+  --surface-active: light-dark(#eef1f5, #232634);
+  --ink: light-dark(#111827, #e7e9f0);
+  --muted: light-dark(#5f6672, #9aa2b4);
+  --line: light-dark(#e5e7eb, #262a35);
+  --line-strong: light-dark(#d1d5db, #343947);
+  --field-border: light-dark(#d1d5db, #343947);
+  --field-border-hover: light-dark(#9ca3af, #4c5264);
   --field-surface: light-dark(#ffffff, #191c25);
-  --field-placeholder: light-dark(#667085, #767e91);
-  --field-disabled: light-dark(#eef0f4, #1a1d26);
-  /* 인디고는 어두운 바닥에서 가라앉는다. 다크에서는 한 단계 띄운다. */
-  --primary: light-dark(#4f46e5, #8189f8);
-  --primary-hover: light-dark(#4338ca, #9aa0fa);
-  --primary-subtle: light-dark(#eef0fe, #23263c);
-  --accent: light-dark(#4f46e5, #8189f8);
-  --accent-hover: light-dark(#4338ca, #9aa0fa);
-  --accent-ink: light-dark(#3730a3, #bcc0fc);
-  --accent-subtle: light-dark(#eef0fe, #23263c);
+  --field-placeholder: light-dark(#6b7280, #767e91);
+  --field-disabled: light-dark(#f3f5f8, #1a1d26);
+  /* 부산대 파랑의 사다리: 진한 색, 눌렀을 때, 옅은 면, 막대 바탕, 옅은 면 위 글자. */
+  --primary: light-dark(#0658a0, #6aa6e0);
+  --primary-hover: light-dark(#054a87, #8bbbe8);
+  --primary-subtle: light-dark(#eef4fb, #172434);
+  --accent: light-dark(#0658a0, #6aa6e0);
+  --accent-hover: light-dark(#054a87, #8bbbe8);
+  --accent-ink: light-dark(#053c6e, #c4dcf3);
+  --accent-subtle: light-dark(#eef4fb, #172434);
+  --accent-track: light-dark(#d4e4f4, #1f3550);
   --focus: var(--primary);
   --focus-halo: color-mix(in srgb, var(--focus) 22%, transparent);
   --danger-halo: color-mix(in srgb, var(--danger) 18%, transparent);
-  --success: light-dark(#15803d, #4ade80);
-  --success-subtle: light-dark(#e7f5ec, #13291d);
+  --success: light-dark(#247b50, #4ade80);
+  --success-subtle: light-dark(#dcfce7, #13291d);
   --warning: light-dark(#b45309, #fbbf24);
   --warning-ink: light-dark(#92400e, #fcd34d);
-  --warning-subtle: light-dark(#fdf2e1, #2a2011);
-  --danger: light-dark(#dc2626, #f87171);
-  --danger-subtle: light-dark(#fdecec, #2c1719);
-  --danger-border: light-dark(#f0b7b2, #4a2529);
+  --warning-subtle: light-dark(#fffbeb, #2a2011);
+  --danger: light-dark(#c4242a, #f87171);
+  --danger-subtle: light-dark(#ffedea, #2c1719);
+  --danger-border: light-dark(#f5c2bd, #4a2529);
   --danger-surface: light-dark(#fff8f7, #221518);
   --danger-surface-hover: light-dark(#fff0ee, #2c191c);
   --danger-surface-active: light-dark(#ffe9e6, #341d21);
   --backdrop: light-dark(rgb(23 32 51 / 0.34), rgb(0 0 0 / 0.62));
-  --radius-control: 0.5rem;
-  --radius-panel: 0.75rem;
+  /* 모서리는 좁게 하나로: 카드 8px, 버튼과 입력칸 6px. */
+  --radius-control: 0.375rem;
+  --radius-panel: 0.5rem;
   /* light-dark() 는 색만 받는다. 그림자는 거리를 고정하고 색만 갈아 끼운다. */
   --shadow-tint-weak: light-dark(rgb(16 24 40 / 0.04), rgb(0 0 0 / 0.34));
   --shadow-tint: light-dark(rgb(16 24 40 / 0.08), rgb(0 0 0 / 0.5));
   --shadow-tint-float: light-dark(rgb(16 24 40 / 0.16), rgb(0 0 0 / 0.62));
-  --shadow-card: 0 1px 2px var(--shadow-tint-weak), 0 1px 3px var(--shadow-tint);
-  --shadow-admin-panel: 0 1px 2px var(--shadow-tint-weak);
+  /* 쉬고 있는 카드는 그림자 없이 테두리만. 그림자는 떠 있는 것(메뉴, 대화상자, 팝오버)에만 남긴다. */
+  --shadow-card: none;
+  --shadow-admin-panel: none;
   --shadow-float: 0 12px 32px var(--shadow-tint-float);
   --font-mono: "SFMono-Regular", "SF Mono", "D2Coding", "Consolas", "Liberation Mono", Menlo, monospace;
   --snap-duration: 140ms;
@@ -245,7 +249,8 @@ body {
   margin: 0;
   background: var(--workspace);
   color: var(--ink);
-  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  /* 숫자와 영문은 DM Sans, 한글은 Pretendard 가 맡는다(DM Sans 에는 한글이 없다). */
+  font-family: var(--font-dm-sans), "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

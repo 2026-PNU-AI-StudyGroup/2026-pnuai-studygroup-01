@@ -1,5 +1,6 @@
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
+import { DM_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 
 import "./globals.css";
@@ -7,6 +8,9 @@ import { getRequestLocale } from "@/modules/translation/infrastructure/request-l
 import { I18nProvider } from "@/modules/translation/ui/i18n-provider";
 import { SIDEBAR_COOKIE, normalizeSidebarState } from "@/shared/ui/appearance";
 import { DialogBackdropDismissController } from "@/shared/ui/dialog-backdrop-dismiss";
+
+// 숫자와 영문 글꼴. 한글은 globals.css 의 Pretendard 가 이어받는다.
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
@@ -40,15 +44,12 @@ export default async function RootLayout({
     <html
       lang={locale}
       data-sidebar={sidebar}
+      className={dmSans.variable}
       suppressHydrationWarning
     >
       <body>
         <DialogBackdropDismissController />
-        {/*
-          방향(사용자 확정): Canon — 잘 만든 SaaS 관리자 대시보드. 정석을 높은 완성도로(반어·잔재주 없이).
-          OWN-WORLD: 화이트 서피스 카드 + 정제된 인디고 악센트 + 소프트 섀도우 + 둥근 모서리. 데이터·수치·시각 tabular-nums.
-          크래프트 기준 = Linear·Vercel·Stripe 대시보드 수준. 밝은 화면만 쓴다(globals.css 참고).
-        */}
+        {/* 방향은 globals.css 맨 위 주석(taste-skill accent ladder, 부산대 파랑). 밝은 화면만 쓴다. */}
         <I18nProvider locale={locale}><UiText>{children}</UiText></I18nProvider>
       </body>
     </html>

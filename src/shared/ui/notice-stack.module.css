@@ -34,15 +34,15 @@
 .lightScheme {
   color-scheme: light;
   --surface: #ffffff;
-  --surface-subtle: #f1f3f7;
-  --ink: #191c22;
-  --muted: #5b616e;
-  --line: #e7e9ef;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  --surface-subtle: #f3f5f8;
+  --ink: #111827;
+  --muted: #5f6672;
+  --line: #e5e7eb;
+  --primary: #0658a0;
+  --primary-hover: #054a87;
   --warning: #b45309;
   --warning-ink: #92400e;
-  --warning-subtle: #fdf2e1;
+  --warning-subtle: #fffbeb;
   --shadow-tint-float: rgb(16 24 40 / 0.16);
 }
 
