@@ -22,13 +22,13 @@ export function ProjectAssistantManagementPanel({
   return (
     <section aria-labelledby="project-assistants-title" className="space-y-5 border-t border-[var(--line)] pt-7">
       <div>
-        <h2 id="project-assistants-title" className="text-xl font-bold"><UiText>{"조교 관리"}</UiText></h2>
+        <h2 id="project-assistants-title" className="text-lg font-semibold"><UiText>{"조교 관리"}</UiText></h2>
         <p className="muted mt-1 text-sm"><UiText>{"초대를 수락한 조교는 계정 역할과 관계없이 이 프로젝트의 관리 권한을 갖습니다."}</UiText></p>
       </div>
       <InviteProjectAssistantForm topicId={management.topicId} />
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <h3 className="text-sm font-bold"><UiText>{"현재 조교"}</UiText>{" "}{management.assistants.length}<UiText>{"명"}</UiText></h3>
+          <h3 className="text-sm font-semibold"><UiText>{"현재 조교"}</UiText>{" "}{management.assistants.length}<UiText>{"명"}</UiText></h3>
           {management.assistants.length ? (
             <ul className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {management.assistants.map((assistant) => (
@@ -44,7 +44,7 @@ export function ProjectAssistantManagementPanel({
           ) : <EmptyState variant="compact" title="등록된 조교가 없습니다" description="초대한 조교가 수락하면 이 목록에 표시됩니다." />}
         </div>
         <div>
-          <h3 className="text-sm font-bold"><UiText>{"응답 대기"}</UiText>{" "}{management.pendingInvitations.length}<UiText>{"명"}</UiText></h3>
+          <h3 className="text-sm font-semibold"><UiText>{"응답 대기"}</UiText>{" "}{management.pendingInvitations.length}<UiText>{"명"}</UiText></h3>
           {management.pendingInvitations.length ? (
             <ul className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {management.pendingInvitations.map((invitation) => (

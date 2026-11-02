@@ -138,7 +138,7 @@ function RubricListItem({ programId, rubric, scopeLabel, index, count, onEdit }:
         <RubricMove rubric={rubric} programId={programId} direction="down" disabled={locked || index === count - 1} />
         <span className="group relative inline-flex" tabIndex={locked ? 0 : undefined} aria-describedby={locked ? deletionHintId : undefined}>
           <form action={deleteAction}><IconButton type="submit" className={locked ? "cursor-not-allowed text-[var(--muted)]" : "text-[var(--danger)] hover:text-[var(--danger)]"} disabled={locked || deleting} aria-label={`${rubric.title} 채점표 삭제`} title="채점표 삭제"><TrashIcon className="size-5" /></IconButton></form>
-          {locked ? <span id={deletionHintId} role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+0.45rem)] right-0 z-20 w-max max-w-56 rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-center text-xs font-semibold leading-5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"><UiText>{"점수가 저장된 채점표는 삭제할 수 없습니다."}</UiText></span> : null}
+          {locked ? <span id={deletionHintId} role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+0.45rem)] right-0 z-20 w-max max-w-56 rounded-[var(--radius-control)] bg-[var(--ink)] px-2.5 py-1.5 text-center text-xs font-semibold leading-5 text-[var(--surface)] opacity-0 shadow-[var(--shadow-float)] transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"><UiText>{"점수가 저장된 채점표는 삭제할 수 없습니다."}</UiText></span> : null}
         </span>
       </div>
     </div>

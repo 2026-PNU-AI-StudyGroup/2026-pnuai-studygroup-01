@@ -144,9 +144,8 @@
 }
 
 .badge {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -154,9 +153,8 @@
   margin-top: 0.3125rem;
   padding-right: 2rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
-  letter-spacing: -0.02em;
 }
 
 /* 급한 소식 하나만 색을 쓴다. 창마다 색이 다르면 그것부터 눈에 들어온다. */

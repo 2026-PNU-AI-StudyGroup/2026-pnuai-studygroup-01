@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
         <Brand href="/" />
       </header>
       <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
-        <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
+        <h1 className="text-[clamp(1.5rem,2.4vw,1.875rem)] font-semibold leading-tight tracking-[-0.02em]">
           <UiText>{"개인정보 처리방침"}</UiText>
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">

@@ -97,7 +97,7 @@ export function ProgramAnnouncementCreateModal({ programId, programName, closeHr
         }}
       >
         <input type="hidden" name="programId" value={programId} />
-        <p className="rounded-lg bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--muted)]">
+        <p className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--muted)]">
           <strong className="text-[var(--ink)]"><UiText>{programName}</UiText></strong><UiText>{"에 게시됩니다. 공지 대상은 변경할 수 없습니다."}</UiText>
         </p>
         <fieldset className="grid gap-2">
@@ -115,7 +115,7 @@ export function ProgramAnnouncementCreateModal({ programId, programName, closeHr
         />
         <Toggle name="pinned" label="상단 고정" />
         {uploadProgress ? <p role="status" aria-live="polite" className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold"><UiText>{`${uploadProgress.fileIndex + 1}/${uploadProgress.fileCount} ${uploadProgress.fileName} · ${fileUploadProgressLabel(uploadProgress.progress)}`}</UiText></p> : null}
-        {state.status === "error" ? <p role="alert" className="text-sm font-bold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
+        {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
         <div className="flex justify-end gap-2 border-t border-[var(--line)] pt-5">
           {uploadProgress ? <button type="button" className="button-secondary" onClick={() => uploadControllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
           <button type="button" className="button-secondary" onClick={requestClose} disabled={pending}><UiText>{"취소"}</UiText></button>

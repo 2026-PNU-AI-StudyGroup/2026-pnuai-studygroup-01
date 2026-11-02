@@ -44,7 +44,7 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments" panel={<StudentTeamPanel currentPath="/recruitments" />}>
-      <main className="page-enter pb-28 lg:pb-0">
+      <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
           <div className="space-y-5">
             <StudentTeamPageIntro

@@ -37,9 +37,9 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
       <section className={styles.section}>
         <SectionHeader title="자문위원 목록" description="이 프로그램에 초대한 위원만 나옵니다." />
         {serving.length === 0 ? (
-          <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 초대한 자문위원이 없습니다."}</UiText></p>
+          <p role="status" className="rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"이 프로그램에 초대한 자문위원이 없습니다."}</UiText></p>
         ) : (
-          <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+          <ul className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
             {serving.map((advisor) => <AdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
           </ul>
         )}
@@ -47,7 +47,7 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
       {revoked.length > 0 ? (
         <section className={styles.section}>
           <SectionHeader title="회수한 위원" description="초대를 거둔 위원입니다. 다시 부르면 새 링크가 발급되고, 담당 팀은 다시 배정해야 합니다." />
-          <ul className="overflow-hidden rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface-subtle)]">
+          <ul className="overflow-hidden rounded-[var(--radius-panel)] border border-dashed border-[var(--line)] bg-[var(--surface-subtle)]">
             {revoked.map((advisor) => <RevokedAdvisorRow key={advisor.userId} programId={programId} advisor={advisor} />)}
           </ul>
         </section>
@@ -80,7 +80,7 @@ function ActionResult({ state }: { state: AdvisorActionState }) {
   if (state.status === "idle") return null;
   return (
     <div className="grid gap-2">
-      <p role={state.status === "error" ? "alert" : "status"} className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger,#dc2626)]" : "text-[var(--primary)]"}`}>
+      <p role={state.status === "error" ? "alert" : "status"} className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
         <UiText>{state.message}</UiText>
       </p>
       {/* key: 위원이 바뀌면 복사 상태를 새로 시작해 이전 위원 토큰이 남지 않도록 재마운트한다. */}
@@ -104,7 +104,7 @@ function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
     }
   };
   return (
-    <div className="grid gap-1.5 rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+    <div className="grid gap-1.5 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
         <code className="min-w-0 break-all text-sm font-semibold">{absoluteLink}</code>
         <button type="button" className="button-secondary text-sm" onClick={copy}>
@@ -114,7 +114,7 @@ function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
           <UiText>{"닫기"}</UiText>
         </button>
       </div>
-      {copyStatus === "failed" ? <p role="alert" className="text-xs font-semibold text-[var(--danger,#dc2626)]"><UiText>{"복사에 실패했습니다. 링크를 직접 선택해 복사해 주세요."}</UiText></p> : null}
+      {copyStatus === "failed" ? <p role="alert" className="text-xs font-semibold text-[var(--danger)]"><UiText>{"복사에 실패했습니다. 링크를 직접 선택해 복사해 주세요."}</UiText></p> : null}
     </div>
   );
 }
@@ -165,16 +165,16 @@ function AdvisorRow({ programId, advisor }: { programId: string; advisor: Progra
     <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 font-bold text-[var(--ink)]">
+          <p className="flex flex-wrap items-center gap-2 font-semibold text-[var(--ink)]">
             {advisor.name}
             {accountDisabled ? (
-              <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-xs font-semibold text-[var(--muted)]"><UiText>{"계정 비활성"}</UiText></span>
+              <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-xs font-normal text-[var(--muted)]"><UiText>{"계정 비활성"}</UiText></span>
             ) : null}
           </p>
           <p className="mt-0.5 text-sm text-[var(--muted)]">{advisor.email}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${advisor.activeToken && !suspended ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${advisor.activeToken && !suspended ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
             {suspended ? (
               <UiText>{"심사 멈춤"}</UiText>
             ) : advisor.activeToken ? (
@@ -218,15 +218,15 @@ function RevokedAdvisorRow({ programId, advisor }: { programId: string; advisor:
     <li className="grid gap-3 border-t border-[var(--line)] px-5 py-4 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 font-bold text-[var(--ink)]">
+          <p className="flex flex-wrap items-center gap-2 font-semibold text-[var(--ink)]">
             {advisor.name}
-            <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-xs font-semibold text-[var(--muted)]"><UiText>{"초대 회수됨"}</UiText></span>
+            <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-xs font-normal text-[var(--muted)]"><UiText>{"초대 회수됨"}</UiText></span>
           </p>
           <p className="mt-0.5 text-sm text-[var(--muted)]">{advisor.email}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {advisor.revokedAt ? (
-            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-normal text-[var(--muted)]">
               <UiText>{"회수 "}</UiText><UiDate value={advisor.revokedAt} mode="dateTime" />
             </span>
           ) : null}
@@ -251,13 +251,13 @@ function AssignmentForm({ programId, advisor, topics }: { programId: string; adv
   const [state, action, pending] = useActionState(assignAdvisorTeamsAction, idleState);
   const assigned = new Set(advisor.assignedTopicIds);
   return (
-    <details className="group rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+    <details className="group rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
       <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-5 py-4">
         <span className="min-w-0">
-          <strong className="font-bold text-[var(--ink)]">{advisor.name}</strong>
+          <strong className="font-semibold text-[var(--ink)]">{advisor.name}</strong>
           <span className="ml-2 text-sm text-[var(--muted)]">{advisor.email}</span>
         </span>
-        <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+        <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-normal text-[var(--muted)]">
           <UiText>{`담당 ${advisor.assignedTopicIds.length}팀`}</UiText>
         </span>
       </summary>
@@ -298,19 +298,19 @@ function ScoreMatrix({ matrix }: { matrix: AdvisorScoreMatrixRow[] }) {
   const advisorColumns = new Map<string, string>();
   for (const row of matrix) for (const score of row.scores) advisorColumns.set(score.advisorId, score.advisorName);
   if (matrix.length === 0 || advisorColumns.size === 0) {
-    return <p role="status" className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"아직 채점한 자문위원이 없습니다."}</UiText></p>;
+    return <p role="status" className="rounded-[var(--radius-panel)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]"><UiText>{"아직 채점한 자문위원이 없습니다."}</UiText></p>;
   }
   const columns = [...advisorColumns.entries()];
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+    <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
       <table className="w-full min-w-max border-collapse text-sm">
         <thead>
-          <tr className="border-b border-[var(--line)] bg-[var(--surface-subtle)] text-left">
-            <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀"}</UiText></th>
+          <tr className="border-b border-[var(--line)] text-left">
+            <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"팀"}</UiText></th>
             {columns.map(([advisorId, advisorName]) => (
-              <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]">{advisorName}</th>
+              <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
             ))}
-            <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"평균"}</UiText></th>
+            <th scope="col" className="px-4 py-3 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"평균"}</UiText></th>
           </tr>
         </thead>
         <tbody>
@@ -322,7 +322,7 @@ function ScoreMatrix({ matrix }: { matrix: AdvisorScoreMatrixRow[] }) {
                 {columns.map(([advisorId]) => (
                   <td key={advisorId} className="px-4 py-3 text-right tabular-nums">{scoreByAdvisor.has(advisorId) ? scoreByAdvisor.get(advisorId) : "–"}</td>
                 ))}
-                <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{row.average === null ? "–" : row.average.toFixed(1)}</td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--accent)]">{row.average === null ? "–" : row.average.toFixed(1)}</td>
               </tr>
             );
           })}

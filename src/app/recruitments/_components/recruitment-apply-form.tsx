@@ -50,8 +50,8 @@ export function RecruitmentApplyForm({
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 sm:px-7">
           <div>
-            <p className="text-sm font-bold text-[var(--primary)]">{teamName}</p>
-            <h3 id={titleId} className="mt-1 text-2xl font-bold tracking-[-0.035em]"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
+            <p className="text-sm font-semibold text-[var(--accent)]">{teamName}</p>
+            <h3 id={titleId} className="mt-1 text-xl font-semibold"><UiText>{postTitle}</UiText> {" "}<UiText>{"지원"}</UiText></h3>
             <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{"희망 역할과 지원 내용을 입력해 주세요."}</UiText></p>
           </div>
           <UiButton type="button" aria-label="팀원 모집 지원 닫기" disabled={pending} onClick={() => dialogRef.current?.close()} className="button-quiet min-w-11 shrink-0 px-0">

@@ -73,14 +73,14 @@ export function ManagedProjectSummary({ topic, description, footer }: {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-10">
           <section aria-labelledby="managed-topic-description">
-            <h2 id="managed-topic-description" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로젝트 설명"}</UiText></h2>
+            <h2 id="managed-topic-description" className="text-lg font-semibold"><UiText>{"프로젝트 설명"}</UiText></h2>
             {description}
           </section>
 
           {showApplicationSetup ? (
             <>
               <section aria-labelledby="managed-topic-requirements">
-                <h2 id="managed-topic-requirements" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"지원 조건"}</UiText></h2>
+                <h2 id="managed-topic-requirements" className="text-lg font-semibold"><UiText>{"지원 조건"}</UiText></h2>
                 <dl className="mt-3 border-t border-[var(--line)]">
                   {requirementRows.map(([label, value]) => (
                     <div key={label} className="grid gap-1 border-b border-[var(--line)] py-3.5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-baseline sm:gap-4">
@@ -93,7 +93,7 @@ export function ManagedProjectSummary({ topic, description, footer }: {
 
               <section aria-labelledby="managed-application-form">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 id="managed-application-form" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"지원서 구성"}</UiText></h2>
+                  <h2 id="managed-application-form" className="text-lg font-semibold"><UiText>{"지원서 구성"}</UiText></h2>
                   <StatusBadge tone="info">{applicationModeLabel[topic.applicationMode]}</StatusBadge>
                 </div>
                 {topic.applicationQuestions.length === 0 ? (
@@ -117,7 +117,7 @@ export function ManagedProjectSummary({ topic, description, footer }: {
         </div>
 
         <aside aria-labelledby="managed-topic-schedule" className="border-t border-[var(--line)] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-          <h2 id="managed-topic-schedule" className="text-lg font-bold tracking-[-0.02em]"><UiText>{"프로그램 일정"}</UiText></h2>
+          <h2 id="managed-topic-schedule" className="text-lg font-semibold"><UiText>{"프로그램 일정"}</UiText></h2>
           <dl className="mt-3 grid gap-5">
             {topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt
               ? <Period label="모집 기간" start={topic.programRecruitmentStartsAt} end={topic.programRecruitmentEndsAt} />

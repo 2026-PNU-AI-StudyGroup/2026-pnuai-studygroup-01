@@ -49,7 +49,7 @@ export function ReceivedApplicationList({
       <div className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
         <form action="/professor/applications" method="get" role="search" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           {status ? <input type="hidden" name="status" value={status} /> : null}
-          <label className="grid gap-2 text-sm font-bold">
+          <label className="grid gap-2 text-sm font-semibold">
             <UiText>{"프로젝트 또는 지원자 검색"}</UiText>
             <UiInput
               type="search"
@@ -73,13 +73,13 @@ export function ReceivedApplicationList({
                   <Link
                     href={applicationsHref({ status: filter.value, query })}
                     aria-current={selected ? "page" : undefined}
-                    className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors ${
+                    className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
                       selected
-                        ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary-hover)]"
+                        ? "border-[var(--accent-subtle)] bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
                         : "border-[var(--line-strong)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--ink)]"
                     }`}
                   >
-                    <UiText>{filter.label}</UiText><span aria-hidden="true">{count}</span>
+                    <UiText>{filter.label}</UiText><span aria-hidden="true" className="tabular-nums">{count}</span>
                   </Link>
                 </li>
               );
@@ -89,7 +89,7 @@ export function ReceivedApplicationList({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[var(--line)] py-4 text-sm">
-        <span className="font-bold"><UiText>{"검색 결과"}</UiText>{" "}{page.total}<UiText>{"건"}</UiText></span>
+        <span className="font-semibold tabular-nums"><UiText>{"검색 결과"}</UiText>{" "}{page.total}<UiText>{"건"}</UiText></span>
         <span className="muted"><UiText>{"검토 중"}</UiText>{" "}{page.counts.PENDING}<UiText>{"건"}</UiText></span>
       </div>
 
@@ -103,7 +103,7 @@ export function ReceivedApplicationList({
         {page.items.map((application) => (
           <li
             key={application.id}
-            className="group relative grid gap-5 py-7 transition-colors hover:bg-[var(--surface-subtle)] focus-within:bg-[var(--primary-subtle)] md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-center"
+            className="group relative grid gap-5 py-7 transition-colors hover:bg-[var(--surface-subtle)] focus-within:bg-[var(--accent-subtle)] md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-center"
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -112,12 +112,12 @@ export function ReceivedApplicationList({
                 </StatusBadge>
                 <span className="muted text-xs"><UiText>{application.applicationKind === "TEAM" ? `팀 지원 · ${application.teamMemberCount}명` : "개인 지원"}</UiText></span>
               </div>
-              <h2 className="mt-3 truncate text-lg font-semibold tracking-[-0.025em]">
+              <h2 className="mt-3 truncate text-lg font-semibold">
                 <UiText>{application.topicTitle}</UiText>
               </h2>
             </div>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">{application.studentName}<UiText>{application.applicationKind === "TEAM" && application.teamMemberCount > 1 ? ` 외 ${application.teamMemberCount - 1}명` : ""}</UiText></p>
+              <p className="truncate font-semibold">{application.studentName}<UiText>{application.applicationKind === "TEAM" && application.teamMemberCount > 1 ? ` 외 ${application.teamMemberCount - 1}명` : ""}</UiText></p>
               <p className="muted mt-2 text-xs">
                 <time dateTime={application.createdAt.toISOString()}>
                   <UiDate value={application.createdAt} mode="dateTime" /> <UiText>{"지원"}</UiText></time>

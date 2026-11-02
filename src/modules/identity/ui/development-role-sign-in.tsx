@@ -7,13 +7,13 @@ export function DevelopmentRoleSignIn({ seedRequired = false }: { seedRequired?:
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <p className="eyebrow"><UiText>{"로컬 개발 전용"}</UiText></p>
-          <h3 id="development-login-title" className="mt-1 text-lg font-bold"><UiText>{"역할별 화면 미리보기"}</UiText></h3>
+          <h3 id="development-login-title" className="mt-1 text-lg font-semibold"><UiText>{"역할별 화면 미리보기"}</UiText></h3>
         </div>
-        <span className="rounded bg-[var(--primary-subtle)] px-2 py-1 text-xs font-semibold text-[var(--primary-hover)]">LOCAL</span>
+        <span className="rounded bg-[var(--accent-subtle)] px-2 py-1 text-xs font-semibold text-[var(--accent-ink)]">LOCAL</span>
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{"역할별 화면을 데모 계정으로 바로 엽니다."}</UiText></p>
       {seedRequired ? (
-        <p role="alert" className="mt-3 rounded-lg bg-[var(--warning-subtle)] px-3 py-2 text-sm font-semibold text-[var(--warning-ink)]">
+        <p role="alert" className="mt-3 rounded-[var(--radius-control)] bg-[var(--warning-subtle)] px-3 py-2 text-sm font-semibold text-[var(--warning-ink)]">
           <UiText>{"데모 계정이 없습니다. 먼저"}</UiText><code>ALLOW_LOCAL_DEMO_SEED=true npm run db:seed-demo</code><UiText>{"를 실행해 주세요."}</UiText></p>
       ) : null}
       <div className="mt-4 grid gap-3">

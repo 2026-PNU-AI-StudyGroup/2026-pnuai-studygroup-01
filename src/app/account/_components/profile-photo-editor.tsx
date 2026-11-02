@@ -119,7 +119,7 @@ export function ProfilePhotoEditor({
         <PersonAvatar userId={userId} updatedAt={updatedAt} className="size-16" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold"><UiText>{"프로필 사진"}</UiText></p>
+        <p className="text-sm font-semibold"><UiText>{"프로필 사진"}</UiText></p>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"JPEG, PNG, WebP · 최대 5MiB · 가운데가 보이도록 표시됩니다."}</UiText></p>
         {state === "uploading" ? (
           <div className="mt-2" aria-live="polite">

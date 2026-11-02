@@ -15,14 +15,14 @@ export function ResponsiveSectionNavigation({
     <details className="group lg:hidden">
       <summary className="flex min-h-[4.5rem] cursor-pointer list-none items-center gap-3 border-y border-[var(--line)] py-3 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
-          <span className="block text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]">
+          <span className="block text-xs text-[var(--muted)]">
             {eyebrow}
           </span>
-          <strong className="mt-1 block truncate text-sm font-bold text-[var(--ink)]">
+          <strong className="mt-1 block truncate text-sm font-semibold text-[var(--ink)]">
             {label}
           </strong>
         </span>
-        {meta ? <span className="shrink-0 text-xs font-bold text-[var(--primary)]">{meta}</span> : null}
+        {meta ? <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--accent)]">{meta}</span> : null}
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"

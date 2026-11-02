@@ -30,7 +30,7 @@ export function AdvisorScoringForm({
     <form action={action} className="grid gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5">
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="rubricId" value={rubricId} />
-      <h3 className="text-base font-bold tracking-[-0.02em]"><UiText>{title}</UiText></h3>
+      <h3 className="text-base font-semibold"><UiText>{title}</UiText></h3>
       {criteria.map((criterion) => (
         <label key={criterion.id} className="grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-3 text-sm">
           <span className="font-semibold">
@@ -50,7 +50,7 @@ export function AdvisorScoringForm({
           />
         </label>
       ))}
-      <p className="border-t border-[var(--line)] pt-3 text-sm font-bold">
+      <p className="border-t border-[var(--line)] pt-3 text-sm font-semibold">
         <UiText>{"총점"}</UiText> {total} / {maximum}
       </p>
       {state.message ? (

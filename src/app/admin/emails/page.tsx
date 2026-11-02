@@ -44,15 +44,16 @@ export default async function EmailDeliveryAdminPage() {
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/emails" crumbs={[{ label: "이메일 전송" }]} panel={<AdminSidebar currentPath="/admin/emails" />}>
       <AdminWorkspace title="이메일 전송">
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {/* 지표 넷은 카드 하나를 1px 선으로 나눈다. 0 에는 상태 색을 입히지 않는다. */}
+        <section className="admin-panel grid gap-px overflow-hidden bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">
           <Metric label="대기·처리" value={queueCount} />
-          <Metric label="실패" value={counts.FAILED ?? 0} tone="danger" />
-          <Metric label="최근 24시간 성공" value={recentSuccess} tone="success" />
+          <Metric label="실패" value={counts.FAILED ?? 0} tone={counts.FAILED ? "danger" : "neutral"} />
+          <Metric label="최근 24시간 성공" value={recentSuccess} tone={recentSuccess ? "success" : "neutral"} />
           <Metric label="가장 오래된 대기" value={oldest ? formatAge(now.getTime() - oldest.createdAt.getTime()) : "없음"} />
         </section>
         <AdminSection id="email-status-title" title="상태별 작업">
           <ul className="grid divide-y divide-[var(--line)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            {Object.entries(emailDeliveryStatusLabel).map(([status, label]) => <li key={status} className="flex items-center justify-between gap-3 px-5 py-4"><StatusBadge tone={status === "FAILED" ? "danger" : status === "SENT" ? "success" : status === "RETRY_WAIT" ? "warning" : "neutral"}><UiText>{label}</UiText></StatusBadge><strong>{counts[status] ?? 0}</strong></li>)}
+            {Object.entries(emailDeliveryStatusLabel).map(([status, label]) => <li key={status} className="flex items-center justify-between gap-3 px-5 py-4"><StatusBadge tone={status === "FAILED" ? "danger" : status === "SENT" ? "success" : status === "RETRY_WAIT" ? "warning" : "neutral"}><UiText>{label}</UiText></StatusBadge><strong className="font-semibold tabular-nums">{counts[status] ?? 0}</strong></li>)}
           </ul>
         </AdminSection>
         <AdminSection id="failed-email-title" title="실패한 작업">
@@ -76,7 +77,7 @@ export default async function EmailDeliveryAdminPage() {
 }
 
 function Metric({ label, value, tone = "neutral" }: { label: string; value: string | number; tone?: "neutral" | "success" | "danger" }) {
-  return <div className="admin-panel p-5"><p className="text-sm font-semibold text-[var(--muted)]"><UiText>{label}</UiText></p><p className={`mt-2 text-2xl font-bold tracking-[-0.03em] ${tone === "danger" ? "text-[var(--danger)]" : tone === "success" ? "text-[var(--success)]" : "text-[var(--ink)]"}`}>{value}</p></div>;
+  return <div className="bg-[var(--surface)] px-5 py-4"><p className="text-[0.8125rem] text-[var(--muted)]"><UiText>{label}</UiText></p><p className={`mt-1.5 text-2xl font-semibold tabular-nums ${tone === "danger" ? "text-[var(--danger)]" : tone === "success" ? "text-[var(--success)]" : "text-[var(--ink)]"}`}>{value}</p></div>;
 }
 
 function formatAge(milliseconds: number) {

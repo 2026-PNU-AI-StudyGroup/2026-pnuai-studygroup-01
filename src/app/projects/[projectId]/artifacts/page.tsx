@@ -89,15 +89,15 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
       {registrationPeriodState && reportWorkspace.artifacts.length > 0 ? (
         <aside
           aria-labelledby="artifact-registration-restriction-title"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 sm:px-6"
         >
           <div>
-            <p id="artifact-registration-restriction-title" className="text-sm font-extrabold text-[var(--ink)]"><UiText>{registrationPeriodState === "BEFORE" ? "결과물 등록 기간 전" : "결과물 등록 기간 종료"}</UiText></p>
+            <p id="artifact-registration-restriction-title" className="text-sm font-semibold text-[var(--ink)]"><UiText>{registrationPeriodState === "BEFORE" ? "결과물 등록 기간 전" : "결과물 등록 기간 종료"}</UiText></p>
             <p className="muted mt-1 text-sm leading-6"><UiText>{registrationPeriodState === "BEFORE"
               ? "등록 기간이 시작되면 새 결과물을 공개할 수 있습니다."
               : "등록 기간이 종료되어 기존 결과물만 확인할 수 있습니다."}</UiText></p>
           </div>
-          <p className="text-sm font-bold text-[var(--ink)]">
+          <p className="text-sm font-medium tabular-nums text-[var(--ink)]">
             <UiText>{registrationPeriodState === "BEFORE" ? "등록 시작" : "등록 종료"}</UiText>{" "}
             <time dateTime={(registrationPeriodState === "BEFORE" ? workspace.schedule.executionStartsAt : workspace.schedule.executionEndsAt).toISOString()}>
               <UiDate value={registrationPeriodState === "BEFORE" ? workspace.schedule.executionStartsAt : workspace.schedule.executionEndsAt} mode="dateTime" />
@@ -110,13 +110,13 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
           {visibleArtifacts.map((artifact) => {
             const titleId = `artifact-title-${artifact.id}`;
             return (
-              <li key={artifact.id} className="min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:p-6" data-artifact-type={artifact.type.toLowerCase()}>
+              <li key={artifact.id} className="min-w-0 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6" data-artifact-type={artifact.type.toLowerCase()}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <div className="min-w-0">
-                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{ARTIFACT_TYPE_LABELS[artifact.type]}</UiText></span>
-                    <h2 id={titleId} className="text-base font-bold leading-6 tracking-[-0.02em] [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
+                    <span className="block text-xs text-[var(--muted)]"><UiText>{ARTIFACT_TYPE_LABELS[artifact.type]}</UiText></span>
+                    <h2 id={titleId} className="text-base font-semibold leading-6 [overflow-wrap:anywhere]"><UiText>{artifact.title}</UiText></h2>
                   </div>
-                  <time className="muted shrink-0 text-sm font-medium" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
+                  <time className="muted shrink-0 text-sm tabular-nums" dateTime={artifact.createdAt.toISOString()}><UiDate value={artifact.createdAt} mode="date" /></time>
                 </div>
                 <div className="mt-4">
                   <ArtifactMedia type={artifact.type} title={artifact.title} fileId={artifact.fileId} externalUrl={artifact.externalUrl} />

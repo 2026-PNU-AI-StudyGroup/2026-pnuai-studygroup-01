@@ -45,13 +45,13 @@ export function SplitDialog({ dialogRef, closeButtonRef, openOnMount = false, ey
         event.preventDefault();
         if (!pending) onRequestClose();
       }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] lg:overflow-hidden"
+      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[var(--shadow-float)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] lg:overflow-hidden"
     >
       <div className="grid lg:max-h-[calc(100dvh-2rem)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-        <header className="border-b border-[var(--line)] bg-[var(--primary-subtle)] px-6 py-7 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:border-b-0 lg:border-r lg:px-8 lg:py-9">
+        <header className="border-b border-[var(--line)] bg-[var(--accent-subtle)] px-6 py-7 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:border-b-0 lg:border-r lg:px-8 lg:py-9">
           <div>
-            {eyebrow ? <p className="text-xs font-bold text-[var(--primary)]"><UiText>{eyebrow}</UiText></p> : null}
-            <h2 id={titleId} className={`${eyebrow ? "mt-3" : ""} text-3xl font-bold leading-[1.08] tracking-[-0.045em]`}><UiText>{title}</UiText></h2>
+            {eyebrow ? <p className="text-[0.8125rem] font-medium text-[var(--muted)]"><UiText>{eyebrow}</UiText></p> : null}
+            <h2 id={titleId} className={`${eyebrow ? "mt-2" : ""} text-2xl font-bold leading-tight tracking-[-0.02em]`}><UiText>{title}</UiText></h2>
           </div>
           {hasDescription || steps ? (
             <div id={hasDescription ? descriptionId : undefined} className="lg:min-h-0 lg:overflow-y-auto">

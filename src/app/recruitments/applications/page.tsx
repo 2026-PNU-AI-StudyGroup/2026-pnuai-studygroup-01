@@ -60,10 +60,10 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
             />
 
             {data.applications.length === 0 ? (
-              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-primary" href="/recruitments"><UiText>{"모집 공고 둘러보기"}</UiText></Link>} />
+              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-secondary" href="/recruitments"><UiText>{"모집 공고 둘러보기"}</UiText></Link>} />
             ) : (
               <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-                <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-semibold text-[var(--muted)] lg:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] px-6 py-3 text-xs text-[var(--muted)] lg:grid">
                   <span><UiText>{"지원한 모집"}</UiText></span>
                   <span><UiText>{"지원일"}</UiText></span>
                   <span className="text-right"><UiText>{"상태"}</UiText></span>
@@ -72,11 +72,11 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
                   {data.applications.map((application) => (
                     <li key={application.id} className="grid gap-4 border-b border-[var(--line)] px-6 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_10rem_8rem] lg:items-center lg:gap-6">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[var(--primary)]">{application.teamName}</p>
-                        <h3 className="mt-1 truncate text-lg font-bold tracking-[-0.02em] text-[var(--ink)]"><UiText>{application.postTitle}</UiText></h3>
+                        <p className="text-xs font-medium text-[var(--accent)]">{application.teamName}</p>
+                        <h3 className="mt-1 truncate text-base font-semibold text-[var(--ink)]"><UiText>{application.postTitle}</UiText></h3>
                         <p className="mt-1 truncate text-sm text-[var(--muted)]"><UiText>{application.topicTitle}</UiText> · {application.recruiterName}</p>
                       </div>
-                      <p className="text-sm text-[var(--muted)]">
+                      <p className="text-sm tabular-nums text-[var(--muted)]">
                         <UiDate value={application.createdAt} mode="date" />
                         {application.decidedAt ? <span className="mt-1 block text-xs"><UiDate value={application.decidedAt} mode="date" /> {" "}<UiText>{"처리"}</UiText></span> : null}
                       </p>

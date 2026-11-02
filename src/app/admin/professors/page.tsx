@@ -26,11 +26,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("교수 권한 관리");
 }
 
+const selectedTabClass = "border-[var(--accent-subtle)] bg-[var(--accent-subtle)] text-[var(--accent-ink)] hover:border-[var(--accent-subtle)] hover:bg-[var(--accent-subtle)]";
+
 function TabLinks({ tab }: { tab: "list" | "history" }) {
   return (
     <>
-      <Link className={tab === "list" ? "button-primary" : "button-secondary"} href="/admin/professors"><UiText>{"권한 목록"}</UiText></Link>
-      <Link className={tab === "history" ? "button-primary" : "button-secondary"} href="/admin/professors?tab=history"><UiText>{"변경 이력"}</UiText></Link>
+      {/* 보기 전환이다. 채운 버튼은 화면의 주 동작(권한 부여)에 남기고, 고른 쪽은 옅은 파랑 면으로 표시한다. */}
+      <Link aria-current={tab === "list" ? "page" : undefined} className={`button-secondary ${tab === "list" ? selectedTabClass : ""}`} href="/admin/professors"><UiText>{"권한 목록"}</UiText></Link>
+      <Link aria-current={tab === "history" ? "page" : undefined} className={`button-secondary ${tab === "history" ? selectedTabClass : ""}`} href="/admin/professors?tab=history"><UiText>{"변경 이력"}</UiText></Link>
     </>
   );
 }

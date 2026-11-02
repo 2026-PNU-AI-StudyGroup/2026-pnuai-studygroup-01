@@ -32,7 +32,7 @@ export default async function TeamAnnouncementsPage({ params }: { params: Promis
         titleId="project-announcements-title"
         description="프로젝트 운영 안내와 주요 변경 사항을 확인합니다."
         bordered={false}
-        meta={<span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1.5 text-sm font-bold text-[var(--muted)]">{announcements.length}<UiText>{"건"}</UiText></span>}
+        meta={<span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-sm font-medium tabular-nums text-[var(--muted)]">{announcements.length}<UiText>{"건"}</UiText></span>}
         actions={canWrite ? (
           <Link className="button-primary gap-2" href={`/announcements/new?target=${encodeURIComponent(`team:${workspace.id}`)}`}>
             <AddIcon className="size-4 shrink-0" /><UiText>{"공지 작성"}</UiText>

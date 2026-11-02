@@ -51,7 +51,7 @@ describe("LanguagePopover", () => {
     );
 
     const trigger = screen.getByRole("button", { name: "Choose language" });
-    expect(trigger).toHaveClass("text-[#cbd6ff]");
+    expect(trigger).toHaveClass("text-white/75");
     expect(trigger).toHaveTextContent("Language");
 
     fireEvent.click(trigger);

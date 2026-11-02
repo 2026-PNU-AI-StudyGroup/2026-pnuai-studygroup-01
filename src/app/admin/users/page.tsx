@@ -108,7 +108,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                   key={filter}
                   href={listHref({ role: filter })}
                   aria-current={selected ? "page" : undefined}
-                  className={`min-h-9 shrink-0 rounded-full border px-3 text-xs font-semibold leading-9 ${selected ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"}`}
+                  className={`min-h-8 shrink-0 rounded-full border px-3 text-[0.8125rem] font-medium leading-8 ${selected ? "border-[var(--accent-subtle)] bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"}`}
                 >
                   <UiText>{roleFilterLabel[filter]}</UiText>
                 </Link>
@@ -124,7 +124,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                   key={filter}
                   href={listHref({ status: filter })}
                   aria-current={selected ? "page" : undefined}
-                  className={`min-h-9 shrink-0 rounded-full border px-3 text-xs font-semibold leading-9 ${selected ? "border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"}`}
+                  className={`min-h-8 shrink-0 rounded-full border px-3 text-[0.8125rem] font-medium leading-8 ${selected ? "border-[var(--accent-subtle)] bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"}`}
                 >
                   <UiText>{statusFilterLabel[filter]}</UiText>
                 </Link>
@@ -157,7 +157,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
                   </div>
                   <p className="muted min-w-0 truncate text-sm">{user.email}</p>
                   <div className="grid gap-0.5 md:whitespace-nowrap">
-                    <time className="muted text-sm" dateTime={user.createdAt.toISOString()}>
+                    <time className="muted text-sm tabular-nums" dateTime={user.createdAt.toISOString()}>
                       <span className="sr-only"><UiText>{"가입일"}</UiText>{" "}</span>
                       <UiDate value={user.createdAt} mode="date" />
                     </time>
@@ -188,8 +188,8 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
             </ol>
           )}
           {data.totalPages > 1 ? (
-            <UiNav aria-label="사용자 목록 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
-              <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
+            <UiNav aria-label="사용자 목록 페이지" className="flex items-center justify-between border-t border-[var(--line)] px-5 py-4 sm:px-6">
+              <span className="muted text-sm tabular-nums">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
                 {data.page > 1 ? <PaginationDirectionLink direction="previous" href={listHref({ page: data.page - 1 })} /> : null}
                 {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={listHref({ page: data.page + 1 })} /> : null}

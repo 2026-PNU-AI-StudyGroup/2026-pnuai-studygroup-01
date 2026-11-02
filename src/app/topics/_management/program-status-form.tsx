@@ -15,7 +15,7 @@ export function ProgramStatusForm({ id, isPublic, endsAt, appearance = "card", s
   if (!showVisibility) {
     return <form action={action} aria-busy={pending} className="grid gap-4">
       <div>
-        <h2 className="text-[1.125rem] font-extrabold tracking-[-0.025em]"><UiText>{"운영 종료"}</UiText></h2>
+        <h2 className="text-lg font-semibold"><UiText>{"운영 종료"}</UiText></h2>
         <p className="mt-1.5 text-[0.8125rem] leading-6 text-[var(--muted)]"><UiText>{closed ? "종료일이 지났습니다. 다시 운영하려면 일정에서 종료일을 연장하세요." : "지금 종료하면 프로그램 종료일이 현재 시각으로 변경되고 미처리 항목을 정리합니다."}</UiText></p>
       </div>
       <input type="hidden" name="programId" value={id} />
@@ -55,7 +55,7 @@ function VisibilityForm({ id, visible, pending, action }: {
   action: (payload: FormData) => void;
 }) {
   return (
-    <form action={action} aria-busy={pending} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] p-4">
+    <form action={action} aria-busy={pending} className="flex items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] p-4">
       <div><p className="font-bold"><UiText>{"프로그램 공개"}</UiText></p><p className="mt-1 text-sm text-[var(--muted)]"><UiText>{visible ? "학생과 교수진에게 공개 중" : "관리자만 볼 수 있음"}</UiText></p></div>
       <input type="hidden" name="programId" value={id} />
       <input type="hidden" name="operation" value="SET_PUBLIC" />

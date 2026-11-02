@@ -44,8 +44,8 @@
 .criteriaHeader h3 {
   color: var(--ink);
   font-size: .9375rem;
-  font-weight: 800;
-  letter-spacing: -.015em;
+  font-weight: 600;
+ 
 }
 
 .scopeHeaderActions,
@@ -81,7 +81,7 @@
   overflow: hidden;
   color: var(--ink);
   font-size: .9375rem;
-  font-weight: 750;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -120,7 +120,7 @@
   background: var(--surface);
   color: var(--ink);
   padding: 0;
-  box-shadow: 0 1.5rem 4rem rgb(23 32 51 / .2);
+  box-shadow: var(--shadow-float);
 }
 
 .dialog::backdrop {
@@ -139,7 +139,7 @@
 }
 
 .dialogHeader { border-bottom: 1px solid var(--line); }
-.dialogHeader h2 { font-size: 1rem; font-weight: 800; letter-spacing: -.015em; }
+.dialogHeader h2 { font-size: 1rem; font-weight: 600; }
 .dialogFooter { justify-content: flex-end; border-top: 1px solid var(--line); }
 
 .dialogBody {
@@ -165,7 +165,7 @@
 .field > span {
   color: var(--muted);
   font-size: .75rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
 }
 

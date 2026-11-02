@@ -11,6 +11,8 @@ vi.mock("@/modules/identity/infrastructure/current-actor", () => ({
   getCurrentActor: getCurrentActorMock,
 }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
+// next/font 는 빌드할 때 바뀌는 호출이라 테스트에서는 빈 글꼴로 갈음한다.
+vi.mock("next/font/google", () => ({ League_Spartan: () => ({ variable: "", className: "" }) }));
 vi.mock("@/shared/infrastructure/database/prisma", () => ({
   prisma: { user: { findUnique } },
 }));

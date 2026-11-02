@@ -27,7 +27,7 @@
 .field > span {
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -65,7 +65,7 @@
   overflow: visible;
   color: var(--ink);
   font-size: 0.875rem;
-  font-weight: 750;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -112,7 +112,7 @@
   background: var(--surface);
   color: var(--ink);
   padding: 0;
-  box-shadow: 0 1.5rem 4rem rgb(23 32 51 / 0.2);
+  box-shadow: var(--shadow-float);
 }
 
 .dialogSurface {
@@ -136,7 +136,7 @@
 
 .dialogHeader h3 {
   font-size: 1rem;
-  font-weight: 750;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -171,7 +171,7 @@
   cursor: pointer;
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   list-style: none;
 }
 
@@ -211,7 +211,7 @@
 .criteriaHeader h4 {
   color: var(--ink);
   font-size: 0.875rem;
-  font-weight: 750;
+  font-weight: 600;
   line-height: 1.4;
 }
 

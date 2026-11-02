@@ -8,8 +8,7 @@
   min-width: 0;
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--workspace) 94%, white);
-  backdrop-filter: blur(14px);
+  background: var(--workspace);
   scrollbar-width: none;
 }
 
@@ -25,7 +24,7 @@
   padding: .75rem 1rem;
   color: var(--muted);
   font-size: .875rem;
-  font-weight: 750;
+  font-weight: 500;
   white-space: nowrap;
   transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
 }
@@ -50,14 +49,15 @@
   stroke-linejoin: round;
 }
 
+/* 탭은 글자색과 아래 2px 선으로만 고른다. 바탕은 칠하지 않는다. */
 .item:hover,
 .item:focus-visible {
-  background: color-mix(in srgb, var(--primary-subtle) 45%, transparent);
-  color: var(--primary);
+  color: var(--ink);
 }
 
-.itemActive { color: var(--primary); }
-.itemActive::after { background: var(--primary); }
+.itemActive { color: var(--ink); }
+.itemActive svg { color: var(--accent); }
+.itemActive::after { background: var(--accent); }
 
 /* 관리 탭은 세 칸이라 폭을 나눠 늘이지 않고 왼쪽부터 붙인다. */
 .management { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; justify-content: start; }
@@ -73,12 +73,12 @@
   padding: 0 .875rem;
   color: var(--muted);
   font-size: .8125rem;
-  font-weight: 700;
+  font-weight: 500;
   transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
 }
 .subItem svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .subItem:hover, .subItem:focus-visible { background: var(--surface-subtle); color: var(--ink); }
-.subItemActive, .subItemActive:hover { background: var(--primary-subtle); color: var(--primary); }
+.subItemActive, .subItemActive:hover { background: var(--accent-subtle); color: var(--accent-ink); }
 
 @media (max-width: 63.9375rem) {
   .root { top: 4.5rem; }

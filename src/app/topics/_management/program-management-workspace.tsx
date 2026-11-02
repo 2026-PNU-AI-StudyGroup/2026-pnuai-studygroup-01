@@ -90,7 +90,7 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
                 <path d="m9 4-6 6 6 6M3.5 10H16" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </UiLink>
-            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]">
+            <h1 className="text-[clamp(1.5rem,2.4vw,1.875rem)] font-semibold leading-tight tracking-[-0.02em]">
               <UiText>{program.name}</UiText>
             </h1>
             <span className={styles.programStatus} data-tone={status.tone}><UiText>{status.label}</UiText></span>
@@ -134,9 +134,9 @@ export function ProgramManagementHeader({ program, tab, pendingApprovalCount }: 
 export async function ProgramCreateWorkspace({ cancelHref }: { cancelHref: string }) {
   const categoryOptions = await listProgramCategories();
   return (
-    <div className="page-enter">
+    <div>
       <header className="border-b border-[var(--line)] pb-6">
-        <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]"><UiText>{"새 프로그램"}</UiText></h1>
+        <h1 className="text-[clamp(1.5rem,2.4vw,1.875rem)] font-semibold leading-tight tracking-[-0.02em]"><UiText>{"새 프로그램"}</UiText></h1>
       </header>
       <div className="pt-5"><ProgramForm categoryOptions={categoryOptions} cancelHref={cancelHref} /></div>
     </div>
@@ -227,5 +227,5 @@ export async function ProgramManagementWorkspace({
     content = <div className={styles.panel}><ProgramAdvisorPanel programId={program.id} advisors={advisors} topics={topics} matrix={matrix} /></div>;
   }
 
-  return <div className="page-enter"><ProgramManagementHeader program={program} tab={tab} pendingApprovalCount={pendingApprovalCount} /><div className="pt-7">{content}</div></div>;
+  return <div><ProgramManagementHeader program={program} tab={tab} pendingApprovalCount={pendingApprovalCount} /><div className="pt-7">{content}</div></div>;
 }

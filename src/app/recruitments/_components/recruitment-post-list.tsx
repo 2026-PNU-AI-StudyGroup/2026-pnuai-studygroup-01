@@ -38,31 +38,31 @@ function RecruitmentCard({ post, actorId, contactOptions }: {
       <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] transition duration-200 hover:border-[var(--line-strong)]">
         <div className={`border-b border-[var(--line)] px-5 py-4 sm:px-6 ${isMine ? "bg-[var(--surface-subtle)]" : posterTheme.background}`}>
           <div className="flex items-start justify-between gap-4">
-            <p className={`text-sm font-bold ${isMine ? "text-[var(--muted)]" : posterTheme.accent}`}>{post.teamName}</p>
-            <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-[var(--ink)]">
+            <p className={`text-sm font-semibold ${isMine ? "text-[var(--muted)]" : posterTheme.accent}`}>{post.teamName}</p>
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold tabular-nums text-[var(--ink)]">
               <CapacityIcon />
               {post.memberCount}/{post.capacity}<UiText>{"명"}</UiText>
             </span>
           </div>
-          <p className="mt-2 text-xs font-semibold text-[var(--muted)]"><UiText>{"마감"}</UiText>{" "}<UiDate value={post.deadlineAt} mode="dateTime" /></p>
-          <p className="mt-3 text-xl font-bold leading-tight tracking-[-0.03em] text-[var(--ink)]">{post.roleNeeded}</p>
+          <p className="mt-2 text-xs tabular-nums text-[var(--muted)]"><UiText>{"마감"}</UiText>{" "}<UiDate value={post.deadlineAt} mode="dateTime" /></p>
+          <p className="mt-3 text-base font-semibold leading-tight text-[var(--ink)]">{post.roleNeeded}</p>
         </div>
 
         <div className="flex flex-1 flex-col px-5 py-5 sm:px-6">
           <div>
-            <p className="text-xs font-semibold text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.authorName}</p>
-            <h3 className="mt-2 text-[1.35rem] font-bold leading-snug tracking-[-0.025em] text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
+            <p className="text-xs text-[var(--muted)]"><UiText>{post.topicTitle}</UiText> · {post.authorName}</p>
+            <h3 className="mt-2 text-lg font-semibold leading-snug text-[var(--ink)]"><UiText>{post.title}</UiText></h3>
             <TranslatedText text={post.content} className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]" />
           </div>
 
           <dl className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-5 gap-y-4 border-t border-[var(--line)] pt-5 text-sm">
             <div className="min-w-0">
-              <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"필요 기술"}</UiText></dt>
-              <dd className="mt-1 break-words font-bold leading-6 text-[var(--ink)]"><UiText>{post.requiredSkills.join(", ")}</UiText></dd>
+              <dt className="text-xs text-[var(--muted)]"><UiText>{"필요 기술"}</UiText></dt>
+              <dd className="mt-1 break-words font-medium leading-6 text-[var(--ink)]"><UiText>{post.requiredSkills.join(", ")}</UiText></dd>
             </div>
             <div className="min-w-0">
-              <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"활동 가능 시간"}</UiText></dt>
-              <dd className="mt-1 break-words font-bold leading-6 text-[var(--ink)]"><UiText>{post.availability}</UiText></dd>
+              <dt className="text-xs text-[var(--muted)]"><UiText>{"활동 가능 시간"}</UiText></dt>
+              <dd className="mt-1 break-words font-medium leading-6 text-[var(--ink)]"><UiText>{post.availability}</UiText></dd>
             </div>
           </dl>
 
@@ -79,7 +79,7 @@ function RecruitmentCard({ post, actorId, contactOptions }: {
                 <StatusBadge tone={historyStatus[post.ownApplication.status].tone}><UiText>{historyStatus[post.ownApplication.status].label}</UiText></StatusBadge>
               </p>
             ) : post.authorId === actorId ? (
-              <Link href={`/recruitments/${post.id}/applications`} className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[var(--primary)]">
+              <Link href={`/recruitments/${post.id}/applications`} className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-[var(--accent)]">
                 <UiText>{"지원자 보기"}</UiText>
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </Link>

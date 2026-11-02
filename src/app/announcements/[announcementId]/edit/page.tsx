@@ -63,7 +63,7 @@ export default async function EditAnnouncementPage({
       userName={actor.name}
       currentPath={`/announcements/${announcement.id}/edit`}
     >
-      <main className="content-shell page-enter pb-28 lg:pb-16">
+      <main className="content-shell pb-28 lg:pb-16">
         <div className="mx-auto max-w-4xl space-y-7">
           <PageHeader
             compact

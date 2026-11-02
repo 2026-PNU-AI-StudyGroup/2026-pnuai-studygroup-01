@@ -28,7 +28,7 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false,
   const desktopGrid = adminSurface ? (wideLayout ? "lg:grid lg:gap-5" : "2xl:grid 2xl:gap-5") : "xl:grid xl:gap-5";
   const compactLabel = adminSurface ? (wideLayout ? "lg:hidden" : "2xl:hidden") : "xl:hidden";
   const ledger = <>
-      <div aria-hidden="true" className={`hidden px-5 py-3 text-xs font-bold text-[var(--muted)] sm:px-6 ${adminSurface ? "border-b border-[var(--line)] bg-[var(--surface)]" : "border-y border-[var(--line)]"} ${desktopGrid} ${columns}`}>
+      <div aria-hidden="true" className={`hidden px-5 py-3 text-xs font-medium text-[var(--muted)] sm:px-6 ${adminSurface ? "border-b border-[var(--line)] bg-[var(--surface)]" : "border-y border-[var(--line)]"} ${desktopGrid} ${columns}`}>
         <span><UiText>{"프로젝트"}</UiText></span>
         <span><UiText>{"상태"}</UiText></span>
         <span><UiText>{"등록자"}</UiText></span>
@@ -44,24 +44,24 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false,
           return (
             <li key={request.id} className={`${adminSurface ? adminRecordRowClassName : "record-row px-2 py-6"} grid gap-5 ${adminSurface ? "2xl:items-start 2xl:gap-5" : "xl:items-start xl:gap-5"} ${columns}`}>
               <div className="min-w-0">
-                <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"프로젝트"}</UiText></p>
-                <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]"><UiText>{request.topicTitle}</UiText></h3>
+                <p className={`mb-1 text-xs font-medium text-[var(--muted)] ${compactLabel}`}><UiText>{"프로젝트"}</UiText></p>
+                <h3 className="text-base font-semibold text-[var(--ink)]"><UiText>{request.topicTitle}</UiText></h3>
                 <p className="mt-1 truncate text-xs font-semibold text-[var(--muted)]"><UiText>{request.programCategory}</UiText> · <UiText>{request.programName}</UiText></p>
               </div>
               <div>
-                <p className={`mb-1.5 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"상태"}</UiText></p>
+                <p className={`mb-1.5 text-xs font-medium text-[var(--muted)] ${compactLabel}`}><UiText>{"상태"}</UiText></p>
                 <StatusBadge tone={status[request.status][1]}>{status[request.status][0]}</StatusBadge>
               </div>
               <div>
-                <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"등록자"}</UiText></p>
+                <p className={`mb-1 text-xs font-medium text-[var(--muted)] ${compactLabel}`}><UiText>{"등록자"}</UiText></p>
                 <p className="text-sm font-semibold">{request.requesterName}</p>
               </div>
               <div>
-                <p className={`mb-1 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"검토 요청 대상"}</UiText></p>
+                <p className={`mb-1 text-xs font-medium text-[var(--muted)] ${compactLabel}`}><UiText>{"검토 요청 대상"}</UiText></p>
                 <p className="text-sm font-semibold">{route}</p>
               </div>
               <div className="min-w-0">
-                <p className={`mb-2 text-xs font-bold text-[var(--muted)] ${compactLabel}`}><UiText>{"상세"}</UiText></p>
+                <p className={`mb-2 text-xs font-medium text-[var(--muted)] ${compactLabel}`}><UiText>{"상세"}</UiText></p>
                 <TopicApprovalDialog request={request} canDecide={!student && request.status === "PENDING"} triggerLabel={actionLabel} />
               </div>
             </li>
@@ -80,10 +80,10 @@ export function ProjectApprovalLedger({ requests, student, adminSurface = false,
     <section aria-labelledby="approval-ledger-title">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h2 id="approval-ledger-title" className="text-xl font-bold tracking-[-0.03em]"><UiText>{title}</UiText></h2>
+          <h2 id="approval-ledger-title" className="text-lg font-semibold"><UiText>{title}</UiText></h2>
           <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{description}</UiText></p>
         </div>
-        <span className="shrink-0 text-sm font-bold text-[var(--muted)]">{requests.length}<UiText>{"건"}</UiText></span>
+        <span className="shrink-0 text-sm tabular-nums text-[var(--muted)]">{requests.length}<UiText>{"건"}</UiText></span>
       </div>
       {ledger}
     </section>

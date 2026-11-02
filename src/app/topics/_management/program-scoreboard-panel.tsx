@@ -43,24 +43,24 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
           페이지가 가로로 밀려 오른쪽 끝 칸이 화면 밖으로 나간다. min-w-0 을 줘야 표가 제자리에서 구른다. */}
       <form action={saveResults} className="min-w-0">
       <input type="hidden" name="programId" value={programId} />
-      <div className="min-w-0 overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+      <div className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
-            <tr className="border-b border-[var(--line)] bg-[var(--surface-subtle)] text-left">
-              <th scope="col" className="w-12 px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
+            <tr className="border-b border-[var(--line)] text-left">
+              <th scope="col" className="w-12 px-4 py-3 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
+              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
               <SortHeader label="팀" columnKey="team" sortKey={sortKey} onSort={setSortKey} />
-              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
+              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
+              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
               <SortHeader label="내부 심사" columnKey="staff" sortKey={sortKey} onSort={setSortKey} align="right" />
               {advisorColumns.map(([advisorId, advisorName]) => (
-                <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)]">{advisorName}</th>
+                <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
               ))}
               <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="합계" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
               {/* 표가 넓어 수상 칸이 가로 스크롤 밖으로 밀린다. 오른쪽에 붙여 늘 보이게 한다. */}
-              <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-3 text-xs font-semibold text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
+              <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
             </tr>
           </thead>
           <tbody>
@@ -68,7 +68,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
               const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score.total]));
               return (
                 <tr key={row.teamId} className="border-t border-[var(--line)] first:border-t-0">
-                  <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--muted)]">{index + 1}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-[var(--muted)]">{index + 1}</td>
                   <td className="px-4 py-2">
                     <TextInput
                       type="number"
@@ -95,7 +95,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
                   ))}
                   <td className="px-4 py-3 text-right tabular-nums">{row.advisorAverage === null ? "–" : row.advisorAverage.toFixed(1)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{row.voteCount}</td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--primary)]">{combinedScore(row).toFixed(1)}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--accent)]">{combinedScore(row).toFixed(1)}</td>
                   <td className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] px-4 py-2">
                     <TextInput
                       name={`award:${row.teamId}`}
@@ -149,12 +149,12 @@ function SortHeader({ label, columnKey, sortKey, onSort, align = "left" }: {
     <th
       scope="col"
       aria-sort={active ? (columnKey === "team" ? "ascending" : "descending") : "none"}
-      className={`px-4 py-3 text-xs font-semibold ${align === "right" ? "text-right" : "text-left"} ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}
+      className={`px-4 py-3 text-xs font-normal ${align === "right" ? "text-right" : "text-left"} ${active ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}
     >
       <button
         type="button"
         onClick={() => onSort(columnKey)}
-        className={`inline-flex min-h-8 items-center gap-1 font-semibold hover:text-[var(--ink)] ${align === "right" ? "flex-row-reverse" : ""}`}
+        className={`inline-flex min-h-8 items-center gap-1 hover:text-[var(--ink)] ${align === "right" ? "flex-row-reverse" : ""}`}
       >
         <UiText>{label}</UiText>
         <svg aria-hidden="true" viewBox="0 0 12 12" className={`size-3 shrink-0 fill-current ${active ? "" : "opacity-25"}`}>

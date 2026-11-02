@@ -203,7 +203,7 @@ export function AnnouncementForm({
           </p>
         ) : null}
       </div>
-      <div className="flex justify-end gap-2 border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-8">
+      <div className="flex justify-end gap-2 border-t border-[var(--line)] px-5 py-4 sm:px-8">
         {uploadProgress ? <button type="button" className="button-secondary" onClick={() => uploadControllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
         <button
           className="button-primary max-sm:w-full"
@@ -234,6 +234,6 @@ function VisibilityOption({ value, checked, onChange, label, description }: {
     onChange={() => onChange(value)}
     label={label}
     description={description}
-    className={checked ? "border-[var(--primary)] bg-[var(--primary-subtle)]" : "border-[var(--field-border)] bg-[var(--surface)] hover:border-[var(--line-strong)]"}
+    className={checked ? "border-[var(--accent)] bg-[var(--accent-subtle)]" : "border-[var(--field-border)] bg-[var(--surface)] hover:border-[var(--line-strong)]"}
   />;
 }

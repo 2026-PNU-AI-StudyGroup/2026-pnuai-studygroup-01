@@ -39,7 +39,7 @@ export function ArtifactMedia({ type, title, fileId, externalUrl }: {
   }
   if (externalUrl) {
     return (
-      <a className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-[var(--primary-hover)] hover:underline [overflow-wrap:anywhere]" href={externalUrl} target="_blank" rel="noreferrer">
+      <a className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-[var(--accent)] hover:underline [overflow-wrap:anywhere]" href={externalUrl} target="_blank" rel="noreferrer">
         <ExternalLinkIcon className="size-4 shrink-0" /><span className="min-w-0 break-all">{externalUrl}</span><span className="sr-only"> <UiText>{"새 창"}</UiText></span>
       </a>
     );

@@ -15,12 +15,12 @@ export function AdvisorProgramBannerView({ banner, now }: { banner: AdvisorProgr
   return (
     <section
       aria-labelledby="advisor-banner-title"
-      className="mb-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft,none)]"
+      className="mb-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">
+      <p className="text-[0.8125rem] font-medium text-[var(--muted)]">
         <UiText>{"자문위원 심사"}</UiText>
       </p>
-      <h2 id="advisor-banner-title" className="mt-1.5 text-lg font-bold leading-6 tracking-[-0.02em] [overflow-wrap:anywhere]">
+      <h2 id="advisor-banner-title" className="mt-1 text-lg font-semibold leading-6 [overflow-wrap:anywhere]">
         <UiText>{`${banner.advisorName} 위원님 · ${banner.programName}`}</UiText>
       </h2>
       <p className="muted mt-1 text-sm leading-6">
@@ -70,8 +70,8 @@ export function AdvisorProgramBannerView({ banner, now }: { banner: AdvisorProgr
 
 function BannerFact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-[var(--surface-subtle)] px-4 py-3">
-      <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt>
+    <div className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3">
+      <dt className="text-xs text-[var(--muted)]"><UiText>{label}</UiText></dt>
       <dd className="mt-1 text-sm font-semibold text-[var(--ink)] tabular-nums">{children}</dd>
     </div>
   );

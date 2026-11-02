@@ -46,7 +46,7 @@ export default async function StudentTeamManagePage({
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/teams/manage/${team.id}`} panel={<StudentTeamPanel currentPath={`/teams/manage/${team.id}`} />}>
-      <main className="page-enter pb-28 lg:pb-0">
+      <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
           <StudentTeamManagementSections team={team} actorId={actor.id} recruitmentPosts={postData.posts} />
           {modal === "recruitment" && team.leaderId === actor.id ? (

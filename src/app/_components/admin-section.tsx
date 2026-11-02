@@ -22,9 +22,9 @@ export function AdminSection({
 }) {
   return (
     <section aria-labelledby={id} className="admin-panel overflow-hidden">
-      <header className="flex flex-col gap-4 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+      <header className="flex flex-col gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <h2 id={id} className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
+          <h2 id={id} className="text-base font-semibold text-[var(--ink)]">
             <UiText>{title}</UiText>
           </h2>
           {description !== undefined && description !== null ? (
@@ -34,7 +34,7 @@ export function AdminSection({
           ) : null}
         </div>
         {actions !== undefined && actions !== null ? <div className="min-w-0 lg:ml-auto">{actions}</div> : null}
-        {meta !== undefined && meta !== null ? <div className="shrink-0 text-sm font-semibold text-[var(--muted)]"><UiText>{meta}</UiText></div> : null}
+        {meta !== undefined && meta !== null ? <div className="shrink-0 text-sm tabular-nums text-[var(--muted)]"><UiText>{meta}</UiText></div> : null}
       </header>
       {children}
     </section>

@@ -58,7 +58,7 @@ export default async function AnnouncementsPage({
       userName={actor.name}
       currentPath="/announcements"
     >
-      <main className="content-shell page-enter pb-28 lg:pb-16">
+      <main className="content-shell pb-28 lg:pb-16">
         <div className="mx-auto max-w-6xl space-y-8">
           <PageHeader
             compact
@@ -69,12 +69,12 @@ export default async function AnnouncementsPage({
           />
 
           <section aria-labelledby="announcement-list-title" className="panel overflow-hidden">
-            <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-7">
-              <h2 id="announcement-list-title" className="text-base font-bold tracking-[-0.02em] text-[var(--ink)]">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-7">
+              <h2 id="announcement-list-title" className="text-base font-semibold text-[var(--ink)]">
                 <UiText>{"전체 공지"}</UiText>
               </h2>
-              <p className="text-sm font-semibold text-[var(--muted)]">
-                <UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{data.total}</strong><UiText>{"건"}</UiText>
+              <p className="text-sm text-[var(--muted)]">
+                <UiText>{"총"}</UiText>{" "}<strong className="font-semibold tabular-nums text-[var(--ink)]">{data.total}</strong><UiText>{"건"}</UiText>
               </p>
             </div>
 
@@ -105,11 +105,11 @@ export default async function AnnouncementsPage({
                             </span>
                           ) : null}
                           {isRecentAnnouncement(announcement.createdAt) ? (
-                            <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--danger)]">NEW</span>
+                            <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[var(--danger)]">NEW</span>
                           ) : null}
                           <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
                         </div>
-                        <h3 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[var(--ink)] transition-colors group-hover:text-[var(--primary-hover)]">
+                        <h3 className="text-base font-semibold text-[var(--ink)] transition-colors group-hover:text-[var(--accent)]">
                           <UiText>{announcement.title}</UiText>
                         </h3>
                         <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted)] sm:line-clamp-1">
@@ -125,7 +125,7 @@ export default async function AnnouncementsPage({
                       </div>
                       <div className="hidden text-right text-sm sm:block">
                         <p className="font-semibold text-[var(--ink)]">{announcement.authorName}</p>
-                        <time className="mt-1 block text-xs text-[var(--muted)]" dateTime={announcement.createdAt.toISOString()}>
+                        <time className="mt-1 block text-xs tabular-nums text-[var(--muted)]" dateTime={announcement.createdAt.toISOString()}>
                           <UiDate value={announcement.createdAt} mode="date" />
                         </time>
                       </div>
@@ -141,7 +141,7 @@ export default async function AnnouncementsPage({
 
           {data.totalPages > 1 ? (
             <UiNav aria-label="공지사항 페이지" className="flex items-center justify-between">
-              <span className="text-sm text-[var(--muted)]">
+              <span className="text-sm tabular-nums text-[var(--muted)]">
                 {data.page} / {data.totalPages} <UiText>{"페이지"}</UiText>
               </span>
               <div className="flex gap-2">

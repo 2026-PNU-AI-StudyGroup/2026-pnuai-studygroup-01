@@ -79,11 +79,11 @@ export function TeamModal({
           event.preventDefault();
           requestClose();
         }}
-        className={`fixed inset-0 m-auto w-[calc(100%-2rem)] overflow-y-auto border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink)] shadow-[0_24px_70px_rgba(31,35,48,.18)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] ${size === "wizard" ? "max-h-[calc(100dvh-2rem)] max-w-5xl rounded-[var(--radius-panel)] p-4 sm:p-8" : `max-h-[calc(100dvh-2rem)] rounded-[var(--radius-panel)] p-6 sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}`}
+        className={`fixed inset-0 m-auto w-[calc(100%-2rem)] overflow-y-auto border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink)] shadow-[var(--shadow-float)] [overscroll-behavior:contain] backdrop:bg-[var(--backdrop)] ${size === "wizard" ? "max-h-[calc(100dvh-2rem)] max-w-5xl rounded-[var(--radius-panel)] p-4 sm:p-8" : `max-h-[calc(100dvh-2rem)] rounded-[var(--radius-panel)] p-6 sm:p-8 ${size === "wide" ? "max-w-4xl" : "max-w-xl"}`}`}
       >
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 id="team-modal-title" className="text-2xl font-bold tracking-[-0.035em] text-[var(--ink)]"><UiText>{title}</UiText></h2>
+            <h2 id="team-modal-title" className="text-xl font-semibold text-[var(--ink)]"><UiText>{title}</UiText></h2>
             {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p> : null}
           </div>
           <UiButton

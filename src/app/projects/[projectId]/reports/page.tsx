@@ -49,15 +49,15 @@ function ReportCard({
   const submission = { id: report.id, title: report.title, dueAt: report.dueAt };
 
   return (
-    <article id={`report-${report.id}`} className="scroll-mt-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-sm sm:p-6">
+    <article id={`report-${report.id}`} className="scroll-mt-6 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold tracking-[-0.03em]"><UiText>{report.title}</UiText></h2>
+            <h2 className="text-lg font-semibold"><UiText>{report.title}</UiText></h2>
             {!report.submissionEnabled ? <StatusBadge tone="neutral"><UiText>{"보관됨"}</UiText></StatusBadge> : !report.required ? <StatusBadge tone="neutral"><UiText>{"선택 제출"}</UiText></StatusBadge> : <StatusBadge tone="info"><UiText>{"필수 제출"}</UiText></StatusBadge>}
             <StatusBadge tone={presentation.tone}><UiText>{presentation.label}</UiText></StatusBadge>
           </div>
-          <p className="mt-1 text-sm text-[var(--muted)]">
+          <p className="mt-1 text-sm tabular-nums text-[var(--muted)]">
             <UiText>{"제출 마감"}</UiText>{" "}
             <time dateTime={report.dueAt.toISOString()}><UiDate value={report.dueAt} mode="dateTime" /></time>
           </p>
@@ -68,11 +68,11 @@ function ReportCard({
       {report.versions.length ? (
         <ol className="mt-5 grid gap-3">
           {report.versions.map((version, index) => (
-            <li key={version.id} className="rounded-2xl bg-[var(--surface-subtle)] p-4">
+            <li key={version.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <a href={`/api/files/${version.fileId}`} className="font-bold text-[var(--primary-hover)] hover:underline">v{version.version} · {version.fileName}</a>
-                  <p className="mt-1 text-xs text-[var(--muted)]">{version.submitterName}{" · "}<UiDate value={version.submittedAt} mode="dateTime" /></p>
+                  <a href={`/api/files/${version.fileId}`} className="font-semibold text-[var(--accent)] hover:underline">v{version.version} · {version.fileName}</a>
+                  <p className="mt-1 text-xs tabular-nums text-[var(--muted)]">{version.submitterName}{" · "}<UiDate value={version.submittedAt} mode="dateTime" /></p>
                 </div>
                 {version.decision ? (
                   <StatusBadge tone={version.decision.decision === "APPROVED" ? "success" : "warning"}>
@@ -82,9 +82,9 @@ function ReportCard({
               </div>
               {version.description ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6"><UiText>{version.description}</UiText></p> : null}
               {version.decision ? (
-                <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 text-sm">
-                  <h3 className="font-bold"><UiText>{version.decision.decision === "REVISION_REQUESTED" ? "수정 요청 사항" : "승인 의견"}</UiText></h3>
-                  <p className="font-semibold"><span>{version.decision.reviewerName}</span>{" · "}<UiDate value={version.decision.decidedAt} mode="dateTime" /></p>
+                <div className="mt-3 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] p-3 text-sm">
+                  <h3 className="font-semibold"><UiText>{version.decision.decision === "REVISION_REQUESTED" ? "수정 요청 사항" : "승인 의견"}</UiText></h3>
+                  <p className="text-[var(--muted)]"><span>{version.decision.reviewerName}</span>{" · "}<UiDate value={version.decision.decidedAt} mode="dateTime" /></p>
                   <p className="mt-1 whitespace-pre-wrap"><UiText>{version.decision.comment || "등록된 검토 의견이 없습니다."}</UiText></p>
                   {index === 0 && isTeamMember && version.decision.decision === "REVISION_REQUESTED" ? (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] pt-3">
@@ -106,12 +106,12 @@ function ReportCard({
         남길 사람에게만 빈 자리를 보이고, 읽는 사람에게는 있을 때만 보인다.
       */}
       {report.feedback.length || canReview ? <section className="mt-5 border-t border-[var(--line)] pt-5">
-        <h3 className="text-sm font-bold"><UiText>{"피드백"}</UiText></h3>
+        <h3 className="text-sm font-semibold"><UiText>{"피드백"}</UiText></h3>
         {report.feedback.length ? (
           <ul className="mt-3 grid gap-2">
             {report.feedback.map((item) => (
-              <li key={item.id} className="rounded-xl bg-[var(--surface-subtle)] p-3 text-sm">
-                <p className="text-xs text-[var(--muted)]">{item.authorName}{" · "}<UiDate value={item.createdAt} mode="dateTime" /></p>
+              <li key={item.id} className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 text-sm">
+                <p className="text-xs tabular-nums text-[var(--muted)]">{item.authorName}{" · "}<UiDate value={item.createdAt} mode="dateTime" /></p>
                 <p className="mt-1 whitespace-pre-wrap"><UiText>{item.body}</UiText></p>
               </li>
             ))}
@@ -150,12 +150,12 @@ export default async function TeamReportsPage({ params }: { params: Promise<{ pr
         <EmptyState {...emptyState} />
       ) : (
         <div className="space-y-4">
-          {noSubmittableReports ? <aside role="status" className="rounded-2xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4 text-sm"><strong><UiText>{"현재 제출 가능한 보고서가 없습니다"}</UiText></strong><p className="mt-1 text-[var(--muted)]"><UiText>{"기존 제출·검토 이력은 아래에서 확인할 수 있습니다."}</UiText></p></aside> : null}
+          {noSubmittableReports ? <aside role="status" className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-4 text-sm"><strong><UiText>{"현재 제출 가능한 보고서가 없습니다"}</UiText></strong><p className="mt-1 text-[var(--muted)]"><UiText>{"기존 제출·검토 이력은 아래에서 확인할 수 있습니다."}</UiText></p></aside> : null}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl font-bold tracking-[-0.04em]"><UiText>{"보고서 제출 현황"}</UiText></h2>
+            <h2 className="text-lg font-semibold"><UiText>{"보고서 제출 현황"}</UiText></h2>
             <div className="flex items-center gap-2">
               {submittedCount ? <a href={`/api/projects/${projectId}/submissions`} className="button-secondary gap-2"><DownloadIcon className="size-4 shrink-0" /><UiText>{"제출물 전체 다운로드"}</UiText></a> : null}
-              <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1.5 text-sm font-bold"><UiText>{"제출"}</UiText>{` ${submittedCount}/${requiredReports.length}`}</span>
+              <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-sm font-medium tabular-nums"><UiText>{"제출"}</UiText>{` ${submittedCount}/${requiredReports.length}`}</span>
             </div>
           </div>
           {reportWorkspace.reports.map((report) => (

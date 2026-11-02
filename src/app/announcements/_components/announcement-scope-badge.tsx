@@ -20,12 +20,12 @@ export function AnnouncementScopeBadge({ teamName, programName, visibility }: {
   return (
     <>
       {scope ? (
-        <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]">
+        <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--muted)]">
           <svg aria-hidden="true" viewBox="0 0 16 16" className="size-3 shrink-0 fill-none stroke-current stroke-[1.6]"><circle cx="8" cy="8" r="6" /><circle cx="8" cy="8" r="2.5" /></svg>
           <span className="truncate"><UiText>{scope.label}</UiText> · {scope.name}</span>
         </span>
       ) : null}
-      <span className="inline-flex items-center rounded-full bg-[var(--primary-subtle)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--primary)]">
+      <span className="inline-flex items-center shrink-0 whitespace-nowrap rounded-full bg-[var(--accent-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--accent-ink)]">
         <UiText>{visibilityLabel}</UiText>
       </span>
     </>

@@ -62,7 +62,7 @@ export default async function OnboardingPage() {
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/onboarding">
-      <main className="content-shell page-enter pb-24 lg:pb-12">
+      <main className="content-shell pb-24 lg:pb-12">
         <div className="mx-auto max-w-4xl">
           <ExplorerHero
             title={<UiText>{onboardingTitle(state)}</UiText>}
@@ -80,9 +80,9 @@ export default async function OnboardingPage() {
             {needsPrivacyNotice ? (
               <PrivacyNoticeStep variant={isAdvisor ? "advisor" : "member"} />
             ) : (
-              <section aria-labelledby="student-onboarding-title" className="page-enter">
+              <section aria-labelledby="student-onboarding-title">
                 <div className="pb-6">
-                  <h2 id="student-onboarding-title" className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
+                  <h2 id="student-onboarding-title" className="text-lg font-semibold text-[var(--ink)]">
                     <UiText>{"학생 기본 정보"}</UiText>
                   </h2>
                 </div>

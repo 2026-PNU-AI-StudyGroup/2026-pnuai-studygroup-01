@@ -42,7 +42,7 @@ export default async function StudentTeamsPage({
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams" panel={<StudentTeamPanel currentPath="/teams" />}>
-      <main className="page-enter pb-28 lg:pb-0">
+      <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
           <div className="space-y-5">
             <StudentTeamPageIntro
@@ -64,7 +64,7 @@ export default async function StudentTeamsPage({
             <section aria-labelledby="my-teams-title">
               <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
-                  <h2 id="my-teams-title" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"참여 중인 팀"}</UiText></h2>
+                  <h2 id="my-teams-title" className="text-lg font-semibold"><UiText>{"참여 중인 팀"}</UiText></h2>
                 </div>
                 <span className="text-sm font-semibold text-[var(--muted)]">{teams.length}<UiText>{"개"}</UiText></span>
               </div>

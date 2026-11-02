@@ -62,7 +62,7 @@ export default async function AnnouncementDetailPage({
       userName={actor.name}
       currentPath={`/announcements/${announcement.id}`}
     >
-      <main className="content-shell page-enter pb-28 lg:pb-16">
+      <main className="content-shell pb-28 lg:pb-16">
         <div className="mx-auto max-w-4xl">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <Link className="button-quiet gap-2" href={listHref}><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"공지 목록"}</UiText></Link>
@@ -78,14 +78,14 @@ export default async function AnnouncementDetailPage({
             ) : null}
           </div>
           <article className="panel overflow-hidden">
-            <header className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-7 sm:px-8 sm:py-9">
+            <header className="border-b border-[var(--line)] px-5 py-7 sm:px-8 sm:py-8">
               <div className="flex flex-wrap items-center gap-1.5">
                 <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
               </div>
-              <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[var(--ink)]">
+              <h1 className="mt-3 text-[clamp(1.5rem,2.4vw,1.875rem)] font-bold leading-[1.25] tracking-[-0.02em] text-[var(--ink)]">
                 <UiText>{announcement.title}</UiText>
               </h1>
-              <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted)]">
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums text-[var(--muted)]">
                 <span className="font-semibold text-[var(--ink)]">{announcement.authorName}</span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={announcement.createdAt.toISOString()}>

@@ -39,19 +39,19 @@ export function ProfessorSidebar({ currentPath, role }: { currentPath: string; r
 
       <UiNav aria-label={role === "STUDENT" ? "조교 업무" : "교수 업무"}>
         <details className="group relative lg:hidden">
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--line-strong)] bg-[var(--surface)] px-3 [&::-webkit-details-marker]:hidden">
             <span className="flex min-w-0 items-center gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--primary-subtle)] text-[var(--primary)]">
+              <span className="grid size-5 shrink-0 place-items-center text-[var(--accent)]">
                 <ProfessorNavigationIcon name={current.icon} />
               </span>
               <span className="min-w-0 text-left">
-                <strong className="block truncate text-sm font-bold"><UiText>{current.label}</UiText></strong>
+                <strong className="block truncate text-sm font-semibold"><UiText>{current.label}</UiText></strong>
                 {"hint" in current ? <span className="block truncate text-xs text-[var(--muted)]"><UiText>{current.hint}</UiText></span> : null}
               </span>
             </span>
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.7] transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" /></svg>
           </summary>
-          <ul className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-30 space-y-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-float)]">
+          <ul className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-30 space-y-1 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-float)]">
             {items.map((item) => (
               <li key={item.href}>
                 <ProfessorNavigationLink item={item} active={isProfessorNavigationActive(item.href, currentPath)} />
@@ -87,18 +87,18 @@ function ProfessorNavigationLink({ item, active }: {
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`relative flex min-h-12 items-center gap-3 rounded-lg px-3 text-left transition-colors ${
+      className={`relative flex min-h-12 items-center gap-3 rounded-[var(--radius-control)] px-3 text-left transition-colors ${
         active
           ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
           : "text-[var(--ink)] hover:bg-[var(--surface-active)]"
       }`}
     >
-      <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${active ? "bg-[var(--surface)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
+      <span className={`grid size-5 shrink-0 place-items-center ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>
         <ProfessorNavigationIcon name={item.icon} />
       </span>
       <span className="min-w-0">
-        <strong className="block truncate text-[0.82rem] font-bold"><UiText>{item.label}</UiText></strong>
-        {"hint" in item ? <span className={`mt-0.5 block truncate text-[0.66rem] font-semibold ${active ? "text-[var(--primary)]/75" : "text-[var(--muted)]"}`}><UiText>{item.hint}</UiText></span> : null}
+        <strong className="block truncate text-sm font-medium"><UiText>{item.label}</UiText></strong>
+        {"hint" in item ? <span className={`mt-0.5 block truncate text-xs ${active ? "text-[var(--accent-ink)]" : "text-[var(--muted)]"}`}><UiText>{item.hint}</UiText></span> : null}
       </span>
     </Link>
   );

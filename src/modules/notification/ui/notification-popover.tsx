@@ -103,9 +103,9 @@ export function NotificationPopover({
           inverse
             ? open || active
               ? "bg-white/16 text-white"
-              : "text-[#cbd6ff] hover:bg-white/10 hover:text-white"
+              : "text-white/75 hover:bg-white/10 hover:text-white"
             : open || active
-              ? "bg-[var(--primary-subtle)] text-[var(--primary)]"
+              ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
               : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
         }`}
       >
@@ -148,10 +148,10 @@ export function NotificationPopover({
                 : "-top-1.5 right-[7.75rem] border-l border-t border-[var(--line-strong)] sm:right-[8.5rem] lg:right-4"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[var(--shadow-float)]">
             <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4">
-              <h2 className="text-base font-bold tracking-[-0.025em]"><UiText>{"알림"}</UiText></h2>
-              <span className="text-xs font-semibold text-[var(--muted)]">
+              <h2 className="text-base font-semibold"><UiText>{"알림"}</UiText></h2>
+              <span className="text-xs text-[var(--muted)]">
                 {unreadSummary}
               </span>
             </header>
@@ -168,18 +168,18 @@ export function NotificationPopover({
                       >
                         <span
                           aria-hidden="true"
-                          className={`mt-1.5 size-2 rounded-full ${item.read ? "bg-[var(--line-strong)]" : "bg-[var(--primary)]"}`}
+                          className={`mt-1.5 size-2 rounded-full ${item.read ? "bg-[var(--line-strong)]" : "bg-[var(--accent)]"}`}
                         />
                         <span className="min-w-0">
                           <span className="flex items-center justify-between gap-3">
-                            <span className={`text-xs font-semibold ${item.read ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
+                            <span className={`text-xs font-medium ${item.read ? "text-[var(--muted)]" : "text-[var(--accent)]"}`}>
                               <UiText>{typeLabel[item.type]}</UiText>
                             </span>
-                            <time className="shrink-0 text-[11px] font-medium text-[var(--muted)]" dateTime={item.createdAt}>
+                            <time className="shrink-0 text-[11px] tabular-nums text-[var(--muted)]" dateTime={item.createdAt}>
                               <UiDate value={new Date(item.createdAt)} mode="dateTime" />
                             </time>
                           </span>
-                          <strong className="mt-1.5 block truncate text-sm font-bold"><UiText>{item.title}</UiText></strong>
+                          <strong className="mt-1.5 block truncate text-sm font-semibold"><UiText>{item.title}</UiText></strong>
                           <span className="mt-1 line-clamp-1 block text-xs leading-5 text-[var(--muted)]"><UiText>{item.body}</UiText></span>
                           {!item.read ? <span className="sr-only"><UiText>{"읽지 않은 알림"}</UiText></span> : null}
                         </span>
@@ -198,7 +198,7 @@ export function NotificationPopover({
               <Link
                 href="/notifications"
                 onClick={() => setOpen(false)}
-                className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-extrabold text-[var(--primary)] hover:bg-[var(--primary-subtle)]"
+                className="flex min-h-12 items-center justify-center border-t border-[var(--line)] px-5 text-sm font-semibold text-[var(--accent)] hover:bg-[var(--accent-subtle)] hover:text-[var(--accent-ink)]"
               >
                 <UiText>{"전체 알림 보기"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
                   <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />

@@ -42,7 +42,7 @@ export function RecruitmentApplicationsView({
         <section aria-labelledby="recruitment-content-title" className="grid gap-6 border-b border-[var(--line)] px-7 py-7 lg:grid-cols-[12rem_minmax(0,1fr)] lg:px-9">
           <div>
             <div className="flex items-center gap-3">
-              <h2 id="recruitment-content-title" className="text-base font-bold text-[var(--ink)]"><UiText>{"모집 내용"}</UiText></h2>
+              <h2 id="recruitment-content-title" className="text-base font-semibold text-[var(--ink)]"><UiText>{"모집 내용"}</UiText></h2>
               <StatusBadge tone={post.status === "OPEN" ? "success" : undefined}><UiText>{post.status === "OPEN" ? "모집 중" : "모집 종료"}</UiText></StatusBadge>
             </div>
             <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"지원자"}</UiText>{" "}{post.applications.length}<UiText>{"명 · 대기"}</UiText>{" "}{pendingCount}<UiText>{"명"}</UiText></p>
@@ -51,8 +51,8 @@ export function RecruitmentApplicationsView({
         </section>
 
         <section aria-labelledby="applicant-list-title">
-          <div className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-7 py-4 lg:px-9">
-            <h2 id="applicant-list-title" className="text-sm font-bold text-[var(--ink)]"><UiText>{"지원자"}</UiText></h2>
+          <div className="border-b border-[var(--line)] px-7 py-4 lg:px-9">
+            <h2 id="applicant-list-title" className="text-base font-semibold text-[var(--ink)]"><UiText>{"지원자"}</UiText></h2>
           </div>
           {post.applications.length === 0 ? (
             <div className="px-7 lg:px-9">
@@ -65,10 +65,10 @@ export function RecruitmentApplicationsView({
                   <article className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)_auto]">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-bold text-[var(--ink)]">{application.studentName}</h3>
+                        <h3 className="text-base font-semibold text-[var(--ink)]">{application.studentName}</h3>
                         <StatusBadge tone={statusPresentation[application.status].tone}><UiText>{statusPresentation[application.status].label}</UiText></StatusBadge>
                       </div>
-                      <p className="mt-2 text-xs text-[var(--muted)]"><UiDate value={application.createdAt} mode="date" /> {" "}<UiText>{"지원"}</UiText></p>
+                      <p className="mt-2 text-xs tabular-nums text-[var(--muted)]"><UiDate value={application.createdAt} mode="date" /> {" "}<UiText>{"지원"}</UiText></p>
                     </div>
                     <div className="min-w-0">
                       <dl className="grid gap-5 text-sm">

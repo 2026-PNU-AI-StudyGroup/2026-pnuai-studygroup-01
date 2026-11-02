@@ -16,7 +16,7 @@ export function MemberContacts({ phone, kakao, github, instagram, title = "ì—°ë
   const entries = ([['phone', phone], ['kakao', kakao], ['github', github], ['instagram', instagram]] as const).filter(([, value]) => value);
   return (
     <div className="mt-6 border-t border-[var(--line)] pt-6">
-      <h3 className="text-xs font-bold text-[var(--muted)]"><UiText>{title}</UiText></h3>
+      <h3 className="text-xs font-medium text-[var(--muted)]"><UiText>{title}</UiText></h3>
       {entries.length ? (
         <ul className="mt-3 grid gap-2.5">
           {entries.map(([kind, value]) => (

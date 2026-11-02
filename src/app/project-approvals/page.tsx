@@ -67,7 +67,7 @@ export default async function ProjectApprovalsPage({ searchParams }: { searchPar
 
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/project-approvals">
-      <main className="content-shell page-enter pb-28 lg:pb-16">
+      <main className="content-shell pb-28 lg:pb-16">
         <div className="mx-auto max-w-6xl space-y-8">
           <PageHeader eyebrow="관리자 작업함" title="프로젝트 승인" description="학생이 등록한 프로젝트를 검토하고 공개 여부를 결정합니다." />
           <ProjectApprovalLedger

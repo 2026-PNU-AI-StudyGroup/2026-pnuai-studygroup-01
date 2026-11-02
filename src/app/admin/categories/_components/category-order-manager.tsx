@@ -22,9 +22,9 @@ export function CategoryOrderManager({ categories, programCounts }: {
     <ol className="divide-y divide-[var(--line)]">
       {categories.map((category, index) => (
         <li key={category} className="flex flex-wrap items-center gap-3 px-5 py-4">
-          <span className="w-6 shrink-0 text-right text-sm font-bold tabular-nums text-[var(--muted)]">{index + 1}</span>
+          <span className="w-6 shrink-0 text-right text-sm tabular-nums text-[var(--muted)]">{index + 1}</span>
           <span className="min-w-0 flex-1">
-            <strong className="block truncate text-sm font-bold text-[var(--ink)]"><UiText>{category}</UiText></strong>
+            <strong className="block truncate text-sm font-semibold text-[var(--ink)]"><UiText>{category}</UiText></strong>
             <span className="text-xs text-[var(--muted)]">{programCounts[category] ?? 0}<UiText>{"개 프로그램"}</UiText></span>
           </span>
           <span className="flex shrink-0 items-center gap-1">

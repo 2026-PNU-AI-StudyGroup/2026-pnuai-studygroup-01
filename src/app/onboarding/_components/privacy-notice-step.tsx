@@ -38,8 +38,8 @@ export function PrivacyNoticeStep({ variant = "member" }: { variant?: PrivacyNot
   const [agreed, setAgreed] = useState(false);
   const summary = variant === "advisor" ? ADVISOR_SUMMARY : MEMBER_SUMMARY;
   return (
-    <section aria-labelledby="privacy-notice-title" className="page-enter">
-      <h2 id="privacy-notice-title" className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">
+    <section aria-labelledby="privacy-notice-title">
+      <h2 id="privacy-notice-title" className="text-lg font-semibold text-[var(--ink)]">
         <UiText>{"개인정보 수집·이용 동의"}</UiText>
       </h2>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">

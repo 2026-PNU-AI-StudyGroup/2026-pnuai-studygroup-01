@@ -41,17 +41,17 @@ export function NotificationCenter({
   markAllRead: () => void | Promise<void>;
 }) {
   return (
-    <main className="page-enter w-full px-5 py-8 pb-24 sm:px-8 lg:px-12 lg:py-12">
-      <header className="border-b border-[var(--line)] pb-8">
-        <h1 className="text-[clamp(2.1rem,4vw,3rem)] font-bold leading-none tracking-[-0.055em]"><UiText>{"알림"}</UiText></h1>
+    <main className="w-full px-5 py-8 pb-24 sm:px-8 lg:px-12 lg:py-12">
+      <header className="border-b border-[var(--line)] pb-6">
+        <h1 className="text-[clamp(1.5rem,2.4vw,1.875rem)] font-bold leading-tight tracking-[-0.02em]"><UiText>{"알림"}</UiText></h1>
       </header>
-      <div className="pt-10">
+      <div className="pt-8">
         <section aria-labelledby="notification-list-title">
           <div className="flex flex-wrap items-end justify-between gap-6 border-b border-[var(--line)] pb-7">
             <div>
-              <h2 id="notification-list-title" className="text-2xl font-bold tracking-[-0.035em]"><UiText>{"최근 활동"}</UiText></h2>
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                <UiText>{"전체"}</UiText>{data.total}<UiText>{"개"}</UiText>{data.unreadCount ? <span className="ml-3 font-semibold text-[var(--primary)]"><UiText>{"읽지 않음"}</UiText>{" "}{data.unreadCount}<UiText>{"개"}</UiText></span> : null}
+              <h2 id="notification-list-title" className="text-lg font-semibold"><UiText>{"최근 활동"}</UiText></h2>
+              <p className="mt-2 text-sm tabular-nums text-[var(--muted)]">
+                <UiText>{"전체"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText>{data.unreadCount ? <span className="ml-3 font-semibold text-[var(--accent)]"><UiText>{"읽지 않음"}</UiText>{" "}{data.unreadCount}<UiText>{"개"}</UiText></span> : null}
               </p>
             </div>
             {data.unreadCount ? (
@@ -82,34 +82,34 @@ export function NotificationCenter({
                           className={`relative z-10 grid size-6 place-items-center rounded-full border ${
                             notification.readAt
                               ? "border-[var(--line-strong)] bg-[var(--surface)] text-[var(--muted)]"
-                              : "border-[var(--primary)] bg-[var(--primary)] text-white"
+                              : "border-[var(--accent-track)] bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
                           }`}
                         >
                           <Icon className="size-3.5" />
                         </span>
                         <span className="hidden pt-0.5 sm:block">
-                          <span className={`block text-xs font-bold ${notification.readAt ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
+                          <span className={`block text-xs font-medium ${notification.readAt ? "text-[var(--muted)]" : "text-[var(--accent)]"}`}>
                             {typeLabel[notification.type]}
                           </span>
-                          <time className="mt-2 block text-[11px] leading-4 text-[var(--muted)]" dateTime={notification.createdAt.toISOString()}>
+                          <time className="mt-2 block text-[11px] leading-4 tabular-nums text-[var(--muted)]" dateTime={notification.createdAt.toISOString()}>
                             <UiDate value={notification.createdAt} mode="dateTime" />
                           </time>
                         </span>
                         <span className="min-w-0">
                           <span className="flex items-center gap-2 sm:hidden">
-                            <span className={`text-xs font-bold ${notification.readAt ? "text-[var(--muted)]" : "text-[var(--primary)]"}`}>
+                            <span className={`text-xs font-medium ${notification.readAt ? "text-[var(--muted)]" : "text-[var(--accent)]"}`}>
                               {typeLabel[notification.type]}
                             </span>
-                            {!notification.readAt ? <span className="size-1.5 rounded-full bg-[var(--primary)]" aria-hidden="true" /> : null}
+                            {!notification.readAt ? <span className="size-1.5 rounded-full bg-[var(--accent)]" aria-hidden="true" /> : null}
                           </span>
-                          <span role="heading" aria-level={3} className="mt-2 block text-[15px] font-extrabold leading-6 sm:mt-0"><UiText>{notification.title}</UiText></span>
+                          <span role="heading" aria-level={3} className="mt-2 block text-[15px] font-semibold leading-6 sm:mt-0"><UiText>{notification.title}</UiText></span>
                           {!notification.readAt ? <span className="sr-only"><UiText>{"읽지 않은 알림"}</UiText></span> : null}
                           <span className="mt-1.5 block max-w-2xl text-sm leading-6 text-[var(--muted)]"><UiText>{notification.body}</UiText></span>
-                          <time className="mt-2 block text-[11px] text-[var(--muted)] sm:hidden" dateTime={notification.createdAt.toISOString()}>
+                          <time className="mt-2 block text-[11px] tabular-nums text-[var(--muted)] sm:hidden" dateTime={notification.createdAt.toISOString()}>
                             <UiDate value={notification.createdAt} mode="dateTime" />
                           </time>
                         </span>
-                        <span className="col-start-2 mt-3 inline-flex items-center gap-1 justify-self-start text-xs font-bold text-[var(--muted)] group-hover:text-[var(--primary)] sm:col-start-auto sm:mt-0 sm:justify-self-end sm:pt-1">
+                        <span className="col-start-2 mt-3 inline-flex items-center gap-1 justify-self-start text-xs font-medium text-[var(--muted)] group-hover:text-[var(--accent)] sm:col-start-auto sm:mt-0 sm:justify-self-end sm:pt-1">
                           <UiText>{notification.readAt ? "열기" : "확인"}</UiText>
                           <ChevronIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                         </span>
@@ -123,7 +123,7 @@ export function NotificationCenter({
         </section>
         {data.totalPages > 1 ? (
           <UiNav aria-label="알림 페이지" className="flex items-center justify-between border-b border-[var(--line)] py-6">
-            <span className="text-xs font-semibold text-[var(--muted)]">{data.page} / {data.totalPages}</span>
+            <span className="text-xs tabular-nums text-[var(--muted)]">{data.page} / {data.totalPages}</span>
             <div className="flex gap-5">
               {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/notifications?page=${data.page - 1}`} /> : null}
               {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/notifications?page=${data.page + 1}`} /> : null}

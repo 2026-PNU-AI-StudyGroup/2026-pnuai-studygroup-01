@@ -13,7 +13,7 @@
 .count {
   color: var(--muted);
   font-size: .8125rem;
-  font-weight: 750;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -38,7 +38,7 @@
   flex: none;
   color: var(--muted);
   font-size: .8125rem;
-  font-weight: 750;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 

@@ -281,7 +281,6 @@ summary::-webkit-details-marker {
     color: var(--ink);
     font-size: 0.9375rem;
     line-height: 1.5;
-    box-shadow: 0 1px 2px var(--shadow-tint-weak);
     transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
   }
 
@@ -307,14 +306,14 @@ summary::-webkit-details-marker {
   .field:focus-visible {
     border-color: var(--focus);
     background: var(--surface);
-    box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px var(--shadow-tint-weak);
+    box-shadow: 0 0 0 3px var(--focus-halo);
   }
 
   .form-control:user-invalid:focus-visible,
   .form-control[aria-invalid="true"]:focus-visible,
   .field:user-invalid:focus-visible,
   .field[aria-invalid="true"]:focus-visible {
-    box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px var(--shadow-tint-weak);
+    box-shadow: 0 0 0 3px var(--danger-halo);
   }
 
 
@@ -355,7 +354,7 @@ summary::-webkit-details-marker {
     justify-content: space-between;
     gap: 1rem;
     border: 1px solid var(--line);
-    border-radius: 1rem;
+    border-radius: var(--radius-panel);
     background: var(--surface);
     padding: 0.875rem 1rem;
   }
@@ -471,10 +470,10 @@ summary::-webkit-details-marker {
     min-height: 2.25rem;
     margin-right: 0.75rem;
     border: 0;
-    border-radius: 0.5rem;
-    background: var(--primary-subtle);
+    border-radius: var(--radius-control);
+    background: var(--accent-subtle);
     padding: 0.4375rem 0.75rem;
-    color: var(--primary-hover);
+    color: var(--accent-ink);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 600;
@@ -561,8 +560,8 @@ summary::-webkit-details-marker {
   }
 
   .button-quiet:hover {
-    background: var(--primary-subtle);
-    color: var(--primary-hover);
+    background: var(--accent-subtle);
+    color: var(--accent-ink);
   }
 
   .button-secondary:active,
@@ -588,19 +587,18 @@ summary::-webkit-details-marker {
     opacity: 0.55;
   }
 
+  /* 제목 위 작은 표시. 대문자와 자간 없이 회색 문장형으로 둔다. */
   .eyebrow {
     color: var(--muted);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 0.8125rem;
+    font-weight: 500;
   }
 
   .editorial-title {
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-size: clamp(1.5rem, 2.4vw, 1.875rem);
     font-weight: 700;
-    letter-spacing: -0.035em;
-    line-height: 1.15;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
   }
 
   .muted {

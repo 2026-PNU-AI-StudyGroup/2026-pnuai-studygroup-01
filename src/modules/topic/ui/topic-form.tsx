@@ -13,7 +13,7 @@ import { CustomSelect } from "@/shared/ui/custom-select";
 import { ChoiceCard, FormField, FormSection, FormStaticValue, TextInput, Textarea } from "@/shared/ui/form-system";
 import { IconButton } from "@/shared/ui/icon-button";
 import { TagInput } from "@/shared/ui/tag-input";
-import { AddIcon, TrashIcon } from "@/shared/ui/workspace-icons";
+import { AddIcon, CheckIcon, TrashIcon } from "@/shared/ui/workspace-icons";
 
 export type TopicFormActionState = {
   status: "idle" | "error" | "success";
@@ -129,9 +129,9 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
   if (state.status === "success") {
     return (
       <div className="grid min-h-72 place-content-center gap-5 text-center">
-        <div className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--success-subtle)] text-2xl font-bold text-[var(--success)]">✓</div>
+        <div aria-hidden="true" className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--success-subtle)] text-[var(--success)]"><CheckIcon className="size-6" /></div>
         <div>
-          <h3 className="text-xl font-bold"><UiText>{"승인 요청을 보냈습니다"}</UiText></h3>
+          <h3 className="text-xl font-semibold"><UiText>{"승인 요청을 보냈습니다"}</UiText></h3>
           <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"검토 상태는 내 승인 요청에서 확인할 수 있습니다."}</UiText></p>
         </div>
         <div className="flex flex-wrap justify-center gap-3">
@@ -186,8 +186,8 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
             ]}
           />
         </FormField> : <p className="text-sm text-[var(--muted)]"><UiText>{"프로젝트는 팀장만 등록할 수 있습니다. 팀이 없으면 새로 만들고, 이미 속한 팀이 있으면 팀장에게 등록을 요청해 주세요."}</UiText></p>}
-        {selectedStudentTeam ? <div className="grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4">
-          <div><p className="text-sm font-bold"><UiText>{"팀원"}</UiText></p><ul className="mt-2 flex flex-wrap gap-2">{(selectedStudentTeam.members ?? []).map((member) => <li key={member.id} className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold"><UiText>{member.name}</UiText></li>)}</ul></div>
+        {selectedStudentTeam ? <div className="grid gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface-subtle)] p-4">
+          <div><p className="text-sm font-semibold"><UiText>{"팀원"}</UiText></p><ul className="mt-2 flex flex-wrap gap-2">{(selectedStudentTeam.members ?? []).map((member) => <li key={member.id} className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold"><UiText>{member.name}</UiText></li>)}</ul></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField id="topic-project-team-name" label="프로젝트 팀명" required><TextInput id="topic-project-team-name" name="projectTeamName" value={projectTeamName} onChange={(event) => setProjectTeamName(event.target.value)} maxLength={100} required /></FormField>
             <FormField id="topic-project-representative" label="프로젝트 대표" required><CustomSelect id="topic-project-representative" name="projectRepresentativeId" ariaLabel="프로젝트 대표" value={projectRepresentativeId} onValueChange={setProjectRepresentativeId} required placeholder="대표를 선택하세요" options={(selectedStudentTeam.members ?? []).map((member) => ({ value: member.id, label: member.name }))} /></FormField>
@@ -231,7 +231,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
           <Textarea id="topic-description" name="description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={10_000} required rows={4} />
         </FormField>
         <section aria-labelledby="topic-approval-title" className="grid gap-4 border-t border-[var(--line)] pt-5">
-          <h3 id="topic-approval-title" className="text-sm font-bold"><UiText>{"검토 요청"}</UiText></h3>
+          <h3 id="topic-approval-title" className="text-sm font-semibold"><UiText>{"검토 요청"}</UiText></h3>
           {advisorEnabled === false ? <><input type="hidden" name="approvalRoute" value="ADMIN" /><p className="text-sm text-[var(--muted)]"><UiText>{"이 프로그램의 승인 요청은 관리자가 검토합니다."}</UiText></p></> : (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -246,7 +246,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
 
       <section id="topic-registration-review" hidden={step !== 2} aria-labelledby="topic-review-title" className="grid gap-5">
         <div className="border-b border-[var(--line)] pb-4">
-          <h2 id="topic-review-title" className="text-lg font-bold"><UiText>{"입력 내용 확인"}</UiText></h2>
+          <h2 id="topic-review-title" className="text-lg font-semibold"><UiText>{"입력 내용 확인"}</UiText></h2>
         </div>
         {/* 값을 표처럼 라벨 열과 값 열로 나란히 둔다. 예전에는 라벨 위 값 아래로 쌓여
             줄마다 시작점이 달라 읽기 어려웠다. 소개 글만 아래에 폭 전체로 둔다. */}
@@ -271,7 +271,7 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
       </section>
 
       <div className={`${styles.actions} flex flex-wrap items-center justify-end gap-3`}>
-        {state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-bold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
+        {state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
         {step > 0 ? <button type="button" className="button-quiet" onClick={() => setStep((current) => current - 1)}><UiText>{"이전"}</UiText></button> : null}
         {step < STUDENT_REGISTRATION_STEPS.length - 1 ? <button type="button" className="button-primary" onClick={next} disabled={step === 0 && (!studentTeamId || !projectTeamName || !projectRepresentativeId)}><UiText>{"다음"}</UiText></button> : <button type="button" className="button-primary max-sm:w-full" onClick={submit} disabled={pending}><UiText>{pending ? "제출 중" : "프로젝트 등록 제출"}</UiText></button>}
       </div>
@@ -391,9 +391,9 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
   if (wizard && state.status === "success") {
     return (
       <div className="grid min-h-72 place-content-center gap-5 text-center">
-        <div className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--success-subtle)] text-2xl font-bold text-[var(--success)]">✓</div>
+        <div aria-hidden="true" className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--success-subtle)] text-[var(--success)]"><CheckIcon className="size-6" /></div>
         <div>
-          <h3 className="text-xl font-bold"><UiText>{"승인 요청을 보냈습니다"}</UiText></h3>
+          <h3 className="text-xl font-semibold"><UiText>{"승인 요청을 보냈습니다"}</UiText></h3>
           <p className="mt-2 text-sm text-[var(--muted)]"><UiText>{"검토 상태는 내 승인 요청에서 확인할 수 있습니다."}</UiText></p>
         </div>
         <button type="button" className="button-primary mx-auto" onClick={() => router.replace(wizard.closeHref)}><UiText>{"완료"}</UiText></button>
@@ -551,7 +551,7 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
       <label className="grid gap-2 text-sm font-medium">
         <UiText>{"모집 인원"}</UiText><TextInput name="capacity" type="number" min="1" max="100" value={capacity} onChange={(event) => setCapacity(Number(event.target.value))} required />
       </label>
-      <div className="rounded-lg bg-[var(--surface-subtle)] px-4 py-3 text-sm">
+      <div className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm">
         <span className="block text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 기간"}</UiText></span>
         <span className="mt-1 block font-semibold"><UiText>{selectedProgram?.recruitmentStartsAt && selectedProgram.recruitmentEndsAt ? `${programDate.format(selectedProgram.recruitmentStartsAt)} – ${programDate.format(selectedProgram.recruitmentEndsAt)}` : "모집 기간 없음"}</UiText></span>
       </div>
@@ -560,7 +560,7 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
       {wizard && currentWizardStep.id === "REVIEW" ? (
         <section aria-labelledby="topic-review-title" className="grid gap-5">
           <div className="border-b border-[var(--line)] pb-4">
-            <h2 id="topic-review-title" className="text-lg font-bold"><UiText>{"입력 내용 확인"}</UiText></h2>
+            <h2 id="topic-review-title" className="text-lg font-semibold"><UiText>{"입력 내용 확인"}</UiText></h2>
           </div>
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div><dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"프로그램"}</UiText></dt><dd className="mt-1 font-semibold"><UiText>{selectedProgram?.name ?? "선택 안 됨"}</UiText>{selectedDivision ? <><span className="text-[var(--muted)]"> · </span><UiText>{selectedDivision.name}</UiText></> : null}</dd></div>
@@ -623,7 +623,7 @@ function TopicFormEditor({ action: createTopic, programs, defaultProgramId, succ
       </FormSection> : null}
       <div className={`${styles.actions} flex flex-wrap items-center justify-end gap-3`}>
           {state.message ? (
-            <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-bold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+            <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`mt-1 text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
               <UiText>{state.message}</UiText>
             </p>
           ) : null}

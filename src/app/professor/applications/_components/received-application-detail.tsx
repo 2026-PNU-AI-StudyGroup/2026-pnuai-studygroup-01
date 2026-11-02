@@ -25,7 +25,7 @@ export function ReceivedApplicationDetail({
           <p className="muted mt-6 text-sm font-medium"><UiText>{"지원 프로젝트"}</UiText></p>
           <h2
             id="application-topic-title"
-            className="mt-2 text-2xl font-semibold tracking-[-0.035em]"
+            className="mt-2 text-2xl font-semibold tracking-[-0.02em]"
           >
             <UiText>{application.topicTitle}</UiText>
           </h2>
@@ -90,7 +90,7 @@ export function ReceivedApplicationDetail({
       ) : null}
 
       {application.status !== "PENDING" ? (
-        <section aria-labelledby="review-result-title" className="border-l-2 border-[var(--primary)] bg-[var(--primary-subtle)] px-5 py-5">
+        <section aria-labelledby="review-result-title" className="rounded-[var(--radius-panel)] bg-[var(--accent-subtle)] px-5 py-5">
           <h3 id="review-result-title" className="text-sm font-semibold"><UiText>{"전달한 검토 의견"}</UiText></h3>
           <p className="mt-2 whitespace-pre-wrap leading-7"><UiText>{application.reviewComment || "별도 의견 없이 결정했습니다."}</UiText></p>
           {application.decidedAt ? <p className="muted mt-3 text-xs"><UiText>{application.decidedByName ?? "시스템"}</UiText>{" · "}<UiDate value={application.decidedAt} mode="dateTime" /></p> : null}

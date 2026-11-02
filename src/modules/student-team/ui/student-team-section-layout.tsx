@@ -69,7 +69,7 @@ export function StudentTeamPanel({ currentPath }: { currentPath: string }) {
                     aria-current={active ? "page" : undefined}
                     className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-semibold ${
                       active
-                        ? "border-[var(--primary)] text-[var(--primary-hover)]"
+                        ? "border-[var(--accent)] text-[var(--ink)]"
                         : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
                     }`}
                   >

@@ -106,7 +106,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                     <StatusBadge tone={entry.action.includes("REVOKED") || entry.action.includes("DEACTIVATED") || entry.action.includes("REVISION") || entry.action.includes("REJECTED") ? "warning" : "neutral"}>{actionLabel[entry.action]}</StatusBadge>
                   </div>
                   <div className="min-w-0">
-                    <p className="break-words font-bold"><UiText>{entry.targetLabel}</UiText></p>
+                    <p className="break-words font-semibold"><UiText>{entry.targetLabel}</UiText></p>
                     <p className="muted mt-1 text-sm"><UiText>{"관리자"}</UiText>{" "}{entry.actorName}</p>
                     {entry.reason ? (
                       <p className="mt-1 break-words text-sm leading-6 text-[var(--ink)]">
@@ -114,14 +114,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                       </p>
                     ) : null}
                   </div>
-                  <time className="muted text-sm xl:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
+                  <time className="muted text-sm tabular-nums xl:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
                 </li>
               ))}
             </ol>
           )}
           {data.totalPages > 1 ? (
-            <UiNav aria-label="관리 이력 페이지" className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
-              <span className="muted text-sm">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
+            <UiNav aria-label="관리 이력 페이지" className="flex items-center justify-between border-t border-[var(--line)] px-5 py-4 sm:px-6">
+              <span className="muted text-sm tabular-nums">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
               <div className="flex gap-2">
                 {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/admin/audit?page=${data.page - 1}`} /> : null}
                 {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/admin/audit?page=${data.page + 1}`} /> : null}

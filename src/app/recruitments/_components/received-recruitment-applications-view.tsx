@@ -41,7 +41,7 @@ export function ReceivedRecruitmentApplicationsView({
                     <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{application.teamName}</UiText>{" · "}<UiText>{application.postTitle}</UiText></span>
                   </div>
                   <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <h2 className="text-xl font-bold tracking-[-0.025em] text-[var(--ink)]">{application.studentName}</h2>
+                    <h2 className="text-lg font-semibold text-[var(--ink)]">{application.studentName}</h2>
                     <span className="text-sm text-[var(--muted)]"><UiText>{"희망 역할"}</UiText>{" "}<strong className="font-semibold text-[var(--ink)]"><UiText>{application.desiredRole}</UiText></strong></span>
                     <span className="text-xs text-[var(--muted)]"><UiDate value={application.createdAt} mode="date" /> <UiText>{"지원"}</UiText></span>
                   </div>
