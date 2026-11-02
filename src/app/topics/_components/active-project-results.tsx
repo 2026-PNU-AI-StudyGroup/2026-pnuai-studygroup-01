@@ -6,9 +6,9 @@ import { UiDiv } from "@/modules/translation/ui/localized-elements";
 
 import { isTopicRecruiting, ProjectApplicationAction } from "@/app/topics/_components/project-application-action";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
-import { ProjectIdentity, ProjectResultsLayout, ProjectRowCells } from "@/app/topics/_components/project-results-layout";
+import { ProjectCard, ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
 import { ProjectVoteButton, ProjectVoteCountBadge, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
-import { Missing, Pill, Thumb, type PillTone } from "@/modules/project-program/ui/work-screen";
+import { Pill, type PillTone } from "@/modules/project-program/ui/work-screen";
 import { hasTopicsFilters, topicsHref } from "@/app/topics/_lib/topics-query";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
@@ -42,20 +42,19 @@ const projectStatusTone: Record<TopicItem["effectiveStatus"], PillTone> = {
   CANCELED: "plain",
 };
 
-/** 관리자 행의 보고서 칸. 제출 막대와 몇 건 중 몇 건, 기한을 넘긴 것이 있으면 그 수만 빨갛게. */
-function ReportCell({ data }: { data?: AdminProjectCardData }) {
+/** 관리자 카드의 보고서 줄. 제출 막대와 몇 건 중 몇 건, 기한을 넘긴 것이 있으면 그 수만 빨갛게. */
+function ReportProgress({ data }: { data?: AdminProjectCardData }) {
   const progress = data?.reportProgress;
-  if (!progress || progress.requiredCount === 0) return <Missing />;
+  if (!progress || progress.requiredCount === 0) return null;
   const rate = calculateReportSubmissionRate(progress.submittedCount, progress.requiredCount);
   return (
-    <div className="min-w-0 text-xs leading-4">
-      <div className="flex items-center gap-2">
-        <UiDiv role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rate} className="h-1.5 w-12 flex-none overflow-hidden rounded-full bg-[var(--accent-subtle)]">
-          <span className="block h-full rounded-full bg-[var(--primary)]" style={{ width: `${rate}%` }} />
-        </UiDiv>
-        <span className="tabular-nums text-[var(--ink)]">{progress.submittedCount} / {progress.requiredCount}</span>
-      </div>
-      {progress.overdueCount > 0 ? <p className="mt-1 text-[var(--danger)]"><UiText>{`기한 초과 ${progress.overdueCount}건`}</UiText></p> : null}
+    <div className="mt-2 flex items-center gap-2 text-xs">
+      <span className="flex-none text-[var(--muted)]"><UiText>{"보고서"}</UiText></span>
+      <UiDiv role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rate} className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--accent-subtle)]">
+        <span className="block h-full rounded-full bg-[var(--primary)]" style={{ width: `${rate}%` }} />
+      </UiDiv>
+      <span className="flex-none tabular-nums text-[var(--ink)]">{progress.submittedCount} / {progress.requiredCount}</span>
+      {progress.overdueCount > 0 ? <span className="flex-none text-[var(--danger)]"><UiText>{`기한 초과 ${progress.overdueCount}건`}</UiText></span> : null}
     </div>
   );
 }
@@ -86,30 +85,34 @@ function ProjectRow({ topic, canApply, leaderTeams, now, voteSelection, adminDat
     );
 
   return (
-    <>
-      <Thumb src={topic.thumbnailPath} fallback={<ProgramIcon icon={topic.programIcon} />} />
-      <ProjectIdentity id={`topic-${topic.id}`} title={topic.title} href={`/topics/${topic.id}`} description={<UiText>{topic.description}</UiText>} />
-      <ProjectRowCells>
-        <div className="min-w-0 leading-4">
-          <p className="truncate text-[0.8125rem] text-[var(--ink)]">{topic.teamName ? <UiText>{topic.teamName}</UiText> : <Missing />}</p>
-          <p className="mt-1 truncate text-xs text-[var(--muted)]">
-            {adminDataEnabled ? <span className="tabular-nums"><UiText>{members}</UiText></span> : topic.professorName ?? <UiText>{topic.divisionName ?? ""}</UiText>}
-          </p>
-        </div>
-        {adminDataEnabled ? null : (
-          <span className={`whitespace-nowrap tabular-nums @min-[40rem]:text-right ${full ? "text-[var(--muted)]" : "text-[var(--ink)]"}`}>
-            <UiText>{members}</UiText>
-          </span>
-        )}
-        {adminDataEnabled ? <ReportCell data={adminData} /> : null}
-        <div className="flex min-w-0 flex-col items-start gap-1">
+    <ProjectCard
+      id={`topic-${topic.id}`}
+      title={topic.title}
+      href={`/topics/${topic.id}`}
+      description={<UiText>{topic.description}</UiText>}
+      image={topic.thumbnailPath}
+      fallback={<ProgramIcon icon={topic.programIcon} />}
+      meta={(
+        <>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="min-w-0 truncate text-[var(--ink)]">
+              {topic.teamName
+                ? <UiText>{topic.teamName}</UiText>
+                : <span className="text-[var(--muted)]">{topic.professorName ?? <UiText>{topic.divisionName ?? "팀 미구성"}</UiText>}</span>}
+            </p>
+            <span className={`flex-none whitespace-nowrap tabular-nums ${full ? "text-[var(--muted)]" : "text-[var(--ink)]"}`}><UiText>{members}</UiText></span>
+          </div>
+          {adminDataEnabled ? <ReportProgress data={adminData} /> : null}
+        </>
+      )}
+      badges={(
+        <>
           <Pill tone={status.tone}>{status.label}</Pill>
           {typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : null}
-        </div>
-        {/* 줄 안의 버튼은 칸만큼 늘리지 않고 내용 크기의 낮은 버튼으로 둔다. 휴대폰에서만 꽉 채운다. */}
-        <div className="flex min-w-0 flex-col items-end gap-1.5 [&_.button-compact]:min-h-8 [&_.button-compact]:px-3 [&_.button-compact]:font-medium @min-[40rem]:[&_.button-compact]:w-auto @max-[40rem]:w-full @max-[40rem]:items-stretch empty:hidden">{action}</div>
-      </ProjectRowCells>
-    </>
+        </>
+      )}
+      actions={action}
+    />
   );
 }
 
@@ -151,10 +154,6 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       listLabel="프로젝트 목록"
       paginationLabel="프로젝트 페이지"
       hrefForPage={(page) => topicsHref({ programId, q: query, divisionId, teamStatus, reportStatus, page })}
-      columns={admin
-        ? [{ label: "팀, 인원" }, { label: "보고서" }, { label: "상태" }, { label: "" }]
-        : [{ label: "팀" }, { label: "인원", align: "right" }, { label: "상태" }, { label: "" }]}
-      columnTemplate={admin ? "7rem 6rem 4.5rem 6.5rem" : "7rem 4rem 4.5rem 8.5rem"}
       search={search}
       filters={filters}
       ballot={ballot}

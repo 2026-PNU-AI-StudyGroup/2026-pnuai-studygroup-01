@@ -134,7 +134,7 @@ describe("PastProjectsView", () => {
     expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute("href", "https://github.com/pnu/indoor-way");
   });
 
-  it("지도교수가 없는 프로그램은 교수 이름을 숨기고 모르는 값은 줄표로 둔다", () => {
+  it("지도교수가 없는 프로그램은 교수 이름을 숨기고 모르는 값은 자리를 비운다", () => {
     render(
       <PastProjectsView
         projects={[{ ...project, advisorEnabled: false }]}
@@ -147,8 +147,8 @@ describe("PastProjectsView", () => {
 
     expect(screen.getByText("모두의 길")).toBeInTheDocument();
     expect(screen.queryByText(/김도윤/)).not.toBeInTheDocument();
-    // 수상, 득표, 저장소가 모두 없다.
-    expect(screen.getAllByText("-")).toHaveLength(3);
+    // 수상, 득표, 저장소가 모두 없으면 줄표 없이 비운다.
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
   });
 
   it("관리자에게는 줄 끝에 진행 현황과 연락처를 둔다", () => {
