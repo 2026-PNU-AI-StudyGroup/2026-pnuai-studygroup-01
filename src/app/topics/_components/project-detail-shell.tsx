@@ -1,69 +1,31 @@
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 
+import { UiAside } from "@/modules/translation/ui/localized-elements";
+
+/*
+  프로젝트 한 건의 화면. 머리 카드, 숫자 판, 그 아래 본문(넓은 칸)과 팀, 일정 같은 곁 정보(좁은 칸).
+  본문 폭이 68rem 이상이면 두 칸, 좁으면 본문 아래로 곁 정보를 쌓는다. 사업 화면과 같은 비율이다.
+*/
 export function ProjectDetailShell({
-  cover,
-  marker,
-  heading,
-  headerAside,
+  header,
+  kpis,
   children,
-  rail,
-  railLabelledBy,
+  side,
+  sideLabel = "프로젝트 정보",
 }: {
-  cover?: ReactNode;
-  marker?: ReactNode;
-  heading: ReactNode;
-  headerAside?: ReactNode;
+  header: ReactNode;
+  kpis?: ReactNode;
   children: ReactNode;
-  rail?: ReactNode;
-  railLabelledBy?: string;
+  side?: ReactNode;
+  sideLabel?: string;
 }) {
   return (
-    <article className="min-w-0">
-      {cover ? (
-        <div className="overflow-hidden border-y border-[var(--line)]">
-          {cover}
-        </div>
-      ) : null}
-
-      <div className={`relative ${cover ? "pt-9" : ""}`}>
-        {cover && marker ? (
-          <div
-            aria-hidden="true"
-            className="absolute -top-7 left-0 grid size-14 place-items-center rounded-full border-4 border-[var(--workspace)] bg-[var(--ink)] text-white"
-          >
-            {marker}
-          </div>
-        ) : null}
-
-        <header
-          className={`grid gap-8 border-b border-[var(--line)] pb-9 ${cover ? "pt-5" : "pt-1"} ${
-            headerAside
-              ? "lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end"
-              : ""
-          }`}
-        >
-          <UiText>{heading}</UiText>
-          {headerAside ? (
-            <div className="border-t border-[var(--line)] pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
-              {headerAside}
-            </div>
-          ) : null}
-        </header>
-
-        {rail ? (
-          <div className="grid gap-12 pt-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
-            <div className="min-w-0"><UiText>{children}</UiText></div>
-            <aside
-              aria-labelledby={railLabelledBy}
-              className="border-t border-[var(--line)] pt-7 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-0"
-            >
-              {rail}
-            </aside>
-          </div>
-        ) : (
-          <div className="min-w-0 pt-10"><UiText>{children}</UiText></div>
-        )}
+    <article className="@container grid min-w-0 gap-3.5">
+      {header}
+      {kpis}
+      <div className="grid items-start gap-3.5 @min-[68rem]:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid min-w-0 gap-3.5">{children}</div>
+        {side ? <UiAside aria-label={sideLabel} className="grid min-w-0 gap-3.5">{side}</UiAside> : null}
       </div>
     </article>
   );

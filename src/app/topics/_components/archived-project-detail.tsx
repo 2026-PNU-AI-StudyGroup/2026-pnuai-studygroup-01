@@ -1,8 +1,8 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { ProjectDetailShell } from "@/app/topics/_components/project-detail-shell";
 import { ProjectMediaCarousel } from "@/app/topics/_components/project-media-carousel";
-import { ProjectAwardBadge } from "@/app/topics/_components/project-award-badge";
+import { ProjectAwardBadge } from "@/modules/project-program/ui/project-award-badge";
 import {
   buildShowcaseMedia,
   ProjectArtifactSection,
@@ -10,14 +10,14 @@ import {
   resolveShowcaseRepository,
 } from "@/app/topics/_components/project-showcase-sections";
 import { ArchivedProjectVoteAction } from "@/app/topics/_components/project-vote-control";
+import { cardClass, CardHead, KpiStrip, ObjectHeader, Thumb } from "@/modules/project-program/ui/work-screen";
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
-import { ChevronIcon } from "@/shared/ui/workspace-icons";
+import { ProgramIcon } from "@/shared/ui/program-icon";
 
-export function ArchivedProjectDetail({ project, ballot }: { project: ArchivedProject; ballot?: ProgramVoteBallot }) {
+export function ArchivedProjectDetail({ project, ballot, workspaceLink }: { project: ArchivedProject; ballot?: ProgramVoteBallot; workspaceLink?: ReactNode }) {
   const { media, embeddedIds, galleryIds } = buildShowcaseMedia({
     artifacts: project.artifacts,
     title: project.topicTitle,
@@ -27,28 +27,68 @@ export function ArchivedProjectDetail({ project, ballot }: { project: ArchivedPr
   const voteAction = ballot?.phase === "OPEN" && ballot.candidates.some(({ id }) => id === project.topicId)
     ? <ArchivedProjectVoteAction ballot={ballot} topicId={project.topicId} />
     : undefined;
-  // 심사는 저장소의 리드미를 읽고 이뤄진다. 읽고 나서 투표하는 차례가 되도록 저장소를 위에 둔다.
+  // 심사는 저장소의 리드미를 읽고 이뤄진다. 읽고 나서 투표하는 차례가 되도록 저장소를 머리에 둔다.
   const repository = resolveShowcaseRepository({ artifacts: project.artifacts, sourceUrl: project.sourceUrl });
-  const headerAside = repository || voteAction
-    ? <div className="space-y-5">{repository ? <ProjectRepositoryCallout repository={repository} /> : null}{voteAction}</div>
-    : undefined;
+  const people: Array<[string, string[]]> = [
+    ["팀장", project.memberNames.slice(0, 1)],
+    ["팀원", project.memberNames.slice(1)],
+    ...(project.advisorEnabled ? [[project.advisorRole, [project.professorName]] as [string, string[]]] : []),
+  ];
 
-  return <>
-    <UiNav aria-label="이전 위치" className="mb-5">
-      <Link href={`/topics?view=past&programId=${encodeURIComponent(project.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">
-        <ChevronIcon className="size-4 rotate-180" />
-        <UiText>{"지난 프로젝트"}</UiText>
-      </Link>
-    </UiNav>
+  return (
     <ProjectDetailShell
-      heading={<div className="mx-auto w-full max-w-4xl"><p className="text-sm font-semibold text-[var(--muted)]">{project.startYear} · {project.programName} · {project.teamName}{project.divisionName ? ` · ${project.divisionName}` : ""}</p><h1 className="mt-3 text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{project.topicTitle}</UiText></h1>{project.award || project.popularAward || typeof project.archivedVoteCount === "number" ? <div className="mt-4 flex flex-wrap items-center gap-2">{project.award ? <ProjectAwardBadge award={project.award} /> : null}{project.popularAward ? <ProjectAwardBadge award="인기상" /> : null}{typeof project.archivedVoteCount === "number" ? <span className="inline-flex min-h-7 items-center rounded-full border border-[var(--line)] bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--muted)]">{project.archivedVoteCount}<UiText>{"표"}</UiText></span> : null}</div> : null}<div className="mt-6 space-y-2.5">{project.memberNames[0] ? <div className="flex flex-wrap items-center gap-2"><span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--primary-hover)] py-1 text-[0.7rem] font-bold text-[var(--primary)]"><UiText>{"팀장"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{project.memberNames[0]}</span></div> : null}{project.memberNames.length > 1 ? <div className="flex flex-wrap items-center gap-2"><span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--line)] py-1 text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"팀원"}</UiText></span>{project.memberNames.slice(1).map((name) => <span key={name} className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{name}</span>)}</div> : null}{project.advisorEnabled ? <div className="flex flex-wrap items-center gap-2"><span className="inline-flex w-16 shrink-0 items-center justify-center rounded-full border border-[var(--line)] py-1 text-[0.7rem] font-bold text-[var(--muted)]"><UiText>{"지도교수"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{project.professorName} {project.advisorRole}</span></div> : null}</div></div>}
-      headerAside={headerAside}
+      header={(
+        <ObjectHeader
+          id="project-title"
+          media={<Thumb src={project.thumbnailPath} fallback={<ProgramIcon icon={project.programIcon} />} className="h-[3.875rem] w-[3.125rem]" />}
+          title={<UiText>{project.topicTitle}</UiText>}
+          titleAside={project.award || project.popularAward ? (
+            <>
+              {project.award ? <ProjectAwardBadge award={project.award} /> : null}
+              {project.popularAward ? <ProjectAwardBadge award="인기상" /> : null}
+            </>
+          ) : undefined}
+          meta={<>{project.startYear} <UiText>{project.programName}</UiText>, <UiText>{`${project.teamNumber === null ? "" : `${project.teamNumber}. `}${project.teamName} 팀`}</UiText>{project.divisionName ? <>, <UiText>{project.divisionName}</UiText></> : null}</>}
+          finding={project.award ? <UiText>{`${project.programName} ${project.award} 수상작입니다.`}</UiText> : undefined}
+          actions={workspaceLink || repository ? <>{workspaceLink}{repository ? <ProjectRepositoryCallout repository={repository} primary /> : null}</> : undefined}
+        />
+      )}
+      kpis={(
+        <KpiStrip items={[
+          { label: "팀원", value: project.memberNames.length, unit: "명" },
+          { label: "공개 결과물", value: project.artifacts.length, unit: "개" },
+          // 정확한 득표수는 관리자에게만 온다. 다른 사람에게는 모르는 값이라 줄표로 둔다.
+          { label: "득표", value: project.archivedVoteCount ?? null, unit: "표" },
+        ]} />
+      )}
+      side={(
+        <>
+          {voteAction ? (
+            <section aria-labelledby="project-vote-title" className={`${cardClass} pb-4`}>
+              <CardHead id="project-vote-title" title={<UiText>{"투표"}</UiText>} />
+              <div className="px-5">{voteAction}</div>
+            </section>
+          ) : null}
+          <section aria-labelledby="project-people-title" className={cardClass}>
+            <CardHead id="project-people-title" title={<UiText>{"팀"}</UiText>} count={<UiText>{`${project.memberNames.length}명`}</UiText>} />
+            <dl className="px-5 pb-3 text-[0.8125rem]">
+              {people.map(([label, names]) => (
+                <div key={label} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 py-2 [&+div]:border-t [&+div]:border-[var(--line)]">
+                  <dt className="text-[var(--muted)]"><UiText>{label}</UiText></dt>
+                  <dd className="min-w-0 text-[var(--ink)]">{names.length ? names.join(", ") : <span className="text-[var(--muted)]">-</span>}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </>
+      )}
     >
-      <div className="mx-auto max-w-4xl space-y-11">
-        <ProjectMediaCarousel items={media} />
-        <section aria-labelledby="archive-description"><h2 id="archive-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2><LocalizedMarkdown text={project.showcaseIntro ?? project.topicDescription} className="mt-3 space-y-3 text-[0.9375rem] text-[var(--ink)]" /></section>
-        <ProjectArtifactSection artifacts={project.artifacts} sourceUrl={project.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} repositoryShownAbove={Boolean(repository)} />
-      </div>
+      <section aria-labelledby="archive-description" className={`${cardClass} pb-5`}>
+        <CardHead id="archive-description" title={<UiText>{"프로젝트 소개"}</UiText>} />
+        {media.length ? <div className="px-5 pb-4"><ProjectMediaCarousel items={media} /></div> : null}
+        <LocalizedMarkdown text={project.showcaseIntro ?? project.topicDescription} className="max-w-3xl space-y-3 px-5 text-[0.9375rem] leading-7 text-[var(--ink)]" />
+      </section>
+      <ProjectArtifactSection artifacts={project.artifacts} sourceUrl={project.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} repositoryShownAbove={Boolean(repository)} />
     </ProjectDetailShell>
-  </>;
+  );
 }

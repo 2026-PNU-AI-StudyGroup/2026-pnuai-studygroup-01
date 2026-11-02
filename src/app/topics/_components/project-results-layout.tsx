@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import {
   ProjectVoteStatusPill,
@@ -10,18 +10,13 @@ import {
 } from "@/app/topics/_components/project-vote-control";
 import { ProjectVoteResultsDialog } from "@/app/topics/_components/project-vote-results-dialog";
 import { ProjectPagination } from "@/app/topics/_components/project-pagination";
+import { cardClass } from "@/modules/project-program/ui/work-screen";
 import type {
   ProgramVoteBallot,
   VotingResultsView,
 } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiUl } from "@/modules/translation/ui/localized-elements";
-import { EmptyState } from "@/shared/ui/page-primitives";
-import { DocumentIcon, UndoIcon } from "@/shared/ui/workspace-icons";
-
-// 화면 폭이 아니라 목록 폭으로 열 수를 정한다. 사이드바를 접고 펴면 같은 화면에서도 목록 폭이
-// 달라진다. 목록이 48rem 이상이면 세 장(1280px 화면에서 장당 약 250px)까지 놓는다.
-const cardGridClassName = "grid gap-5 @xl:grid-cols-2 @3xl:grid-cols-3";
 
 export type ProjectResultsEmptyState = {
   unfilteredTitle: string;
@@ -30,7 +25,14 @@ export type ProjectResultsEmptyState = {
   filteredDescription: string;
 };
 
+export type ProjectColumn = { label: string; align?: "right" };
+
+/*
+  프로젝트 목록 한 장. 카드 대신 선과 줄 맞춤으로 읽는 표다. 첫 두 칸(사진, 프로젝트)은 늘 같고
+  나머지 칸은 화면이 정한다. 목록 폭이 40rem 아래면 나머지 칸이 프로젝트 이름 밑으로 흘러 두 줄이 된다.
+*/
 export function ProjectResultsLayout<T>({
+  title = "프로젝트",
   items,
   itemKey,
   total,
@@ -43,11 +45,14 @@ export function ProjectResultsLayout<T>({
   paginationLabel,
   hrefForPage,
   renderItem,
-  headerAction,
+  columns,
+  columnTemplate,
+  search,
+  filters,
   ballot,
   votingResults,
-  submissionHref,
 }: {
+  title?: string;
   items: T[];
   itemKey: (item: T) => string;
   total: number;
@@ -60,40 +65,49 @@ export function ProjectResultsLayout<T>({
   paginationLabel: string;
   hrefForPage: (page: number) => string;
   renderItem: (item: T, voteSelection: ProjectVoteSelection) => ReactNode;
-  headerAction?: ReactNode;
+  /** 사진, 프로젝트 칸 뒤에 오는 칸의 머리글. */
+  columns: ProjectColumn[];
+  /** 사진, 프로젝트 칸 뒤에 오는 칸들의 grid-template-columns 값. */
+  columnTemplate: string;
+  search?: ReactNode;
+  filters?: ReactNode;
   ballot?: ProgramVoteBallot;
   votingResults?: VotingResultsView;
-  /** 관리자에게만 넘긴다. 팀 x 보고서 현황표로 간다. */
-  submissionHref?: string;
 }) {
   const voteSelection = useProjectVoteSelection(ballot);
+  const gridStyle = { "--row-cols": `2.5rem minmax(0,1fr) ${columnTemplate}` } as CSSProperties;
   return (
-    <section id="project-results" aria-labelledby="project-results-title" className="@container scroll-mt-32 pt-5">
-      <div className="mb-4 flex min-h-9 flex-wrap items-center gap-3">
-        {headerAction}
+    <section id="project-results" aria-labelledby="project-results-title" className={`${cardClass} @container scroll-mt-32`}>
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 px-5 pb-3 pt-4">
+        <h2 id="project-results-title" className="text-base font-semibold text-[var(--ink)]"><UiText>{title}</UiText></h2>
+        <span className="text-[0.8125rem] tabular-nums text-[var(--muted)]">{total}<UiText>{"개"}</UiText><span className="sr-only"> <UiText>{listLabel}</UiText></span></span>
         <ProjectVoteStatusPill selection={voteSelection} />
         {votingResults ? <ProjectVoteResultsDialog view={votingResults} /> : null}
-        {submissionHref ? <Link href={submissionHref} className="button-secondary min-h-8 gap-1.5 px-3 py-1.5 text-xs"><DocumentIcon className="size-4 shrink-0" /><UiText>{"보고서 현황"}</UiText></Link> : null}
-        <h2 id="project-results-title" className="sr-only"><UiText>{listLabel}</UiText></h2>
-        <p className="ml-auto shrink-0 text-xs font-semibold text-[var(--muted)]">
-          <UiText>{"총"}</UiText>{" "}<strong className="text-[var(--ink)]">{total}</strong><UiText>{"개"}</UiText>
-        </p>
+        {search ? <div className="w-full sm:ml-auto sm:w-64">{search}</div> : null}
       </div>
+      {filters}
       {!items.length ? (
-        <EmptyState
-          title={hasFilters ? emptyState.filteredTitle ?? "조건에 맞는 프로젝트가 없습니다" : emptyState.unfilteredTitle}
-          description={hasFilters ? emptyState.filteredDescription : emptyState.unfilteredDescription}
-          action={hasFilters ? (
-            <Link href={resetHref} className="button-secondary gap-2">
-              <UndoIcon className="size-4 shrink-0" />
-              <UiText>{"필터 초기화"}</UiText>
-            </Link>
-          ) : undefined}
-        />
+        <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-4 text-[0.8125rem]">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-medium text-[var(--ink)]"><UiText>{hasFilters ? emptyState.filteredTitle ?? "조건에 맞는 프로젝트가 없습니다" : emptyState.unfilteredTitle}</UiText></h3>
+            <p className="mt-0.5 text-[var(--muted)]"><UiText>{hasFilters ? emptyState.filteredDescription : emptyState.unfilteredDescription}</UiText></p>
+          </div>
+          {hasFilters ? <Link href={resetHref} className="button-secondary button-compact"><UiText>{"필터 초기화"}</UiText></Link> : null}
+        </div>
       ) : (
-        <UiUl aria-label={listLabel} className={cardGridClassName}>
-          {items.map((item) => <li key={itemKey(item)} className="min-w-0">{renderItem(item, voteSelection)}</li>)}
-        </UiUl>
+        <div style={gridStyle}>
+          <div aria-hidden="true" className="hidden h-9 items-center gap-x-3 px-5 text-xs text-[var(--muted)] @min-[40rem]:grid @min-[40rem]:grid-cols-[var(--row-cols)]">
+            <span className="col-span-2"><UiText>{"프로젝트"}</UiText></span>
+            {columns.map((column) => <span key={column.label} className={column.align === "right" ? "text-right" : undefined}><UiText>{column.label}</UiText></span>)}
+          </div>
+          <UiUl aria-label={listLabel}>
+            {items.map((item) => (
+              <li key={itemKey(item)} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-2.5 transition-colors hover:bg-[#fafbfc] @min-[40rem]:grid-cols-[var(--row-cols)]">
+                {renderItem(item, voteSelection)}
+              </li>
+            ))}
+          </UiUl>
+        </div>
       )}
       <ProjectPagination
         page={page}
@@ -103,4 +117,26 @@ export function ProjectResultsLayout<T>({
       />
     </section>
   );
+}
+
+/** 행의 프로젝트 칸. 이름(링크)과 그 아래 한 줄 설명. */
+export function ProjectIdentity({ id, title, href, description }: {
+  id: string;
+  title: string;
+  href: string;
+  description: ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <h3 id={id} className="truncate text-sm font-medium leading-5">
+        <Link href={href} className="text-[var(--ink)] hover:text-[var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"><UiText>{title}</UiText></Link>
+      </h3>
+      <p className="mt-0.5 truncate text-[0.8125rem] leading-[1.125rem] text-[var(--muted)]">{description}</p>
+    </div>
+  );
+}
+
+/** 행의 나머지 칸 묶음. 넓은 화면에서는 사라져 칸마다 격자에 앉고, 좁은 화면에서는 이름 밑 한 줄로 흐른다. */
+export function ProjectRowCells({ children }: { children: ReactNode }) {
+  return <div className="col-start-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.8125rem] @min-[40rem]:contents">{children}</div>;
 }

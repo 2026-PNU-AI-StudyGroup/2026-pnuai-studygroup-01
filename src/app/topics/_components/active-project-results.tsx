@@ -1,15 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import { isTopicRecruiting, ProjectApplicationAction } from "@/app/topics/_components/project-application-action";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
-import { ProjectGalleryCardShell } from "@/app/topics/_components/project-gallery-card-shell";
-import { ProjectGalleryStatusBadge } from "@/app/topics/_components/project-gallery-status-badge";
-import { ProjectResultsLayout } from "@/app/topics/_components/project-results-layout";
+import { ProjectIdentity, ProjectResultsLayout, ProjectRowCells } from "@/app/topics/_components/project-results-layout";
 import { ProjectVoteButton, ProjectVoteCountBadge, type ProjectVoteSelection } from "@/app/topics/_components/project-vote-control";
+import { Missing, Pill, Thumb, type PillTone } from "@/modules/project-program/ui/work-screen";
 import { hasTopicsFilters, topicsHref } from "@/app/topics/_lib/topics-query";
 import type { PublicTopicPage } from "@/modules/topic/application/topic-ports";
 import type { ProgramVoteBallot, VotingResultsView } from "@/modules/project-voting/application/manage-project-voting";
@@ -20,43 +18,48 @@ import type {
 } from "@/modules/team/application/list-admin-program-project-operations";
 import { calculateReportSubmissionRate } from "@/modules/team/domain/project-progress";
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
-import { ProgressBar, StatusBadge } from "@/shared/ui/page-primitives";
+import { ProgramIcon } from "@/shared/ui/program-icon";
 
 type TopicItem = PublicTopicPage["items"][number];
 
-const projectStatusPresentation = {
-  PENDING_APPROVAL: { label: "승인 대기", tone: "warning" },
-  REJECTED: { label: "반려됨", tone: "danger" },
-  ...teamStatusPresentation,
+const projectStatusLabel = {
+  PENDING_APPROVAL: "승인 대기",
+  REJECTED: "반려됨",
+  FORMING: teamStatusPresentation.FORMING.label,
+  IN_PROGRESS: teamStatusPresentation.IN_PROGRESS.label,
+  COMPLETED: teamStatusPresentation.COMPLETED.label,
+  CANCELED: teamStatusPresentation.CANCELED.label,
 } as const;
 
-function AdminProjectCardProgress({ data }: { data: AdminProjectCardData }) {
-  const { requiredCount, submittedCount, overdueCount } = data.reportProgress;
-  if (requiredCount === 0) return null;
+// 진행 중과 모집 중만 파랑, 손볼 일(승인 대기, 반려)만 제 색. 나머지는 회색이다.
+const projectStatusTone: Record<TopicItem["effectiveStatus"], PillTone> = {
+  PENDING_APPROVAL: "warning",
+  REJECTED: "danger",
+  FORMING: "plain",
+  IN_PROGRESS: "accent",
+  COMPLETED: "plain",
+  CANCELED: "plain",
+};
 
+/** 관리자 행의 보고서 칸. 제출 막대와 몇 건 중 몇 건, 기한을 넘긴 것이 있으면 그 수만 빨갛게. */
+function ReportCell({ data }: { data?: AdminProjectCardData }) {
+  const progress = data?.reportProgress;
+  if (!progress || progress.requiredCount === 0) return <Missing />;
+  const rate = calculateReportSubmissionRate(progress.submittedCount, progress.requiredCount);
   return (
-    <div className="mb-4">
-      <ProgressBar
-        value={calculateReportSubmissionRate(submittedCount, requiredCount)}
-        label="보고서 제출률"
-      />
-      <p className={`mt-1 text-right text-xs ${overdueCount > 0 ? "font-bold text-[var(--danger)]" : "text-[var(--muted)]"}`}>
-        {submittedCount} / {requiredCount} <UiText>{"보고서 제출"}</UiText>
-        {overdueCount > 0 ? <>{" · "}<UiText>{"기한 초과"}</UiText> {overdueCount}<UiText>{"건"}</UiText></> : null}
-      </p>
+    <div className="min-w-0 text-xs leading-4">
+      <div className="flex items-center gap-2">
+        <div role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rate} className="h-1.5 w-12 flex-none overflow-hidden rounded-full bg-[var(--accent-subtle)]">
+          <span className="block h-full rounded-full bg-[var(--primary)]" style={{ width: `${rate}%` }} />
+        </div>
+        <span className="tabular-nums text-[var(--ink)]">{progress.submittedCount} / {progress.requiredCount}</span>
+      </div>
+      {progress.overdueCount > 0 ? <p className="mt-1 text-[var(--danger)]"><UiText>{`기한 초과 ${progress.overdueCount}건`}</UiText></p> : null}
     </div>
   );
 }
 
-function ProjectStatusBadge({ topic, recruiting }: { topic: TopicItem; recruiting: boolean }) {
-  const status = recruiting
-    ? { label: "모집 중", tone: "success" as const }
-    : projectStatusPresentation[topic.effectiveStatus];
-
-  return <ProjectGalleryStatusBadge label={status.label} tone={status.tone} />;
-}
-
-function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDataEnabled, adminData }: {
+function ProjectRow({ topic, canApply, leaderTeams, now, voteSelection, adminDataEnabled, adminData }: {
   topic: TopicItem;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -65,59 +68,50 @@ function ProjectCard({ topic, canApply, leaderTeams, now, voteSelection, adminDa
   adminDataEnabled: boolean;
   adminData?: AdminProjectCardData;
 }) {
-  const href = `/topics/${topic.id}`;
-  const hasRecruitmentPeriod = Boolean(topic.programRecruitmentStartsAt && topic.programRecruitmentEndsAt);
   const recruiting = isTopicRecruiting(topic, now);
-  const application = topic.ownApplicationStatus;
   const voteCandidate = voteSelection.ballot?.candidates.find(({ id }) => id === topic.id);
-  const hasProjectAction = Boolean(application || (canApply && recruiting));
-  const showActionLayer = adminDataEnabled || hasProjectAction || Boolean(voteCandidate);
-  const memberLabel = `${topic.memberCount} / ${topic.capacity}명`;
-  const availabilityTone = !topic.recruitmentEnabled || topic.studentProjectCreationEnabled
-    ? "neutral" as const
-    : topic.memberCount >= topic.capacity
-    ? "neutral" as const
-    : !hasRecruitmentPeriod || topic.programRecruitmentStartsAt! > now
-      ? "neutral" as const
-      : topic.programRecruitmentEndsAt! <= now
-        ? "neutral" as const
-        : topic.programRecruitmentEndsAt!.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1_000
-          ? "warning" as const
-          : "success" as const;
+  const full = topic.memberCount >= topic.capacity;
+  const members = `${topic.memberCount} / ${topic.capacity}명`;
+  const status = recruiting
+    ? { label: "모집 중", tone: "accent" as const }
+    : { label: projectStatusLabel[topic.effectiveStatus], tone: projectStatusTone[topic.effectiveStatus] };
+  const action = adminDataEnabled
+    ? <AdminProjectCardActions projectTitle={topic.title} data={adminData} />
+    : (
+      <>
+        <ProjectApplicationAction topic={topic} canApply={canApply} recruiting={recruiting} leaderTeams={leaderTeams} quiet />
+        {voteCandidate ? <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} quiet /> : null}
+      </>
+    );
 
   return (
-    <ProjectGalleryCardShell
-      id={`topic-${topic.id}`}
-      title={topic.title}
-      href={href}
-      programName={topic.programName}
-      programIcon={topic.programIcon}
-      divisionId={topic.divisionId}
-      divisionName={topic.divisionName}
-      teamName={topic.teamName}
-      description={topic.description}
-      imagePath={topic.thumbnailPath ?? undefined}
-      coverStatus={<ProjectStatusBadge topic={topic} recruiting={recruiting} />}
-      coverOverlay={typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : undefined}
-      titleAside={<StatusBadge tone={availabilityTone}><span className="whitespace-nowrap"><UiText>{memberLabel}</UiText></span></StatusBadge>}
-      details={topic.professorName ? <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">{topic.professorName}</p> : undefined}
-      actions={showActionLayer ? (
-        <>
-            {adminData ? <AdminProjectCardProgress data={adminData} /> : null}
-            {adminDataEnabled ? <AdminProjectCardActions projectTitle={topic.title} data={adminData} /> : null}
-            <ProjectApplicationAction topic={topic} canApply={canApply} recruiting={recruiting} leaderTeams={leaderTeams} />
-            {voteCandidate ? (
-              <div className={hasProjectAction || adminDataEnabled ? "mt-2" : ""}>
-                <ProjectVoteButton candidate={voteCandidate} selection={voteSelection} />
-              </div>
-            ) : null}
-        </>
-      ) : undefined}
-    />
+    <>
+      <Thumb src={topic.thumbnailPath} fallback={<ProgramIcon icon={topic.programIcon} />} />
+      <ProjectIdentity id={`topic-${topic.id}`} title={topic.title} href={`/topics/${topic.id}`} description={<UiText>{topic.description}</UiText>} />
+      <ProjectRowCells>
+        <div className="min-w-0 leading-4">
+          <p className="truncate text-[0.8125rem] text-[var(--ink)]">{topic.teamName ? <UiText>{topic.teamName}</UiText> : <Missing />}</p>
+          <p className="mt-1 truncate text-xs text-[var(--muted)]">
+            {adminDataEnabled ? <span className="tabular-nums"><UiText>{members}</UiText></span> : topic.professorName ?? <UiText>{topic.divisionName ?? ""}</UiText>}
+          </p>
+        </div>
+        {adminDataEnabled ? null : (
+          <span className={`whitespace-nowrap tabular-nums @min-[40rem]:text-right ${full ? "text-[var(--muted)]" : "text-[var(--ink)]"}`}>
+            <UiText>{members}</UiText>
+          </span>
+        )}
+        {adminDataEnabled ? <ReportCell data={adminData} /> : null}
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <Pill tone={status.tone}>{status.label}</Pill>
+          {typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : null}
+        </div>
+        <div className="flex min-w-0 flex-col items-stretch gap-1.5 @max-[40rem]:w-full empty:hidden">{action}</div>
+      </ProjectRowCells>
+    </>
   );
 }
 
-export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, registrationAction }: {
+export function ActiveProjectResults({ topics, canApply, leaderTeams, programId, query, divisionId, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, search, filters }: {
   topics: PublicTopicPage;
   canApply: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
@@ -130,10 +124,12 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
   adminProjectData?: AdminProjectCardData[];
   teamStatus?: AdminProjectTeamFilter;
   reportStatus?: AdminProjectReportFilter;
-  registrationAction?: ReactNode;
+  search?: ReactNode;
+  filters?: ReactNode;
 }) {
   const hasFilters = hasTopicsFilters({ q: query, divisionId, teamStatus, reportStatus });
   const adminDataByTopicId = new Map(adminProjectData?.map((data) => [data.topicId, data]));
+  const admin = adminProjectData !== undefined;
   return (
     <ProjectResultsLayout
       items={topics.items}
@@ -153,18 +149,22 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       listLabel="프로젝트 목록"
       paginationLabel="프로젝트 페이지"
       hrefForPage={(page) => topicsHref({ programId, q: query, divisionId, teamStatus, reportStatus, page })}
-      headerAction={registrationAction}
+      columns={admin
+        ? [{ label: "팀, 인원" }, { label: "보고서" }, { label: "상태" }, { label: "" }]
+        : [{ label: "팀" }, { label: "인원", align: "right" }, { label: "상태" }, { label: "" }]}
+      columnTemplate={admin ? "7rem 6rem 4.5rem 6.5rem" : "7rem 3.5rem 4.5rem 8.5rem"}
+      search={search}
+      filters={filters}
       ballot={ballot}
       votingResults={votingResults}
-      submissionHref={adminProjectData !== undefined && programId ? programManagementHref(programId, "reports") : undefined}
       renderItem={(topic, voteSelection) => (
-        <ProjectCard
+        <ProjectRow
           topic={topic}
           canApply={canApply}
           leaderTeams={leaderTeams}
           now={now}
           voteSelection={voteSelection}
-          adminDataEnabled={adminProjectData !== undefined}
+          adminDataEnabled={admin}
           adminData={adminDataByTopicId.get(topic.id)}
         />
       )}

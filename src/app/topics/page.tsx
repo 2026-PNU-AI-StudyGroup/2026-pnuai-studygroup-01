@@ -14,6 +14,8 @@ import { ProjectSearchForm } from "@/app/topics/_components/project-search-form"
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
 import { ProjectRegistrationModal } from "@/app/topics/_components/project-registration-modal";
 import { StudentProjectRegistrationLink } from "@/app/topics/_components/student-project-registration-link";
+import { isTopicRecruiting } from "@/app/topics/_components/project-application-action";
+import { programFinding } from "@/app/topics/_lib/program-finding";
 import { topicsHref, type ProjectView } from "@/app/topics/_lib/topics-query";
 import { buildAdminProgramSidebarItems, buildProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { orderedProgramSidebarIds } from "@/modules/project-program/ui/program-sidebar-items";
@@ -60,7 +62,8 @@ import { AppShell } from "@/app/_components/app-shell";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { EmptyState } from "@/shared/ui/page-primitives";
-import { SettingsIcon } from "@/shared/ui/workspace-icons";
+import { DocumentIcon, SettingsIcon } from "@/shared/ui/workspace-icons";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 // 관리자 메뉴 이름이 "프로젝트 현황"이라 탭 제목도 같은 이름을 쓴다.
 export async function generateMetadata(): Promise<Metadata> {
@@ -90,9 +93,9 @@ function ProgramManageLink({ programId, programName }: {
     <Link
       href={programManagementHref(programId)}
       aria-label={`${programName} 관리`}
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface-subtle)] focus-visible:text-[var(--primary)]"
+      className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)] text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] focus-visible:bg-[var(--surface-subtle)] focus-visible:text-[var(--ink)]"
     >
-      <SettingsIcon className="size-[1.1rem]" />
+      <SettingsIcon className="size-4" />
     </Link>
   );
 }
@@ -107,6 +110,27 @@ function ProgramAdminTitleActions({ programId, programName, pendingApprovalCount
       <ProgramManageLink programId={programId} programName={programName} />
       {pendingApprovalCount > 0 ? <ProgramApprovalLink programId={programId} count={pendingApprovalCount} /> : null}
     </div>
+  );
+}
+
+/** 관리자 머리 오른쪽. 팀 x 보고서 현황표로 간다. */
+function ReportStatusLink({ programId }: { programId: string }) {
+  return (
+    <Link href={programManagementHref(programId, "reports")} className="button-secondary button-compact gap-1.5">
+      <DocumentIcon className="size-4 shrink-0" /><UiText>{"보고서 현황"}</UiText>
+    </Link>
+  );
+}
+
+/** 머리의 한 줄. 손봐야 할 일은 굵게, 지금 걸린 기간은 그 뒤에. */
+function FindingText({ finding }: { finding: { alert?: string; phase?: string } }) {
+  if (!finding.alert && !finding.phase) return null;
+  return (
+    <>
+      {finding.alert ? <b className="font-semibold"><UiText>{finding.alert}</UiText></b> : null}
+      {finding.alert && finding.phase ? " " : null}
+      {finding.phase ? <UiText>{finding.phase}</UiText> : null}
+    </>
   );
 }
 
@@ -204,7 +228,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
   if (actor.role === "ADVISOR" && invitedProgramIds.size === 0) {
     return (
       <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">
-        <main className="content-shell page-enter">
+        <main className="content-shell">
           <EmptyState
             title="심사할 프로그램이 없습니다"
             description="초대가 회수되었거나 아직 배정되지 않았습니다. 초대 링크를 보낸 담당자에게 문의해 주세요."
@@ -279,8 +303,10 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
         <ProjectExplorerView
           view="past"
           program={selectedProgram}
-          search={<ProjectSearchForm view="past" programId={programId} query={query} divisionId={divisionId} />}
           titleAction={manageAction}
+          actions={actor.role === "ADMIN" && programId ? <ReportStatusLink programId={programId} /> : undefined}
+          finding={selectedProgram ? <FindingText finding={programFinding({ now, program: selectedProgram })} /> : undefined}
+          now={now}
           banner={await advisorBanner(programId)}
           announcementRail={(
             <ProgramAnnouncementRail
@@ -293,7 +319,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
           )}
           overlays={firstSearchParam(params.modal) === "announcement-new" && announcementCreateHref && programId && selectedProgram ? <ProgramAnnouncementCreateModal programId={programId} programName={selectedProgram.name} closeHref={closeAnnouncementHref} createAction={createProgramAnnouncementAction} /> : null}
         >
-          <PastProjectsView {...archive} query={query} programId={programId} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} />
+          <PastProjectsView {...archive} query={query} programId={programId} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} search={<ProjectSearchForm view="past" programId={programId} query={query} divisionId={divisionId} />} />
         </ProjectExplorerView>
       </ExplorerLayout>
     );
@@ -387,15 +413,37 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
     panel = <ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />;
+    const finding = selectedProgram ? programFinding({
+      now,
+      program: selectedProgram,
+      operations: operations ? { ...operations.summary, showTeam: !selectedProgram.studentProjectCreationEnabled } : undefined,
+      pendingApprovals: programId ? pendingApprovalCounts.get(programId) ?? 0 : 0,
+      recruitingCount: actor.role === "STUDENT" ? topics.items.filter((topic) => isTopicRecruiting(topic, now)).length : undefined,
+    }) : undefined;
     content = (
       <ExplorerLayout>
         <ProjectExplorerView
           view="active"
           program={selectedProgram}
-          search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} teamStatus={projectFilters.team} reportStatus={projectFilters.report} />}
           titleAction={manageAction}
+          actions={actor.role === "ADMIN" && programId
+            ? <ReportStatusLink programId={programId} />
+            : <StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} href={openRegistrationHref} />}
+          finding={finding ? <FindingText finding={finding} /> : undefined}
+          now={now}
           banner={await advisorBanner(programId)}
           privatePreview={actor.role === "ADMIN" && selectedProgram?.isPublic === false}
+          summary={actor.role === "ADMIN" && programId && operations ? (
+            <AdminProjectOperationsSummary
+              programId={programId}
+              operations={operations}
+              selectedTeamFilter={projectFilters.team}
+              selectedReportFilter={projectFilters.report}
+              showTeamFilter={!selectedProgram?.studentProjectCreationEnabled}
+              divisionId={divisionId}
+              query={query}
+            />
+          ) : undefined}
           announcementRail={(
             <ProgramAnnouncementRail
               announcements={programAnnouncements}
@@ -420,18 +468,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
             </>
           )}
         >
-        {actor.role === "ADMIN" && programId && operations ? (
-          <AdminProjectOperationsSummary
-            programId={programId}
-            operations={operations}
-            selectedTeamFilter={projectFilters.team}
-            selectedReportFilter={projectFilters.report}
-            showTeamFilter={!selectedProgram?.studentProjectCreationEnabled}
-            divisionId={divisionId}
-            query={query}
-          />
-        ) : null}
-        <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT" && !selectedProgram?.studentProjectCreationEnabled} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} teamStatus={projectFilters.team} reportStatus={projectFilters.report} registrationAction={<StudentProjectRegistrationLink role={actor.role} program={selectedProgram} now={now} href={openRegistrationHref} />} />
+          <ActiveProjectsView programId={programId} topics={topics} canApply={actor.role === "STUDENT" && !selectedProgram?.studentProjectCreationEnabled} leaderTeams={leaderTeams} query={query} divisionId={divisionId} divisions={selectedProgram?.divisions ?? []} hasUnassigned={hasUnassigned} now={now} ballot={ballot ?? undefined} votingResults={votingResults ?? undefined} adminProjectData={adminProjectData} teamStatus={projectFilters.team} reportStatus={projectFilters.report} search={<ProjectSearchForm view="active" programId={programId} query={query} divisionId={divisionId} teamStatus={projectFilters.team} reportStatus={projectFilters.report} />} />
         </ProjectExplorerView>
       </ExplorerLayout>
     );

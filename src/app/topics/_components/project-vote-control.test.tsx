@@ -37,11 +37,11 @@ function selection(voteLimitScope: "PROGRAM" | "DIVISION", selectedTopicIds: str
 }
 
 describe("프로그램 투표 상태 알약", () => {
-  it("득표 배지는 투표함 아이콘과 표 단위를 표시한다", () => {
+  it("득표수는 표 칸의 글자로 표 단위와 함께 적는다", () => {
     render(<ProjectVoteCountBadge voteCount={2} />);
 
     expect(screen.getByLabelText("득표 2표")).toHaveTextContent("2표");
-    expect(screen.getByLabelText("득표 2표").querySelector("svg")).toBeInTheDocument();
+    expect(screen.getByLabelText("득표 2표")).toHaveClass("tabular-nums");
   });
 
   it("프로그램 단위 투표는 현재 선택 수와 한도를 표시한다", () => {

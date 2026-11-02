@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { AdminProjectOperationsSummary } from "@/app/topics/_components/admin-project-operations-summary";
 
 describe("AdminProjectOperationsSummary", () => {
-  it("프로그램 전체 집계를 보여주고 선택한 상태로 같은 목록을 필터링한다", () => {
+  it("숫자 칸이 곧 목록 조건이고, 고른 칸을 다시 누르면 그 조건만 풀린다", () => {
     render(
       <AdminProjectOperationsSummary
         programId="program-1"
@@ -20,22 +20,26 @@ describe("AdminProjectOperationsSummary", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "프로젝트 필터" })).toHaveClass("sr-only");
-    expect(screen.getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(screen.getByRole("link", { name: "기한 초과 1개" })).toHaveAttribute(
+    expect(screen.getByRole("navigation", { name: "프로젝트 조건" })).toBeInTheDocument();
+    const overdue = screen.getByRole("link", { name: "보고서 기한 초과 1개" });
+    expect(overdue).toHaveAttribute("aria-current", "page");
+    expect(overdue).toHaveAttribute(
       "href",
-      "/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&teamStatus=formed&reportStatus=overdue",
+      "/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&teamStatus=formed",
     );
-    expect(screen.getAllByRole("link", { name: "전체 4개" })[0]).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "팀 미구성 1개" })).toHaveAttribute(
       "href",
-      "/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&reportStatus=overdue",
+      "/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0&teamStatus=unassigned&reportStatus=overdue",
     );
+    expect(screen.getByRole("link", { name: "전체 프로젝트 4개" })).toHaveAttribute(
+      "href",
+      "/topics?programId=program-1&divisionId=division-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0",
+    );
+    // 기한을 넘긴 수만 빨갛게 둔다.
+    expect(overdue.querySelector(".text-\\[var\\(--danger\\)\\]")).toHaveTextContent("1");
   });
 
-  it("학생 팀 프로젝트 등록형에서는 팀 구성 조건을 표시하지 않는다", () => {
+  it("학생 팀 프로젝트 등록형에서는 팀 구성 칸을 두지 않는다", () => {
     render(
       <AdminProjectOperationsSummary
         programId="program-1"
@@ -47,7 +51,8 @@ describe("AdminProjectOperationsSummary", () => {
       />,
     );
 
-    expect(screen.queryByRole("navigation", { name: "팀 구성" })).not.toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "필수 보고서" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^팀 구성됨/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "보고서 모두 제출 1개" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "전체 프로젝트 1개" })).toHaveAttribute("aria-current", "page");
   });
 });

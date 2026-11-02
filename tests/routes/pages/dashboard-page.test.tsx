@@ -63,7 +63,7 @@ vi.mock("@/app/dashboard/_components/project-dashboard-hero", () => ({
 }));
 vi.mock("@/app/dashboard/_components/project-dashboard-sidebar", () => ({ ProjectDashboardSidebar: () => null }));
 vi.mock("@/app/dashboard/_components/project-application-list", () => ({ ProjectApplicationList: () => null }));
-vi.mock("@/app/dashboard/_components/project-list", () => ({ ProjectList: () => null }));
+vi.mock("@/app/dashboard/_components/project-list", () => ({ ProjectList: () => null, DeadlineList: () => null }));
 vi.mock("@/app/_components/project-approval-ledger", () => ({ ProjectApprovalLedger: () => null }));
 vi.mock("@/app/_components/project-assistant-controls", () => ({ ProjectAssistantInvitationDecisionForm: () => null }));
 
@@ -92,7 +92,8 @@ describe("DashboardPage empty states", () => {
     render(await DashboardPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByRole("heading", { name: "승인 대기" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "검토할 승인 요청이 없습니다" })).toBeInTheDocument();
+    // 빈 상태도 카드 틀과 머리를 지키고 한 문장만 둔다.
+    expect(screen.getByText("검토할 승인 요청이 없습니다. 새 요청이 오면 여기에 보입니다.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "아직 연결된 프로젝트가 없습니다" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "주제 관리" })).toHaveAttribute("href", "/professor/topics");
     expect(screen.queryByRole("link", { name: "새 주제 등록" })).not.toBeInTheDocument();

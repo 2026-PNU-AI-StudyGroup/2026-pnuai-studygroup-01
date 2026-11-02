@@ -15,6 +15,8 @@ import {
 } from "@/app/topics/_components/project-showcase-sections";
 import { LocalizedMarkdown } from "@/modules/translation/ui/localized-markdown";
 import { ProgramSidebar } from "@/app/topics/_components/program-sidebar";
+import { ProgramScheduleCard } from "@/app/topics/_components/project-portal-chrome";
+import { cardClass, CardHead, daysUntil, KpiStrip, ObjectHeader, Pill, Thumb } from "@/modules/project-program/ui/work-screen";
 import { buildAdminProgramSidebarItems } from "@/app/topics/_lib/program-sidebar-items";
 import { loadProgramSidebarItems } from "@/app/topics/_lib/load-program-sidebar-items";
 
@@ -33,11 +35,14 @@ import { ListAdminTopicPreviewService } from "@/modules/topic/application/list-a
 import { ListPublishedTopicsService } from "@/modules/topic/application/list-published-topics";
 import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prisma-topic-query-repository";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
+import { ProgramIcon } from "@/shared/ui/program-icon";
 import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { SettingsIcon } from "@/shared/ui/workspace-icons";
+
+const monthDay = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" });
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 상세");
@@ -55,7 +60,7 @@ export default async function TopicDetailPage({ params, searchParams }: { params
     && await new TeamWorkspaceQueryService(new PrismaTeamWorkspaceQueryRepository(prisma)).canOpen(actor, topicId);
   if (canOpenWorkspace && actor.role !== "ADMIN" && (await searchParams).view !== "public") redirect(`/projects/${topicId}`);
   const workspaceLink = canOpenWorkspace
-    ? <UiNav aria-label="프로젝트 관리" className="mb-5 flex justify-end"><Link href={`/projects/${topicId}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link></UiNav>
+    ? <Link href={`/projects/${topicId}`} className="button-secondary button-compact gap-1.5"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link>
     : null;
   const audience = actor.role === "ADMIN" ? "ADMIN" : actor.role === "PROFESSOR" ? "FACULTY" : "STUDENT";
   const archivedProject = await new ListArchivedProjectsService(new PrismaTeamArchiveQueryRepository(prisma, audience)).find(topicId);
@@ -66,9 +71,8 @@ export default async function TopicDetailPage({ params, searchParams }: { params
       new ProjectVotingService(new PrismaProjectVotingRepository(prisma)).getBallot(actor, archivedProject.programId),
       listProgramCategoryOrder(prisma),
     ]);
-    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`} panel={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}><ExplorerLayout>
-      {workspaceLink}
-      <ArchivedProjectDetail project={archivedProject} ballot={ballot ?? undefined} /></ExplorerLayout></AppShell>;
+    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`} crumbs={[{ label: archivedProject.programName, href: `/topics?view=past&programId=${encodeURIComponent(archivedProject.programId)}` }, { label: archivedProject.topicTitle }]} panel={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}><ExplorerLayout>
+      <ArchivedProjectDetail project={archivedProject} ballot={ballot ?? undefined} workspaceLink={workspaceLink} /></ExplorerLayout></AppShell>;
   }
 
   const topicRepository = new PrismaTopicQueryRepository(prisma, audience);
@@ -93,7 +97,7 @@ export default async function TopicDetailPage({ params, searchParams }: { params
   // 학생이 팀을 꾸리는 프로그램은 팀 모집에서 합류한다.
   const applicationAction = <ProjectApplicationAction topic={topic} canApply={canApply} recruiting={recruiting} leaderTeams={leaderTeams} />;
   const joinGuide = actor.role === "STUDENT" && topic.studentProjectCreationEnabled && topic.programExecutionEndsAt > now
-    ? <p className="text-sm font-medium text-[var(--muted)]"><UiText>{"이 프로그램은 팀 모집에서 팀에 합류합니다."}</UiText>{" "}<Link href="/recruitments" className="font-bold text-[var(--primary)] hover:underline"><UiText>{"팀 모집 보기"}</UiText></Link></p>
+    ? <Link href="/recruitments" className="button-secondary button-compact"><UiText>{"팀 모집에서 합류"}</UiText></Link>
     : null;
   const { media, embeddedIds, galleryIds } = buildShowcaseMedia({
     artifacts: topic.artifacts,
@@ -106,19 +110,96 @@ export default async function TopicDetailPage({ params, searchParams }: { params
   const teamLeader = topic.teamMembers?.find(({ role }) => role === "LEADER");
   const teamMembers = topic.teamMembers?.filter(({ role }) => role === "MEMBER") ?? [];
 
+  const status = recruiting
+    ? { label: "모집 중", tone: "accent" as const }
+    : topic.effectiveStatus === "PENDING_APPROVAL" ? { label: "승인 대기", tone: "warning" as const }
+      : topic.effectiveStatus === "REJECTED" ? { label: "반려됨", tone: "danger" as const }
+        : { label: teamStatusPresentation[topic.effectiveStatus].label, tone: topic.effectiveStatus === "IN_PROGRESS" ? "accent" as const : "plain" as const };
+  // 머리 한 줄. 모집 중이면 남은 자리와 마감, 투표 중이면 투표 마감. 수행 기간은 숫자 판에 있어 되풀이하지 않는다.
+  const finding = recruiting && topic.programRecruitmentEndsAt
+    ? `남은 자리 ${topic.capacity - topic.memberCount}명, 모집은 ${monthDay.format(topic.programRecruitmentEndsAt)}에 마감합니다.`
+    : topic.programVotingStartsAt && topic.programVotingEndsAt && topic.programVotingStartsAt <= now && now < topic.programVotingEndsAt
+      ? `투표는 ${monthDay.format(topic.programVotingEndsAt)}까지 열려 있습니다.`
+      : undefined;
+  const executionDaysLeft = daysUntil(topic.programExecutionEndsAt, now);
+  const people: Array<[string, string[]]> = topic.studentProjectCreationEnabled
+    ? [["팀장", teamLeader ? [teamLeader.name] : []], ["팀원", teamMembers.map(({ name }) => name)]]
+    : [["등록자", [topic.authorName]], ...(topic.teamMembers?.length ? [["팀원", topic.teamMembers.map(({ name }) => name)] as [string, string[]]] : [])];
+  if (topic.professorName) people.push(["지도교수", [topic.professorName]]);
+  const hasApplicationAction = Boolean(topic.ownApplicationStatus || (canApply && recruiting));
+
   return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`} crumbs={[{ label: topic.programName, href: `/topics?programId=${encodeURIComponent(topic.programId)}` }, { label: topic.title }]} panel={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} selectedName={topic.programName} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
     <ExplorerLayout>
-      <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{canOpenWorkspace ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link> : null}</UiNav>
       <ProjectDetailShell
-        headerAside={repository ? <ProjectRepositoryCallout repository={repository} /> : undefined}
-        heading={<div className="mx-auto w-full max-w-4xl"><p className="text-sm font-semibold text-[var(--muted)]">{topic.programName}{topic.divisionName ? ` · ${topic.divisionName}` : ""}</p><h1 className="mt-3 text-[clamp(1.5rem,2.8vw,2.125rem)] font-bold leading-[1.15] tracking-[-0.035em]"><UiText>{topic.title}</UiText></h1><div className="mt-6 space-y-2.5">{topic.studentProjectCreationEnabled ? <>{teamLeader ? <div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀장"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{teamLeader.name}</span></div> : null}{teamMembers.length ? <div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"팀원"}</UiText></span>{teamMembers.map(({ name }) => <span key={name} className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{name}</span>)}</div> : null}</> : <><div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"등록자"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{topic.authorName}</span></div><div className="flex flex-wrap items-center gap-2"><span className="w-16 shrink-0 text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 현황"}</UiText></span><span className="inline-flex items-center rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">{topic.memberCount} / {topic.capacity}<UiText>{"명"}</UiText></span></div></>}</div>{joinGuide ? <div className="mt-6">{joinGuide}</div> : null}<div className="mt-6 max-w-xs empty:hidden">{applicationAction}</div></div>}
+        header={(
+          <ObjectHeader
+            id="project-title"
+            media={<Thumb src={topic.thumbnailPath} fallback={<ProgramIcon icon={topic.programIcon} />} className="h-[3.875rem] w-[3.125rem]" />}
+            title={<UiText>{topic.title}</UiText>}
+            titleAside={<Pill tone={status.tone}>{status.label}</Pill>}
+            meta={<><UiText>{topic.programName}</UiText>{topic.divisionName ? <>, <UiText>{topic.divisionName}</UiText></> : null}{topic.teamName ? <>, <UiText>{`${topic.teamName} 팀`}</UiText></> : null}</>}
+            finding={finding ? <UiText>{finding}</UiText> : undefined}
+            actions={(
+              <>
+                {workspaceLink}
+                {repository ? <ProjectRepositoryCallout repository={repository} primary={!hasApplicationAction} /> : null}
+                {joinGuide}
+                {hasApplicationAction ? <div className="min-w-32">{applicationAction}</div> : null}
+              </>
+            )}
+          />
+        )}
+        kpis={(
+          <KpiStrip items={[
+            { label: "팀원", value: topic.memberCount, unit: "명", note: <UiText>{`정원 ${topic.capacity}명`}</UiText> },
+            { label: "공개 결과물", value: topic.artifacts.length, unit: "개" },
+            { label: "수행 종료까지", value: Math.max(0, executionDaysLeft), unit: "일", note: <UiDate value={topic.programExecutionEndsAt} /> },
+          ]} />
+        )}
+        side={(
+          <>
+            <section aria-labelledby="project-people-title" className={cardClass}>
+              <CardHead id="project-people-title" title={<UiText>{"팀"}</UiText>} count={<UiText>{`${topic.memberCount}명`}</UiText>} />
+              <dl className="px-5 pb-3 text-[0.8125rem]">
+                {people.map(([label, names]) => (
+                  <div key={label} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 py-2 [&+div]:border-t [&+div]:border-[var(--line)]">
+                    <dt className="text-[var(--muted)]"><UiText>{label}</UiText></dt>
+                    <dd className="min-w-0 text-[var(--ink)]">{names.length ? names.join(", ") : <span className="text-[var(--muted)]">-</span>}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+            <ProgramScheduleCard now={now} program={{
+              name: topic.programName,
+              category: topic.programCategory,
+              recruitmentStartsAt: topic.programRecruitmentStartsAt,
+              recruitmentEndsAt: topic.programRecruitmentEndsAt,
+              executionStartsAt: topic.programExecutionStartsAt,
+              executionEndsAt: topic.programExecutionEndsAt,
+              votingPolicy: topic.programVotingStartsAt && topic.programVotingEndsAt ? { startsAt: topic.programVotingStartsAt, endsAt: topic.programVotingEndsAt } : null,
+            }} />
+          </>
+        )}
       >
-        <div className="mx-auto max-w-4xl space-y-11">
-          <ProjectMediaCarousel items={media} />
-          <section aria-labelledby="topic-description"><h2 id="topic-description" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"프로젝트 소개"}</UiText></h2><LocalizedMarkdown text={topic.showcaseIntro ?? topic.description} className="mt-3 max-w-3xl space-y-3 text-[0.9375rem] leading-7 text-[var(--ink)]" /></section>
-          <ProjectArtifactSection artifacts={topic.artifacts} sourceUrl={topic.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} repositoryShownAbove={Boolean(repository)} />
-          {recruiting ? <section aria-labelledby="topic-requirements"><h2 id="topic-requirements" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"지원 조건"}</UiText></h2><dl className="mt-3 border-t border-[var(--line)]">{[["필수 기술", topic.requiredSkills.join(", ") || "별도 조건 없음"], ["우대 기술", topic.preferredSkills.join(", ") || "별도 조건 없음"], ["예상 역할", topic.roleExpectations], ["활동 조건", topic.availabilityRequirement]].map(([label, value]) => <div key={label} className="grid gap-1 border-t border-[var(--line)] py-4 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)]"><dt className="text-sm font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt><dd className="text-sm font-semibold leading-6 text-[var(--ink)]"><UiText>{value}</UiText></dd></div>)}</dl></section> : null}
-        </div>
+        <section aria-labelledby="topic-description" className={`${cardClass} pb-5`}>
+          <CardHead id="topic-description" title={<UiText>{"프로젝트 소개"}</UiText>} />
+          {media.length ? <div className="px-5 pb-4"><ProjectMediaCarousel items={media} /></div> : null}
+          <LocalizedMarkdown text={topic.showcaseIntro ?? topic.description} className="max-w-3xl space-y-3 px-5 text-[0.9375rem] leading-7 text-[var(--ink)]" />
+        </section>
+        <ProjectArtifactSection artifacts={topic.artifacts} sourceUrl={topic.sourceUrl} embeddedIds={embeddedIds} galleryIds={galleryIds} repositoryShownAbove={Boolean(repository)} />
+        {recruiting ? (
+          <section aria-labelledby="topic-requirements" className={cardClass}>
+            <CardHead id="topic-requirements" title={<UiText>{"지원 조건"}</UiText>} />
+            <dl className="px-5 pb-3">
+              {[["필수 기술", topic.requiredSkills.join(", ") || "별도 조건 없음"], ["우대 기술", topic.preferredSkills.join(", ") || "별도 조건 없음"], ["예상 역할", topic.roleExpectations], ["활동 조건", topic.availabilityRequirement]].map(([label, value]) => (
+                <div key={label} className="grid gap-1 py-2.5 text-sm [&+div]:border-t [&+div]:border-[var(--line)] sm:grid-cols-[7rem_minmax(0,1fr)]">
+                  <dt className="text-[var(--muted)]"><UiText>{label}</UiText></dt>
+                  <dd className="leading-6 text-[var(--ink)]"><UiText>{value}</UiText></dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
       </ProjectDetailShell>
     </ExplorerLayout>
   </AppShell>;

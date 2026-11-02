@@ -21,9 +21,9 @@ export function AdminProjectCardActions({ projectTitle, data }: {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex items-center gap-3 whitespace-nowrap text-[0.8125rem]">
         {data ? (
-          <Link href={`/projects/${encodeURIComponent(data.topicId)}`} className="button-secondary min-h-10 w-full px-2 text-xs">
+          <Link href={`/projects/${encodeURIComponent(data.topicId)}`} className="font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]">
             <UiText>{"진행 현황"}</UiText>
           </Link>
         ) : (
@@ -34,12 +34,13 @@ export function AdminProjectCardActions({ projectTitle, data }: {
             ref={contactTriggerRef}
             type="button"
             onClick={() => dialogRef.current?.showModal()}
-            className="button-secondary min-h-10 w-full px-2 text-xs"
+            aria-label="연락처 정보"
+            className="font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]"
           >
-            <UiText>{"연락처 정보"}</UiText>
+            <UiText>{"연락처"}</UiText>
           </button>
         ) : (
-          <UnavailableActionButton label="연락처 정보" />
+          <UnavailableActionButton label="연락처" ariaLabel="연락처 정보" />
         )}
       </div>
       {data ? (
@@ -82,15 +83,16 @@ export function AdminProjectCardActions({ projectTitle, data }: {
   );
 }
 
-function UnavailableActionButton({ label }: { label: string }) {
+function UnavailableActionButton({ label, ariaLabel }: { label: string; ariaLabel?: string }) {
   const tooltipId = useId();
   return (
-    <span className="group relative block">
+    <span className="group relative inline-block">
       <button
         type="button"
         aria-disabled="true"
+        aria-label={ariaLabel}
         aria-describedby={tooltipId}
-        className="button-secondary min-h-10 w-full cursor-not-allowed px-2 text-xs"
+        className="cursor-not-allowed text-[var(--muted)]"
       >
         <UiText>{label}</UiText>
       </button>
