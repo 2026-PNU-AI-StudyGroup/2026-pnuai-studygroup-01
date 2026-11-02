@@ -7,7 +7,6 @@ import { type InvalidEvent, useActionState, useRef, useState } from "react";
 import { createProgramAction } from "@/app/topics/_management/program-actions";
 import styles from "@/app/topics/_management/program-form.module.css";
 import navStyles from "@/app/topics/_management/program-section-nav.module.css";
-import { ProgramSectionNavIcon, type ProgramSectionNavIconName } from "@/app/topics/_management/program-section-nav";
 import { ProgramPeriodRow, ProgramTeamSizeRange, ProgramVisibilitySettings, type ProgramVisibility } from "@/app/topics/_management/program-form-fields";
 import {
   ProgramCreateReportBuilder,
@@ -32,15 +31,6 @@ const PROGRAM_FORM_SECTIONS = [
 ] as const;
 
 type ProgramFormSectionId = (typeof PROGRAM_FORM_SECTIONS)[number]["id"];
-
-const formNavIcon: Record<ProgramFormSectionId, ProgramSectionNavIconName> = {
-  "program-basic": "basic",
-  "program-operation": "operation",
-  "program-schedule": "schedule",
-  "program-voting": "voting",
-  "program-rubrics": "rubric",
-  "program-reports": "reports",
-};
 
 export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: string[]; cancelHref: string }) {
   const [votingEnabled, setVotingEnabled] = useState(false);
@@ -123,7 +113,6 @@ export function ProgramForm({ categoryOptions, cancelHref }: { categoryOptions: 
     <UiNav id="program-create-navigation" aria-label="프로그램 등록 항목" className={navStyles.root}>
       {PROGRAM_FORM_SECTIONS.map((section, index) => (
         <button key={section.id} type="button" aria-controls={section.id} aria-current={activeSection === section.id ? "step" : undefined} onClick={() => showSection(section.id)} className={`${navStyles.item} ${activeSection === section.id ? navStyles.itemActive : ""}`}>
-          <ProgramSectionNavIcon section={formNavIcon[section.id]} />
           <span><span aria-hidden="true">{index + 1}. </span><UiText>{section.label}</UiText></span>
         </button>
       ))}

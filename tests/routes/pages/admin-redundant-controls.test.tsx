@@ -20,9 +20,10 @@ vi.mock("@/modules/identity/application/manage-users", () => ({
   resolveUserListStatusFilter: () => "ALL",
 }));
 vi.mock("@/modules/identity/infrastructure/prisma-user-administration-repository", () => ({ PrismaUserAdministrationRepository: class {} }));
-vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
+vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: { user: { groupBy: vi.fn().mockResolvedValue([]) } } }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
-vi.mock("@/app/_components/admin-workspace", () => ({
+vi.mock("@/app/_components/admin-workspace", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/app/_components/admin-workspace")>()),
   AdminWorkspace: ({ title, actions, children }: { title: string; actions?: ReactNode; children: ReactNode }) => (
     <main><h1>{title}</h1>{actions}{children}</main>
   ),

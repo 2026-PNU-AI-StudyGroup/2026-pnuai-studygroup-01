@@ -6,7 +6,7 @@ import { saveProgramTeamResultsAction } from "@/app/topics/_management/program-a
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { EmptyState } from "@/shared/ui/page-primitives";
+import { cardClass, CardHead, Missing } from "@/modules/project-program/ui/work-screen";
 import { TextInput } from "@/shared/ui/form-system";
 
 type SortKey = "combined" | "staff" | "advisor" | "vote" | "team";
@@ -25,51 +25,56 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
   }, [rows]);
   const ranked = useMemo(() => sortRows(rows, sortKey), [rows, sortKey]);
 
-  if (rows.length === 0) {
-    return <EmptyState variant="section" title="팀이 없습니다" description="팀이 확정되면 집계표가 채워집니다." />;
-  }
-
+  // 화면의 질문은 "누가 몇 점인가"다. 표 한 장이 카드 전체이고, 열 이름이 정렬 단추다.
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-xs text-[var(--muted)]"><UiText>{"열 이름을 눌러 줄을 세웁니다. 합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다."}</UiText></p>
-        <button type="button" onClick={() => downloadCsv(programName, ranked, advisorColumns)} className="button-secondary ml-auto min-h-9 px-3 text-xs">
-          <UiText>{"CSV 내려받기"}</UiText>
-        </button>
-      </div>
+    <section aria-labelledby="scoreboard-title" className={cardClass}>
+      <CardHead
+        id="scoreboard-title"
+        title={<UiText>{"심사 집계"}</UiText>}
+        count={<>{rows.length}<UiText>{"팀"}</UiText></>}
+        action={rows.length ? (
+          <button type="button" onClick={() => downloadCsv(programName, ranked, advisorColumns)} className="button-secondary button-compact min-h-8 px-3 font-medium">
+            <UiText>{"CSV 내려받기"}</UiText>
+          </button>
+        ) : undefined}
+      />
+      <p className="px-5 pb-3 text-xs text-[var(--muted)]"><UiText>{"내부 채점표, 자문위원 점수, 득표를 한 표로 모읍니다. 열 이름을 눌러 줄을 세웁니다. 합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다."}</UiText></p>
+      {rows.length === 0 ? (
+        <div role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem]"><p className="font-medium text-[var(--ink)]"><UiText>{"팀이 없습니다"}</UiText></p><p className="mt-0.5 text-[var(--muted)]"><UiText>{"팀이 확정되면 집계표가 채워집니다."}</UiText></p></div>
+      ) : <>
 
       {/* 상은 이 표를 보고 정한다. 입력칸을 같은 표에 두면 팀 이름을 옮겨 적을 일이 없다. */}
       {/* grid·flex 자식은 min-width 가 auto 라 표 너비만큼 늘어난다. 그러면 표 안이 아니라
           페이지가 가로로 밀려 오른쪽 끝 칸이 화면 밖으로 나간다. min-w-0 을 줘야 표가 제자리에서 구른다. */}
       <form action={saveResults} className="min-w-0">
       <input type="hidden" name="programId" value={programId} />
-      <div className="min-w-0 overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-        <table className="w-full min-w-max border-collapse text-sm">
+      <div className="min-w-0 overflow-x-auto">
+        <table className="w-full min-w-max border-collapse text-[0.8125rem]">
           <thead>
-            <tr className="border-b border-[var(--line)] text-left">
-              <th scope="col" className="w-12 px-4 py-3 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
+            <tr className="border-t border-[var(--line)] text-left">
+              <th scope="col" className="w-12 py-2 pl-5 pr-3 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
+              <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
               <SortHeader label="팀" columnKey="team" sortKey={sortKey} onSort={setSortKey} />
-              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
-              <th scope="col" className="px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
+              <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
+              <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
               <SortHeader label="내부 심사" columnKey="staff" sortKey={sortKey} onSort={setSortKey} align="right" />
               {advisorColumns.map(([advisorId, advisorName]) => (
-                <th key={advisorId} scope="col" className="px-4 py-3 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
+                <th key={advisorId} scope="col" className="px-3 py-2 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
               ))}
               <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="합계" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
               {/* 표가 넓어 수상 칸이 가로 스크롤 밖으로 밀린다. 오른쪽에 붙여 늘 보이게 한다. */}
-              <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-xs font-normal text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
+              <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-2 pl-3 pr-5 text-xs font-normal text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
             </tr>
           </thead>
           <tbody>
             {ranked.map((row, index) => {
               const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score.total]));
               return (
-                <tr key={row.teamId} className="border-t border-[var(--line)] first:border-t-0">
-                  <td className="px-4 py-3 text-right tabular-nums text-[var(--muted)]">{index + 1}</td>
-                  <td className="px-4 py-2">
+                <tr key={row.teamId} className="border-t border-[var(--line)]">
+                  <td className="py-2 pl-5 pr-3 text-right tabular-nums text-[var(--muted)]">{index + 1}</td>
+                  <td className="px-3 py-1.5">
                     <TextInput
                       type="number"
                       inputMode="numeric"
@@ -78,32 +83,32 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
                       name={`number:${row.teamId}`}
                       defaultValue={row.teamNumber ?? ""}
                       aria-label={`${row.teamName} 팀 번호`}
-                      className="w-20 text-right tabular-nums"
+                      className="h-8 min-h-8 w-20 py-0 text-right text-[0.8125rem] tabular-nums"
                     />
                   </td>
-                  <th scope="row" className="px-4 py-3 text-left font-semibold text-[var(--ink)]">
+                  <th scope="row" className="px-3 py-2 text-left text-sm font-medium text-[var(--ink)]">
                     {row.teamName}
                     {row.staffScorerNames.length ? (
                       <span className="mt-0.5 block text-xs font-normal text-[var(--muted)]">{row.staffScorerNames.join(", ")}</span>
                     ) : null}
                   </th>
-                  <td className="max-w-[22rem] truncate px-4 py-3 text-[var(--muted)]" title={row.projectTitle}><UiText>{row.projectTitle}</UiText></td>
-                  <td className="px-4 py-3 text-[var(--muted)]"><UiText>{row.divisionName ?? "미분과"}</UiText></td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.staffTotal ?? "–"}</td>
+                  <td className="max-w-[22rem] truncate px-3 py-2 text-[var(--muted)]" title={row.projectTitle}><UiText>{row.projectTitle}</UiText></td>
+                  <td className="px-3 py-2 text-[var(--muted)]"><UiText>{row.divisionName ?? "미분과"}</UiText></td>
+                  <td className="px-3 py-2 text-right tabular-nums">{row.staffTotal ?? <Missing />}</td>
                   {advisorColumns.map(([advisorId]) => (
-                    <td key={advisorId} className="px-4 py-3 text-right tabular-nums">{scoreByAdvisor.get(advisorId) ?? "–"}</td>
+                    <td key={advisorId} className="px-3 py-2 text-right tabular-nums">{scoreByAdvisor.get(advisorId) ?? <Missing />}</td>
                   ))}
-                  <td className="px-4 py-3 text-right tabular-nums">{row.advisorAverage === null ? "–" : row.advisorAverage.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.voteCount}</td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--accent)]">{combinedScore(row).toFixed(1)}</td>
-                  <td className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] px-4 py-2">
+                  <td className="px-3 py-2 text-right tabular-nums">{row.advisorAverage === null ? <Missing /> : row.advisorAverage.toFixed(1)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{row.voteCount}</td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{combinedScore(row).toFixed(1)}</td>
+                  <td className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-1.5 pl-3 pr-5">
                     <TextInput
                       name={`award:${row.teamId}`}
                       defaultValue={row.award ?? ""}
                       maxLength={60}
                       placeholder="예: 대상"
                       aria-label={`${row.teamName} 수상 내역`}
-                      className="w-36"
+                      className="h-8 min-h-8 w-36 py-0 text-[0.8125rem]"
                     />
                   </td>
                 </tr>
@@ -112,8 +117,8 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
           </tbody>
         </table>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <p className="text-xs text-[var(--muted)]">
+      <div className="flex flex-wrap items-center gap-3 border-t border-[var(--line)] px-5 py-3">
+        <p className="min-w-0 flex-1 text-xs text-[var(--muted)]">
           <UiText>{"번호는 지난 프로젝트 목록의 차례가 됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
         </p>
         {resultState.message ? (
@@ -121,12 +126,13 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
             {resultState.message}
           </p>
         ) : null}
-        <button type="submit" className="button-primary ml-auto min-h-9 px-3 text-xs" disabled={savingResults}>
+        <button type="submit" className="button-primary button-compact min-h-8 px-3 font-medium" disabled={savingResults}>
           <UiText>{savingResults ? "저장 중" : "번호·수상 저장"}</UiText>
         </button>
       </div>
       </form>
-    </div>
+      </>}
+    </section>
   );
 }
 
@@ -149,7 +155,7 @@ function SortHeader({ label, columnKey, sortKey, onSort, align = "left" }: {
     <th
       scope="col"
       aria-sort={active ? (columnKey === "team" ? "ascending" : "descending") : "none"}
-      className={`px-4 py-3 text-xs font-normal ${align === "right" ? "text-right" : "text-left"} ${active ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}
+      className={`px-3 py-1 text-xs font-normal ${align === "right" ? "text-right" : "text-left"} ${active ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}
     >
       <button
         type="button"

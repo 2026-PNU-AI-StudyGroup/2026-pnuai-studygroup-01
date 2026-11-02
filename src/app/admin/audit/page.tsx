@@ -1,25 +1,17 @@
 import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import {
-  AdminSection,
-  AdminSectionEmpty,
-  adminRecordListClassName,
-  adminRecordRowClassName,
-} from "@/app/_components/admin-section";
 import { AdminSidebar } from "@/app/_components/admin-sidebar";
-import { AdminWorkspace } from "@/app/_components/admin-workspace";
+import { AdminPager, AdminWorkspace, adminHeadRow, adminRow } from "@/app/_components/admin-workspace";
 import { ListAuditLogService, type AuditAction } from "@/modules/audit/application/list-audit-log";
 import { PrismaAuditLogReader } from "@/modules/audit/infrastructure/prisma-audit-log-reader";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { AppShell } from "@/app/_components/app-shell";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
+import { cardClass, CardHead, Pill } from "@/modules/project-program/ui/work-screen";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -76,6 +68,14 @@ const actionLabel: Record<AuditAction, string> = {
   ADVISOR_TEAMS_ASSIGNED: "자문위원 팀 할당",
 };
 
+// 권한을 거두거나 막은 변경만 노란 알약. 나머지는 회색이다.
+function actionTone(action: AuditAction) {
+  return action.includes("REVOKED") || action.includes("DEACTIVATED") || action.includes("REVISION") || action.includes("REJECTED") ? "warning" as const : "plain" as const;
+}
+
+// 일시, 변경, 대상과 사유, 처리자. 좁으면 앞 칸 아래 회색 한 줄로 흐른다.
+const columns = "@min-[48rem]:grid-cols-[9.5rem_11rem_minmax(0,1fr)_7rem]";
+
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
@@ -83,52 +83,44 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const page = Number(firstSearchParam(params.page) ?? "1");
   const data = await new ListAuditLogService(new PrismaAuditLogReader(prisma)).execute(actor, page);
+  const latest = data.page === 1 ? data.items[0] : undefined;
   return (
     <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/audit" crumbs={[{ label: "관리 이력" }]} panel={<AdminSidebar currentPath="/admin/audit" />}>
-      <AdminWorkspace title="관리 이력" description="권한, 사용자 접근, 팀 확정과 보고서 승인처럼 운영에 영향을 주는 변경을 시간순으로 확인합니다.">
-        <AdminSection
-          id="audit-list-title"
-          title="최근 변경"
-          meta={<><UiText>{"총"}</UiText>{" "}{data.total}<UiText>{"건"}</UiText></>}
-        >
+      <AdminWorkspace
+        title="관리 이력"
+        description={latest ? <><UiText>{"마지막 변경"}</UiText>{": "}<span className="tabular-nums"><UiDate value={latest.createdAt} mode="dateTime" /></span>, <UiText>{actionLabel[latest.action]}</UiText>, <UiText>{"처리자"}</UiText>{" "}{latest.actorName}.</> : undefined}
+      >
+        <section aria-labelledby="audit-list-title" className={`${cardClass} @container`}>
+          <CardHead id="audit-list-title" title={<UiText>{"운영 변경 기록"}</UiText>} count={<>{data.total.toLocaleString("ko-KR")}<UiText>{"건"}</UiText></>} />
           {data.items.length === 0 ? (
-            <AdminSectionEmpty>
-              <EmptyState variant="section" title="아직 변경 기록이 없습니다" description="중요한 운영 변경은 자동으로 기록됩니다." />
-            </AdminSectionEmpty>
+            <p role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"아직 변경 기록이 없습니다. 권한, 사용자, 팀 확정, 보고서 승인 같은 운영 변경은 자동으로 기록됩니다."}</UiText></p>
           ) : (
-            <ol className={adminRecordListClassName}>
-              {data.items.map((entry) => (
-                <li
-                  key={entry.id}
-                  className={`${adminRecordRowClassName} grid gap-4 xl:grid-cols-[13rem_minmax(18rem,1fr)_12rem] xl:items-center`}
-                >
-                  <div>
-                    <StatusBadge tone={entry.action.includes("REVOKED") || entry.action.includes("DEACTIVATED") || entry.action.includes("REVISION") || entry.action.includes("REJECTED") ? "warning" : "neutral"}>{actionLabel[entry.action]}</StatusBadge>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="break-words font-semibold"><UiText>{entry.targetLabel}</UiText></p>
-                    <p className="muted mt-1 text-sm"><UiText>{"관리자"}</UiText>{" "}{entry.actorName}</p>
-                    {entry.reason ? (
-                      <p className="mt-1 break-words text-sm leading-6 text-[var(--ink)]">
-                        <span className="muted"><UiText>{"사유"}</UiText>{" "}</span>{entry.reason}
-                      </p>
-                    ) : null}
-                  </div>
-                  <time className="muted text-sm tabular-nums xl:text-right" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
-                </li>
-              ))}
-            </ol>
-          )}
-          {data.totalPages > 1 ? (
-            <UiNav aria-label="관리 이력 페이지" className="flex items-center justify-between border-t border-[var(--line)] px-5 py-4 sm:px-6">
-              <span className="muted text-sm tabular-nums">{data.page} / {data.totalPages} {" "}<UiText>{"페이지"}</UiText></span>
-              <div className="flex gap-2">
-                {data.page > 1 ? <PaginationDirectionLink direction="previous" href={`/admin/audit?page=${data.page - 1}`} /> : null}
-                {data.page < data.totalPages ? <PaginationDirectionLink direction="next" href={`/admin/audit?page=${data.page + 1}`} /> : null}
+            <>
+              <div aria-hidden="true" className={`${adminHeadRow} ${columns}`}>
+                <span><UiText>{"일시"}</UiText></span>
+                <span><UiText>{"변경"}</UiText></span>
+                <span><UiText>{"대상"}</UiText></span>
+                <span><UiText>{"처리자"}</UiText></span>
               </div>
-            </UiNav>
-          ) : null}
-        </AdminSection>
+              <ol>
+                {data.items.map((entry) => (
+                  <li key={entry.id} className={`${adminRow} grid-cols-[minmax(0,1fr)_auto] text-[0.8125rem] ${columns}`}>
+                    <time className="tabular-nums text-[var(--muted)]" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="dateTime" /></time>
+                    <span className="justify-self-end @min-[48rem]:justify-self-start"><Pill tone={actionTone(entry.action)}>{actionLabel[entry.action]}</Pill></span>
+                    <div className="col-span-2 min-w-0 @min-[48rem]:col-span-1">
+                      <p className="break-words text-sm font-medium text-[var(--ink)]"><UiText>{entry.targetLabel}</UiText></p>
+                      {entry.reason ? (
+                        <p className="mt-0.5 break-words text-xs text-[var(--muted)]"><UiText>{"사유"}</UiText>{" "}<span className="text-[var(--ink)]">{entry.reason}</span></p>
+                      ) : null}
+                    </div>
+                    <span className="col-span-2 truncate text-[var(--muted)] @min-[48rem]:col-span-1 @min-[48rem]:text-[var(--ink)]">{entry.actorName}</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+          <AdminPager label="관리 이력 페이지" page={data.page} totalPages={data.totalPages} pageSize={50} total={data.total} href={(next) => `/admin/audit?page=${next}`} />
+        </section>
       </AdminWorkspace>
     </AppShell>
   );
