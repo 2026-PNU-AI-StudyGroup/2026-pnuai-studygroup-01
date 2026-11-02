@@ -17,11 +17,11 @@ describe("ProjectPortalHero", () => {
     expect(screen.getByRole("heading", { level: 1, name: "전체 프로젝트" })).toBeInTheDocument();
   });
 
-  it("사업 이름의 회차를 표지에 얹고 분류, 한 줄 발견, 할 일 버튼을 함께 둔다", () => {
+  it("사업 이름, 분류, 한 줄 발견, 할 일 버튼을 한 머리에 두고 회차 숫자를 표지에 따로 떼지 않는다", () => {
     render(<ProjectPortalHero view="active" program={program} finding="모집은 9월 30일에 마감합니다." actions={<a href="/x">보고서 현황</a>} />);
 
     const header = screen.getByRole("region", { name: "AI 부스터 2기" });
-    expect(within(header).getByText("기")).toBeInTheDocument();
+    expect(within(header).queryByText("기")).not.toBeInTheDocument();
     expect(header).toHaveTextContent("교육");
     expect(header).toHaveTextContent("모집은 9월 30일에 마감합니다.");
     expect(within(header).getByRole("link", { name: "보고서 현황" })).toBeInTheDocument();

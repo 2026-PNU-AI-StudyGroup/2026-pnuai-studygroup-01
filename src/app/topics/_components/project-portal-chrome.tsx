@@ -27,7 +27,8 @@ export type PortalProgram = {
 
 /**
  * 사업 화면의 머리. 사업 이름, 분류와 기간, 데이터에서 뽑은 한 줄, 할 일 버튼을 한 카드에 둔다.
- * 표지 자리에는 이름의 회차(7회, 2기)를, 없으면 사업 아이콘을 얹는다.
+ * 표지 자리에는 사업 아이콘을 옅은 파랑 칸 가운데에 둔다. 회차(2기, 7회)는 제목에 이미 있어
+ * 숫자만 떼어 얹으면 "2" 와 "기" 가 따로 놀아 어색했다.
  */
 export function ProjectPortalHero({ view, program, titleAction, actions, finding }: {
   view: "active" | "past";
@@ -37,18 +38,12 @@ export function ProjectPortalHero({ view, program, titleAction, actions, finding
   finding?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
-  const edition = program?.name.match(/(\d+)\s*(기|회|차)/);
   return (
     <ObjectHeader
       id="explorer-hero-title"
-      media={program ? (
-        <div aria-hidden="true" className="flex h-[3.875rem] w-[3.125rem] flex-none flex-col justify-end rounded bg-[var(--primary)] p-1.5 text-white">
-          {edition ? (
-            <>
-              <b className="text-xl font-bold leading-5 tabular-nums">{edition[1]}</b>
-              <small className="text-[0.6875rem] leading-[0.8125rem] opacity-90">{edition[2]}</small>
-            </>
-          ) : program.icon ? <ProgramIcon icon={program.icon} className="mb-0.5 size-6" /> : null}
+      media={program?.icon ? (
+        <div aria-hidden="true" className="grid size-12 flex-none place-items-center rounded-[var(--radius-panel)] bg-[var(--accent-subtle)] text-[var(--accent)]">
+          <ProgramIcon icon={program.icon} className="size-6" />
         </div>
       ) : undefined}
       title={<UiText>{title}</UiText>}
