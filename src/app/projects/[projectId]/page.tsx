@@ -21,6 +21,7 @@ import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastruct
 import { teamStatusPresentation } from "@/modules/team/ui/team-status-presentation";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { ProgramIcon } from "@/shared/ui/program-icon";
 
@@ -289,9 +290,9 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ p
             />
             {reportRows.length ? (
               <div className="px-5 pb-3">
-                <div role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={reportRows.length} aria-valuenow={submittedReports} className="h-1.5 overflow-hidden rounded-full bg-[var(--accent-subtle)]">
+                <UiDiv role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={reportRows.length} aria-valuenow={submittedReports} className="h-1.5 overflow-hidden rounded-full bg-[var(--accent-subtle)]">
                   <span className="block h-full rounded-full bg-[var(--primary)]" style={{ width: `${(submittedReports / reportRows.length) * 100}%` }} />
-                </div>
+                </UiDiv>
                 <div className="mt-1 flex justify-between text-xs tabular-nums text-[var(--muted)]"><span>0</span><span>{reportRows.length}<UiText>{"건"}</UiText></span></div>
                 <ul className="mt-2">
                   {visibleReports.map((report) => (

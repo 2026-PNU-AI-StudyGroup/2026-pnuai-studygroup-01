@@ -24,6 +24,7 @@ vi.mock("@/app/_components/app-shell", () => ({
 }));
 vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamSectionLayout: ({ children }: { children: ReactNode }) => <>{children}</>,
+  StudentTeamPanel: () => null,
   StudentTeamPageIntro: ({ title, description, action, meta }: { title: string; description: string; action?: ReactNode; meta?: ReactNode }) => (
     <header><h1>{title}</h1><p>{description}</p>{meta}<div>{action}</div></header>
   ),

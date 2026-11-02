@@ -8,6 +8,7 @@ import type {
   AdminProjectCardContact,
 } from "@/modules/team/application/list-admin-project-card-data";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiButton } from "@/modules/translation/ui/localized-elements";
 import { EmptyState } from "@/shared/ui/page-primitives";
 import { CloseIcon } from "@/shared/ui/workspace-icons";
 
@@ -30,7 +31,7 @@ export function AdminProjectCardActions({ projectTitle, data }: {
           <UnavailableActionButton label="진행 현황" />
         )}
         {data ? (
-          <button
+          <UiButton
             ref={contactTriggerRef}
             type="button"
             onClick={() => dialogRef.current?.showModal()}
@@ -38,7 +39,7 @@ export function AdminProjectCardActions({ projectTitle, data }: {
             className="font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]"
           >
             <UiText>{"연락처"}</UiText>
-          </button>
+          </UiButton>
         ) : (
           <UnavailableActionButton label="연락처" ariaLabel="연락처 정보" />
         )}

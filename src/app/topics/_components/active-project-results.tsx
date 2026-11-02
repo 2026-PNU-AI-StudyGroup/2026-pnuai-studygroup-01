@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { UiDiv } from "@/modules/translation/ui/localized-elements";
 
 import { isTopicRecruiting, ProjectApplicationAction } from "@/app/topics/_components/project-application-action";
 import { AdminProjectCardActions } from "@/app/topics/_components/admin-project-card-actions";
@@ -49,9 +50,9 @@ function ReportCell({ data }: { data?: AdminProjectCardData }) {
   return (
     <div className="min-w-0 text-xs leading-4">
       <div className="flex items-center gap-2">
-        <div role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rate} className="h-1.5 w-12 flex-none overflow-hidden rounded-full bg-[var(--accent-subtle)]">
+        <UiDiv role="progressbar" aria-label="보고서 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rate} className="h-1.5 w-12 flex-none overflow-hidden rounded-full bg-[var(--accent-subtle)]">
           <span className="block h-full rounded-full bg-[var(--primary)]" style={{ width: `${rate}%` }} />
-        </div>
+        </UiDiv>
         <span className="tabular-nums text-[var(--ink)]">{progress.submittedCount} / {progress.requiredCount}</span>
       </div>
       {progress.overdueCount > 0 ? <p className="mt-1 text-[var(--danger)]"><UiText>{`기한 초과 ${progress.overdueCount}건`}</UiText></p> : null}

@@ -125,11 +125,12 @@ describe("학생 조교 교수 작업공간 페이지", () => {
     expect(topicListHeading.closest("header")?.parentElement).toHaveClass(
       "overflow-hidden",
       "lg:rounded-[var(--radius-panel)]",
-      "lg:shadow-[var(--shadow-admin-panel)]",
+      "lg:border",
+      "lg:bg-[var(--surface)]",
     );
     expect(screen.getByRole("heading", { name: "배정된 프로젝트" }).closest("li")).toHaveClass(
       "record-row",
-      "focus-within:bg-[var(--primary-subtle)]",
+      "focus-within:bg-[var(--accent-subtle)]",
     );
     expect(screen.queryByRole("link", { name: "새 프로젝트 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "학생 등록 검토" })).not.toBeInTheDocument();
