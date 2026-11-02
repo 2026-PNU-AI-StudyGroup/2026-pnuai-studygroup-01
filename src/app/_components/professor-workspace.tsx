@@ -16,8 +16,8 @@ export function ProfessorWorkspace({ currentPath, role, eyebrow, title, descript
   return (
     <main className="min-h-[calc(100vh-4.5rem)] lg:min-h-screen">
       <div className="grid w-full lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)]">
-        <aside className="shell-panel min-w-0 overflow-hidden border-b border-[var(--line)] bg-[var(--surface)] lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
-          <div className="w-full bg-[var(--surface)] lg:min-h-screen lg:w-[var(--shell-panel-open)]">
+        <aside className="shell-panel min-w-0 overflow-hidden border-b border-[var(--line)] bg-[var(--sidebar)] lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
+          <div className="w-full bg-[var(--sidebar)] lg:min-h-screen lg:w-[var(--shell-panel-open)]">
             <ProfessorSidebar currentPath={currentPath} role={role} />
           </div>
         </aside>

@@ -26,7 +26,8 @@
   color-scheme: light;
 
   --workspace: light-dark(#f7f9fc, #0f1117);
-  --sidebar: light-dark(#ffffff, #15171f);
+  /* 메뉴와 패널은 화면 바탕과 같은 면에 두고 1px 선으로만 나눈다. 흰색은 카드에만 쓴다. */
+  --sidebar: light-dark(#f7f9fc, #15171f);
   --surface: light-dark(#ffffff, #15171f);
   /* 헤더와 하단 탭바처럼 흐림 위에 얹는 반투명 면. 불투명 토큰에 투명도를 섞으면 light-dark 와 겹쳐 깨진다. */
   --surface-glass: light-dark(rgb(255 255 255 / 0.94), rgb(21 23 31 / 0.94));

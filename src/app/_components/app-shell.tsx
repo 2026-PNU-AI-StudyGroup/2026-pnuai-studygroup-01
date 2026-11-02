@@ -189,8 +189,8 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
             {navigation.map((item) => {
               const active = isNavigationActive(item, currentPath, role);
               return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
-                  <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
+                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"}`}>
+                  <span className={`grid size-9 place-items-center ${active ? "text-[var(--accent)]" : ""}`}><NavIcon name={item.icon} active={active} /></span>
                   <span><UiText>{item.label}</UiText></span>
                 </Link>
               );
@@ -208,7 +208,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
           </div>
         </aside>
         <div className="min-w-0 bg-[var(--workspace)]">
-          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface-glass)] backdrop-blur-xl lg:hidden">
+          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] lg:hidden">
             <div className="flex h-[4.5rem] items-center justify-between gap-5 px-5 sm:px-8">
               <div><Brand href="/topics" ariaLabel={shellCopy.mobileBrand} /></div>
               <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
           </header>
           <div id="main-content" tabIndex={-1} className={styles.mainContent}><UiText>{children}</UiText></div>
         </div>
-        <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-[var(--surface-glass)] px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
+        <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-[var(--surface)] px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
           {navigation.map((item) => {
             const active = isNavigationActive(item, currentPath, role);
             return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;

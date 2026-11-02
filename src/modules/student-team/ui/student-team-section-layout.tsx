@@ -52,9 +52,9 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
 
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)]">
-      <UiAside aria-label="팀 영역 메뉴" className="shell-panel min-w-0 bg-[var(--surface)] lg:border-r lg:border-[var(--line)]">
+      <UiAside aria-label="팀 영역 메뉴" className="shell-panel min-w-0 bg-[var(--sidebar)] lg:border-r lg:border-[var(--line)]">
         {/* 여백을 안쪽으로 옮겼다. 칸이 0 으로 줄 때 바깥에 있으면 여백부터 찌그러진다. */}
-        <div className="w-full bg-[var(--surface)] px-5 pb-5 pt-5 sm:px-8 lg:min-h-screen lg:w-[var(--shell-panel-open)] lg:px-5 lg:py-8">
+        <div className="w-full bg-[var(--sidebar)] px-5 pb-5 pt-5 sm:px-8 lg:min-h-screen lg:w-[var(--shell-panel-open)] lg:px-5 lg:py-8">
         <div className="lg:sticky lg:top-8">
           <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
             <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀 모집"}</UiText></p>
@@ -98,10 +98,10 @@ export function StudentTeamSectionLayout({ currentPath, children }: { currentPat
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`snap-color relative flex min-h-11 items-center gap-3 border-l-2 px-3 text-sm font-semibold ${
+                      className={`snap-color relative flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm font-semibold ${
                         active
-                          ? "border-[var(--primary)] text-[var(--primary)]"
-                          : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
+                          ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
+                          : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"
                       }`}
                     >
                       <StudentTeamIcon name={item.icon} />

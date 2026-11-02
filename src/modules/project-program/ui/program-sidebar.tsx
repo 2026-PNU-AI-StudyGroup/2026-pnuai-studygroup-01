@@ -78,16 +78,14 @@ function VotingProgramCarousel({
   const currentProgram = programs[currentIndex];
 
   return (
-    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--primary-hover)] bg-[var(--primary)] p-3.5 text-white">
-      <span aria-hidden="true" className="absolute -right-7 -top-8 size-24 rounded-full border border-white/15" />
-      <span aria-hidden="true" className="absolute -right-2 -top-2 size-12 rounded-full bg-white/10" />
+    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--accent-track)] bg-[var(--accent-subtle)] p-3.5 text-[var(--ink)]">
       <div className="relative">
         <div className="flex min-h-6 items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--accent-ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="M5 4.5h10M5 10h10M5 15.5h6" strokeLinecap="round" /><circle cx="3.5" cy="4.5" r=".65" fill="currentColor" /><circle cx="3.5" cy="10" r=".65" fill="currentColor" /><circle cx="3.5" cy="15.5" r=".65" fill="currentColor" /></svg>
             <UiText>{"투표 진행 중"}</UiText>
           </span>
-          <p key={`deadline-${currentProgram.id}`} className={`${styles.destinationText} text-right text-[0.65rem] font-semibold text-white/85`}><UiText>{"마감"}</UiText> <UiDate value={currentProgram.votingEndsAt!} mode="dateTime" /></p>
+          <p key={`deadline-${currentProgram.id}`} className={`${styles.destinationText} text-right text-xs font-medium text-[var(--muted)]`}><UiText>{"마감"}</UiText> <UiDate value={currentProgram.votingEndsAt!} mode="dateTime" /></p>
         </div>
         <div key={currentProgram.id} className={`mt-3 ${styles.destinationText}`}>
           <div className="flex min-w-0 items-center gap-2.5">
@@ -96,7 +94,7 @@ function VotingProgramCarousel({
             </span>
             <div className="min-w-0">
               <h3 className="truncate text-sm font-bold tracking-[-0.02em]"><UiText>{currentProgram.name}</UiText></h3>
-              <ProgramMetadata program={currentProgram} className="mt-0.5 block truncate text-[0.68rem] font-semibold text-white/75" />
+              <ProgramMetadata program={currentProgram} className="mt-0.5 block truncate text-xs text-[var(--muted)]" />
             </div>
           </div>
         </div>
@@ -104,7 +102,7 @@ function VotingProgramCarousel({
           <UiLink
             href={currentProgram.votingHref ?? currentProgram.href}
             aria-current={!currentProgram.votingHref && currentProgram.id === selectedId ? "page" : undefined}
-            className="inline-flex min-h-9 w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--surface)] px-2 text-xs font-bold text-[var(--primary)] transition-colors hover:bg-[var(--primary-subtle)]"
+            className="inline-flex min-h-9 w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--primary)] px-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--primary-hover)]"
           >
             <UiText>{"투표하러 가기"}</UiText>
           </UiLink>
@@ -112,14 +110,14 @@ function VotingProgramCarousel({
       </div>
       {programs.length > 1 ? (
         <div className="relative mt-1.5 flex h-5 items-center justify-center gap-1">
-          <button type="button" aria-controls={carouselId} onClick={() => onMove(-1)} className="grid size-5 cursor-pointer place-items-center text-white/75 transition-colors hover:text-white">
+          <button type="button" aria-controls={carouselId} onClick={() => onMove(-1)} className="grid size-5 cursor-pointer place-items-center text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="m12 4-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span className="sr-only"><UiText>{"이전 투표 프로그램"}</UiText></span>
           </button>
-          <span className="text-[0.58rem] font-bold leading-none tabular-nums text-white/80">
+          <span className="text-xs font-medium leading-none tabular-nums text-[var(--muted)]">
             {currentIndex + 1} / {programs.length}
           </span>
-          <button type="button" aria-controls={carouselId} onClick={() => onMove(1)} className="grid size-5 cursor-pointer place-items-center text-white/75 transition-colors hover:text-white">
+          <button type="button" aria-controls={carouselId} onClick={() => onMove(1)} className="grid size-5 cursor-pointer place-items-center text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="m8 4 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span className="sr-only"><UiText>{"다음 투표 프로그램"}</UiText></span>
           </button>
@@ -155,7 +153,7 @@ function CategoryProgramGroup({
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-active)]"
       >
         <span className="min-w-0 truncate text-left"><UiText>{category}</UiText></span>
         <svg
@@ -178,7 +176,7 @@ function CategoryProgramGroup({
               const privateProgram = program.visibility === "private";
               const votingOpen = Boolean(program.votingEndsAt) && !privateProgram;
               const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${showSettings ? "pr-10" : ""} ${
-                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-[calc(0.5rem+1px)] before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
+                selected ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "hover:bg-[var(--surface-active)]"
               }`;
               const status = privateProgram
                 ? { dot: "", text: "text-[var(--muted)]", label: "비공개", locked: true }

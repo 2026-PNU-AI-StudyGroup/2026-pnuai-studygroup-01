@@ -64,8 +64,8 @@ export function ProjectDashboardSidebar({
             aria-current={selected ? "page" : undefined}
             className={`relative flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors ${
               selected
-                ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]"
-                : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
+                ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
+                : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"
             }`}
           >
             <span id={labelId}><UiText>{item.label}</UiText></span>

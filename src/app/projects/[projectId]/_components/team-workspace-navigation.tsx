@@ -75,7 +75,7 @@ export function TeamWorkspaceNavigation({ projectId, advisorEnabled, canDelete =
               <Link
                 href={href}
                 aria-current={selected ? "page" : undefined}
-                className={`snap-color relative flex min-h-11 items-center gap-3 border-l-2 px-3 text-sm font-semibold lg:w-full ${selected ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"}`}
+                className={`snap-color relative flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm font-semibold lg:w-full ${selected ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"}`}
               >
                 <NavigationIcon name={icon} />
                 <UiText>{label}</UiText>

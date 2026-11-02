@@ -86,8 +86,8 @@ function ProfessorNavigationLink({ item, active, compact = false }: {
         compact ? "min-h-12" : "hint" in item ? "min-h-[4.25rem]" : "min-h-12"
       } ${
         active
-          ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-3 before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]"
-          : "text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+          ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
+          : "text-[var(--ink)] hover:bg-[var(--surface-active)]"
       }`}
     >
       <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${active ? "bg-[var(--surface)] text-[var(--primary)]" : "bg-[var(--surface-subtle)] text-[var(--muted)]"}`}>
