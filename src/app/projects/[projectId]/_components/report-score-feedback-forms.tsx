@@ -11,6 +11,7 @@ import {
   ReportFormDialogHeader,
 } from "@/app/projects/[projectId]/_components/report-form-layout";
 import { initialReportActionState } from "@/app/projects/[projectId]/_lib/report-form-shared";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { SuccessToast } from "@/shared/ui/success-toast";
@@ -34,7 +35,7 @@ export function ReportFeedbackForm({ teamId, reportId }: { teamId: string; repor
 
   return (
     <>
-      <button type="button" className="button-secondary mt-3" onClick={() => dialogRef.current?.showModal()}><UiText>{"피드백 남기기"}</UiText></button>
+      <button type="button" className={rowActionClass} onClick={() => dialogRef.current?.showModal()}><UiText>{"피드백 남기기"}</UiText></button>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-xl`}>
         <ReportFormDialogHeader title="피드백 남기기" description="등록한 피드백은 보고서 참여자에게 표시됩니다." titleId={titleId} closeLabel="피드백 입력 닫기" pending={pending} onClose={() => dialogRef.current?.close()} />
         <form ref={formRef} action={action} className="grid gap-5 px-5 py-6 sm:px-7">

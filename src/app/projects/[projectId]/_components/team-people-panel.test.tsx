@@ -63,7 +63,6 @@ describe("TeamPeoplePanel", () => {
     projectTeamId: "60000000-0000-4000-8000-000000000001",
     membershipChangesEnabled: true,
     invitations: [],
-    layout: "page" as const,
   };
 
   it("프로젝트 팀원 목록에서 팀장에게만 팀장 뱃지를 표시한다", () => {

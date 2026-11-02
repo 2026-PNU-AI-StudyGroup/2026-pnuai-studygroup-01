@@ -109,7 +109,9 @@ describe("ProjectGuidanceRequestsPage", () => {
     expect(pageTitle.closest("section")).toHaveClass("max-w-6xl");
     expect(pageTitle.closest("header")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "새 요청 보내기" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "회의나 검토가 필요하신가요?" }).closest("section")).toHaveClass("bg-[var(--surface)]", "rounded-[var(--radius-panel)]");
+    // 새 요청은 제목 줄의 채운 버튼 하나로 연다. 다시 보내는 규칙은 제목 밑 한 줄에 둔다.
+    expect(within(pageTitle.closest("header")!).getByRole("button", { name: "새 요청 보내기" })).toBeInTheDocument();
+    expect(screen.getByText("같은 유형의 요청은 교수 답변을 받은 뒤 다시 보낼 수 있습니다.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "아직 등록된 요청이 없습니다" })).toBeInTheDocument();
     expect(screen.getByText("회의나 검토가 필요할 때 새 요청 보내기 버튼으로 첫 요청을 작성하세요.")).toBeInTheDocument();
   });
@@ -158,7 +160,7 @@ describe("ProjectGuidanceRequestsPage", () => {
     expect(screen.queryByRole("button", { name: "새 요청 보내기" })).not.toBeInTheDocument();
     const requestCard = screen.getByRole("article", { name: "설계 검토 요청" });
     expect(requestCard).toHaveAttribute("data-request-state", "pending");
-    expect(requestCard).toHaveClass("bg-[var(--surface)]", "rounded-[var(--radius-panel)]");
+    expect(requestCard.closest("section")).toHaveAttribute("aria-labelledby", "guidance-request-history-title");
     const requestTitle = within(requestCard).getByRole("heading", { name: "설계 검토 요청" });
     expect(requestCard).toHaveAttribute("aria-labelledby", requestTitle.id);
     expect(requestCard).not.toHaveAttribute("aria-label");

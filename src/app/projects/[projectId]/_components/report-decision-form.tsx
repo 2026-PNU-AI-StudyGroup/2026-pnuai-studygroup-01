@@ -10,6 +10,7 @@ import {
   ReportFormDialogHeader,
 } from "@/app/projects/[projectId]/_components/report-form-layout";
 import { initialReportActionState } from "@/app/projects/[projectId]/_lib/report-form-shared";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
 
@@ -19,9 +20,11 @@ type PendingDecision = "APPROVED" | "REVISION_REQUESTED";
 export function ReportDecisionForm({
   teamId,
   reportVersionId,
+  triggerClassName = rowActionClass,
 }: {
   teamId: string;
   reportVersionId: string;
+  triggerClassName?: string;
 }) {
   const [state, action, pending] = useActionState(
     decideReportAction,
@@ -51,7 +54,7 @@ export function ReportDecisionForm({
 
   return (
     <>
-      <button type="button" className="button-secondary mt-4" onClick={() => editorDialogRef.current?.showModal()}>
+      <button type="button" className={triggerClassName} onClick={() => editorDialogRef.current?.showModal()}>
         <UiText>{"보고서 검토"}</UiText>
       </button>
       <dialog

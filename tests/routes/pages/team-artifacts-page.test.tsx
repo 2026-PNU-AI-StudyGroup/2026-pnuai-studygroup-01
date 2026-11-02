@@ -124,7 +124,7 @@ describe("TeamArtifactsPage", () => {
 
     const posterItem = screen.getByRole("heading", { name: "모두의 길 프로젝트 소개 포스터" }).closest("li");
     expect(posterItem).toHaveAttribute("data-artifact-type", "poster");
-    expect(posterItem).toHaveClass("rounded-[var(--radius-panel)]", "border", "bg-[var(--surface)]");
+    expect(posterItem?.closest("section")).toHaveAccessibleName("등록한 자료");
     const inlinePosterLabels = within(posterItem!).getAllByText("포스터", { selector: "span" })
       .filter((label) => !label.closest("dialog"));
     expect(inlinePosterLabels).toHaveLength(1);

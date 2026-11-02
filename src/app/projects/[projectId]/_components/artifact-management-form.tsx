@@ -12,7 +12,8 @@ import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { TextInput } from "@/shared/ui/form-system";
-import { SettingsIcon } from "@/shared/ui/workspace-icons";
+import { UiButton } from "@/modules/translation/ui/localized-elements";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 
 const initialState: ReportActionState = { status: "idle", message: "" };
 
@@ -48,9 +49,9 @@ export function ArtifactManagementForm({
 
   return (
     <>
-      <button type="button" className="button-quiet mt-3 w-full gap-2" onClick={() => dialogRef.current?.showModal()} disabled={pending}>
-        <SettingsIcon className="size-4 shrink-0" /><UiText>{"정보 수정·삭제"}</UiText>
-      </button>
+      <UiButton type="button" className={rowActionClass} onClick={() => dialogRef.current?.showModal()} disabled={pending} aria-label={`${artifact.title} 수정 또는 삭제`}>
+        <UiText>{"수정"}</UiText>
+      </UiButton>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-[34rem]`}>
         <div className="border-b border-[var(--line)] px-5 py-4 sm:px-6">
           <h2 id={titleId} className="sr-only"><UiText>{"결과물 수정"}</UiText></h2>
@@ -59,8 +60,8 @@ export function ArtifactManagementForm({
         <form action={updateAction} className="grid gap-5 px-6 py-6">
           <input type="hidden" name="teamId" value={teamId} />
           <input type="hidden" name="artifactId" value={artifact.id} />
-          <div className="grid gap-2 text-sm font-semibold"><span><UiText>{"결과물 종류"}</UiText></span><CustomSelect name="type" ariaLabel="결과물 종류" options={artifactTypeOptions} defaultValue={artifact.type} disabled={pending} /></div>
-          <label className="grid gap-2 text-sm font-semibold"><UiText>{"결과물 제목"}</UiText><TextInput name="title" defaultValue={artifact.title} required maxLength={200} disabled={pending} /></label>
+          <div className="grid gap-2 text-sm font-medium"><span><UiText>{"결과물 종류"}</UiText></span><CustomSelect name="type" ariaLabel="결과물 종류" options={artifactTypeOptions} defaultValue={artifact.type} disabled={pending} /></div>
+          <label className="grid gap-2 text-sm font-medium"><UiText>{"결과물 제목"}</UiText><TextInput name="title" defaultValue={artifact.title} required maxLength={200} disabled={pending} /></label>
           {error ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{error}</UiText></p> : null}
           <div className="flex flex-wrap justify-end gap-2"><button type="button" className="button-secondary" onClick={() => dialogRef.current?.close()} disabled={pending}><UiText>{"취소"}</UiText></button><button type="submit" className="button-primary" disabled={pending}><UiText>{updatePending ? "저장 중" : "저장"}</UiText></button></div>
         </form>

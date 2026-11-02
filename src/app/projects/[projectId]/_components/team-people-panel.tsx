@@ -16,6 +16,8 @@ import { UiButton, UiUl } from "@/modules/translation/ui/localized-elements";
 import { CustomSelect } from "@/shared/ui/custom-select";
 import { CloseIcon } from "@/shared/ui/workspace-icons";
 import { PersonAvatar } from "@/shared/ui/person-avatar";
+import { cardClass, CardHead, Pill } from "@/modules/project-program/ui/work-screen";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 
 type TeamMember = TeamWorkspace["members"][number];
 type MemberActionKind = "LEAVE" | "REMOVE" | "TRANSFER" | "REMOVE_LEADER";
@@ -34,7 +36,6 @@ export function TeamPeoplePanel({
   membershipChangesEnabled,
   canManageMembers,
   invitations,
-  layout = "page",
 }: {
   advisorEnabled: boolean;
   professor: TeamWorkspace["professor"];
@@ -46,8 +47,6 @@ export function TeamPeoplePanel({
   membershipChangesEnabled: boolean;
   canManageMembers: boolean;
   invitations: ProjectTeamInvitationSummary[];
-  /** 페이지에서는 그대로 펼치고, 좁은 사이드바에서는 접어 둔다. */
-  layout?: "page" | "sidebar";
 }) {
   const router = useRouter();
   const detailDialogRef = useRef<HTMLDialogElement>(null);
@@ -81,49 +80,97 @@ export function TeamPeoplePanel({
     setMemberAction(nextAction);
   }
 
-  const people = (
-    <PeopleContent
-      advisorEnabled={advisorEnabled}
-      professor={professor}
-      assistants={assistants}
-      members={members}
-      actorId={actorId}
-      membershipChangesEnabled={membershipChangesEnabled}
-      canManageMembers={canManageMembers}
-      pending={pending}
-      onSelectMember={setActiveMember}
-      onMemberAction={openMemberAction}
-    />
-  );
-  // 사람을 빼는 손잡이 바로 아래에 들이는 손잡이를 둔다. 권한도 같은 값을 쓴다.
-  const peopleWithInvite = (
-    <div className="space-y-5">
-      {people}
-      {canManageMembers && membershipChangesEnabled ? (
-        <ProjectTeamInviteSection projectId={projectId} projectTeamId={projectTeamId} invitations={invitations} />
-      ) : null}
-    </div>
-  );
+  const membersTitleId = useId();
+  const staffTitleId = useId();
+  const inviteTitleId = useId();
+  const showStaff = advisorEnabled || assistants.length > 0;
+  // 사람을 빼는 손잡이(팀원 표)와 들이는 손잡이(초대)는 같은 권한을 쓴다.
+  const showInvite = canManageMembers && membershipChangesEnabled;
+  const hasSide = showStaff || showInvite;
 
   return (
     <>
-      {layout === "page" ? <div>{peopleWithInvite}</div> : null}
-      {layout === "sidebar" ? (
-      <>
-      <details className="group mt-4 border-t border-[var(--line)] pt-4 lg:hidden">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-          <span><UiText>{"프로젝트 구성원"}</UiText></span>
-          <span className="text-xs text-[var(--muted)]">
-            <UiText>{"팀원"}</UiText>{" "}{members.length}<UiText>{"명"}</UiText>
-            <span aria-hidden="true" className="ml-2 inline-block transition-transform group-open:rotate-180">⌄</span>
-          </span>
-        </summary>
-        <div className="pb-2 pt-3">{peopleWithInvite}</div>
-      </details>
+      <div className="@container">
+        <div className={`grid items-start gap-3.5 ${hasSide ? "@min-[60rem]:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
+          <section aria-labelledby={membersTitleId} className={cardClass}>
+            <CardHead id={membersTitleId} title={<UiText>{"팀원"}</UiText>} count={<UiText>{`${members.length}명`}</UiText>} />
+            {members.length ? (
+              <UiUl aria-label="프로젝트 팀원">
+                {members.map((member) => (
+                  <li key={member.id} className="flex min-w-0 items-center gap-3 border-t border-[var(--line)] px-5 py-2.5">
+                    <UiButton
+                      type="button"
+                      aria-label={`${member.name} 상세 정보`}
+                      className="group flex min-h-10 min-w-0 flex-1 items-center gap-3 text-left"
+                      onClick={() => setActiveMember(member)}
+                    >
+                      <PersonAvatar userId={member.id} updatedAt={member.profileImage?.updatedAt} className="size-8 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-sm font-medium text-[var(--ink)] group-hover:text-[var(--primary)]">{member.name}</span>
+                          {member.role === "LEADER" ? <Pill tone="accent">{"팀장"}</Pill> : null}
+                        </span>
+                        <span className="block truncate text-xs text-[var(--muted)]">{member.email}</span>
+                      </span>
+                    </UiButton>
+                    <MemberRowActions
+                      member={member}
+                      actorId={actorId}
+                      membershipChangesEnabled={membershipChangesEnabled}
+                      canManageMembers={canManageMembers}
+                      pending={pending}
+                      onMemberAction={openMemberAction}
+                    />
+                  </li>
+                ))}
+              </UiUl>
+            ) : <p className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"아직 팀원이 없습니다"}</UiText></p>}
+          </section>
 
-      <div className="mt-7 hidden border-t border-[var(--line)] pt-5 lg:block">{peopleWithInvite}</div>
-      </>
-      ) : null}
+          {hasSide ? (
+            <div className="grid min-w-0 gap-3.5">
+              {showStaff ? (
+                <section aria-labelledby={staffTitleId} className={cardClass}>
+                  <CardHead id={staffTitleId} title={<UiText>{"지도"}</UiText>} />
+                  <div className="space-y-3 px-5 pb-4">
+                    {advisorEnabled ? (
+                      <div>
+                        <p className="text-[0.8125rem] text-[var(--muted)]"><UiText>{"지도교수"}</UiText></p>
+                        <div className="flex min-w-0 items-center gap-2.5 py-1.5">
+                          <PersonAvatar userId={professor.id} updatedAt={professor.profileImage?.updatedAt} className="size-7 shrink-0" />
+                          <p className="truncate text-sm">{professor.name}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                    {assistants.length ? (
+                      <div>
+                        <p className="text-[0.8125rem] text-[var(--muted)]"><UiText>{"조교"}</UiText></p>
+                        <UiUl aria-label="프로젝트 조교">
+                          {assistants.map((assistant) => (
+                            <li key={assistant.id} className="flex min-w-0 items-center gap-2.5 py-1.5">
+                              <PersonAvatar userId={assistant.id} updatedAt={assistant.profileImage?.updatedAt} className="size-7 shrink-0" />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm">{assistant.name}</p>
+                                <p className="truncate text-xs text-[var(--muted)]">{assistant.email}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </UiUl>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+              {showInvite ? (
+                <section aria-labelledby={inviteTitleId} className={cardClass}>
+                  <CardHead id={inviteTitleId} title={<UiText>{"팀원 초대"}</UiText>} count={invitations.length ? <UiText>{`응답 대기 ${invitations.length}건`}</UiText> : undefined} />
+                  <ProjectTeamInviteSection projectId={projectId} projectTeamId={projectTeamId} invitations={invitations} />
+                </section>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
 
       <dialog
         ref={detailDialogRef}
@@ -137,7 +184,7 @@ export function TeamPeoplePanel({
               <div className="flex min-w-0 items-center gap-4">
                 <PersonAvatar userId={activeMember.id} updatedAt={activeMember.profileImage?.updatedAt} className="size-12" />
                 <div className="min-w-0">
-                  <h2 id={detailTitleId} className="text-xl font-bold tracking-[-0.035em]">{activeMember.name}</h2>
+                  <h2 id={detailTitleId} className="text-lg font-semibold">{activeMember.name}</h2>
                   <p className="mt-1 break-all text-sm text-[var(--muted)]">{activeMember.email}</p>
                 </div>
               </div>
@@ -190,95 +237,6 @@ export function TeamPeoplePanel({
   );
 }
 
-function PeopleContent({
-  advisorEnabled,
-  professor,
-  assistants,
-  members,
-  actorId,
-  membershipChangesEnabled,
-  canManageMembers,
-  pending,
-  onSelectMember,
-  onMemberAction,
-}: {
-  advisorEnabled: boolean;
-  professor: TeamWorkspace["professor"];
-  assistants: TeamWorkspace["assistants"];
-  members: TeamWorkspace["members"];
-  actorId: string;
-  membershipChangesEnabled: boolean;
-  canManageMembers: boolean;
-  pending: boolean;
-  onSelectMember: (member: TeamMember) => void;
-  onMemberAction: (action: Exclude<MemberAction, null>) => void;
-}) {
-  return (
-    <div className="space-y-5">
-      {advisorEnabled ? (
-        <div>
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"지도교수"}</UiText></p>
-          <div className="mt-2 flex min-w-0 items-center gap-2.5">
-            <PersonAvatar userId={professor.id} updatedAt={professor.profileImage?.updatedAt} className="size-8" />
-            <p className="truncate text-sm font-semibold">{professor.name}</p>
-          </div>
-        </div>
-      ) : null}
-
-      {assistants.length ? (
-        <div>
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]"><UiText>{"조교"}</UiText></p>
-          <UiUl aria-label="프로젝트 조교" className="mt-2 space-y-2">
-            {assistants.map((assistant) => (
-              <li key={assistant.id} className="flex min-w-0 items-center gap-2.5">
-                <PersonAvatar userId={assistant.id} updatedAt={assistant.profileImage?.updatedAt} className="size-8" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{assistant.name}</p>
-                  <p className="truncate text-xs text-[var(--muted)]">{assistant.email}</p>
-                </div>
-              </li>
-            ))}
-          </UiUl>
-        </div>
-      ) : null}
-
-      <div>
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-          <UiText>{"팀원"}</UiText>{" "}{members.length}<UiText>{"명"}</UiText>
-        </p>
-        <UiUl aria-label="프로젝트 팀원" className="mt-2 space-y-1">
-          {members.map((member) => (
-            <li key={member.id} className="flex min-w-0 items-center gap-1">
-              <UiButton
-                type="button"
-                aria-label={`${member.name} 상세 정보`}
-                className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-xl px-1.5 text-left text-sm font-semibold transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--primary-hover)]"
-                onClick={() => onSelectMember(member)}
-              >
-                <PersonAvatar userId={member.id} updatedAt={member.profileImage?.updatedAt} className="size-7 shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{member.name}</span>
-                {member.role === "LEADER" ? (
-                  <span className="shrink-0 rounded-md bg-[var(--primary-subtle)] px-1.5 py-0.5 text-[0.625rem] font-bold leading-4 text-[var(--primary-hover)]">
-                    <UiText>{"팀장"}</UiText>
-                  </span>
-                ) : null}
-              </UiButton>
-              <MemberRowActions
-                member={member}
-                actorId={actorId}
-                membershipChangesEnabled={membershipChangesEnabled}
-                canManageMembers={canManageMembers}
-                pending={pending}
-                onMemberAction={onMemberAction}
-              />
-            </li>
-          ))}
-        </UiUl>
-      </div>
-    </div>
-  );
-}
-
 function MemberRowActions({
   member,
   actorId,
@@ -298,7 +256,8 @@ function MemberRowActions({
   const isSelf = member.id === actorId;
   const canLeave = isSelf;
   const canManageMember = canManageMembers;
-  const quietActionClass = "button-quiet min-h-8 shrink-0 px-2 text-[0.6875rem]";
+  // 위임은 낮은 테두리 버튼, 빼는 일은 빨간 글자 버튼으로 한 단계 조용하게.
+  const removeActionClass = "inline-flex min-h-8 shrink-0 items-center px-2 text-[0.8125rem] font-medium text-[var(--danger)] hover:underline hover:underline-offset-[3px]";
 
   if (member.role === "LEADER") {
     if (!canManageMember) return null;
@@ -307,7 +266,7 @@ function MemberRowActions({
         type="button"
         disabled={pending}
         aria-label={`${member.name} ${isSelf ? "팀장 인계 후 탈퇴" : "팀장 인계 후 제외"}`}
-        className={`${quietActionClass} text-[var(--danger)]`}
+        className={removeActionClass}
         onClick={() => onMemberAction({ kind: "REMOVE_LEADER", member })}
       >
         <UiText>{isSelf ? "탈퇴" : "제외"}</UiText>
@@ -316,13 +275,13 @@ function MemberRowActions({
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-0.5">
+    <div className="flex shrink-0 items-center gap-1">
       {canManageMember ? (
         <UiButton
           type="button"
           disabled={pending}
           aria-label={`${member.name} 팀장 위임`}
-          className={`${quietActionClass} text-[var(--primary)]`}
+          className={rowActionClass}
           onClick={() => onMemberAction({ kind: "TRANSFER", member })}
         >
           <UiText>{"위임"}</UiText>
@@ -333,7 +292,7 @@ function MemberRowActions({
           type="button"
           disabled={pending}
           aria-label={`${member.name} ${isSelf ? "프로젝트 팀 탈퇴" : "프로젝트 팀에서 제외"}`}
-          className={`${quietActionClass} text-[var(--danger)]`}
+          className={removeActionClass}
           onClick={() => onMemberAction({ kind: isSelf ? "LEAVE" : "REMOVE", member })}
         >
           <UiText>{isSelf ? "탈퇴" : "제외"}</UiText>
@@ -396,7 +355,7 @@ function MembershipActionDialog({
           {memberAction.kind !== "LEAVE" ? <input type="hidden" name="targetUserId" value={memberAction.member.id} /> : null}
           <header className="flex items-start justify-between gap-5 border-b border-[var(--line)] px-5 py-5 sm:px-6">
             <div>
-              <h2 id={titleId} className="text-lg font-bold tracking-[-0.02em]"><UiText>{copy.title}</UiText></h2>
+              <h2 id={titleId} className="text-lg font-semibold"><UiText>{copy.title}</UiText></h2>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]"><UiText>{copy.description}</UiText></p>
             </div>
             <UiButton type="button" onClick={() => dialogRef.current?.close()} disabled={pending} aria-label="닫기" className="button-quiet min-w-11 shrink-0 px-0"><CloseIcon className="size-5" /></UiButton>
@@ -404,7 +363,7 @@ function MembershipActionDialog({
           <div className="grid gap-4 px-5 py-5 sm:px-6">
             {isLeaderRemoval ? (
               successorOptions.length ? (
-                <label className="grid gap-2 text-sm font-semibold">
+                <label className="grid gap-2 text-sm font-medium">
                   <span><UiText>{"인계할 팀장"}</UiText></span>
                   <CustomSelect
                     name="nextLeaderId"
@@ -465,8 +424,8 @@ function actionCopy(memberAction: Exclude<MemberAction, null>, selfLeaderRemoval
 function MemberDetail({ label, value, breakAll = false }: { label: string; value: string | null | undefined; breakAll?: boolean }) {
   return (
     <div>
-      <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{label}</UiText></dt>
-      <dd className={`mt-1 font-semibold ${breakAll ? "break-all" : "break-words"}`}>
+      <dt className="text-xs text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className={`mt-1 font-medium ${breakAll ? "break-all" : "break-words"}`}>
         {value || <UiText>{"미입력"}</UiText>}
       </dd>
     </div>

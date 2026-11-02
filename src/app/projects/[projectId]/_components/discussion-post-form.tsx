@@ -50,10 +50,10 @@ export function DiscussionPostForm({
   }
 
   return (
-    <form action={action} className="shrink-0 border-t border-[var(--line)] bg-[var(--surface)] px-5 py-5 lg:px-7">
+    <form action={action} className="shrink-0 border-t border-[var(--line)] bg-[var(--surface)] px-5 py-4">
       <input type="hidden" name="teamId" value={teamId} />
       <div className="flex items-start gap-3">
-        <span aria-hidden="true" className="mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-white">
+        <span aria-hidden="true" className="mt-1.5 grid size-8 shrink-0 place-items-center rounded-full bg-[var(--accent-track)] text-[var(--accent-ink)]">
           <svg viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round">
             <circle cx="12" cy="8" r="3.25" />
             <path d="M5.5 20c.4-4.2 2.6-6.2 6.5-6.2s6.1 2 6.5 6.2" />
@@ -61,7 +61,7 @@ export function DiscussionPostForm({
         </span>
         <div className="min-w-0 flex-1">
           <label htmlFor="discussion-message" className="sr-only"><UiText>{"메시지"}</UiText></label>
-          <div className="flex items-end gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface-subtle)] p-2 pl-4 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--focus)_18%,transparent)]">
+          <div className="flex items-end gap-2 rounded-[var(--radius-control)] border border-[var(--line-strong)] bg-[var(--surface)] p-1.5 pl-3.5 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--focus)_18%,transparent)]">
             <UiTextarea
               id="discussion-message"
               name="content"
@@ -70,9 +70,9 @@ export function DiscussionPostForm({
               rows={2}
               placeholder={`${authorName}님의 메시지 입력`}
               onKeyDown={submitOnEnter}
-              className={`${styles.input} min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]`}
+              className={`${styles.input} min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-sm leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]`}
             />
-            <UiButton type="submit" disabled={pending} className="button-primary min-h-11 shrink-0 px-3" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
+            <UiButton type="submit" disabled={pending} className="button-primary min-h-9 shrink-0 px-2.5" aria-label={pending ? "메시지 전송 중" : "메시지 보내기"}>
               <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[1.125rem] fill-none stroke-current stroke-[1.75]" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m4 5 16 7-16 7 3-7-3-7Z" />
                 <path d="M7 12h13" />

@@ -18,6 +18,7 @@ import {
   uploadFailureMessage,
   uploadTeamFile,
 } from "@/app/projects/[projectId]/_lib/report-form-shared";
+import { FormSection } from "@/app/projects/[projectId]/_components/workspace-page-header";
 
 // 예전에는 화면 오른쪽 위 버튼으로 모달을 열어야 했다. 사진·영상은 화면 안에서 등록하는데
 // 링크·파일만 따로 창을 띄우게 되어 있어 흐름이 끊겼다. 같은 화면에 나란히 둔다.
@@ -37,13 +38,13 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
   }, []);
 
   return (
-    <section aria-labelledby={titleId} className="space-y-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:p-6">
-      <div>
-        <h2 id={titleId} className="text-base font-extrabold tracking-[-0.02em]"><UiText>{"소스 코드·포스터·기타 자료"}</UiText></h2>
-        <p className="muted mt-1 text-sm leading-6"><UiText>{"공개 링크 또는 파일 중 한 방식으로 결과물을 추가합니다."}</UiText></p>
-      </div>
+    <FormSection
+      id={titleId}
+      title={<UiText>{"자료 추가"}</UiText>}
+      description={<UiText>{"공개 링크 또는 파일 중 한 방식으로 결과물을 추가합니다."}</UiText>}
+    >
       <form
-        className="grid gap-5"
+        className="grid gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           const form = event.currentTarget;
@@ -103,22 +104,22 @@ export function ArtifactRegistrationForm({ teamId }: { teamId: string }) {
             {uploadProgress.percent !== null ? <progress aria-label={teamFileUploadProgressLabel(uploadProgress)} className="h-2 w-full accent-[var(--primary)]" max={100} value={uploadProgress.percent} /> : null}
           </div>
         ) : null}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p aria-live="polite" role={state.status === "error" ? "alert" : undefined} className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <p aria-live="polite" role={state.status === "error" ? "alert" : undefined} className={`mr-auto text-[0.8125rem] font-medium ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
             {state.message ? <UiText>{state.message}</UiText> : null}
           </p>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             {canCancelUpload ? (
-              <button type="button" className="button-secondary" onClick={() => uploadControllerRef.current?.abort()}>
+              <button type="button" className="button-secondary button-compact min-h-8 px-3 font-medium" onClick={() => uploadControllerRef.current?.abort()}>
                 <UiText>{"업로드 취소"}</UiText>
               </button>
             ) : null}
-            <button type="submit" className="button-primary" disabled={pending}>
+            <button type="submit" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending}>
               <UiText>{pending ? (uploadProgress ? teamFileUploadProgressLabel(uploadProgress) : "등록 중") : "결과물 등록"}</UiText>
             </button>
           </div>
         </div>
       </form>
-    </section>
+    </FormSection>
   );
 }

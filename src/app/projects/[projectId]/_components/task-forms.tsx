@@ -17,14 +17,14 @@ import {
 import { initialTeamActionState } from "@/app/projects/[projectId]/_lib/team-form-state";
 import type { TaskStatus } from "@/modules/team/application/team-workspace-ports";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
-import { UiInput } from "@/modules/translation/ui/localized-elements";
+import { UiButton, UiInput } from "@/modules/translation/ui/localized-elements";
 import { ConfirmSubmitButton } from "@/shared/ui/confirm-submit-button";
 import { CustomMultiSelect, CustomSelect } from "@/shared/ui/custom-select";
 import { DateTimeInput } from "@/shared/ui/form-system";
-import { IconButton } from "@/shared/ui/icon-button";
 import { SuccessToast } from "@/shared/ui/success-toast";
 import { useDialogSuccessToast } from "@/shared/ui/use-dialog-success-toast";
-import { AddIcon, CheckIcon, EditIcon, UndoIcon } from "@/shared/ui/workspace-icons";
+import { AddIcon } from "@/shared/ui/workspace-icons";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 
 type AssignableMember = { id: string; name: string };
 
@@ -51,11 +51,11 @@ function TaskFields({
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <label className="grid gap-1.5 text-sm font-bold text-[var(--muted)] sm:col-span-2">
+      <label className="grid gap-1.5 text-sm font-medium text-[var(--ink)] sm:col-span-2">
         <UiText>{"할 일 제목"}</UiText>
         <UiInput name="title" required maxLength={200} defaultValue={title} disabled={pending} placeholder="예: 사용자 인터뷰 완료" className="form-control text-[var(--ink)]" />
       </label>
-      <label className="grid gap-1.5 text-sm font-bold text-[var(--muted)]">
+      <label className="grid gap-1.5 text-sm font-medium text-[var(--ink)]">
         <UiText>{"담당자"}</UiText>
         <CustomMultiSelect
           name="assigneeIds"
@@ -66,7 +66,7 @@ function TaskFields({
         />
       </label>
       {status ? (
-        <label className="grid gap-1.5 text-sm font-bold text-[var(--muted)]">
+        <label className="grid gap-1.5 text-sm font-medium text-[var(--ink)]">
           <UiText>{"상태"}</UiText>
           <CustomSelect
             name="status"
@@ -77,7 +77,7 @@ function TaskFields({
           />
         </label>
       ) : null}
-      <label className={`grid gap-1.5 text-sm font-bold text-[var(--muted)] ${status ? "sm:col-span-2" : ""}`}>
+      <label className={`grid gap-1.5 text-sm font-medium text-[var(--ink)] ${status ? "sm:col-span-2" : ""}`}>
         <UiText>{"완료 예정일"}</UiText>
         <DateTimeInput name="dueAt" type="date" required defaultValue={dueAt?.toISOString().slice(0, 10)} disabled={pending} className="text-[var(--ink)]" />
       </label>
@@ -93,7 +93,7 @@ export function TaskCreateDialog({ teamId, members }: { teamId: string; members:
 
   return (
     <>
-      <button type="button" className="button-primary gap-2" onClick={() => dialogRef.current?.showModal()}>
+      <button type="button" className="button-primary button-compact gap-1.5" onClick={() => dialogRef.current?.showModal()}>
         <AddIcon className="size-4 shrink-0" /><UiText>{"새 할 일"}</UiText>
       </button>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-2xl`}>
@@ -134,7 +134,7 @@ export function TaskEditDialog({
 
   return (
     <>
-      <IconButton type="button" onClick={() => dialogRef.current?.showModal()} aria-label={`${title} 수정`} title="할 일 수정"><EditIcon className="size-5" /></IconButton>
+      <UiButton type="button" className={rowActionClass} onClick={() => dialogRef.current?.showModal()} aria-label={`${title} 수정`}><UiText>{"수정"}</UiText></UiButton>
       <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={(event) => { if (pending) event.preventDefault(); }} className={`${reportDialogClassName} max-w-2xl`}>
         <ReportFormDialogHeader title="할 일 수정" description="제목, 기한, 담당자와 상태를 한 번에 저장합니다." titleId={titleId} closeLabel="할 일 수정 닫기" pending={pending} onClose={() => dialogRef.current?.close()} />
         <form action={action} className="grid gap-5 px-5 py-6 sm:px-7">
@@ -173,14 +173,9 @@ export function TaskCompletionForm({
     <form action={action}>
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="taskId" value={taskId} />
-      <IconButton
-        type="submit"
-        disabled={pending}
-        aria-label={`${title} ${actionLabel}`}
-        title={actionLabel}
-      >
-        {completed ? <UndoIcon className="size-5" /> : <CheckIcon className="size-5" />}
-      </IconButton>
+      <UiButton type="submit" disabled={pending} aria-label={`${title} ${actionLabel}`} className={rowActionClass}>
+        <UiText>{completed ? "되돌리기" : "완료"}</UiText>
+      </UiButton>
       {state.status === "error" ? <span className="sr-only" role="alert"><UiText>{state.message}</UiText></span> : null}
     </form>
   );

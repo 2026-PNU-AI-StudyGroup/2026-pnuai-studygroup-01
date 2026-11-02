@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ProjectAnnouncementList } from "@/app/projects/[projectId]/_components/project-announcement-list";
-import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
+import { monthDay, WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
+import { cardClass, CardHead } from "@/modules/project-program/ui/work-screen";
 import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { resolveAnnouncementAudience } from "@/modules/announcement/infrastructure/announcement-audience";
@@ -25,21 +26,24 @@ export default async function TeamAnnouncementsPage({ params }: { params: Promis
   ).listForTeam(audience, workspace.id);
   const canWrite = actor.role === "ADMIN" || workspace.access.isPrimaryAdvisor;
 
+  const latest = announcements.reduce<(typeof announcements)[number] | undefined>((found, item) => !found || item.createdAt > found.createdAt ? item : found, undefined);
+
   return (
-    <section aria-labelledby="project-announcements-title" className="mx-auto max-w-6xl space-y-7">
+    <section aria-labelledby="project-announcements-title" className="mx-auto grid max-w-6xl gap-5">
       <WorkspacePageHeader
         title="프로젝트 공지"
         titleId="project-announcements-title"
-        description="프로젝트 운영 안내와 주요 변경 사항을 확인합니다."
-        bordered={false}
-        meta={<span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-sm font-medium tabular-nums text-[var(--muted)]">{announcements.length}<UiText>{"건"}</UiText></span>}
+        finding={latest ? <UiText>{`최근 공지는 ${monthDay.format(latest.createdAt)} ${latest.authorName}의 ${latest.title}입니다.`}</UiText> : undefined}
         actions={canWrite ? (
-          <Link className="button-primary gap-2" href={`/announcements/new?target=${encodeURIComponent(`team:${workspace.id}`)}`}>
+          <Link className="button-primary button-compact gap-1.5" href={`/announcements/new?target=${encodeURIComponent(`team:${workspace.id}`)}`}>
             <AddIcon className="size-4 shrink-0" /><UiText>{"공지 작성"}</UiText>
           </Link>
         ) : undefined}
       />
-      <ProjectAnnouncementList announcements={announcements} />
+      <section aria-labelledby="project-announcement-list-title" className={cardClass}>
+        <CardHead id="project-announcement-list-title" title={<UiText>{"공지 목록"}</UiText>} count={<>{announcements.length}<UiText>{"건"}</UiText></>} />
+        <ProjectAnnouncementList announcements={announcements} />
+      </section>
     </section>
   );
 }

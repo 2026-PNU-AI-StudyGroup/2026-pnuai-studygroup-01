@@ -50,6 +50,7 @@ const workspace = {
   status: "IN_PROGRESS" as const,
   advisorEnabled: true,
   professorName: "김도윤",
+  professor: { id: "professor-1", name: "김도윤", profileImage: null },
   members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
   assistants: [{ id: "assistant-1", name: "이서연", email: "assistant@pusan.ac.kr" }],
   discussionPosts: [
@@ -91,7 +92,7 @@ describe("TeamDiscussionPage", () => {
     const pageHeader = screen.getByRole("heading", { name: "팀 대화" }).closest("header");
     expect(pageHeader).not.toHaveClass("border-b");
 
-    expect(pageHeader?.querySelector("p")).toHaveTextContent("3명 참여 · 메시지 30개");
+    expect(pageHeader?.querySelector("p")).toHaveTextContent("3명이 참여하고 메시지는 30개입니다.");
 
     const messageLog = screen.getByRole("log", { name: "팀 대화" });
     const discussionPanel = messageLog.closest("div.overflow-hidden");

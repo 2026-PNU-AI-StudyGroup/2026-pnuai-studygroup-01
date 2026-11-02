@@ -21,7 +21,7 @@ export function ReportFormDialogHeader({ eyebrow, title, description, titleId, c
     <div className="flex items-start justify-between gap-6 border-b border-[var(--line)] px-5 py-5 sm:px-7">
       <div>
         {eyebrow ? <p className="eyebrow"><UiText>{eyebrow}</UiText></p> : null}
-        <h3 id={titleId} className={`${eyebrow ? "mt-2" : ""} text-2xl font-bold tracking-[-0.035em]`}><UiText>{title}</UiText></h3>
+        <h3 id={titleId} className={`${eyebrow ? "mt-2" : ""} text-lg font-semibold`}><UiText>{title}</UiText></h3>
         {description ? <p className="muted mt-2 text-sm"><UiText>{description}</UiText></p> : null}
       </div>
       <button type="button" onClick={onClose} disabled={pending && !allowPendingCancel} aria-label={closeLabel} className="button-quiet min-w-11 shrink-0 px-0"><CloseIcon /></button>

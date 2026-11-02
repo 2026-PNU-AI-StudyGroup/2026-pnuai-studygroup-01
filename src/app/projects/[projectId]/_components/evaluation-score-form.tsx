@@ -8,6 +8,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 const rubricScoreInitialState: RubricScoreState = { status: "idle", message: "" };
 
+// 항목마다 한 줄. 이름은 왼쪽, 점수 칸과 만점은 오른쪽 끝에 맞춘다. 저장은 표 아래 버튼 하나로 한 번에.
 export function EvaluationScoreForm({
   evaluationId,
   teamId,
@@ -19,15 +20,20 @@ export function EvaluationScoreForm({
 }) {
   const [state, action, pending] = useActionState(saveRubricScoresAction.bind(null, evaluationId, teamId), rubricScoreInitialState);
   return (
-    <form action={action} className="mt-5 grid gap-3 border-t border-[var(--line)] pt-5">
+    <form action={action} className="text-[0.8125rem]">
       {criteria.map((criterion) => (
-        <label key={criterion.id} className="grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-3 text-sm">
-          <span className="font-semibold">{criterion.label}<span className="ml-1 text-xs font-normal text-[var(--muted)]"><UiText>{`/ ${criterion.maxPoints}점`}</UiText></span></span>
-          <UiInput name={`points_${criterion.id}`} type="number" min={0} max={criterion.maxPoints} defaultValue={criterion.points ?? ""} required className="form-control" aria-label={`${criterion.label} 점수`} />
+        <label key={criterion.id} className="flex min-h-12 items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-1.5">
+          <span className="min-w-0 text-[var(--ink)]">{criterion.label}</span>
+          <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-[var(--muted)]">
+            <UiInput name={`points_${criterion.id}`} type="number" min={0} max={criterion.maxPoints} defaultValue={criterion.points ?? ""} required className="form-control h-9 min-h-9 w-20 px-2.5 py-1 text-right text-sm tabular-nums" aria-label={`${criterion.label} 점수`} />
+            <UiText>{`/ ${criterion.maxPoints}점`}</UiText>
+          </span>
         </label>
       ))}
-      {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
-      <div><button className="button-primary" disabled={pending || criteria.length === 0}><UiText>{pending ? "저장 중" : "점수 저장"}</UiText></button></div>
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--line)] px-5 py-3">
+        {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={`mr-auto font-medium ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}
+        <button className="button-primary button-compact min-h-8 px-3" disabled={pending || criteria.length === 0}><UiText>{pending ? "저장 중" : "점수 저장"}</UiText></button>
+      </div>
     </form>
   );
 }
