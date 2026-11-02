@@ -14,6 +14,7 @@ import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-t
 import {
   StudentTeamPageIntro,
   StudentTeamPagination,
+  StudentTeamPanel,
   StudentTeamSectionLayout,
 } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
@@ -42,9 +43,9 @@ export default async function RecruitmentsPage({ searchParams }: { searchParams:
   const recruitEntry = await recruitMembersEntry(actor);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments">
-      <main className="page-enter pb-28 lg:min-h-screen lg:pb-0">
-        <StudentTeamSectionLayout currentPath="/recruitments">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments" panel={<StudentTeamPanel currentPath="/recruitments" />}>
+      <main className="page-enter pb-28 lg:pb-0">
+        <StudentTeamSectionLayout>
           <div className="space-y-5">
             <StudentTeamPageIntro
               title="둘러보기"

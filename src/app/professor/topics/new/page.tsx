@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createTopicAction } from "@/app/_actions/create-topic-action";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectProgramService } from "@/modules/project-program/application/manage-project-programs";
@@ -26,8 +27,8 @@ export default async function NewTopicPage() {
   const programs = await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listRegistrableOpen(new Date());
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new">
-      <ProfessorWorkspace currentPath="/professor/topics/new" role={actor.role} title="새 프로젝트 등록" actions={programs.length ? <Link className="button-secondary gap-2" href="/professor/topics"><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"프로젝트 목록"}</UiText></Link> : undefined}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics/new" panel={<ProfessorSidebar currentPath="/professor/topics/new" role={actor.role} />}>
+      <ProfessorWorkspace title="새 프로젝트 등록" actions={programs.length ? <Link className="button-secondary gap-2" href="/professor/topics"><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"프로젝트 목록"}</UiText></Link> : undefined}>
         {programs.length ? <TopicForm action={createTopicAction} programs={programs} successHref="/professor/topics" /> : <EmptyState title="지금 프로젝트를 등록할 수 있는 프로그램이 없습니다" description="공개 프로그램의 프로젝트 등록 기간이 시작되면 새 프로젝트를 만들 수 있습니다." action={<Link className="button-secondary gap-2" href="/professor/topics"><ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"프로젝트 목록"}</UiText></Link>} />}
       </ProfessorWorkspace>
     </AppShell>

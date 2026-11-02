@@ -178,6 +178,7 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     return `${closeHref}${closeHref.includes("?") ? "&" : "?"}modal=announcement-new`;
   };
   let content: ReactNode;
+  let panel: ReactNode;
 
   const [adminPrograms, adminPendingApprovalCounts] = actor.role === "ADMIN"
     ? await Promise.all([
@@ -272,8 +273,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
+    panel = <ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />;
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+      <ExplorerLayout>
         <ProjectExplorerView
           view="past"
           program={selectedProgram}
@@ -384,8 +386,9 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     const manageAction = actor.role === "ADMIN" && programId && selectedProgram
       ? <ProgramAdminTitleActions programId={programId} programName={selectedProgram.name} pendingApprovalCount={pendingApprovalCounts.get(programId) ?? 0} />
       : undefined;
+    panel = <ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />;
     content = (
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={programId} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+      <ExplorerLayout>
         <ProjectExplorerView
           view="active"
           program={selectedProgram}
@@ -434,5 +437,5 @@ export default async function TopicsPage({ searchParams }: { searchParams: Promi
     );
   }
 
-  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics">{content}</AppShell>;
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/topics" panel={panel}>{content}</AppShell>;
 }

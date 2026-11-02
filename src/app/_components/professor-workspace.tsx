@@ -1,12 +1,9 @@
 import type { ReactNode } from "react";
 
-import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
-import type { UserRole } from "@/modules/identity/domain/user-role";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
-export function ProfessorWorkspace({ currentPath, role, eyebrow, title, description, actions, children }: {
-  currentPath: string;
-  role: UserRole;
+/** 교수 업무 화면의 본문 칸. 업무 목록(ProfessorSidebar)은 AppShell 의 panel 로 넘겨 왼쪽 메뉴에 둔다. */
+export function ProfessorWorkspace({ eyebrow, title, description, actions, children }: {
   eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
@@ -14,24 +11,17 @@ export function ProfessorWorkspace({ currentPath, role, eyebrow, title, descript
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-[calc(100vh-4.5rem)] lg:min-h-screen">
-      <div className="grid w-full lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)]">
-        <aside className="shell-panel min-w-0 overflow-hidden border-b border-[var(--line)] bg-[var(--sidebar)] lg:min-h-screen lg:overflow-visible lg:border-b-0 lg:border-r">
-          <div className="w-full bg-[var(--sidebar)] lg:min-h-screen lg:w-[var(--shell-panel-open)]">
-            <ProfessorSidebar currentPath={currentPath} role={role} />
+    <main className="min-h-[calc(100vh-4.5rem)]">
+      <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-8 xl:px-12 2xl:px-14">
+        <header className="flex flex-col gap-4 border-b border-[var(--line)] pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            {eyebrow ? <p className="mb-2 text-xs font-bold text-[var(--primary)]"><UiText>{eyebrow}</UiText></p> : null}
+            <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]"><UiText>{title}</UiText></h1>
+            {description ? <p className="mt-2 max-w-3xl text-[0.9375rem] leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p> : null}
           </div>
-        </aside>
-        <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14">
-          <header className="flex flex-col gap-4 border-b border-[var(--line)] pb-7 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              {eyebrow ? <p className="mb-2 text-xs font-bold text-[var(--primary)]"><UiText>{eyebrow}</UiText></p> : null}
-              <h1 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em]"><UiText>{title}</UiText></h1>
-              {description ? <p className="mt-2 max-w-3xl text-[0.9375rem] leading-6 text-[var(--muted)]"><UiText>{description}</UiText></p> : null}
-            </div>
-            {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
-          </header>
-          <div className="page-enter space-y-8 pt-7"><UiText>{children}</UiText></div>
-        </div>
+          {actions ? <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
+        </header>
+        <div className="page-enter space-y-8 pt-7"><UiText>{children}</UiText></div>
       </div>
     </main>
   );

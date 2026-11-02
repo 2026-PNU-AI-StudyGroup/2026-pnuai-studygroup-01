@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { CategoryOrderManager } from "@/app/admin/categories/_components/category-order-manager";
 import { AdminSection } from "@/app/_components/admin-section";
+import { AdminSidebar } from "@/app/_components/admin-sidebar";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -27,8 +28,8 @@ export default async function ProgramCategoryOrderAdminPage() {
   const programCounts = Object.fromEntries(grouped.map(({ category, _count }) => [category, _count._all]));
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/categories">
-      <AdminWorkspace currentPath="/admin/categories" title="대분류 순서">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/categories" crumbs={[{ label: "대분류 순서" }]} panel={<AdminSidebar currentPath="/admin/categories" />}>
+      <AdminWorkspace title="대분류 순서">
         <AdminSection id="category-order-title" title="사이드바에 세우는 차례">
           <p className="px-5 pt-4 text-sm text-[var(--muted)]">
             <UiText>{"프로젝트 목록 사이드바와 첫 화면에 열리는 프로그램이 이 차례를 따릅니다."}</UiText>

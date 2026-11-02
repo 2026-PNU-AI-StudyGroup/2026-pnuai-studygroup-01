@@ -66,7 +66,7 @@ export default async function TopicDetailPage({ params, searchParams }: { params
       new ProjectVotingService(new PrismaProjectVotingRepository(prisma)).getBallot(actor, archivedProject.programId),
       listProgramCategoryOrder(prisma),
     ]);
-    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`}><ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+    return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topicId}`} panel={<ProgramSidebar items={sidebarItems} selectedId={archivedProject.programId} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}><ExplorerLayout>
       {workspaceLink}
       <ArchivedProjectDetail project={archivedProject} ballot={ballot ?? undefined} /></ExplorerLayout></AppShell>;
   }
@@ -106,8 +106,8 @@ export default async function TopicDetailPage({ params, searchParams }: { params
   const teamLeader = topic.teamMembers?.find(({ role }) => role === "LEADER");
   const teamMembers = topic.teamMembers?.filter(({ role }) => role === "MEMBER") ?? [];
 
-  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`}>
-    <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} selectedName={topic.programName} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+  return <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/topics/${topic.id}`} crumbs={[{ label: topic.programName, href: `/topics?programId=${encodeURIComponent(topic.programId)}` }, { label: topic.title }]} panel={<ProgramSidebar items={sidebarItems} selectedId={topic.programId} selectedName={topic.programName} title={actor.role === "ADMIN" ? "프로그램 관리" : "프로그램"} showSettings={actor.role === "ADMIN"} categoryOrder={categoryOrder} />}>
+    <ExplorerLayout>
       <UiNav aria-label="이전 위치" className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href={`/topics?programId=${encodeURIComponent(topic.programId)}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]"><path d="m12 5-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" /></svg><UiText>{"프로젝트 목록"}</UiText></Link>{canOpenWorkspace ? <Link href={`/projects/${topic.id}`} className="button-secondary button-compact gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"진행 현황"}</UiText></Link> : null}</UiNav>
       <ProjectDetailShell
         headerAside={repository ? <ProjectRepositoryCallout repository={repository} /> : undefined}

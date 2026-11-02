@@ -7,6 +7,7 @@ import type {
   ProjectDashboardView,
 } from "@/app/dashboard/_lib/project-dashboard-view";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
+import { sidebarGroupLabelClass, sidebarRowClass } from "@/shared/ui/sidebar-row";
 
 export function ProjectDashboardSidebar({
   counts,
@@ -62,11 +63,7 @@ export function ProjectDashboardSidebar({
             href={item.view === "all" ? "/dashboard" : `/dashboard?view=${item.view}`}
             aria-labelledby={`${labelId} ${countId}`}
             aria-current={selected ? "page" : undefined}
-            className={`relative flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 text-sm font-bold transition-colors ${
-              selected
-                ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
-                : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"
-            }`}
+            className={`${sidebarRowClass(selected)} justify-between max-lg:min-h-11`}
           >
             <span id={labelId}><UiText>{item.label}</UiText></span>
             <span id={countId} className="sr-only">{item.count}<UiText>{"개"}</UiText></span>
@@ -80,7 +77,7 @@ export function ProjectDashboardSidebar({
   }
 
   return (
-    <div className="px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-3 lg:py-8">
+    <div className="px-4 py-4 lg:p-0">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{student ? "내 프로젝트" : "프로젝트 운영"}</UiText>}
         label={<UiText>{selectedItem.label}</UiText>}
@@ -92,14 +89,12 @@ export function ProjectDashboardSidebar({
       </ResponsiveSectionNavigation>
 
       <div className="hidden lg:block">
-        <div className="border-b border-[var(--line)] px-2 pb-5">
-          <h2 className="text-sm font-bold tracking-[-0.02em] text-[var(--ink)]">
-            <UiText>{student ? "내 프로젝트" : "프로젝트 운영"}</UiText>
-          </h2>
-        </div>
+        <h2 className={sidebarGroupLabelClass}>
+          <UiText>{student ? "내 프로젝트" : "프로젝트 운영"}</UiText>
+        </h2>
 
-        <UiNav aria-label={student ? "내 프로젝트 바로가기" : "프로젝트 운영 바로가기"} className="mt-4">
-          <ul className="space-y-1">{navigationItems("desktop")}</ul>
+        <UiNav aria-label={student ? "내 프로젝트 바로가기" : "프로젝트 운영 바로가기"}>
+          <ul className="space-y-0.5">{navigationItems("desktop")}</ul>
         </UiNav>
       </div>
     </div>

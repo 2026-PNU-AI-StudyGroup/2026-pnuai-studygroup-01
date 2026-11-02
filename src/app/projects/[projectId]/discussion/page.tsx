@@ -39,7 +39,7 @@ export default async function TeamDiscussionPage({ params, searchParams }: { par
   const participantCount = workspace.members.length + workspace.assistants.length + (workspace.advisorEnabled ? 1 : 0);
 
   return (
-    <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-5rem)] lg:min-h-[38rem]">
+    <section aria-labelledby="discussion-title" className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col gap-6 lg:h-[calc(100vh-8rem)] lg:min-h-[38rem]">
       {workspace.status !== "COMPLETED" && workspace.discussionPage === 1 ? <AutoRefresh /> : null}
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">

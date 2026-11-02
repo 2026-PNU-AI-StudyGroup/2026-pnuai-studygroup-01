@@ -85,121 +85,48 @@
 }
 
 /*
-  접히는 왼쪽 영역.
+  접히는 왼쪽 메뉴.
 
-  아이콘 레일과 그 옆 목록 패널은 서로 다른 격자에 들어 있다. 폭을 각자 적어 두면
-  둘이 어긋나므로 루트에 폭을 하나씩 두고 양쪽 격자가 그 값을 읽게 한다.
-  @property 로 등록해야 길이로 인정받아 값이 부드럽게 흐른다. 등록하지 않으면
-  0 과 6.5rem 사이를 한 칸에 건너뛴다.
+  메뉴는 한 칸이다. 브랜드, 역할별 주요 메뉴, 화면별 목록이 위에서부터 이어진다.
+  폭은 루트에 하나만 두고 격자가 그 값을 읽는다. @property 로 등록해야 길이로
+  인정받아 값이 부드럽게 흐른다. 등록하지 않으면 0 과 펼친 폭 사이를 한 번에 건너뛴다.
 */
-@property --shell-rail {
+@property --shell-sidebar {
   syntax: "<length>";
   inherits: true;
-  initial-value: 6.5rem;
-}
-
-@property --shell-panel {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 15.5rem;
+  initial-value: 14.5rem;
 }
 
 :root {
-  /* 펼쳤을 때의 폭. 접히는 동안 안쪽 내용이 찌그러지지 않게 붙잡아 두는 기준이기도 하다. */
-  --shell-rail-open: 6.5rem;
-  --shell-panel-open: 15.5rem;
-  --shell-rail: var(--shell-rail-open);
-  --shell-panel: var(--shell-panel-open);
+  /* 펼쳤을 때의 폭(232px). 접히는 동안 안쪽 내용이 찌그러지지 않게 붙잡아 두는 기준이기도 하다. */
+  --shell-sidebar-open: 14.5rem;
+  --shell-sidebar: var(--shell-sidebar-open);
   /*
-    화면 절반 가까이가 움직이는 일이라 대화상자나 알림보다 느긋해야 눈이 따라간다.
+    화면 한쪽이 통째로 움직이는 일이라 대화상자나 알림보다 느긋해야 눈이 따라간다.
     공용 --silk-duration 을 늘리면 작은 것들까지 굼떠지므로 여기만 따로 둔다.
   */
   --shell-duration: 320ms;
-  transition:
-    --shell-rail var(--shell-duration) var(--silk-ease),
-    --shell-panel var(--shell-duration) var(--silk-ease);
-}
-
-@media (min-width: 1280px) {
-  :root {
-    --shell-panel-open: 17rem;
-  }
+  transition: --shell-sidebar var(--shell-duration) var(--silk-ease);
 }
 
 :root[data-sidebar="collapsed"] {
-  --shell-rail: 0rem;
-  --shell-panel: 0rem;
+  --shell-sidebar: 0rem;
 }
 
 @media (min-width: 1024px) {
   /*
-    칸을 못 박는다.
-
-    접으면 사이드바가 화면 밖으로 나가면서 격자 흐름에서 빠진다. 그대로 두면 본문이
-    자동 배치로 한 칸 당겨져 폭 0 인 첫 칸에 들어가 통째로 사라진다.
-
-    잘라 내지는 않는다. 안쪽 감싸개가 제 폭과 바탕색을 들고 있어서, 칸이 줄었다 늘었다
-    하는 동안 본문 위를 덮으며 미끄러지는 그림이 된다. 여기서 overflow 를 걸면
-    레일 옆으로 펼쳐지는 계정·언어 팝오버가 같이 잘려 보이지 않는다.
-  */
-  .shell-rail,
-  .shell-panel {
-    grid-column: 1;
-  }
-
-  .shell-rail ~ *,
-  .shell-panel ~ * {
-    grid-column: 2;
-  }
-
-  /*
-    감싸개가 판 높이를 그대로 받게 한다.
-
-    사이드바 알맹이는 저마다 sticky 로 화면에 붙어 있다. sticky 는 부모 상자 안에서만
-    움직이는데, 폭과 바탕색을 들고 있는 감싸개는 높이가 제 내용만큼이라 붙을 자리가
-    없었다. 그래서 본문을 내리면 사이드바가 같이 딸려 올라갔다.
-    격자 칸은 본문 높이만큼 늘어나므로, 감싸개를 그 높이까지 펴 주면 다시 붙는다.
-    레일은 제가 sticky 라 손대지 않는다.
-  */
-  .shell-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .shell-panel > * {
-    flex: 1 0 auto;
-  }
-
-  /*
     접힌 뒤에는 격자에서 빼내 화면 왼쪽 밖에 세워 둔다. 왼쪽 가장자리에 손을 대면
-    그때만 미끄러져 나온다. 레일과 패널이 붙어서 같이 나와야 한 덩어리로 보인다.
+    그때만 미끄러져 나온다. 칸 자리는 명시해 두었으므로 빠져도 본문이 당겨지지 않는다.
   */
-  :root[data-sidebar="collapsed"] :is(.shell-rail, .shell-panel) {
+  :root[data-sidebar="collapsed"] .shell-sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
+    left: 0;
     z-index: 45;
-    /* 꺼내 보는 판은 화면보다 길 수 있으니 이때만 스크롤 상자로 둔다. */
-    overflow-x: hidden;
-    overflow-y: auto;
+    width: var(--shell-sidebar-open);
     transform: translateX(-100%);
     transition: transform var(--shell-duration) var(--silk-ease);
-  }
-
-  :root[data-sidebar="collapsed"] .shell-rail {
-    left: 0;
-    width: var(--shell-rail-open);
-  }
-
-  :root[data-sidebar="collapsed"] .shell-panel {
-    left: var(--shell-rail-open);
-    width: var(--shell-panel-open);
-    border-right: 1px solid var(--line);
-    /*
-      제 폭만큼만 밀면 레일 자리 하나가 남아 화면 왼쪽에 띠로 걸린다.
-      레일 폭까지 더 밀어야 완전히 빠진다.
-    */
-    transform: translateX(calc(-100% - var(--shell-rail-open)));
   }
 
   /*
@@ -209,19 +136,19 @@
     나오게 해서 여닫힘이 끝없이 되풀이된다. 여닫는 조건은 SidebarToggle 이 좌표로
     판단해 이 속성으로 알려 준다.
   */
-  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] :is(.shell-rail, .shell-panel) {
+  :root[data-sidebar="collapsed"][data-sidebar-peek="true"] .shell-sidebar {
     transform: none;
     box-shadow: var(--shadow-float);
   }
 
   /*
-    여닫이 손잡이. 펼쳤을 때는 레일과 패널 사이 경계선 위에 걸치고, 접으면 화면
-    왼쪽 위로 내려온다. 레일 안에 두면 접힐 때 같이 사라져 다시 펼 길이 없다.
+    여닫이 손잡이. 펼쳤을 때는 메뉴 오른쪽 경계선 위, 브랜드 줄 높이에 걸친다.
+    메뉴 안에 두면 접힐 때 같이 사라져 다시 펼 길이 없다.
   */
   .shell-sidebar-toggle {
     position: fixed;
-    top: 1.2rem;
-    left: calc(var(--shell-rail) - 0.875rem);
+    top: 1.125rem;
+    left: calc(var(--shell-sidebar) - 0.875rem);
     z-index: 50;
     transition: left var(--shell-duration) var(--silk-ease), background-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
   }
@@ -231,9 +158,14 @@
     left: 0.75rem;
   }
 
+  /* 접힌 동안 손잡이가 위 막대 왼쪽 끝을 차지하므로 경로를 그만큼 민다. */
+  :root[data-sidebar="collapsed"] .shell-topbar {
+    padding-left: 3.75rem;
+  }
+
   /* 살짝 꺼내 보는 중에는 손잡이도 나온 판 옆으로 따라가서 바로 고정할 수 있게 한다. */
   :root[data-sidebar="collapsed"][data-sidebar-peek="true"] .shell-sidebar-toggle {
-    left: calc(var(--shell-rail-open) - 0.875rem);
+    left: calc(var(--shell-sidebar-open) - 0.875rem);
   }
 }
 

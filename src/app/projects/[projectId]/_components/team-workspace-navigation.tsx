@@ -5,6 +5,7 @@ import { UiLink } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { usePathname } from "next/navigation";
+import { sidebarRowClass } from "@/shared/ui/sidebar-row";
 
 const sections = [
   { label: "개요", suffix: "", icon: "overview" },
@@ -66,7 +67,7 @@ export function TeamWorkspaceNavigation({ projectId, advisorEnabled, canDelete =
         </UiNav>
       </details>
       <UiNav aria-label="프로젝트 메뉴" className="hidden lg:block">
-      <ul className="flex flex-col">
+      <ul className="flex flex-col gap-0.5">
         {visibleSections.map(({ label, suffix, icon }) => {
           const href = `/projects/${projectId}${suffix}`;
           const selected = suffix ? pathname.startsWith(href) : pathname === href;
@@ -75,7 +76,7 @@ export function TeamWorkspaceNavigation({ projectId, advisorEnabled, canDelete =
               <Link
                 href={href}
                 aria-current={selected ? "page" : undefined}
-                className={`snap-color relative flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm font-semibold lg:w-full ${selected ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"}`}
+                className={sidebarRowClass(selected)}
               >
                 <NavigationIcon name={icon} />
                 <UiText>{label}</UiText>

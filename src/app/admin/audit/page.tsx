@@ -11,6 +11,7 @@ import {
   adminRecordListClassName,
   adminRecordRowClassName,
 } from "@/app/_components/admin-section";
+import { AdminSidebar } from "@/app/_components/admin-sidebar";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { ListAuditLogService, type AuditAction } from "@/modules/audit/application/list-audit-log";
 import { PrismaAuditLogReader } from "@/modules/audit/infrastructure/prisma-audit-log-reader";
@@ -83,8 +84,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const page = Number(firstSearchParam(params.page) ?? "1");
   const data = await new ListAuditLogService(new PrismaAuditLogReader(prisma)).execute(actor, page);
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/audit">
-      <AdminWorkspace currentPath="/admin/audit" title="관리 이력" description="권한, 사용자 접근, 팀 확정과 보고서 승인처럼 운영에 영향을 주는 변경을 시간순으로 확인합니다.">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/audit" crumbs={[{ label: "관리 이력" }]} panel={<AdminSidebar currentPath="/admin/audit" />}>
+      <AdminWorkspace title="관리 이력" description="권한, 사용자 접근, 팀 확정과 보고서 승인처럼 운영에 영향을 주는 변경을 시간순으로 확인합니다.">
         <AdminSection
           id="audit-list-title"
           title="최근 변경"

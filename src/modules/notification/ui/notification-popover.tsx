@@ -137,7 +137,7 @@ export function NotificationPopover({
           className={`absolute z-50 text-left text-[var(--ink)] ${
             placement === "side"
               ? "bottom-0 left-[calc(100%+0.75rem)] w-[23rem]"
-              : "fixed left-4 right-4 top-[4.75rem] w-auto"
+              : "fixed left-4 right-4 top-[4.75rem] w-auto lg:absolute lg:left-auto lg:right-0 lg:top-[calc(100%+0.75rem)] lg:w-[23rem]"
           }`}
         >
           <span
@@ -145,7 +145,7 @@ export function NotificationPopover({
             className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
-                : "-top-1.5 right-[7.75rem] border-l border-t border-[var(--line-strong)] sm:right-[8.5rem]"
+                : "-top-1.5 right-[7.75rem] border-l border-t border-[var(--line-strong)] sm:right-[8.5rem] lg:right-4"
             }`}
           />
           <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">

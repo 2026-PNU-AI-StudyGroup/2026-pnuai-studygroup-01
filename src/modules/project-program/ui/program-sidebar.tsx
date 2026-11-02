@@ -147,13 +147,14 @@ function CategoryProgramGroup({
   const contentId = useId();
 
   return (
-    <div className="border-b border-[var(--line)] pb-2">
+    <div>
+      {/* 왼쪽 메뉴의 다른 줄과 같은 높이와 굵기. 대분류끼리는 선 대신 줄 간격으로 나눈다. */}
       <button
         type="button"
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-active)]"
+        className="flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-[var(--radius-control)] px-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-active)]"
       >
         <span className="min-w-0 truncate text-left"><UiText>{category}</UiText></span>
         <svg
@@ -170,12 +171,12 @@ function CategoryProgramGroup({
         className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <ul className={`ml-4 space-y-1 border-l border-[var(--line)] pl-2 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
+          <ul className={`mb-1 ml-3.5 space-y-0.5 border-l border-[var(--line)] pl-1.5 pt-0.5 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
             {[...programs].sort((a, b) => b.startYear - a.startYear).map((program) => {
               const selected = program.id === selectedId;
               const privateProgram = program.visibility === "private";
               const votingOpen = Boolean(program.votingEndsAt) && !privateProgram;
-              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${showSettings ? "pr-10" : ""} ${
+              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${showSettings ? "pr-8" : ""} ${
                 selected ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "hover:bg-[var(--surface-active)]"
               }`;
               const status = privateProgram
@@ -224,7 +225,7 @@ function CategoryProgramGroup({
                       href={programManagementHref(program.id)}
                       tabIndex={open ? undefined : -1}
                       aria-label={`${program.name} 설정`}
-                      className="absolute right-1 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface)] focus-visible:text-[var(--primary)]"
+                      className="absolute right-0.5 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-[var(--radius-control)] text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface)] focus-visible:text-[var(--primary)]"
                     >
                       <SettingsIcon className="size-[1.1rem]" />
                     </UiLink>
@@ -312,7 +313,7 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
   }
 
   function programList(surface: "mobile" | "desktop") {
-    return categories.length ? <div className="space-y-2">{categoryGroups(surface)}</div> : null;
+    return categories.length ? <div className="space-y-0.5">{categoryGroups(surface)}</div> : null;
   }
 
   const voteBox = votingPrograms.length ? (
@@ -320,7 +321,7 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
   ) : null;
 
   return (
-    <div className="flex flex-col px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:px-3 lg:py-8">
+    <div className="flex flex-col px-4 py-4 lg:p-0">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{title}</UiText>}
         label={<UiText>{selectedProgram?.name ?? selectedName ?? "프로그램 선택"}</UiText>}
@@ -340,19 +341,18 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
         </UiNav>
       </ResponsiveSectionNavigation>
 
-      <div className="hidden min-h-0 flex-1 flex-col lg:flex">
-        <div className="mb-4 flex shrink-0 items-center justify-between gap-3 px-2">
-          <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{title}</UiText></h2>
+      {/* 왼쪽 메뉴 칸이 통째로 스크롤하므로 목록이 따로 스크롤 상자를 갖지 않는다. */}
+      <div className="hidden flex-col lg:flex">
+        <div className="mb-1.5 flex items-center justify-between gap-3 pl-2.5">
+          <h2 className="text-xs font-medium text-[var(--muted)]"><UiText>{title}</UiText></h2>
           {showSettings ? (
-            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
+            <AddProgramLink className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
           ) : null}
         </div>
-        <UiNav aria-label="프로그램 선택" className="flex min-h-0 flex-1 flex-col">
+        <UiNav aria-label="프로그램 선택">
           {/* 투표는 기간이 짧아 놓치면 끝이다. 프로그램 목록이 길어도 묻히지 않게 맨 위에 둔다. */}
-          {voteBox ? <div className="mb-4 shrink-0">{voteBox}</div> : null}
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {programList("desktop")}
-          </div>
+          {voteBox ? <div className="mb-4">{voteBox}</div> : null}
+          {programList("desktop")}
         </UiNav>
       </div>
     </div>

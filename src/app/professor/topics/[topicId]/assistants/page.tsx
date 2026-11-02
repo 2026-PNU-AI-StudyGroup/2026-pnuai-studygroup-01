@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { ProjectAssistantManagementPanel } from "@/app/_components/project-assistant-management";
 import { AppShell } from "@/app/_components/app-shell";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { ProjectAssistantOperationError, ProjectAssistantQueryService } from "@/modules/project-assistant/application/manage-project-assistants";
@@ -53,10 +54,9 @@ export default async function ProjectAssistantManagementPage({
       userId={actor.id}
       userName={actor.name}
       currentPath="/professor/topics"
+      panel={<ProfessorSidebar currentPath="/professor/topics" role={actor.role} />}
     >
       <ProfessorWorkspace
-        currentPath={`/professor/topics/${topic.id}/assistants`}
-        role={actor.role}
         title={topic.title}
         actions={(
           <>

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
@@ -44,8 +45,9 @@ export default async function ProfessorApplicationDetailPage({
       userId={actor.id}
       userName={actor.name}
       currentPath="/professor/applications"
+      panel={<ProfessorSidebar currentPath="/professor/applications" role={actor.role} />}
     >
-      <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원서 상세" actions={
+      <ProfessorWorkspace title="지원서 상세" actions={
             <Link href="/professor/applications" className="button-secondary gap-2">
               <ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>
           }>

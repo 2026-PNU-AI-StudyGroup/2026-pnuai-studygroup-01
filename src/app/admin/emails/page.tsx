@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { RetryEmailDeliveryForm } from "@/app/admin/emails/_components/retry-email-delivery-form";
 import { AdminSection, AdminSectionEmpty, adminRecordListClassName, adminRecordRowClassName } from "@/app/_components/admin-section";
+import { AdminSidebar } from "@/app/_components/admin-sidebar";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { AppShell } from "@/app/_components/app-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -41,8 +42,8 @@ export default async function EmailDeliveryAdminPage() {
   const queueCount = (counts.PENDING ?? 0) + (counts.RETRY_WAIT ?? 0) + (counts.PROCESSING ?? 0);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/emails">
-      <AdminWorkspace currentPath="/admin/emails" title="이메일 전송">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/emails" crumbs={[{ label: "이메일 전송" }]} panel={<AdminSidebar currentPath="/admin/emails" />}>
+      <AdminWorkspace title="이메일 전송">
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Metric label="대기·처리" value={queueCount} />
           <Metric label="실패" value={counts.FAILED ?? 0} tone="danger" />

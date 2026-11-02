@@ -10,7 +10,7 @@ import { StudentTeamQueryService } from "@/modules/student-team/application/mana
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-query-repository";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
-import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
+import { StudentTeamPanel, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
@@ -45,9 +45,9 @@ export default async function StudentTeamManagePage({
   ]);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/teams/manage/${team.id}`}>
-      <main className="page-enter pb-28 lg:min-h-screen lg:pb-0">
-        <StudentTeamSectionLayout currentPath={`/teams/manage/${team.id}`}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/teams/manage/${team.id}`} panel={<StudentTeamPanel currentPath={`/teams/manage/${team.id}`} />}>
+      <main className="page-enter pb-28 lg:pb-0">
+        <StudentTeamSectionLayout>
           <StudentTeamManagementSections team={team} actorId={actor.id} recruitmentPosts={postData.posts} />
           {modal === "recruitment" && team.leaderId === actor.id ? (
             <TeamModal title="팀원 모집 공고" closeHref={`/teams/manage/${team.id}`} size="wide">

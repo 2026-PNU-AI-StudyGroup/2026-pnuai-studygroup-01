@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { updateTopicAction } from "@/app/professor/topics/_actions/topic-management-actions";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -36,10 +37,8 @@ export default async function EditManagedTopicPage({ params }: { params: Promise
     ? await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listAll(actor)
     : await new ProjectProgramService(new PrismaProjectProgramRepository(prisma)).listPublic();
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics" panel={<ProfessorSidebar currentPath="/professor/topics" role={actor.role} />}>
       <ProfessorWorkspace
-        currentPath={`/professor/topics/${topic.id}/edit`}
-        role={actor.role}
         eyebrow={topic.programName}
         title="프로젝트 내용 편집"
         description="제출된 지원서가 있으면 지원 방식과 문항은 변경할 수 없습니다."

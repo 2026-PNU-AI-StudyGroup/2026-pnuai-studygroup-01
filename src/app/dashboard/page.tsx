@@ -14,8 +14,6 @@ import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger
 import {
   buildProjectDashboardCounts,
   parseProjectDashboardView,
-  type ProjectDashboardCounts,
-  type ProjectDashboardView,
 } from "@/app/dashboard/_lib/project-dashboard-view";
 import { ProjectTeamInvitationDecisionForm } from "@/app/_components/project-team-invitation-decision-form";
 import { PrismaProjectTeamInvitationRepository } from "@/modules/project-team/infrastructure/prisma-project-team-invitation-repository";
@@ -42,14 +40,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
 }
 
-function ProjectDashboardFrame({ role, counts, view, children }: {
+function ProjectDashboardFrame({ role, children }: {
   role: "STUDENT" | "PROFESSOR" | "ADVISOR";
-  counts: ProjectDashboardCounts;
-  view: ProjectDashboardView;
   children: ReactNode;
 }) {
   return (
-    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} />}>
+    <ExplorerLayout>
       <ProjectDashboardHero role={role} />
       {children}
     </ExplorerLayout>
@@ -165,8 +161,8 @@ export default async function DashboardPage({
   const hasAnyProject = counts.all > 0;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard" panel={<ProjectDashboardSidebar counts={counts} selectedView={view} student={actor.role === "STUDENT"} />}>
+      <ProjectDashboardFrame role={actor.role}>
         <div className="page-enter space-y-8 pt-5">
           {teamInvitations.length > 0 ? (
             <section aria-labelledby="team-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">

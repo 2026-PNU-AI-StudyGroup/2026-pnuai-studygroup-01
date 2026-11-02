@@ -13,6 +13,7 @@ import {
   adminRecordListClassName,
   adminRecordRowClassName,
 } from "@/app/_components/admin-section";
+import { AdminSidebar } from "@/app/_components/admin-sidebar";
 import { AdminWorkspace } from "@/app/_components/admin-workspace";
 import { ProfessorAccessService } from "@/modules/identity/application/manage-professor-access";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -44,8 +45,8 @@ export default async function ProfessorsPage({ searchParams }: { searchParams: P
   if (tab === "history") {
     const entries = await service.listAudit(actor);
     return (
-      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
-        <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="권한을 부여하거나 회수한 기록과 처리자를 시간순으로 확인합니다." actions={<TabLinks tab="history" />}>
+      <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors" crumbs={[{ label: "교수 권한" }]} panel={<AdminSidebar currentPath="/admin/professors" />}>
+        <AdminWorkspace title="교수 권한" description="권한을 부여하거나 회수한 기록과 처리자를 시간순으로 확인합니다." actions={<TabLinks tab="history" />}>
           <AdminSection
             id="professor-audit-title"
             title="최근 권한 변경 기록"
@@ -85,8 +86,8 @@ export default async function ProfessorsPage({ searchParams }: { searchParams: P
 
   const entries = await service.list(actor);
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors">
-      <AdminWorkspace currentPath="/admin/professors" title="교수 권한" description="교수 권한을 부여할 부산대학교 이메일을 등록하고, 더 이상 필요하지 않은 권한을 회수합니다." actions={<TabLinks tab="list" />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/admin/professors" crumbs={[{ label: "교수 권한" }]} panel={<AdminSidebar currentPath="/admin/professors" />}>
+      <AdminWorkspace title="교수 권한" description="교수 권한을 부여할 부산대학교 이메일을 등록하고, 더 이상 필요하지 않은 권한을 회수합니다." actions={<TabLinks tab="list" />}>
         <AdminSection id="professor-register-title" title="교수 이메일 등록">
           <ProfessorAccessForm />
         </AdminSection>

@@ -10,7 +10,7 @@ import {
   InvitationDecisionForm,
 } from "@/app/teams/_components/student-team-controls";
 import { StudentTeamLedger } from "@/app/teams/_components/student-team-ledger";
-import { StudentTeamPageIntro, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
+import { StudentTeamPageIntro, StudentTeamPanel, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { TeamModal } from "@/modules/student-team/ui/team-modal";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamQueryService } from "@/modules/student-team/application/manage-student-teams";
@@ -41,9 +41,9 @@ export default async function StudentTeamsPage({
     .reduce((total, team) => total + team.pendingApplicantCount, 0);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams">
-      <main className="page-enter pb-28 lg:min-h-screen lg:pb-0">
-        <StudentTeamSectionLayout currentPath="/teams">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/teams" panel={<StudentTeamPanel currentPath="/teams" />}>
+      <main className="page-enter pb-28 lg:pb-0">
+        <StudentTeamSectionLayout>
           <div className="space-y-5">
             <StudentTeamPageIntro
               title="내 팀"

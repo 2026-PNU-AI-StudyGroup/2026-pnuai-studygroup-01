@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { requireProfessorWorkspaceActor } from "@/app/professor/_lib/professor-workspace-access";
 import { ReceivedApplicationList } from "@/app/professor/applications/_components/received-application-list";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { ListReceivedTopicApplicationsService } from "@/modules/topic-application/application/list-received-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
@@ -38,8 +39,8 @@ export default async function ProfessorApplicationsPage({ searchParams }: {
   ).execute(actor, requestedPage, 20, status, query);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications">
-      <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원 검토" description="대기 중인 지원부터 확인하고, 지원서와 팀 구성을 근거로 프로젝트 참여 여부를 결정합니다.">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications" panel={<ProfessorSidebar currentPath="/professor/applications" role={actor.role} />}>
+      <ProfessorWorkspace title="지원 검토" description="대기 중인 지원부터 확인하고, 지원서와 팀 구성을 근거로 프로젝트 참여 여부를 결정합니다.">
         {applications.total === 0 && !status && !query.trim()
           ? <EmptyState title="아직 받은 지원서가 없습니다" description="학생이 프로젝트에 지원하면 이 목록에 표시됩니다." />
           : <ReceivedApplicationList page={applications} status={status} query={query.trim().slice(0, 100)} />}

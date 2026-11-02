@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { UiAside, UiNav } from "@/modules/translation/ui/localized-elements";
+import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
 import { ExplorerHero } from "@/shared/ui/explorer-hero";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
+import { sidebarGroupLabelClass, sidebarRowClass } from "@/shared/ui/sidebar-row";
 
 const navigation = [
   { href: "/recruitments", label: "둘러보기", icon: "search" },
@@ -47,77 +48,64 @@ function isTeamNavigationActive(href: string, currentPath: string) {
   return currentPath === href;
 }
 
-export function StudentTeamSectionLayout({ currentPath, children }: { currentPath: string; children: ReactNode }) {
+/** 팀 모집 영역 메뉴. AppShell 의 panel 로 넘겨 왼쪽 메뉴의 주요 메뉴 아래(휴대폰은 본문 위)에 놓인다. */
+export function StudentTeamPanel({ currentPath }: { currentPath: string }) {
   const current = navigation.find((item) => isTeamNavigationActive(item.href, currentPath)) ?? navigation[0];
 
   return (
-    <div className="grid w-full grid-cols-[minmax(0,1fr)] lg:min-h-screen lg:grid-cols-[var(--shell-panel)_minmax(0,1fr)]">
-      <UiAside aria-label="팀 영역 메뉴" className="shell-panel min-w-0 bg-[var(--sidebar)] lg:border-r lg:border-[var(--line)]">
-        {/* 여백을 안쪽으로 옮겼다. 칸이 0 으로 줄 때 바깥에 있으면 여백부터 찌그러진다. */}
-        <div className="w-full bg-[var(--sidebar)] px-5 pb-5 pt-5 sm:px-8 lg:min-h-screen lg:w-[var(--shell-panel-open)] lg:px-5 lg:py-8">
-        <div className="lg:sticky lg:top-8">
-          <div className="hidden border-b border-[var(--line)] pb-6 lg:block">
-            <p className="text-base font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"팀 모집"}</UiText></p>
-          </div>
+    <div className="px-5 py-5 sm:px-8 lg:p-0">
+      <ResponsiveSectionNavigation
+        eyebrow={<UiText>{"팀 모집"}</UiText>}
+        label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
+      >
+        <UiNav aria-label="팀 메뉴 모바일">
+          <ul className="grid grid-cols-2 gap-x-4 sm:grid-cols-4">
+            {navigation.map((item) => {
+              const active = isTeamNavigationActive(item.href, currentPath);
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-semibold ${
+                      active
+                        ? "border-[var(--primary)] text-[var(--primary-hover)]"
+                        : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
+                    }`}
+                  >
+                    <StudentTeamIcon name={item.icon} />
+                    <UiText>{item.label}</UiText>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </UiNav>
+      </ResponsiveSectionNavigation>
 
-          <ResponsiveSectionNavigation
-            eyebrow={<UiText>{"팀 모집"}</UiText>}
-            label={<span className="flex min-w-0 items-center gap-2.5"><StudentTeamIcon name={current.icon} /><UiText>{current.label}</UiText></span>}
-          >
-            <UiNav aria-label="팀 메뉴 모바일">
-              <ul className="grid grid-cols-2 gap-x-4 sm:grid-cols-4">
-                {navigation.map((item) => {
-                  const active = isTeamNavigationActive(item.href, currentPath);
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        aria-current={active ? "page" : undefined}
-                        className={`flex min-h-11 items-center gap-2 border-b px-1 text-sm font-semibold ${
-                          active
-                            ? "border-[var(--primary)] text-[var(--primary-hover)]"
-                            : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
-                        }`}
-                      >
-                        <StudentTeamIcon name={item.icon} />
-                        <UiText>{item.label}</UiText>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </UiNav>
-          </ResponsiveSectionNavigation>
-
-          <UiNav aria-label="팀 메뉴" className="mt-5 hidden lg:block">
-            <ul className="flex flex-col">
-              {navigation.map((item) => {
-                const active = isTeamNavigationActive(item.href, currentPath);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`snap-color relative flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm font-semibold ${
-                        active
-                          ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
-                          : "text-[var(--muted)] hover:bg-[var(--surface-active)] hover:text-[var(--ink)]"
-                      }`}
-                    >
-                      <StudentTeamIcon name={item.icon} />
-                      <UiText>{item.label}</UiText>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </UiNav>
-        </div>
-        </div>
-      </UiAside>
-      <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>
+      <h2 className={`hidden lg:block ${sidebarGroupLabelClass}`}><UiText>{"팀 모집"}</UiText></h2>
+      <UiNav aria-label="팀 메뉴" className="hidden lg:block">
+        <ul className="flex flex-col gap-0.5">
+          {navigation.map((item) => {
+            const active = isTeamNavigationActive(item.href, currentPath);
+            return (
+              <li key={item.href}>
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={sidebarRowClass(active)}>
+                  <StudentTeamIcon name={item.icon} />
+                  <UiText>{item.label}</UiText>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </UiNav>
     </div>
   );
+}
+
+/** 팀 모집 영역의 본문 칸. 메뉴는 StudentTeamPanel 을 AppShell 의 panel 로 넘긴다. */
+export function StudentTeamSectionLayout({ children }: { children: ReactNode }) {
+  return <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-8 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>;
 }
 
 export function StudentTeamPageIntro({ title, description, action, meta }: { title: string; description?: ReactNode; action?: ReactNode; meta?: ReactNode }) {

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { TopicStatusButton } from "@/app/professor/topics/_components/topic-status-button";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { GetManagedTopicService, ManagedTopicNotFoundError } from "@/modules/topic/application/get-managed-topic";
@@ -30,8 +31,8 @@ export default async function ManagedTopicPage({ params }: { params: Promise<{ t
     ).execute(actor, topicId);
   } catch (error) { if (error instanceof ManagedTopicNotFoundError) notFound(); throw error; }
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics">
-      <ProfessorWorkspace currentPath={`/professor/topics/${topic.id}`} role={actor.role} eyebrow={topic.programName} title={topic.title} actions={<><Link href={`/professor/topics/${topic.id}/assistants`} className="button-secondary gap-2"><ProfileIcon className="size-4 shrink-0" /><UiText>{"조교 관리"}</UiText></Link>{(topic.effectiveStatus !== "COMPLETED" && topic.effectiveStatus !== "CANCELED") || actor.role === "ADMIN" ? <Link href={`/professor/topics/${topic.id}/edit`} className="button-secondary gap-2"><EditIcon className="size-4 shrink-0" /><UiText>{"내용 편집"}</UiText></Link> : null}<TopicStatusButton topicId={topic.id} status={topic.status} pendingApplicationCount={topic.pendingApplicationCount} openRecruitmentPostCount={topic.openRecruitmentPostCount} recruitmentEnabled={topic.recruitmentEnabled} canCloseRecruitment={actor.role === "ADMIN" || topic.managerId === actor.id} isAdmin={actor.role === "ADMIN"} /></>}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/topics" panel={<ProfessorSidebar currentPath="/professor/topics" role={actor.role} />}>
+      <ProfessorWorkspace eyebrow={topic.programName} title={topic.title} actions={<><Link href={`/professor/topics/${topic.id}/assistants`} className="button-secondary gap-2"><ProfileIcon className="size-4 shrink-0" /><UiText>{"조교 관리"}</UiText></Link>{(topic.effectiveStatus !== "COMPLETED" && topic.effectiveStatus !== "CANCELED") || actor.role === "ADMIN" ? <Link href={`/professor/topics/${topic.id}/edit`} className="button-secondary gap-2"><EditIcon className="size-4 shrink-0" /><UiText>{"내용 편집"}</UiText></Link> : null}<TopicStatusButton topicId={topic.id} status={topic.status} pendingApplicationCount={topic.pendingApplicationCount} openRecruitmentPostCount={topic.openRecruitmentPostCount} recruitmentEnabled={topic.recruitmentEnabled} canCloseRecruitment={actor.role === "ADMIN" || topic.managerId === actor.id} isAdmin={actor.role === "ADMIN"} /></>}>
     <ManagedProjectSummary
       topic={topic}
       description={<TranslatedText text={topic.description} className="muted mt-3 whitespace-pre-wrap leading-8" />}
