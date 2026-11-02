@@ -270,14 +270,15 @@ summary::-webkit-details-marker {
 
   .form-control,
   .field {
-    min-height: 3rem;
+    /* 버튼과 같은 40px. 나란히 놓여도 아래 선이 맞는다. */
+    min-height: 2.5rem;
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
     border: 1px solid var(--field-border);
     border-radius: var(--radius-control);
     background-color: var(--field-surface);
-    padding: 0.6875rem 0.875rem;
+    padding: 0.4375rem 0.875rem;
     color: var(--ink);
     font-size: 0.9375rem;
     line-height: 1.5;
