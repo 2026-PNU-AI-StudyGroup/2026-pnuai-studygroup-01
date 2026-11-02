@@ -12,7 +12,7 @@ export function MemberContactDialogButton({ name, email, contacts }: { name: str
       <button
         type="button"
         aria-label={`${name} 연락처`}
-        className="text-left font-semibold text-[var(--ink)] hover:text-[var(--accent)] hover:underline"
+        className="text-left text-sm font-medium text-[var(--ink)] hover:text-[var(--primary)] hover:underline hover:underline-offset-[3px]"
         onClick={() => dialogRef.current?.showModal()}
       >
         {name}

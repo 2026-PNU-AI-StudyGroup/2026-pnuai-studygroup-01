@@ -29,7 +29,7 @@ export default async function ReceivedRecruitmentApplicationsPage({
   ).listReceivedApplications(actor, teamId);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/received" panel={<StudentTeamPanel currentPath="/recruitments/received" />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/received" crumbs={[{ label: "받은 지원" }]} panel={<StudentTeamPanel currentPath="/recruitments/received" />}>
       <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
           <ReceivedRecruitmentApplicationsView applications={applications} teamId={teamId} />

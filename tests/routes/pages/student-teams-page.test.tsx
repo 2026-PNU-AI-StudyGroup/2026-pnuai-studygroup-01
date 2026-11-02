@@ -25,8 +25,8 @@ vi.mock("@/app/_components/app-shell", () => ({
 vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamSectionLayout: ({ children }: { children: ReactNode }) => <>{children}</>,
   StudentTeamPanel: () => null,
-  StudentTeamPageIntro: ({ title, description, action, meta }: { title: string; description: string; action?: ReactNode; meta?: ReactNode }) => (
-    <header><h1>{title}</h1><p>{description}</p>{meta}<div>{action}</div></header>
+  StudentTeamPageIntro: ({ title, finding, action }: { title: string; finding?: ReactNode; action?: ReactNode }) => (
+    <header><h1>{title}</h1><p>{finding}</p><div>{action}</div></header>
   ),
 }));
 vi.mock("@/app/teams/_components/student-team-ledger", () => ({
@@ -54,6 +54,19 @@ describe("StudentTeamsPage", () => {
     expect(screen.getAllByText("참여 중인 팀")).toHaveLength(1);
     expect(screen.getAllByText("1개")).toHaveLength(1);
     expect(screen.queryByRole("link", { name: /받은 초대/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "받은 팀 초대 목록" })).not.toBeInTheDocument();
+  });
+
+  it("받은 초대는 모달을 거치지 않고 팀 목록 위에서 바로 응답한다", async () => {
+    listWorkspace.mockResolvedValue({
+      teams: [],
+      invitations: [{ id: "invite-1", teamId: "team-9", teamName: "AI 튜터", leaderName: "이도윤", status: "PENDING", createdAt: new Date("2026-10-30") }],
+    });
+
+    render(await StudentTeamsPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText("받은 팀 초대 1건이 응답을 기다립니다.")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "받은 팀 초대 목록" })).toHaveTextContent("AI 튜터");
   });
 
   it("팀과 초대가 없으면 빈 상태의 팀 만들기 진입점만 보여준다", async () => {

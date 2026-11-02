@@ -2,7 +2,6 @@ import Link from "next/link";
 import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { ReactNode } from "react";
-import { ExplorerHero } from "@/shared/ui/explorer-hero";
 import { PaginationDirectionLink } from "@/shared/ui/icon-button";
 import { ResponsiveSectionNavigation } from "@/shared/ui/responsive-section-navigation";
 import { sidebarGroupLabelClass, sidebarRowClass } from "@/shared/ui/sidebar-row";
@@ -108,22 +107,28 @@ export function StudentTeamSectionLayout({ children }: { children: ReactNode }) 
   return <div className="min-w-0 px-5 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-12 lg:pt-8 xl:px-12 2xl:px-14"><UiText>{children}</UiText></div>;
 }
 
-export function StudentTeamPageIntro({ title, description, action, meta }: { title: string; description?: ReactNode; action?: ReactNode; meta?: ReactNode }) {
+/**
+ * 팀 모집 화면의 제목 줄. 내 프로젝트 화면과 같은 꼴로, 제목 아래에 데이터에서 뽑은 한 줄을 두고
+ * 오른쪽에 그 화면의 할 일 버튼을 둔다.
+ */
+export function StudentTeamPageIntro({ title, finding, action }: { title: string; finding?: ReactNode; action?: ReactNode }) {
   return (
-    <ExplorerHero
-      title={<UiText>{title}</UiText>}
-      description={description ? <UiText>{description}</UiText> : undefined}
-      context={meta}
-      action={action}
-    />
+    <section aria-labelledby="student-team-title" className="flex flex-wrap items-end gap-x-4 gap-y-3">
+      <div className="min-w-0 flex-1">
+        <h1 id="student-team-title" className="text-2xl font-bold leading-[1.875rem] text-[var(--ink)]"><UiText>{title}</UiText></h1>
+        {finding ? <p className="mt-1.5 text-sm text-[var(--ink)]">{finding}</p> : null}
+      </div>
+      {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
+    </section>
   );
 }
 
+/** 목록 카드 맨 아래 줄. 몇 쪽 중 몇 쪽인지와 앞뒤 이동만 둔다. */
 export function StudentTeamPagination({ page, totalPages, total, href }: { page: number; totalPages: number; total: number; href: (page: number) => string }) {
   if (totalPages <= 1) return null;
   return (
-    <UiNav aria-label="페이지 이동" className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-6">
-      <span className="text-sm text-[var(--muted)]"><UiText>{"전체"}</UiText>{" "}{total}<UiText>{"개 ·"}</UiText>{" "}{page}/{totalPages} {" "}<UiText>{"페이지"}</UiText></span>
+    <UiNav aria-label="페이지 이동" className="flex items-center justify-between gap-4 border-t border-[var(--line)] px-5 py-2.5">
+      <span className="text-[0.8125rem] tabular-nums text-[var(--muted)]"><UiText>{`전체 ${total}건`}</UiText>, {page} / {totalPages}<UiText>{"페이지"}</UiText></span>
       <div className="flex items-center gap-1">
         {page > 1 ? <PaginationDirectionLink direction="previous" href={href(page - 1)} /> : null}
         {page < totalPages ? <PaginationDirectionLink direction="next" href={href(page + 1)} /> : null}

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
@@ -14,9 +13,9 @@ import {
   StudentTeamPanel,
   StudentTeamSectionLayout,
 } from "@/modules/student-team/ui/student-team-section-layout";
+import { SentApplicationList } from "@/app/recruitments/_components/sent-application-list";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
 import { recruitMembersEntry } from "@/app/recruitments/_lib/recruit-members-entry";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { AddIcon } from "@/shared/ui/workspace-icons";
@@ -24,13 +23,6 @@ import { AddIcon } from "@/shared/ui/workspace-icons";
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("지원 내역");
 }
-const statusPresentation = {
-  PENDING: { label: "검토 중", tone: "info" },
-  ACCEPTED: { label: "수락", tone: "success" },
-  REJECTED: { label: "거절", tone: "danger" },
-  CLOSED: { label: "모집 종료", tone: "neutral" },
-  WITHDRAWN: { label: "철회", tone: "neutral" },
-} as const;
 
 export default async function RecruitmentApplicationsPage({ searchParams }: { searchParams: Promise<{ page?: SearchParamValue }> }) {
   const actor = await getCurrentActor();
@@ -44,49 +36,37 @@ export default async function RecruitmentApplicationsPage({ searchParams }: { se
   const pageHref = (page: number) => page > 1 ? `/recruitments/applications?page=${page}` : "/recruitments/applications";
   const recruitEntry = await recruitMembersEntry(actor);
 
+  // 상태별 수는 한 쪽에 다 보일 때만 센다. 여러 쪽이면 이 쪽 몇 건만 세게 되어 틀린 수가 된다.
+  const counted = data.totalPages <= 1;
+  const pending = data.applications.filter(({ status }) => status === "PENDING").length;
+  const accepted = data.applications.filter(({ status }) => status === "ACCEPTED").length;
+  const finding = !counted || data.total === 0 ? undefined : pending ? (
+    <><b className="font-semibold"><UiText>{`검토 중인 지원 ${pending}건`}</UiText></b>{", "}<UiText>{"팀장이 수락하면 그 팀의 구성원이 됩니다."}</UiText></>
+  ) : accepted ? (
+    <UiText>{`수락된 지원이 ${accepted}건 있습니다. 합류한 팀은 내 팀에서 볼 수 있습니다.`}</UiText>
+  ) : (
+    <UiText>{"검토를 기다리는 지원이 없습니다."}</UiText>
+  );
+
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/applications" panel={<StudentTeamPanel currentPath="/recruitments/applications" />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/applications" crumbs={[{ label: "지원 내역" }]} panel={<StudentTeamPanel currentPath="/recruitments/applications" />}>
       <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
-          <div className="space-y-5">
+          <div className="grid gap-3.5">
             <StudentTeamPageIntro
               title="지원 내역"
-              meta={<span><UiText>{"지원 기록"}</UiText>{" "}{data.total}<UiText>{"개"}</UiText></span>}
+              finding={finding}
               action={(
-                <Link className="button-primary gap-2" href={recruitEntry.href}>
+                <Link className="button-primary button-compact gap-1.5" href={recruitEntry.href}>
                   <AddIcon className="size-4 shrink-0" /><UiText>{recruitEntry.label}</UiText>
                 </Link>
               )}
             />
 
-            {data.applications.length === 0 ? (
-              <EmptyState title="아직 지원 내역이 없습니다" description="모집 중인 팀을 확인하고 함께할 팀에 지원해 보세요." action={<Link className="button-secondary" href="/recruitments"><UiText>{"모집 공고 둘러보기"}</UiText></Link>} />
-            ) : (
-              <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-                <div className="hidden grid-cols-[minmax(0,1fr)_10rem_8rem] items-center gap-6 border-b border-[var(--line)] px-6 py-3 text-xs text-[var(--muted)] lg:grid">
-                  <span><UiText>{"지원한 모집"}</UiText></span>
-                  <span><UiText>{"지원일"}</UiText></span>
-                  <span className="text-right"><UiText>{"상태"}</UiText></span>
-                </div>
-                <ol>
-                  {data.applications.map((application) => (
-                    <li key={application.id} className="grid gap-4 border-b border-[var(--line)] px-6 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_10rem_8rem] lg:items-center lg:gap-6">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-[var(--accent)]">{application.teamName}</p>
-                        <h3 className="mt-1 truncate text-base font-semibold text-[var(--ink)]"><UiText>{application.postTitle}</UiText></h3>
-                        <p className="mt-1 truncate text-sm text-[var(--muted)]"><UiText>{application.topicTitle}</UiText> · {application.recruiterName}</p>
-                      </div>
-                      <p className="text-sm tabular-nums text-[var(--muted)]">
-                        <UiDate value={application.createdAt} mode="date" />
-                        {application.decidedAt ? <span className="mt-1 block text-xs"><UiDate value={application.decidedAt} mode="date" /> {" "}<UiText>{"처리"}</UiText></span> : null}
-                      </p>
-                      <div className="lg:text-right"><StatusBadge tone={statusPresentation[application.status].tone}><UiText>{statusPresentation[application.status].label}</UiText></StatusBadge></div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            <StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />
+            <SentApplicationList
+              data={data}
+              footer={<StudentTeamPagination page={data.page} totalPages={data.totalPages} total={data.total} href={pageHref} />}
+            />
           </div>
         </StudentTeamSectionLayout>
       </main>

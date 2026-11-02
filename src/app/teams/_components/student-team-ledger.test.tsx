@@ -24,7 +24,7 @@ const team: StudentTeamSummary = {
 };
 
 describe("StudentTeamLedger", () => {
-  it("팀별 상태와 관리 동작을 계층화된 카드에 표시한다", () => {
+  it("팀마다 한 줄에 역할, 구성원, 모집, 검토 대기와 관리 동작을 맞춰 적는다", () => {
     const { container } = render(<StudentTeamLedger teams={[team]} actorId="student-1" />);
 
     expect(screen.getByRole("list", { name: "참여 중인 팀 목록" })).toBeInTheDocument();
@@ -34,16 +34,25 @@ describe("StudentTeamLedger", () => {
     expect(screen.getByText("팀장")).toBeInTheDocument();
     expect(screen.getByText("2명")).toBeInTheDocument();
     expect(screen.getByText("김학생, 이학생")).toBeInTheDocument();
+    expect(screen.getByText("1건")).toBeInTheDocument();
     expect(screen.getByText("3명")).toBeInTheDocument();
+    // 줄 안의 버튼은 채운 버튼이 아니라 낮은 테두리 버튼이다. 채운 버튼은 제목 줄 하나뿐이다.
     const reviewLink = screen.getByRole("link", { name: "지원자 검토 3명" });
     expect(reviewLink).toHaveAttribute("href", "/recruitments/received?teamId=team-1");
-    expect(reviewLink).toHaveClass("button-primary");
+    expect(reviewLink).toHaveClass("button-secondary", "button-compact");
     const manageLink = screen.getByRole("link", { name: "팀 관리" });
     expect(manageLink).toHaveAttribute("href", "/teams/manage/team-1");
     expect(manageLink).toHaveClass("button-secondary");
     expect(screen.getAllByRole("link")).toHaveLength(2);
-    expect(container.querySelector("article")).toHaveClass("rounded-[var(--radius-panel)]");
-    expect(container.querySelector("article > div")?.className).not.toContain("bg-[var(--accent-subtle)]");
+    expect(container.querySelector("article")).not.toBeInTheDocument();
     expect(container.querySelector("li")).not.toHaveClass("record-row");
+  });
+
+  it("팀원으로 들어간 팀에는 검토 버튼을 달지 않는다", () => {
+    render(<StudentTeamLedger teams={[team]} actorId="student-2" />);
+
+    expect(screen.getByText("팀원")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /지원자 검토/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "팀 관리" })).toHaveAttribute("href", "/teams/manage/team-1");
   });
 });

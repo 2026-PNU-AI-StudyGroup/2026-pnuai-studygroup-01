@@ -28,27 +28,52 @@ vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { child
 vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamSectionLayout: ({ children }: { children: ReactNode }) => <>{children}</>,
   StudentTeamPanel: () => null,
-  StudentTeamPageIntro: ({ title, description, meta }: { title: string; description: string; meta?: ReactNode }) => <header><h1>{title}</h1><p>{description}</p><div>{meta}</div></header>,
+  StudentTeamPageIntro: ({ title, finding, action }: { title: string; finding?: ReactNode; action?: ReactNode }) => <header><h1>{title}</h1><p data-testid="finding">{finding}</p>{action}</header>,
   StudentTeamPagination: () => null,
 }));
 vi.mock("@/app/recruitments/_lib/recruit-members-entry", () => ({
   recruitMembersEntry: async () => ({ href: "/teams/manage/team-1?modal=recruitment", label: "팀원 모집하기" }),
 }));
-vi.mock("@/app/recruitments/_components/recruitment-post-list", () => ({
-  RecruitmentPostList: () => <div>모집 카드</div>,
+vi.mock("@/app/recruitments/_components/recruitment-post-list", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/app/recruitments/_components/recruitment-post-list")>(),
+  RecruitmentPostList: () => <div>모집 목록</div>,
 }));
 
+const day = 86_400_000;
+function post(id: string, overrides: Record<string, unknown>) {
+  return {
+    id, teamId: `team-${id}`, teamName: `팀 ${id}`, topicTitle: "", authorId: "student-2", authorName: "김하늘",
+    title: `공고 ${id}`, content: "", requiredSkills: [], roleNeeded: "", availability: "",
+    memberCount: 2, capacity: 4, createdAt: new Date(), deadlineAt: new Date(Date.now() + 9 * day),
+    canApply: true, isMember: false, ownApplication: null,
+    ...overrides,
+  };
+}
+
 describe("RecruitmentsPage", () => {
-  it("제목과 설명, 모집 수를 상단 소개 한 곳에서만 제공한다", async () => {
+  it("제목 아래 한 줄에 지금 지원할 수 있는 공고 수와 가장 먼저 닫히는 공고를 적는다", async () => {
     getCurrentActor.mockResolvedValue({ id: "student-1", name: "정하늘", role: "STUDENT" });
     getProfile.mockResolvedValue(null);
-    listPosts.mockResolvedValue({ posts: [], page: 1, totalPages: 1, total: 3 });
+    listPosts.mockResolvedValue({
+      page: 1,
+      totalPages: 1,
+      total: 4,
+      posts: [
+        post("a", { deadlineAt: new Date(Date.now() + 9 * day) }),
+        post("b", { teamName: "모두의 길", deadlineAt: new Date(Date.now() + 3 * day + 3_600_000) }),
+        // 내 공고, 이미 지원한 공고는 지원할 수 있는 수에서 빠진다.
+        post("c", { authorId: "student-1", deadlineAt: new Date(Date.now() + day) }),
+        post("d", { ownApplication: { status: "PENDING" } }),
+      ],
+    });
 
     render(await RecruitmentsPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getAllByRole("heading", { name: "둘러보기" })).toHaveLength(1);
-    expect(screen.getByText("다른 팀이 올린 모집 공고를 보고 지원하세요.")).toBeInTheDocument();
-    expect(screen.getByText("모집 중 3건")).toBeInTheDocument();
-    expect(screen.queryByText("필요한 역할과 기술, 활동 가능 시간을 비교할 수 있습니다.")).not.toBeInTheDocument();
+    const finding = screen.getByTestId("finding");
+    expect(finding).toHaveTextContent("지금 지원할 수 있는 공고 2건");
+    expect(finding).toHaveTextContent(/모두의 길 공고가 [34]일 뒤 가장 먼저 마감됩니다/);
+    expect(finding).toHaveTextContent("내 지원 1건은 팀장이 검토하고 있습니다.");
+    expect(screen.getByRole("link", { name: "팀원 모집하기" })).toHaveAttribute("href", "/teams/manage/team-1?modal=recruitment");
   });
 });

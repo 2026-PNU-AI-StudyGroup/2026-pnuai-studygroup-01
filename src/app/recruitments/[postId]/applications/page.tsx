@@ -27,7 +27,13 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
   const content = <RecruitmentApplicationsView post={post} actorRole={actor.role} />;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={actor.role === "STUDENT" ? "/recruitments/received" : "/dashboard"} panel={actor.role === "STUDENT" ? <StudentTeamPanel currentPath="/recruitments/received" /> : undefined}>
+    <AppShell
+      role={actor.role}
+      userId={actor.id}
+      userName={actor.name}
+      currentPath={actor.role === "STUDENT" ? "/recruitments/received" : "/dashboard"}
+      crumbs={actor.role === "STUDENT" ? [{ label: "받은 지원", href: "/recruitments/received" }, { label: post.title }] : [{ label: post.title }]}
+      panel={actor.role === "STUDENT" ? <StudentTeamPanel currentPath="/recruitments/received" /> : undefined}>
       <main className={actor.role === "STUDENT" ? "pb-28 lg:pb-0" : "content-shell"}>
         {actor.role === "STUDENT" ? <StudentTeamSectionLayout>{content}</StudentTeamSectionLayout> : content}
       </main>

@@ -45,7 +45,7 @@ export default async function StudentTeamManagePage({
   ]);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/teams/manage/${team.id}`} panel={<StudentTeamPanel currentPath={`/teams/manage/${team.id}`} />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={`/teams/manage/${team.id}`} crumbs={[{ label: "내 팀", href: "/teams" }, { label: team.name }]} panel={<StudentTeamPanel currentPath={`/teams/manage/${team.id}`} />}>
       <main className="pb-28 lg:pb-0">
         <StudentTeamSectionLayout>
           <StudentTeamManagementSections team={team} actorId={actor.id} recruitmentPosts={postData.posts} />

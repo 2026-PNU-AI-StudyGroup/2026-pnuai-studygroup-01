@@ -44,7 +44,7 @@ describe("RecruitmentPostList", () => {
       />,
     );
 
-    expect(screen.getAllByText("2/4명")).toHaveLength(1);
+    expect(screen.getAllByText("2 / 4명")).toHaveLength(1);
     expect(screen.queryByText("2자리 남음")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("모집자 김하늘")).not.toBeInTheDocument();
     expect(screen.queryByText("모집 내용 전체 보기")).not.toBeInTheDocument();
