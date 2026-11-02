@@ -7,8 +7,8 @@ export function PageHeader({ eyebrow, title, description, actions, compact = fal
   return (
     <header className={`flex flex-col sm:flex-row sm:items-end sm:justify-between ${compact ? "gap-4" : "gap-6"}`}>
       <div className="max-w-3xl">
-        {eyebrow ? <p className="text-[0.6875rem] font-bold tracking-[0.1em] text-[var(--muted)]"><UiText>{eyebrow}</UiText></p> : null}
-        <h1 className={`${eyebrow ? "mt-1.5" : ""} ${compact ? "text-[clamp(1.375rem,2vw,1.625rem)]" : "text-[clamp(1.5rem,2.4vw,1.875rem)]"} font-bold leading-[1.15] tracking-[-0.035em] text-[var(--ink)]`}><UiText>{title}</UiText></h1>
+        {eyebrow ? <p className="text-[0.8125rem] font-medium text-[var(--muted)]"><UiText>{eyebrow}</UiText></p> : null}
+        <h1 className={`${eyebrow ? "mt-1.5" : ""} ${compact ? "text-[clamp(1.375rem,2vw,1.625rem)]" : "text-[clamp(1.5rem,2.4vw,1.875rem)]"} font-bold leading-[1.2] tracking-[-0.02em] text-[var(--ink)]`}><UiText>{title}</UiText></h1>
         {description ? <p className={`max-w-2xl text-[0.9375rem] leading-6 text-[var(--muted)] ${compact ? "mt-2" : "mt-2.5"}`}><UiText>{description}</UiText></p> : null}
       </div>
       {actions ? <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 [&>*]:max-sm:flex-1">{actions}</div> : null}
@@ -30,7 +30,7 @@ export function EmptyState({ title, description, action, variant = "results" }: 
       : "flex min-h-16 flex-wrap items-center justify-between gap-3 py-4 text-left";
   const titleClassName = variant === "compact"
     ? "text-sm font-semibold text-[var(--ink)]"
-    : "text-lg font-semibold tracking-[-0.025em] text-[var(--ink)]";
+    : "text-lg font-semibold text-[var(--ink)]";
 
   return (
     <div className={containerClassName} data-empty-state={variant} role="status">
@@ -43,16 +43,17 @@ export function EmptyState({ title, description, action, variant = "results" }: 
   );
 }
 
+// 옅은 바탕에 같은 색 계열의 진한 글자. 테두리 없이 면으로만 구분한다.
 const statusStyle = {
-  neutral: "bg-[var(--surface-subtle)] text-[var(--muted)] ring-[var(--line-strong)]",
-  info: "bg-[var(--primary-subtle)] text-[var(--primary-hover)] ring-[color-mix(in_srgb,var(--primary)_24%,transparent)]",
-  success: "bg-[var(--success-subtle)] text-[var(--success)] ring-[color-mix(in_srgb,var(--success)_26%,transparent)]",
-  warning: "bg-[var(--warning-subtle)] text-[var(--warning-ink)] ring-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
-  danger: "bg-[var(--danger-subtle)] text-[var(--danger)] ring-[color-mix(in_srgb,var(--danger)_26%,transparent)]",
+  neutral: "bg-[var(--surface-subtle)] text-[var(--muted)]",
+  info: "bg-[var(--accent-subtle)] text-[var(--accent-ink)]",
+  success: "bg-[var(--success-subtle)] text-[var(--success)]",
+  warning: "bg-[var(--warning-subtle)] text-[var(--warning-ink)]",
+  danger: "bg-[var(--danger-subtle)] text-[var(--danger)]",
 } as const;
 
 export function StatusBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: keyof typeof statusStyle }) {
-  return <span className={`inline-flex min-h-7 items-center rounded-[0.375rem] px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyle[tone]}`}><UiText>{children}</UiText></span>;
+  return <span className={`inline-flex min-h-[1.375rem] shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${statusStyle[tone]}`}><UiText>{children}</UiText></span>;
 }
 
 export function ProgressBar({ value, label = "진행률" }: { value: number; label?: string }) {
@@ -60,10 +61,10 @@ export function ProgressBar({ value, label = "진행률" }: { value: number; lab
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-4 text-sm">
-        <span className="muted font-medium"><UiText>{label}</UiText></span><strong className="text-[var(--ink)]">{safeValue}%</strong>
+        <span className="muted font-medium"><UiText>{label}</UiText></span><strong className="tabular-nums text-[var(--ink)]">{safeValue}%</strong>
       </div>
-      <UiDiv className="h-2.5 overflow-hidden rounded-full bg-[var(--line)]" role="progressbar" aria-label={label} aria-valuenow={safeValue} aria-valuemin={0} aria-valuemax={100}>
-        <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${safeValue}%` }} />
+      <UiDiv className="h-1.5 overflow-hidden rounded-full bg-[var(--accent-subtle)]" role="progressbar" aria-label={label} aria-valuenow={safeValue} aria-valuemin={0} aria-valuemax={100}>
+        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${safeValue}%` }} />
       </UiDiv>
     </div>
   );

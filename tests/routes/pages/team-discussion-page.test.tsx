@@ -50,6 +50,7 @@ const workspace = {
   status: "IN_PROGRESS" as const,
   advisorEnabled: true,
   professorName: "김도윤",
+  professor: { id: "professor-1", name: "김도윤", profileImage: null },
   members: [{ id: "student-1", name: "정하늘", email: "student@pusan.ac.kr" }],
   assistants: [{ id: "assistant-1", name: "이서연", email: "assistant@pusan.ac.kr" }],
   discussionPosts: [
@@ -78,7 +79,7 @@ describe("TeamDiscussionPage", () => {
     loadActiveTeamWorkspace.mockResolvedValue({ actor, workspace });
   });
 
-  it("대화 계약을 유지하면서 메시지와 작성기를 하나의 흰색 패널로 묶는다", async () => {
+  it("대화 계약을 유지하면서 메시지와 작성기를 하나의 패널로 묶는다", async () => {
     const { container } = render(await TeamDiscussionPage({
       params: Promise.resolve({ projectId: "team-1" }),
       searchParams: Promise.resolve({ page: "2" }),
@@ -91,7 +92,7 @@ describe("TeamDiscussionPage", () => {
     const pageHeader = screen.getByRole("heading", { name: "팀 대화" }).closest("header");
     expect(pageHeader).not.toHaveClass("border-b");
 
-    expect(pageHeader?.querySelector("p")).toHaveTextContent("3명 참여 · 메시지 30개");
+    expect(pageHeader?.querySelector("p")).toHaveTextContent("3명이 참여하고 메시지는 30개입니다.");
 
     const messageLog = screen.getByRole("log", { name: "팀 대화" });
     const discussionPanel = messageLog.closest("div.overflow-hidden");
@@ -108,12 +109,12 @@ describe("TeamDiscussionPage", () => {
 
     const otherMessage = screen.getByRole("article", { name: "김도윤의 메시지" });
     expect(within(otherMessage).getByText("발표 범위를 먼저 정리해 주세요.").parentElement).toHaveClass(
-      "border-[var(--line-strong)]",
+      "border-[var(--line)]",
       "bg-[var(--surface-subtle)]",
     );
     const ownMessage = screen.getByRole("article", { name: "정하늘의 메시지" });
     expect(within(ownMessage).getByText("오늘 안에 초안을 공유하겠습니다.").parentElement).toHaveClass(
-      "bg-[var(--primary-subtle)]",
+      "bg-[var(--accent-subtle)]",
     );
 
     expect(screen.getByRole("link", { name: "최근 대화" })).toHaveAttribute("href", "/projects/team-1/discussion?page=1");

@@ -34,7 +34,7 @@ export function ProjectApprovalFilters({
   };
 
   return (
-    <UiDiv aria-label="승인 요청 필터" className="flex flex-wrap items-center gap-2">
+    <UiDiv aria-label="승인 요청 필터" className="grid gap-2 sm:grid-cols-[13rem_9rem]">
       <CustomSelect
         ariaLabel="프로그램"
         density="compact"
@@ -46,7 +46,7 @@ export function ProjectApprovalFilters({
           ...programs.map((program) => ({
             value: program.id,
             label: program.name,
-            description: `${program.category} · 승인 대기 ${pendingCountByProgram[program.id] ?? 0}건`,
+            description: `${program.category}, 승인 대기 ${pendingCountByProgram[program.id] ?? 0}건`,
           })),
         ]}
       />

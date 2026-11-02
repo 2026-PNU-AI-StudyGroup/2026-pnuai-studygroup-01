@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import Link from "next/link";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/topics/_components/topic-application-editor", () => ({
@@ -89,7 +88,7 @@ function ballot(voteCount: number | null): ProgramVoteBallot {
 }
 
 describe("ActiveProjectResults", () => {
-  it("프로젝트 등록 동작을 총 개수 행의 왼쪽에 표시한다", () => {
+  it("목록 머리에 총 개수와 검색 칸을 둔다", () => {
     render(
       <ActiveProjectResults
         topics={topics()}
@@ -97,27 +96,22 @@ describe("ActiveProjectResults", () => {
         leaderTeams={[]}
         query=""
         now={now}
-        registrationAction={<Link href="/projects/new">프로젝트 등록</Link>}
+        search={<input type="search" aria-label="프로젝트 검색" />}
       />,
     );
 
-    const registration = screen.getByRole("link", { name: "프로젝트 등록" });
-    const header = registration.parentElement;
-    const count = header?.querySelector("p");
-
-    expect(count).toHaveTextContent("총 1개");
-    expect(header?.firstElementChild).toBe(registration);
-    expect(header?.lastElementChild).toBe(count);
+    const list = screen.getByRole("region", { name: "프로젝트" });
+    expect(list).toHaveTextContent("1개");
+    expect(screen.getByRole("searchbox", { name: "프로젝트 검색" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "프로젝트 목록" })).toBeInTheDocument();
   });
 
   it("프로그램 공통 모집 기간 안에서만 지원을 표시한다", () => {
     render(<ActiveProjectResults topics={topics()} canApply leaderTeams={[]} query="" now={now} />);
 
     expect(screen.getByRole("button", { name: "지원" })).toBeInTheDocument();
-    const memberBadge = screen.getByText("1 / 4명");
-    expect(memberBadge.parentElement).toHaveClass("bg-[var(--success-subtle)]");
-    expect(memberBadge).toHaveClass("whitespace-nowrap");
-    expect(screen.getByText("모집 중")).toHaveClass("rounded-full", "text-white", "backdrop-blur-sm");
+    expect(screen.getByText("1 / 4명")).toHaveClass("whitespace-nowrap", "tabular-nums", "text-[var(--ink)]");
+    expect(screen.getByText("모집 중")).toHaveClass("rounded-full", "bg-[var(--accent-subtle)]");
   });
 
   it("공개된 0표는 표시하고 비공개 null 득표수는 숨긴다", () => {
@@ -130,7 +124,7 @@ describe("ActiveProjectResults", () => {
     expect(screen.queryByLabelText(/득표 \d+표/)).not.toBeInTheDocument();
   });
 
-  it("모집이 끝난 확정 팀은 진행 중 상태를 이미지에 표시한다", () => {
+  it("모집이 끝난 확정 팀은 진행 중 상태를 표시한다", () => {
     const activeTopics = topics();
     activeTopics.items[0].recruitmentEnabled = false;
     activeTopics.items[0].effectiveStatus = "IN_PROGRESS";
@@ -145,7 +139,7 @@ describe("ActiveProjectResults", () => {
     render(<ActiveProjectResults topics={topics(4)} canApply leaderTeams={[]} query="" now={now} />);
 
     expect(screen.queryByRole("button", { name: "지원" })).not.toBeInTheDocument();
-    expect(screen.getByText("4 / 4명").parentElement).toHaveClass("bg-[var(--surface-subtle)]");
+    expect(screen.getByText("4 / 4명")).toHaveClass("text-[var(--muted)]");
   });
 
   it("학생 팀 프로젝트 운영 프로그램에서는 직접 지원을 숨긴다", () => {
@@ -181,7 +175,8 @@ describe("ActiveProjectResults", () => {
     expect(screen.getByRole("link", { name: "진행 현황" })).toHaveAttribute("href", "/projects/50000000-0000-4000-8000-000000000001");
     expect(screen.getByRole("button", { name: "연락처 정보" })).toBeEnabled();
     expect(screen.getByRole("progressbar", { name: "보고서 제출률" })).toHaveAttribute("aria-valuenow", "50");
-    expect(screen.getByText(/1 \/ 2/)).toHaveTextContent("기한 초과 1건");
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+    expect(screen.getByText("기한 초과 1건")).toHaveClass("text-[var(--danger)]");
   });
 
   it("팀이 구성되지 않은 관리자 카드에는 보고서 진행 영역을 표시하지 않는다", () => {

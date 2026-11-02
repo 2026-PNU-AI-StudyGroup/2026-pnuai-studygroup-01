@@ -22,8 +22,8 @@ describe("StudentProjectRegistrationLink", () => {
       "href",
       "/topics?programId=program%2F2026&modal=project-registration",
     );
-    expect(link).toHaveClass("min-h-9", "px-3", "text-xs");
-    expect(link).not.toHaveClass("button-primary");
+    // 사업 머리 오른쪽의 하나뿐인 채운 버튼. 목록 줄 높이에 맞춘 낮은 버튼이다.
+    expect(link).toHaveClass("button-primary", "button-compact");
     expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 

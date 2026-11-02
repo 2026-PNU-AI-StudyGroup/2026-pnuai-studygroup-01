@@ -5,7 +5,6 @@ import { useState } from "react";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiDiv } from "@/modules/translation/ui/localized-elements";
 import { ChoiceCard } from "@/shared/ui/form-system";
-import { EmptyState } from "@/shared/ui/page-primitives";
 import styles from "@/app/topics/_management/program-submission-download.module.css";
 
 export type SubmissionTeamRow = {
@@ -25,7 +24,7 @@ export function ProgramSubmissionDownload({ programId, teams }: {
   const allSelected = downloadable.length > 0 && selectedCount === downloadable.length;
 
   if (teams.length === 0) {
-    return <EmptyState title="팀이 없습니다" description="프로젝트가 팀으로 확정되면 제출물을 내려받을 수 있습니다." />;
+    return <p role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"팀이 없습니다. 프로젝트가 팀으로 확정되면 제출물을 내려받을 수 있습니다."}</UiText></p>;
   }
 
   function toggle(teamId: string) {
@@ -62,7 +61,7 @@ export function ProgramSubmissionDownload({ programId, teams }: {
         <UiDiv className={styles.actions}>
           <button
             type="button"
-            className="button-secondary"
+            className="button-secondary button-compact min-h-8 px-3 font-medium"
             disabled={selectedCount === 0}
             onClick={() => download(selected)}
           >
@@ -70,7 +69,7 @@ export function ProgramSubmissionDownload({ programId, teams }: {
           </button>
           <button
             type="button"
-            className="button-primary"
+            className="button-secondary button-compact min-h-8 px-3 font-medium"
             disabled={downloadable.length === 0}
             onClick={() => download(null)}
           >
@@ -95,7 +94,7 @@ export function ProgramSubmissionDownload({ programId, teams }: {
             <span className={styles.files}>
               {team.fileCount > 0
                 ? <>{team.fileCount}<UiText>{"개"}</UiText></>
-                : <UiText>{"제출물 없음"}</UiText>}
+                : <span className="text-[var(--muted)]">0<UiText>{"개"}</UiText></span>}
             </span>
           </li>
         ))}

@@ -23,6 +23,7 @@ import { LanguagePopover } from "@/modules/translation/ui/language-popover";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { SIDEBAR_COOKIE, normalizeSidebarState } from "@/shared/ui/appearance";
 import { Brand } from "@/shared/ui/brand";
+import { sidebarRowClass } from "@/shared/ui/sidebar-row";
 import { SidebarToggle } from "@/shared/ui/sidebar-toggle";
 
 type NavigationItem = {
@@ -137,13 +138,28 @@ function NavIcon({ name, active = false }: { name: NavigationItem["icon"]; activ
   return <svg aria-hidden="true" viewBox="0 0 24 24" className={`size-5 shrink-0 ${active ? "fill-current" : "fill-none stroke-current stroke-[1.75]"}`}>{active ? filledPaths[name] : outlinePaths[name]}</svg>;
 }
 
-export async function AppShell({ role, userId, userName, currentPath, children, preferredLocale }: { role: UserRole; userId: string; userName: string; currentPath: string; children: ReactNode; preferredLocale?: SiteLocale }) {
+/** 위 막대 경로 한 칸. 현재 영역(주요 메뉴 이름) 뒤에 화면이 덧붙인다. */
+export type ShellCrumb = { label: string; href?: string };
+
+export async function AppShell({ role, userId, userName, currentPath, children, panel, crumbs = [], preferredLocale }: {
+  role: UserRole;
+  userId: string;
+  userName: string;
+  currentPath: string;
+  children: ReactNode;
+  /** 화면별 목록(프로그램, 운영 관리, 프로젝트 메뉴 등). 넓은 화면에서는 왼쪽 메뉴 아래, 휴대폰에서는 본문 위에 놓인다. */
+  panel?: ReactNode;
+  /** 현재 영역 뒤에 이어 붙일 경로. 마지막 칸이 지금 화면이다. */
+  crumbs?: ShellCrumb[];
+  preferredLocale?: SiteLocale;
+}) {
   if (currentPath !== "/onboarding") {
     await requireCompletedStudentOnboarding({ id: userId, role });
   }
   const locale = preferredLocale ?? await getUserLocale(userId);
+  // 목록과 경로도 저장된 번역을 쓴다. 본문만 넘기면 메뉴 칸의 프로그램 이름이 번역되지 않는다.
   const storedTranslations = await readStoredContentTranslations(
-    children,
+    [children, panel, crumbs],
     locale,
     new ReadStoredTranslationService(new PrismaStoredTranslationReader(prisma)),
   );
@@ -165,75 +181,89 @@ export async function AppShell({ role, userId, userName, currentPath, children, 
     ? role === "STUDENT" ? "학생" : role === "PROFESSOR" ? "교수" : role === "ADVISOR" ? "자문위원" : "관리자"
     : role === "STUDENT" ? "Student" : role === "PROFESSOR" ? "Professor" : role === "ADVISOR" ? "Advisor" : "Administrator";
   const shellCopy = locale === "ko"
-    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일" }
-    : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile" };
+    ? { skip: "본문으로 건너뛰기", navigation: "주요 메뉴", mobileNavigation: "모바일 주요 메뉴", mobileBrand: "부산대학교 학과 프로젝트 찾기 모바일", breadcrumb: "현재 위치" }
+    : { skip: "Skip to content", navigation: "Primary navigation", mobileNavigation: "Mobile navigation", mobileBrand: "Pusan National University project explorer mobile", breadcrumb: "Current location" };
+  const section = navigation.find((item) => isNavigationActive(item, currentPath, role));
+  const trail: ShellCrumb[] = [...(section ? [{ label: section.label, href: section.href }] : []), ...crumbs];
   // 접힘 여부는 루트 레이아웃이 html 에 이미 적어 두었다. 여기서는 손잡이가
   // 처음부터 같은 값을 들고 있도록 같은 쿠키를 한 번 더 읽는다.
   const cookieStore = await cookies();
   const sidebarState = normalizeSidebarState(cookieStore.get(SIDEBAR_COOKIE)?.value);
   return (
     <I18nProvider locale={locale} storedTranslations={storedTranslations}>
-    <div className="min-h-screen bg-[var(--workspace)]">
+    <div className={`${styles.root} min-h-screen bg-[var(--workspace)]`}>
       <a href="#main-content" className="skip-link">{shellCopy.skip}</a>
-      <div className={`${styles.root} min-h-screen bg-[var(--workspace)] lg:grid lg:grid-cols-[var(--shell-rail)_minmax(0,1fr)]`}>
-        {/* 접었을 때 왼쪽 가장자리에 손을 대면 레일과 목록이 잠깐 나온다. 손잡이가 함께 맡는다. */}
-        <SidebarToggle initialState={sidebarState} />
-        <aside className="shell-rail sticky top-0 z-40 hidden h-screen min-h-[42rem] border-r border-[var(--line)] bg-[var(--sidebar)] lg:block">
-          {/*
-            칸이 0 으로 줄어드는 동안 안쪽은 제 폭과 바탕색을 지킨다. 그래야 여닫는 동안
-            본문 위를 덮으며 미끄러지는 그림이 되고, 글자만 붕 떠 보이지 않는다.
-          */}
-          <div className="flex h-full w-[var(--shell-rail-open)] flex-col items-center bg-[var(--sidebar)] px-2 py-6">
-          <Brand href="/topics" variant="sidebar" />
-          <nav aria-label={shellCopy.navigation} className="mt-9 flex w-full flex-col gap-1">
-            {navigation.map((item) => {
-              const active = isNavigationActive(item, currentPath, role);
-              return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`group flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-control)] px-1 text-center text-[0.7rem] font-semibold leading-tight transition-colors ${active ? "bg-[var(--primary-subtle)] text-[var(--primary)]" : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
-                  <span className="grid size-9 place-items-center"><NavIcon name={item.icon} active={active} /></span>
-                  <span><UiText>{item.label}</UiText></span>
-                </Link>
-              );
-            })}
+      {/* 접었을 때 왼쪽 가장자리에 손을 대면 메뉴가 잠깐 나온다. 손잡이가 함께 맡는다. */}
+      <SidebarToggle initialState={sidebarState} />
+      {/*
+        넓은 화면: 왼쪽 메뉴 한 칸이 두 줄을 다 차지하고, 오른쪽은 위 막대와 본문.
+        휴대폰: 위 막대, 화면별 목록, 본문 순서로 쌓인다. 그래서 위 막대를 문서 맨 앞에 두고
+        넓은 화면에서는 칸 자리를 못 박는다. 메뉴가 접혀 격자에서 빠져도 본문이 당겨지지 않는다.
+      */}
+      <div className="lg:grid lg:min-h-screen lg:grid-cols-[var(--shell-sidebar)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+        <header className="shell-topbar sticky top-0 z-20 flex h-[4.5rem] items-center justify-between gap-5 border-b border-[var(--line)] bg-[var(--surface)] px-5 sm:px-8 lg:static lg:col-start-2 lg:row-start-1 lg:h-16 lg:bg-[var(--workspace)] lg:px-10">
+          <div className="lg:hidden"><Brand href="/topics" ariaLabel={shellCopy.mobileBrand} /></div>
+          <nav aria-label={shellCopy.breadcrumb} className="hidden min-w-0 lg:block">
+            <ol className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[0.8125rem] text-[var(--muted)]">
+              {trail.map((crumb, index) => {
+                const last = index === trail.length - 1;
+                const linked = crumb.href && !(last && crumb.href === currentPath);
+                return (
+                  <li key={`${index}-${crumb.label}`} className={`flex items-center gap-1.5 ${last ? "min-w-0" : "shrink-0"}`}>
+                    {index > 0 ? <span aria-hidden="true">/</span> : null}
+                    {linked
+                      ? <Link href={crumb.href!} className="snap-color hover:text-[var(--ink)]"><UiText>{crumb.label}</UiText></Link>
+                      : <span aria-current={last ? "page" : undefined} className="truncate font-medium text-[var(--ink)]"><UiText>{crumb.label}</UiText></span>}
+                  </li>
+                );
+              })}
+            </ol>
           </nav>
-          <div className="mt-auto flex w-full flex-col items-center gap-2 pt-4">
+          <div className="flex shrink-0 items-center gap-2">
             <NotificationIndicatorContainer
               userId={userId}
               active={currentPath === "/notifications"}
+              placement="below"
               openNotification={openNotificationAction}
             />
-            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} />
-            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} locale={locale} />
+            <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} placement="below" />
+            <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} />
           </div>
+        </header>
+        <aside className="shell-sidebar lg:sticky lg:top-0 lg:z-30 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-screen">
+          {/*
+            칸이 0 으로 줄어드는 동안 안쪽은 제 폭과 바탕색을 지킨다. 그래야 여닫는 동안
+            본문 위를 덮으며 미끄러지는 그림이 되고, 글자만 붕 떠 보이지 않는다.
+            목록이 길면 메뉴 칸 안에서만 스크롤한다.
+          */}
+          <div className="lg:flex lg:h-full lg:w-[var(--shell-sidebar-open)] lg:flex-col lg:overflow-y-auto lg:border-r lg:border-[var(--line)] lg:bg-[var(--sidebar)] lg:px-3 lg:pb-6">
+            <div className="hidden shrink-0 lg:block">
+              <div className="flex h-16 items-center px-2"><Brand href="/topics" variant="sidebar" /></div>
+              <nav aria-label={shellCopy.navigation} className="mt-2 flex flex-col gap-0.5">
+                {navigation.map((item) => {
+                  const active = isNavigationActive(item, currentPath, role);
+                  return (
+                    <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={sidebarRowClass(active)}>
+                      <NavIcon name={item.icon} />
+                      <UiText>{item.label}</UiText>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+            {panel ? <div className="border-b border-[var(--line)] lg:mt-6 lg:border-b-0">{panel}</div> : null}
           </div>
         </aside>
-        <div className="min-w-0 bg-[var(--workspace)]">
-          <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface-glass)] backdrop-blur-xl lg:hidden">
-            <div className="flex h-[4.5rem] items-center justify-between gap-5 px-5 sm:px-8">
-              <div><Brand href="/topics" ariaLabel={shellCopy.mobileBrand} /></div>
-              <div className="flex items-center gap-2">
-                <NotificationIndicatorContainer
-                  userId={userId}
-                  active={currentPath === "/notifications"}
-                  placement="below"
-                  openNotification={openNotificationAction}
-                />
-                <LanguagePopover locale={locale} updateLanguage={updateLanguageAction} placement="below" />
-                <AccountPopover userName={userName} roleLabel={roleLabel} active={isSectionActive("/account", currentPath)} accountPageCurrent={currentPath === "/account"} placement="below" locale={locale} />
-              </div>
-            </div>
-          </header>
-          <div id="main-content" tabIndex={-1} className={styles.mainContent}><UiText>{children}</UiText></div>
-        </div>
-        <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-[var(--surface-glass)] px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_35px_rgba(31,35,48,.08)] backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
-          {navigation.map((item) => {
-            const active = isNavigationActive(item, currentPath, role);
-            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;
-          })}
-        </nav>
-        <AppToaster />
-        <PopupAnnouncements />
+        <div id="main-content" tabIndex={-1} className={`${styles.mainContent} min-w-0 lg:col-start-2 lg:row-start-2`}><UiText>{children}</UiText></div>
       </div>
+      <nav aria-label={shellCopy.mobileNavigation} className="fixed inset-x-0 bottom-0 z-30 grid border-t border-[var(--line)] bg-[var(--surface)] px-2 pb-[env(safe-area-inset-bottom)] lg:hidden" style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}>
+        {navigation.map((item) => {
+          const active = isNavigationActive(item, currentPath, role);
+          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`snap-color my-1 flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}><NavIcon name={item.icon} active={active} /><UiText>{item.label}</UiText></Link>;
+        })}
+      </nav>
+      <AppToaster />
+      <PopupAnnouncements />
     </div>
     </I18nProvider>
   );

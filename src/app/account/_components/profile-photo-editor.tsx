@@ -119,8 +119,8 @@ export function ProfilePhotoEditor({
         <PersonAvatar userId={userId} updatedAt={updatedAt} className="size-16" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold"><UiText>{"프로필 사진"}</UiText></p>
-        <p className="mt-1 text-xs leading-5 text-[var(--muted)]"><UiText>{"JPEG, PNG, WebP · 최대 5MiB · 가운데가 보이도록 표시됩니다."}</UiText></p>
+        <p className="text-sm font-medium text-[var(--ink)]"><UiText>{"프로필 사진"}</UiText></p>
+        <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]"><UiText>{"JPEG, PNG, WebP · 최대 5MiB · 가운데가 보이도록 표시됩니다."}</UiText></p>
         {state === "uploading" ? (
           <div className="mt-2" aria-live="polite">
             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-subtle)]"><div className="h-full bg-[var(--primary)] transition-[width]" style={{ width: `${progress}%` }} /></div>
@@ -128,8 +128,8 @@ export function ProfilePhotoEditor({
           </div>
         ) : null}
         {message ? <p aria-live="polite" className={`mt-2 text-xs font-semibold ${state === "failed" ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>{message}</p> : null}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <label className={`button-secondary cursor-pointer ${state === "uploading" ? "pointer-events-none opacity-50" : ""}`}>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <label className={`button-secondary button-compact min-h-8 cursor-pointer px-3 font-medium ${state === "uploading" ? "pointer-events-none opacity-50" : ""}`}>
             <span><UiText>{updatedAt ? "사진 교체" : "사진 설정"}</UiText></span>
             <FileInput
               ref={inputRef}
@@ -139,7 +139,7 @@ export function ProfilePhotoEditor({
               onChange={(event) => void selectPhoto(event.currentTarget.files?.[0])}
             />
           </label>
-          {state === "uploading" ? <button type="button" className="button-quiet" onClick={() => controllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
+          {state === "uploading" ? <button type="button" className="button-quiet button-compact min-h-8 px-3 font-medium" onClick={() => controllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
           {updatedAt ? <IconButton type="button" className="text-[var(--danger)] hover:text-[var(--danger)]" onClick={() => setDeleteConfirmationOpen(true)} aria-label="프로필 사진 삭제" title="프로필 사진 삭제"><TrashIcon className="size-5" /></IconButton> : null}
         </div>
       </div>

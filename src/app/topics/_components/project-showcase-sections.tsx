@@ -1,4 +1,5 @@
 import type { ProjectMediaItem } from "@/app/topics/_components/project-media-carousel";
+import { cardClass, CardHead } from "@/modules/project-program/ui/work-screen";
 import { resolveShowcaseRepository } from "@/modules/team/domain/showcase-repository";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { GithubIcon } from "@/shared/ui/github-icon";
@@ -37,28 +38,25 @@ export { resolveShowcaseRepository };
  * 저장소로 보내는 첫 손잡이.
  *
  * 심사는 리드미를 읽고 이뤄지는데 저장소 링크가 사진과 소개 아래에 묻혀 있어 거기까지
- * 닿지 못한다는 이야기를 들었다. 제목 옆에 두어 스크롤 없이 보이게 한다.
+ * 닿지 못한다는 이야기를 들었다. 프로젝트 머리의 버튼 자리에 두어 스크롤 없이 보이게 한다.
  */
-export function ProjectRepositoryCallout({ repository }: {
+export function ProjectRepositoryCallout({ repository, primary = false }: {
   repository: NonNullable<ReturnType<typeof resolveShowcaseRepository>>;
+  /** 지원처럼 더 앞선 할 일이 없을 때만 채운 버튼으로 둔다. */
+  primary?: boolean;
 }) {
   return (
-    <div>
-      <p className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"소스와 문서"}</UiText></p>
-      <p className="mt-2 truncate text-sm font-bold text-[var(--ink)]" title={`${repository.owner}/${repository.repo}`}>
-        {repository.owner}/{repository.repo}
-      </p>
-      <a
-        href={repository.url}
-        target="_blank"
-        rel="noreferrer"
-        className="button-primary mt-3 w-full gap-2"
-      >
-        <GithubIcon className="size-4 shrink-0" />
-        <UiText>{"README 보러 가기"}</UiText>
-        <span className="sr-only"> <UiText>{"새 창"}</UiText></span>
-      </a>
-    </div>
+    <a
+      href={repository.url}
+      target="_blank"
+      rel="noreferrer"
+      title={`${repository.owner}/${repository.repo}`}
+      className={`${primary ? "button-primary" : "button-secondary"} button-compact gap-1.5`}
+    >
+      <GithubIcon className="size-4 shrink-0" />
+      <UiText>{"README 보러 가기"}</UiText>
+      <span className="sr-only"> <UiText>{"새 창"}</UiText></span>
+    </a>
   );
 }
 
@@ -102,55 +100,42 @@ export function ProjectArtifactSection({ artifacts, sourceUrl, embeddedIds, gall
   // 위에서 저장소를 안내했고 그 밖에 내보일 것이 없으면 빈 제목만 남는다. 통째로 접는다.
   if (repositoryShownAbove && !hasResults) return null;
 
+  const rowClass = "flex min-w-0 items-center gap-3 py-2.5 text-sm [&+li]:border-t [&+li]:border-[var(--line)]";
   return (
-    <section aria-labelledby="project-artifacts">
-      <h2 id="project-artifacts" className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--muted)]"><UiText>{"공개 결과물"}</UiText></h2>
+    <section aria-labelledby="project-artifacts" className={cardClass}>
+      <CardHead id="project-artifacts" title={<UiText>{"공개 결과물"}</UiText>} count={hasResults ? <>{(github ? 1 : 0) + (plainSourceUrl ? 1 : 0) + rest.length}<UiText>{"개"}</UiText></> : undefined} />
       {hasResults ? (
-        <div className="mt-3 space-y-3">
+        <ul className="px-5 pb-2">
           {github ? (
-            <a href={github.url} target="_blank" rel="noreferrer" className="group flex items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] p-4 transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]">
-              <span className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--ink)] text-white"><GithubIcon className="size-5" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-[var(--ink)]">{github.owner}/{github.repo}</span>
-                <span className="mt-0.5 block truncate text-xs font-semibold text-[var(--muted)]"><UiText>{"GitHub 저장소"}</UiText></span>
-              </span>
-              <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" />
-            </a>
+            <li className={rowClass}>
+              <GithubIcon className="size-4 shrink-0 text-[var(--muted)]" />
+              <a href={github.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-medium text-[var(--ink)] hover:text-[var(--primary)]">{github.owner}/{github.repo}</a>
+              <span className="shrink-0 text-xs text-[var(--muted)]"><UiText>{"GitHub 저장소"}</UiText></span>
+            </li>
           ) : null}
           {plainSourceUrl ? (
-            <a href={plainSourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] p-4 transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]">
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-[var(--ink)]"><UiText>{"프로젝트 링크"}</UiText></span>
-                <span className="mt-0.5 block truncate text-xs font-semibold text-[var(--muted)]">{plainSourceUrl}</span>
-              </span>
+            <li className={rowClass}>
               <ExternalLinkIcon className="size-4 shrink-0 text-[var(--muted)]" />
-            </a>
+              <a href={plainSourceUrl} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-medium text-[var(--ink)] hover:text-[var(--primary)]"><UiText>{"프로젝트 링크"}</UiText></a>
+              <span className="min-w-0 max-w-[50%] truncate text-xs text-[var(--muted)]">{plainSourceUrl}</span>
+            </li>
           ) : null}
-          {rest.length ? (
-            <ul className="flex flex-wrap gap-2">
-              {rest.map((artifact) => {
-                const chip = <>
-                  {artifact.type === "SOURCE_CODE" ? <GithubIcon className="size-4 shrink-0" /> : <DocumentIcon className="size-4 shrink-0 text-[var(--muted)]" />}
-                  <span className="truncate text-sm font-semibold text-[var(--ink)]"><UiText>{artifact.title}</UiText></span>
-                  <span className="shrink-0 text-[0.6875rem] font-semibold text-[var(--muted)]">{ARTIFACT_TYPE_LABEL[artifact.type]}</span>
-                  {artifact.fileId || artifact.externalUrl ? <ExternalLinkIcon className="size-3.5 shrink-0 text-[var(--muted)]" /> : null}
-                </>;
-                const base = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--line)] px-3.5 py-2";
-                const hover = "transition-colors hover:border-[var(--field-border)] hover:bg-[var(--surface-subtle)]";
-                return (
-                  <li key={artifact.id}>
-                    {artifact.fileId
-                      ? <a className={`${base} ${hover}`} href={`/api/files/${artifact.fileId}`}>{chip}</a>
-                      : artifact.externalUrl
-                        ? <a className={`${base} ${hover}`} href={artifact.externalUrl} target="_blank" rel="noreferrer">{chip}<span className="sr-only"> <UiText>{"새 창"}</UiText></span></a>
-                        : <span className={`${base} text-[var(--muted)]`}>{chip}</span>}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-        </div>
-      ) : <p className="mt-3 text-sm leading-6 text-[var(--muted)]"><UiText>{"공개 결과물 준비 중"}</UiText></p>}
+          {rest.map((artifact) => {
+            const label = <span className="min-w-0 flex-1 truncate font-medium"><UiText>{artifact.title}</UiText></span>;
+            return (
+              <li key={artifact.id} className={rowClass}>
+                {artifact.type === "SOURCE_CODE" ? <GithubIcon className="size-4 shrink-0 text-[var(--muted)]" /> : <DocumentIcon className="size-4 shrink-0 text-[var(--muted)]" />}
+                {artifact.fileId
+                  ? <a className="flex min-w-0 flex-1 text-[var(--ink)] hover:text-[var(--primary)]" href={`/api/files/${artifact.fileId}`}>{label}</a>
+                  : artifact.externalUrl
+                    ? <a className="flex min-w-0 flex-1 text-[var(--ink)] hover:text-[var(--primary)]" href={artifact.externalUrl} target="_blank" rel="noreferrer">{label}<span className="sr-only"> <UiText>{"새 창"}</UiText></span></a>
+                    : <span className="flex min-w-0 flex-1 text-[var(--muted)]">{label}</span>}
+                <span className="shrink-0 text-xs text-[var(--muted)]"><UiText>{ARTIFACT_TYPE_LABEL[artifact.type]}</UiText></span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : <p className="px-5 pb-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"공개 결과물 준비 중"}</UiText></p>}
     </section>
   );
 }

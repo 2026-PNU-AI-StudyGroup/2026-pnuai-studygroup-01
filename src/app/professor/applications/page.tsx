@@ -1,14 +1,15 @@
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 
 import { requireProfessorWorkspaceActor } from "@/app/professor/_lib/professor-workspace-access";
 import { ReceivedApplicationList } from "@/app/professor/applications/_components/received-application-list";
+import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
 import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { ListReceivedTopicApplicationsService } from "@/modules/topic-application/application/list-received-topic-applications";
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { EmptyState } from "@/shared/ui/page-primitives";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import type { ProfessorTopicApplicationStatus } from "@/modules/topic-application/application/topic-application-ports";
 
@@ -36,13 +37,17 @@ export default async function ProfessorApplicationsPage({ searchParams }: {
   const applications = await new ListReceivedTopicApplicationsService(
     new PrismaTopicApplicationQueryRepository(prisma),
   ).execute(actor, requestedPage, 20, status, query);
+  const pending = applications.counts.PENDING;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications">
-      <ProfessorWorkspace currentPath="/professor/applications" role={actor.role} title="지원 검토" description="대기 중인 지원부터 확인하고, 지원서와 팀 구성을 근거로 프로젝트 참여 여부를 결정합니다.">
-        {applications.total === 0 && !status && !query.trim()
-          ? <EmptyState title="아직 받은 지원서가 없습니다" description="학생이 프로젝트에 지원하면 이 목록에 표시됩니다." />
-          : <ReceivedApplicationList page={applications} status={status} query={query.trim().slice(0, 100)} />}
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/professor/applications" crumbs={[{ label: "지원 검토" }]} panel={<ProfessorSidebar currentPath="/professor/applications" role={actor.role} />}>
+      <ProfessorWorkspace
+        title="지원 검토"
+        description={pending
+          ? <b className="font-semibold"><UiText>{`검토를 기다리는 지원이 ${pending}건 있습니다.`}</UiText></b>
+          : <UiText>{"검토할 지원이 없습니다."}</UiText>}
+      >
+        <ReceivedApplicationList page={applications} status={status} query={query.trim().slice(0, 100)} />
       </ProfessorWorkspace>
     </AppShell>
   );

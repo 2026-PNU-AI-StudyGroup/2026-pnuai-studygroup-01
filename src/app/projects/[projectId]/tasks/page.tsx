@@ -5,7 +5,7 @@ import {
   TaskCreateDialog,
   TaskEditDialog,
 } from "@/app/projects/[projectId]/_components/task-forms";
-import { WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
+import { monthDay, WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import {
   taskDeadlineState,
   presentTasks,
@@ -13,22 +13,41 @@ import {
 } from "@/modules/team/ui/task-presentation";
 import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
 import type { TeamWorkspace } from "@/modules/team/application/team-workspace-ports";
+import { cardClass, CardHead, daysLabel, daysUntil, Pill } from "@/modules/project-program/ui/work-screen";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { EmptyState, StatusBadge } from "@/shared/ui/page-primitives";
-import { CheckIcon } from "@/shared/ui/workspace-icons";
+import { EmptyState } from "@/shared/ui/page-primitives";
+import { PersonAvatar } from "@/shared/ui/person-avatar";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트 할 일");
 }
 
 const taskStatus = {
-  TODO: ["할 일", "info"],
-  IN_PROGRESS: ["진행 중", "warning"],
-  DONE: ["완료", "success"],
+  TODO: { label: "할 일", tone: "plain" },
+  IN_PROGRESS: { label: "진행 중", tone: "accent" },
+  DONE: { label: "완료", tone: "plain" },
 } as const;
 
-function TaskCard({
+/*
+  할 일 표. 목록 폭이 40rem 이상이면 할 일, 담당자, 날짜, 상태, 버튼 다섯 칸이 줄을 맞추고,
+  좁으면 담당자와 날짜, 상태가 제목 밑 한 줄로 흐른다. 버튼은 오른쪽 칸에 남는다.
+*/
+const rowGrid = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 @min-[40rem]:grid-cols-[minmax(0,1fr)_10rem_7rem_4.5rem_8.5rem] @min-[40rem]:gap-x-5";
+
+function TaskTableHead({ dateLabel }: { dateLabel: string }) {
+  return (
+    <div aria-hidden="true" className={`${rowGrid} hidden h-9 px-5 text-xs text-[var(--muted)] @min-[40rem]:grid`}>
+      <span><UiText>{"할 일"}</UiText></span>
+      <span><UiText>{"담당자"}</UiText></span>
+      <span className="text-right"><UiText>{dateLabel}</UiText></span>
+      <span><UiText>{"상태"}</UiText></span>
+      <span />
+    </div>
+  );
+}
+
+function TaskRow({
   task,
   teamId,
   members,
@@ -41,70 +60,40 @@ function TaskCard({
   canEdit: boolean;
   now: Date;
 }) {
-  const deadlineState = taskDeadlineState(task, now);
-  const titleId = `task-title-${task.id}`;
+  const overdue = taskDeadlineState(task, now) === "OVERDUE";
   const displayedDate = task.completedAt ?? task.dueAt;
+  const assignees = task.assignees.map(({ name }) => name).join(", ");
 
   return (
-    <article
-      aria-labelledby={titleId}
-      className={`h-full overflow-hidden rounded-[var(--radius-panel)] border bg-[var(--surface)] shadow-[0_10px_30px_rgba(31,35,48,0.055)] ${
-        deadlineState === "OVERDUE"
-          ? "border-[color-mix(in_srgb,var(--danger)_35%,var(--line))]"
-          : deadlineState === "COMPLETE"
-            ? "border-[color-mix(in_srgb,var(--success)_22%,var(--line))]"
-            : "border-[var(--line)]"
-      }`}
-    >
-      <div className="p-5 sm:p-6">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge tone={taskStatus[task.status][1]}><UiText>{taskStatus[task.status][0]}</UiText></StatusBadge>
-              <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-[0.375rem] px-2.5 py-1 text-xs font-semibold ${
-                deadlineState === "OVERDUE"
-                  ? "bg-[var(--danger-subtle)] text-[var(--danger)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--danger)_26%,transparent)]"
-                  : deadlineState === "COMPLETE"
-                    ? "bg-[var(--surface-subtle)] text-[var(--muted)]"
-                    : "bg-[var(--surface-subtle)] text-[var(--muted)] ring-1 ring-inset ring-[var(--line-strong)]"
-              }`}>
-                <UiText>{task.status === "DONE" ? "완료일" : "완료 예정"}</UiText>
-                <time dateTime={displayedDate.toISOString()}><UiDate value={displayedDate} mode="date" /></time>
-              </span>
-              {deadlineState === "OVERDUE" ? <StatusBadge tone="danger"><UiText>{"기한 초과"}</UiText></StatusBadge> : null}
-            </div>
-            <h3 id={titleId} className="mt-3 break-words text-lg font-bold leading-7 tracking-[-0.025em] text-[var(--ink)]">
-              <UiText>{task.title}</UiText>
-            </h3>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {canEdit ? (
-              <>
-                <TaskCompletionForm teamId={teamId} taskId={task.id} title={task.title} status={task.status} />
-                <TaskEditDialog
-                  teamId={teamId}
-                  taskId={task.id}
-                  title={task.title}
-                  dueAt={task.dueAt}
-                  status={task.status}
-                  assigneeIds={task.assignees.map(({ id }) => id)}
-                  members={members}
-                />
-              </>
-            ) : null}
-          </div>
-        </header>
-
-        <dl className="mt-5 text-sm">
-          <div className="min-w-0">
-            <dt className="text-xs font-bold text-[var(--muted)]"><UiText>{"담당자"}</UiText></dt>
-            <dd className="mt-1.5 break-words font-bold text-[var(--ink)]">
-              <UiText>{task.assignees.map(({ name }) => name).join(", ") || "미지정"}</UiText>
-            </dd>
-          </div>
-        </dl>
+    <li className={`${rowGrid} border-t border-[var(--line)] px-5 py-2.5 text-[0.8125rem] transition-colors hover:bg-[#fafbfc]`}>
+      <h3 className="min-w-0 break-words text-sm font-medium leading-5 text-[var(--ink)]"><UiText>{task.title}</UiText></h3>
+      <div className="col-start-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 @min-[40rem]:contents">
+        <span className={`min-w-0 truncate ${assignees ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}><UiText>{assignees || "미지정"}</UiText></span>
+        <span className="flex items-baseline gap-1.5 whitespace-nowrap tabular-nums @min-[40rem]:flex-col @min-[40rem]:items-end @min-[40rem]:gap-0 @min-[40rem]:leading-4">
+          <time dateTime={displayedDate.toISOString()} className="text-[var(--ink)]"><UiDate value={displayedDate} mode="date" /></time>
+          {task.status === "DONE" ? null : overdue
+            ? <span className="text-xs font-medium text-[var(--danger)]"><UiText>{"기한 초과"}</UiText></span>
+            : <span className="text-xs text-[var(--muted)]"><UiText>{daysLabel(daysUntil(task.dueAt, now))}</UiText></span>}
+        </span>
+        <span><Pill tone={taskStatus[task.status].tone}>{taskStatus[task.status].label}</Pill></span>
       </div>
-    </article>
+      <div className="col-start-2 row-span-2 row-start-1 flex justify-end gap-1.5 @min-[40rem]:col-start-auto @min-[40rem]:row-span-1 @min-[40rem]:row-start-auto">
+        {canEdit ? (
+          <>
+            <TaskCompletionForm teamId={teamId} taskId={task.id} title={task.title} status={task.status} />
+            <TaskEditDialog
+              teamId={teamId}
+              taskId={task.id}
+              title={task.title}
+              dueAt={task.dueAt}
+              status={task.status}
+              assigneeIds={task.assignees.map(({ id }) => id)}
+              members={members}
+            />
+          </>
+        ) : null}
+      </div>
+    </li>
   );
 }
 
@@ -115,88 +104,112 @@ export default async function TeamTasksPage({ params }: { params: Promise<{ proj
   const emptyDescription = workspace.status === "COMPLETED" ? "프로젝트 종료 전에 만든 할 일이 없습니다." : !workspace.access.canContribute ? "팀원이 첫 할 일을 만들면 작업 상태를 확인할 수 있습니다." : "첫 할 일과 완료 예정일, 담당자를 정해 주세요.";
   const now = new Date();
   const { active, completed } = presentTasks(workspace.tasks, now);
+  const overdueCount = active.filter((task) => taskDeadlineState(task, now) === "OVERDUE").length;
+  const nextDue = active.find((task) => taskDeadlineState(task, now) === "UPCOMING");
+  const rowProps = { teamId: workspace.id, members: workspace.members, canEdit: canEditTasks, now };
+
+  // 담당별 남은 할 일. 팀원은 0 이라도 적고, 담당자가 없는 할 일은 미지정 한 줄로 모은다.
+  // 기한 초과는 표에서 이미 빨갛게 알리므로 여기서는 회색으로 센다.
+  const load = new Map(workspace.members.map((member) => [member.id, { id: member.id, name: member.name, profileImage: member.profileImage, open: 0, overdue: 0 }]));
+  const unassigned = { open: 0, overdue: 0 };
+  for (const task of active) {
+    const late = taskDeadlineState(task, now) === "OVERDUE";
+    // 팀을 떠난 사람에게 남은 할 일도 그 이름으로 센다.
+    for (const assignee of task.assignees) {
+      if (!load.has(assignee.id)) load.set(assignee.id, { ...assignee, profileImage: null, open: 0, overdue: 0 });
+    }
+    const buckets = task.assignees.length ? task.assignees.map((assignee) => load.get(assignee.id)!) : [unassigned];
+    for (const bucket of buckets) {
+      bucket.open += 1;
+      if (late) bucket.overdue += 1;
+    }
+  }
+  const showLoad = workspace.tasks.length > 0 && load.size > 0;
+
+  // 제목 밑 한 줄: 넘긴 마감이 먼저, 그다음 가장 가까운 완료 예정.
+  const finding = workspace.tasks.length === 0 ? null : active.length === 0
+    ? <UiText>{`등록한 할 일 ${completed.length}개를 모두 마쳤습니다.`}</UiText>
+    : (
+      <>
+        {overdueCount ? <b className="font-semibold"><UiText>{`완료 예정일을 넘긴 할 일이 ${overdueCount}개입니다.`}</UiText></b> : null}
+        {overdueCount && nextDue ? " " : null}
+        {nextDue ? <UiText>{`가장 가까운 완료 예정은 ${nextDue.title}, ${monthDay.format(nextDue.dueAt)}(${daysLabel(daysUntil(nextDue.dueAt, now))})입니다.`}</UiText> : null}
+      </>
+    );
 
   return (
-    <section aria-labelledby="tasks-title" className="mx-auto max-w-6xl space-y-7">
+    <section aria-labelledby="tasks-title" className="mx-auto grid max-w-6xl gap-5">
       <WorkspacePageHeader
         title="할 일"
         titleId="tasks-title"
-        bordered={false}
-        meta={(
-          <div className="flex flex-wrap gap-2 text-sm font-bold">
-            <span className="rounded-full bg-[var(--primary-subtle)] px-3 py-1.5 text-[var(--primary-hover)]">
-              <UiText>{"남은 할 일"}</UiText>{" "}{active.length}
-            </span>
-            <span className="rounded-full bg-[var(--success-subtle)] px-3 py-1.5 text-[var(--success)]">
-              <UiText>{"완료"}</UiText>{" "}{completed.length}/{workspace.taskCount}
-            </span>
-          </div>
-        )}
+        finding={finding}
         actions={canEditTasks ? <TaskCreateDialog teamId={workspace.id} members={workspace.members} /> : undefined}
       />
 
-      {workspace.tasks.length === 0 ? <EmptyState title="할 일이 없습니다" description={emptyDescription} /> : (
-        <div className="space-y-6">
-          {active.length > 0 ? (
-            <section aria-labelledby="active-tasks-title">
-              <div className="flex items-center justify-between gap-4">
-                <h2 id="active-tasks-title" className="text-xl font-bold tracking-[-0.035em]"><UiText>{"남은 할 일"}</UiText></h2>
-                <span className="text-sm font-bold text-[var(--muted)]">{active.length}<UiText>{"건"}</UiText></span>
-              </div>
-              <ol className="mt-4 grid gap-4 lg:grid-cols-2">
-                {active.map((task) => (
-                  <li key={task.id} className="min-w-0">
-                    <TaskCard
-                      task={task}
-                      teamId={workspace.id}
-                      members={workspace.members}
-                      canEdit={canEditTasks}
-                      now={now}
-                    />
-                  </li>
-                ))}
-              </ol>
+      <div className="@container">
+        <div className={`grid items-start gap-3.5 ${showLoad ? "@min-[60rem]:grid-cols-[minmax(0,1fr)_18rem]" : ""}`}>
+          <div className="grid min-w-0 gap-3.5">
+            <section aria-labelledby="active-tasks-title" className={cardClass}>
+              <CardHead
+                id="active-tasks-title"
+                title={<UiText>{"남은 할 일"}</UiText>}
+                count={<UiText>{`${active.length}개`}</UiText>}
+                action={workspace.taskCount ? <span className="tabular-nums text-[var(--muted)]"><UiText>{`${completed.length} / ${workspace.taskCount}개 완료`}</UiText></span> : undefined}
+              />
+              {workspace.tasks.length === 0 ? (
+                <div className="border-t border-[var(--line)] px-5"><EmptyState variant="section" title="할 일이 없습니다" description={emptyDescription} /></div>
+              ) : active.length === 0 ? (
+                <p className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"등록된 할 일을 모두 마쳤습니다."}</UiText></p>
+              ) : (
+                <>
+                  <TaskTableHead dateLabel="완료 예정" />
+                  <ol>{active.map((task) => <TaskRow key={task.id} task={task} {...rowProps} />)}</ol>
+                </>
+              )}
             </section>
-          ) : (
-            <div className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 shadow-[0_8px_24px_rgba(31,35,48,0.045)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-control)] bg-[var(--success-subtle)] text-[var(--success)]">
-                  <CheckIcon className="size-6" />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-lg font-bold tracking-[-0.025em] text-[var(--ink)]"><UiText>{"모든 할 일 완료"}</UiText></h2>
-                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{"등록된 할 일을 모두 마쳤습니다."}</UiText></p>
-                </div>
-              </div>
-              <span className="w-fit shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1.5 text-sm font-bold text-[var(--muted)]">
-                {completed.length}/{workspace.taskCount} <UiText>{"완료"}</UiText>
-              </span>
-            </div>
-          )}
 
-          {completed.length > 0 ? (
-            <details className="group">
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 font-bold text-[var(--ink)] shadow-[0_8px_24px_rgba(31,35,48,0.045)] [&::-webkit-details-marker]:hidden">
-                <span><UiText>{"완료한 일"}</UiText>{" "}{completed.length}<UiText>{"건"}</UiText></span>
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180 [stroke-linecap:round] [stroke-linejoin:round]"><path d="m6 8 4 4 4-4" /></svg>
-              </summary>
-              <ol className="mt-4 grid gap-4 lg:grid-cols-2">
-                {completed.map((task) => (
-                  <li key={task.id} className="min-w-0">
-                    <TaskCard
-                      task={task}
-                      teamId={workspace.id}
-                      members={workspace.members}
-                      canEdit={canEditTasks}
-                      now={now}
-                    />
+            {completed.length > 0 ? (
+              <details className={`${cardClass} group`}>
+                <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2.5 px-5 py-3 [&::-webkit-details-marker]:hidden">
+                  <h2 className="text-base font-semibold text-[var(--ink)]"><UiText>{"완료한 일"}</UiText></h2>
+                  <span className="text-[0.8125rem] tabular-nums text-[var(--muted)]"><UiText>{`${completed.length}개`}</UiText></span>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto size-4 shrink-0 fill-none stroke-[var(--muted)] stroke-[1.8] transition-transform group-open:rotate-180 [stroke-linecap:round] [stroke-linejoin:round]"><path d="m6 8 4 4 4-4" /></svg>
+                </summary>
+                <TaskTableHead dateLabel="완료일" />
+                <ol>{completed.map((task) => <TaskRow key={task.id} task={task} {...rowProps} />)}</ol>
+              </details>
+            ) : null}
+          </div>
+
+          {showLoad ? (
+            <section aria-labelledby="task-load-title" className={cardClass}>
+              <CardHead id="task-load-title" title={<UiText>{"담당별 남은 할 일"}</UiText>} />
+              <ul className="pb-1.5 text-[0.8125rem]">
+                {[...load.values()].map((person) => (
+                  <li key={person.id} className="flex min-h-11 items-center gap-2.5 border-t border-[var(--line)] px-5 py-1.5">
+                    <PersonAvatar userId={person.id} updatedAt={person.profileImage?.updatedAt} className="size-7 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-[var(--ink)]">{person.name}</span>
+                    <span className="text-right tabular-nums leading-4">
+                      <span className={`block ${person.open ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}>{person.open}</span>
+                      {person.overdue ? <span className="block text-xs text-[var(--muted)]"><UiText>{`기한 초과 ${person.overdue}`}</UiText></span> : null}
+                    </span>
                   </li>
                 ))}
-              </ol>
-            </details>
+                {unassigned.open ? (
+                  <li className="flex min-h-11 items-center gap-2.5 border-t border-[var(--line)] px-5 py-1.5">
+                    <span aria-hidden="true" className="size-7 shrink-0 rounded-full border border-dashed border-[var(--line-strong)]" />
+                    <span className="min-w-0 flex-1 text-[var(--muted)]"><UiText>{"미지정"}</UiText></span>
+                    <span className="text-right tabular-nums leading-4">
+                      <span className="block text-[var(--ink)]">{unassigned.open}</span>
+                      {unassigned.overdue ? <span className="block text-xs text-[var(--muted)]"><UiText>{`기한 초과 ${unassigned.overdue}`}</UiText></span> : null}
+                    </span>
+                  </li>
+                ) : null}
+              </ul>
+            </section>
           ) : null}
         </div>
-      )}
+      </div>
     </section>
   );
 }

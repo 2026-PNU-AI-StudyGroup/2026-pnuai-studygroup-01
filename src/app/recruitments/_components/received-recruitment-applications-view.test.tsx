@@ -29,7 +29,9 @@ describe("ReceivedRecruitmentApplicationsView", () => {
 
     expect(screen.getByRole("heading", { name: "받은 지원" })).toBeInTheDocument();
     expect(screen.getByText("김지원")).toBeInTheDocument();
-    expect(screen.getByText("코드웨이브 · 백엔드 팀원 모집")).toBeInTheDocument();
+    expect(screen.getByText("코드웨이브")).toBeInTheDocument();
+    expect(screen.getByText("백엔드 팀원 모집")).toBeInTheDocument();
+    expect(screen.getByText(/검토를 기다리는 지원자 1명/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ACCEPT" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "REJECT" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "공유 연락처" })).toBeInTheDocument();

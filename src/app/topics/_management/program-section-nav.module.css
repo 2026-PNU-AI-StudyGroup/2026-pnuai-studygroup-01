@@ -1,15 +1,18 @@
+/* 프로그램 등록 단계. 관리 화면 탭처럼 왼쪽부터 붙인 밑줄 탭이고, 글자색과 2px 선으로만 고른다. */
 .root {
   position: sticky;
   /* 상단 헤더는 lg 미만에서만 표시된다(4.5rem). 데스크톱에서 같은 값을 쓰면 그만큼 빈 틈으로 본문이 비쳐 보인다. */
   top: 0;
   z-index: 19;
   display: grid;
-  grid-template-columns: repeat(6, minmax(max-content, 1fr));
+  grid-auto-columns: max-content;
+  grid-auto-flow: column;
+  justify-content: start;
+  gap: 1.25rem;
   min-width: 0;
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--workspace) 94%, white);
-  backdrop-filter: blur(14px);
+  background: var(--workspace);
   scrollbar-width: none;
 }
 
@@ -18,16 +21,13 @@
 .item {
   position: relative;
   display: inline-flex;
-  min-height: 3.5rem;
+  min-height: 2.75rem;
   align-items: center;
-  justify-content: center;
-  gap: .5rem;
-  padding: .75rem 1rem;
   color: var(--muted);
   font-size: .875rem;
-  font-weight: 750;
+  font-weight: 500;
   white-space: nowrap;
-  transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
+  transition: color var(--snap-duration) var(--snap-ease);
 }
 
 .item::after {
@@ -40,50 +40,12 @@
   content: "";
 }
 
-.item svg {
-  width: 1.125rem;
-  height: 1.125rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .item:hover,
-.item:focus-visible {
-  background: color-mix(in srgb, var(--primary-subtle) 45%, transparent);
-  color: var(--primary);
-}
+.item:focus-visible { color: var(--ink); }
 
-.itemActive { color: var(--primary); }
+.itemActive { color: var(--ink); }
 .itemActive::after { background: var(--primary); }
-
-/* 관리 탭은 세 칸이라 폭을 나눠 늘이지 않고 왼쪽부터 붙인다. */
-.management { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; justify-content: start; }
-
-/* 평가 아래 네 화면. 위 줄과 구분되게 작은 알약으로 둔다. */
-.subnav { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: 1rem; }
-.subItem {
-  display: inline-flex;
-  min-height: 2.5rem;
-  align-items: center;
-  gap: .4rem;
-  border-radius: var(--radius-control);
-  padding: 0 .875rem;
-  color: var(--muted);
-  font-size: .8125rem;
-  font-weight: 700;
-  transition: color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
-}
-.subItem svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.subItem:hover, .subItem:focus-visible { background: var(--surface-subtle); color: var(--ink); }
-.subItemActive, .subItemActive:hover { background: var(--primary-subtle); color: var(--primary); }
 
 @media (max-width: 63.9375rem) {
   .root { top: 4.5rem; }
-}
-
-@media (max-width: 48rem) {
-  .root { grid-template-columns: none; grid-auto-columns: max-content; grid-auto-flow: column; }
 }

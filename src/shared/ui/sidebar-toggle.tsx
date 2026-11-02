@@ -11,12 +11,11 @@ const PEEK_EDGE_PX = 12;
 /**
  * 왼쪽 영역을 여닫는 손잡이. 접힌 동안 살짝 꺼내 보는 일도 여기서 맡는다.
  *
- * 상태는 html 의 data-sidebar 에 적는다. 접히는 폭을 정하는 css 변수가 거기 걸려 있고,
- * 아이콘 레일과 목록 패널이 서로 다른 격자에 들어 있어 공통 조상이 그것뿐이다.
+ * 상태는 html 의 data-sidebar 에 적는다. 접히는 폭을 정하는 css 변수가 거기 걸려 있다.
  * 서버를 갔다 오지 않고 그 자리에서 속성을 바꾸므로 누르는 즉시 움직인다. 쿠키는 다음에
  * 들어올 때 서버가 같은 모습으로 그리라고 남기는 메모다.
  *
- * 레일 안이 아니라 밖에 둔다. 안에 두면 접힐 때 같이 사라져 다시 펼 길이 없다.
+ * 메뉴 안이 아니라 밖에 둔다. 안에 두면 접힐 때 같이 사라져 다시 펼 길이 없다.
  */
 export function SidebarToggle({ initialState }: { initialState: SidebarState }) {
   const [state, setState] = useState(initialState);
@@ -51,9 +50,7 @@ export function SidebarToggle({ initialState }: { initialState: SidebarState }) 
         clearPeek();
         return;
       }
-      const rail = document.querySelector(".shell-rail");
-      const panel = document.querySelector(".shell-panel");
-      flyoutRight = (rail?.getBoundingClientRect().width ?? 0) + (panel?.getBoundingClientRect().width ?? 0);
+      flyoutRight = document.querySelector(".shell-sidebar")?.getBoundingClientRect().width ?? 0;
       root.dataset.sidebarPeek = "true";
     };
 
@@ -63,11 +60,11 @@ export function SidebarToggle({ initialState }: { initialState: SidebarState }) 
       else apply(peeking && event.clientX < flyoutRight);
     };
     const onPointerLeave = () => apply(false);
-    // 키보드로 레일 안까지 넘어오면 보이지 않는 것을 짚고 있게 된다. 그때도 꺼내 준다.
+    // 키보드로 메뉴 안까지 넘어오면 보이지 않는 것을 짚고 있게 된다. 그때도 꺼내 준다.
     const onFocusIn = (event: FocusEvent) => {
       if (!desktop.matches) return;
       const target = event.target as Element | null;
-      if (target?.closest?.(".shell-rail, .shell-panel")) apply(true);
+      if (target?.closest?.(".shell-sidebar")) apply(true);
       else if (!target?.closest?.(".shell-sidebar-toggle")) apply(false);
     };
     const onResize = () => apply(false);

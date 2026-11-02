@@ -84,37 +84,35 @@ export function StudentReviewList({
 
   return (
     <section aria-labelledby="student-review-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-      <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] px-6 py-5 sm:px-7">
-        <div>
-          <h2 id="student-review-title" className="text-2xl font-bold tracking-[-0.03em]"><UiText>{"검토 중"}</UiText></h2>
-        </div>
-        <span className="shrink-0 text-sm font-semibold text-[var(--muted)]">{total}<UiText>{"건"}</UiText></span>
+      <header className="flex items-baseline gap-2.5 px-5 pb-2.5 pt-4">
+        <h2 id="student-review-title" className="text-base font-semibold"><UiText>{"검토 중"}</UiText></h2>
+        <span className="text-[0.8125rem] tabular-nums text-[var(--muted)]">{total}<UiText>{"건"}</UiText></span>
       </header>
 
       {visibleEntries.length > 0 ? (
-        <ul className="divide-y divide-[var(--line)]">
+        <ul className="divide-y divide-[var(--line)] border-t border-[var(--line)]">
           {visibleEntries.map((entry) => {
             const titleId = `student-review-${entry.id}-title`;
             const actionId = `student-review-${entry.id}-action`;
             return (
-              <li key={entry.id} className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7">
+              <li key={entry.id} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge tone="info"><UiText>{"검토 중"}</UiText></StatusBadge>
                     <span className="text-xs font-semibold text-[var(--muted)]"><UiText>{entry.type === "APPLICATION" ? "프로젝트 지원" : "프로젝트 등록"}</UiText></span>
                   </div>
-                  <h3 id={titleId} className="mt-3 text-xl font-bold leading-tight tracking-[-0.025em]"><UiText>{entry.title}</UiText></h3>
-                  <p className="mt-1 text-sm text-[var(--muted)]"><UiText>{entry.programName}</UiText></p>
+                  <h3 id={titleId} className="mt-1.5 text-sm font-medium leading-5"><UiText>{entry.title}</UiText></h3>
+                  <p className="text-xs text-[var(--muted)]"><UiText>{entry.programName}</UiText></p>
                 </div>
-                <div className="flex shrink-0 items-center gap-4 sm:flex-col sm:items-end">
-                  <time className="text-sm font-medium text-[var(--muted)]" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="date" /></time>
+                <div className="flex shrink-0 items-center gap-3">
+                  <time className="text-xs tabular-nums text-[var(--muted)]" dateTime={entry.createdAt.toISOString()}><UiDate value={entry.createdAt} mode="date" /></time>
                   {entry.type === "REGISTRATION" ? (
                     <div className="flex items-center gap-2">
                       <TopicApprovalDialog request={entry.request} canDecide={false} triggerLabel="보기" />
                       <StudentRegistrationWithdrawalForm projectId={entry.request.topicId} />
                     </div>
                   ) : entry.href ? (
-                    <Link href={entry.href} aria-labelledby={`${titleId} ${actionId}`} className="button-secondary"><span id={actionId}><UiText>{entry.actionLabel}</UiText></span></Link>
+                    <Link href={entry.href} aria-labelledby={`${titleId} ${actionId}`} className="button-secondary button-compact"><span id={actionId}><UiText>{entry.actionLabel}</UiText></span></Link>
                   ) : null}
                 </div>
               </li>
@@ -122,11 +120,11 @@ export function StudentReviewList({
           })}
         </ul>
       ) : (
-        <div className="px-6 sm:px-7"><EmptyState variant="section" title="검토 중인 요청이 없습니다" description="새 프로젝트를 찾거나 프로젝트를 등록하면 이곳에서 상태를 확인할 수 있습니다." action={<Link href="/topics" className="button-secondary"><UiText>{"프로젝트 목록"}</UiText></Link>} /></div>
+        <div className="border-t border-[var(--line)] px-5"><EmptyState variant="section" title="검토 중인 요청이 없습니다" description="새 프로젝트를 찾거나 프로젝트를 등록하면 이곳에서 상태를 확인할 수 있습니다." action={<Link href="/topics" className="button-secondary"><UiText>{"프로젝트 목록"}</UiText></Link>} /></div>
       )}
 
       {preview && total > visibleEntries.length ? (
-        <div className="border-t border-[var(--line)] px-6 py-4 text-right sm:px-7"><Link href="/dashboard?view=pending" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]"><UiText>{"검토 중 전체 보기"}</UiText></Link></div>
+        <div className="border-t border-[var(--line)] px-5 py-2.5"><Link href="/dashboard?view=pending" className="text-[0.8125rem] font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]"><UiText>{"검토 중 전체 보기"}</UiText></Link></div>
       ) : null}
       {!preview ? <ProjectPagination page={resolvedPage} totalPages={totalPages} ariaLabel="검토 중 페이지" href={(nextPage) => `/dashboard?view=pending&page=${nextPage}`} /> : null}
     </section>

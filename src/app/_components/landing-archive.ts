@@ -1,3 +1,4 @@
+// 공개 아카이브 묶기. 로그인 전 첫 화면과 /archive 가 같이 쓴다. 라우트끼리 private 파일을 참조하지 못해 여기에 둔다.
 import { orderProgramSidebarCategories } from "@/modules/project-program/ui/program-sidebar-items";
 import type { PublicArchivedProject } from "@/modules/team/application/archive-projects";
 
@@ -68,5 +69,50 @@ export function groupPublicArchive(
       .sort(([left], [right]) => right - left)
       .map(([year, programs]) => ({ year, programs: [...programs.values()] })),
     totalProjects: projects.length,
+  };
+}
+
+export type PublicArchiveDigest = {
+  programCount: number;
+  projectCount: number;
+  awardCount: number;
+  repositoryCount: number;
+  tabs: Array<{
+    name: string;
+    count: number;
+    year: number;
+    program: string;
+    teams: number;
+    rows: Array<{ id: string; title: string; award: string | null }>;
+  }>;
+};
+
+/**
+ * 첫 화면이 보여 줄 공개 결과물 요약. 숫자는 아카이브 머리말과 같은 셈이다(졸업과제 탭도 사업 하나로 센다).
+ * 탭마다 가장 최근 대회 하나를 조회 차례(상 순서) 그대로 위에서 rowsPerTab 줄만 담는다.
+ */
+export function digestPublicArchive(
+  projects: readonly PublicArchivedProject[],
+  categoryOrder: readonly string[],
+  rowsPerTab = 7,
+): PublicArchiveDigest {
+  const { categories, totalProjects } = groupPublicArchive(projects, categoryOrder, undefined);
+  return {
+    programCount: categories.length + 1,
+    projectCount: totalProjects,
+    awardCount: projects.filter((project) => project.award).length,
+    repositoryCount: projects.filter((project) => project.repositoryUrl).length,
+    tabs: categories.map(({ name, count }) => {
+      const [latest] = groupPublicArchive(projects, categoryOrder, name).years;
+      const [program] = latest.programs;
+      return {
+        name,
+        count,
+        year: latest.year,
+        program: program.name,
+        teams: program.projects.length,
+        rows: program.projects.slice(0, rowsPerTab).map(({ id, title, award }) => ({ id, title, award })),
+      };
+    }),
   };
 }

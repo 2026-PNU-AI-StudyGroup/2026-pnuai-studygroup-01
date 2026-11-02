@@ -111,8 +111,8 @@ export async function ProgramManagementRoutePage({
     pendingApprovalCounts,
   );
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programManagementHref(selectedProgramId, tab)}>
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings selectedItemLinkable categoryOrder={categoryOrder} />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programManagementHref(selectedProgramId, tab)} panel={<ProgramSidebar items={sidebarItems} selectedId={selectedProgramId} title="프로그램 관리" showSettings selectedItemLinkable categoryOrder={categoryOrder} />}>
+      <ExplorerLayout>
         <ProgramManagementWorkspace
           actor={actor}
           programId={selectedProgramId}
@@ -136,8 +136,8 @@ export async function ProgramCreateRoutePage() {
     pendingApprovalCounts,
   );
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programCreateHref()}>
-      <ExplorerLayout sidebar={<ProgramSidebar items={sidebarItems} title="프로그램 관리" showSettings categoryOrder={categoryOrder} />}>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={programCreateHref()} panel={<ProgramSidebar items={sidebarItems} title="프로그램 관리" showSettings categoryOrder={categoryOrder} />}>
+      <ExplorerLayout>
         <ProgramCreateWorkspace cancelHref={fallbackProgramId ? programManagementHref(fallbackProgramId) : "/topics"} />
       </ExplorerLayout>
     </AppShell>

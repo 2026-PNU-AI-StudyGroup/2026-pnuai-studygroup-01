@@ -33,7 +33,7 @@ function applicationModeLabel(mode: PublicTopicSummary["applicationMode"]) {
   return "개인 또는 팀 지원";
 }
 
-export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, applicationQuestions, capacity, memberCount = 0, teamMaxSize = 6, leaderTeams }: {
+export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, applicationQuestions, capacity, memberCount = 0, teamMaxSize = 6, leaderTeams, quiet = false }: {
   topicId: string;
   topicTitle: string;
   applicationMode: PublicTopicSummary["applicationMode"];
@@ -42,6 +42,8 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
   memberCount?: number;
   teamMaxSize?: number;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
+  /** 목록 줄 안에서는 테두리 버튼으로 둔다. 줄마다 채운 버튼이면 표보다 시끄럽다. */
+  quiet?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -70,7 +72,7 @@ export function TopicApplicationEditor({ topicId, topicTitle, applicationMode, a
 
   return (
     <>
-      <button type="button" onClick={openDialog} disabled={state.status === "success"} className="button-primary w-full">
+      <button type="button" onClick={openDialog} disabled={state.status === "success"} className={`${quiet ? "button-secondary" : "button-primary"} button-compact w-full whitespace-nowrap`}>
         <UiText>{state.status === "success" ? "지원 접수됨" : "이 프로젝트에 지원"}</UiText>
       </button>
 

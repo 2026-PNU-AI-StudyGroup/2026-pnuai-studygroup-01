@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import Link from "next/link";
 import { describe, expect, it } from "vitest";
 
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
@@ -43,38 +44,41 @@ describe("내 프로젝트 통합 화면", () => {
     expect(container.querySelector("summary")).toHaveTextContent("내 프로젝트검토 중2개");
   });
 
-  it("학생 프로젝트 화면을 지원부터 완료까지의 단일 흐름으로 설명한다", () => {
-    render(<ProjectDashboardHero role="STUDENT" />);
+  it("학생 제목 줄은 가장 가까운 마감 한 줄과 그 마감의 할 일을 함께 둔다", () => {
+    const { rerender } = render(<ProjectDashboardHero role="STUDENT" />);
 
-    expect(screen.getByRole("heading", { name: "내 프로젝트" })).toBeInTheDocument();
-    expect(screen.getByText("참여 프로젝트의 일정과 제출 현황을 확인합니다.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "새 프로젝트 찾기" })).toHaveAttribute("href", "/topics");
+    expect(screen.getByRole("heading", { level: 1, name: "내 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "새 프로젝트 찾기" })).toHaveClass("button-primary");
+
+    rerender(<ProjectDashboardHero role="STUDENT" finding="중간 보고서 마감이 2일 남았습니다" primaryAction={<Link href="/projects/team-1/reports" className="button-primary">보고서 제출</Link>} />);
+    expect(screen.getByText("중간 보고서 마감이 2일 남았습니다")).toBeInTheDocument();
+    // 채운 버튼은 하나만. 마감 할 일이 있으면 새 프로젝트 찾기는 테두리 버튼으로 내려간다.
+    expect(screen.getByRole("link", { name: "새 프로젝트 찾기" })).toHaveClass("button-secondary");
+    expect(screen.getByRole("link", { name: "보고서 제출" })).toHaveAttribute("href", "/projects/team-1/reports");
   });
 
   it("교수 프로젝트 화면을 별도 상단 탭 없이 운영 행동 중심으로 설명한다", () => {
     render(<ProjectDashboardHero role="PROFESSOR" />);
 
-    expect(screen.getByRole("heading", { name: "프로젝트 운영" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "지도 현황" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "지원 검토" })).toHaveAttribute("href", "/professor/applications");
     expect(screen.getByRole("link", { name: "프로젝트 관리" })).toHaveAttribute("href", "/professor/topics");
   });
 
-  it("진행 프로젝트 카드는 핵심 현황과 카드 전체 진입점을 제공한다", () => {
-    render(<ProjectList role="STUDENT" teams={[team]} view="active" />);
+  it("진행 프로젝트 줄은 팀, 보고서 제출, 다음 할 일, 상태와 이름 링크를 둔다", () => {
+    render(<ProjectList role="STUDENT" teams={[team]} view="active" now={new Date("2026-07-27T00:00:00Z")} />);
 
     expect(screen.getByRole("heading", { name: "진행 중 프로젝트" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "실내 길찾기" })).toBeInTheDocument();
     expect(screen.getByText("모두의 길")).toBeInTheDocument();
     expect(screen.getByText("2026 캡스톤디자인")).toBeInTheDocument();
-    expect(screen.getByText("진행 중")).toHaveClass("bg-[var(--primary-subtle)]");
-    expect(screen.getByText("보고서 제출률")).toBeInTheDocument();
+    expect(screen.getByText("진행 중")).toHaveClass("bg-[var(--accent-subtle)]");
     expect(screen.getByRole("progressbar", { name: "모두의 길 보고서 제출률" })).toHaveAttribute("aria-valuenow", "33");
-    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "1 / 3 보고서 제출")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === "SPAN" && element.textContent === "1 / 3건")).toBeInTheDocument();
     expect(screen.getByText("프로토타입 테스트")).toBeInTheDocument();
+    expect(screen.getByText("6일 남음")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "실내 길찾기 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.queryByText("팀 대화")).not.toBeInTheDocument();
-    expect(screen.queryByText("보고서")).not.toBeInTheDocument();
   });
 
   it("작업 공간과 같은 규칙으로 기한 지난 할 일을 먼저 보이고 기한 초과로 표시한다", () => {
@@ -118,7 +122,7 @@ describe("내 프로젝트 통합 화면", () => {
     rerender(<ProjectList role="STUDENT" teams={[{ ...team, status: "COMPLETED" }]} view="completed" />);
 
     expect(screen.getByRole("heading", { name: "완료한 프로젝트" })).toBeInTheDocument();
-    expect(screen.getByText("완료")).toHaveClass("bg-[var(--success-subtle)]");
+    expect(screen.getByText("완료")).toHaveClass("bg-[var(--surface-subtle)]");
     expect(screen.getByRole("link", { name: "실내 길찾기 완료 프로젝트 열기" })).toHaveAttribute("href", "/projects/team-1");
     expect(screen.queryByText("진행 중 프로젝트")).not.toBeInTheDocument();
   });
@@ -170,7 +174,7 @@ describe("내 프로젝트 통합 화면", () => {
     expect(screen.getByRole("link", { name: "접근성 지도 프로젝트 보기" })).toHaveAttribute("href", "/topics/topic-1");
     const pendingCard = screen.getByText("접근성 지도").closest("article");
     expect(pendingCard).not.toBeNull();
-    expect(within(pendingCard!).getByText("검토 중")).toHaveClass("bg-[var(--primary-subtle)]");
+    expect(within(pendingCard!).getByText("검토 중")).toHaveClass("bg-[var(--accent-subtle)]");
 
     rerender(
       <ProjectApplicationList

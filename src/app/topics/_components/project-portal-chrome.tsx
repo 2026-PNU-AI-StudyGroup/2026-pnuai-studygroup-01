@@ -1,113 +1,92 @@
 import type { ReactNode } from "react";
-import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { ExplorerHero } from "@/shared/ui/explorer-hero";
 
-export function ProjectPortalHero({ view, program, search, titleAction }: {
+import { cardClass, CardHead, ObjectHeader, Pill } from "@/modules/project-program/ui/work-screen";
+import type { ProgramIconKey } from "@/modules/project-program/domain/program-icon";
+import { schedulePhaseState } from "@/modules/team/ui/task-presentation";
+import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
+import { ProgramIcon } from "@/shared/ui/program-icon";
+
+type DateValue = Date | string;
+
+export type PortalProgram = {
+  id?: string;
+  name: string;
+  category: string;
+  icon?: ProgramIconKey;
+  isPublic?: boolean;
+  startsAt?: DateValue;
+  endsAt?: DateValue;
+  projectRegistrationStartsAt?: DateValue;
+  projectRegistrationEndsAt?: DateValue;
+  recruitmentStartsAt?: DateValue | null;
+  recruitmentEndsAt?: DateValue | null;
+  executionStartsAt?: DateValue;
+  executionEndsAt?: DateValue;
+  votingPolicy?: { startsAt: DateValue; endsAt: DateValue } | null;
+};
+
+/**
+ * 사업 화면의 머리. 사업 이름, 분류와 기간, 데이터에서 뽑은 한 줄, 할 일 버튼을 한 카드에 둔다.
+ * 표지 자리에는 사업 아이콘을 옅은 파랑 칸 가운데에 둔다. 회차(2기, 7회)는 제목에 이미 있어
+ * 숫자만 떼어 얹으면 "2" 와 "기" 가 따로 놀아 어색했다.
+ */
+export function ProjectPortalHero({ view, program, titleAction, actions, finding }: {
   view: "active" | "past";
-  program?: {
-    id?: string;
-    name: string;
-    category: string;
-    startsAt?: Date | string;
-    endsAt?: Date | string;
-    projectRegistrationStartsAt?: Date | string;
-    projectRegistrationEndsAt?: Date | string;
-    recruitmentStartsAt?: Date | string | null;
-    recruitmentEndsAt?: Date | string | null;
-    executionStartsAt?: Date | string;
-    executionEndsAt?: Date | string;
-    votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
-  };
-  search?: ReactNode;
+  program?: PortalProgram;
   titleAction?: ReactNode;
+  actions?: ReactNode;
+  finding?: ReactNode;
 }) {
   const title = program?.name ?? (view === "past" ? "지난 프로젝트" : "전체 프로젝트");
-  const description = view === "past" ? "완료된 프로젝트와 결과물을 확인하세요." : "현재 참여할 수 있는 프로젝트를 확인하세요.";
-
-  if (program && program.startsAt && program.endsAt) {
-    const { startsAt, endsAt } = program;
-    return (
-      <ExplorerHero
-        title={<UiText>{title}</UiText>}
-        titleAction={titleAction}
-        details={
-          <details className="group -my-1">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
-              <UiText>{"프로그램 정보"}</UiText>
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 transition-transform group-open:rotate-180"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </summary>
-            <div className="mt-2.5 grid gap-3.5">
-              <ProgramPeriods
-                startsAt={startsAt}
-                endsAt={endsAt}
-                projectRegistrationStartsAt={program.projectRegistrationStartsAt}
-                projectRegistrationEndsAt={program.projectRegistrationEndsAt}
-                recruitmentStartsAt={program.recruitmentStartsAt}
-                recruitmentEndsAt={program.recruitmentEndsAt}
-                executionStartsAt={program.executionStartsAt}
-                executionEndsAt={program.executionEndsAt}
-                votingPolicy={program.votingPolicy}
-              />
-            </div>
-          </details>
-        }
-        action={search ? <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">{search}</div> : undefined}
-      />
-    );
-  }
-
   return (
-    <ExplorerHero
+    <ObjectHeader
+      id="explorer-hero-title"
+      media={program?.icon ? (
+        <div aria-hidden="true" className="grid size-12 flex-none place-items-center rounded-[var(--radius-panel)] bg-[var(--accent-subtle)] text-[var(--accent)]">
+          <ProgramIcon icon={program.icon} className="size-6" />
+        </div>
+      ) : undefined}
       title={<UiText>{title}</UiText>}
-      titleAction={titleAction}
-      description={<UiText>{description}</UiText>}
-      context={program?.category ? <UiText>{program.category}</UiText> : undefined}
-      action={search ? <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">{search}</div> : undefined}
+      titleAside={titleAction}
+      meta={program ? (
+        <>
+          <UiText>{program.category}</UiText>
+          {program.startsAt && program.endsAt ? <>, <span className="tabular-nums"><UiDate value={program.startsAt} /> ~ <UiDate value={program.endsAt} /></span></> : null}
+          {program.isPublic === false ? <>, <UiText>{"비공개 사업"}</UiText></> : null}
+        </>
+      ) : <UiText>{view === "past" ? "완료된 프로젝트와 결과물" : "지금 참여할 수 있는 프로젝트"}</UiText>}
+      finding={finding}
+      actions={actions}
     />
   );
 }
 
-function ProgramPeriods({ startsAt, endsAt, projectRegistrationStartsAt, projectRegistrationEndsAt, recruitmentStartsAt, recruitmentEndsAt, executionStartsAt, executionEndsAt, votingPolicy }: {
-  startsAt: Date | string;
-  endsAt: Date | string;
-  projectRegistrationStartsAt?: Date | string;
-  projectRegistrationEndsAt?: Date | string;
-  recruitmentStartsAt?: Date | string | null;
-  recruitmentEndsAt?: Date | string | null;
-  executionStartsAt?: Date | string;
-  executionEndsAt?: Date | string;
-  votingPolicy?: { startsAt: Date | string; endsAt: Date | string } | null;
-}) {
+/** 사업 일정. 지금 걸린 기간에 표시를 달고, 지난 기간은 회색으로 둔다. */
+export function ProgramScheduleCard({ program, now }: { program: PortalProgram; now: Date }) {
+  const periods: Array<[string, DateValue | null | undefined, DateValue | null | undefined]> = [
+    ["운영", program.startsAt, program.endsAt],
+    ["프로젝트 등록", program.projectRegistrationStartsAt ?? program.startsAt, program.projectRegistrationEndsAt ?? program.endsAt],
+    ["모집", program.recruitmentStartsAt, program.recruitmentEndsAt],
+    ["수행", program.executionStartsAt, program.executionEndsAt],
+    ["투표", program.votingPolicy?.startsAt, program.votingPolicy?.endsAt],
+  ];
+  const rows = periods.filter((row): row is [string, DateValue, DateValue] => Boolean(row[1] && row[2]));
+  if (!rows.length) return null;
+  const states = rows.map(([, start, end]) => schedulePhaseState(new Date(start), new Date(end), now));
+  const allDone = states.every((state) => state === "COMPLETE");
+  // 기간은 겹친다(운영 안에 등록, 모집, 수행). "지금" 표시는 가장 좁은 기간 하나에만 단다.
+  const currentIndex = states.lastIndexOf("CURRENT");
   return (
-    <dl className="grid gap-1.5 text-xs sm:text-sm">
-      <ProgramPeriod label="운영 기간" startsAt={startsAt} endsAt={endsAt} />
-      <ProgramPeriod
-        label="프로젝트 등록 기간"
-        startsAt={projectRegistrationStartsAt ?? startsAt}
-        endsAt={projectRegistrationEndsAt ?? endsAt}
-      />
-      {recruitmentStartsAt && recruitmentEndsAt ? <ProgramPeriod label="프로젝트 모집 기간" startsAt={recruitmentStartsAt} endsAt={recruitmentEndsAt} /> : null}
-      {executionStartsAt && executionEndsAt ? <ProgramPeriod label="수행 기간" startsAt={executionStartsAt} endsAt={executionEndsAt} /> : null}
-      {votingPolicy ? (
-        <ProgramPeriod label="투표 기간" startsAt={votingPolicy.startsAt} endsAt={votingPolicy.endsAt} />
-      ) : null}
-    </dl>
-  );
-}
-
-function ProgramPeriod({ label, startsAt, endsAt }: {
-  label: string;
-  startsAt: Date | string;
-  endsAt: Date | string;
-}) {
-  return (
-    <div className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] gap-x-3">
-      <dt className="font-semibold text-[var(--muted)]"><UiText>{label}</UiText></dt>
-      <dd className="min-w-0 font-semibold text-[var(--ink)]">
-        <UiDate value={startsAt} mode="dateTime" />
-        <span aria-hidden="true"> – </span>
-        <UiDate value={endsAt} mode="dateTime" />
-      </dd>
-    </div>
+    <section aria-labelledby="program-schedule-title" className={cardClass}>
+      <CardHead id="program-schedule-title" title={<UiText>{"일정"}</UiText>} count={allDone ? <UiText>{"모두 끝남"}</UiText> : undefined} />
+      <ol className="px-5 pb-3">
+        {rows.map(([label, start, end], index) => (
+          <li key={label} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2 text-[0.8125rem] [&+li]:border-t [&+li]:border-[var(--line)] ${states[index] === "COMPLETE" ? "text-[var(--muted)]" : "text-[var(--ink)]"}`}>
+            <span className="flex min-w-0 items-center gap-2"><UiText>{label}</UiText>{index === currentIndex ? <Pill tone="accent">{"지금"}</Pill> : null}</span>
+            <span className="text-right tabular-nums text-[var(--muted)]"><UiDate value={start} /> ~ <UiDate value={end} /></span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

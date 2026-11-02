@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 
 import {
   registerShowcaseImageAction,
@@ -19,7 +19,8 @@ import {
 } from "@/app/projects/[projectId]/_lib/report-form-shared";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { SHOWCASE_IMAGE_MAX_BYTES } from "@/modules/file/domain/upload-policy";
-import { UiButton, UiInput, UiSection } from "@/modules/translation/ui/localized-elements";
+import { UiButton, UiInput } from "@/modules/translation/ui/localized-elements";
+import { FormSection } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { optimizeShowcaseImage } from "@/app/projects/[projectId]/_lib/showcase-image-optimization";
 
 export type ShowcaseImage = { id: string; title: string; src: string };
@@ -41,6 +42,7 @@ export function ShowcaseManager({
   images: ShowcaseImage[];
 }) {
   const router = useRouter();
+  const titleId = useId();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<ReportActionState>(initialReportActionState);
@@ -149,57 +151,52 @@ export function ShowcaseManager({
   }
 
   return (
-    <UiSection
-      aria-label="쇼케이스 이미지 관리"
-      className="space-y-7 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:p-7"
+    <FormSection
+      id={titleId}
+      title={<UiText>{"쇼케이스 이미지"}</UiText>}
+      description={<UiText>{"가로형 3:2 비율, 권장 크기 600×400 이상"}</UiText>}
+      bodyClassName="space-y-5 px-5 py-4"
     >
-      <div className="space-y-1">
-        <h2 className="text-base font-extrabold tracking-[-0.02em]"><UiText>{"쇼케이스 이미지"}</UiText></h2>
-      </div>
-
       <div className="space-y-2">
-        <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{"대표 이미지"}</UiText></span>
-        <div className="grid gap-4 sm:grid-cols-[20rem_1fr] sm:items-stretch">
-          <div className="relative aspect-video w-full self-start overflow-hidden rounded-[var(--radius-panel)] border border-dashed border-[var(--line)] bg-[var(--surface-subtle)]">
+        <span className="block text-[0.8125rem] font-medium text-[var(--ink)]"><UiText>{"대표 이미지"}</UiText></span>
+        <div className="grid gap-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:items-start">
+          <div className={`relative aspect-[3/2] w-full overflow-hidden rounded-[var(--radius-control)] border ${thumbnailPath ? "border-[var(--line)]" : "border-dashed border-[var(--line-strong)]"}`}>
             {thumbnailPath ? (
-              <Image src={thumbnailPath} alt="" fill unoptimized sizes="20rem" className="object-cover" />
+              <Image src={thumbnailPath} alt="" fill unoptimized sizes="14rem" className="object-cover" />
             ) : (
               <div className="flex size-full items-center justify-center px-4 text-center">
-                <span className="muted text-sm"><UiText>{"대표 이미지가 없습니다"}</UiText></span>
+                <span className="text-[0.8125rem] text-[var(--muted)]"><UiText>{"대표 이미지가 없습니다"}</UiText></span>
               </div>
             )}
           </div>
-          <div className="flex flex-col justify-center rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm leading-6">
-            <p className="font-semibold"><UiText>{"권장 규격"}</UiText></p>
-            <ul className="muted mt-1 list-disc space-y-0.5 pl-4">
-              <li><UiText>{"가로형 3:2 비율"}</UiText></li>
-              <li><UiText>{"권장 크기 600×400 이상"}</UiText></li>
-              <li><UiText>{"JPG, PNG 또는 WebP · 최대 20MB"}</UiText></li>
-            </ul>
+          {/* 표지 옆에 규격과 손잡이를 함께 둔다. 프로젝트 목록과 상세 머리에 이 그림이 실린다. */}
+          <div className="grid gap-2 text-[0.8125rem] text-[var(--muted)]">
+            <p><UiText>{"프로젝트 목록과 상세 화면 머리에 실립니다."}</UiText></p>
+            <p><UiText>{"JPG, PNG 또는 WebP · 최대 20MB"}</UiText></p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending} onClick={() => thumbnailInputRef.current?.click()}>
+                <UiText>{thumbnailPath ? "이미지 교체" : "이미지 올리기"}</UiText>
+              </button>
+              {thumbnailPath ? (
+                <button type="button" className="button-quiet button-compact min-h-8 px-3 font-medium text-[var(--danger)]" disabled={pending} onClick={removeThumbnail}><UiText>{"삭제"}</UiText></button>
+              ) : null}
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className="button-secondary" disabled={pending} onClick={() => thumbnailInputRef.current?.click()}>
-            <UiText>{thumbnailPath ? "이미지 교체" : "이미지 올리기"}</UiText>
-          </button>
-          {thumbnailPath ? (
-            <button type="button" className="button-quiet" disabled={pending} onClick={removeThumbnail}><UiText>{"삭제"}</UiText></button>
-          ) : null}
         </div>
         <UiInput ref={thumbnailInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={pickThumbnail} />
       </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]"><UiText>{"갤러리 사진"}</UiText></span>
-          <button type="button" className="button-secondary" disabled={pending} onClick={() => galleryInputRef.current?.click()}><UiText>{"사진 추가"}</UiText></button>
+          <span className="text-[0.8125rem] font-medium text-[var(--ink)]"><UiText>{"갤러리 사진"}</UiText>{" "}<span className="font-normal tabular-nums text-[var(--muted)]">{order.length}<UiText>{"장"}</UiText></span></span>
+          <button type="button" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending} onClick={() => galleryInputRef.current?.click()}><UiText>{"사진 추가"}</UiText></button>
         </div>
         <UiInput ref={galleryInputRef} type="file" accept={IMAGE_ACCEPT} multiple className="sr-only" tabIndex={-1} aria-hidden="true" onChange={addImages} />
         {order.length === 0 ? (
-          <p className="muted rounded-[var(--radius-control)] border border-dashed border-[var(--line)] px-4 py-6 text-center text-sm"><UiText>{"추가한 사진이 없습니다."}</UiText></p>
+          <p className="rounded-[var(--radius-control)] border border-dashed border-[var(--line-strong)] px-4 py-3 text-[0.8125rem] text-[var(--muted)]"><UiText>{"추가한 사진이 없습니다."}</UiText></p>
         ) : (
           <>
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {order.map((image, index) => (
                 <li
                   key={image.id}
@@ -208,7 +205,7 @@ export function ShowcaseManager({
                   onDragEnter={() => handleDragEnter(index)}
                   onDragOver={(event) => event.preventDefault()}
                   onDragEnd={handleDragEnd}
-                  className={`group relative cursor-grab overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] active:cursor-grabbing ${dragIndex === index ? "opacity-60 ring-2 ring-[var(--primary)]" : ""}`}
+                  className={`group relative cursor-grab overflow-hidden rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] active:cursor-grabbing ${dragIndex === index ? "opacity-60 ring-2 ring-[var(--primary)]" : ""}`}
                 >
                   <div className="relative aspect-video w-full overflow-hidden bg-[var(--surface-subtle)]">
                     <Image src={image.src} alt={image.title} fill unoptimized sizes="(min-width: 1024px) 16rem, 45vw" className="pointer-events-none object-cover" />
@@ -228,8 +225,8 @@ export function ShowcaseManager({
         )}
       </div>
 
-      {state.status === "error" ? <p role="alert" className="text-sm font-semibold text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
-      {pending ? <p role="status" aria-live="polite" className="muted text-sm font-semibold"><UiText>{"처리 중"}</UiText></p> : null}
-    </UiSection>
+      {state.status === "error" ? <p role="alert" className="text-[0.8125rem] font-medium text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
+      {pending ? <p role="status" aria-live="polite" className="text-[0.8125rem] text-[var(--muted)]"><UiText>{"처리 중"}</UiText></p> : null}
+    </FormSection>
   );
 }

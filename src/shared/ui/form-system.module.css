@@ -15,7 +15,7 @@
   gap: 0.5rem;
   color: var(--ink);
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -25,7 +25,7 @@
   padding: 0.125rem 0.4375rem;
   color: var(--muted);
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .required {
@@ -69,7 +69,6 @@
   border-radius: var(--radius-panel);
   background: var(--surface);
   padding: 1.5rem;
-  box-shadow: 0 1px 2px rgb(31 35 48 / 0.025);
 }
 
 .sectionPlain {
@@ -94,7 +93,6 @@
   align-content: start;
   gap: 1.5rem;
   padding: 1.25rem;
-  box-shadow: 0 6px 20px var(--shadow-tint-weak);
 }
 
 .header {
@@ -125,18 +123,18 @@
   height: 2rem;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 0.6875rem;
-  background: var(--primary-subtle);
-  color: var(--primary-hover);
-  font-size: 0.6875rem;
-  font-weight: 850;
+  border-radius: var(--radius-control);
+  background: var(--accent-subtle);
+  color: var(--accent-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .title {
   color: var(--ink);
-  font-size: 1.0625rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .sectionCompact .title {
@@ -173,7 +171,7 @@
   cursor: pointer;
   gap: 0.75rem;
   border: 1px solid var(--line-strong);
-  border-radius: 1rem;
+  border-radius: var(--radius-panel);
   background: var(--surface);
   padding: 1rem;
   transition: border-color var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease);
@@ -195,9 +193,8 @@
 }
 
 .choice:has(input:checked) {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary-subtle) 72%, white);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent);
+  border-color: var(--accent);
+  background: var(--accent-subtle);
 }
 
 .choice:has(input:focus-visible) {
@@ -366,8 +363,7 @@
   width: 1.125rem;
   height: 1.125rem;
   border-radius: 50%;
-  background: white;
-  box-shadow: 0 1px 2px rgb(31 35 48 / 0.2);
+  background: var(--surface);
   transition: transform var(--snap-duration) var(--snap-ease);
 }
 
@@ -467,5 +463,5 @@
 .numberUnit {
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 500;
 }

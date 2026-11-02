@@ -24,7 +24,7 @@ export function ProjectSearchForm({
   return (
     <form
       action="/topics"
-      className="w-full sm:w-72"
+      className="w-full"
       role="search"
     >
       {view === "past" ? <input type="hidden" name="view" value="past" /> : null}
@@ -34,14 +34,14 @@ export function ProjectSearchForm({
       {reportStatus && reportStatus !== "all" ? <input type="hidden" name="reportStatus" value={reportStatus} /> : null}
       <label className="relative block">
         <span className="sr-only"><UiText>{"프로젝트 검색"}</UiText></span>
-        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--muted)]" />
+        <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[var(--muted)]" />
         <UiInput
           type="search"
           name="q"
           defaultValue={query}
           maxLength={100}
           placeholder="프로젝트 검색"
-          className="form-control min-h-10 w-full bg-[var(--surface)] pl-11 text-sm"
+          className="form-control h-8 min-h-8 w-full bg-[var(--surface)] py-0 pl-8 text-[0.8125rem]"
         />
       </label>
     </form>

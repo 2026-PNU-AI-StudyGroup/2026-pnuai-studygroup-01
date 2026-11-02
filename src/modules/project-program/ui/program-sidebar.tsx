@@ -78,16 +78,14 @@ function VotingProgramCarousel({
   const currentProgram = programs[currentIndex];
 
   return (
-    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--primary-hover)] bg-[var(--primary)] p-3.5 text-white">
-      <span aria-hidden="true" className="absolute -right-7 -top-8 size-24 rounded-full border border-white/15" />
-      <span aria-hidden="true" className="absolute -right-2 -top-2 size-12 rounded-full bg-white/10" />
+    <UiSection id={carouselId} aria-roledescription="carousel" aria-label="투표 진행 프로그램" className="relative overflow-hidden rounded-[var(--radius-panel)] border border-[var(--accent-track)] bg-[var(--accent-subtle)] p-3.5 text-[var(--ink)]">
       <div className="relative">
         <div className="flex min-h-6 items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--accent-ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="M5 4.5h10M5 10h10M5 15.5h6" strokeLinecap="round" /><circle cx="3.5" cy="4.5" r=".65" fill="currentColor" /><circle cx="3.5" cy="10" r=".65" fill="currentColor" /><circle cx="3.5" cy="15.5" r=".65" fill="currentColor" /></svg>
             <UiText>{"투표 진행 중"}</UiText>
           </span>
-          <p key={`deadline-${currentProgram.id}`} className={`${styles.destinationText} text-right text-[0.65rem] font-semibold text-white/85`}><UiText>{"마감"}</UiText> <UiDate value={currentProgram.votingEndsAt!} mode="dateTime" /></p>
+          <p key={`deadline-${currentProgram.id}`} className={`${styles.destinationText} text-right text-xs font-medium text-[var(--muted)]`}><UiText>{"마감"}</UiText> <UiDate value={currentProgram.votingEndsAt!} mode="dateTime" /></p>
         </div>
         <div key={currentProgram.id} className={`mt-3 ${styles.destinationText}`}>
           <div className="flex min-w-0 items-center gap-2.5">
@@ -96,7 +94,7 @@ function VotingProgramCarousel({
             </span>
             <div className="min-w-0">
               <h3 className="truncate text-sm font-bold tracking-[-0.02em]"><UiText>{currentProgram.name}</UiText></h3>
-              <ProgramMetadata program={currentProgram} className="mt-0.5 block truncate text-[0.68rem] font-semibold text-white/75" />
+              <ProgramMetadata program={currentProgram} className="mt-0.5 block truncate text-xs text-[var(--muted)]" />
             </div>
           </div>
         </div>
@@ -104,7 +102,7 @@ function VotingProgramCarousel({
           <UiLink
             href={currentProgram.votingHref ?? currentProgram.href}
             aria-current={!currentProgram.votingHref && currentProgram.id === selectedId ? "page" : undefined}
-            className="inline-flex min-h-9 w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--surface)] px-2 text-xs font-bold text-[var(--primary)] transition-colors hover:bg-[var(--primary-subtle)]"
+            className="inline-flex min-h-9 w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--primary)] px-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--primary-hover)]"
           >
             <UiText>{"투표하러 가기"}</UiText>
           </UiLink>
@@ -112,14 +110,14 @@ function VotingProgramCarousel({
       </div>
       {programs.length > 1 ? (
         <div className="relative mt-1.5 flex h-5 items-center justify-center gap-1">
-          <button type="button" aria-controls={carouselId} onClick={() => onMove(-1)} className="grid size-5 cursor-pointer place-items-center text-white/75 transition-colors hover:text-white">
+          <button type="button" aria-controls={carouselId} onClick={() => onMove(-1)} className="grid size-5 cursor-pointer place-items-center text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="m12 4-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span className="sr-only"><UiText>{"이전 투표 프로그램"}</UiText></span>
           </button>
-          <span className="text-[0.58rem] font-bold leading-none tabular-nums text-white/80">
+          <span className="text-xs font-medium leading-none tabular-nums text-[var(--muted)]">
             {currentIndex + 1} / {programs.length}
           </span>
-          <button type="button" aria-controls={carouselId} onClick={() => onMove(1)} className="grid size-5 cursor-pointer place-items-center text-white/75 transition-colors hover:text-white">
+          <button type="button" aria-controls={carouselId} onClick={() => onMove(1)} className="grid size-5 cursor-pointer place-items-center text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-3.5 fill-none stroke-current stroke-[1.8]"><path d="m8 4 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span className="sr-only"><UiText>{"다음 투표 프로그램"}</UiText></span>
           </button>
@@ -149,13 +147,14 @@ function CategoryProgramGroup({
   const contentId = useId();
 
   return (
-    <div className="border-b border-[var(--line)] pb-2">
+    <div>
+      {/* 왼쪽 메뉴의 다른 줄과 같은 높이와 굵기. 대분류끼리는 선 대신 줄 간격으로 나눈다. */}
       <button
         type="button"
         aria-expanded={open}
         aria-controls={contentId}
         onClick={onToggle}
-        className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-[0.92rem] font-extrabold tracking-[-0.01em] text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-[var(--radius-control)] px-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-active)]"
       >
         <span className="min-w-0 truncate text-left"><UiText>{category}</UiText></span>
         <svg
@@ -172,13 +171,13 @@ function CategoryProgramGroup({
         className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <ul className={`ml-4 space-y-1 border-l border-[var(--line)] pl-2 pt-1 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
+          <ul className={`mb-1 ml-3.5 space-y-0.5 border-l border-[var(--line)] pl-1.5 pt-0.5 transition-opacity duration-150 motion-reduce:transition-none ${open ? "opacity-100 delay-75" : "opacity-0"}`}>
             {[...programs].sort((a, b) => b.startYear - a.startYear).map((program) => {
               const selected = program.id === selectedId;
               const privateProgram = program.visibility === "private";
               const votingOpen = Boolean(program.votingEndsAt) && !privateProgram;
-              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${showSettings ? "pr-10" : ""} ${
-                selected ? "bg-[var(--primary-subtle)] text-[var(--primary)] before:absolute before:-left-[calc(0.5rem+1px)] before:inset-y-0 before:w-0.5 before:bg-[var(--primary)]" : "hover:bg-[var(--surface-subtle)]"
+              const rowClassName = `relative flex min-h-[3rem] items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-2 text-left transition-colors ${showSettings ? "pr-8" : ""} ${
+                selected ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : "hover:bg-[var(--surface-active)]"
               }`;
               const status = privateProgram
                 ? { dot: "", text: "text-[var(--muted)]", label: "비공개", locked: true }
@@ -226,7 +225,7 @@ function CategoryProgramGroup({
                       href={programManagementHref(program.id)}
                       tabIndex={open ? undefined : -1}
                       aria-label={`${program.name} 설정`}
-                      className="absolute right-1 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface)] focus-visible:text-[var(--primary)]"
+                      className="absolute right-0.5 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-[var(--radius-control)] text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--primary)] focus-visible:bg-[var(--surface)] focus-visible:text-[var(--primary)]"
                     >
                       <SettingsIcon className="size-[1.1rem]" />
                     </UiLink>
@@ -314,7 +313,7 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
   }
 
   function programList(surface: "mobile" | "desktop") {
-    return categories.length ? <div className="space-y-2">{categoryGroups(surface)}</div> : null;
+    return categories.length ? <div className="space-y-0.5">{categoryGroups(surface)}</div> : null;
   }
 
   const voteBox = votingPrograms.length ? (
@@ -322,7 +321,7 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
   ) : null;
 
   return (
-    <div className="flex flex-col px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:px-3 lg:py-8">
+    <div className="flex flex-col px-4 py-4 lg:p-0">
       <ResponsiveSectionNavigation
         eyebrow={<UiText>{title}</UiText>}
         label={<UiText>{selectedProgram?.name ?? selectedName ?? "프로그램 선택"}</UiText>}
@@ -342,19 +341,18 @@ export function ProgramSidebar({ items, selectedId, selectedName, title = "프�
         </UiNav>
       </ResponsiveSectionNavigation>
 
-      <div className="hidden min-h-0 flex-1 flex-col lg:flex">
-        <div className="mb-4 flex shrink-0 items-center justify-between gap-3 px-2">
-          <h2 className="text-sm font-bold tracking-[-0.02em]"><UiText>{title}</UiText></h2>
+      {/* 왼쪽 메뉴 칸이 통째로 스크롤하므로 목록이 따로 스크롤 상자를 갖지 않는다. */}
+      <div className="hidden flex-col lg:flex">
+        <div className="mb-1.5 flex items-center justify-between gap-3 pl-2.5">
+          <h2 className="text-xs font-medium text-[var(--muted)]"><UiText>{title}</UiText></h2>
           {showSettings ? (
-            <AddProgramLink className="grid size-8 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
+            <AddProgramLink className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:text-[var(--primary)]" />
           ) : null}
         </div>
-        <UiNav aria-label="프로그램 선택" className="flex min-h-0 flex-1 flex-col">
+        <UiNav aria-label="프로그램 선택">
           {/* 투표는 기간이 짧아 놓치면 끝이다. 프로그램 목록이 길어도 묻히지 않게 맨 위에 둔다. */}
-          {voteBox ? <div className="mb-4 shrink-0">{voteBox}</div> : null}
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {programList("desktop")}
-          </div>
+          {voteBox ? <div className="mb-4">{voteBox}</div> : null}
+          {programList("desktop")}
         </UiNav>
       </div>
     </div>

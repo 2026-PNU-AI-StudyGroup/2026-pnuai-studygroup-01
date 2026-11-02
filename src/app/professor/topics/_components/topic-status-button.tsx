@@ -59,12 +59,12 @@ export function TopicStatusButton({
           <form action={action}>
             <input type="hidden" name="topicId" value={topicId} />
             <input type="hidden" name="intent" value="closeRecruitment" />
-            <ConfirmSubmitButton disabled={pending} className="button-secondary text-sm" confirmMessage={`프로젝트 모집을 마감하면 검토 중인 지원 ${pendingApplicationCount}건이 자동 미선정되고 팀원 모집 글 ${openRecruitmentPostCount}건도 마감됩니다. 프로젝트 자체는 계속 진행됩니다. 이 작업은 취소할 수 없습니다. 계속하시겠습니까?`}><UiText>{pending ? "처리 중" : "모집 마감"}</UiText></ConfirmSubmitButton>
+            <ConfirmSubmitButton disabled={pending} className="button-secondary button-compact font-medium" confirmMessage={`프로젝트 모집을 마감하면 검토 중인 지원 ${pendingApplicationCount}건이 자동 미선정되고 팀원 모집 글 ${openRecruitmentPostCount}건도 마감됩니다. 프로젝트 자체는 계속 진행됩니다. 이 작업은 취소할 수 없습니다. 계속하시겠습니까?`}><UiText>{pending ? "처리 중" : "모집 마감"}</UiText></ConfirmSubmitButton>
           </form>
         ) : null}
       </div>
       {state.message ? (
-        <p aria-live="polite" className={`mt-2 text-sm ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+        <p aria-live="polite" className={`mt-1.5 text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
           <UiText>{state.message}</UiText>
         </p>
       ) : null}
@@ -84,12 +84,12 @@ function AdminLifecycleForm({ action, topicId, label, pending, message, error }:
     <form action={action} className="grid min-w-64 gap-2 sm:grid-cols-[minmax(12rem,1fr)_auto]">
       <input type="hidden" name="topicId" value={topicId} />
       <input type="hidden" name="intent" value="REQUEST_REVIEW" />
-      <TextInput name="reason" required maxLength={1000} className="min-h-10" placeholder="변경 사유" />
-      <button disabled={pending} className="button-secondary text-sm">
+      <TextInput name="reason" required maxLength={1000} className="min-h-[2.125rem] py-1 text-[0.8125rem]" placeholder="변경 사유" />
+      <button disabled={pending} className="button-secondary button-compact font-medium">
         <UiText>{pending ? "처리 중" : label}</UiText>
       </button>
       {message ? (
-        <p aria-live="polite" className={`text-sm sm:col-span-2 ${error ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+        <p aria-live="polite" className={`text-xs sm:col-span-2 ${error ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
           <UiText>{message}</UiText>
         </p>
       ) : null}

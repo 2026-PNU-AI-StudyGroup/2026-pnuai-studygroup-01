@@ -10,7 +10,7 @@ import type {
   AdminProjectTeamFilter,
 } from "@/modules/team/application/list-admin-program-project-operations";
 
-export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, query, divisionId, divisions = [], hasUnassigned = false, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, registrationAction }: {
+export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, query, divisionId, divisions = [], hasUnassigned = false, now, ballot, votingResults, adminProjectData, teamStatus, reportStatus, search }: {
   programId?: string;
   topics: PublicTopicPage;
   canApply: boolean;
@@ -25,12 +25,24 @@ export function ActiveProjectsView({ programId, topics, canApply, leaderTeams, q
   adminProjectData?: AdminProjectCardData[];
   teamStatus?: AdminProjectTeamFilter;
   reportStatus?: AdminProjectReportFilter;
-  registrationAction?: ReactNode;
+  search?: ReactNode;
 }) {
   return (
-    <div className="min-w-0">
-      <ActiveProjectFilters programId={programId} query={query} divisionId={divisionId} divisions={divisions} hasUnassigned={hasUnassigned} teamStatus={teamStatus} reportStatus={reportStatus} />
-      <ActiveProjectResults topics={topics} canApply={canApply} leaderTeams={leaderTeams} programId={programId} query={query} divisionId={divisionId} now={now} ballot={ballot} votingResults={votingResults} adminProjectData={adminProjectData} teamStatus={teamStatus} reportStatus={reportStatus} registrationAction={registrationAction} />
-    </div>
+    <ActiveProjectResults
+      topics={topics}
+      canApply={canApply}
+      leaderTeams={leaderTeams}
+      programId={programId}
+      query={query}
+      divisionId={divisionId}
+      now={now}
+      ballot={ballot}
+      votingResults={votingResults}
+      adminProjectData={adminProjectData}
+      teamStatus={teamStatus}
+      reportStatus={reportStatus}
+      search={search}
+      filters={<ActiveProjectFilters programId={programId} query={query} divisionId={divisionId} divisions={divisions} hasUnassigned={hasUnassigned} teamStatus={teamStatus} reportStatus={reportStatus} />}
+    />
   );
 }

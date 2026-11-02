@@ -26,16 +26,17 @@ export function isTopicRecruiting(topic: PublicTopicSummary, now: Date): boolean
  *
  * 이미 지원했으면 결과를 볼 곳으로, 지원할 수 있으면 지원서를 연다. 둘 다 아니면 비운다.
  */
-export function ProjectApplicationAction({ topic, canApply, recruiting, leaderTeams }: {
+export function ProjectApplicationAction({ topic, canApply, recruiting, leaderTeams, quiet = false }: {
   topic: PublicTopicSummary;
   canApply: boolean;
   recruiting: boolean;
   leaderTeams: Array<{ id: string; name: string; memberCount: number }>;
+  quiet?: boolean;
 }) {
   const application = topic.ownApplicationStatus;
   if (application) {
     return (
-      <Link href={applicationAction[application].href} className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--primary)]">
+      <Link href={applicationAction[application].href} className="inline-flex min-h-8 items-center whitespace-nowrap text-[0.8125rem] font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]">
         <UiText>{applicationAction[application].label}</UiText>
         <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-2 size-4 fill-none stroke-current stroke-[1.75]"><path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </Link>
@@ -52,6 +53,7 @@ export function ProjectApplicationAction({ topic, canApply, recruiting, leaderTe
       memberCount={topic.memberCount}
       teamMaxSize={topic.projectTeamMaxSize ?? 6}
       leaderTeams={leaderTeams}
+      quiet={quiet}
     />
   );
 }

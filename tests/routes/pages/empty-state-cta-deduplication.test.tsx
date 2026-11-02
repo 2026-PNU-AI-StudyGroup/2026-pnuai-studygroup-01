@@ -33,8 +33,9 @@ vi.mock("@/shared/infrastructure/database/prisma", () => ({ prisma: {} }));
 vi.mock("@/app/_components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
 vi.mock("@/modules/student-team/ui/student-team-section-layout", () => ({
   StudentTeamSectionLayout: ({ children }: { children: ReactNode }) => <>{children}</>,
-  StudentTeamPageIntro: ({ title, description, meta, action }: { title: string; description: string; meta?: ReactNode; action?: ReactNode }) => (
-    <header><h1>{title}</h1><p>{description}</p>{meta}{action}</header>
+  StudentTeamPanel: () => null,
+  StudentTeamPageIntro: ({ title, finding, action }: { title: string; finding?: ReactNode; action?: ReactNode }) => (
+    <header><h1>{title}</h1><p>{finding}</p>{action}</header>
   ),
   StudentTeamPagination: () => null,
 }));

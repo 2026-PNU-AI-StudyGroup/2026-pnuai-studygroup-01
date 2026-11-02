@@ -33,7 +33,7 @@ const team: StudentTeamSummary = {
 };
 
 describe("StudentTeamManagementSections", () => {
-  it("팀장 화면을 절제된 팀 헤더, 구성원·초대 패널과 삭제 영역으로 구성한다", () => {
+  it("팀장 화면은 팀 머리, 구성원과 초대 카드, 모집 공고, 마지막 삭제 영역으로 이어진다", () => {
     const { container } = render(<StudentTeamManagementSections team={team} actorId="student-1" recruitmentPosts={[]} />);
 
     expect(screen.getByRole("heading", { name: "코드웨이브" })).toBeInTheDocument();
@@ -44,10 +44,14 @@ describe("StudentTeamManagementSections", () => {
     expect(screen.getByRole("list", { name: "응답 대기 중인 팀 초대" })).toBeInTheDocument();
     expect(screen.getByText("three@pusan.ac.kr")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "팀 삭제 실행" })).toBeInTheDocument();
-    expect(container.querySelector("header")).toHaveClass("rounded-[var(--radius-panel)]");
-    expect(container.querySelector("header")?.className).toContain("bg-[var(--accent-subtle)]");
-    expect(screen.getByRole("heading", { name: "구성원" }).closest("section")?.parentElement).toHaveClass("xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)]");
+    expect(screen.getByRole("heading", { level: 1, name: "코드웨이브" }).closest("section")).toHaveClass("rounded-[var(--radius-panel)]");
+    expect(screen.getByText("검토를 기다리는 지원자 2명")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "팀원 모집하기" })).toHaveAttribute("href", "/teams/manage/team-1?modal=recruitment");
+    expect(screen.getByRole("heading", { name: "구성원" }).closest("section")?.parentElement).toHaveClass("@min-[60rem]:grid-cols-[minmax(0,1fr)_21rem]");
+    expect(screen.getByText("등록한 모집 공고가 없습니다.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "팀 삭제" }).closest("section")).toHaveClass("border-t");
+    // 되돌릴 수 없는 일은 화면 맨 끝 제 구역에 둔다.
+    expect(container.firstElementChild?.lastElementChild).toContainElement(screen.getByRole("button", { name: "팀 삭제 실행" }));
   });
 
   it("팀원에게는 초대와 삭제 기능을 표시하지 않는다", () => {
@@ -55,6 +59,8 @@ describe("StudentTeamManagementSections", () => {
 
     expect(screen.queryByRole("button", { name: "초대 보내기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "팀 삭제 실행" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "모집 공고 목록" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팀원").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "팀 탈퇴" })).toBeInTheDocument();
   });
 });

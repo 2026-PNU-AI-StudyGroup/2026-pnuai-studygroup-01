@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PastProjectsView } from "@/app/topics/_components/past-projects-view";
-import styles from "@/app/topics/_components/project-gallery.module.css";
 import type { ArchivedProject } from "@/modules/team/application/archive-projects";
 import type { ProgramVoteBallot } from "@/modules/project-voting/application/manage-project-voting";
 
@@ -72,7 +71,7 @@ describe("PastProjectsView", () => {
     expect(push).toHaveBeenCalledWith("/topics?view=past&programId=program-1&q=%EA%B8%B8%EC%B0%BE%EA%B8%B0", { scroll: false });
   });
 
-  it("투표 중인 과거 프로젝트 카드에서도 바로 투표할 수 있다", () => {
+  it("투표 중인 과거 프로젝트 줄에서도 바로 투표할 수 있다", () => {
     render(
       <PastProjectsView
         projects={[project]}
@@ -86,13 +85,11 @@ describe("PastProjectsView", () => {
     );
 
     expect(screen.queryByText("선택한 프로젝트")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "투표하기" })).toBeInTheDocument();
-    const voteCountBadge = screen.getByLabelText("득표 0표");
-    expect(voteCountBadge).toHaveClass("absolute", "bottom-3", "right-3", "text-xs");
-    expect(voteCountBadge?.closest("[aria-hidden='true']")).toBeNull();
+    // 줄마다 채운 버튼이면 표보다 시끄러워 테두리 버튼으로 둔다.
+    expect(screen.getByRole("button", { name: "투표하기" })).toHaveClass("button-secondary");
+    expect(screen.getByLabelText("득표 0표")).toHaveTextContent("0표");
     const voteStatus = screen.getByRole("status", { name: "투표 현황" });
-    const total = screen.getByText("1", { selector: "strong" }).closest("p");
-    expect(voteStatus.parentElement).toBe(total?.parentElement);
+    expect(voteStatus.closest("section")).toBe(screen.getByRole("region", { name: "지난 프로젝트" }));
   });
 
   it("결과 비공개 투표 용지는 투표 기능만 유지하고 득표 배지를 숨긴다", () => {
@@ -116,10 +113,10 @@ describe("PastProjectsView", () => {
     expect(screen.queryByLabelText(/득표 \d+표/)).not.toBeInTheDocument();
   });
 
-  it("썸네일 카드에는 프로젝트의 프로그램·분과 소속을 함께 표시한다", () => {
+  it("한 줄에 사진, 이름과 설명, 팀과 지도교수, 수상, 득표, 저장소를 둔다", () => {
     render(
       <PastProjectsView
-        projects={[project]}
+        projects={[{ ...project, award: "대상", sourceUrl: "https://github.com/pnu/indoor-way" }]}
         total={1}
         page={1}
         totalPages={1}
@@ -127,51 +124,17 @@ describe("PastProjectsView", () => {
       />,
     );
 
-    const detailLink = screen.getByRole("link", { name: "실내 길찾기" });
-    const article = detailLink.closest("article");
-    expect(article?.querySelector("[data-project-cover]")).toBeInTheDocument();
-    expect(article).toHaveTextContent("CSE 캡스톤디자인 2025 · 융합");
-    expect(screen.getByText("완료")).toHaveClass("rounded-full", "text-white", "backdrop-blur-sm");
-    expect(article).toHaveTextContent("모두의 길 팀 · 김도윤 교수");
-    expect(detailLink).toHaveAttribute(
-      "href",
-      "/topics/50000000-0000-4000-8000-000000000001",
-    );
+    const row = screen.getByRole("link", { name: "실내 길찾기" }).closest("li");
+    expect(screen.getByRole("link", { name: "실내 길찾기" })).toHaveAttribute("href", "/topics/50000000-0000-4000-8000-000000000001");
+    expect(row?.querySelector("img")).toHaveAttribute("src", "/demo/archive/project.png");
+    expect(row).toHaveTextContent("프로젝트 설명");
+    expect(row).toHaveTextContent("모두의 길");
+    expect(row).toHaveTextContent("김도윤 교수");
+    expect(screen.getByText("대상")).toHaveClass("bg-[var(--accent-track)]");
+    expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute("href", "https://github.com/pnu/indoor-way");
   });
 
-  it("팀과 지도교수를 한 줄로 표시하고 참여·결과물 정보 박스를 제거한다", () => {
-    render(
-      <PastProjectsView
-        projects={[{ ...project, artifacts: [{ id: "artifact-1", type: "POSTER", title: "발표 포스터", position: 0 }] }]}
-        total={1}
-        page={1}
-        totalPages={1}
-        query=""
-      />,
-    );
-
-    const article = screen.getByRole("article");
-    const title = screen.getByRole("heading", { name: "실내 길찾기" });
-    const team = screen.getByText("모두의 길 팀");
-    const teamMeta = team.closest("p");
-    const description = screen.getByText("프로젝트 설명");
-
-    expect(teamMeta).toHaveTextContent("모두의 길 팀 · 김도윤 교수");
-    expect(article.querySelector("dl")).not.toBeInTheDocument();
-    expect(article).not.toHaveTextContent("참여 · 결과물");
-    expect(article).not.toHaveTextContent("1명 · 1개");
-    expect(title).toHaveClass("line-clamp-2");
-    expect(title).not.toHaveClass("min-h-14");
-    expect(description).toHaveClass("line-clamp-2");
-    expect(description).not.toHaveClass("min-h-12");
-    expect(screen.queryByRole("list", { name: "프로젝트 기술" })).not.toBeInTheDocument();
-    expect(article).not.toHaveTextContent("TypeScript");
-    if (!teamMeta) throw new Error("팀 메타 정보를 찾을 수 없습니다.");
-    expect(title.compareDocumentPosition(teamMeta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(teamMeta.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("지도교수가 없는 프로그램은 교수 메타를 숨긴다", () => {
+  it("지도교수가 없는 프로그램은 교수 이름을 숨기고 모르는 값은 자리를 비운다", () => {
     render(
       <PastProjectsView
         projects={[{ ...project, advisorEnabled: false }]}
@@ -182,12 +145,13 @@ describe("PastProjectsView", () => {
       />,
     );
 
-    expect(screen.getByText("모두의 길 팀").closest("p")).toHaveTextContent("모두의 길 팀");
-    expect(screen.queryByText("김도윤")).not.toBeInTheDocument();
-    expect(screen.getByText("프로젝트 설명")).toHaveClass("line-clamp-2");
+    expect(screen.getByText("모두의 길")).toBeInTheDocument();
+    expect(screen.queryByText(/김도윤/)).not.toBeInTheDocument();
+    // 수상, 득표, 저장소가 모두 없으면 줄표 없이 비운다.
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
   });
 
-  it("관리자 연락처 버튼을 카드 전체 링크보다 위의 클릭 레이어에 둔다", () => {
+  it("관리자에게는 줄 끝에 진행 현황과 연락처를 둔다", () => {
     render(
       <PastProjectsView
         projects={[project]}
@@ -203,13 +167,12 @@ describe("PastProjectsView", () => {
       />,
     );
 
-    const contactButton = screen.getByRole("button", { name: "연락처 정보" });
-    const actionLayer = contactButton.closest(`.${styles.actionLayer}`);
-    expect(actionLayer).not.toBeNull();
-    expect(actionLayer).toHaveClass("mt-auto");
+    const row = screen.getByRole("link", { name: "실내 길찾기" }).closest("li");
+    expect(row).toContainElement(screen.getByRole("button", { name: "연락처 정보" }));
+    expect(row).toContainElement(screen.getByRole("link", { name: "진행 현황" }));
   });
 
-  it("썸네일이 없는 지난 프로젝트에도 대체 장식 커버를 유지한다", () => {
+  it("사진이 없는 지난 프로젝트는 회색 판에 사업 아이콘을 둔다", () => {
     render(
       <PastProjectsView
         projects={[{ ...project, thumbnailPath: undefined }]}
@@ -220,14 +183,9 @@ describe("PastProjectsView", () => {
       />,
     );
 
-    const article = screen.getByRole("link", { name: "실내 길찾기" }).closest("article");
-    expect(article?.querySelector("[data-project-cover]")).toBeInTheDocument();
-    expect(article?.querySelector("[data-project-cover-fallback]")).toBeInTheDocument();
-    expect(article?.querySelector("[data-project-cover] svg")).toBeInTheDocument();
-    expect(article?.querySelector("[data-project-cover] [data-pnu-mark]")).not.toBeInTheDocument();
-    // 표지는 분과, 주제명, 팀명 순으로 채운다. 분과가 있으면 프로그램명 대신 분과를 쓴다.
-    expect(article?.querySelector("[data-project-cover-fallback]")).toHaveTextContent("융합실내 길찾기모두의 길");
-    expect(article?.querySelector("img")).not.toBeInTheDocument();
+    const row = screen.getByRole("link", { name: "실내 길찾기" }).closest("li");
+    expect(row?.querySelector("img")).not.toBeInTheDocument();
+    expect(row?.querySelector("span[aria-hidden='true'] svg")).toBeInTheDocument();
   });
 
   it("필터 결과가 비어도 같은 초기화 동작을 두 번 표시하지 않는다", () => {

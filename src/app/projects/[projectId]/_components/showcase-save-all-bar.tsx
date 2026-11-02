@@ -31,19 +31,13 @@ export function ShowcaseSaveAllBar({ teamId, topicId }: { teamId: string; topicI
     });
   }
 
+  // 제목 줄 오른쪽의 채운 버튼. 작성을 마친 뒤 하는 일이라 이 화면의 할 일 하나로 둔다.
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] px-5 py-4 shadow-[0_10px_28px_rgba(31,35,48,0.045)] sm:px-6">
-      <div className="min-w-0">
-        <p className="text-sm font-extrabold text-[var(--ink)]"><UiText>{"작성을 마쳤나요?"}</UiText></p>
-        {state.status === "error" ? (
-          <p role="alert" className="mt-1 text-sm font-semibold leading-6 text-[var(--danger)]"><UiText>{state.message}</UiText></p>
-        ) : (
-          <p className="muted mt-1 text-sm leading-6"><UiText>{"소개 글과 영상 링크를 저장하고 방문자 화면으로 이동합니다."}</UiText></p>
-        )}
-      </div>
-      <button type="button" className="button-primary shrink-0" disabled={pending} onClick={saveAll}>
-        <UiText>{pending ? "저장 중" : "전체 저장"}</UiText>
+    <>
+      {state.status === "error" ? <p role="alert" className="text-[0.8125rem] font-medium text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
+      <button type="button" className="button-primary button-compact shrink-0" disabled={pending} onClick={saveAll}>
+        <UiText>{pending ? "저장 중" : "저장하고 방문자 화면 보기"}</UiText>
       </button>
-    </div>
+    </>
   );
 }

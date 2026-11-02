@@ -8,6 +8,7 @@ import {
   respondProjectGuidanceRequestAction,
 } from "@/app/projects/[projectId]/_actions/project-guidance-request-actions";
 import { CloseIcon } from "@/app/projects/[projectId]/_components/workspace-icons";
+import { rowActionClass } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { koreanDateTimeInput } from "@/app/projects/[projectId]/_lib/report-form-shared";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
@@ -63,7 +64,7 @@ function GuidanceDialogHeader({
   return (
     <header className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 sm:px-7">
       <div>
-        <h3 id={titleId} className="text-2xl font-extrabold tracking-[-0.035em]"><UiText>{title}</UiText></h3>
+        <h3 id={titleId} className="text-lg font-semibold"><UiText>{title}</UiText></h3>
         <p id={descriptionId} className="muted mt-2 text-sm leading-6"><UiText>{description}</UiText></p>
       </div>
       <button type="button" onClick={onClose} disabled={pending} aria-label={closeLabel} className="button-quiet min-w-11 shrink-0 px-0">
@@ -96,7 +97,7 @@ export function ProjectGuidanceRequestForm({
 
   return (
     <>
-      <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary gap-2" disabled={pending}>
+      <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-primary button-compact gap-1.5" disabled={pending}>
         <AddIcon className="size-4 shrink-0" /><UiText>{"새 요청 보내기"}</UiText>
       </button>
       <dialog
@@ -125,7 +126,7 @@ export function ProjectGuidanceRequestForm({
           <input type="hidden" name="teamId" value={teamId} />
 
           <fieldset disabled={pending} className="grid gap-2">
-            <legend className="text-sm font-bold text-[var(--ink)]"><UiText>{"요청 유형"}</UiText></legend>
+            <legend className="text-sm font-medium text-[var(--ink)]"><UiText>{"요청 유형"}</UiText></legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {([
                 ["MEETING", "회의 요청", "회의 목적과 논의할 내용을 전달합니다."],
@@ -146,7 +147,7 @@ export function ProjectGuidanceRequestForm({
             </div>
           </fieldset>
 
-          <label htmlFor={`${fieldId}-title`} className="grid gap-2 text-sm font-semibold">
+          <label htmlFor={`${fieldId}-title`} className="grid gap-2 text-sm font-medium">
             <UiText>{"제목"}</UiText>
             <UiInput
               id={`${fieldId}-title`}
@@ -160,7 +161,7 @@ export function ProjectGuidanceRequestForm({
             />
           </label>
 
-          <label htmlFor={`${fieldId}-content`} className="grid gap-2 text-sm font-semibold">
+          <label htmlFor={`${fieldId}-content`} className="grid gap-2 text-sm font-medium">
             <UiText>{"요청 내용"}</UiText>
             <UiTextarea
               id={`${fieldId}-content`}
@@ -175,7 +176,7 @@ export function ProjectGuidanceRequestForm({
             />
           </label>
 
-          <label htmlFor={`${fieldId}-reference-url`} className="grid gap-2 text-sm font-semibold">
+          <label htmlFor={`${fieldId}-reference-url`} className="grid gap-2 text-sm font-medium">
             <span><UiText>{"참고 링크"}</UiText> <span className="font-normal text-[var(--muted)]"><UiText>{"(선택)"}</UiText></span></span>
             <UiInput
               id={`${fieldId}-reference-url`}
@@ -226,7 +227,7 @@ export function ProjectGuidanceResponseForm({
 
   return (
     <>
-      <button type="button" onClick={() => dialogRef.current?.showModal()} className="button-secondary">
+      <button type="button" onClick={() => dialogRef.current?.showModal()} className={rowActionClass}>
         <UiText>{"답변하기"}</UiText>
       </button>
       <dialog
@@ -253,7 +254,7 @@ export function ProjectGuidanceResponseForm({
           <input type="hidden" name="teamId" value={teamId} />
           <input type="hidden" name="requestId" value={requestId} />
 
-          <label htmlFor={`${fieldId}-response`} className="grid gap-2 text-sm font-semibold">
+          <label htmlFor={`${fieldId}-response`} className="grid gap-2 text-sm font-medium">
             <UiText>{"답변"}</UiText>
             <UiTextarea
               id={`${fieldId}-response`}
@@ -269,7 +270,7 @@ export function ProjectGuidanceResponseForm({
           </label>
 
           {kind === "MEETING" ? (
-            <label htmlFor={`${fieldId}-scheduled-at`} className="grid gap-2 text-sm font-semibold">
+            <label htmlFor={`${fieldId}-scheduled-at`} className="grid gap-2 text-sm font-medium">
               <span><UiText>{"확정 일시"}</UiText> <span className="font-normal text-[var(--muted)]"><UiText>{"(선택)"}</UiText></span></span>
               <DateTimeInput
                 id={`${fieldId}-scheduled-at`}
@@ -308,13 +309,13 @@ export function CancelProjectGuidanceRequestForm({
   );
 
   return (
-    <form action={action} aria-busy={pending} className="grid gap-2">
+    <form action={action} aria-busy={pending} className="inline-grid gap-1">
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="requestId" value={requestId} />
       <ConfirmSubmitButton
         disabled={pending}
         aria-label={pending ? "요청 취소 중" : "요청 취소"}
-        className="button-quiet min-h-11 text-[var(--danger)]"
+        className="inline-flex min-h-11 items-center px-1 text-[0.8125rem] font-medium text-[var(--danger)] hover:underline hover:underline-offset-[3px]"
         confirmMessage="이 요청을 취소하시겠습니까?"
       >
         <UiText>{pending ? "취소 중" : "요청 취소"}</UiText>

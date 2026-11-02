@@ -7,7 +7,6 @@ import { toggleProjectVoteAction } from "@/app/_actions/project-vote-actions";
 import type { ProgramVoteBallot, ProjectVoteCandidate } from "@/modules/project-voting/application/manage-project-voting";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { UiSection } from "@/modules/translation/ui/localized-elements";
-import { BallotBoxIcon } from "@/shared/ui/workspace-icons";
 
 export type ProjectVoteSelection = {
   ballot?: ProgramVoteBallot;
@@ -54,13 +53,15 @@ export function useProjectVoteSelection(ballot?: ProgramVoteBallot): ProjectVote
   return { ballot, selectedTopicIds, pending, pendingTopicId, toggle };
 }
 
-export function ProjectVoteButton({ candidate, selection }: {
+export function ProjectVoteButton({ candidate, selection, quiet = false }: {
   candidate?: ProjectVoteCandidate;
   selection: ProjectVoteSelection;
+  /** 목록 줄 안에서는 테두리 버튼으로 두고, 투표한 줄만 옅은 파랑으로 칠한다. */
+  quiet?: boolean;
 }) {
   const ballot = selection.ballot;
   if (!ballot || !candidate) return null;
-  if (ballot.phase !== "OPEN") return <button type="button" disabled className="button-secondary w-full"><UiText>{ballot.phase === "UPCOMING" ? "투표 시작 전" : "투표 기간 종료"}</UiText></button>;
+  if (ballot.phase !== "OPEN") return <button type="button" disabled className="button-secondary button-compact w-full"><UiText>{ballot.phase === "UPCOMING" ? "투표 시작 전" : "투표 기간 종료"}</UiText></button>;
 
   const selected = selection.selectedTopicIds.has(candidate.id);
   const selfVoteBlocked = !ballot.policy.selfVotingAllowed && candidate.isSelfProject;
@@ -80,7 +81,9 @@ export function ProjectVoteButton({ candidate, selection }: {
       type="button"
       onClick={() => selection.toggle(candidate.id)}
       disabled={disabled}
-      className={`${selected ? "button-secondary" : "button-primary"} w-full`}
+      className={`${quiet
+        ? `button-secondary ${selected ? "border-[var(--accent-track)] bg-[var(--accent-subtle)] text-[var(--accent-ink)]" : ""}`
+        : selected ? "button-secondary" : "button-primary"} button-compact w-full`}
     >
       <UiText>{label}</UiText>
     </button>
@@ -110,14 +113,11 @@ export function ArchivedProjectVoteAction({
   );
 }
 
+/** 득표수. 0표도 그대로 적는다. 결과를 숨기는 기간에는 값이 없어 그리지 않는다. */
 export function ProjectVoteCountBadge({ voteCount }: { voteCount: number }) {
   return (
-    <span
-      aria-label={`득표 ${voteCount}표`}
-      className="pointer-events-none absolute bottom-3 right-3 z-[2] inline-flex min-h-7 items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(31,35,48,.88)] px-2.5 text-xs font-semibold text-white shadow-sm"
-    >
-      <BallotBoxIcon className="size-4" />
-      <strong aria-hidden="true" className="tabular-nums">{voteCount}<UiText>{"표"}</UiText></strong>
+    <span aria-label={`득표 ${voteCount}표`} className="whitespace-nowrap text-xs tabular-nums text-[var(--muted)]">
+      <span aria-hidden="true">{voteCount}<UiText>{"표"}</UiText></span>
     </span>
   );
 }
@@ -138,7 +138,7 @@ export function ProjectVoteStatusPill({ selection }: { selection: ProjectVoteSel
     <span
       role="status"
       aria-label="투표 현황"
-      className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-bold text-[var(--ink)]"
+      className="inline-flex min-h-7 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] px-2.5 text-xs font-medium text-[var(--ink)]"
     >
       <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${indicatorTone}`} />
       <UiText>{label}</UiText>

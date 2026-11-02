@@ -57,7 +57,7 @@ export function AnnouncementTargetPicker({ programs, teams, value, onValueChange
     return next;
   });
 
-  const leafClass = (checked: boolean) => `flex min-h-10 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-sm transition-colors ${checked ? "bg-[var(--primary-subtle)] font-semibold text-[var(--primary)]" : "text-[var(--ink)] hover:bg-[var(--surface-subtle)]"}`;
+  const leafClass = (checked: boolean) => `flex min-h-10 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-sm transition-colors ${checked ? "bg-[var(--accent-subtle)] font-semibold text-[var(--accent-ink)]" : "text-[var(--ink)] hover:bg-[var(--surface-subtle)]"}`;
 
   return (
     <div>

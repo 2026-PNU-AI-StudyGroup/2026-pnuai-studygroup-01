@@ -12,7 +12,7 @@ export function MemberContactDialogButton({ name, email, contacts }: { name: str
       <button
         type="button"
         aria-label={`${name} 연락처`}
-        className="text-left font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:underline"
+        className="text-left text-sm font-medium text-[var(--ink)] hover:text-[var(--primary)] hover:underline hover:underline-offset-[3px]"
         onClick={() => dialogRef.current?.showModal()}
       >
         {name}
@@ -20,12 +20,12 @@ export function MemberContactDialogButton({ name, email, contacts }: { name: str
       <dialog
         ref={dialogRef}
         aria-labelledby="member-contact-title"
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[0_28px_90px_rgba(31,35,48,.25)] backdrop:bg-[var(--ink)]/45"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-[var(--shadow-float)] backdrop:bg-[var(--backdrop)]"
       >
         <div className="p-6 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 id="member-contact-title" className="text-xl font-bold tracking-[-0.035em]">{name}</h2>
+              <h2 id="member-contact-title" className="text-lg font-semibold">{name}</h2>
               <p className="mt-1 break-all text-sm text-[var(--muted)]">{email}</p>
             </div>
             <UiButton

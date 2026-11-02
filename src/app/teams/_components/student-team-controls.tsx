@@ -33,10 +33,10 @@ export function CreateStudentTeamForm() {
   }, [router, state.status, state.teamId]);
   return (
     <form action={action} className="grid gap-4" aria-busy={pending}>
-      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 이름"}</UiText><UiInput className="form-control" name="name" required maxLength={80} placeholder="예: 코드웨이브" /></label>
-      <label className="grid gap-2 text-sm font-semibold"><UiText>{"팀 소개"}</UiText><UiTextarea className="form-control" name="description" rows={3} maxLength={1000} placeholder="팀의 주제나 활동 계획을 간단히 입력하세요." /></label>
-      <button className="button-primary justify-self-start" type="submit" disabled={pending}><UiText>{pending ? "만드는 중" : "내 팀 만들기"}</UiText></button>
+      <label className="grid gap-2 text-sm font-medium"><UiText>{"팀 이름"}</UiText><UiInput className="form-control" name="name" required maxLength={80} placeholder="예: 코드웨이브" /></label>
+      <label className="grid gap-2 text-sm font-medium"><UiText>{"팀 소개"}</UiText><UiTextarea className="form-control" name="description" rows={3} maxLength={1000} placeholder="팀의 주제나 활동 계획을 간단히 입력하세요." /></label>
       <ActionMessage state={state} />
+      <button className="button-primary button-compact justify-self-end" type="submit" disabled={pending}><UiText>{pending ? "만드는 중" : "내 팀 만들기"}</UiText></button>
     </form>
   );
 }
@@ -44,11 +44,12 @@ export function CreateStudentTeamForm() {
 export function InviteStudentTeamMemberForm({ teamId }: { teamId: string }) {
   const [state, action, pending] = useActionState(inviteStudentTeamMemberAction, initialStudentTeamActionState);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" aria-busy={pending}>
+    <form action={action} className="grid gap-3" aria-busy={pending}>
       <input type="hidden" name="teamId" value={teamId} />
-      <label className="grid gap-2 text-sm font-semibold"><span><UiText>{"이메일로 초대"}</UiText></span><TextInput type="email" name="email" required placeholder="student@pusan.ac.kr" /></label>
-      <button className="button-primary self-end" type="submit" disabled={pending}><UiText>{pending ? "보내는 중" : "초대 보내기"}</UiText></button>
-      <div className="sm:col-span-2"><ActionMessage state={state} /></div>
+      <label className="grid gap-2 text-sm font-medium"><span><UiText>{"이메일로 초대"}</UiText></span><TextInput type="email" name="email" required placeholder="student@pusan.ac.kr" /></label>
+      <ActionMessage state={state} />
+      {/* 좁은 칸이라 입력칸을 다 쓰게 하고 버튼은 아래 오른쪽에. 화면의 채운 버튼은 제목 줄 하나만 둔다. */}
+      <button className="button-secondary button-compact justify-self-end" type="submit" disabled={pending}><UiText>{pending ? "보내는 중" : "초대 보내기"}</UiText></button>
     </form>
   );
 }
@@ -58,8 +59,8 @@ export function InvitationDecisionForm({ invitationId }: { invitationId: string 
   return (
     <form action={action} className="flex flex-wrap items-center justify-end gap-2" aria-busy={pending}>
       <input type="hidden" name="invitationId" value={invitationId} />
-      <button className="button-secondary" name="decision" value="DECLINE" type="submit" disabled={pending}><UiText>{"거절"}</UiText></button>
-      <button className="button-primary" name="decision" value="ACCEPT" type="submit" disabled={pending}><UiText>{"팀 참여"}</UiText></button>
+      <button className="button-quiet button-compact min-h-8 px-3 font-medium" name="decision" value="DECLINE" type="submit" disabled={pending}><UiText>{"거절"}</UiText></button>
+      <button className="button-secondary button-compact min-h-8 px-3 font-medium" name="decision" value="ACCEPT" type="submit" disabled={pending}><UiText>{"팀 참여"}</UiText></button>
       <ActionMessage state={state} />
     </form>
   );
@@ -70,7 +71,7 @@ export function CancelStudentTeamInvitationForm({ invitationId, email }: { invit
   return (
     <form action={action} className="flex flex-wrap items-center justify-end gap-2" aria-busy={pending}>
       <input type="hidden" name="invitationId" value={invitationId} />
-      <ConfirmSubmitButton className="button-quiet text-[var(--danger)]" disabled={pending} confirmMessage={`${email} 님에게 보낸 초대를 철회하시겠습니까?`}><UiText>{"초대 철회"}</UiText></ConfirmSubmitButton>
+      <ConfirmSubmitButton className="button-quiet button-compact min-h-8 px-3 font-medium text-[var(--danger)] hover:bg-[var(--danger-subtle)]" disabled={pending} confirmMessage={`${email} 님에게 보낸 초대를 철회하시겠습니까?`}><UiText>{"초대 철회"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );
@@ -83,11 +84,11 @@ export function TeamMemberActions({ teamId, studentId, studentName }: { teamId: 
     <div className="flex flex-wrap items-center justify-end gap-1">
       <form action={transferAction}>
         <input type="hidden" name="teamId" value={teamId} /><input type="hidden" name="nextLeaderId" value={studentId} />
-        <ConfirmSubmitButton className="button-quiet" disabled={transferring} confirmMessage={`${studentName} 님에게 팀장을 이전하시겠습니까?`}><UiText>{"팀장 위임"}</UiText></ConfirmSubmitButton>
+        <ConfirmSubmitButton className="button-quiet button-compact min-h-8 px-3 font-medium" disabled={transferring} confirmMessage={`${studentName} 님에게 팀장을 이전하시겠습니까?`}><UiText>{"팀장 위임"}</UiText></ConfirmSubmitButton>
       </form>
       <form action={removeAction}>
         <input type="hidden" name="teamId" value={teamId} /><input type="hidden" name="studentId" value={studentId} />
-        <ConfirmSubmitButton className="button-quiet text-[var(--danger)]" disabled={removing} confirmMessage={`${studentName} 님을 팀에서 내보내시겠습니까?`}><UiText>{"내보내기"}</UiText></ConfirmSubmitButton>
+        <ConfirmSubmitButton className="button-quiet button-compact min-h-8 px-3 font-medium text-[var(--danger)] hover:bg-[var(--danger-subtle)]" disabled={removing} confirmMessage={`${studentName} 님을 팀에서 내보내시겠습니까?`}><UiText>{"내보내기"}</UiText></ConfirmSubmitButton>
       </form>
       <ActionMessage state={transferState.message ? transferState : removeState} />
     </div>
@@ -99,7 +100,7 @@ export function DeleteStudentTeamForm({ teamId, teamName }: { teamId: string; te
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name="teamId" value={teamId} />
-      <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀을 삭제하시겠습니까? 완료된 프로젝트 기록은 삭제되지 않습니다.`}><UiText>{"팀 삭제"}</UiText></ConfirmSubmitButton>
+      <ConfirmSubmitButton className="button-secondary button-compact justify-self-start font-medium text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀을 삭제하시겠습니까? 완료된 프로젝트 기록은 삭제되지 않습니다.`}><UiText>{"팀 삭제"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );
@@ -110,7 +111,7 @@ export function LeaveStudentTeamForm({ teamId, teamName }: { teamId: string; tea
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name="teamId" value={teamId} />
-      <ConfirmSubmitButton className="button-quiet justify-self-start text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀에서 탈퇴하시겠습니까? 대기 중인 프로젝트 등록은 취소됩니다.`}><UiText>{"팀 탈퇴"}</UiText></ConfirmSubmitButton>
+      <ConfirmSubmitButton className="button-secondary button-compact justify-self-start font-medium text-[var(--danger)]" disabled={pending} confirmMessage={`${teamName} 팀에서 탈퇴하시겠습니까? 대기 중인 프로젝트 등록은 취소됩니다.`}><UiText>{"팀 탈퇴"}</UiText></ConfirmSubmitButton>
       <ActionMessage state={state} />
     </form>
   );

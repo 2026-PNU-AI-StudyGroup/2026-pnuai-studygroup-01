@@ -73,9 +73,9 @@ export function AccountPopover({
           inverse
             ? open || active
               ? "bg-white/16 text-white"
-              : "text-[#cbd6ff] hover:bg-white/10 hover:text-white"
+              : "text-white/75 hover:bg-white/10 hover:text-white"
             : open || active
-              ? "bg-[var(--primary-subtle)] text-[var(--primary)]"
+              ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
               : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
         }`}
       >
@@ -96,7 +96,7 @@ export function AccountPopover({
           className={`absolute z-50 text-left text-[var(--ink)] ${
             placement === "side"
               ? "bottom-0 left-[calc(100%+0.75rem)] w-72"
-              : "fixed left-4 right-4 top-[4.75rem] w-auto"
+              : "fixed left-4 right-4 top-[4.75rem] w-auto lg:absolute lg:left-auto lg:right-0 lg:top-[calc(100%+0.75rem)] lg:w-72"
           }`}
         >
           <span
@@ -104,10 +104,10 @@ export function AccountPopover({
             className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
-                : "-top-1.5 right-5 border-l border-t border-[var(--line-strong)] sm:right-8"
+                : "-top-1.5 right-5 border-l border-t border-[var(--line-strong)] sm:right-8 lg:right-4"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[var(--shadow-float)]">
             <header className="flex items-center gap-3 border-b border-[var(--line)] px-5 py-4">
               <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-subtle)] text-[var(--muted)]">
                 <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.75]">
@@ -116,15 +116,15 @@ export function AccountPopover({
                 </svg>
               </span>
               <span className="min-w-0">
-                <strong className="block truncate text-sm font-bold">{userName}</strong>
-                <span className="mt-0.5 block text-xs font-semibold text-[var(--muted)]"><UiText>{roleLabel}</UiText></span>
+                <strong className="block truncate text-sm font-semibold">{userName}</strong>
+                <span className="mt-0.5 block text-xs text-[var(--muted)]"><UiText>{roleLabel}</UiText></span>
               </span>
             </header>
 
             {accountPageCurrent ? (
               <span
                 aria-current="page"
-                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] bg-[var(--primary-subtle)] px-5 text-sm font-bold text-[var(--primary)]"
+                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] bg-[var(--accent-subtle)] px-5 text-sm font-semibold text-[var(--accent-ink)]"
               >
                 {copy.myAccount}
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-2">
@@ -135,7 +135,7 @@ export function AccountPopover({
               <Link
                 href="/account"
                 onClick={() => setOpen(false)}
-                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-bold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
+                className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)]"
               >
                 {copy.myAccount}
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">
@@ -146,7 +146,7 @@ export function AccountPopover({
             <Link
               href="/feedback"
               onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)] hover:text-[var(--primary)]"
+              className="flex min-h-12 items-center justify-between border-b border-[var(--line)] px-5 text-sm font-semibold hover:bg-[var(--surface-subtle)]"
             >
               {copy.feedback}
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-[1.75]">

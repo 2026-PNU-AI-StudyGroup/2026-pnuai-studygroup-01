@@ -3,72 +3,61 @@ import { UiUl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 import type { StudentTeamSummary } from "@/modules/student-team/application/student-team-ports";
-import { StatusBadge } from "@/shared/ui/page-primitives";
+import { Pill } from "@/modules/project-program/ui/work-screen";
 
+// 팀, 내 역할, 구성원, 모집 중, 검토 대기, 할 일. 목록 폭이 46rem 아래면 팀 이름 밑으로 흐른다.
+const teamRowGrid = "@min-[46rem]:grid-cols-[minmax(0,1fr)_4rem_minmax(0,12rem)_4.5rem_4.5rem_13rem]";
+const cellLabel = "text-xs text-[var(--muted)] @min-[46rem]:sr-only";
+
+/** 내 팀 목록. 줄마다 팀 상태를 숫자로 맞춰 적고, 손볼 일이 있는 팀에만 검토 버튼을 단다. */
 export function StudentTeamLedger({ teams, actorId }: {
   teams: StudentTeamSummary[];
   actorId: string;
 }) {
   return (
-    <UiUl aria-label="참여 중인 팀 목록" className="grid gap-6 xl:grid-cols-2">
-      {teams.map((team) => {
-        const isLeader = team.leaderId === actorId;
-        return (
-          <li key={team.id}>
-            <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--line-strong)] hover:shadow-[0_16px_34px_rgb(35_71_184_/_0.08)]">
-              <div className="px-5 pb-5 pt-6 sm:px-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-start gap-3.5">
-                    <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-[0.9rem] bg-[var(--primary-subtle)] text-[var(--primary)]">
-                      <svg viewBox="0 0 24 24" className="size-5 fill-none stroke-current stroke-[1.8]" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="9" cy="8" r="3" />
-                        <path d="M3.5 20c.2-4 2.1-6 5.5-6s5.3 2 5.5 6M16 6c2.7 0 4 1.7 4 3.5s-1.2 3.1-3 3.3M17 14.7c2.7.4 4 2.1 4 5.3" />
-                      </svg>
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="text-[1.45rem] font-bold leading-tight tracking-[-0.035em] text-[var(--ink)]">{team.name}</h3>
-                      <p className="mt-1 truncate text-xs font-medium text-[var(--muted)]">{team.members.map(({ name }) => name).join(", ")}</p>
-                    </div>
-                  </div>
-                  <StatusBadge tone={isLeader ? "info" : "neutral"}><UiText>{isLeader ? "팀장" : "팀원"}</UiText></StatusBadge>
-                </div>
-                {team.description ? <p className="mt-5 line-clamp-2 text-sm leading-6 text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
+    <>
+      <div aria-hidden="true" className={`hidden h-9 items-center gap-x-5 px-5 text-xs text-[var(--muted)] @min-[46rem]:grid ${teamRowGrid}`}>
+        <span><UiText>{"팀"}</UiText></span>
+        <span><UiText>{"내 역할"}</UiText></span>
+        <span><UiText>{"구성원"}</UiText></span>
+        <span className="text-right"><UiText>{"모집 중"}</UiText></span>
+        <span className="text-right"><UiText>{"검토 대기"}</UiText></span>
+        <span />
+      </div>
+      <UiUl aria-label="참여 중인 팀 목록">
+        {teams.map((team) => {
+          const isLeader = team.leaderId === actorId;
+          const reviewable = isLeader && team.pendingApplicantCount > 0;
+          return (
+            <li key={team.id} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-2 border-t border-[var(--line)] px-5 py-3 transition-colors hover:bg-[#fafbfc] @min-[46rem]:items-center ${teamRowGrid}`}>
+              <div className="min-w-0">
+                <h3 className="truncate text-sm font-medium leading-5 text-[var(--ink)]">{team.name}</h3>
+                {team.description ? <p className="mt-0.5 truncate text-[0.8125rem] leading-[1.125rem] text-[var(--muted)]"><UiText>{team.description}</UiText></p> : null}
               </div>
-
-              <div className="border-t border-[var(--line)] px-5 py-5 sm:px-6">
-                <dl className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3.5">
-                    <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"구성원"}</UiText></dt>
-                    <dd className="mt-1 text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">{team.members.length}<UiText>{"명"}</UiText></dd>
-                  </div>
-                  <div className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3.5">
-                    <dt className="text-xs font-semibold text-[var(--muted)]"><UiText>{"모집 중"}</UiText></dt>
-                    <dd className="mt-1 text-lg font-bold tracking-[-0.025em] text-[var(--ink)]">{team.openRecruitmentCount}<UiText>{"건"}</UiText></dd>
-                  </div>
-                </dl>
-                <p className="mt-4 text-sm font-semibold text-[var(--muted)]"><UiText>{"검토 대기"}</UiText>{" "}<span className={team.pendingApplicantCount ? "text-[var(--primary-hover)]" : "text-[var(--muted)]"}><UiText>{team.pendingApplicantCount ? `${team.pendingApplicantCount}명` : "없음"}</UiText></span></p>
+              <div className="self-start @min-[46rem]:self-auto"><Pill tone={isLeader ? "accent" : "plain"}>{isLeader ? "팀장" : "팀원"}</Pill></div>
+              <div className="col-span-2 min-w-0 text-[0.8125rem] leading-[1.125rem] @min-[46rem]:col-span-1">
+                <p className="tabular-nums text-[var(--ink)]"><span className={cellLabel}><UiText>{"구성원"}</UiText>{" "}</span>{team.members.length}<UiText>{"명"}</UiText></p>
+                <p className="truncate text-xs text-[var(--muted)]">{team.members.map(({ name }) => name).join(", ")}</p>
               </div>
-
-              <div className="mt-auto border-t border-[var(--line)] px-5 py-4 sm:px-6">
-                {isLeader && team.pendingApplicantCount > 0 ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <Link href={`/recruitments/received?teamId=${team.id}`} className="button-primary justify-center">
-                      <UiText>{`지원자 검토 ${team.pendingApplicantCount}명`}</UiText>
-                    </Link>
-                    <Link href={`/teams/manage/${team.id}`} className="button-secondary justify-center"><UiText>{"팀 관리"}</UiText></Link>
-                  </div>
-                ) : (
-                  <Link href={`/teams/manage/${team.id}`} className="button-primary w-full justify-center">
-                    <UiText>{"팀 관리"}</UiText><svg aria-hidden="true" viewBox="0 0 20 20" className="ml-1.5 size-4 fill-none stroke-current stroke-[1.75]">
-                      <path d="M4 10h11M11 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+              <p className="text-[0.8125rem] tabular-nums text-[var(--ink)] @min-[46rem]:text-right">
+                <span className={cellLabel}><UiText>{"모집 중"}</UiText>{" "}</span>{team.openRecruitmentCount}<UiText>{"건"}</UiText>
+              </p>
+              <p className={`text-[0.8125rem] tabular-nums @min-[46rem]:text-right ${reviewable ? "font-semibold text-[var(--accent-ink)]" : "text-[var(--muted)]"}`}>
+                <span className={`${cellLabel} font-normal`}><UiText>{"검토 대기"}</UiText>{" "}</span>{team.pendingApplicantCount}<UiText>{"명"}</UiText>
+              </p>
+              {/* 줄 안의 버튼은 내용 크기의 낮은 테두리 버튼. 휴대폰에서만 줄을 채운다. */}
+              <div className="col-span-2 flex flex-wrap gap-1.5 @min-[46rem]:col-span-1 @min-[46rem]:justify-end @max-[46rem]:[&>a]:flex-1">
+                {reviewable ? (
+                  <Link href={`/recruitments/received?teamId=${team.id}`} className="button-secondary button-compact min-h-8 px-3 font-medium">
+                    <UiText>{`지원자 검토 ${team.pendingApplicantCount}명`}</UiText>
                   </Link>
-                )}
+                ) : null}
+                <Link href={`/teams/manage/${team.id}`} className="button-secondary button-compact min-h-8 px-3 font-medium"><UiText>{"팀 관리"}</UiText></Link>
               </div>
-            </article>
-          </li>
-        );
-      })}
-    </UiUl>
+            </li>
+          );
+        })}
+      </UiUl>
+    </>
   );
 }

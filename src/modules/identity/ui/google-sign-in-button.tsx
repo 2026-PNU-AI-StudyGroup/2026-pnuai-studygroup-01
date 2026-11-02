@@ -51,7 +51,7 @@ export function GoogleSignInButton({ disabled = false }: { disabled?: boolean })
         {disabled && showDisabledHelp ? (
           <span
             role="tooltip"
-            className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-1/2 z-10 w-max max-w-[calc(100vw-2.5rem)] -translate-x-1/2 rounded-[var(--radius-control)] bg-[var(--ink)] px-3 py-2 text-center text-sm leading-5 text-white shadow-lg"
+            className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-1/2 z-10 w-max max-w-[calc(100vw-2.5rem)] -translate-x-1/2 rounded-[var(--radius-control)] bg-[var(--ink)] px-3 py-2 text-center text-sm leading-5 text-[var(--surface)] shadow-[var(--shadow-float)]"
           >
             <UiText>{"테스트 서버에서는 테스트 계정으로 로그인하세요."}</UiText>
           </span>

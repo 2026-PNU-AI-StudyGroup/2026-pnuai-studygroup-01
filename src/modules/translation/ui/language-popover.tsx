@@ -62,9 +62,9 @@ export function LanguagePopover({
           inverse
             ? open
               ? "bg-white/16 text-white"
-              : "text-[#cbd6ff] hover:bg-white/10 hover:text-white"
+              : "text-white/75 hover:bg-white/10 hover:text-white"
             : open
-              ? "bg-[var(--primary-subtle)] text-[var(--primary)]"
+              ? "bg-[var(--accent-subtle)] text-[var(--accent-ink)]"
               : "text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
         }`}
       >
@@ -83,7 +83,7 @@ export function LanguagePopover({
           className={`absolute z-50 text-left text-[var(--ink)] ${
             placement === "side"
               ? "bottom-0 left-[calc(100%+0.75rem)] w-64"
-              : "fixed left-4 right-4 top-[4.75rem] w-auto"
+              : "fixed left-4 right-4 top-[4.75rem] w-auto lg:absolute lg:left-auto lg:right-0 lg:top-[calc(100%+0.75rem)] lg:w-64"
           }`}
         >
           <span
@@ -91,13 +91,13 @@ export function LanguagePopover({
             className={`absolute z-10 size-3 rotate-45 bg-[var(--surface)] ${
               placement === "side"
                 ? "-left-1.5 bottom-4 border-b border-l border-[var(--line-strong)]"
-                : "-top-1.5 right-[4.5rem] border-l border-t border-[var(--line-strong)] sm:right-[5.25rem]"
+                : "-top-1.5 right-[4.5rem] border-l border-t border-[var(--line-strong)] sm:right-[5.25rem] lg:right-4"
             }`}
           />
-          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[0_12px_32px_rgb(23_32_51_/_0.14)]">
+          <div className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-strong)] bg-[var(--surface)] shadow-[var(--shadow-float)]">
             <header className="border-b border-[var(--line)] px-5 py-4">
-              <h2 className="text-base font-bold tracking-[-0.025em]">{copy.title}</h2>
-              <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{copy.current}</p>
+              <h2 className="text-base font-semibold">{copy.title}</h2>
+              <p className="mt-1 text-xs text-[var(--muted)]">{copy.current}</p>
             </header>
             <div className="p-2">
               {(["ko", "en"] as const).map((value) => {
@@ -107,7 +107,7 @@ export function LanguagePopover({
                   <div
                     key={value}
                     aria-current="true"
-                    className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] bg-[var(--primary-subtle)] px-3 text-sm font-bold text-[var(--primary)]"
+                    className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] bg-[var(--accent-subtle)] px-3 text-sm font-semibold text-[var(--accent-ink)]"
                   >
                     <span>{label}</span>
                     <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 fill-none stroke-current stroke-2">
@@ -119,7 +119,7 @@ export function LanguagePopover({
                     <input type="hidden" name="locale" value={value} />
                     <button
                       type="submit"
-                      className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] px-3 text-sm font-bold text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
+                      className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] px-3 text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
                     >
                       <span>{label}</span>
                     </button>

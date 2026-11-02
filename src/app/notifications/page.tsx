@@ -9,6 +9,7 @@ import { PrismaNotificationRepository } from "@/modules/notification/infrastruct
 import { NotificationCenter } from "@/modules/notification/ui/notification-center";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
+import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,12 +24,14 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const data = await new NotificationService(new PrismaNotificationRepository(prisma)).list(actor.id, requestedPage);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/notifications">
-      <NotificationCenter
-        data={data}
-        openNotification={openNotificationAction}
-        markAllRead={markAllNotificationsReadAction}
-      />
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/notifications" crumbs={[{ label: "알림" }]}>
+      <ExplorerLayout>
+        <NotificationCenter
+          data={data}
+          openNotification={openNotificationAction}
+          markAllRead={markAllNotificationsReadAction}
+        />
+      </ExplorerLayout>
     </AppShell>
   );
 }

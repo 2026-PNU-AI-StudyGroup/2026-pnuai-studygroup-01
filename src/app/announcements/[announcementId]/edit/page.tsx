@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
+import { ScreenTitle } from "@/app/_components/screen-title";
 import { AnnouncementForm } from "@/app/announcements/_components/announcement-form";
 import { announcementReturnHref } from "@/app/_lib/announcement-return-href";
 import {
@@ -14,7 +15,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { PageHeader } from "@/shared/ui/page-primitives";
+import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("공지 수정");
@@ -62,14 +63,15 @@ export default async function EditAnnouncementPage({
       userId={actor.id}
       userName={actor.name}
       currentPath={`/announcements/${announcement.id}/edit`}
+      crumbs={[{ label: announcement.title, href: `/announcements/${announcement.id}` }, { label: "공지 수정" }]}
     >
-      <main className="content-shell page-enter pb-28 lg:pb-16">
-        <div className="mx-auto max-w-4xl space-y-7">
-          <PageHeader
-            compact
-            title="공지 수정"
-            description="변경한 내용은 저장 즉시 모든 구성원에게 표시됩니다."
-            actions={<Link className="button-secondary" href={returnHref}><UiText>{"취소"}</UiText></Link>}
+      <ExplorerLayout>
+        <div className="grid gap-3.5">
+          <ScreenTitle
+            id="announcement-edit-title"
+            title={<UiText>{"공지 수정"}</UiText>}
+            meta={<UiText>{"변경한 내용은 저장 즉시 모든 구성원에게 표시됩니다."}</UiText>}
+            actions={<Link className="button-secondary button-compact" href={returnHref}><UiText>{"취소"}</UiText></Link>}
           />
           <AnnouncementForm
             announcementId={announcement.id}
@@ -86,7 +88,7 @@ export default async function EditAnnouncementPage({
             targetLabel={announcement.teamName ?? announcement.programName ?? "시스템 전체"}
           />
         </div>
-      </main>
+      </ExplorerLayout>
     </AppShell>
   );
 }

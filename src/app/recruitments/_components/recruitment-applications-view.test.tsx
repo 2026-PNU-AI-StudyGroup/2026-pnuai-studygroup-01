@@ -11,7 +11,7 @@ vi.mock("@/app/_components/translated-text", () => ({
 }));
 
 describe("RecruitmentApplicationsView", () => {
-  it("지원자가 없으면 기존 모집 패널 안에서 평면 빈 상태를 보여준다", () => {
+  it("지원자가 없으면 지원자 카드의 머리를 남긴 채 그 안에 한 줄 빈 상태를 보여준다", () => {
     render(
       <RecruitmentApplicationsView
         actorRole="STUDENT"
@@ -27,8 +27,9 @@ describe("RecruitmentApplicationsView", () => {
       />,
     );
 
-    const state = screen.getByRole("heading", { name: "아직 지원자가 없습니다" }).closest("[data-empty-state]");
-    expect(state).toHaveAttribute("data-empty-state", "section");
+    const state = screen.getByText("아직 지원자가 없습니다").closest("[data-empty-state]");
+    expect(state).toHaveAttribute("data-empty-state", "compact");
+    expect(screen.getByRole("heading", { name: "지원자" })).toBeInTheDocument();
     expect(state).not.toHaveClass("border");
     expect(state).not.toHaveClass("bg-[var(--surface)]");
   });

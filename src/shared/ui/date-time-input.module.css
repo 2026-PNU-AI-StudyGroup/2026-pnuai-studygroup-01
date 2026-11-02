@@ -34,7 +34,6 @@
   font-size: 0.9375rem;
   font-weight: 550;
   text-align: left;
-  box-shadow: 0 1px 2px var(--shadow-tint-weak);
   transition: border-color var(--snap-duration) var(--snap-ease), box-shadow var(--snap-duration) var(--snap-ease), background-color var(--snap-duration) var(--snap-ease);
 }
 
@@ -45,15 +44,18 @@
   white-space: nowrap;
 }
 
-.trigger:hover:not(:disabled),
+.trigger:hover:not(:disabled) {
+  border-color: var(--field-border-hover);
+}
+
 .trigger[aria-expanded="true"] {
-  border-color: var(--primary);
+  border-color: var(--focus);
   background: var(--surface);
 }
 
 .trigger:focus-visible,
 .trigger[aria-expanded="true"] {
-  box-shadow: 0 0 0 3px var(--focus-halo), 0 1px 2px var(--shadow-tint-weak);
+  box-shadow: 0 0 0 3px var(--focus-halo);
 }
 
 .trigger[data-invalid="true"],
@@ -63,7 +65,7 @@
 }
 
 .trigger[data-invalid="true"]:focus-visible {
-  box-shadow: 0 0 0 3px var(--danger-halo), 0 1px 2px var(--shadow-tint-weak);
+  box-shadow: 0 0 0 3px var(--danger-halo);
 }
 
 .trigger:disabled {
@@ -94,7 +96,7 @@
   z-index: 70;
   overflow-y: auto;
   border: 1px solid var(--line);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
   background: var(--surface);
   padding: 0.625rem;
   box-shadow: var(--shadow-float);
@@ -118,12 +120,12 @@
   width: 2rem;
   height: 2rem;
   place-items: center;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
 }
 
 .monthButton:hover,
 .monthButton:focus-visible {
-  background: var(--primary-subtle);
+  background: var(--surface-subtle);
 }
 
 .weekdays,
@@ -136,7 +138,7 @@
   margin-bottom: 0.125rem;
   color: var(--muted);
   font-size: 0.6875rem;
-  font-weight: 750;
+  font-weight: 500;
   text-align: center;
 }
 
@@ -154,7 +156,7 @@
   min-width: 0;
   place-items: center;
   border: 1px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   color: var(--ink);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
@@ -163,14 +165,14 @@
 .day:hover:not(:disabled),
 .day:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--focus) 32%, transparent);
-  background: var(--primary-subtle);
+  border-color: var(--line-strong);
+  background: var(--surface-subtle);
 }
 
 .dayToday {
-  border-color: color-mix(in srgb, var(--primary) 44%, transparent);
-  color: var(--primary-hover);
-  font-weight: 800;
+  border-color: var(--accent-track);
+  color: var(--accent-ink);
+  font-weight: 600;
 }
 
 .daySelected,
@@ -197,14 +199,14 @@
   padding-top: 0.5rem;
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .timeField input {
   min-height: 2.25rem;
   width: 100%;
   border: 1px solid var(--field-border);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-control);
   background: var(--field-surface);
   padding: 0.375rem 0.625rem;
   color: var(--ink);
@@ -239,12 +241,12 @@
 
 .timePreset {
   border: 1px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   background: var(--surface);
   padding: 0.25rem 0.5rem;
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -254,9 +256,9 @@
 }
 
 .timePreset[aria-pressed="true"] {
-  border-color: var(--primary);
-  background: var(--primary-subtle);
-  color: var(--primary);
+  border-color: var(--accent-subtle);
+  background: var(--accent-subtle);
+  color: var(--accent-ink);
 }
 
 .calendarFooter {
@@ -270,16 +272,17 @@
 
 .calendarFooter button {
   min-height: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   padding: 0.25rem 0.5rem;
-  color: var(--primary-hover);
+  color: var(--accent);
   font-size: 0.8125rem;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .calendarFooter button:hover,
 .calendarFooter button:focus-visible {
-  background: var(--primary-subtle);
+  background: var(--accent-subtle);
+  color: var(--accent-ink);
 }
 
 @keyframes calendarIn {

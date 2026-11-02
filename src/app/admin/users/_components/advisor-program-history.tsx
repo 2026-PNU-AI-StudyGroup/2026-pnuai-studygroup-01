@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { AdvisorProgramHistoryRow } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
-import { StatusBadge } from "@/shared/ui/page-primitives";
+import { Pill } from "@/modules/project-program/ui/work-screen";
 
 /**
  * 자문위원 계정의 내력.
@@ -19,7 +19,7 @@ import { StatusBadge } from "@/shared/ui/page-primitives";
 export function AdvisorProgramHistory({ name, history }: { name: string; history: AdvisorProgramHistoryRow[] }) {
   if (history.length === 0) {
     return (
-      <p className="basis-full text-xs text-[var(--muted)]">
+      <p className="basis-full text-right text-xs text-[var(--muted)]">
         <UiText>{"초대된 프로그램이 없습니다."}</UiText>
       </p>
     );
@@ -27,28 +27,28 @@ export function AdvisorProgramHistory({ name, history }: { name: string; history
   const serving = history.filter((row) => row.revokedAt === null).length;
   return (
     <details className="basis-full">
-      <summary className="cursor-pointer list-none text-xs font-semibold text-[var(--muted)] underline underline-offset-4">
+      <summary className="cursor-pointer list-none text-right text-xs font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]">
         <UiText>{serving > 0 ? `더보기 · 참여 중 ${serving}개 / 전체 ${history.length}개` : `더보기 · 지난 프로그램 ${history.length}개`}</UiText>
       </summary>
       <ul aria-label={`${name} 자문위원 참여 프로그램`} className="mt-2 grid gap-1.5">
         {history.map((row) => (
           <li key={row.programId} className="flex flex-wrap items-center gap-2 text-xs">
             {row.revokedAt !== null ? (
-              <StatusBadge>{"회수됨"}</StatusBadge>
+              <Pill>{"회수됨"}</Pill>
             ) : row.suspendedAt !== null ? (
               // 링크를 살려 둔 채 막은 상태다. 다시 열면 그 링크가 그대로 열린다.
-              <StatusBadge tone="warning">{"참여 중 · 멈춤"}</StatusBadge>
+              <Pill tone="warning">{"참여 중 · 멈춤"}</Pill>
             ) : row.hasActiveLink ? (
-              <StatusBadge tone="success">{"참여 중"}</StatusBadge>
+              <Pill tone="accent">{"참여 중"}</Pill>
             ) : (
               // 심사단이지만 링크가 없어 지금은 들어올 수 없다. 접속 차단이거나 만료된 경우다.
-              <StatusBadge tone="warning">{"참여 중 · 링크 없음"}</StatusBadge>
+              <Pill tone="warning">{"참여 중 · 링크 없음"}</Pill>
             )}
             {/* 잠그거나 다시 부르는 일은 프로그램 화면에서 한다. 여기서는 그 자리로 보낸다 --
                 어느 프로그램인지 알아도 찾아가는 것이 일이었다. */}
             <Link
               href={programManagementHref(row.programId, "advisors")}
-              className="min-w-0 font-semibold text-[var(--ink)] underline underline-offset-4 [overflow-wrap:anywhere] hover:text-[var(--primary)]"
+              className="min-w-0 font-medium text-[var(--ink)] [overflow-wrap:anywhere] hover:text-[var(--primary)] hover:underline"
             >
               <UiText>{row.programName}</UiText>
             </Link>

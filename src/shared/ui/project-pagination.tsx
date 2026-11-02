@@ -26,10 +26,10 @@ export function ProjectPagination({ page, totalPages, href, ariaLabel }: {
   return (
     <UiNav aria-label={ariaLabel} className="mt-8 border-t border-[var(--line)] pt-6">
       <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-bold text-[var(--muted)]"><strong className="text-[var(--ink)]">{page}</strong> / {totalPages} <UiText>{"페이지"}</UiText></p>
+        <p className="text-sm tabular-nums text-[var(--muted)]"><strong className="font-semibold text-[var(--ink)]">{page}</strong> / {totalPages} <UiText>{"페이지"}</UiText></p>
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           {page > 1 ? <PaginationDirectionLink direction="previous" href={href(page - 1)} /> : <DisabledPaginationDirection direction="previous" />}
-          {visiblePages(page, totalPages).map((item, index) => item === "ellipsis" ? <span key={`ellipsis-${index}`} aria-hidden="true" className="grid size-10 place-items-center text-sm font-bold text-[var(--muted)]">…</span> : item === page ? <span key={item} aria-current="page" className="grid size-10 place-items-center rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-sm font-bold text-white">{item}</span> : <Link key={item} href={href(item)} aria-label={`${item} 페이지`} className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-sm font-bold text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]">{item}</Link>)}
+          {visiblePages(page, totalPages).map((item, index) => item === "ellipsis" ? <span key={`ellipsis-${index}`} aria-hidden="true" className="grid size-10 place-items-center text-sm text-[var(--muted)]">…</span> : item === page ? <span key={item} aria-current="page" className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-[var(--accent-subtle)] text-sm font-semibold tabular-nums text-[var(--accent-ink)]">{item}</span> : <Link key={item} href={href(item)} aria-label={`${item} 페이지`} className="grid size-10 place-items-center rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] text-sm font-medium tabular-nums text-[var(--ink)] transition-colors hover:border-[var(--field-border-hover)]">{item}</Link>)}
           {page < totalPages ? <PaginationDirectionLink direction="next" href={href(page + 1)} /> : <DisabledPaginationDirection direction="next" />}
         </div>
       </div>

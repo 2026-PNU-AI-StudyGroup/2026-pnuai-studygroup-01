@@ -7,7 +7,7 @@ import { AppShell } from "@/app/_components/app-shell";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
-import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
+import { StudentTeamPanel, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 
@@ -29,9 +29,9 @@ export default async function ReceivedRecruitmentApplicationsPage({
   ).listReceivedApplications(actor, teamId);
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/received">
-      <main className="pb-28 lg:min-h-screen lg:pb-0">
-        <StudentTeamSectionLayout currentPath="/recruitments/received">
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/recruitments/received" crumbs={[{ label: "받은 지원" }]} panel={<StudentTeamPanel currentPath="/recruitments/received" />}>
+      <main className="pb-28 lg:pb-0">
+        <StudentTeamSectionLayout>
           <ReceivedRecruitmentApplicationsView applications={applications} teamId={teamId} />
         </StudentTeamSectionLayout>
       </main>

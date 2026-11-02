@@ -6,6 +6,7 @@ import { loadActiveTeamWorkspace } from "@/app/projects/[projectId]/_lib/team-wo
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { PrismaProjectTeamInvitationRepository } from "@/modules/project-team/infrastructure/prisma-project-team-invitation-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
+import { UiText } from "@/modules/translation/ui/i18n-provider";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("팀 관리");
@@ -21,25 +22,33 @@ export default async function TeamManagementPage({ params }: { params: Promise<{
     ? await new PrismaProjectTeamInvitationRepository(prisma, actor).listPending(workspace.id)
     : [];
 
+  const leader = workspace.members.find((member) => member.role === "LEADER");
+
   return (
-    <section aria-labelledby="team-management-title" className="mx-auto max-w-6xl space-y-7">
-      <WorkspacePageHeader title="팀 관리" titleId="team-management-title" bordered={false} />
-      <div>
-        <div className="max-w-2xl">
-          <TeamPeoplePanel
-            advisorEnabled={workspace.advisorEnabled}
-            professor={workspace.professor}
-            assistants={workspace.assistants}
-            members={workspace.members}
-            projectId={workspace.topicId}
-            projectTeamId={workspace.id}
-            actorId={actor.id}
-            membershipChangesEnabled={workspace.status === "IN_PROGRESS"}
-            canManageMembers={canManageMembers}
-            invitations={invitations}
-          />
-        </div>
-      </div>
+    <section aria-labelledby="team-management-title" className="mx-auto grid max-w-6xl gap-5">
+      <WorkspacePageHeader
+        title="팀 관리"
+        titleId="team-management-title"
+        finding={(
+          <p>
+            <UiText>{leader ? `팀원 ${workspace.members.length}명, 팀장은 ${leader.name}입니다.` : `팀원은 ${workspace.members.length}명입니다.`}</UiText>
+            {invitations.length ? <>{" "}<UiText>{`응답을 기다리는 초대가 ${invitations.length}건입니다.`}</UiText></> : null}
+            {workspace.status !== "IN_PROGRESS" ? <span className="text-[var(--muted)]">{" "}<UiText>{"진행 중인 프로젝트에서만 팀원을 바꿀 수 있습니다."}</UiText></span> : null}
+          </p>
+        )}
+      />
+      <TeamPeoplePanel
+        advisorEnabled={workspace.advisorEnabled}
+        professor={workspace.professor}
+        assistants={workspace.assistants}
+        members={workspace.members}
+        projectId={workspace.topicId}
+        projectTeamId={workspace.id}
+        actorId={actor.id}
+        membershipChangesEnabled={workspace.status === "IN_PROGRESS"}
+        canManageMembers={canManageMembers}
+        invitations={invitations}
+      />
     </section>
   );
 }

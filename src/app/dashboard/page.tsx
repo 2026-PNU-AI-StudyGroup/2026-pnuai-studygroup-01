@@ -8,15 +8,15 @@ import { redirect } from "next/navigation";
 import { ProjectDashboardHero } from "@/app/dashboard/_components/project-dashboard-hero";
 import { ProjectDashboardSidebar } from "@/app/dashboard/_components/project-dashboard-sidebar";
 import { ProjectApplicationList } from "@/app/dashboard/_components/project-application-list";
-import { ProjectList } from "@/app/dashboard/_components/project-list";
+import { DeadlineList, ProjectList } from "@/app/dashboard/_components/project-list";
 import { StudentReviewList } from "@/app/dashboard/_components/student-review-list";
 import { ProjectApprovalLedger } from "@/app/_components/project-approval-ledger";
 import {
   buildProjectDashboardCounts,
+  collectDashboardDeadlines,
   parseProjectDashboardView,
-  type ProjectDashboardCounts,
-  type ProjectDashboardView,
 } from "@/app/dashboard/_lib/project-dashboard-view";
+import { cardClass, CardHead, daysUntil } from "@/modules/project-program/ui/work-screen";
 import { ProjectTeamInvitationDecisionForm } from "@/app/_components/project-team-invitation-decision-form";
 import { PrismaProjectTeamInvitationRepository } from "@/modules/project-team/infrastructure/prisma-project-team-invitation-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
@@ -42,16 +42,20 @@ export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("프로젝트");
 }
 
-function ProjectDashboardFrame({ role, counts, view, children }: {
+const dayWithWeekday = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "long", timeZone: "Asia/Seoul" });
+
+function ProjectDashboardFrame({ role, finding, primaryAction, children }: {
   role: "STUDENT" | "PROFESSOR" | "ADVISOR";
-  counts: ProjectDashboardCounts;
-  view: ProjectDashboardView;
+  finding?: ReactNode;
+  primaryAction?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <ExplorerLayout sidebar={<ProjectDashboardSidebar counts={counts} selectedView={view} student={role === "STUDENT"} />}>
-      <ProjectDashboardHero role={role} />
-      {children}
+    <ExplorerLayout>
+      <div className="grid gap-3.5">
+        <ProjectDashboardHero role={role} finding={finding} primaryAction={primaryAction} />
+        {children}
+      </div>
     </ExplorerLayout>
   );
 }
@@ -144,6 +148,39 @@ export default async function DashboardPage({
     secondaryApplicationPromise,
   ]);
   const teams = teamPage.items;
+  const now = new Date();
+  // 마감은 진행 중 프로젝트의 아직 안 낸 필수 보고서와 끝나지 않은 할 일이다. 보고서 마감일은 목록 조회에 없어 따로 읽는다.
+  const liveTeamIds = teams.filter(({ status }) => status === "IN_PROGRESS").map(({ id }) => id);
+  const openReports = liveTeamIds.length
+    ? await prisma.report.findMany({
+      where: { projectTeam: { projectId: { in: liveTeamIds } }, required: true, submissionEnabled: true, versions: { none: {} } },
+      orderBy: [{ dueAt: "asc" }, { id: "asc" }],
+      select: { id: true, titleSnapshot: true, dueAt: true, projectTeam: { select: { projectId: true } } },
+    })
+    : [];
+  const deadlines = collectDashboardDeadlines(
+    teams,
+    openReports.map((report) => ({ id: report.id, projectId: report.projectTeam.projectId, title: report.titleSnapshot, dueAt: report.dueAt })),
+  );
+  const nextDeadline = deadlines.find(({ dueAt }) => daysUntil(dueAt, now) >= 0);
+  const missedCount = deadlines.filter(({ dueAt }) => daysUntil(dueAt, now) < 0).length;
+  const nextReport = deadlines.find(({ kind, dueAt }) => kind === "REPORT" && daysUntil(dueAt, now) >= 0);
+  const nextDays = nextDeadline ? daysUntil(nextDeadline.dueAt, now) : 0;
+  const finding = nextDeadline ? (
+    <>
+      <b className="font-semibold"><UiText>{nextDays === 0 ? `${nextDeadline.title} 마감이 오늘입니다` : `${nextDeadline.title} 마감이 ${nextDays}일 남았습니다`}</UiText></b>
+      {" "}<UiText>{`(${dayWithWeekday.format(nextDeadline.dueAt)}, ${nextDeadline.projectTitle}).`}</UiText>
+      {missedCount ? <>{" "}<UiText>{`기한을 넘긴 마감이 ${missedCount}건 있습니다.`}</UiText></> : null}
+    </>
+  ) : missedCount ? (
+    <b className="font-semibold"><UiText>{`기한을 넘긴 마감이 ${missedCount}건 있습니다.`}</UiText></b>
+  ) : liveTeamIds.length ? (
+    <UiText>{"진행 중인 프로젝트에 남은 마감이 없습니다."}</UiText>
+  ) : undefined;
+  const primaryAction = student && nextReport
+    ? <Link href={`/projects/${nextReport.projectId}/reports`} className="button-primary button-compact"><UiText>{"보고서 제출"}</UiText></Link>
+    : undefined;
+  const invitationCount = teamInvitations.length + assistantInvitations.length;
   const activeCount = teamPage.counts.active;
   const completedCount = teamPage.counts.completed;
   const applicationCounts = primaryApplicationPage?.counts ?? {
@@ -165,60 +202,53 @@ export default async function DashboardPage({
   const hasAnyProject = counts.all > 0;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard">
-      <ProjectDashboardFrame role={actor.role} counts={counts} view={view}>
-        <div className="page-enter space-y-8 pt-5">
-          {teamInvitations.length > 0 ? (
-            <section aria-labelledby="team-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
-              <h2 id="team-invitations-title" className="text-lg font-bold"><UiText>{"프로젝트 팀 초대"}</UiText></h2>
-              <ul className="mt-3 divide-y divide-[var(--line)]">
-                {teamInvitations.map((invitation) => (
-                  <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div>
-                      <strong><UiText>{invitation.projectTitle}</UiText></strong>
-                      <p className="muted mt-1 text-sm">
-                        <UiText>{invitation.programName}</UiText>{" · "}{invitation.invitedByName}
-                        {" "}<UiText>{"님이 초대했습니다"}</UiText>
-                      </p>
-                    </div>
-                    <ProjectTeamInvitationDecisionForm invitationId={invitation.id} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          {assistantInvitations.length > 0 ? (
-            <section aria-labelledby="assistant-invitations-title" className="border-y border-[var(--line)] bg-[var(--primary-subtle)] px-5 py-5">
-              <h2 id="assistant-invitations-title" className="text-lg font-bold"><UiText>{"프로젝트 조교 초대"}</UiText></h2>
-              <ul className="mt-3 divide-y divide-[var(--line)]">
-                {assistantInvitations.map((invitation) => (
-                  <li key={invitation.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div>
-                      <strong><UiText>{invitation.topicTitle}</UiText></strong>
-                      <p className="muted mt-1 text-sm">{invitation.inviterName} · <UiText>{"프로젝트 관리 권한"}</UiText></p>
-                    </div>
-                    <ProjectAssistantInvitationDecisionForm invitationId={invitation.id} />
-                  </li>
-                ))}
-              </ul>
-            </section>
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/dashboard" panel={<ProjectDashboardSidebar counts={counts} selectedView={view} student={actor.role === "STUDENT"} />}>
+      <ProjectDashboardFrame role={actor.role} finding={finding} primaryAction={primaryAction}>
+          {(view === "all" || view === "active") && (liveTeamIds.length > 0 || invitationCount > 0) ? (
+            <div className="@container">
+              <div className={`grid items-start gap-3.5 ${invitationCount > 0 && liveTeamIds.length > 0 ? "@min-[68rem]:grid-cols-[minmax(0,1fr)_22rem]" : ""}`}>
+                {liveTeamIds.length > 0 ? <DeadlineList deadlines={deadlines} now={now} /> : null}
+                {invitationCount > 0 ? (
+                  <section aria-labelledby="invitations-title" className={cardClass}>
+                    <CardHead id="invitations-title" title={<UiText>{"받은 초대"}</UiText>} count={<>{invitationCount}<UiText>{"건"}</UiText></>} />
+                    <ul className="[&_:is(.button-primary,.button-secondary)]:min-h-[2.125rem] [&_:is(.button-primary,.button-secondary)]:px-3 [&_:is(.button-primary,.button-secondary)]:py-1 [&_:is(.button-primary,.button-secondary)]:text-[0.8125rem]">
+                      {teamInvitations.map((invitation) => (
+                        <li key={invitation.id} className="grid gap-2.5 border-t border-[var(--line)] px-5 py-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-5"><UiText>{invitation.projectTitle}</UiText></p>
+                            <p className="mt-0.5 text-xs text-[var(--muted)]">
+                              <UiText>{`팀 초대, ${invitation.programName}, ${invitation.invitedByName} 님이 보냄`}</UiText>
+                            </p>
+                          </div>
+                          <ProjectTeamInvitationDecisionForm invitationId={invitation.id} />
+                        </li>
+                      ))}
+                      {assistantInvitations.map((invitation) => (
+                        <li key={invitation.id} className="grid gap-2.5 border-t border-[var(--line)] px-5 py-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-5"><UiText>{invitation.topicTitle}</UiText></p>
+                            <p className="mt-0.5 text-xs text-[var(--muted)]"><UiText>{`조교 초대, 프로젝트 관리 권한, ${invitation.inviterName} 님이 보냄`}</UiText></p>
+                          </div>
+                          <ProjectAssistantInvitationDecisionForm invitationId={invitation.id} />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ) : null}
+              </div>
+            </div>
           ) : null}
           {assistantTopics.some(({ projectTeam }) => !projectTeam) ? (
-            <section aria-labelledby="assistant-topics-title">
-              <div className="flex items-end justify-between border-b border-[var(--line)] pb-3">
-                <div>
-                  <p className="eyebrow"><UiText>{"조교 권한"}</UiText></p>
-                  <h2 id="assistant-topics-title" className="mt-1 text-xl font-bold"><UiText>{"운영 준비 중인 프로젝트"}</UiText></h2>
-                </div>
-              </div>
-              <ul className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+            <section aria-labelledby="assistant-topics-title" className={cardClass}>
+              <CardHead id="assistant-topics-title" title={<UiText>{"운영 준비 중인 프로젝트"}</UiText>} count={<UiText>{"조교 권한"}</UiText>} />
+              <ul>
                 {assistantTopics.filter(({ projectTeam }) => !projectTeam).map((topic) => (
-                  <li key={topic.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div>
-                      <strong><UiText>{topic.title}</UiText></strong>
-                      <p className="muted mt-1 text-sm">{topic.program.name} · <UiText>{topic.status === "PENDING_APPROVAL" ? "승인 대기" : topic.status === "ACTIVE" ? "공개" : topic.status === "REJECTED" ? "반려됨" : "마감"}</UiText></p>
+                  <li key={topic.id} className="grid gap-2 border-t border-[var(--line)] px-5 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium leading-5"><UiText>{topic.title}</UiText></p>
+                      <p className="mt-0.5 text-xs text-[var(--muted)]"><UiText>{`${topic.program.name}, ${topic.status === "PENDING_APPROVAL" ? "승인 대기" : topic.status === "ACTIVE" ? "공개" : topic.status === "REJECTED" ? "반려됨" : "마감"}`}</UiText></p>
                     </div>
-                    <Link href={`/professor/topics/${topic.id}`} className="button-secondary gap-2"><SettingsIcon className="size-4 shrink-0" /><UiText>{"프로젝트 관리"}</UiText></Link>
+                    <Link href={`/professor/topics/${topic.id}`} className="button-secondary button-compact gap-1.5"><SettingsIcon className="size-4 shrink-0" /><UiText>{"프로젝트 관리"}</UiText></Link>
                   </li>
                 ))}
               </ul>
@@ -227,12 +257,9 @@ export default async function DashboardPage({
           {actor.role === "PROFESSOR" && pendingApprovals.length > 0 ? (
             <ProjectApprovalLedger requests={pendingApprovals} student={false} />
           ) : actor.role === "PROFESSOR" && view === "all" ? (
-            <section aria-labelledby="approval-empty-title" className="overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-              <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-6">
-                <h2 id="approval-empty-title" className="text-lg font-bold tracking-[-0.03em]"><UiText>{"승인 대기"}</UiText></h2>
-                <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-bold text-[var(--muted)]">0<UiText>{"건"}</UiText></span>
-              </header>
-              <div className="px-5 sm:px-6"><EmptyState variant="section" title="검토할 승인 요청이 없습니다" description="새 승인 요청이 도착하면 이곳에 표시됩니다." /></div>
+            <section aria-labelledby="approval-empty-title" className={cardClass}>
+              <CardHead id="approval-empty-title" title={<UiText>{"승인 대기"}</UiText>} count={<>0<UiText>{"건"}</UiText></>} />
+              <p className="px-5 pb-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"검토할 승인 요청이 없습니다. 새 요청이 오면 여기에 보입니다."}</UiText></p>
             </section>
           ) : null}
 
@@ -249,22 +276,16 @@ export default async function DashboardPage({
             />
           ) : null}
 
-          {view === "all" && activeCount > 0 ? (
+          {view === "all" && activeCount + completedCount > 0 ? (
             <ProjectList
               role={actor.role}
-              teams={teams.filter((team) => team.status === "IN_PROGRESS")}
-              view="active"
+              teams={[...teams].sort((left, right) => Number(left.status !== "IN_PROGRESS") - Number(right.status !== "IN_PROGRESS"))}
+              view="all"
+              now={now}
             />
           ) : null}
           {student && view === "all" && primaryApplicationPage && ownPendingApprovalPage ? (
             <StudentReviewList applications={primaryApplicationPage.items} registrations={ownPendingApprovalPage.items} total={primaryApplicationPage.total + ownPendingApprovalPage.total} preview />
-          ) : null}
-          {view === "all" && completedCount > 0 ? (
-            <ProjectList
-              role={actor.role}
-              teams={teams.filter((team) => team.status === "COMPLETED")}
-              view="completed"
-            />
           ) : null}
           {student && view === "all" && secondaryApplicationPage && secondaryApplicationPage.total > 0 ? (
             <ProjectApplicationList page={secondaryApplicationPage} status="REJECTED" preview />
@@ -282,6 +303,7 @@ export default async function DashboardPage({
               role={actor.role}
               teams={visibleTeams}
               view={view}
+              now={now}
             />
           ) : null}
           {(view === "active" || view === "completed") && visibleTeams.length === 0 ? (
@@ -305,7 +327,6 @@ export default async function DashboardPage({
               }}
             />
           ) : null}
-        </div>
       </ProjectDashboardFrame>
     </AppShell>
   );

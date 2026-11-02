@@ -6,7 +6,7 @@ import { RecruitmentApplicationsView } from "@/app/recruitments/_components/recr
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { StudentTeamRecruitmentQueryService } from "@/modules/student-team/application/manage-student-team-recruitment";
 import { PrismaStudentTeamRecruitmentQueryRepository } from "@/modules/student-team/infrastructure/prisma-student-team-recruitment-query-repository";
-import { StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
+import { StudentTeamPanel, StudentTeamSectionLayout } from "@/modules/student-team/ui/student-team-section-layout";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
 
@@ -27,9 +27,15 @@ export default async function RecruitmentPostApplicationsPage({ params }: { para
   const content = <RecruitmentApplicationsView post={post} actorRole={actor.role} />;
 
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath={actor.role === "STUDENT" ? "/recruitments/received" : "/dashboard"}>
-      <main className={actor.role === "STUDENT" ? "pb-28 lg:min-h-screen lg:pb-0" : "content-shell"}>
-        {actor.role === "STUDENT" ? <StudentTeamSectionLayout currentPath="/recruitments/received">{content}</StudentTeamSectionLayout> : content}
+    <AppShell
+      role={actor.role}
+      userId={actor.id}
+      userName={actor.name}
+      currentPath={actor.role === "STUDENT" ? "/recruitments/received" : "/dashboard"}
+      crumbs={actor.role === "STUDENT" ? [{ label: "받은 지원", href: "/recruitments/received" }, { label: post.title }] : [{ label: post.title }]}
+      panel={actor.role === "STUDENT" ? <StudentTeamPanel currentPath="/recruitments/received" /> : undefined}>
+      <main className={actor.role === "STUDENT" ? "pb-28 lg:pb-0" : "content-shell"}>
+        {actor.role === "STUDENT" ? <StudentTeamSectionLayout>{content}</StudentTeamSectionLayout> : content}
       </main>
     </AppShell>
   );

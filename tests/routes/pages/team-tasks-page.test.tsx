@@ -82,7 +82,8 @@ describe("TeamTasksPage", () => {
     expect(screen.getByTestId("task-edit-dialog")).toHaveTextContent("IN_PROGRESS:student-1");
     expect(screen.getByTestId("new-task-dialog")).toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
-    expect(screen.getByText("정하늘")).toBeInTheDocument();
+    // 담당자 이름은 할 일 줄에 보인다. 옆 칸 "담당별 남은 할 일"에도 같은 이름이 있어 줄 안에서 찾는다.
+    expect(within(screen.getByRole("heading", { name: "남은 할 일" }).closest("section")!).getByText("정하늘")).toBeInTheDocument();
   });
 
   it("읽기 전용 사용자는 정적 상태와 담당자를 확인한다", async () => {
@@ -97,7 +98,8 @@ describe("TeamTasksPage", () => {
 
     expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
     expect(screen.getAllByText("진행 중").length).toBeGreaterThan(0);
-    expect(screen.getByText("정하늘")).toBeInTheDocument();
+    // 담당자 이름은 할 일 줄에 보인다. 옆 칸 "담당별 남은 할 일"에도 같은 이름이 있어 줄 안에서 찾는다.
+    expect(within(screen.getByRole("heading", { name: "남은 할 일" }).closest("section")!).getByText("정하늘")).toBeInTheDocument();
   });
 
   it("기한이 지난 진행 중 항목을 먼저 보여주고 완료 항목은 접힌 후순위 영역에 둔다", async () => {
@@ -164,6 +166,7 @@ describe("TeamTasksPage", () => {
 
     expect(screen.queryByTestId("new-task-dialog")).not.toBeInTheDocument();
     expect(screen.queryByTestId("task-edit-dialog")).not.toBeInTheDocument();
-    expect(screen.getByText("정하늘")).toBeInTheDocument();
+    // 담당자 이름은 할 일 줄에 보인다. 옆 칸 "담당별 남은 할 일"에도 같은 이름이 있어 줄 안에서 찾는다.
+    expect(within(screen.getByRole("heading", { name: "남은 할 일" }).closest("section")!).getByText("정하늘")).toBeInTheDocument();
   });
 });
