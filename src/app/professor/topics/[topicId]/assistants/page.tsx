@@ -17,7 +17,6 @@ import { PrismaTopicQueryRepository } from "@/modules/topic/infrastructure/prism
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { ChevronIcon } from "@/shared/ui/workspace-icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("조교 관리");
@@ -47,6 +46,8 @@ export default async function ProjectAssistantManagementPage({
     if (error instanceof ManagedTopicNotFoundError || error instanceof ProjectAssistantOperationError) notFound();
     throw error;
   }
+  const assistantCount = management.assistants.length;
+  const pendingCount = management.pendingInvitations.length;
 
   return (
     <AppShell
@@ -54,20 +55,16 @@ export default async function ProjectAssistantManagementPage({
       userId={actor.id}
       userName={actor.name}
       currentPath="/professor/topics"
+      crumbs={[{ label: topic.title, href: `/professor/topics/${topic.id}` }, { label: "조교 관리" }]}
       panel={<ProfessorSidebar currentPath="/professor/topics" role={actor.role} />}
     >
       <ProfessorWorkspace
-        title={topic.title}
-        actions={(
-          <>
-            <Link
-              href={`/professor/topics/${topic.id}`}
-              className="button-secondary gap-2"
-            >
-              <ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"프로젝트 상세"}</UiText>
-            </Link>
-          </>
-        )}
+        eyebrow={topic.title}
+        title="조교 관리"
+        description={assistantCount || pendingCount
+          ? <UiText>{`조교 ${assistantCount}명이 이 프로젝트를 함께 관리합니다. 응답을 기다리는 초대는 ${pendingCount}건입니다.`}</UiText>
+          : <UiText>{"아직 조교가 없습니다. 이메일로 초대하면 수락한 뒤부터 이 프로젝트를 함께 관리합니다."}</UiText>}
+        actions={<Link href={`/professor/topics/${topic.id}`} className="button-secondary button-compact"><UiText>{"프로젝트 상세"}</UiText></Link>}
       >
         <ProjectAssistantManagementPanel management={management} />
       </ProfessorWorkspace>

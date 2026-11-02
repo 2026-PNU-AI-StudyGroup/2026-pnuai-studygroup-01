@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { ReceivedApplicationDetail } from "@/app/professor/applications/_components/received-application-detail";
 import { ProfessorSidebar } from "@/app/_components/professor-sidebar";
-import { ProfessorWorkspace } from "@/app/_components/professor-workspace";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import {
   GetReceivedTopicApplicationService,
@@ -15,7 +12,7 @@ import {
 import { PrismaTopicApplicationQueryRepository } from "@/modules/topic-application/infrastructure/prisma-topic-application-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { AppShell } from "@/app/_components/app-shell";
-import { ChevronIcon } from "@/shared/ui/workspace-icons";
+import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getLocalizedMetadata("지원서 상세");
@@ -45,14 +42,12 @@ export default async function ProfessorApplicationDetailPage({
       userId={actor.id}
       userName={actor.name}
       currentPath="/professor/applications"
+      crumbs={[{ label: "지원 검토", href: "/professor/applications" }, { label: application.studentName }]}
       panel={<ProfessorSidebar currentPath="/professor/applications" role={actor.role} />}
     >
-      <ProfessorWorkspace title="지원서 상세" actions={
-            <Link href="/professor/applications" className="button-secondary gap-2">
-              <ChevronIcon className="size-4 shrink-0 rotate-180" /><UiText>{"목록으로"}</UiText></Link>
-          }>
+      <ExplorerLayout>
         <ReceivedApplicationDetail application={application} />
-      </ProfessorWorkspace>
+      </ExplorerLayout>
     </AppShell>
   );
 }

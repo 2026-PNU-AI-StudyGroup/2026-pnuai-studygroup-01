@@ -1,101 +1,130 @@
+import Link from "next/link";
 import { UiDate } from "@/modules/translation/ui/i18n-provider";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ApplicationDecisionForm } from "@/app/professor/applications/_components/decision-form";
 import type { ProfessorTopicApplicationSummary } from "@/modules/topic-application/application/topic-application-ports";
 import { topicApplicationStatusPresentation } from "@/modules/topic-application/ui/topic-application-status-presentation";
-import { StatusBadge } from "@/shared/ui/page-primitives";
+import { cardClass, CardHead, ObjectHeader, Pill } from "@/modules/project-program/ui/work-screen";
 import { TranslatedText } from "@/app/_components/translated-text";
 
+const statusTone = { PENDING: "accent", ACCEPTED: "success", REJECTED: "danger", WITHDRAWN: "plain" } as const;
+
+/**
+ * 지원서 한 장. 왼쪽은 판단 근거(답변, 지원자), 오른쪽은 결정 칸.
+ * 결정 칸 위에 선정하면 팀이 몇 명이 되는지를 먼저 적어 결정의 결과를 보고 누르게 한다.
+ */
 export function ReceivedApplicationDetail({
   application,
 }: {
   application: ProfessorTopicApplicationSummary;
 }) {
+  const team = application.applicationKind === "TEAM";
+  const impact = application.decisionImpact;
+  const afterCount = impact ? impact.currentMemberCount + impact.acceptedMemberCount : 0;
+  const finding = application.status === "PENDING" && impact ? (
+    <>
+      <b className="font-semibold"><UiText>{`선정하면 팀이 ${afterCount} / ${impact.capacity}명이 됩니다.`}</UiText></b>
+      {impact.automaticallyRejectedApplicationCount ? <>{" "}<UiText>{`다른 검토 중 지원 ${impact.automaticallyRejectedApplicationCount}건은 자동 미선정됩니다.`}</UiText></> : null}
+      {impact.closesRecruitment ? <>{" "}<UiText>{"정원이 충족되어 모집 글도 마감됩니다."}</UiText></> : null}
+    </>
+  ) : undefined;
+
   return (
-    <article aria-labelledby="application-topic-title" className="space-y-10">
-      <div className="flex flex-wrap items-start justify-between gap-6 border-b border-[var(--line)] pb-8">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <StatusBadge tone={topicApplicationStatusPresentation[application.status].tone}>
-              {topicApplicationStatusPresentation[application.status].label}
-            </StatusBadge>
-            <time className="muted text-sm" dateTime={application.createdAt.toISOString()}>
-              <UiDate value={application.createdAt} mode="dateTime" /> <UiText>{"지원"}</UiText></time>
-          </div>
-          <p className="muted mt-6 text-sm font-medium"><UiText>{"지원 프로젝트"}</UiText></p>
-          <h2
-            id="application-topic-title"
-            className="mt-2 text-2xl font-semibold tracking-[-0.02em]"
-          >
-            <UiText>{application.topicTitle}</UiText>
-          </h2>
-        </div>
-      </div>
-
-      <section aria-labelledby="student-profile-title">
-        <h3 id="student-profile-title" className="text-lg font-semibold">
-          <UiText>{application.applicationKind === "TEAM" ? "지원 팀" : "지원자 정보"}</UiText>
-        </h3>
-        <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
-          {application.teamMembers.map((member) => (
-            <li key={member.studentId} className="grid gap-2 py-5 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center">
-              <strong>{member.name}</strong>
-              <span className="muted break-all text-sm">{member.email}</span>
-              <StatusBadge tone={member.role === "LEADER" ? "info" : "neutral"}><UiText>{member.role === "LEADER" ? "대표 지원자" : "팀원"}</UiText></StatusBadge>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section aria-labelledby="application-answer-title">
-        <h3 id="application-answer-title" className="text-lg font-semibold">
-          <UiText>{"지원서 답변"}</UiText></h3>
-        {application.answers.length ? (
-          <ol className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
-            {application.answers.map((answer, index) => (
-              <li key={answer.questionId} className="py-6">
-                <p className="text-sm font-semibold">
-                  <span className="mr-2 text-[var(--primary)]">{index + 1}.</span>
-                  <UiText>{answer.label}</UiText>
-                </p>
-                <TranslatedText text={answer.value} className="mt-3 max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="mt-5 space-y-7 border-y border-[var(--line)] py-6">
-            <dl className="grid gap-5 sm:grid-cols-3">
-              <ApplicationProfileItem label="희망 역할" value={application.desiredRole} />
-              <ApplicationProfileItem label="활동 가능 시간" value={application.availability} />
-              <ApplicationProfileItem label="보유 기술" value={application.skills.join(", ")} />
-            </dl>
-            <TranslatedText text={application.message} className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--ink)]" />
-          </div>
+    <article aria-labelledby="application-title" className="@container grid gap-3.5">
+      <ObjectHeader
+        id="application-title"
+        title={<>{application.studentName}<UiText>{team && application.teamMembers.length > 1 ? ` 외 ${application.teamMembers.length - 1}명` : ""}</UiText></>}
+        titleAside={<Pill tone={statusTone[application.status]}>{topicApplicationStatusPresentation[application.status].label}</Pill>}
+        meta={(
+          <>
+            <Link href={`/professor/topics/${application.topicId}`} className="text-[var(--ink)] hover:text-[var(--primary)]"><UiText>{application.topicTitle}</UiText></Link>
+            , <UiText>{team ? "팀 지원" : "개인 지원"}</UiText>
+            , <time className="tabular-nums" dateTime={application.createdAt.toISOString()}><UiDate value={application.createdAt} mode="dateTime" /></time> <UiText>{"지원"}</UiText>
+          </>
         )}
-      </section>
+        finding={finding}
+        actions={<Link href="/professor/applications" className="button-secondary button-compact"><UiText>{"목록으로"}</UiText></Link>}
+      />
 
-      {application.status === "PENDING" ? (
-        <section aria-labelledby="review-decision-title" className="border-y border-[var(--line)] py-6">
-          <div className="mb-5 border-b border-[var(--line)] pb-4">
-            <h3 id="review-decision-title" className="text-lg font-semibold"><UiText>{"결정과 의견 전달"}</UiText></h3>
-            <p className="muted mt-2 text-sm leading-6"><UiText>{"선정 근거나 보완점을 남기면 결정 결과와 함께 학생에게 전달됩니다."}</UiText></p>
-          </div>
-          {application.decisionImpact ? <div className="mb-5 grid gap-3 bg-[var(--surface-subtle)] p-4 text-sm sm:grid-cols-3">
-            <p><strong><UiText>{"선정 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.acceptedMemberCount}<UiText>{"명"}</UiText></span></p>
-            <p><strong><UiText>{"선정 후 인원"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.currentMemberCount + application.decisionImpact.acceptedMemberCount} / {application.decisionImpact.capacity}<UiText>{"명"}</UiText></span></p>
-            <p><strong><UiText>{"자동 미선정"}</UiText></strong><span className="mt-1 block">{application.decisionImpact.automaticallyRejectedApplicationCount}<UiText>{"건"}</UiText>{application.decisionImpact.closesRecruitment ? <UiText>{" · 모집 마감"}</UiText> : null}</span></p>
-          </div> : null}
-          {application.decisionImpact ? <ApplicationDecisionForm applicationId={application.id} impact={application.decisionImpact} /> : null}
-        </section>
-      ) : null}
+      <div className="grid items-start gap-3.5 @min-[60rem]:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid min-w-0 gap-3.5">
+          <section aria-labelledby="application-answer-title" className={cardClass}>
+            <CardHead id="application-answer-title" title={<UiText>{"지원서 답변"}</UiText>} count={application.answers.length ? <UiText>{`${application.answers.length}개 문항`}</UiText> : undefined} />
+            {application.answers.length ? (
+              <ol className="px-5 pb-2">
+                {application.answers.map((answer, index) => (
+                  <li key={answer.questionId} className="py-3.5 [&+li]:border-t [&+li]:border-[var(--line)]">
+                    <p className="text-[0.8125rem] font-medium text-[var(--muted)]">
+                      <span className="mr-1.5 tabular-nums">{index + 1}.</span>
+                      <UiText>{answer.label}</UiText>
+                    </p>
+                    {answer.value.trim()
+                      ? <TranslatedText text={answer.value} className="mt-1.5 max-w-3xl whitespace-pre-wrap text-[0.9375rem] leading-7 text-[var(--ink)]" />
+                      : <p className="mt-1.5 text-[0.9375rem] text-[var(--muted)]"><UiText>{"미입력"}</UiText></p>}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="grid gap-4 px-5 pb-5">
+                <dl className="grid gap-x-6 gap-y-3 text-[0.8125rem] sm:grid-cols-3">
+                  <ApplicationProfileItem label="희망 역할" value={application.desiredRole} />
+                  <ApplicationProfileItem label="활동 가능 시간" value={application.availability} />
+                  <ApplicationProfileItem label="보유 기술" value={application.skills.join(", ")} />
+                </dl>
+                <TranslatedText text={application.message} className="max-w-3xl whitespace-pre-wrap border-t border-[var(--line)] pt-4 text-[0.9375rem] leading-7 text-[var(--ink)]" />
+              </div>
+            )}
+          </section>
 
-      {application.status !== "PENDING" ? (
-        <section aria-labelledby="review-result-title" className="rounded-[var(--radius-panel)] bg-[var(--accent-subtle)] px-5 py-5">
-          <h3 id="review-result-title" className="text-sm font-semibold"><UiText>{"전달한 검토 의견"}</UiText></h3>
-          <p className="mt-2 whitespace-pre-wrap leading-7"><UiText>{application.reviewComment || "별도 의견 없이 결정했습니다."}</UiText></p>
-          {application.decidedAt ? <p className="muted mt-3 text-xs"><UiText>{application.decidedByName ?? "시스템"}</UiText>{" · "}<UiDate value={application.decidedAt} mode="dateTime" /></p> : null}
-        </section>
-      ) : null}
+          <section aria-labelledby="student-profile-title" className={cardClass}>
+            <CardHead id="student-profile-title" title={<UiText>{team ? "지원 팀" : "지원자 정보"}</UiText>} count={<>{application.teamMembers.length}<UiText>{"명"}</UiText></>} />
+            <ul>
+              {application.teamMembers.map((member) => (
+                <li key={member.studentId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-[var(--line)] px-5 py-2.5 sm:grid-cols-[10rem_minmax(0,1fr)_auto]">
+                  <strong className="truncate text-sm font-medium text-[var(--ink)]">{member.name}</strong>
+                  <span className="order-3 col-span-2 truncate text-xs text-[var(--muted)] sm:order-none sm:col-span-1 sm:text-[0.8125rem]">{member.email}</span>
+                  <Pill tone={member.role === "LEADER" ? "accent" : "plain"}>{member.role === "LEADER" ? "대표 지원자" : "팀원"}</Pill>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        {application.status === "PENDING" ? (
+          <section aria-labelledby="review-decision-title" className={`${cardClass} @min-[60rem]:sticky @min-[60rem]:top-6`}>
+            <CardHead id="review-decision-title" title={<UiText>{"결정과 의견 전달"}</UiText>} />
+            {impact ? (
+              <>
+                <dl className="mx-5 grid grid-cols-3 border-y border-[var(--line)] text-[0.8125rem]">
+                  <div className="py-2.5 pr-3">
+                    <dt className="text-xs text-[var(--muted)]"><UiText>{"선정 인원"}</UiText></dt>
+                    <dd className="mt-0.5 tabular-nums text-[var(--ink)]">{impact.acceptedMemberCount}<UiText>{"명"}</UiText></dd>
+                  </div>
+                  <div className="border-l border-[var(--line)] px-3 py-2.5">
+                    <dt className="text-xs text-[var(--muted)]"><UiText>{"선정 후 인원"}</UiText></dt>
+                    <dd className="mt-0.5 tabular-nums text-[var(--ink)]">{afterCount} / {impact.capacity}<UiText>{"명"}</UiText></dd>
+                  </div>
+                  <div className="border-l border-[var(--line)] py-2.5 pl-3">
+                    <dt className="text-xs text-[var(--muted)]"><UiText>{"자동 미선정"}</UiText></dt>
+                    <dd className="mt-0.5 tabular-nums text-[var(--ink)]">{impact.automaticallyRejectedApplicationCount}<UiText>{"건"}</UiText></dd>
+                  </div>
+                </dl>
+                <div className="px-5 pb-5 pt-4">
+                  <ApplicationDecisionForm applicationId={application.id} impact={impact} />
+                </div>
+              </>
+            ) : <p className="px-5 pb-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"지금은 이 지원을 결정할 수 없습니다."}</UiText></p>}
+          </section>
+        ) : (
+          <section aria-labelledby="review-result-title" className={cardClass}>
+            <CardHead id="review-result-title" title={<UiText>{"전달한 검토 의견"}</UiText>} />
+            <div className="px-5 pb-5">
+              <p className={`whitespace-pre-wrap text-sm leading-6 ${application.reviewComment ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}><UiText>{application.reviewComment || "별도 의견 없이 결정했습니다."}</UiText></p>
+              {application.decidedAt ? <p className="mt-3 text-xs tabular-nums text-[var(--muted)]"><UiText>{application.decidedByName ?? "시스템"}</UiText>, <UiDate value={application.decidedAt} mode="dateTime" /></p> : null}
+            </div>
+          </section>
+        )}
+      </div>
     </article>
   );
 }
@@ -103,8 +132,8 @@ export function ReceivedApplicationDetail({
 function ApplicationProfileItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="muted text-xs font-semibold"><UiText>{label}</UiText></dt>
-      <dd className="mt-2"><UiText>{value || "미입력"}</UiText></dd>
+      <dt className="text-xs text-[var(--muted)]"><UiText>{label}</UiText></dt>
+      <dd className={`mt-0.5 ${value ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}><UiText>{value || "미입력"}</UiText></dd>
     </div>
   );
 }

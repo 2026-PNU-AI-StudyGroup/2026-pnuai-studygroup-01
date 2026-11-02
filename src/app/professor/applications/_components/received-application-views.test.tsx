@@ -95,9 +95,10 @@ describe("교수 지원서 목록과 상세", () => {
   it("상세에서 지원자와 교수 지정 문항 답변 및 결정 동작을 표시한다", () => {
     render(<ReceivedApplicationDetail application={application} />);
 
-    expect(screen.getByRole("heading", { name: application.topicTitle })).toBeInTheDocument();
-    expect(screen.getByText(application.studentName)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: application.studentName })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: application.topicTitle })).toHaveAttribute("href", "/professor/topics/topic-1");
     expect(screen.getByText(application.studentEmail)).toBeInTheDocument();
+    expect(screen.getByText("선정하면 팀이 3 / 4명이 됩니다.")).toBeInTheDocument();
     expect(screen.getByText("지원 동기")).toBeInTheDocument();
     expect(screen.getByText(application.answers[0].value)).toBeInTheDocument();
     expect(screen.queryByText(application.desiredRole)).not.toBeInTheDocument();

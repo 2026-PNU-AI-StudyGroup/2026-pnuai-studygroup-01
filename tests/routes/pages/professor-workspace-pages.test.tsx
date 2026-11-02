@@ -120,18 +120,10 @@ describe("학생 조교 교수 작업공간 페이지", () => {
 
     expect(listTopics).toHaveBeenCalledWith(assistant, 1);
     expect(listOpenPrograms).not.toHaveBeenCalled();
-    const topicListHeading = screen.getByRole("heading", { name: "담당 프로젝트" });
-    expect(topicListHeading).toBeInTheDocument();
-    expect(topicListHeading.closest("header")?.parentElement).toHaveClass(
-      "overflow-hidden",
-      "lg:rounded-[var(--radius-panel)]",
-      "lg:border",
-      "lg:bg-[var(--surface)]",
-    );
-    expect(screen.getByRole("heading", { name: "배정된 프로젝트" }).closest("li")).toHaveClass(
-      "record-row",
-      "focus-within:bg-[var(--accent-subtle)]",
-    );
+    expect(screen.getByRole("heading", { name: "담당 프로젝트" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "배정된 프로젝트" })).toHaveAttribute("href", "/professor/topics/topic-1");
+    // 조교에게는 등록 가능한 프로그램 칸과 생성 행동을 그리지 않는다.
+    expect(screen.queryByRole("heading", { name: "등록 기간인 프로그램" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "새 프로젝트 등록" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "학생 등록 검토" })).not.toBeInTheDocument();
   });
