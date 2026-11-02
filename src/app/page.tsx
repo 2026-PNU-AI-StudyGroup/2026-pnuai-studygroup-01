@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 
 import { SignInLanding } from "@/app/_components/sign-in-landing";
+import { digestPublicArchive, type PublicArchiveDigest } from "@/app/_components/landing-archive";
 import { findAdvisorLandingPath } from "@/modules/advisor/infrastructure/prisma-advisor-landing-query";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
 import { isDevelopmentMockAuthEnabled } from "@/modules/identity/infrastructure/development-mock-auth";
+import { listProgramCategoryOrder } from "@/modules/project-program/infrastructure/prisma-program-category-order-repository";
+import { PrismaTeamArchiveQueryRepository } from "@/modules/team/infrastructure/prisma-team-archive-query-repository";
 import { prisma } from "@/shared/infrastructure/database/prisma";
 
 export default async function Home({
@@ -46,6 +49,20 @@ export default async function Home({
     <SignInLanding
       showDevelopmentLogin={showDevelopmentLogin}
       seedRequired={params?.mockLogin === "seed-required"}
+      archive={await loadArchiveDigest()}
     />
   );
+}
+
+/** 첫 화면의 결과물 목록과 숫자. 공개 아카이브와 같은 조회다. 로그인 화면이 이 조회 때문에 막히면 안 되므로 실패하면 빼고 그린다. */
+async function loadArchiveDigest(): Promise<PublicArchiveDigest | null> {
+  try {
+    const [projects, categoryOrder] = await Promise.all([
+      new PrismaTeamArchiveQueryRepository(prisma).listPublic(),
+      listProgramCategoryOrder(prisma),
+    ]);
+    return projects.length > 0 ? digestPublicArchive(projects, categoryOrder) : null;
+  } catch {
+    return null;
+  }
 }

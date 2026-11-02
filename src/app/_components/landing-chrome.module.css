@@ -1,0 +1,321 @@
+/*
+  공개 화면(로그인 전 첫 화면, 사업별 결과물)만의 바탕(taste-skill colour chapters, 2026-11-02 확정).
+  구역마다 흰색, 검정, 형광 노랑, 세이지 면을 통째로 바꾸고 파랑(#0050ff, 흰 글자 5.9:1)은 행동에만 쓴다.
+  안쪽 업무 화면의 부산대 파랑 토큰(--accent 등)과 이름이 겹치면 공용 부품 색이 뒤집힌다. 그래서 c- 를 붙여 이 안에만 둔다.
+*/
+.page {
+  --c-white: #ffffff;
+  --c-surface: #f6f6f6;
+  --c-ink: #000000;
+  --c-muted: #5f5f5f;
+  --c-paper: #f4f4f4;
+  --c-soft: #bdbdbd;
+  --c-blue: #0050ff;
+  --c-on-blue: #ffffff;
+  --c-sage: #d1ddd3;
+  --c-yellow: #f0ff1c;
+  --c-black: #000000;
+
+  /* League Spartan 에는 한글이 없다. 한 줄에 두 서체가 섞이지 않게 숫자와 로고에만 쓴다. */
+  --display: var(--font-landing-display), "Pretendard Variable", sans-serif;
+  --text: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  --step-hero: clamp(3.25rem, 5.2vw, 5rem);
+  --step-title: clamp(4.5rem, 9vw, 8.5rem);
+  --step-poster: clamp(7.5rem, 26vw, 26rem);
+
+  --margin: clamp(16px, 2.8vw, 40px);
+  --gap: 24px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  min-height: 100svh;
+  background: var(--c-white);
+  color: var(--c-ink);
+  font-family: var(--text);
+  font-size: var(--step-body);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.page :focus-visible {
+  outline: 3px solid var(--c-blue);
+  outline-offset: 3px;
+}
+
+.page ::selection {
+  background: var(--c-yellow);
+  color: var(--c-ink);
+}
+
+.display {
+  font-family: var(--text);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.wrap {
+  padding-inline: var(--margin);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gap);
+}
+
+/* 버튼은 모서리 없이 한 색으로. 누르면 살짝 줄어든다. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  background: var(--c-blue);
+  color: var(--c-on-blue);
+  font-weight: 600;
+  font-size: var(--step-body);
+  text-decoration: none;
+  border-radius: 0;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s var(--ease-out);
+}
+
+.button:hover {
+  background: var(--c-ink);
+  color: var(--c-paper);
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.textLink {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  transition: text-underline-offset 0.25s var(--ease-out);
+}
+
+.textLink:hover {
+  text-underline-offset: 8px;
+}
+
+/* 위 막대: 로고, 몇 개의 링크. 막대 면은 따로 없다. */
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+}
+
+.wordmark {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-lead);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wordmark span {
+  margin-left: 10px;
+  font-family: var(--text);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0;
+}
+
+.barLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 28px;
+  font-size: 0.9375rem;
+}
+
+.barLinks a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.barLinks a:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+/* 표지 한 칸. 그림은 틀보다 위아래로 18% 길게 두고 스크롤에 따라 틀 안에서 흐른다. 좌우는 틀과 같다. */
+.tile {
+  flex: var(--r) 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+}
+
+.frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #111;
+}
+
+.frame img {
+  position: absolute;
+  left: 0;
+  top: -9%;
+  width: 100%;
+  height: 118%;
+  object-fit: cover;
+}
+
+.tile figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  height: 30px;
+  padding-top: 8px;
+  font-size: var(--step-small);
+}
+
+/* 검정 바탕에서도 노랑 바탕에서도 한 단계 옅게 보이도록 색 대신 투명도로 낮춘다. */
+.tile figcaption span:last-child {
+  opacity: 0.68;
+}
+
+@media (max-width: 760px) {
+  .tile figcaption {
+    height: auto;
+    min-height: 28px;
+    flex-wrap: wrap;
+    gap: 0 8px;
+    font-size: 13px;
+  }
+}
+
+/* 끝: 링크 다음에 이름이 화면 폭으로 돌아와 바닥에서 닫는다. 글자 판은 스크롤에 맞춰 차례로 올라온다. */
+.footer {
+  background: var(--c-black);
+  color: var(--c-paper);
+  padding-top: 72px;
+}
+
+.footer :focus-visible {
+  outline-color: var(--c-yellow);
+}
+
+.mark {
+  margin-top: 72px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 34svh;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.mark span {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: min(26vh, 16vw);
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+  color: var(--c-black);
+}
+
+.mark span:nth-child(1) { height: 100%; background: var(--c-blue); color: var(--c-on-blue); }
+.mark span:nth-child(2) { height: 72%; background: var(--c-yellow); }
+.mark span:nth-child(3) { height: 88%; background: var(--c-sage); }
+.mark span:nth-child(4) { height: 64%; background: var(--c-paper); }
+.mark span:nth-child(5) { height: 94%; background: var(--c-blue); color: var(--c-on-blue); }
+
+.footerNav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 32px var(--gap);
+}
+
+.footerNav h2 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--c-soft);
+}
+
+.footerNav ul {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.footerNav a {
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.footerNav a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 패밀리 사이트는 이름 옆에 실제 주소를 둔다. 누르기 전에 어디로 가는지 보인다. */
+.family ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--gap);
+}
+
+.family a span {
+  margin-left: 8px;
+  color: var(--c-soft);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .family ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footerLast {
+  margin-top: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: var(--step-small);
+  color: var(--c-soft);
+}
+
+.footerLast .button {
+  padding: 10px 16px;
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 760px) {
+  .barLinks {
+    display: none;
+  }
+
+  .mark {
+    height: 22svh;
+    min-height: 150px;
+  }
+
+  .mark span {
+    font-size: 18vw;
+  }
+
+  .footerNav,
+  .family ul {
+    grid-template-columns: 1fr;
+  }
+}

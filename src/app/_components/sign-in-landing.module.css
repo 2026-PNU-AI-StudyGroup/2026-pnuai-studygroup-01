@@ -1,522 +1,896 @@
 /*
-  로그인 첫 화면. 히어로 한 폭만 짙게 쓰고 아래 설명 구역은 앱과 같은 라이트로 둔다.
-  로그인 직후 흰 작업 화면으로 넘어가므로 페이지 전체를 다크로 만들면 낙차가 크다.
+  로그인 전 첫 화면. 색 토큰과 글꼴, 버튼, 끝 구역은 landing-chrome.module.css 에 있다.
+  구역마다 바탕 면이 통째로 바뀐다: 흰 첫 화면(파란 무대), 검정 결과물, 노랑 이용 절차, 흰 실제 화면,
+  검정 숫자, 세이지 주요 기능, 흰 역할별 안내, 파랑 로그인 띠, 검정 끝.
 */
 
-.page {
-  --hero-ground: #10141c;
-  --hero-ground-deep: #0a0d13;
-  --hero-ink: #f4f6fa;
-  --hero-muted: #a9b2c4;
-  --hero-accent: #8b83f5;
-  --hero-line: rgb(244 246 250 / 0.16);
-}
-
-.page ::selection {
-  background: color-mix(in srgb, var(--primary) 26%, transparent);
-  color: var(--ink);
-}
-
+/* 첫 화면 */
 .hero {
   position: relative;
-  isolation: isolate;
-  overflow: clip;
-  background: var(--hero-ground);
-  color: var(--hero-ink);
+  min-height: max(100svh, 760px);
+  overflow: hidden;
+  background: var(--c-white);
 }
 
-/*
-  지난 프로젝트 결과물의 벽. 한 장으로 이어붙인 6x4 블록을 배경으로 무한 반복시키고,
-  그 층을 정확히 한 블록만큼 좌상단에서 우하단으로 옮긴다. 반복 배경이라 되돌아오는
-  자리에 같은 그림이 놓여 이음매가 보이지 않는다. DOM 은 두 칸뿐이다.
-
-  블록은 서버가 굽는다. 확정된 해커톤 팀의 표지를 모아 한 장으로 만들어 내려주므로
-  새 표지가 올라오면 알아서 벽에 들어온다. 칸 수와 칸 크기는 showcase-wall-layout.ts
-  와 맞물려 있다. 한쪽만 고치면 그림이 잘린다.
-*/
-.mosaic {
+.heroBar {
   position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: clip;
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 84%, transparent 100%);
-}
-
-.mosaicLayer {
-  --block-w: 960px;
-  --block-h: 406px;
-  position: absolute;
-  top: calc(-1 * var(--block-h));
-  left: calc(-1 * var(--block-w));
-  width: calc(100% + var(--block-w));
-  height: calc(100% + var(--block-h));
-  background-color: var(--hero-ground-deep);
-  background-image: url("/api/landing/showcase-wall");
-  background-repeat: repeat;
-  background-size: var(--block-w) var(--block-h);
-  opacity: 0.4;
-  /* 블록이 넓어져 대각선 거리가 늘었다. 카드가 흐르는 속도를 그대로 두려고 시간도 늘린다. */
-  animation: flow 46s linear infinite;
-  will-change: transform;
-}
-
-@media (min-width: 64rem) {
-  .mosaicLayer {
-    --block-w: 1380px;
-    --block-h: 584px;
-  }
-}
-
-@keyframes flow {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(var(--block-w), var(--block-h), 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mosaicLayer {
-    animation: none;
-    transform: translate3d(var(--block-w), var(--block-h), 0);
-  }
-}
-
-/* 왼쪽 글자 자리를 비우는 층. 촘촘해진 배경 위에서 본문 대비를 확보한다. */
-.heroWash {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    linear-gradient(100deg, rgb(16 20 28 / 0.98) 0%, rgb(16 20 28 / 0.92) 34%, rgb(16 20 28 / 0.55) 62%, rgb(16 20 28 / 0.34) 100%),
-    linear-gradient(to bottom, rgb(10 13 19 / 0.72) 0%, rgb(10 13 19 / 0.18) 34%, rgb(10 13 19 / 0.86) 100%);
-}
-
-.heroInner {
-  position: relative;
+  inset: 28px var(--margin) auto;
   z-index: 2;
 }
 
-.topBar {
-  border-bottom: 1px solid var(--hero-line);
+.heroCopy {
+  position: relative;
+  z-index: 1;
+  padding-top: 150px;
+  padding-bottom: 72px;
 }
 
-/*
-  랜딩 전용 워드마크. 어두운 히어로 위에서 파란 원본을 그대로 쓰면 대비가 안 나온다.
-  알파 마스크로 흰색을 입히면 인장 선화가 그대로 남는다. 비율 1994:253.
-*/
-.institute {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 2.75rem;
+.heroCopy h1 {
+  grid-column: 1 / 7;
+  font-size: var(--step-hero);
 }
 
-/* 교육원 이름 옆에 서비스 이름을 붙인다. 여기가 무슨 사이트인지 로고만으로는 모른다.
-   기관 표기를 눌러 읽히게 두고 선 하나로 나눈다. */
-.serviceName {
-  padding-left: 0.75rem;
-  border-left: 1px solid var(--hero-line);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  color: var(--hero-muted);
+.heroLede {
+  grid-column: 1 / 5;
+  margin-top: 36px;
+  max-width: 40ch;
 }
 
-/* 좁은 화면에서는 기관 표기와 나란히 두면 줄이 넘친다. 서비스 이름을 접는다. */
-@media (max-width: 26rem) {
-  .serviceName {
-    display: none;
-  }
+.signIn {
+  grid-column: 1 / 5;
+  margin-top: 28px;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
 }
 
-.instituteMark {
-  display: block;
-  width: 12rem;
-  height: 1.5rem;
-  background-color: var(--hero-ink);
-  mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
-  -webkit-mask: url("/brand/ai-convergence-education-institute.png") left center / contain no-repeat;
+/* 공용 Google 버튼을 이 화면의 행동 색으로 입힌다. G 표시는 흰 칸 위에 둬야 제 색이 산다. */
+.google button {
+  width: auto;
+  min-height: 0;
+  gap: 14px;
+  padding: 10px 22px 10px 10px;
+  border: 0;
+  border-radius: 0;
+  background: var(--c-blue);
+  color: var(--c-on-blue);
+  font-size: var(--step-body);
+  font-weight: 600;
+  box-shadow: none; /* taste-skill-ignore: 공용 버튼에 붙은 그림자를 지운다 */
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s var(--ease-out);
 }
 
-@media (min-width: 48rem) {
-  .instituteMark {
-    width: 15.75rem;
-    height: 2rem;
-  }
+.google button:hover {
+  background: var(--c-ink);
+  color: var(--c-paper);
 }
 
-.institute:focus-visible {
-  border-radius: 0.25rem;
-  outline: 2px solid var(--hero-accent);
-  outline-offset: 4px;
+.google button:active {
+  transform: scale(0.97);
 }
 
-.navLink {
-  color: var(--hero-muted);
-  text-decoration: none;
-  text-underline-offset: 0.25em;
-}
-
-.navLink:hover {
-  color: var(--hero-ink);
-  text-decoration: underline;
-}
-
-.navLink:focus-visible {
-  border-radius: 0.25rem;
-  outline: 2px solid var(--hero-accent);
-  outline-offset: 3px;
-}
-
-.title {
-  /* 워시로 비워 둔 왼쪽 영역 안에서 두 줄로 접히게 폭을 묶는다. */
-  max-width: 42rem;
-  font-size: clamp(2rem, 4.6vw, 3.5rem);
-  font-weight: 800;
-  line-height: 1.16;
-  letter-spacing: -0.045em;
-  text-wrap: balance;
-}
-
-.lede {
-  max-width: 33rem;
-  color: var(--hero-muted);
-  line-height: 1.75;
-}
-
-/* 로그인은 상자에 담지 않고 히어로 본문 흐름 안에 둔다. */
-.signInAction {
-  max-width: 22rem;
+.google button svg {
+  box-sizing: content-box;
+  width: 20px;
+  height: 20px;
+  padding: 8px;
+  background: var(--c-white);
 }
 
 .signInNote {
-  max-width: 30rem;
-  color: var(--hero-muted);
-  line-height: 1.7;
+  max-width: 44ch;
+  font-size: 0.9375rem;
+  color: var(--c-muted);
 }
 
 .signInNote strong {
-  color: var(--hero-ink);
+  color: var(--c-ink);
+  font-weight: 700;
+}
+
+.signIn > a {
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 
-.heroDivider {
-  width: 3.5rem;
-  border-top: 2px solid var(--hero-accent);
+.devLogin {
+  width: 100%;
+  max-width: 26rem;
 }
 
-.stepIndex {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
-  color: var(--muted);
+.stage {
+  position: absolute;
+  left: calc(var(--margin) + (100% - 2 * var(--margin) + var(--gap)) / 12 * 4);
+  right: 0;
+  /* 첫 화면 높이에 묶는다. 개발용 로그인처럼 글 쪽이 길어져도 무대가 첫 화면 아래로 밀려나지 않는다. */
+  top: min(42%, 38svh);
+  bottom: 0;
+  background: var(--c-blue);
+  clip-path: polygon(0 72px, 15% 72px, 15% 0, 100% 0, 100% 100%, 0 100%);
 }
 
-/* 절차는 실제 순서가 있어 번호를 쓴다. */
-.steps {
-  display: grid;
-  gap: 1.75rem;
+.stageInner {
+  position: absolute;
+  left: 56px;
+  top: 96px;
+  width: min(620px, calc(100% - 56px));
 }
 
-@media (min-width: 60rem) {
-  .steps {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 2rem;
-  }
-}
-
-.roleHead {
-  display: none;
-}
-
-@media (min-width: 48rem) {
-  .roleHead {
-    display: grid;
-    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
-    gap: 1.5rem;
-    padding-bottom: 0.5rem;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-}
-
-.roleRow {
-  display: grid;
-  gap: 0.35rem;
-  border-top: 1px solid var(--line);
-  padding-block: 1.25rem;
-}
-
-@media (min-width: 48rem) {
-  .roleRow {
-    grid-template-columns: 8rem minmax(0, 1fr) 9rem;
-    gap: 1.5rem;
-    align-items: baseline;
-  }
-}
-
-.accessTag {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.accessTagAccent {
-  color: var(--accent-ink);
-  font-weight: 600;
-}
-
-/*
-  아래로 내려갈수록 하나씩 올라오는 등장. 스크롤이 곧 시계라서 JS 없이 처리한다.
-  기본 상태는 이미 보이는 상태이므로 스크롤 구동을 지원하지 않는 브라우저에서는
-  아무것도 숨겨지지 않는다. reduced-motion 에서도 그대로 보인다.
-*/
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(1.5rem);
-    filter: blur(7px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-}
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .rise {
-      animation: rise linear both;
-      animation-timeline: view();
-      animation-range: entry 4% cover 24%;
-    }
-
-    /* 한 줄에 나란히 선 항목은 왼쪽부터 차례로 올라오게 시점을 어긋낸다. */
-    .steps > .rise:nth-child(2) {
-      animation-range: entry 8% cover 28%;
-    }
-
-    .steps > .rise:nth-child(3) {
-      animation-range: entry 12% cover 32%;
-    }
-
-    .steps > .rise:nth-child(4) {
-      animation-range: entry 16% cover 36%;
-    }
-  }
-}
-
-/* 구역 머리말. 눈썹 라벨 없이 제목과 한 줄 설명으로만 쓴다. */
-.sectionLede {
-  max-width: 40rem;
-  color: var(--muted);
-  line-height: 1.75;
-}
-
-/* 실제 화면. 한 행에 캡처와 설명을 두고 행마다 좌우를 바꾼다. */
-.screenRow {
-  display: grid;
-  gap: 1.75rem;
-  align-items: center;
-}
-
-@media (min-width: 60rem) {
-  .screenRow {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 3.5rem;
-  }
-
-  .screenRowFlip .screenShot {
-    order: 2;
-  }
-}
-
-.screenShot {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-  box-shadow: 0 10px 30px rgb(16 24 40 / 0.08);
-}
-
-.screenShot img {
-  display: block;
+.stageShot {
   width: 100%;
   height: auto;
 }
 
-/* 기능 목록. 역할 표와 같은 문법으로 맞춰 페이지 안에서 한 벌로 읽히게 한다. */
-.featureRow {
-  display: grid;
-  gap: 0.35rem;
-  border-top: 1px solid var(--line);
-  padding-block: 1.25rem;
+/* 무대 위 화면 조각(data-ui): 사업별 결과물 화면의 모양을 그대로 따른다. */
+.ui {
+  background: #fff;
+  color: #191c22;
+  font-size: 15px;
+  line-height: 1.45;
+  border-radius: 6px 6px 0 0;
+  padding: 22px 24px 40px;
 }
 
-@media (min-width: 48rem) {
-  .featureRow {
-    grid-template-columns: 11rem minmax(0, 1fr);
-    gap: 1.5rem;
-    align-items: baseline;
-  }
-}
-
-/* 마무리. 히어로와 같은 짙은 바탕을 한 번 더 써서 페이지를 닫는다. */
-.closing {
-  background: var(--hero-ground-deep);
-  color: var(--hero-ink);
-}
-
-.closingTitle {
-  font-size: clamp(1.6rem, 3vw, 2.25rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.25;
-  text-wrap: balance;
-}
-
-/* 패밀리 사이트. 이름과 실제 주소를 함께 둬서 어디로 가는지 눌러보기 전에 알 수 있다. */
-.familyGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-@media (min-width: 48rem) {
-  .familyGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 72rem) {
-  .familyGrid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-.familyCard {
+.uiHead {
   display: flex;
-  height: 100%;
-  flex-direction: column;
-  gap: 0.4rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  padding: 0.85rem 0.9rem;
-  text-decoration: none;
-  transition: border-color 120ms, transform 120ms;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
 }
 
-.familyCard:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
+.uiHead strong {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.familyCard:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.uiHead span {
+  font-size: 14px;
+  color: #5b6170;
 }
 
-.familyName {
-  color: var(--ink);
-  font-size: 0.875rem;
+.uiTabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  border-bottom: 1px solid #e3e5ec; /* taste-skill-ignore: 화면 조각(data-ui)의 탭 줄 */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.uiTab {
+  flex: none;
+  padding: 10px 12px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
   font-weight: 600;
+  color: #5b6170;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.uiTab b {
+  margin-left: 6px;
+  font-weight: 600;
+  color: #8a90a0;
+}
+
+.uiTab:hover,
+.uiTab[aria-selected="true"] {
+  color: #191c22;
+}
+
+.uiTab[aria-selected="true"] {
+  border-bottom-color: #191c22;
+}
+
+.uiYear {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px 0 6px;
+  font-size: 14px;
+  color: #5b6170;
+}
+
+.uiRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid #eef0f4; /* taste-skill-ignore: 화면 조각(data-ui)의 목록 줄 */
+}
+
+.uiRow:first-child {
+  border-top: 0;
+}
+
+.uiTitle {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uiAward {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f1f2f6;
+  color: #3d4250;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.uiAward[data-top] {
+  background: #191c22;
+  color: #fff;
+}
+
+/* 결과물 벽 */
+.work {
+  background: var(--c-black);
+  color: var(--c-paper);
+  padding-block: 120px 160px;
+}
+
+.work :focus-visible {
+  outline-color: var(--c-yellow);
+}
+
+.workHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+}
+
+.workHead h2 {
+  font-size: var(--step-title);
+}
+
+.workHead a {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wall {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wallRow {
+  display: flex;
+  gap: 8px;
+  height: var(--h);
+}
+
+.wallRow:nth-child(4n + 1) { --h: 390px; }
+.wallRow:nth-child(4n + 2) { --h: 270px; }
+.wallRow:nth-child(4n + 3) { --h: 330px; }
+.wallRow:nth-child(4n + 4) { --h: 230px; }
+
+.wall:hover figure:not(:hover) {
+  opacity: 0.5;
+}
+
+.band {
+  flex: none;
+  height: clamp(260px, 30vw, 440px);
+}
+
+/* 이용 절차: 네 단계가 계단처럼 한 칸씩 내려간다. 차례는 자리와 ol 이 말한다. */
+.steps {
+  background: var(--c-yellow);
+  color: var(--c-ink);
+  padding-block: 140px 150px;
+}
+
+.stepsHead,
+.featuresHead {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gap);
+  align-items: end;
+}
+
+.stepsHead h2,
+.featuresHead h2,
+.roles h2 {
+  grid-column: 1 / 8;
+  font-size: var(--step-title);
+}
+
+.stepsHead p,
+.featuresHead p {
+  grid-column: 8 / 13;
+  max-width: 44ch;
+}
+
+.stepList {
+  margin-top: 96px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gap);
+  align-items: start;
+}
+
+.stepList li:nth-child(2) { margin-top: 64px; }
+.stepList li:nth-child(3) { margin-top: 128px; }
+.stepList li:nth-child(4) { margin-top: 192px; }
+
+.stepList h3 {
+  font-size: var(--step-head);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.stepList p {
+  margin-top: 16px;
+  max-width: 30ch;
+}
+
+/* 실제 화면: 작은 칸과 큰 칸이 아래 끝을 맞추고 글은 그 밑에 선다. */
+.screens {
+  background: var(--c-white);
+  padding-block: 140px 150px;
+}
+
+.screens > div {
+  align-items: end;
+}
+
+.screensHead {
+  grid-column: 1 / 6;
+  grid-row: 1;
+  align-self: start;
+}
+
+.screensHead h2 {
+  font-size: var(--step-title);
+}
+
+.screensHead p {
+  margin-top: 28px;
+  max-width: 36ch;
+}
+
+.screen {
+  display: contents;
+}
+
+.screenTile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.screenTile img {
+  width: 88%;
+  height: auto;
+}
+
+.screen:nth-child(2) .screenTile {
+  grid-column: 1 / 6;
+  grid-row: 2;
+  margin-top: 56px;
+  height: 34vh;
+  min-height: 240px;
+  background: var(--c-sage);
+}
+
+.screen:nth-child(3) .screenTile {
+  grid-column: 6 / 13;
+  grid-row: 1 / 3;
+  height: 70vh;
+  min-height: 520px;
+  background: var(--c-black);
+}
+
+.screenText {
+  grid-row: 3;
+  align-self: start;
+  padding-top: 22px;
+}
+
+.screen:nth-child(2) .screenText { grid-column: 1 / 6; }
+.screen:nth-child(3) .screenText { grid-column: 6 / 13; }
+
+.screenText h3 {
+  font-size: var(--step-lead);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.screenText p {
+  margin-top: 8px;
+  max-width: 44ch;
+}
+
+/* 숫자: 공개 목록에서 센 값만 쓴다. 큰 숫자 하나와 곁가지 셋. */
+.stats {
+  display: flex;
+  flex-direction: column;
+  min-height: 90svh;
+  padding-block: 120px 96px;
+  background: var(--c-black);
+  color: var(--c-paper);
+}
+
+.stats :focus-visible {
+  outline-color: var(--c-yellow);
+}
+
+.stats > div {
+  flex: 1;
+  align-content: space-between;
+}
+
+.stats h2 {
+  grid-column: 1 / 7;
+  font-size: var(--step-head);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.statsFigure {
+  grid-column: 1 / 8;
+  margin-top: 24vh;
+}
+
+.figure {
+  display: flex;
+  align-items: flex-start;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-poster);
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+}
+
+.figure sup {
+  position: static;
+  margin-left: 0.08em;
+  font-family: var(--text);
+  font-size: var(--step-head);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.statsFigure > p:last-child {
+  margin-top: 28px;
+  max-width: 32ch;
+}
+
+.statsSide {
+  grid-column: 8 / 13;
+  align-self: end;
+  display: grid;
+  justify-items: start;
+  gap: 28px;
+}
+
+.nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 24px;
+}
+
+/* dt 가 먼저 와야 하지만 숫자를 위에 보이게 뒤집는다. */
+.nums > div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.nums dt {
+  margin-top: 6px;
+  font-size: var(--step-small);
+  color: var(--c-soft);
+}
+
+.nums dd {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-head);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.nums small {
+  margin-left: 4px;
+  font-family: var(--text);
+  font-size: 0.4em;
+  letter-spacing: 0;
+}
+
+.statsSide > a {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* 주요 기능 */
+.features {
+  background: var(--c-sage);
+  padding-block: 140px 150px;
+}
+
+.featureList {
+  margin-top: 88px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 56px var(--gap);
+}
+
+.featureList dt {
+  font-size: var(--step-lead);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.featureList dd {
+  margin-top: 8px;
+  max-width: 34ch;
+}
+
+/* 역할별 안내: 역할 이름을 크게, 하는 일을 옆에, 들어오는 길은 작은 면으로. */
+.roles {
+  background: var(--c-white);
+  padding-block: 140px 150px;
+}
+
+.roleList {
+  margin-top: 72px;
+  display: grid;
+  gap: 44px;
+}
+
+.roleList > div {
+  display: grid;
+  grid-template-columns: 34% minmax(0, 1fr) auto;
+  column-gap: var(--gap);
+  align-items: baseline;
+}
+
+.roleList dt {
+  font-size: var(--step-head);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.roleList dd {
+  font-size: var(--step-lead);
   line-height: 1.4;
+  max-width: 36ch;
 }
 
-.familyHost {
-  color: var(--soft, var(--muted));
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  word-break: break-all;
+.roleList .access {
+  padding: 4px 12px;
+  background: var(--c-surface);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* 카드 위쪽 짧은 막대. 국내 기관 사이트의 패밀리 사이트 카드 관례를 따른다. */
-.familyDash {
+.roleList .access[data-invite] {
+  background: var(--c-yellow);
+}
+
+/* 로그인 띠. 띠 전체가 첫 화면의 로그인 자리로 가는 링크다. */
+.cta {
   display: block;
-  width: 1.25rem;
-  border-top: 2px solid var(--accent);
-  margin-bottom: 0.25rem;
+  position: relative;
+  min-height: 60svh;
+  overflow: hidden;
+  background: var(--c-blue);
+  color: var(--c-on-blue);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.familyGo {
-  margin-top: auto;
-  padding-top: 0.5rem;
-  color: var(--muted);
-  font-size: 0.6875rem;
+.cta:hover,
+.cta:focus-visible {
+  background: var(--c-yellow);
+  color: var(--c-ink);
 }
 
-.familyCard:hover .familyGo {
-  color: var(--accent-ink);
+.cta:focus-visible {
+  outline-color: var(--c-ink);
+  outline-offset: -6px;
 }
 
-.familyArrow {
-  display: inline-block;
-  transition: transform 120ms;
+.ctaNote {
+  position: absolute;
+  left: var(--margin);
+  top: 28px;
+  max-width: 30ch;
+  font-size: var(--step-lead);
+  font-weight: 600;
+  line-height: 1.35;
 }
 
-.familyCard:hover .familyArrow {
-  transform: translateX(0.2rem);
+.ctaArrow {
+  position: absolute;
+  right: var(--margin);
+  top: 28px;
+  width: 48px;
+  height: 48px;
+  transition: transform 0.3s var(--ease-out);
 }
 
-/*
-  페이지 끝은 어두운 한 구간으로 닫는다. 패밀리 사이트가 진한 회색, 마무리 칸이
-  가장 짙은 색, 푸터가 그 안의 얇은 띠다. 아래로 갈수록 어두워진다.
-*/
-.familyBand {
-  background: #171b24;
-  color: var(--hero-ink);
+.cta:hover .ctaArrow {
+  transform: translate(6px, -6px);
 }
 
-.familyBandTitle {
-  color: var(--hero-muted);
+.ctaWord {
+  position: absolute;
+  left: var(--margin);
+  bottom: 24px;
+  font-size: var(--step-poster);
+  font-weight: 800;
+  line-height: 0.78;
+  letter-spacing: -0.05em;
 }
 
-.familyBand .familyCard {
-  border-color: rgb(244 246 250 / 0.14);
-  background: rgb(244 246 250 / 0.04);
+.ctaWord > span {
+  display: block;
 }
 
-.familyBand .familyCard:hover {
-  border-color: var(--hero-accent);
-  background: rgb(244 246 250 / 0.07);
+/* 움직임: 첫 화면 글은 차례로 올라오고 무대는 아래에서 셔터처럼 열린다. 나머지는 smooth-scroll.tsx 가 스크롤 위치로 움직인다. */
+.heroBar,
+.heroCopy h1,
+.heroLede,
+.signIn {
+  animation: rise 0.8s var(--ease-out) both;
 }
 
-.familyBand .familyCard:focus-visible {
-  outline-color: var(--hero-accent);
+.heroLede { animation-delay: 0.08s; }
+.signIn { animation-delay: 0.16s; }
+
+.stage {
+  animation: shutter 1.1s var(--ease-out) 0.25s both;
 }
 
-.familyBand .familyDash {
-  border-top-color: var(--hero-accent);
+.stageInner {
+  animation: settle 1.3s var(--ease-out) 0.25s both;
 }
 
-.familyBand .familyName {
-  color: var(--hero-ink);
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
 }
 
-.familyBand .familyHost,
-.familyBand .familyGo {
-  color: var(--hero-muted);
+@keyframes shutter {
+  from { clip-path: polygon(0 100%, 15% 100%, 15% 100%, 100% 100%, 100% 100%, 0 100%); }
+  to { clip-path: polygon(0 72px, 15% 72px, 15% 0, 100% 0, 100% 100%, 0 100%); }
 }
 
-.familyBand .familyCard:hover .familyGo {
-  color: var(--hero-accent);
+@keyframes settle {
+  from { transform: translateY(64px); }
+  to { transform: none; }
 }
 
-.footerDark {
-  background: var(--hero-ground-deep);
-  color: var(--hero-muted);
-  border-top: 1px solid rgb(244 246 250 / 0.12);
+@media (prefers-reduced-motion: reduce) {
+  .heroBar,
+  .heroCopy h1,
+  .heroLede,
+  .signIn,
+  .stage,
+  .stageInner {
+    animation: none;
+  }
 }
 
-.footerDark a:hover {
-  color: var(--hero-ink);
+/* 태블릿: 무대를 글 아래로 내리고, 숫자 위 빈 간격을 줄인다. */
+@media (max-width: 1100px) {
+  .hero {
+    min-height: auto;
+  }
+
+  .heroCopy {
+    padding-bottom: 0;
+  }
+
+  .heroCopy h1,
+  .heroLede,
+  .signIn {
+    grid-column: 1 / -1;
+  }
+
+  .stage {
+    position: relative;
+    left: 0;
+    top: auto;
+    margin-top: 56px;
+    height: 480px;
+    clip-path: polygon(0 48px, 72px 48px, 72px 0, 100% 0, 100% 100%, 0 100%);
+    animation: none;
+  }
+
+  .stageInner {
+    left: var(--margin);
+    top: 80px;
+    width: min(620px, calc(100% - 2 * var(--margin)));
+  }
+
+  .stepList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 48px;
+  }
+
+  .stepList li:nth-child(n) { margin-top: 0; }
+  .stepList li:nth-child(even) { margin-top: 64px; }
+
+  .featureList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats {
+    min-height: auto;
+  }
+
+  .stats > div {
+    align-content: start;
+  }
+
+  .statsFigure {
+    margin-top: 12vh;
+  }
+}
+
+/* 휴대폰: 모든 구역이 한 줄로 선다. */
+@media (max-width: 760px) {
+  .heroCopy {
+    padding-top: 96px;
+  }
+
+  .heroCopy h1 {
+    font-size: 10vw;
+  }
+
+  .heroLede {
+    margin-top: 24px;
+    font-size: 1rem;
+  }
+
+  .stage {
+    height: 440px;
+  }
+
+  /* 조각은 오른쪽 끝으로 흘려 보내되 상 표시까지는 화면 안에 들어오게 한다. */
+  .stageInner {
+    left: 16px;
+    top: 64px;
+    width: calc(100% - 16px);
+  }
+
+  .work {
+    padding-block: 80px 96px;
+  }
+
+  .workHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workHead h2 {
+    font-size: 17vw;
+  }
+
+  .wallRow {
+    height: auto;
+    flex-wrap: wrap;
+  }
+
+  .wallRow figure {
+    flex: 1 1 100%;
+    height: 270px;
+  }
+
+  .wallRow figure:nth-child(n + 2) {
+    flex: 1 1 calc(50% - 4px);
+    height: 210px;
+  }
+
+  .steps,
+  .screens,
+  .features,
+  .roles {
+    padding-block: 88px;
+  }
+
+  .stepsHead,
+  .featuresHead,
+  .screens > div {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .stepsHead h2,
+  .featuresHead h2,
+  .screensHead h2,
+  .roles h2 {
+    font-size: 15vw;
+  }
+
+  .stepList,
+  .featureList {
+    grid-template-columns: 1fr;
+    margin-top: 48px;
+    row-gap: 36px;
+  }
+
+  .stepList li:nth-child(even) { margin-top: 0; }
+
+  .screen {
+    display: block;
+  }
+
+  .screen .screenTile {
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: 16px;
+    padding: 24px 0;
+  }
+
+  .stats {
+    padding-block: 88px 64px;
+  }
+
+  .stats > div {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .stats h2 {
+    font-size: 1.75rem;
+  }
+
+  .statsSide {
+    align-self: stretch;
+  }
+
+  .figure {
+    font-size: 40vw;
+  }
+
+  .roleList > div {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .roleList .access {
+    justify-self: start;
+  }
+
+  .cta {
+    min-height: 46svh;
+  }
+
+  .ctaNote {
+    max-width: 22ch;
+    font-size: 1.0625rem;
+  }
+
+  .ctaArrow {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ctaWord {
+    font-size: 30vw;
+  }
 }

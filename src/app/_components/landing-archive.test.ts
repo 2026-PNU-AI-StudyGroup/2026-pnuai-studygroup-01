@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { graduationTabIndex, groupPublicArchive } from "@/app/archive/_lib/group-public-archive";
+import { digestPublicArchive, graduationTabIndex, groupPublicArchive } from "@/app/_components/landing-archive";
 import type { PublicArchivedProject } from "@/modules/team/application/archive-projects";
 
 function project(overrides: Partial<PublicArchivedProject>): PublicArchivedProject {
@@ -59,5 +59,18 @@ describe("공개 아카이브 묶기", () => {
 
   it("공개된 프로젝트가 없으면 빈 화면이다", () => {
     expect(groupPublicArchive([], [], undefined)).toEqual({ categories: [], selectedCategory: null, years: [], totalProjects: 0 });
+  });
+
+  it("첫 화면 요약은 졸업과제를 사업 하나로 더 세고, 탭마다 가장 최근 대회를 위에서부터 담는다", () => {
+    const digest = digestPublicArchive([
+      { ...projects[0], award: "대상", repositoryUrl: "https://github.com/a/b" },
+      ...projects.slice(1),
+    ], ["AI 부스터", "해커톤"], 1);
+
+    expect(digest).toMatchObject({ programCount: 3, projectCount: 4, awardCount: 1, repositoryCount: 1 });
+    expect(digest.tabs).toEqual([
+      { name: "해커톤", count: 3, year: 2026, program: "제7회", teams: 1, rows: [{ id: "a", title: "제목", award: "대상" }] },
+      { name: "AI 부스터", count: 1, year: 2025, program: "AI 부스터 2025", teams: 1, rows: [{ id: "d", title: "제목", award: null }] },
+    ]);
   });
 });

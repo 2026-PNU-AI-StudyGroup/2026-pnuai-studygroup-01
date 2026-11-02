@@ -1,0 +1,411 @@
+/*
+  사업별 결과물(공개). 첫 화면과 같은 바탕(landing-chrome.module.css)에 노랑 머리 구역과 흰 목록.
+  읽는 화면이라 목록 줄은 움직이지 않는다. 큰 숫자와 제목만 들어올 때 움직인다.
+*/
+
+.head {
+  background: var(--c-yellow);
+  padding-block: 28px 96px;
+}
+
+/* 로그인은 첫 화면에 있다. 여기서는 막대 끝의 작은 버튼 하나로 그 자리로 보낸다. 휴대폰에서도 남긴다. */
+.barEnd {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.barButton {
+  padding: 8px 14px;
+  font-size: 0.9375rem;
+}
+
+.headBody {
+  margin-top: 120px;
+  align-items: end;
+}
+
+.headCopy {
+  grid-column: 1 / 9;
+}
+
+.headCopy h1 {
+  font-size: var(--step-title);
+}
+
+.headCopy p {
+  margin-top: 32px;
+  max-width: 40ch;
+  font-size: var(--step-lead);
+  line-height: 1.4;
+}
+
+.headNums {
+  grid-column: 9 / 13;
+  justify-self: end;
+  display: flex;
+  gap: 48px;
+}
+
+/* dt 가 먼저 와야 하지만 숫자를 위에 보이게 뒤집는다. */
+.headNums > div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.headNums dt {
+  margin-top: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.headNums dd {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-title);
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+}
+
+.headNums small {
+  margin-left: 6px;
+  font-family: var(--text);
+  font-size: 0.3em;
+  letter-spacing: 0;
+}
+
+.strip {
+  margin-top: 72px;
+  display: flex;
+  gap: 8px;
+  height: 240px;
+}
+
+.main {
+  padding-block: 32px 160px;
+}
+
+/* 사업 탭: 고른 탭만 파랑 면. 좁은 화면에서는 옆으로 민다. */
+/* 탭이 많아지면 옆으로 밀지 않고 다음 줄로 넘긴다. 잘린 줄은 넘겨 보는 것으로 읽히지 않는다. */
+.tabs ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tabs a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--c-surface);
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tabs a:hover {
+  background: var(--c-sage);
+}
+
+.tabs a[aria-current="page"] {
+  background: var(--c-blue);
+  color: var(--c-on-blue);
+}
+
+.tabs b {
+  font-family: var(--display);
+  font-weight: 700;
+}
+
+.body {
+  margin-top: 96px;
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  column-gap: 48px;
+  align-items: start;
+}
+
+.yearNav {
+  position: sticky;
+  top: 32px;
+}
+
+.yearNav ul {
+  display: grid;
+  gap: 4px;
+}
+
+/* 글자는 바깥 여백 선에 맞추고, 올렸을 때 면만 여백 쪽으로 번진다. */
+.yearNav a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-inline: -12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.yearNav a:hover {
+  background: var(--c-surface);
+}
+
+.yearNav span {
+  font-weight: 500;
+  color: var(--c-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.years {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  gap: 120px;
+}
+
+.yearNav + .years {
+  grid-column: 2;
+}
+
+.year {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-title);
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+}
+
+.program {
+  margin-top: 48px;
+}
+
+.programHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  font-size: var(--step-lead);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.programCount {
+  flex: none;
+  font-size: var(--step-body);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--c-muted);
+}
+
+/* 줄은 선 대신 한 줄 걸러 옅은 면으로 나눈다. 링크인 줄은 올리면 세이지 면. */
+.rows {
+  margin-top: 20px;
+}
+
+.rows > li:nth-child(odd) {
+  background: var(--c-surface);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr) auto 1.125rem;
+  align-items: center;
+  gap: 4px 20px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+a.row:hover {
+  background: var(--c-sage);
+}
+
+a.row:focus-visible {
+  outline-offset: -3px;
+}
+
+.lead {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--c-muted);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title strong {
+  font-weight: 700;
+}
+
+a.row:hover .title strong {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.title span {
+  margin-left: 10px;
+}
+
+.badgeSlot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.badge {
+  padding: 2px 10px;
+  background: var(--c-yellow);
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge[data-top] {
+  background: var(--c-ink);
+  color: var(--c-paper);
+}
+
+.go {
+  display: flex;
+  color: var(--c-muted);
+  transition: color 0.15s ease, transform 0.2s var(--ease-out);
+}
+
+.go svg {
+  width: 18px;
+  height: 18px;
+}
+
+a.row:hover .go {
+  color: var(--c-blue);
+  transform: translate(2px, -2px);
+}
+
+.graduation {
+  margin-top: 96px;
+}
+
+.note {
+  margin-top: 24px;
+  margin-bottom: 32px;
+  max-width: 60ch;
+}
+
+/* 태블릿에서는 표지 세 장만 둔다. 여섯 장이면 칸이 좁아 캡션이 세 줄로 꺾인다. */
+@media (max-width: 1100px) {
+  .strip figure:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .headCopy {
+    grid-column: 1 / -1;
+  }
+
+  .headNums {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 48px;
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .yearNav {
+    position: static;
+    margin-bottom: 64px;
+  }
+
+  .yearNav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .yearNav a {
+    margin-inline: 0;
+    background: var(--c-surface);
+  }
+
+  .yearNav + .years {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .head {
+    padding-bottom: 64px;
+  }
+
+  .headBody {
+    margin-top: 72px;
+  }
+
+  .headCopy h1 {
+    font-size: 15vw;
+  }
+
+  .headNums dd,
+  .year {
+    font-size: 4.5rem;
+  }
+
+  .strip {
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .strip figure {
+    height: 150px;
+  }
+
+  .strip figure:nth-child(4) {
+    display: flex;
+  }
+
+  .main {
+    padding-bottom: 96px;
+  }
+
+  .body,
+  .graduation {
+    margin-top: 64px;
+  }
+
+  .years {
+    gap: 72px;
+  }
+
+  .programHead {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px;
+  }
+
+  .lead {
+    grid-column: 1 / -1;
+    font-size: 0.8125rem;
+  }
+
+  .go {
+    display: none;
+  }
+}
