@@ -513,11 +513,12 @@ summary::-webkit-details-marker {
   .button-danger,
   .button-quiet {
     display: inline-flex;
-    min-height: 2.875rem;
+    /* 버튼 높이 40px(사용자 결정 2026-11-02). 줄 안의 작은 버튼은 button-compact 로 따로 낮춘다. */
+    min-height: 2.5rem;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-control);
-    padding: 0.65rem 1.125rem;
+    padding: 0.5rem 1rem;
     font-weight: 600;
     transition: background-color var(--snap-duration) var(--snap-ease), border-color var(--snap-duration) var(--snap-ease), color var(--snap-duration) var(--snap-ease);
   }
