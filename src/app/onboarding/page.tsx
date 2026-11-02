@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { AppShell } from "@/app/_components/app-shell";
+import { ScreenTitle } from "@/app/_components/screen-title";
 import { PrivacyNoticeStep } from "@/app/onboarding/_components/privacy-notice-step";
 import { StudentOnboardingForm } from "@/app/onboarding/_components/student-onboarding-form";
 import { findAdvisorLandingPath } from "@/modules/advisor/infrastructure/prisma-advisor-landing-query";
@@ -10,7 +11,7 @@ import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { ExplorerHero } from "@/shared/ui/explorer-hero";
+import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 
 // 탭 제목과 본문 제목이 같은 판단을 쓴다. 동의만 받는 화면인데 탭에 "가입 정보 입력" 이
 // 뜨던 것을 고친다. cache 로 묶어 한 요청 안에서 사용자를 한 번만 읽는다.
@@ -60,13 +61,20 @@ export default async function OnboardingPage() {
     redirect(await landingPathFor(actor.role, actor.id));
   }
 
+  // 학생은 동의 다음에 가입 정보를 채운다. 두 단계가 다 걸린 사람에게만 지금 몇 번째인지 보여 준다.
+  const steps = needsStudentProfile ? 2 : 1;
+  const step = needsPrivacyNotice ? 1 : steps;
+
   return (
-    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/onboarding">
-      <main className="content-shell pb-24 lg:pb-12">
-        <div className="mx-auto max-w-4xl">
-          <ExplorerHero
+    <AppShell role={actor.role} userId={actor.id} userName={actor.name} currentPath="/onboarding" crumbs={[{ label: onboardingTitle(state) }]}>
+      <ExplorerLayout>
+        {/* 한 번 읽고 끝내는 절차라 읽기 좋은 폭의 한 단으로 둔다. */}
+        <div className="mx-auto grid max-w-[48rem] gap-3.5">
+          <ScreenTitle
+            id="onboarding-title"
             title={<UiText>{onboardingTitle(state)}</UiText>}
-            description={
+            aside={steps > 1 ? <span className="text-[0.8125rem] tabular-nums text-[var(--muted)]"><UiText>{`${steps}단계 중 ${step}단계`}</UiText></span> : null}
+            meta={
               <UiText>
                 {needsPrivacyNotice
                   ? isAdvisor
@@ -76,22 +84,13 @@ export default async function OnboardingPage() {
               </UiText>
             }
           />
-          <div className="pt-7">
-            {needsPrivacyNotice ? (
-              <PrivacyNoticeStep variant={isAdvisor ? "advisor" : "member"} />
-            ) : (
-              <section aria-labelledby="student-onboarding-title">
-                <div className="pb-6">
-                  <h2 id="student-onboarding-title" className="text-lg font-semibold text-[var(--ink)]">
-                    <UiText>{"학생 기본 정보"}</UiText>
-                  </h2>
-                </div>
-                <StudentOnboardingForm defaultName={user.name} />
-              </section>
-            )}
-          </div>
+          {needsPrivacyNotice ? (
+            <PrivacyNoticeStep variant={isAdvisor ? "advisor" : "member"} />
+          ) : (
+            <StudentOnboardingForm defaultName={user.name} />
+          )}
         </div>
-      </main>
+      </ExplorerLayout>
     </AppShell>
   );
 }

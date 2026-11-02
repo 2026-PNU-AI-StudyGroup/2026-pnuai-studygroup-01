@@ -13,7 +13,7 @@ import { UiText } from "@/modules/translation/ui/i18n-provider";
 function Notice({ state }: { state: { status: string; message: string } }) {
   if (!state.message) return null;
   return (
-    <p className={`text-xs font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`} role="status">
+    <p className={`text-xs font-medium ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`} role="status">
       <UiText>{state.message}</UiText>
     </p>
   );
@@ -33,11 +33,11 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
   }, [commentState]);
 
   return (
-    <details className="group mt-1 border-t border-dashed border-[var(--line)] pt-3">
-      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center rounded-[var(--radius-control)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] [&::-webkit-details-marker]:hidden">
+    <details className="group">
+      <summary className="inline-flex min-h-8 cursor-pointer list-none items-center text-[0.8125rem] font-medium text-[var(--ink)] hover:text-[var(--primary)] [&::-webkit-details-marker]:hidden">
         <UiText>{"운영 처리"}</UiText>
       </summary>
-      <div className="mt-2 grid gap-3 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-3 sm:p-4">
+      <div className="mt-2 grid gap-3 rounded-[var(--radius-panel)] bg-[var(--surface-subtle)] p-3 sm:p-4">
         <form action={toggleFormAction} className="grid gap-2">
           <UiInput
             className="form-control h-9 bg-[var(--surface)] py-1 text-sm"
@@ -47,7 +47,7 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
             placeholder="처리 메모 (선택)"
           />
           <div className="flex flex-wrap items-center gap-3">
-            <button className={resolved ? "button-secondary" : "button-primary"} type="submit" disabled={toggling}>
+            <button className="button-secondary button-compact" type="submit" disabled={toggling}>
               <UiText>{resolved ? "미해결로 변경" : "해결 처리"}</UiText>
             </button>
             <Notice state={toggleState} />
@@ -63,7 +63,7 @@ export function DeveloperControls({ postId, resolved }: { postId: string; resolv
             placeholder="처리 답변을 남겨 주세요."
           />
           <div className="flex items-center gap-3">
-            <button className="button-secondary" type="submit" disabled={commenting}>
+            <button className="button-secondary button-compact" type="submit" disabled={commenting}>
               <UiText>{"답변 추가"}</UiText>
             </button>
             <Notice state={commentState} />

@@ -3,22 +3,22 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { AnnouncementScopeBadge } from "@/app/announcements/_components/announcement-scope-badge";
+import { ScreenTitle } from "@/app/_components/screen-title";
 import { resolveAnnouncementAudience } from "@/app/announcements/_lib/announcement-audience";
 import { AnnouncementService } from "@/modules/announcement/application/manage-announcements";
 import { canCreateSystemAnnouncement } from "@/modules/announcement/domain/announcement-policy";
 import { PrismaAnnouncementRepository } from "@/modules/announcement/infrastructure/prisma-announcement-repository";
 import { getCurrentActor } from "@/modules/identity/infrastructure/current-actor";
+import { cardClass, CardHead, Pill } from "@/modules/project-program/ui/work-screen";
 import { getLocalizedMetadata } from "@/modules/translation/infrastructure/localized-metadata";
 import {
   UiDate,
   UiText,
 } from "@/modules/translation/ui/i18n-provider";
-import { UiNav } from "@/modules/translation/ui/localized-elements";
 import { prisma } from "@/shared/infrastructure/database/prisma";
-import { PaginationDirectionLink } from "@/shared/ui/icon-button";
+import { ExplorerLayout } from "@/shared/ui/explorer-layout";
 import { markdownToPlainText } from "@/shared/ui/render-markdown";
-import { EmptyState, PageHeader } from "@/shared/ui/page-primitives";
+import { ProjectPagination } from "@/shared/ui/project-pagination";
 import { firstSearchParam, type SearchParamValue } from "@/shared/ui/search-param";
 import { AddIcon, PinIcon } from "@/shared/ui/workspace-icons";
 
@@ -31,6 +31,10 @@ const NEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 function isRecentAnnouncement(createdAt: Date): boolean {
   return Date.now() - createdAt.getTime() < NEW_WINDOW_MS;
 }
+
+// 넓은 목록은 제목, 작성자, 등록일 세 칸. 좁으면 나머지 칸이 제목 밑 한 줄로 흐른다.
+// 이 목록은 프로그램, 팀 공지를 빼고 시스템 전체 공지만 담아 대상 칸은 두지 않는다(언제나 전체 공개).
+const columns = "@min-[44rem]:grid-cols-[minmax(0,1fr)_7rem_6.5rem]";
 
 export default async function AnnouncementsPage({
   searchParams,
@@ -51,6 +55,20 @@ export default async function AnnouncementsPage({
     const suffix = query.toString();
     return suffix ? `/announcements?${suffix}` : "/announcements";
   };
+  const canCreate = canCreateSystemAnnouncement(actor.role);
+  // 첫 쪽에는 고정 공지 다음에 최신 공지가 온다. 최근 7일 새 공지 수와 마지막 공지일을 여기서 센다.
+  // ponytail: 고정 공지가 한 쪽(20건)을 넘으면 마지막 공지가 다음 쪽으로 밀린다. 그때는 저장소에서 따로 센다.
+  const recentCount = data.items.filter(({ createdAt }) => isRecentAnnouncement(createdAt)).length;
+  const latest = data.items.reduce<Date | null>((last, { createdAt }) => (!last || createdAt > last ? createdAt : last), null);
+  const finding = data.page !== 1 || !latest ? undefined : recentCount ? (
+    <b className="font-semibold"><UiText>{`최근 7일 동안 새 공지가 ${recentCount}건 올라왔습니다.`}</UiText></b>
+  ) : (
+    <>
+      <UiText>{"최근 7일 동안 올라온 새 공지가 없습니다."}</UiText>{" "}
+      <span className="whitespace-nowrap text-[var(--muted)]"><UiText>{"마지막 공지"}</UiText> <span className="tabular-nums"><UiDate value={latest} /></span></span>
+    </>
+  );
+
   return (
     <AppShell
       role={actor.role}
@@ -58,104 +76,66 @@ export default async function AnnouncementsPage({
       userName={actor.name}
       currentPath="/announcements"
     >
-      <main className="content-shell pb-28 lg:pb-16">
-        <div className="mx-auto max-w-6xl space-y-8">
-          <PageHeader
-            compact
-            title="공지사항"
-            actions={canCreateSystemAnnouncement(actor.role) && data.total > 0
-              ? <Link className="button-primary gap-2" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"새 공지 작성"}</UiText></Link>
+      <ExplorerLayout>
+        <div className="grid gap-3.5">
+          <ScreenTitle
+            id="announcements-title"
+            title={<UiText>{"공지사항"}</UiText>}
+            finding={finding}
+            actions={canCreate && data.total > 0
+              ? <Link className="button-primary button-compact gap-1.5" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"새 공지 작성"}</UiText></Link>
               : undefined}
           />
 
-          <section aria-labelledby="announcement-list-title" className="panel overflow-hidden">
-            <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-7">
-              <h2 id="announcement-list-title" className="text-base font-semibold text-[var(--ink)]">
-                <UiText>{"전체 공지"}</UiText>
-              </h2>
-              <p className="text-sm text-[var(--muted)]">
-                <UiText>{"총"}</UiText>{" "}<strong className="font-semibold tabular-nums text-[var(--ink)]">{data.total}</strong><UiText>{"건"}</UiText>
-              </p>
-            </div>
-
+          <section aria-labelledby="announcement-list-title" className={`${cardClass} @container`}>
+            <CardHead id="announcement-list-title" title={<UiText>{"전체 공지"}</UiText>} count={<>{data.total}<UiText>{"건"}</UiText></>} />
             {data.items.length === 0 ? (
-              <div className="px-5 sm:px-7">
-                <EmptyState
-                  variant="section"
-                  title="등록된 공지가 없습니다"
-                  description={canCreateSystemAnnouncement(actor.role) ? "첫 공지를 작성하면 모든 사용자가 이곳에서 확인할 수 있습니다." : "새 공지가 등록되면 이 목록에 표시됩니다."}
-                  action={canCreateSystemAnnouncement(actor.role)
-                    ? <Link className="button-primary gap-2 max-sm:w-full" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"첫 공지 작성"}</UiText></Link>
-                    : undefined}
-                />
+              <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-4 text-[0.8125rem]">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium text-[var(--ink)]"><UiText>{"등록된 공지가 없습니다"}</UiText></h3>
+                  <p className="mt-0.5 text-[var(--muted)]"><UiText>{canCreate ? "첫 공지를 작성하면 모든 사용자가 이곳에서 확인할 수 있습니다." : "새 공지가 등록되면 이 목록에 표시됩니다."}</UiText></p>
+                </div>
+                {canCreate ? <Link className="button-primary button-compact gap-1.5" href="/announcements/new"><AddIcon className="size-4 shrink-0" /><UiText>{"첫 공지 작성"}</UiText></Link> : null}
               </div>
             ) : (
-              <ol className="divide-y divide-[var(--line)]">
-                {data.items.map((announcement) => (
-                  <li key={announcement.id}>
-                    <Link
-                      href={`/announcements/${announcement.id}`}
-                      className={`record-row group grid gap-3 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_10rem_1.5rem] sm:items-center sm:gap-6 sm:px-7 sm:py-6 ${announcement.pinned ? "bg-[var(--surface-subtle)]" : ""}`}
-                    >
-                      <div className="min-w-0">
-                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                          {announcement.pinned ? (
-                            <span className="inline-flex items-center text-[0.8125rem] leading-none">
-                              <PinIcon className="size-3.5 text-[var(--primary)]" /><span className="sr-only"><UiText>{"고정"}</UiText></span>
-                            </span>
-                          ) : null}
-                          {isRecentAnnouncement(announcement.createdAt) ? (
-                            <span className="inline-flex items-center rounded-full bg-[var(--danger-subtle)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[var(--danger)]">NEW</span>
-                          ) : null}
-                          <AnnouncementScopeBadge teamName={announcement.teamName} programName={announcement.programName} visibility={announcement.visibility} />
-                        </div>
-                        <h3 className="text-base font-semibold text-[var(--ink)] transition-colors group-hover:text-[var(--accent)]">
-                          <UiText>{announcement.title}</UiText>
-                        </h3>
-                        <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted)] sm:line-clamp-1">
-                          <UiText>{markdownToPlainText(announcement.content)}</UiText>
-                        </p>
-                        <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-[var(--muted)] sm:hidden">
-                          <span className="text-[var(--ink)]">{announcement.authorName}</span>
-                          <span aria-hidden="true">·</span>
-                          <time dateTime={announcement.createdAt.toISOString()}>
+              <>
+                <div aria-hidden="true" className={`hidden h-9 items-center gap-x-5 px-5 text-xs text-[var(--muted)] @min-[44rem]:grid ${columns}`}>
+                  <span><UiText>{"제목"}</UiText></span>
+                  <span><UiText>{"작성자"}</UiText></span>
+                  <span className="text-right"><UiText>{"등록일"}</UiText></span>
+                </div>
+                <ol>
+                  {data.items.map((announcement) => (
+                    <li key={announcement.id} className="border-t border-[var(--line)]">
+                      <Link href={`/announcements/${announcement.id}`} className={`record-row group grid gap-x-5 gap-y-1 px-5 py-3 @min-[44rem]:items-center ${columns}`}>
+                        <span className="min-w-0">
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            {announcement.pinned ? <><PinIcon className="size-3.5 flex-none text-[var(--primary)]" /><span className="sr-only"><UiText>{"고정"}</UiText></span></> : null}
+                            <span className="truncate text-sm font-medium leading-5 text-[var(--ink)] group-hover:text-[var(--primary)]"><UiText>{announcement.title}</UiText></span>
+                            {isRecentAnnouncement(announcement.createdAt) ? <Pill tone="accent">{"새 글"}</Pill> : null}
+                          </span>
+                          <span className="mt-0.5 block truncate text-[0.8125rem] leading-[1.125rem] text-[var(--muted)]"><UiText>{markdownToPlainText(announcement.content)}</UiText></span>
+                        </span>
+                        <span className="flex min-w-0 flex-wrap gap-x-3 text-[0.8125rem] text-[var(--muted)] @min-[44rem]:contents">
+                          <span className="truncate @min-[44rem]:text-[var(--ink)]">{announcement.authorName}</span>
+                          <time className="tabular-nums @min-[44rem]:text-right" dateTime={announcement.createdAt.toISOString()}>
                             <UiDate value={announcement.createdAt} mode="date" />
                           </time>
-                        </div>
-                      </div>
-                      <div className="hidden text-right text-sm sm:block">
-                        <p className="font-semibold text-[var(--ink)]">{announcement.authorName}</p>
-                        <time className="mt-1 block text-xs tabular-nums text-[var(--muted)]" dateTime={announcement.createdAt.toISOString()}>
-                          <UiDate value={announcement.createdAt} mode="date" />
-                        </time>
-                      </div>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" className="hidden size-5 fill-none stroke-[var(--muted)] stroke-2 transition-transform group-hover:translate-x-0.5 group-hover:stroke-[var(--primary)] sm:block">
-                        <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </>
             )}
-          </section>
-
-          {data.totalPages > 1 ? (
-            <UiNav aria-label="공지사항 페이지" className="flex items-center justify-between">
-              <span className="text-sm tabular-nums text-[var(--muted)]">
-                {data.page} / {data.totalPages} <UiText>{"페이지"}</UiText>
-              </span>
-              <div className="flex gap-2">
-                {data.page > 1 ? (
-                  <PaginationDirectionLink direction="previous" href={pageHref(data.page - 1)} />
-                ) : null}
-                {data.page < data.totalPages ? (
-                  <PaginationDirectionLink direction="next" href={pageHref(data.page + 1)} />
-                ) : null}
+            {data.totalPages > 1 ? (
+              <div className="px-5 pb-5">
+                <ProjectPagination page={data.page} totalPages={data.totalPages} href={pageHref} ariaLabel="공지사항 페이지" />
               </div>
-            </UiNav>
-          ) : null}
+            ) : null}
+          </section>
         </div>
-      </main>
+      </ExplorerLayout>
     </AppShell>
   );
 }

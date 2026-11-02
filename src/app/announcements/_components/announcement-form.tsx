@@ -13,6 +13,7 @@ import type { AnnouncementAttachmentRecord, AnnouncementVisibility } from "@/mod
 import { AnnouncementAttachmentEditor } from "@/modules/announcement/ui/announcement-attachment-editor";
 import { appendAnnouncementUploads, type AnnouncementUploadProgress } from "@/modules/announcement/ui/upload-announcement-attachments";
 import { fileUploadProgressLabel, isUploadAbortError, uploadFailureMessage } from "@/modules/file/ui/upload-file";
+import { cardClass, CardHead } from "@/modules/project-program/ui/work-screen";
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { ChoiceCard, Toggle } from "@/shared/ui/form-system";
@@ -22,6 +23,13 @@ const initialState: AnnouncementActionState = {
   message: "",
 };
 
+const labelClass = "text-sm font-medium text-[var(--ink)]";
+const hintClass = "text-xs text-[var(--muted)]";
+
+/*
+  넓으면 왼쪽에 내용(제목, 본문, 첨부), 오른쪽 좁은 칸에 받는 사람과 게시 방식.
+  좁으면 받는 사람을 먼저 고르고 내용을 쓴다. 저장 버튼은 내용 카드 맨 아래 하나뿐이다.
+*/
 export function AnnouncementForm({
   announcementId,
   targets,
@@ -72,7 +80,7 @@ export function AnnouncementForm({
 
   return (
     <form
-      className="panel overflow-hidden"
+      className="@container"
       onSubmit={(event) => {
         event.preventDefault();
         const form = event.currentTarget;
@@ -104,116 +112,120 @@ export function AnnouncementForm({
       }}
     >
       {returnHref ? <input type="hidden" name="returnTo" value={returnHref} /> : null}
-      {/* 트랙을 폼 폭으로 묶는다. auto 트랙이면 긴 파일명 같은 내용이 패널 밖으로 밀어낸다. */}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 px-5 py-6 sm:px-8 sm:py-8">
-        <div className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
-          <span><UiText>{"대상"}</UiText></span>
-          {targetLocked ? (
-            <>
-              <input type="hidden" name="target" value={target || "GLOBAL"} />
-              <div className="rounded-[var(--radius-control)] border border-[var(--field-border)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold text-[var(--ink)]">
-                <UiText>{targetLabel ?? (isProgramTarget ? "선택한 프로그램" : target.startsWith("team:") ? "선택한 프로젝트" : "시스템 전체")}</UiText>
-              </div>
-            </>
-          ) : (
-            <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} value={target} onValueChange={changeTarget} />
-          )}
-          <span className="text-xs font-medium text-[var(--muted)]">
-            <UiText>{isProgramTarget
-              ? "프로그램 공지는 로그인 사용자 전체 또는 프로그램 구성원에게 공개할 수 있습니다."
-              : target.startsWith("team:")
-                ? "팀 공지는 해당 팀 구성원에게만 공개됩니다."
-                : "전체 공지는 모든 로그인 사용자에게 공개됩니다."}</UiText>
-          </span>
-        </div>
-        {isProgramTarget ? (
-          <fieldset className="grid gap-2">
-            <legend className="text-sm font-semibold text-[var(--ink)]"><UiText>{"열람 범위"}</UiText></legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <VisibilityOption
-                value="AUTHENTICATED"
-                checked={visibility === "AUTHENTICATED"}
-                onChange={setVisibility}
-                label="로그인 사용자 전체"
-                description="프로그램 소속과 관계없이 볼 수 있습니다."
-              />
-              <VisibilityOption
-                value="TARGET_MEMBERS"
-                checked={visibility === "TARGET_MEMBERS"}
-                onChange={setVisibility}
-                label="프로그램 구성원만"
-                description="소속 학생·지도교수·담당 교수만 볼 수 있습니다."
-              />
+      <div className="grid items-start gap-3.5 @min-[60rem]:grid-cols-[minmax(0,1fr)_20rem]">
+        <section aria-labelledby="announcement-audience-title" className={`${cardClass} @min-[60rem]:col-start-2 @min-[60rem]:row-start-1`}>
+          <CardHead id="announcement-audience-title" title={<UiText>{"받는 사람"}</UiText>} />
+          {/* 트랙을 칸 폭으로 묶는다. 긴 프로그램 이름이 대상 목록을 카드 밖으로 밀어내지 않게 한다. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 px-5 pb-5">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
+              <span className={labelClass}><UiText>{"대상"}</UiText></span>
+              {targetLocked ? (
+                <>
+                  <input type="hidden" name="target" value={target || "GLOBAL"} />
+                  <div className="rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-2.5 text-sm font-medium text-[var(--ink)] [overflow-wrap:anywhere]">
+                    <UiText>{targetLabel ?? (isProgramTarget ? "선택한 프로그램" : target.startsWith("team:") ? "선택한 프로젝트" : "시스템 전체")}</UiText>
+                  </div>
+                </>
+              ) : (
+                <AnnouncementTargetPicker programs={targets.programs} teams={targets.teams} value={target} onValueChange={changeTarget} />
+              )}
+              <p className={hintClass}>
+                <UiText>{isProgramTarget
+                  ? "프로그램 공지는 로그인 사용자 전체 또는 프로그램 구성원에게 공개할 수 있습니다."
+                  : target.startsWith("team:")
+                    ? "팀 공지는 해당 팀 구성원에게만 공개됩니다."
+                    : "전체 공지는 모든 로그인 사용자에게 공개됩니다."}</UiText>
+              </p>
             </div>
-          </fieldset>
-        ) : <input type="hidden" name="visibility" value={visibility} />}
-        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
-          <span><UiText>{"제목"}</UiText></span>
-          <UiInput
-            className="form-control bg-[var(--surface)]"
-            name="title"
-            type="text"
-            maxLength={120}
-            defaultValue={initialTitle}
-            placeholder="공지 제목을 입력하세요"
-            required
-            autoFocus
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-[var(--ink)]">
-          <span><UiText>{"본문"}</UiText></span>
-          <span className="text-xs font-medium text-[var(--muted)]">
-            <UiText>{"마크다운을 사용할 수 있습니다. 예: ## 제목, **굵게**, - 목록"}</UiText>
-          </span>
-          <UiTextarea
-            className="form-control min-h-80 bg-[var(--surface)] leading-7"
-            name="content"
-            maxLength={20_000}
-            defaultValue={initialContent}
-            placeholder="구성원이 알아야 할 내용을 입력하세요"
-            required
-          />
-        </label>
-        <AnnouncementAttachmentEditor
-          existingAttachments={initialAttachments}
-          retainedAttachmentIds={retainedAttachmentIds}
-          selectedFiles={selectedFiles}
-          disabled={pending}
-          onRetainedAttachmentIdsChange={setRetainedAttachmentIds}
-          onSelectedFilesChange={setSelectedFiles}
-        />
-        <Toggle name="pinned" defaultChecked={initialPinned} label="목록 상단에 고정" />
-        <div className="grid gap-1">
-          <Toggle name="popup" defaultChecked={initialPopup} label="로그인 후 화면에 팝업으로 띄우기" />
-          <p className="text-xs font-medium text-[var(--muted)]">
-            <UiText>{"대상을 지정하지 않은 전체 공지에만 적용됩니다. 올리거나 고친 날부터 14일 동안 뜨고, 읽는 사람은 창을 닫거나 오늘 하루 보지 않을 수 있습니다."}</UiText>
-          </p>
-        </div>
-        {uploadProgress ? (
-          <p role="status" aria-live="polite" className="rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-4 py-3 text-sm font-semibold">
-            <UiText>{`${uploadProgress.fileIndex + 1}/${uploadProgress.fileCount} ${uploadProgress.fileName} · ${fileUploadProgressLabel(uploadProgress.progress)}`}</UiText>
-          </p>
-        ) : null}
-        {state.message ? (
-          <p
-            className="rounded-[var(--radius-control)] bg-[var(--danger-subtle)] px-4 py-3 text-sm font-semibold text-[var(--danger)]"
-            role="alert"
-          >
-            <UiText>{state.message}</UiText>
-          </p>
-        ) : null}
-      </div>
-      <div className="flex justify-end gap-2 border-t border-[var(--line)] px-5 py-4 sm:px-8">
-        {uploadProgress ? <button type="button" className="button-secondary" onClick={() => uploadControllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
-        <button
-          className="button-primary max-sm:w-full"
-          type="submit"
-          disabled={pending}
-        >
-          <UiText>{pending
-            ? editing ? "수정 중" : "등록 중"
-            : editing ? "수정 완료" : "공지 등록"}</UiText>
-        </button>
+            {isProgramTarget ? (
+              <fieldset className="grid gap-2">
+                <legend className={`${labelClass} mb-2`}><UiText>{"열람 범위"}</UiText></legend>
+                <VisibilityOption
+                  value="AUTHENTICATED"
+                  checked={visibility === "AUTHENTICATED"}
+                  onChange={setVisibility}
+                  label="로그인 사용자 전체"
+                  description="프로그램 소속과 관계없이 볼 수 있습니다."
+                />
+                <VisibilityOption
+                  value="TARGET_MEMBERS"
+                  checked={visibility === "TARGET_MEMBERS"}
+                  onChange={setVisibility}
+                  label="프로그램 구성원만"
+                  description="소속 학생·지도교수·담당 교수만 볼 수 있습니다."
+                />
+              </fieldset>
+            ) : <input type="hidden" name="visibility" value={visibility} />}
+          </div>
+          <div className="grid gap-3 border-t border-[var(--line)] px-5 py-4">
+            <h3 className={labelClass}><UiText>{"게시 방식"}</UiText></h3>
+            <Toggle name="pinned" defaultChecked={initialPinned} label="목록 상단에 고정" />
+            <div className="grid gap-1">
+              <Toggle name="popup" defaultChecked={initialPopup} label="로그인 후 화면에 팝업으로 띄우기" />
+              <p className={hintClass}>
+                <UiText>{"대상을 지정하지 않은 전체 공지에만 적용됩니다. 올리거나 고친 날부터 14일 동안 뜨고, 읽는 사람은 창을 닫거나 오늘 하루 보지 않을 수 있습니다."}</UiText>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="announcement-content-title" className={`${cardClass} @min-[60rem]:col-start-1 @min-[60rem]:row-start-1`}>
+          <CardHead id="announcement-content-title" title={<UiText>{"내용"}</UiText>} />
+          {/* 트랙을 폼 폭으로 묶는다. auto 트랙이면 긴 파일명 같은 내용이 카드 밖으로 밀어낸다. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 px-5 pb-5">
+            <label className="grid gap-2">
+              <span className={labelClass}><UiText>{"제목"}</UiText></span>
+              <UiInput
+                className="form-control bg-[var(--surface)]"
+                name="title"
+                type="text"
+                maxLength={120}
+                defaultValue={initialTitle}
+                placeholder="공지 제목을 입력하세요"
+                required
+                autoFocus
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="grid gap-0.5">
+                <span className={labelClass}><UiText>{"본문"}</UiText></span>
+                <span className={hintClass}><UiText>{"마크다운을 사용할 수 있습니다. 예: ## 제목, **굵게**, - 목록"}</UiText></span>
+              </span>
+              <UiTextarea
+                className="form-control min-h-80 bg-[var(--surface)] leading-7"
+                name="content"
+                maxLength={20_000}
+                defaultValue={initialContent}
+                placeholder="구성원이 알아야 할 내용을 입력하세요"
+                required
+              />
+            </label>
+            <AnnouncementAttachmentEditor
+              existingAttachments={initialAttachments}
+              retainedAttachmentIds={retainedAttachmentIds}
+              selectedFiles={selectedFiles}
+              disabled={pending}
+              onRetainedAttachmentIdsChange={setRetainedAttachmentIds}
+              onSelectedFilesChange={setSelectedFiles}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-3">
+            <div className="min-w-0 flex-1 basis-60 text-[0.8125rem]">
+              {uploadProgress ? (
+                <p role="status" aria-live="polite" className="font-medium text-[var(--ink)] tabular-nums">
+                  <UiText>{`${uploadProgress.fileIndex + 1}/${uploadProgress.fileCount} ${uploadProgress.fileName} · ${fileUploadProgressLabel(uploadProgress.progress)}`}</UiText>
+                </p>
+              ) : null}
+              {state.message ? <p role="alert" className="font-medium text-[var(--danger)]"><UiText>{state.message}</UiText></p> : null}
+            </div>
+            {uploadProgress ? <button type="button" className="button-secondary button-compact" onClick={() => uploadControllerRef.current?.abort()}><UiText>{"업로드 취소"}</UiText></button> : null}
+            <button className="button-primary button-compact max-sm:w-full" type="submit" disabled={pending}>
+              <UiText>{pending
+                ? editing ? "수정 중" : "등록 중"
+                : editing ? "수정 완료" : "공지 등록"}</UiText>
+            </button>
+          </div>
+        </section>
       </div>
     </form>
   );
@@ -234,6 +246,6 @@ function VisibilityOption({ value, checked, onChange, label, description }: {
     onChange={() => onChange(value)}
     label={label}
     description={description}
-    className={checked ? "border-[var(--accent)] bg-[var(--accent-subtle)]" : "border-[var(--field-border)] bg-[var(--surface)] hover:border-[var(--line-strong)]"}
+    density="compact"
   />;
 }

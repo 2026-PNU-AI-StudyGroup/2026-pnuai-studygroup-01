@@ -6,6 +6,7 @@ import { useState } from "react";
 import { acceptPrivacyConsentAction } from "@/app/onboarding/_actions/accept-privacy-consent-action";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { PRIVACY_POLICY_EFFECTIVE_DATE } from "@/shared/content/privacy-policy";
+import { cardClass, CardHead } from "@/modules/project-program/ui/work-screen";
 import { ChoiceCard } from "@/shared/ui/form-system";
 
 export type PrivacyNoticeVariant = "member" | "advisor";
@@ -38,30 +39,26 @@ export function PrivacyNoticeStep({ variant = "member" }: { variant?: PrivacyNot
   const [agreed, setAgreed] = useState(false);
   const summary = variant === "advisor" ? ADVISOR_SUMMARY : MEMBER_SUMMARY;
   return (
-    <section aria-labelledby="privacy-notice-title">
-      <h2 id="privacy-notice-title" className="text-lg font-semibold text-[var(--ink)]">
-        <UiText>{"개인정보 수집·이용 동의"}</UiText>
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+    <section aria-labelledby="privacy-notice-title" className={cardClass}>
+      <CardHead id="privacy-notice-title" title={<UiText>{"개인정보 수집·이용 동의"}</UiText>} />
+      <p className="px-5 text-sm leading-6 text-[var(--muted)]">
         <UiText>{PURPOSE[variant]}</UiText>
       </p>
-      <ul className="mt-5 grid gap-2 rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-5 text-[0.9375rem] leading-6">
+      <ul className="mx-5 mt-3 border-y border-[var(--line)] text-sm leading-6 text-[var(--ink)]">
         {summary.map((item) => (
-          <li key={item} className="flex gap-2">
-            <span aria-hidden="true" className="text-[var(--muted)]">·</span>
+          <li key={item} className="py-2.5 [&+li]:border-t [&+li]:border-[var(--line)]">
             <UiText>{item}</UiText>
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-sm text-[var(--muted)]">
-        <Link href="/privacy" className="underline underline-offset-4">
+      <p className="flex flex-wrap gap-x-4 gap-y-1 px-5 pt-3 text-[0.8125rem] text-[var(--muted)]">
+        <Link href="/privacy" className="font-medium text-[var(--primary)] hover:underline hover:underline-offset-[3px]">
           <UiText>{"개인정보 처리방침 전문 보기"}</UiText>
         </Link>
-        {" · "}
-        <UiText>{"시행일"}</UiText> {PRIVACY_POLICY_EFFECTIVE_DATE}
+        <span className="tabular-nums"><UiText>{"시행일"}</UiText> {PRIVACY_POLICY_EFFECTIVE_DATE}</span>
       </p>
       {/* 서비스 이용에 반드시 필요한 항목이라 선택 동의는 두지 않는다. 대신 필수임을 분명히 밝힌다. */}
-      <form action={acceptPrivacyConsentAction} className="mt-6 grid gap-4">
+      <form action={acceptPrivacyConsentAction} className="mt-4 grid gap-3 border-t border-[var(--line)] px-5 py-4">
         {/* 맨 체크박스는 어두운 화면에서 거의 안 보였다. 칸 전체를 눌러 체크하고, 체크하면 테두리가 바뀐다. */}
         <ChoiceCard
           type="checkbox"
@@ -72,10 +69,11 @@ export function PrivacyNoticeStep({ variant = "member" }: { variant?: PrivacyNot
           onChange={(event) => setAgreed(event.target.checked)}
           label="[필수] 개인정보 수집 및 이용에 동의합니다"
           description="위 내용과 개인정보 처리방침을 확인했습니다"
+          density="compact"
         />
-        <div>
+        <div className="flex justify-end">
           {/* 체크 전에는 버튼을 막는다. required 만 두면 눌러 본 뒤에야 막힌 걸 안다. */}
-          <button type="submit" className="button-primary" disabled={!agreed}>
+          <button type="submit" className="button-primary button-compact max-sm:w-full" disabled={!agreed}>
             <UiText>{"동의하고 시작하기"}</UiText>
           </button>
         </div>

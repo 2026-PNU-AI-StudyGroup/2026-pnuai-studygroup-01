@@ -1,12 +1,12 @@
 "use client";
 
 import { UiInput } from "@/modules/translation/ui/localized-elements";
-import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useActionState } from "react";
 
 import { saveStudentAccountAction, type StudentProfileActionState } from "@/app/account/_actions/account-actions";
 import { CustomSelect } from "@/shared/ui/custom-select";
-import { FormField, FormSection } from "@/shared/ui/form-system";
+import { SaveBar } from "@/app/account/_components/account-section-layout";
+import { FormField } from "@/shared/ui/form-system";
 
 const initialState: StudentProfileActionState = { status: "idle", message: "" };
 
@@ -20,8 +20,8 @@ export type StudentAccountInfo = {
 export function StudentAccountForm({ info }: { info: StudentAccountInfo }) {
   const [state, action, pending] = useActionState(saveStudentAccountAction, initialState);
   return (
-    <form action={action} aria-busy={pending} className="grid gap-4">
-      <FormSection title="학사 정보" description="가입 시 입력한 정보이며, 바뀌면 여기에서 수정할 수 있습니다." contentClassName="sm:grid-cols-2">
+    <form action={action} aria-busy={pending}>
+      <div className="grid gap-4 p-5 sm:grid-cols-2">
         <FormField id="account-department" label="학과" description="현재 소속 학과 또는 학부입니다.">
           <UiInput id="account-department" name="department" required minLength={2} maxLength={100} defaultValue={info.department} placeholder="정보컴퓨터공학부" className="form-control" />
         </FormField>
@@ -42,11 +42,8 @@ export function StudentAccountForm({ info }: { info: StudentAccountInfo }) {
         <FormField id="account-contact-email" label="자주 쓰는 이메일 주소" description="학교 메일 외에 자주 확인하는 이메일입니다.">
           <UiInput id="account-contact-email" name="contactEmail" required type="email" maxLength={254} defaultValue={info.contactEmail} placeholder="student@example.com" className="form-control" />
         </FormField>
-      </FormSection>
-      <div className="form-action-bar">
-        <div>{state.message ? <p role={state.status === "error" ? "alert" : "status"} aria-live="polite" className={`text-sm font-semibold ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></p> : null}</div>
-        <button type="submit" disabled={pending} className="button-primary max-sm:w-full"><UiText>{pending ? "저장 중" : "학사 정보 저장"}</UiText></button>
       </div>
+      <SaveBar state={state} pending={pending} label="학사 정보 저장" />
     </form>
   );
 }
