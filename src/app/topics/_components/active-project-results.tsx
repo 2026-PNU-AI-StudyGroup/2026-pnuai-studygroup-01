@@ -106,7 +106,8 @@ function ProjectRow({ topic, canApply, leaderTeams, now, voteSelection, adminDat
           <Pill tone={status.tone}>{status.label}</Pill>
           {typeof voteCandidate?.voteCount === "number" ? <ProjectVoteCountBadge voteCount={voteCandidate.voteCount} /> : null}
         </div>
-        <div className="flex min-w-0 flex-col items-stretch gap-1.5 @max-[40rem]:w-full empty:hidden">{action}</div>
+        {/* 줄 안의 버튼은 칸만큼 늘리지 않고 내용 크기의 낮은 버튼으로 둔다. 휴대폰에서만 꽉 채운다. */}
+        <div className="flex min-w-0 flex-col items-end gap-1.5 [&_.button-compact]:min-h-8 [&_.button-compact]:px-3 [&_.button-compact]:font-medium @min-[40rem]:[&_.button-compact]:w-auto @max-[40rem]:w-full @max-[40rem]:items-stretch empty:hidden">{action}</div>
       </ProjectRowCells>
     </>
   );
@@ -153,7 +154,7 @@ export function ActiveProjectResults({ topics, canApply, leaderTeams, programId,
       columns={admin
         ? [{ label: "팀, 인원" }, { label: "보고서" }, { label: "상태" }, { label: "" }]
         : [{ label: "팀" }, { label: "인원", align: "right" }, { label: "상태" }, { label: "" }]}
-      columnTemplate={admin ? "7rem 6rem 4.5rem 6.5rem" : "7rem 3.5rem 4.5rem 8.5rem"}
+      columnTemplate={admin ? "7rem 6rem 4.5rem 6.5rem" : "7rem 4rem 4.5rem 8.5rem"}
       search={search}
       filters={filters}
       ballot={ballot}

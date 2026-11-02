@@ -96,13 +96,13 @@ export function ProjectResultsLayout<T>({
         </div>
       ) : (
         <div style={gridStyle}>
-          <div aria-hidden="true" className="hidden h-9 items-center gap-x-3 px-5 text-xs text-[var(--muted)] @min-[40rem]:grid @min-[40rem]:grid-cols-[var(--row-cols)]">
+          <div aria-hidden="true" className="hidden h-9 items-center gap-x-5 px-5 text-xs text-[var(--muted)] @min-[40rem]:grid @min-[40rem]:grid-cols-[var(--row-cols)] @min-[40rem]:gap-x-5">
             <span className="col-span-2"><UiText>{"프로젝트"}</UiText></span>
             {columns.map((column) => <span key={column.label} className={column.align === "right" ? "text-right" : undefined}><UiText>{column.label}</UiText></span>)}
           </div>
           <UiUl aria-label={listLabel}>
             {items.map((item) => (
-              <li key={itemKey(item)} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-2.5 transition-colors hover:bg-[#fafbfc] @min-[40rem]:grid-cols-[var(--row-cols)]">
+              <li key={itemKey(item)} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-[var(--line)] px-5 py-2.5 transition-colors hover:bg-[#fafbfc] @min-[40rem]:grid-cols-[var(--row-cols)] @min-[40rem]:gap-x-5">
                 {renderItem(item, voteSelection)}
               </li>
             ))}
