@@ -290,6 +290,298 @@
   },
   {
     "program": {
+      "key": "pnu-ai-studygroup-2025",
+      "org": "2025-PNU-SW-StudyGroup",
+      "programName": "AI학습공동체 2025",
+      "category": "PNU AI학습공동체",
+      "startsAt": "2025-04-01",
+      "endsAt": "2025-08-31"
+    },
+    "repos": [
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-01",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-01",
+        "teamNumber": 1,
+        "teamName": "1조",
+        "title": "너의 하루는: 커플 다이어리 앱",
+        "summary": "커플이 감정, 일정, 추억을 한 앱에서 함께 기록하고 돌아보는 다이어리 앱입니다.",
+        "award": null,
+        "intro": "커플은 대화, 사진, 일정을 메신저와 SNS, 공유 캘린더에 나눠 쓰다 보니 감정과 추억을 한곳에 모아 돌아보기 어렵습니다. 너의 하루는은 커플이 감정, 일정, 추억을 하나의 웹 앱에서 함께 기록하는 다이어리 앱입니다. 하루를 돌아보는 질문에 답하며 일기를 쓰고, 서로의 일기에 피드백을 남기며 관계를 이어 가도록 돕습니다.\n\n### 주요 기능\n- 커플 연결 후 일기 공유 활성화\n- 하루를 돌아보는 질문 3가지와 감정 태그, 사진 첨부\n- 커플 간 일기 공유와 상호 피드백\n- 커플 디데이 자동 계산과 기념일 알림\n- 일간, 주간 감정 변화 차트\n\n### 기술 스택\nReact, Node.js, Express, MySQL, JWT"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-02",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-02",
+        "teamNumber": 2,
+        "teamName": "2조",
+        "title": "맞춤형 뉴스 요약과 문자 알림",
+        "summary": "Naver API 로 모은 최신 뉴스를 GPT 로 요약해 사용자 선호에 맞춰 문자로 보내 주는 웹 서비스입니다.",
+        "award": null,
+        "intro": "바쁜 대학생과 직장인은 원하는 뉴스를 직접 찾아 읽을 시간이 부족하고, 생성형 AI 서비스는 최신 소식을 바로 반영하지 못하는 한계가 있습니다. 이 서비스는 Naver API로 최신 뉴스를 모으고 GPT로 요약한 뒤, 사용자가 정한 키워드와 언론사에 맞춰 원하는 시간에 문자로 보내 줍니다. 수집부터 요약, 전송까지 자동으로 이어져 필요한 정보만 받아 볼 수 있습니다.\n\n### 주요 기능\n- 회원가입 시 선호 언론사와 관심 키워드 등록\n- 키워드와 언론사 기준 뉴스 수집\n- GPT API 기반 기사 요약\n- coolSMS API를 통한 지정 시간대 문자 발송\n- 마이페이지, 키워드 설정, 뉴스 조회 반응형 화면\n\n### 기술 스택\nSpring Boot, JPA, JavaScript, Amazon RDS(MySQL), Naver API, OpenAI API, coolSMS API"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-03",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-03",
+        "teamNumber": 3,
+        "teamName": "3조",
+        "title": "자석 퍼즐 어드벤처 3D 게임",
+        "summary": "정보컴퓨터공학부와 예술대학이 함께 직접 만든 에셋으로 Unity 3D 퍼즐 어드벤처 게임을 만들었습니다.",
+        "award": null,
+        "intro": "정보컴퓨터공학부와 예술대학 학생이 함께 기획부터 아트, 개발까지 직접 맡아 만든 Unity 3D 퍼즐 어드벤처 게임입니다. 플레이어는 자석의 힘을 쓰는 캐릭터 마기가 되어 자석으로 장애물을 헤쳐 나가고, 뒤쫓는 괴물을 피하며 앞으로 나아갑니다. 스터디 기간 동안 프로토타입을 완성하고 사용자 피드백을 받는 것을 목표로 했습니다.\n\n### 주요 기능\n- 자석을 활용한 퍼즐과 플랫포머 플레이\n- 튜토리얼에서 이어지는 전당포 맵과 보스 추격\n- 더 크고 복잡한 퍼즐을 담은 중앙도시 맵과 보스 스테이지\n- FSM 기반 플레이어, 보스, 상호작용 오브젝트 설계\n- Observer 방식의 이벤트 채널로 동시 이벤트 처리\n- 직접 제작한 3D 에셋\n\n### 기술 스택\nUnity, Blender, Adobe Substance 3D Painter"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-04",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-04",
+        "teamNumber": 4,
+        "teamName": "4조",
+        "title": "미성년자 숏폼 과의존 분석",
+        "summary": "청소년의 숏폼 이용 현황과 과의존 위험군 데이터를 분석하고 시각화해 보호 정책을 제안합니다. 방송통신위원회 공공데이터 공모전 출품작입니다.",
+        "award": null,
+        "intro": "청소년 사이에서 숏폼 콘텐츠 이용이 늘면서 과의존, 집중력 저하, 정신건강 악화 같은 문제가 커지고 있습니다. 이 프로젝트는 방송통신위원회와 공공데이터포털, 미디어통계포털의 데이터로 미성년자의 숏폼 이용 현황과 과의존 위험군을 분석하고 시각화합니다. 분석 결과를 바탕으로 미성년자 보호 정책을 제안하며, 2025 방송통신위원회 공공데이터 분석, 활용 공모전 출품을 위해 기획되었습니다.\n\n### 주요 기능\n- 미성년자 숏폼 이용 현황 대시보드\n- 연령별, 지역별, 시간대별 이용 패턴 분석\n- 과의존 위험군 지도\n- 과다 이용 위험 안내와 예방 가이드\n- 미성년자 보호 정책 제안 리포트 자동 생성\n\n### 기술 스택\nPython, TypeScript, React"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-05",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-05",
+        "teamNumber": 5,
+        "teamName": "5조",
+        "title": "햄북 Stock: 모의 주식 투자 플랫폼",
+        "summary": "가상 머니로 실시간 매수와 매도, AI 뉴스 요약, 익명 채팅을 체험하는 모의 주식 투자 플랫폼입니다.",
+        "award": null,
+        "intro": "실제 주식 투자는 진입 장벽이 높아 처음부터 실제 돈으로 시작하기 어렵습니다. 햄북 Stock은 가상 머니로 위험 없이 주식 거래를 체험하는 모의 주식 투자 플랫폼입니다. 실시간 매수와 매도, AI가 요약한 경제 뉴스, 익명 채팅, 수익률 랭킹을 한 서비스 안에서 제공합니다.\n\n### 주요 기능\n- 가상 머니 기반 실시간 매수, 매도와 가격 변동\n- 매일경제 기사 크롤링과 OpenAI 기반 요약 뉴스 피드\n- WebSocket 기반 익명 실시간 채팅\n- 수익률 기반 랭킹(명예의 전당)\n- 나만의 주식 상장과 개인 포트폴리오 관리\n- JWT 인증과 Redis 세션 관리\n\n### 기술 스택\nReact, FastAPI, SQLAlchemy, MySQL, Redis, WebSocket, OpenAI API"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-06",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-06",
+        "teamNumber": 6,
+        "teamName": "6조",
+        "title": "이거무라: AI 맞춤형 식당 추천",
+        "summary": "방문 기록과 평가를 바탕으로 개인과 친구 모임에 맞는 식당을 AI 로 추천하는 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-06.webp",
+        "intro": "학교 근처에서 끼니를 해결하는 학생들은 익숙한 몇몇 식당만 반복해서 찾게 됩니다. 이거무라는 알러지, 비선호 음식, 방문 기록과 평가를 바탕으로 Gemini API가 개인에게 맞는 식당을 추천하는 웹 서비스입니다. 친구와 함께 먹을 때는 구성원의 선호를 함께 고려한 단체 추천을 제공하며, 실제 도메인에 배포해 운영했습니다.\n\n### 주요 기능\n- Gemini API 기반 개인 맞춤 식당 추천\n- 친구 선택 후 함께 먹기 단체 추천\n- 방문 기록과 별점, 한줄평 평가\n- 친구 추가, 요청 관리, 추천용 그룹 생성\n- 식당 상세 정보, 지도 위치, 친구들의 평가 확인\n\n### 기술 스택\nNext.js, TypeScript, Tailwind CSS, Zustand, Spring Boot, Spring Security, JPA, PostgreSQL, Gemini API, Docker, Nginx",
+        "serviceUrl": "https://eatthispnu.com",
+        "videoUrl": "https://youtu.be/Z67Zp1dLph0",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-06-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-06-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-06-photo-3.webp",
+          "pnu-ai-studygroup-2025-pnusw-06-photo-4.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-08",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-08",
+        "teamNumber": 8,
+        "teamName": "8조",
+        "title": "코드몬스터: 코딩 테스트 스터디 플랫폼",
+        "summary": "정해진 날짜의 문제를 풀고 풀이를 기록하고 공유하는 커뮤니티 기반 코딩 테스트 스터디 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-08.webp",
+        "intro": "코딩 테스트 스터디는 많지만 대부분 풀이 공유보다 인증에 초점이 맞춰져 있고, 개인 블로그는 꾸준한 기록과 교류가 부족합니다. 코드몬스터는 정해진 날짜의 문제를 풀고 풀이를 기록하고 공유하는 커뮤니티 기반 코딩 테스트 스터디 플랫폼입니다. 사용자 행동 로그를 수집하고 분석해 UX와 서버 성능을 개선하는 데이터 기반 운영을 함께 다룹니다.\n\n### 주요 기능\n- 날짜별 문제 풀이와 풀이 기록\n- 팀 단위 풀이 공유와 회고\n- Amplitude, GA 기반 사용자 행동 분석\n- 트래픽 집중 시간대 분석과 API 성능 개선\n- Grafana, Loki, Prometheus 기반 로그 수집과 모니터링\n\n### 기술 스택\nReact, Spring Boot, Grafana, Loki, Prometheus, AWS(EC2, S3, ECS), Nginx",
+        "serviceUrl": "https://codemonster.site",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-08-photo-1.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-09",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-09",
+        "teamNumber": 9,
+        "teamName": "9조",
+        "title": "AI 면접 보조 시스템",
+        "summary": "면접 대화를 실시간 음성 인식으로 따라가며 추천 질문을 만들고, 끝난 뒤 결과 리포트와 복기를 제공합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-09.webp",
+        "intro": "전문 면접관이 없는 기업은 체계적인 면접을 진행하기 어렵고, 기술 면접에만 치우치면 지원자의 인성과 소프트 스킬을 살피기 힘듭니다. 이 시스템은 면접 대화를 실시간 음성 인식으로 따라가며 LLM이 적절한 후속 질문을 추천해 면접관을 돕습니다. 면접이 끝나면 평가 결과 리포트와 대화 기록을 제공해 복기와 지원자 관리까지 이어집니다.\n\n### 주요 기능\n- Google Cloud Speech API 기반 실시간 면접 대화 텍스트 변환\n- 면접 맥락에 맞춘 AI 후속 질문 추천\n- 기술 역량과 커뮤니케이션 평가 리포트\n- 면접 대화 분석과 복기\n- 지원자 등록, 이력서 업로드, 전체 현황 관리\n\n### 기술 스택\nNext.js, React, TypeScript, Tailwind CSS, Spring Boot, Spring Data JPA, FastAPI, LangChain, Google Cloud Speech API",
+        "videoUrl": "https://youtu.be/znU13XX5PZ4",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-09-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-09-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-09-photo-3.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-12",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-12",
+        "teamNumber": 12,
+        "teamName": "12조",
+        "title": "AI 맞춤형 보조교사 서비스",
+        "summary": "학생의 질문으로 사고 흐름을 분석해 성취기준에 맞춘 피드백을 주고 교사의 피드백 업무를 돕는 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-12.webp",
+        "intro": "교사 한 명이 많은 학생을 맡는 교실에서는 학생 개개인의 사고 흐름에 맞춘 지도와 실시간 피드백이 어렵습니다. 이 서비스는 학생의 질문을 바탕으로 사고 흐름을 분석하고, 정답 대신 교육과정 성취기준에 맞춘 형성적 피드백을 주는 AI 보조교사입니다. 쌓인 질문과 응답 기록은 교사용 성취 분석과 생활기록부 세부특기사항 초안 작성에 활용되어 교사의 피드백 업무를 돕습니다.\n\n### 주요 기능\n- 로그챗: 이미지 질문 인식과 사고 확장형 피드백\n- ZPD와 스캐폴딩 원리를 반영한 단계별 개입\n- 학급, 단원별 성취 수준을 보여 주는 교사용 대시보드\n- 질문 기록과 보고서, 독후감 기반 세부특기사항 초안 자동 생성\n\n### 기술 스택\nNext.js, ChatGPT API(Vision, Assistant), Supabase",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-12-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-12-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-12-photo-3.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-13",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-13",
+        "teamNumber": 13,
+        "teamName": "13조",
+        "title": "Pilltip: 개인 맞춤 AI 복약 관리",
+        "summary": "건강 상태와 복약 이력을 바탕으로 AI 복약 가이드, 알림, 디지털 문진, 맞춤 DUR 을 제공하는 앱입니다. 2025 SW중심대학 디지털 경진대회 SW부문 수상작입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-13.webp",
+        "intro": "고령화와 만성질환 증가로 여러 약을 함께 복용하는 사람이 늘었지만, 종이 처방전과 약 봉투에 의존한 정보는 이해하기 어렵고 약물 상호작용을 미리 알기도 힘듭니다. Pilltip은 사용자의 건강 상태와 복약 이력을 바탕으로 AI 복약 가이드, 복약 알림, 디지털 문진, 개인 맞춤 DUR을 제공하는 안드로이드 앱입니다. 식품의약품안전처와 건강보험심사평가원의 공공데이터로 약물 정보를 손쉽게 조회할 수 있습니다.\n\n### 주요 기능\n- 생성형 AI 기반 맞춤 복약 가이드\n- 복약 알림\n- 디지털 문진\n- 개인 맞춤 DUR(의약품 안전 사용) 확인\n- 공공데이터 기반 약물 정보 조회\n- 카카오 로그인\n\n### 기술 스택\nKotlin, Jetpack Compose, Hilt, Spring Boot, Elasticsearch, Redis, Nginx, Next.js, OpenAI API(GPT-4o mini), Firebase Cloud Messaging\n\n### 성과\n2025 SW중심대학 디지털 경진대회 SW부문 수상(부산대학교 대표팀)",
+        "videoUrl": "https://youtu.be/XnE1se8ShuI",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-13-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-13-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-13-photo-3.webp",
+          "pnu-ai-studygroup-2025-pnusw-13-photo-4.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-14",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-14",
+        "teamNumber": 14,
+        "teamName": "14조",
+        "title": "키즈카페 이용 데이터 군집 분석",
+        "summary": "광진구 빅데이터 분석 공모전 지정 주제로 키즈카페 관련 데이터를 모아 군집 분석을 했습니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-14.webp",
+        "intro": "2025년 광진구 빅데이터 분석 공모전의 지정 주제로 광진구 키즈카페 입지를 분석한 프로젝트입니다. 인구, 보육시설, 기존 키즈카페, 교통과 주차, 어린이보호구역 등 공공데이터를 모아 격자 단위로 정리하고, 광장동과 자양2동을 대상으로 군집 분석을 수행해 추천 위치를 도출했습니다.\n\n### 주요 기능\n- 광진구 인구, 어린이집, 유치원, 지역아동센터, 키즈카페 데이터 수집과 전처리\n- 버스정류장, 주차장, 어린이보호구역, 유흥업소 등 주변 환경 데이터 정리\n- GMM, KNN, 계층적 군집 분석과 엘보우, AIC 비교\n- 광장동, 자양2동 추천 위치 지도 시각화",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-14-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-14-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-14-photo-3.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-15",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-15",
+        "teamNumber": 15,
+        "teamName": "15조",
+        "title": "두도지: 지도를 밝히는 여행 기록 앱",
+        "summary": "지도를 밝히고 랜드마크를 정복하며 핀으로 여행을 기록하고 친구와 공유하는 앱입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-15.webp",
+        "intro": "국내 여행은 일부 대도시에 몰려 있고, 잘 알려지지 않은 지역은 정보와 공유가 부족합니다. 두도지는 안개로 가려진 지도를 실제로 이동하며 밝히고, 핀을 남겨 여행을 기록하고 친구와 공유하는 위치 기반 여행 기록 앱입니다. 랜드마크 정복, 업적, 일일 퀘스트 같은 게임 요소로 여행 중은 물론 일상에서도 탐험을 이어 가도록 설계했습니다.\n\n### 주요 기능\n- 이동하며 안개 낀 지도를 밝히는 탐험\n- 랜드마크 도달 시 지도 영역 개방\n- 핀을 통한 여행 일기 작성과 피드 공유\n- 친구의 여행 피드 구경\n- 업적과 일일 퀘스트\n\n### 기술 스택\nKotlin(Android), Spring Boot, PostgreSQL, AWS EC2",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-15-photo-1.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-16",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-16",
+        "teamNumber": 16,
+        "teamName": "16조",
+        "title": "부산 구별 명소 탐색 지도 웹",
+        "summary": "2025 문화 디지털혁신 및 데이터활용 공모전 출품작으로, 부산 16개 구군의 명소를 목록과 지도로 찾아보는 웹 서비스입니다.",
+        "award": null,
+        "intro": "2025 문화 디지털혁신 및 데이터활용 공모전 출품작으로, 부산 16개 구군의 명소를 목록과 지도로 찾아보는 React 웹 서비스입니다. 구를 고르면 그 지역의 인기 주제가 나타나고, 추천 장소와 코스를 목록과 카카오맵으로 확인할 수 있도록 화면을 구성했습니다.\n\n### 주요 기능\n- 부산 구군 선택과 구별 인기 주제\n- 추천 장소, 코스 목록과 즐겨찾기\n- 카카오맵 기반 지도 화면\n- 로그인, 회원가입, 마이페이지 화면"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-17",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-17",
+        "teamNumber": 17,
+        "teamName": "17조",
+        "title": "위치 기반 재난 정보와 대피소 안내",
+        "summary": "현재 위치의 재난 정보와 가까운 대피소를 지도로 안내하고 지역 주민이 재난 정보를 나누는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-17.webp",
+        "intro": "재난 상황에서 시민들은 긴급재난문자만으로는 현재 위치에서 어디로 대피해야 하는지, 주변 피해가 어떤지 알기 어렵고, 재난 정보를 나눌 전용 공간도 없습니다. 이 앱은 사용자 위치를 기준으로 주변 재난 정보와 가까운 대피소, 병원을 지도에 보여 주고 길찾기를 연결합니다. 지역 주민이 재난 상황을 공유하는 커뮤니티와 재난 대응 챗봇, 대비 체크리스트도 함께 제공합니다.\n\n### 주요 기능\n- 현재 위치 기반 재난 목록과 상세 정보, 대처 방법\n- 주변 대피소, 병원 지도 표시와 길찾기\n- 지역별, 재난 유형별 알림 필터링\n- 지역 필터와 검색을 갖춘 재난 정보 공유 커뮤니티\n- 재난 대응 AI 챗봇\n- 전국 재난 현황, 재난 뉴스, 대비 체크리스트, 후원\n\n### 기술 스택\nFlutter, Dart, FastAPI, SQLModel, MySQL, Redis, AWS EC2, Amazon S3, Docker, GitHub Actions",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-17-photo-1.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-18",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-18",
+        "teamNumber": 18,
+        "teamName": "18조",
+        "title": "청년 대상 AI 금융상품 큐레이터",
+        "summary": "연령, 소득, 주거 형태, 금융 목표를 대화로 파악해 시중 상품과 정책금융 상품을 함께 추천하고 이유를 설명합니다.",
+        "award": null,
+        "intro": "청년층은 금융상품의 구조와 용어를 이해하기 어렵고, 마련된 정책금융 상품도 정보를 몰라 활용하지 못하는 경우가 많습니다. 이 서비스는 대화로 사용자의 연령, 소득, 직업, 주거 형태, 금융 목표를 파악하고 AI 에이전트가 조건과 가중치를 정해 시중 상품과 정책금융 상품을 함께 추천합니다. 추천마다 이유를 설명하고 이전 대화 맥락을 기억해 청년의 합리적인 금융 의사결정을 돕습니다.\n\n### 주요 기능\n- 대화형 AI 금융상품 추천과 추천 이유 설명\n- 메모리 기반 대화 맥락 유지\n- 추천 상품 관련 블로그, 정책, 뉴스 피드\n- 유사 상품 알림\n- 카카오 소셜 로그인\n\n### 기술 스택\nReact, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy, PostgreSQL, Milvus, Celery, Selenium, bge-m3 임베딩, gpt-4.1-mini, solar-pro, AWS\n\n### 성과\nFIN:NECT 대회 본선 진출"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-19",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-19",
+        "teamNumber": 19,
+        "teamName": "19조",
+        "title": "도시낭인: 서울 1인 가구 주거지 추천",
+        "summary": "서울 청년 1인 가구의 조건에 맞는 주거 지역을 데이터로 추천하고 관련 지원 정책을 함께 안내합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-19.webp",
+        "intro": "서울로 오는 청년 1인 가구는 지리에 익숙하지 않아 어느 지역이 예산과 생활에 맞는지 모른 채 매물을 찾아야 합니다. 도시낭인은 통근지, 교통수단, 예산, 우선순위를 입력하면 서울시 공공데이터로 행정동별 점수를 계산해 맞는 지역을 먼저 추천하고, 그 지역 안의 매물까지 이어서 추천합니다. 지역 추천에서 매물 탐색으로 좁혀 가는 흐름으로 정보 격차와 선택 부담을 줄이는 것이 목표입니다.\n\n### 주요 기능\n- 통근지, 예산, 우선순위 기반 행정동 추천\n- 인프라, 치안, 조용함, 청년 인구, 교통, 통근 지표 점수화\n- 하버사인 거리와 카카오맵 API를 활용한 통근 시간 계산\n- 지도 위 지역별 추천 정도 색상 표시\n- 매물 목록 정렬과 상세 정보, 항목별 점수 확인\n\n### 기술 스택\nReact, TypeScript, Spring Boot, Flask, MySQL, AWS, Kakao Map API",
+        "serviceUrl": "https://sulbang.vercel.app/search",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-19-photo-1.webp",
+          "pnu-ai-studygroup-2025-pnusw-19-photo-2.webp",
+          "pnu-ai-studygroup-2025-pnusw-19-photo-3.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-20",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-20",
+        "teamNumber": 20,
+        "teamName": "20조",
+        "title": "Glue: 부산대 언어교환 플랫폼",
+        "summary": "부산대 내국인 학생과 교환학생, 유학생을 이어 주는 언어교환 플랫폼입니다.",
+        "award": null,
+        "intro": "부산대에는 한국인 친구를 사귀고 싶은 교환학생과 유학생이 많고, 내국인 학생도 언어교환과 문화 교류를 원하지만 서로 만날 계기가 부족합니다. Glue는 부산대 이메일 인증으로 신뢰를 확보하고, 호스트가 언어교환 미팅을 열어 참여자를 모집하는 언어교환 플랫폼입니다. 1대1 채팅으로 미리 소통하고 지난 미팅과 현재 미팅 기록을 관리할 수 있습니다.\n\n### 주요 기능\n- OAuth2 소셜 로그인과 부산대 이메일 인증\n- 호스트의 언어교환 미팅 게시글 작성\n- 미팅 일정, 장소, 주제 사전 공유\n- 호스트와의 1대1 채팅\n- 지난 미팅과 참여 중인 미팅 히스토리"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-31",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-31",
+        "teamNumber": 31,
+        "teamName": "31조",
+        "title": "부산 친환경 관광 경로 추천",
+        "summary": "부산의 오버투어리즘을 줄이기 위해 숨은 명소와 친환경 점수를 반영한 관광 경로를 추천합니다.",
+        "award": null,
+        "intro": "부산 같은 인기 관광도시는 특정 지역에 관광객이 몰리는 오버투어리즘으로 환경 훼손과 주민 갈등이 생기고 있습니다. 이 프로젝트는 지역민이 즐겨 찾는 숨은 명소를 찾아 기존 관광지와 잇고, 이동 수단별 탄소 배출과 식음, 숙박 활동을 반영한 친환경 점수로 관광 코스를 추천합니다. 부산 빅데이터 혁신센터의 관광지 방문객, 대중교통 위치 데이터를 바탕으로 경로 생성과 점수 산정 방식을 설계했습니다.\n\n### 주요 기능\n- 관광지, 버스정류장, 지하철역 위치 지도 시각화\n- 외국인 비율, 방문객 수, 대중교통 접근성 기반 숨은 명소 후보 선정\n- 그래프 알고리즘 기반 관광 경로 생성\n- 이동 수단, 식음, 숙박 활동을 반영한 친환경 점수 산정\n- 친환경 점수 상위 코스 추천\n\n### 기술 스택\nPython, Folium, Plotly, GeoPandas, NetworkX"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-32",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-32",
+        "teamNumber": 32,
+        "teamName": "32조",
+        "title": "중고차 이미지 차종 분류",
+        "summary": "중고차 이미지를 전처리하고 딥러닝 모델로 차종을 분류한 공모전 프로젝트입니다.",
+        "award": null,
+        "intro": "중고차 거래 플랫폼과 차량 관리 시스템 등에서 차종을 빠르고 정확하게 인식하는 기술의 필요성이 커지고 있습니다. 이 프로젝트는 공모전 참여를 계기로 실제 중고차 이미지 데이터를 전처리하고 딥러닝 모델로 차종을 분류했습니다. 여러 모델을 비교하고 하이퍼파라미터를 조정하며 수업에서 배운 데이터 분석과 인공지능 지식을 실제 문제에 적용했습니다.\n\n### 주요 기능\n- 중고차 이미지 노이즈 제거, 라벨링, 학습용 데이터셋 구성\n- 데이터 증강\n- CNN, EfficientNet, ResNet 등 분류 모델 비교\n- 정확도와 처리 속도 평가, 하이퍼파라미터 튜닝\n\n### 기술 스택\nPython"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-35",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-35",
+        "teamNumber": 35,
+        "teamName": "35조",
+        "title": "고위험 임도 분석을 통한 산사태 예방",
+        "summary": "임도 구간별 산사태 빈도와 환경 요인을 k-means 로 군집화해 사방사업 우선 대상지를 제안합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-35.webp",
+        "intro": "기후변화로 집중호우가 잦아지면서 산림 임도는 산사태의 주요 발생 지점이 되고 있지만, 인력과 예산 부족으로 배수 체계 정비가 늦어지고 있습니다. 이 프로젝트는 산림청 공간 데이터로 임도 구간별 경사, 토양, 임상, 강수량과 산사태 이력을 정리하고 k-means로 임도 유형을 군집화했습니다. 각 군집의 위험도를 산사태위험지도로 평가해 고위험 임도를 찾고 사방사업 우선 대상지를 제안합니다.\n\n### 주요 기능\n- 임도 버퍼 기준 공간 정보 추출\n- 경사도, 토양, 임상, 강수량 등 환경 변수 기반 k-means 군집화\n- 산사태위험지도를 활용한 군집별 위험도 평가\n- 위험도에 영향을 준 주요 변수 분석\n- 위험도별 임도망 색상 시각화와 사방사업 우선 대상지 추천\n\n### 기술 스택\nPython, QGIS, Jupyter Notebook",
+        "images": [
+          "pnu-ai-studygroup-2025-pnusw-35-photo-1.webp"
+        ]
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-36",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-36",
+        "teamNumber": 36,
+        "teamName": "36조",
+        "title": "부산 컨퍼런스 잠재 참여 인구 분석",
+        "summary": "부산데이터위크 참가작으로, 지역별 연령대와 행사장 교통 접근성을 분석해 컨퍼런스 잠재 참여 인구를 추정했습니다.",
+        "award": null,
+        "intro": "부산데이터위크 참가작으로, 부산에서 열리는 컨퍼런스에 참여할 수 있는 잠재 인구를 추정한 데이터 분석 프로젝트입니다. 지역별 연령대 분포와 행사장 교통 접근성을 분석하고, 영남권 사이버보안 컨퍼런스를 예로 대상 대학과 학과별 잠재 참여자를 살폈습니다.\n\n### 주요 기능\n- 부산 자치구별 연령대와 노인 인구 밀도 분석\n- 노인복지시설, 도로망 데이터 분석\n- 행사장 교통 접근성 분석\n- 학과별 잠재 참여자 분석과 컨퍼런스 참석 인구 추정"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-37",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-37",
+        "teamNumber": 37,
+        "teamName": "37조",
+        "title": "OPIc 모의고사 웹 플랫폼",
+        "summary": "설문 기반 문제 추출과 자동 녹음으로 실제 OPIc 시험 환경을 재현한 영어 말하기 모의고사 플랫폼입니다.",
+        "award": null,
+        "intro": "OPIc은 실제 상황 기반으로 영어 말하기 능력을 평가하지만, 응시료가 높고 기출문제를 구하기 어려우며 연습 환경도 실제 시험과 차이가 있습니다. 이 플랫폼은 누구나 무료로 실제 시험과 같은 화면에서 연습할 수 있는 웹 기반 OPIc 모의고사입니다. 단계별 설문 응답으로 문제은행에서 맞춤형 15문제를 뽑고, 문제 음성 재생과 자동 녹음으로 시험 흐름을 재현합니다.\n\n### 주요 기능\n- 배경, 경험, 선호 주제를 묻는 단계별 설문조사와 응답 요약\n- 설문 기반 엑셀 문제은행 필터링과 랜덤 출제\n- 문제 표시와 자동 음성 재생\n- 준비 시간 후 자동 녹음과 수동 종료\n- 실제 OPIc 시험 화면 재현\n\n### 기술 스택\nReact, Tailwind CSS"
+      }
+    ]
+  },
+  {
+    "program": {
       "key": "pnu-ai-studygroup-2026",
       "org": "2026-PNU-AI-StudyGroup",
       "programName": "AI학습공동체 2026",

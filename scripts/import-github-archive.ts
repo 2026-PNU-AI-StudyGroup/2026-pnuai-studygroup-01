@@ -16,7 +16,7 @@ import { normalizeRepoUrl, stableArchiveId, type SnapshotProgram, type SnapshotR
 // 만들기만 하고 이미 있는 프로그램과 프로젝트는 건드리지 않는다. 운영자가 화면에서 바꾸거나 지운 것이
 // 다시 돌려도 살아남는다. 그래서 다시 돌리면 스냅샷에 새로 생긴 레포만 들어간다.
 // 프로젝트를 내리려면 화면에서 숨기거나 지우고 snapshot.json 에서도 뺀다. 빼지 않으면
-// 다음에 돌릴 때 지운 프로젝트가 다시 생긴다. 팀원 계정과 사진은 넣지 않는다.
+// 다음에 돌릴 때 지운 프로젝트가 다시 생긴다. 팀원 계정과 인물 사진은 넣지 않는다.
 // 운영 실행: docker compose -f compose.production.yaml --env-file .env.production run --rm import-github
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -101,6 +101,71 @@ async function ensureThumbnail(repo: SnapshotRepo, startsAt: Date): Promise<bool
   return true;
 }
 
+/**
+ * 소개, 서비스와 영상 링크, 갤러리 사진을 빈 자리에만 채운다. 이미 넣은 프로젝트에도 돈다.
+ * 운영자가 화면에서 고친 소개나 지운 결과물 자리는 비어 있지 않으면 건드리지 않는다.
+ */
+async function ensureDetails(repo: SnapshotRepo, startsAt: Date): Promise<number> {
+  const projectTeamId = stableArchiveId("team", repo.fullName);
+  const team = await prisma.projectTeam.findUnique({ where: { id: projectTeamId }, select: { showcaseIntro: true } });
+  if (!team) return 0;
+  if (repo.intro && !team.showcaseIntro) {
+    await prisma.projectTeam.update({ where: { id: projectTeamId }, data: { showcaseIntro: repo.intro } });
+  }
+  let added = 0;
+  const links: ["PRESENTATION_VIDEO" | "OTHER", string, string | null | undefined, number][] = [
+    ["PRESENTATION_VIDEO", "발표 영상", repo.videoUrl, 2],
+    ["OTHER", "서비스 바로가기", repo.serviceUrl, 3],
+  ];
+  for (const [type, title, url, position] of links) {
+    const id = stableArchiveId("artifact", repo.fullName, type);
+    if (!url || await prisma.artifact.findUnique({ where: { id }, select: { id: true } })) continue;
+    await prisma.artifact.create({ data: { id, projectTeamId, registeredById: ARCHIVE_USER_ID, type, title, externalUrl: url, position } });
+    added += 1;
+  }
+  for (const [index, image] of (repo.images ?? []).entries()) {
+    const id = stableArchiveId("artifact", repo.fullName, "image", image);
+    if (await prisma.artifact.findUnique({ where: { id }, select: { id: true } })) continue;
+    const fileId = stableArchiveId("file", repo.fullName, "image", image);
+    const objectKey = `teams/${projectTeamId}/files/${fileId}`;
+    const bytes = await readFile(join(here, "github-archive", "images", image));
+    await s3.send(new PutObjectCommand({
+      Bucket: objectStorageBucket,
+      Key: objectKey,
+      Body: bytes,
+      ContentType: "image/webp",
+      ChecksumSHA256: createHash("sha256").update(bytes).digest("base64"),
+    }));
+    if (!await prisma.storedFile.findUnique({ where: { id: fileId }, select: { id: true } })) {
+      await prisma.storedFile.create({
+        data: {
+          id: fileId,
+          objectKey,
+          uploadObjectKey: `staging/${objectKey}`,
+          projectTeamId,
+          ownerId: ARCHIVE_USER_ID,
+          purpose: "ARTIFACT",
+          consumer: "ARTIFACT",
+          // 갤러리 사진은 아티팩트 트리거가 READY 에서 ATTACHED 로 올린다.
+          status: "READY",
+          originalName: image,
+          contentType: "image/webp",
+          size: bytes.length,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+          expiresAt: startsAt,
+          cleanupAfter: new Date(startsAt.getTime() + 2 * 86_400_000),
+          readyAt: startsAt,
+        },
+      });
+    }
+    await prisma.artifact.create({
+      data: { id, projectTeamId, registeredById: ARCHIVE_USER_ID, type: "IMAGE", title: `${repo.title} 사진 ${index + 1}`, fileId, position: 10 + index },
+    });
+    added += 1;
+  }
+  return added;
+}
+
 async function main() {
   const snapshot = JSON.parse(
     await readFile(join(here, "github-archive", "snapshot.json"), "utf8"),
@@ -165,12 +230,14 @@ async function main() {
     let existing = 0;
     let duplicate = 0;
     let thumbnails = 0;
+    let details = 0;
     for (const repo of repos) {
       const topicId = stableArchiveId("topic", repo.fullName);
       if (await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } })) {
         console.log(`  이미 넣은 프로젝트라 건너뜀: ${repo.fullName}`);
         existing += 1;
         if (await ensureThumbnail(repo, startsAt)) thumbnails += 1;
+        details += await ensureDetails(repo, startsAt);
         continue;
       }
       if (repo.url && taken.has(normalizeRepoUrl(repo.url))) {
@@ -199,7 +266,7 @@ async function main() {
           },
         });
         await tx.projectTeam.create({
-          data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, award: repo.award, confirmedAt: startsAt },
+          data: { id: projectTeamId, projectId: topicId, name: repo.teamName, number: repo.teamNumber, award: repo.award, confirmedAt: startsAt, showcaseIntro: repo.intro ?? null },
         });
         if (repo.url) {
           await tx.artifact.create({
@@ -230,8 +297,9 @@ async function main() {
       });
       created += 1;
       if (await ensureThumbnail(repo, startsAt)) thumbnails += 1;
+      details += await ensureDetails(repo, startsAt);
     }
-    console.log(`${source.programName}: 새로 ${created}개, 이미 있음 ${existing}개, 다른 프로젝트와 겹쳐 건너뜀 ${duplicate}개, 썸네일 새로 ${thumbnails}개`);
+    console.log(`${source.programName}: 새로 ${created}개, 이미 있음 ${existing}개, 다른 프로젝트와 겹쳐 건너뜀 ${duplicate}개, 썸네일 새로 ${thumbnails}개, 사진과 링크 새로 ${details}개`);
   }
 }
 

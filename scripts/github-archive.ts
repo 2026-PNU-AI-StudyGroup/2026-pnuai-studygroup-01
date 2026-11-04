@@ -40,8 +40,14 @@ export type SnapshotRepo = {
   summary: string;
   /** 공식 발표에서 옮긴 상 이름. 상이 없으면 null. */
   award: string | null;
-  /** 발표 영상 주소. OPUS 에서 옮긴 졸업과제 2025 에만 있다. */
+  /** 발표 영상 주소. OPUS 에서 옮긴 졸업과제 2025 와 README 에 영상이 걸린 레포에 있다. */
   videoUrl?: string | null;
+  /** 팀이 운영한 서비스 주소. README 에 적힌 것만. */
+  serviceUrl?: string;
+  /** 상세 화면 소개(마크다운). README 를 읽고 손으로 쓴 것. 이름, 이메일은 넣지 않는다. */
+  intro?: string;
+  /** github-archive/images 아래 갤러리 사진. README 와 레포의 사진 중 사람이 고른 것. */
+  images?: string[];
   /** github-archive/images 아래 썸네일 파일. 유튜브 대표 이미지나 README 사진을 webp 로 줄인 것. */
   thumbnail?: string;
 };
