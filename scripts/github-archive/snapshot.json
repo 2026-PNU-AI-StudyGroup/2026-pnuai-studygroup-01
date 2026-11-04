@@ -1162,6 +1162,528 @@
   },
   {
     "program": {
+      "key": "pnu-cse-capstone-2024",
+      "org": "pnucse-capstone-2024",
+      "programName": "정보컴퓨터공학부 졸업과제 2024",
+      "startsAt": "2024-03-04",
+      "endsAt": "2024-10-31",
+      "category": "CSE 캡스톤 디자인",
+      "icon": "GRADUATION_CAP"
+    },
+    "repos": [
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-01",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-01",
+        "teamNumber": 1,
+        "teamName": "1조",
+        "title": "3D MRI 뇌종양 분할 및 웹 시각화 시스템",
+        "summary": "BraTS 3D MRI 데이터로 학습한 U-Net 모델로 뇌종양 영역을 분할하고, 업로드한 MRI 파일의 분할 결과를 웹에서 시각화해 의료진의 빠른 진단을 돕는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-01.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-02",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-02",
+        "teamNumber": 2,
+        "teamName": "2조",
+        "title": "다기관 데이터에 강건한 심장 MRI 분할 플랫폼",
+        "summary": "여러 기관과 장비에서 수집한 심장 MRI로 U-Net 모델을 학습해 좌심실, 우심실, 심근을 분할하고, 심장 주기별 분할 결과와 움직임을 웹에서 보여 주는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-02.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-3",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-3",
+        "teamNumber": 3,
+        "teamName": "3조",
+        "title": "DaTSCAN 영상 기반 파킨슨병 분류 웹 서비스",
+        "summary": "PPMI 데이터의 DaTSCAN 뇌 영상을 3D ResNet 모델로 분석해 파킨슨병 여부를 분류하고, 판단 근거를 saliency map으로 함께 보여 주는 웹 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-04",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-04",
+        "teamNumber": 4,
+        "teamName": "4조",
+        "title": "수어비전: 택시 이용을 돕는 수어 번역 앱",
+        "summary": "청각장애인이 택시를 탈 때 수어 동작을 촬영하면 AI Hub 수어 영상으로 학습한 모델이 텍스트와 음성으로 번역해 기사와 의사소통할 수 있게 하는 안드로이드 앱입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-04.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-05",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-05",
+        "teamNumber": 5,
+        "teamName": "5조",
+        "title": "초보, 고령 운전자를 위한 맞춤형 운전 보조 앱",
+        "summary": "스마트폰 카메라와 GPS로 전방 차량 거리, 차선 이탈, 제한 속도를 실시간 경고하고, 운전 기록 대시보드와 안전한 연습 경로 안내를 제공하는 운전 미숙자용 앱입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-05.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-06",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-06",
+        "teamNumber": 6,
+        "teamName": "6조",
+        "title": "강화학습 기반 교차로 동적 신호제어 시스템",
+        "summary": "CARLA와 SUMO 시뮬레이터에서 YOLOv8과 ByteTrack으로 차량을 탐지, 추적하고 강화학습으로 신호 순서와 시간을 동적으로 정해 교차로 대기 시간을 줄이는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-06.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-07",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-07",
+        "teamNumber": 7,
+        "teamName": "7조",
+        "title": "질병 연관 유전자 발굴을 위한 머신러닝 기법 설계",
+        "summary": "DisGeNET의 질병, 유전자, 연관 데이터로 이기종 그래프를 구성하고 GCN 모델로 학습해 질병과 유전자의 새로운 연관성을 예측하는 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-07.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-08",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-08",
+        "teamNumber": 8,
+        "teamName": "8조",
+        "title": "신약 후보물질 발굴을 위한 거대 화합물 라이브러리 탐색 최적화",
+        "summary": "타겟 단백질 파일을 올리면 방대한 화합물 라이브러리에서 결합 가능성이 높은 상위 10개 화합물을 추천하도록, 클러스터링과 탐색 알고리즘으로 가상 스크리닝을 가속하는 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-08.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-09",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-09",
+        "teamNumber": 9,
+        "teamName": "9조",
+        "title": "표 형식 데이터 딥러닝 기반 암 발병 예측 서비스",
+        "summary": "건강 정보 표 데이터에 FT-Transformer, TabNet 등 딥러닝 모델을 적용해 암 발병 확률을 예측하고, SHAP으로 각 입력값의 영향을 설명해 주는 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-09.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-10",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-10",
+        "teamNumber": 10,
+        "teamName": "10조",
+        "title": "CCTV 영상 텍스트 쿼리 기반 실종자 탐색 시스템",
+        "summary": "컴퓨터 비전으로 CCTV 영상 속 인물의 특징을 자동 분석해 두고, 옷차림 등 특징 쿼리로 실종자나 용의자를 검색할 수 있게 하는 웹 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-10.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-11",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-11",
+        "teamNumber": 11,
+        "teamName": "11조",
+        "title": "FindSuspect: 이미지 기반 용의자 검색 시스템",
+        "summary": "여러 CCTV 영상에서 YOLOv9으로 사람을 찾고 VTFPAR++로 보행자 특징을 추출한 뒤, 용의자 사진과 코사인 유사도를 비교해 비슷한 인물과 특징을 함께 보여 주는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-11.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-12",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-12",
+        "teamNumber": 12,
+        "teamName": "12조",
+        "title": "SmartPlate: 식판 음식 인식 칼로리 관리 서비스",
+        "summary": "식판 사진에서 음식 종류와 양을 추정해 섭취 칼로리와 영양소를 계산하고, 체중 목표에 맞는 식단 관리를 돕는 서비스로 음식 양 추정 데이터는 직접 촬영해 구축했습니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-12.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-13",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-13",
+        "teamNumber": 13,
+        "teamName": "13조",
+        "title": "감독관 상호작용형 VR 화재 대피 교육 시스템",
+        "summary": "VR 체험자가 화재 상황을 체험하는 동안 PC 감독관이 실시간으로 행동을 모니터링하고 환경을 조정하며 피드백을 주는 Unity 기반 재난 대응 교육 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-13.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-14",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-14",
+        "teamNumber": 14,
+        "teamName": "14조",
+        "title": "LLM 기반 디지털 휴먼의 성격 표현과 사용자 인식 연구",
+        "summary": "LLM으로 지배적, 중립적, 순종적 성격의 대화와 제스처를 생성하는 Unity 디지털 휴먼을 만들고, 사용자가 그 성격을 어떻게 인식하는지 예비조사로 분석한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-14.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-15",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-15",
+        "teamNumber": 15,
+        "teamName": "15조",
+        "title": "시선 추적 기반 공부 집중 타이머 서비스",
+        "summary": "웹캠 시선 추적으로 사용자가 화면 어디를 보는지 파악하고 GPT로 화면 내용이 학습과 관련 있는지 판별해, 실제로 집중한 시간만 기록하는 공부 타이머 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-15.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-17",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-17",
+        "teamNumber": 17,
+        "teamName": "17조",
+        "title": "블록체인 기반 커피 원두 원산지 추적 물류 시스템",
+        "summary": "커피 원두의 원산지 위조와 복잡한 공급망 문제를 해결하기 위해, 스마트 컨트랙트로 원산지와 유통 정보를 블록체인에 기록하고 조회하는 물류 관리 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-17.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-18",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-18",
+        "teamNumber": 18,
+        "teamName": "18조",
+        "title": "LSM-Tree 기반 키-값 저장 시스템 구현",
+        "summary": "대용량 쓰기에 유리한 LSM-Tree 키-값 저장소를 직접 구현하고 Leveled, Tiered, Simple Leveled 컴팩션의 성능을 비교하며, 데이터 입력과 조회용 GUI를 제공하는 프로젝트입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-18.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-19",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-19",
+        "teamNumber": 19,
+        "teamName": "19조",
+        "title": "다중화자 인식 STT 기반 자동 대화록 생성",
+        "summary": "라벨링된 음성 데이터로 화자 분리 모델을 직접 학습하고 Whisper 음성 인식과 결합해, 회의나 대화 녹음에서 화자별 대화록을 자동 생성하는 프로젝트입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-19.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-20",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-20",
+        "teamNumber": 20,
+        "teamName": "20조",
+        "title": "티켓 예매 도메인 마이크로서비스 구축 및 배포 시스템",
+        "summary": "티켓 판매자, 구매자, 관리자의 요구사항을 반영한 티켓 예매 마이크로서비스 풀과 템플릿을 제공하고, Kubernetes 기반으로 배포와 모니터링을 지원하는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-20.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-21",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-21",
+        "teamNumber": 21,
+        "teamName": "21조",
+        "title": "멀티 클라우드 기반 허가형 블록체인 플랫폼",
+        "summary": "AWS, Azure, OpenStack에 하이퍼레저 패브릭 네트워크 구성 요소를 분산 배치해 자동 구축하고, 스마트 컨트랙트 관리와 네트워크 상태 모니터링을 제공하는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-21.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-22",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-22",
+        "teamNumber": 22,
+        "teamName": "22조",
+        "title": "허가형 블록체인을 이용한 데이터 수집 시스템",
+        "summary": "하이퍼레저 패브릭으로 무분별한 데이터 생성을 막고, 스마트 컨트랙트 템플릿과 배포 자동화로 다양한 분야에 적용할 수 있는 신뢰성 있는 데이터 수집 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-22.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-23",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-23",
+        "teamNumber": 23,
+        "teamName": "23조",
+        "title": "KoBASIC: 한글 프로그래밍 언어",
+        "summary": "교육용 언어 BASIC을 한글화한 KoBASIC 인터프리터를 구현하고, 한글 코드를 Python으로 자동 변환하는 웹 기능을 더해 입문자의 Python 학습 진입을 돕는 프로젝트입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-23.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-24",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-24",
+        "teamNumber": 24,
+        "teamName": "24조",
+        "title": "개인의 신체 특성 기반 패션 추천 시스템",
+        "summary": "얼굴과 전신 사진에서 퍼스널 컬러, 얼굴형, 체형을 자동 분석하고 계절과 사용자 피드백을 반영해 어울리는 패션 아이템을 추천하는 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-24.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-25",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-25",
+        "teamNumber": 25,
+        "teamName": "25조",
+        "title": "AI 기반 TOPIK 문제 생성 및 모의시험 CBT 플랫폼",
+        "summary": "GPT 모델로 한국어능력시험 TOPIK 유형의 문제를 자동 생성하고, 컴퓨터 기반 모의시험 응시와 자동 채점, 학습 통계를 제공하는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-25.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-26",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-26",
+        "teamNumber": 26,
+        "teamName": "26조",
+        "title": "LLM 연동 대화형 영화 추천 시스템",
+        "summary": "사용자의 대화에서 취향과 상황 정보를 LLM으로 추출하고 추천 모듈과 연동해, 근거와 함께 개인화된 영화를 추천하는 경량화된 대화형 추천 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-26.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-27",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-27",
+        "teamNumber": 27,
+        "teamName": "27조",
+        "title": "사용자 맞춤형 텍스트 클라우드와 뉴스 추천",
+        "summary": "멀티턴 대화로 파인튜닝한 Llama 3가 사용자 문장의 감정과 특징을 분석해 뉴스를 추천하고, 추천 뉴스로 개인 맞춤형 텍스트 클라우드를 만들어 보여 주는 프로젝트입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-27.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-28",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-28",
+        "teamNumber": 28,
+        "teamName": "28조",
+        "title": "클라우드 기반 로봇 관제 및 모니터링 시스템",
+        "summary": "ArUco 마커 영상 인식으로 여러 로봇의 위치를 실시간 추적하고 LiDAR 데이터로 3D 환경을 시각화하며, 웹에서 ESP32 로봇을 원격 제어하는 클라우드 관제 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-28.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-29",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-29",
+        "teamNumber": 29,
+        "teamName": "29조",
+        "title": "Unity 가상 데이터 증강 기반 용접선 길이 검출",
+        "summary": "조선소 셀 구조물의 용접 부위와 길이를 자동 검출하기 위해 Unity 시뮬레이터로 학습 이미지를 생성하고, YOLOv8과 선 검출을 결합한 딥러닝 모델을 학습시킨 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-29.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-30",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-30",
+        "teamNumber": 30,
+        "teamName": "30조",
+        "title": "Unity Render Streaming 기반 클라우드 게이밍 시스템",
+        "summary": "서버에서 렌더링한 Unity 게임 화면을 WebRTC로 실시간 스트리밍해 기기 성능과 관계없이 게임을 즐길 수 있게 하고, Kubernetes로 서버 인프라를 운영하는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-30.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-31",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-31",
+        "teamNumber": 31,
+        "teamName": "31조",
+        "title": "OpenWRT 기반 다중 공유기 모니터링 및 제어 시스템",
+        "summary": "OpenWRT 공유기 여러 대를 안드로이드 앱에서 한 번에 모니터링하고 상황별 설정 프로파일을 적용해, 혼잡한 네트워크의 연결 품질을 개선하는 관리 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-31.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-32",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-32",
+        "teamNumber": 32,
+        "teamName": "32조",
+        "title": "클라우드 YoYo 공격 탐지 및 방어 시스템",
+        "summary": "클라우드 자동 확장을 악용해 비용 피해를 주는 YoYo 공격을 실시간 탐지하고, 응답 시간을 교란하는 방식 등 여러 방어 기법을 Kubernetes 환경에서 실험, 검증한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-32.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-33",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-33",
+        "teamNumber": 33,
+        "teamName": "33조",
+        "title": "열화상, 음향 멀티모달 AI 노인시설 안전사고 감지 플랫폼",
+        "summary": "사생활 침해가 적은 열화상 영상과 음향을 멀티모달 AI로 분석해 요양시설의 낙상 등 안전사고를 실시간 감지하고, 보호자와 병원에 사고 영상과 통계를 제공하는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-33.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-34",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-34",
+        "teamNumber": 34,
+        "teamName": "34조",
+        "title": "RAG 기반 중고차 추천 챗봇 플랫폼",
+        "summary": "중고차 지식이 부족한 일반 사용자도 대화로 정보를 얻고 알맞은 매물을 추천받을 수 있도록, 중고차 데이터와 RAG를 결합한 챗봇 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-34.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-35",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-35",
+        "teamNumber": 35,
+        "teamName": "35조",
+        "title": "UWB RTLS와 컴퓨터 비전 기반 병원 자율주행 로봇",
+        "summary": "UWB 기반 실시간 위치 추정과 ArUco 마커 영상 인식으로 로봇의 위치와 방향을 파악하고, 경로 탐색 알고리즘으로 병원 실내를 자율 주행하는 로봇 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-35.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-36",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-36",
+        "teamNumber": 36,
+        "teamName": "36조",
+        "title": "AlphaTron: AI 실시간 객체 탐지 자동 대응 보안 시스템",
+        "summary": "카메라 영상에서 YOLOv8로 사람, 동물, 차량을 탐지, 추적하고 위협 수준을 판단해 서보 장치로 자동 대응하며, 앱으로 실시간 모니터링과 녹화 영상 관리를 제공하는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-36.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-37",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-37",
+        "teamNumber": 37,
+        "teamName": "37조",
+        "title": "교내 서버리스 프로젝트 배포 시스템",
+        "summary": "학생들이 비용 부담 없이 프로젝트를 배포 템플릿으로 컨테이너 배포하고 공유할 수 있도록, 접속이 없으면 자원을 0으로 줄이는 Kubernetes 기반 서버리스 배포 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-37.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-38",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-38",
+        "teamNumber": 38,
+        "teamName": "38조",
+        "title": "강화학습 기반 V2G 전력 거래 이익 최대화",
+        "summary": "EV2Gym 시뮬레이션 환경에서 PPO, SAC, TRPO 등 강화학습 알고리즘을 비교해, 배터리 수명과 충전 만족도를 고려하며 전기차 충방전 이익을 최대화하는 전략을 개발한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-38.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-39",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-39",
+        "teamNumber": 39,
+        "teamName": "39조",
+        "title": "V2G 이해관계자 이익을 고려한 전기차 충방전 최적화",
+        "summary": "EV2Gym에서 V2G 이해관계자별 상태와 보상 함수를 설계해 강화학습으로 충방전 일정을 최적화하고, 충전소별 결과와 사용자 이익을 Flask 웹으로 시각화한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-39.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-40",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-40",
+        "teamNumber": 40,
+        "teamName": "40조",
+        "title": "분할 기반 녹내장 검출 AI 모델 개발",
+        "summary": "안저 영상에서 시신경 원반과 컵을 분할해 녹내장을 조기 검출하기 위해, U-Net에 CBAM, 트랜스포머 블록, DC-UNet 구조를 결합한 분할 모델을 설계한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-40.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-41",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-41",
+        "teamNumber": 41,
+        "teamName": "41조",
+        "title": "하이브리드 특징 추출 기반 녹내장 조기 검출 모델",
+        "summary": "안저 영상의 시신경 유두와 컵 영역에서 CNN, LBP, HOG, SURF 특징을 추출하고 MRMR로 선별한 뒤 SVM, 랜덤 포레스트 등으로 녹내장 여부를 분류하는 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-41.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-42",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-42",
+        "teamNumber": 42,
+        "teamName": "42조",
+        "title": "노드커넥션: 블록체인 등기사항증명서 발급 시스템",
+        "summary": "시간차 전세 사기 등 부동산 사기를 예방하기 위해 등기사항증명서의 등록과 조회를 블록체인에서 처리해 위변조를 막는 부동산 거래 지원 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-42.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-43",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-43",
+        "teamNumber": 43,
+        "teamName": "43조",
+        "title": "BEINUS: 전기차 배터리 이력 관리 블록체인 플랫폼",
+        "summary": "하이퍼레저 패브릭의 채널 기반 데이터 공유로 민감 정보를 보호하면서, 전기차 배터리의 생산부터 유지보수, 재활용까지 전 과정을 투명하게 추적하는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-43.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-44",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-44",
+        "teamNumber": 44,
+        "teamName": "44조",
+        "title": "멀티 클라우드 환경 LLM 기반 로그 분석 시스템",
+        "summary": "여러 클라우드 인스턴스의 로그를 ELK 스택으로 통합 수집하고, LLM으로 시간대별, 일별, 주별 요약과 이상 패턴 탐지, 대응 방안을 관리자에게 제공하는 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-44.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-45",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-45",
+        "teamNumber": 45,
+        "teamName": "45조",
+        "title": "IMU 기반 경량 재활운동 자세 추론 및 보조 시스템",
+        "summary": "카메라 대신 몸에 붙인 ESP32 IMU 센서 데이터를 BLE로 모아 동기화하고, 머신러닝으로 재활운동 자세를 추론해 프라이버시 걱정 없이 운동을 보조하는 임베디드 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-45.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-46",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-46",
+        "teamNumber": 46,
+        "teamName": "46조",
+        "title": "IMU 센서 활용 AI 온디바이스 이상 탐지",
+        "summary": "PC 시스템 팬의 진동을 IMU 센서로 수집해 학습한 AI 모델이 기기에서 직접 이상 여부와 종류를 판별하고, 웹에 경고와 발생 기록을 남기는 설비 이상 탐지 시스템입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-46.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-47",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-47",
+        "teamNumber": 47,
+        "teamName": "47조",
+        "title": "MMORPG 보안 통신 구현과 블록 암호 성능 비교",
+        "summary": "Unity 기반 MMORPG 서버와 클라이언트에 핸드셰이크를 포함한 보안 통신을 구현하고, AES, ARIA, HIGHT, SPECK, TWINE 등 블록 암호 알고리즘별 성능을 비교한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-47.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-48",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-48",
+        "teamNumber": 48,
+        "teamName": "48조",
+        "title": "QNX 취약점 분석과 경량 AES 암호 알고리즘 개발",
+        "summary": "임베디드 운영체제 QNX의 보안 취약점을 여러 사이버 공격으로 분석하고, 저사양 임베디드 시스템에서 쓸 수 있도록 AES 암호 알고리즘을 경량화한 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-48.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-49",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-49",
+        "teamNumber": 49,
+        "teamName": "49조",
+        "title": "ECDH 키 교환 기반 드론 MAVLink 메시지 서명 인증",
+        "summary": "PX4 드론과 지상 제어 장치 사이의 MAVLink 통신에 ECDH로 대칭키를 안전하게 공유하고 서명 검증을 추가해, 중간자 공격과 메시지 변조를 막는 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-49.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-50",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-50",
+        "teamNumber": 50,
+        "teamName": "50조",
+        "title": "MITRE ATT&CK 기반 클라우드 보안 공격 자동화 도구",
+        "summary": "대상 시스템을 스캔해 CVE를 찾고 MITRE ATT&CK 전술 순서에 따라 공격 시나리오를 자동 생성, 실행한 뒤 결과와 방어책을 제공하는 클라우드, 온프레미스 모의 해킹 도구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-50.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-51",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-51",
+        "teamNumber": 51,
+        "teamName": "51조",
+        "title": "TextRank 기반 난독화 웹쉘 탐지 모델",
+        "summary": "난독화 해제 전처리와 TextRank 기반 알고리즘, 머신러닝을 결합해 난독화 편향 없이 PHP 웹쉘을 탐지하고, 탐지 과정과 결과를 웹에서 시각화하는 프로젝트입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-51.webp"
+      },
+      {
+        "fullName": "pnucse-capstone-2024/Capstone-2024-team-52",
+        "url": "https://github.com/pnucse-capstone-2024/Capstone-2024-team-52",
+        "teamNumber": 52,
+        "teamName": "52조",
+        "title": "Intel MPK 기반 WebAssembly JIT 코드 보호 기법",
+        "summary": "WebAssembly 런타임의 JIT 컴파일 코드 영역에 Intel MPK 보호 키를 다양하게 할당해 4kB 단위의 세밀한 메모리 보호를 제공하는 하드웨어 기반 보안 기법 연구입니다.",
+        "award": null,
+        "thumbnail": "pnu-cse-capstone-2024-capstone-2024-team-52.webp"
+      }
+    ]
+  },
+  {
+    "program": {
       "key": "pnu-cse-capstone-2025",
       "org": "pnucse-capstone2025",
       "programName": "정보컴퓨터공학부 졸업과제 2025",
