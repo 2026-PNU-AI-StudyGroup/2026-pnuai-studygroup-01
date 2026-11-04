@@ -290,6 +290,227 @@
   },
   {
     "program": {
+      "key": "pnu-ai-studygroup-2025",
+      "org": "2025-PNU-SW-StudyGroup",
+      "programName": "AI학습공동체 2025",
+      "category": "PNU AI학습공동체",
+      "startsAt": "2025-04-01",
+      "endsAt": "2025-08-31"
+    },
+    "repos": [
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-01",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-01",
+        "teamNumber": 1,
+        "teamName": "1조",
+        "title": "너의 하루는: 커플 다이어리 앱",
+        "summary": "커플이 감정, 일정, 추억을 한 앱에서 함께 기록하고 돌아보는 다이어리 앱입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-02",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-02",
+        "teamNumber": 2,
+        "teamName": "2조",
+        "title": "맞춤형 뉴스 요약과 문자 알림",
+        "summary": "Naver API 로 모은 최신 뉴스를 GPT 로 요약해 사용자 선호에 맞춰 문자로 보내 주는 웹 서비스입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-03",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-03",
+        "teamNumber": 3,
+        "teamName": "3조",
+        "title": "자석 퍼즐 어드벤처 3D 게임",
+        "summary": "정보컴퓨터공학부와 예술대학이 함께 직접 만든 에셋으로 Unity 3D 퍼즐 어드벤처 게임을 만들었습니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-04",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-04",
+        "teamNumber": 4,
+        "teamName": "4조",
+        "title": "미성년자 숏폼 과의존 분석",
+        "summary": "청소년의 숏폼 이용 현황과 과의존 위험군 데이터를 분석하고 시각화해 보호 정책을 제안합니다. 방송통신위원회 공공데이터 공모전 출품작입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-05",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-05",
+        "teamNumber": 5,
+        "teamName": "5조",
+        "title": "햄북 Stock: 모의 주식 투자 플랫폼",
+        "summary": "가상 머니로 실시간 매수와 매도, AI 뉴스 요약, 익명 채팅을 체험하는 모의 주식 투자 플랫폼입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-06",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-06",
+        "teamNumber": 6,
+        "teamName": "6조",
+        "title": "이거무라: AI 맞춤형 식당 추천",
+        "summary": "방문 기록과 평가를 바탕으로 개인과 친구 모임에 맞는 식당을 AI 로 추천하는 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-06.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-08",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-08",
+        "teamNumber": 8,
+        "teamName": "8조",
+        "title": "코드몬스터: 코딩 테스트 스터디 플랫폼",
+        "summary": "정해진 날짜의 문제를 풀고 풀이를 기록하고 공유하는 커뮤니티 기반 코딩 테스트 스터디 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-08.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-09",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-09",
+        "teamNumber": 9,
+        "teamName": "9조",
+        "title": "AI 면접 보조 시스템",
+        "summary": "면접 대화를 실시간 음성 인식으로 따라가며 추천 질문을 만들고, 끝난 뒤 결과 리포트와 복기를 제공합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-09.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-12",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-12",
+        "teamNumber": 12,
+        "teamName": "12조",
+        "title": "AI 맞춤형 보조교사 서비스",
+        "summary": "학생의 질문으로 사고 흐름을 분석해 성취기준에 맞춘 피드백을 주고 교사의 피드백 업무를 돕는 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-12.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-13",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-13",
+        "teamNumber": 13,
+        "teamName": "13조",
+        "title": "Pilltip: 개인 맞춤 AI 복약 관리",
+        "summary": "건강 상태와 복약 이력을 바탕으로 AI 복약 가이드, 알림, 디지털 문진, 맞춤 DUR 을 제공하는 앱입니다. 2025 SW중심대학 디지털 경진대회 SW부문 수상작입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-13.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-14",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-14",
+        "teamNumber": 14,
+        "teamName": "14조",
+        "title": "키즈카페 이용 데이터 군집 분석",
+        "summary": "광진구 빅데이터 분석 공모전 지정 주제로 키즈카페 관련 데이터를 모아 군집 분석을 했습니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-14.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-15",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-15",
+        "teamNumber": 15,
+        "teamName": "15조",
+        "title": "두도지: 지도를 밝히는 여행 기록 앱",
+        "summary": "지도를 밝히고 랜드마크를 정복하며 핀으로 여행을 기록하고 친구와 공유하는 앱입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-15.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-16",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-16",
+        "teamNumber": 16,
+        "teamName": "16조",
+        "title": "부산 구별 명소 탐색 지도 웹",
+        "summary": "2025 문화 디지털혁신 및 데이터활용 공모전 출품작으로, 부산 16개 구군의 명소를 목록과 지도로 찾아보는 웹 서비스입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-16.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-17",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-17",
+        "teamNumber": 17,
+        "teamName": "17조",
+        "title": "위치 기반 재난 정보와 대피소 안내",
+        "summary": "현재 위치의 재난 정보와 가까운 대피소를 지도로 안내하고 지역 주민이 재난 정보를 나누는 플랫폼입니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-17.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-18",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-18",
+        "teamNumber": 18,
+        "teamName": "18조",
+        "title": "청년 대상 AI 금융상품 큐레이터",
+        "summary": "연령, 소득, 주거 형태, 금융 목표를 대화로 파악해 시중 상품과 정책금융 상품을 함께 추천하고 이유를 설명합니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-19",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-19",
+        "teamNumber": 19,
+        "teamName": "19조",
+        "title": "도시낭인: 서울 1인 가구 주거지 추천",
+        "summary": "서울 청년 1인 가구의 조건에 맞는 주거 지역을 데이터로 추천하고 관련 지원 정책을 함께 안내합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-19.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-20",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-20",
+        "teamNumber": 20,
+        "teamName": "20조",
+        "title": "Glue: 부산대 언어교환 플랫폼",
+        "summary": "부산대 내국인 학생과 교환학생, 유학생을 이어 주는 언어교환 플랫폼입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-31",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-31",
+        "teamNumber": 31,
+        "teamName": "31조",
+        "title": "부산 친환경 관광 경로 추천",
+        "summary": "부산의 오버투어리즘을 줄이기 위해 숨은 명소와 친환경 점수를 반영한 관광 경로를 추천합니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-32",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-32",
+        "teamNumber": 32,
+        "teamName": "32조",
+        "title": "중고차 이미지 차종 분류",
+        "summary": "중고차 이미지를 전처리하고 딥러닝 모델로 차종을 분류한 공모전 프로젝트입니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-35",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-35",
+        "teamNumber": 35,
+        "teamName": "35조",
+        "title": "고위험 임도 분석을 통한 산사태 예방",
+        "summary": "임도 구간별 산사태 빈도와 환경 요인을 k-means 로 군집화해 사방사업 우선 대상지를 제안합니다.",
+        "award": null,
+        "thumbnail": "pnu-ai-studygroup-2025-pnusw-35.webp"
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-36",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-36",
+        "teamNumber": 36,
+        "teamName": "36조",
+        "title": "부산 컨퍼런스 잠재 참여 인구 분석",
+        "summary": "부산데이터위크 참가작으로, 지역별 연령대와 행사장 교통 접근성을 분석해 컨퍼런스 잠재 참여 인구를 추정했습니다.",
+        "award": null
+      },
+      {
+        "fullName": "2025-PNU-SW-StudyGroup/PNUSW-37",
+        "url": "https://github.com/2025-PNU-SW-StudyGroup/PNUSW-37",
+        "teamNumber": 37,
+        "teamName": "37조",
+        "title": "OPIc 모의고사 웹 플랫폼",
+        "summary": "설문 기반 문제 추출과 자동 녹음으로 실제 OPIc 시험 환경을 재현한 영어 말하기 모의고사 플랫폼입니다.",
+        "award": null
+      }
+    ]
+  },
+  {
+    "program": {
       "key": "pnu-ai-studygroup-2026",
       "org": "2026-PNU-AI-StudyGroup",
       "programName": "AI학습공동체 2026",
