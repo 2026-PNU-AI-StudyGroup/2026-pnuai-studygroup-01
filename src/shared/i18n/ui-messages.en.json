@@ -2839,5 +2839,11 @@
   "처리방침 목차": "Privacy policy contents",
   "목차": "Contents",
   "읽지 않은 알림이 {0}개 있습니다.": "You have {0} unread notifications.",
-  "모든 알림을 읽었습니다.": "You have read all notifications."
+  "모든 알림을 읽었습니다.": "You have read all notifications.",
+  "GitHub 레포 주소를 확인해 주세요. 예: https://github.com/아이디/레포": "Please check the GitHub repository URL. Example: https://github.com/username/repo",
+  "레포를 열 수 없어요. 공개 레포인지 확인하거나 칸을 직접 채워 주세요.": "Unable to open the repository. Check that it is public, or fill in the fields yourself.",
+  "README 가 없어요. 칸을 직접 채워 주세요.": "There is no README. Please fill in the fields yourself.",
+  "GitHub 응답이 늦어요. 잠시 뒤 다시 눌러 주세요.": "GitHub is responding slowly. Please try again in a moment.",
+  "이 프로젝트의 대표 이미지를 바꿀 권한이 없습니다.": "You do not have permission to change this project's cover image.",
+  "README 에서 쓸 수 있는 그림을 찾지 못했어요. 대표 이미지를 직접 올려 주세요.": "Could not find a usable image in the README. Please upload a cover image yourself."
 }
