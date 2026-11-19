@@ -136,12 +136,14 @@ function InstantPublishForm({ programId, enabled }: { programId: string; enabled
   }
   return <form onSubmit={submit} aria-busy={pending} className={styles.form}>
     <input type="hidden" name="programId" value={programId} />
-    <fieldset className={formStyles.radioGroup}>
-      <legend><UiText>{"개인 프로젝트 바로 올리기"}</UiText></legend>
-      <ChoiceCard variant="inline" name="instantPublish" value="false" checked={!value} onChange={() => setValue(false)} required label="승인 후 공개 (팀 프로젝트)" />
-      <ChoiceCard variant="inline" name="instantPublish" value="true" checked={value} onChange={() => setValue(true)} required label="바로 공개 (1인 개인 프로젝트, 수업용)" />
-    </fieldset>
-    <p className="text-sm text-[var(--muted)]"><UiText>{"바로 공개를 고르면 학생이 저장하는 즉시 프로젝트가 공개되고 학생 혼자인 팀이 확정됩니다. 학생 1명당 프로젝트 1개입니다."}</UiText></p>
+    <div className={styles.fields}>
+      <fieldset className={formStyles.radioGroup}>
+        <legend><UiText>{"개인 프로젝트 바로 올리기"}</UiText></legend>
+        <ChoiceCard variant="inline" name="instantPublish" value="false" checked={!value} onChange={() => setValue(false)} required label="승인 후 공개 (팀 프로젝트)" />
+        <ChoiceCard variant="inline" name="instantPublish" value="true" checked={value} onChange={() => setValue(true)} required label="바로 공개 (1인 개인 프로젝트, 수업용)" />
+      </fieldset>
+      <p className="text-sm text-[var(--muted)]"><UiText>{"바로 공개를 고르면 학생이 저장하는 즉시 프로젝트가 공개되고 학생 혼자인 팀이 확정됩니다. 학생 1명당 프로젝트 1개입니다."}</UiText></p>
+    </div>
     <ActionBar state={state} pending={pending} label="바로 올리기 설정 저장" />
   </form>;
 }
