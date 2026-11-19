@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -126,7 +126,15 @@ export function ProgramOperationPanel({ program }: { program: { id: string; advi
 function InstantPublishForm({ programId, enabled }: { programId: string; enabled: boolean }) {
   const [value, setValue] = useState(enabled);
   const [state, action, pending] = useActionState(updateProgramInstantPublishAction, initialProgramActionState);
-  return <form action={action} aria-busy={pending} className={styles.form}>
+  const [, startSubmit] = useTransition();
+  // form action 으로 보내면 React 가 끝난 뒤 폼을 처음 렌더 상태로 되돌려, 저장한 선택이 화면에서
+  // 예전 값으로 돌아간다. onSubmit 으로 보내 되돌림을 피한다.
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startSubmit(() => action(formData));
+  }
+  return <form onSubmit={submit} aria-busy={pending} className={styles.form}>
     <input type="hidden" name="programId" value={programId} />
     <fieldset className={formStyles.radioGroup}>
       <legend><UiText>{"개인 프로젝트 바로 올리기"}</UiText></legend>
