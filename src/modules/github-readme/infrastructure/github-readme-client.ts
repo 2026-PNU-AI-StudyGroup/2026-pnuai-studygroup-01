@@ -1,13 +1,13 @@
 import { detectRasterImageType, type RasterImageType } from "@/modules/file/domain/upload-policy";
 import {
-  firstReadmeImage,
+  readmeImageCandidates,
   isAllowedGithubAssetUrl,
   pickTitle,
   readmeTitleAndSummary,
   type GithubRepo,
 } from "@/modules/github-readme/domain/readme";
 
-export type ReadmePreview = { title: string; summary: string; imageUrl: string | null };
+export type ReadmePreview = { title: string; summary: string; imageUrls: string[] };
 export type ReadmeFailure = "NOT_FOUND" | "NO_README" | "UNAVAILABLE";
 export type ReadmeResult = { ok: true; preview: ReadmePreview } | { ok: false; reason: ReadmeFailure };
 
@@ -71,7 +71,7 @@ export async function fetchGithubReadme(repo: GithubRepo, options: ClientOptions
       preview: {
         title: pickTitle({ readmeTitle: title, description: meta.description ?? null, repoName: meta.name ?? repo.repo }).slice(0, 200),
         summary,
-        imageUrl: firstReadmeImage(markdown, { ...repo, branch: meta.default_branch ?? "main" }),
+        imageUrls: readmeImageCandidates(markdown, { ...repo, branch: meta.default_branch ?? "main" }),
       },
     };
   } catch {

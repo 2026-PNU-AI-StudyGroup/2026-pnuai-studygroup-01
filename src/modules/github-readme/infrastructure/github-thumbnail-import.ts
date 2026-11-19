@@ -52,8 +52,11 @@ export async function importGithubThumbnail(
   if (!takeGithubQuota(actor.id)) return "RATE_LIMITED";
   const readme = await fetchGithubReadme(repo, { token: process.env.GITHUB_TOKEN || undefined });
   if (!readme.ok) return readme.reason;
-  if (!readme.preview.imageUrl) return "NO_IMAGE";
-  const image = await downloadGithubImage(readme.preview.imageUrl);
+  let image: Awaited<ReturnType<typeof downloadGithubImage>> = null;
+  for (const url of readme.preview.imageUrls) {
+    image = await downloadGithubImage(url);
+    if (image) break;
+  }
   if (!image) return "NO_IMAGE";
 
   const fileId = randomUUID();

@@ -25,7 +25,7 @@ describe("fetchGithubReadme", () => {
       preview: {
         title: "일정 비서",
         summary: "메일을 읽고 일정을 잡는 에이전트.",
-        imageUrl: "https://raw.githubusercontent.com/alice/agent/dev/shot.png",
+        imageUrls: ["https://raw.githubusercontent.com/alice/agent/dev/shot.png"],
       },
     });
   });

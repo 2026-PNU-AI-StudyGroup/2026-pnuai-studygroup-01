@@ -133,6 +133,8 @@ const ASSET_HOSTS = new Set([
   "user-images.githubusercontent.com",
   "private-user-images.githubusercontent.com",
   "objects.githubusercontent.com",
+  // github.com/user-attachments/ 그림이 리다이렉트되는 GitHub 의 S3 저장소
+  "github-production-user-asset-6210df.s3.amazonaws.com",
 ]);
 
 /**
@@ -164,15 +166,24 @@ function resolveReadmeImage(src: string, source: GithubRepo & { branch: string }
   return `https://raw.githubusercontent.com/${source.owner}/${source.repo}/${source.branch}/${path}`;
 }
 
-/** README 의 첫 그림을 받을 수 있는 주소로 돌려준다. 배지와 허용 목록 밖 주소는 건너뛴다. */
-export function firstReadmeImage(markdown: string, source: GithubRepo & { branch: string }): string | null {
+const NON_RASTER_IMAGE = /\.(svg|gif)$/i;
+
+/**
+ * README 그림 가운데 대표 이미지 후보를 앞에서부터 고른다. 배지, 허용 목록 밖 주소, 대표 이미지로
+ * 저장할 수 없는 SVG/GIF 는 건너뛴다. 확장자 없는 주소는 받아 봐야 알 수 있어 여러 개를 돌려준다.
+ */
+export function readmeImageCandidates(markdown: string, source: GithubRepo & { branch: string }, limit = 3): string[] {
   const candidates = [...markdown.matchAll(MARKDOWN_IMAGE), ...markdown.matchAll(HTML_IMAGE)]
     .sort((left, right) => left.index - right.index)
     .map((match) => match[1]!);
+  const result: string[] = [];
   for (const candidate of candidates) {
     if (BADGE_IMAGE.test(candidate)) continue;
     const resolved = resolveReadmeImage(candidate, source);
-    if (resolved && isAllowedGithubAssetUrl(resolved)) return resolved;
+    if (!resolved || !isAllowedGithubAssetUrl(resolved)) continue;
+    if (NON_RASTER_IMAGE.test(new URL(resolved).pathname) || result.includes(resolved)) continue;
+    result.push(resolved);
+    if (result.length === limit) break;
   }
-  return null;
+  return result;
 }
