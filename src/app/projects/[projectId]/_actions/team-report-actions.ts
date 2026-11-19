@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
+import { importGithubThumbnail } from "@/modules/github-readme/infrastructure/github-thumbnail-import";
+import { GITHUB_THUMBNAIL_MESSAGES } from "@/modules/github-readme/ui/github-readme-messages";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
 import {
   ArtifactRegistrationService,
@@ -127,8 +130,16 @@ export async function registerArtifactAction(formData: FormData): Promise<Report
       fileId: parsed.data.uploadId,
       externalUrl: parsed.data.externalUrl,
     });
+    // 소스 코드 링크가 GitHub 이면 README 첫 그림으로 빈 대표 이미지를 채운다.
+    // 결과물 등록은 이미 끝났으므로 여기서 무엇이 실패해도 등록 결과는 성공이다.
+    const thumbnail = parsed.data.type === "SOURCE_CODE" && parsed.data.externalUrl
+      ? await importGithubThumbnail(actor, { teamId: parsed.data.teamId, repoUrl: parsed.data.externalUrl, replace: false }).catch(() => "UNAVAILABLE" as const)
+      : null;
     revalidatePath("/projects", "layout");
-    return { status: "success", message: "결과물을 등록했습니다." };
+    return {
+      status: "success",
+      message: thumbnail === "FILLED" ? "결과물을 등록했습니다. README 그림으로 대표 이미지를 채웠습니다." : "결과물을 등록했습니다.",
+    };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
@@ -293,6 +304,26 @@ export async function setTeamThumbnailAction(formData: FormData): Promise<Report
     });
     revalidatePath("/projects", "layout");
     return { status: "success", message: parsed.data.uploadId ? "대표 이미지를 저장했습니다." : "대표 이미지를 삭제했습니다." };
+  } catch (error) {
+    const expected = message(error);
+    if (expected) return { status: "error", message: expected };
+    throw error;
+  }
+}
+
+export async function importGithubThumbnailAction(formData: FormData): Promise<ReportActionState> {
+  const actor = await getCurrentOperationalActor();
+  if (!actor) redirect("/sign-in");
+  const parsed = z.object({ teamId: z.string().uuid(), repoUrl: z.string().url().max(2048) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "GitHub 주소를 확인해 주세요." };
+  try {
+    const result = await importGithubThumbnail(actor, { ...parsed.data, replace: true });
+    if (result === "FILLED") {
+      revalidatePath("/projects", "layout");
+      return { status: "success", message: "README 그림을 대표 이미지로 저장했습니다." };
+    }
+    if (result === "SKIPPED") return { status: "error", message: GITHUB_THUMBNAIL_MESSAGES.NO_IMAGE };
+    return { status: "error", message: GITHUB_THUMBNAIL_MESSAGES[result] };
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };

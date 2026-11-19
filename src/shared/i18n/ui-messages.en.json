@@ -2845,5 +2845,8 @@
   "README 가 없어요. 칸을 직접 채워 주세요.": "There is no README. Please fill in the fields yourself.",
   "GitHub 응답이 늦어요. 잠시 뒤 다시 눌러 주세요.": "GitHub is responding slowly. Please try again in a moment.",
   "이 프로젝트의 대표 이미지를 바꿀 권한이 없습니다.": "You do not have permission to change this project's cover image.",
-  "README 에서 쓸 수 있는 그림을 찾지 못했어요. 대표 이미지를 직접 올려 주세요.": "Could not find a usable image in the README. Please upload a cover image yourself."
+  "README 에서 쓸 수 있는 그림을 찾지 못했어요. 대표 이미지를 직접 올려 주세요.": "Could not find a usable image in the README. Please upload a cover image yourself.",
+  "결과물을 등록했습니다. README 그림으로 대표 이미지를 채웠습니다.": "Artifact registered. The cover image was filled from the README image.",
+  "GitHub 주소를 확인해 주세요.": "Please check the GitHub URL.",
+  "README 그림을 대표 이미지로 저장했습니다.": "Saved the README image as the cover image."
 }
