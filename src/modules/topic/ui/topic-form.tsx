@@ -3,7 +3,7 @@
 import { UiInput, UiTextarea } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import type { TopicSummary } from "@/modules/topic/application/topic-ports";
@@ -44,6 +44,7 @@ type TopicFormProps = {
     studentTeams: Array<{ id: string; name: string; memberCount: number; pendingInvitationCount?: number; members?: Array<{ id: string; name: string }> }>;
   };
   initialTopic?: TopicSummary;
+  previewGithubReadme?: (repoUrl: string) => Promise<{ status: "success"; preview: { title: string; summary: string } } | { status: "error"; message: string }>;
   wizard?: {
     closeHref: string;
     createTeamHref?: string;
@@ -70,7 +71,7 @@ export function TopicForm(props: TopicFormProps) {
   return <TopicFormEditor {...props} />;
 }
 
-function StudentProjectRegistrationWizard({ action: createTopic, programs, defaultProgramId, studentApproval, wizard }: TopicFormProps & {
+function StudentProjectRegistrationWizard({ action: createTopic, programs, defaultProgramId, studentApproval, wizard, previewGithubReadme }: TopicFormProps & {
   studentApproval: NonNullable<TopicFormProps["studentApproval"]>;
   wizard: NonNullable<TopicFormProps["wizard"]>;
 }) {
@@ -85,6 +86,25 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
   const [projectTeamName, setProjectTeamName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [repoUrl, setRepoUrl] = useState("");
+  const [readmeMessage, setReadmeMessage] = useState("");
+  const [readmePending, startReadme] = useTransition();
+
+  function loadReadme() {
+    if (!previewGithubReadme || !repoUrl.trim()) return;
+    setReadmeMessage("");
+    startReadme(async () => {
+      const result = await previewGithubReadme(repoUrl.trim());
+      if (result.status === "error") {
+        setReadmeMessage(result.message);
+        return;
+      }
+      // 학생이 이미 쓴 칸은 덮지 않는다.
+      if (!title.trim()) setTitle(result.preview.title);
+      if (!description.trim() && result.preview.summary) setDescription(result.preview.summary);
+      setReadmeMessage("README 에서 제목과 설명을 가져왔습니다. 확인하고 고쳐 주세요.");
+    });
+  }
   const [approvalRoute, setApprovalRoute] = useState<"PROFESSOR" | "ADMIN">("PROFESSOR");
   const [requestedProfessorId, setRequestedProfessorId] = useState("");
   const submitIntent = useRef(false);
@@ -224,6 +244,17 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
             <CustomSelect id="topic-division" name="divisionId" ariaLabel="분과" required value={selectedDivisionId} onValueChange={setSelectedDivisionId} placeholder="분과를 선택하세요" options={selectedProgram.divisions.map((division) => ({ value: division.id, label: division.name }))} />
           </FormField> : null}
         </div>
+        {previewGithubReadme ? (
+          <FormField id="topic-github" label="GitHub 레포" optional description="공개 레포 주소를 넣으면 README 로 제목과 설명을 채웁니다.">
+            <div className="flex gap-2">
+              <TextInput id="topic-github" type="url" inputMode="url" placeholder="https://github.com/아이디/레포" value={repoUrl} onChange={(event) => setRepoUrl(event.target.value)} />
+              <button type="button" className="button-secondary shrink-0" onClick={loadReadme} disabled={readmePending || !repoUrl.trim()}>
+                <UiText>{readmePending ? "가져오는 중" : "README 가져오기"}</UiText>
+              </button>
+            </div>
+            {readmeMessage ? <p role="status" className="mt-2 text-sm text-[var(--muted)]"><UiText>{readmeMessage}</UiText></p> : null}
+          </FormField>
+        ) : null}
         <FormField id="topic-title" label="프로젝트명" required>
           <TextInput id="topic-title" name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={200} required />
         </FormField>

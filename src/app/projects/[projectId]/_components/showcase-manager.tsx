@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 
 import {
+  importGithubThumbnailAction,
   registerShowcaseImageAction,
   removeArtifactAction,
   reorderArtifactsAction,
@@ -35,10 +36,12 @@ function fileTitle(name: string): string {
 export function ShowcaseManager({
   teamId,
   thumbnailPath,
+  githubUrl,
   images,
 }: {
   teamId: string;
   thumbnailPath?: string;
+  githubUrl?: string;
   images: ShowcaseImage[];
 }) {
   const router = useRouter();
@@ -49,6 +52,16 @@ export function ShowcaseManager({
   const [pending, startTransition] = useTransition();
   const [order, setOrder] = useState<ShowcaseImage[]>(images);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  function importFromGithub() {
+    if (!githubUrl) return;
+    run(async () => {
+      const data = new FormData();
+      data.set("teamId", teamId);
+      data.set("repoUrl", githubUrl);
+      return importGithubThumbnailAction(data);
+    });
+  }
 
   function run(work: () => Promise<ReportActionState>) {
     setState(initialReportActionState);
@@ -177,6 +190,11 @@ export function ShowcaseManager({
               <button type="button" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending} onClick={() => thumbnailInputRef.current?.click()}>
                 <UiText>{thumbnailPath ? "이미지 교체" : "이미지 올리기"}</UiText>
               </button>
+              {githubUrl ? (
+                <button type="button" className="button-quiet button-compact min-h-8 px-3 font-medium" disabled={pending} onClick={importFromGithub}>
+                  <UiText>{"GitHub 에서 가져오기"}</UiText>
+                </button>
+              ) : null}
               {thumbnailPath ? (
                 <button type="button" className="button-quiet button-compact min-h-8 px-3 font-medium text-[var(--danger)]" disabled={pending} onClick={removeThumbnail}><UiText>{"삭제"}</UiText></button>
               ) : null}

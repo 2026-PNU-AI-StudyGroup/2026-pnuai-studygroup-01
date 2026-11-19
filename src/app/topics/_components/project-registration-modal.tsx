@@ -4,6 +4,7 @@ import { createTopicAction } from "@/app/_actions/create-topic-action";
 import type { ProjectProgramRecord } from "@/modules/project-program/application/manage-project-programs";
 import { UiOl } from "@/modules/translation/ui/localized-elements";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
+import { previewGithubReadmeAction } from "@/app/_actions/github-readme-actions";
 import { TopicForm } from "@/modules/topic/ui/topic-form";
 import { ConfirmationDialog } from "@/shared/ui/confirmation-dialog";
 import { SplitDialog } from "@/shared/ui/split-dialog";
@@ -71,6 +72,7 @@ export function ProjectRegistrationModal({ programs, defaultProgramId, professor
       <div className="px-6 py-7 sm:px-8 lg:px-10 lg:py-9">
         <TopicForm
           action={createTopicAction}
+          previewGithubReadme={previewGithubReadmeAction}
           programs={programs}
           defaultProgramId={defaultProgramId}
           studentApproval={{ professors, studentTeams }}

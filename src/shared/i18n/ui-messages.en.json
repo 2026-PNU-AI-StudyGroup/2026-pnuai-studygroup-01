@@ -2848,5 +2848,12 @@
   "README 에서 쓸 수 있는 그림을 찾지 못했어요. 대표 이미지를 직접 올려 주세요.": "Could not find a usable image in the README. Please upload a cover image yourself.",
   "결과물을 등록했습니다. README 그림으로 대표 이미지를 채웠습니다.": "Artifact registered. The cover image was filled from the README image.",
   "GitHub 주소를 확인해 주세요.": "Please check the GitHub URL.",
-  "README 그림을 대표 이미지로 저장했습니다.": "Saved the README image as the cover image."
+  "README 그림을 대표 이미지로 저장했습니다.": "Saved the README image as the cover image.",
+  "GitHub 에서 가져오기": "Import from GitHub",
+  "README 에서 제목과 설명을 가져왔습니다. 확인하고 고쳐 주세요.": "Title and description were filled from the README. Please review and edit them.",
+  "GitHub 레포": "GitHub repository",
+  "공개 레포 주소를 넣으면 README 로 제목과 설명을 채웁니다.": "Enter a public repository URL to fill the title and description from its README.",
+  "https://github.com/아이디/레포": "https://github.com/user/repo",
+  "가져오는 중": "Importing",
+  "README 가져오기": "Import README"
 }

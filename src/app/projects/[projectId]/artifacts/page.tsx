@@ -13,6 +13,7 @@ import { ShowcaseSaveAllBar } from "@/app/projects/[projectId]/_components/showc
 import { ShowcaseVideoCard } from "@/app/projects/[projectId]/_components/showcase-video-card";
 import { FormSection, rowActionClass, WorkspacePageHeader } from "@/app/projects/[projectId]/_components/workspace-page-header";
 import { loadTeamReportWorkspace } from "@/app/projects/[projectId]/_lib/team-workspace-data";
+import { parseGithubRepo } from "@/modules/github-readme/domain/readme";
 import { ARTIFACT_TYPE_LABELS, ArtifactMedia } from "@/shared/ui/artifact-media";
 import { EmptyState } from "@/shared/ui/page-primitives";
 
@@ -67,6 +68,9 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
       src: artifact.externalUrl ?? `/api/files/${artifact.fileId}`,
     }));
   const showcaseVideo = reportWorkspace.artifacts.find((artifact) => artifact.type === "PRESENTATION_VIDEO");
+  const githubUrl = reportWorkspace.artifacts.find((artifact) => (
+    artifact.type === "SOURCE_CODE" && artifact.externalUrl && parseGithubRepo(artifact.externalUrl)
+  ))?.externalUrl ?? undefined;
   const visibleArtifacts = canRegisterArtifact
     ? reportWorkspace.artifacts.filter((artifact): artifact is typeof artifact & { type: "SOURCE_CODE" | "POSTER" | "OTHER" } => artifact.type !== "IMAGE" && artifact.type !== "PRESENTATION_VIDEO")
     : reportWorkspace.artifacts.filter((artifact) => artifact.type !== "PRESENTATION_VIDEO");
@@ -129,7 +133,7 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
           canManage={canRegisterArtifact}
         />
         <ShowcaseVideoCard teamId={workspace.id} video={showcaseVideo} canManage={canRegisterArtifact} />
-        {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} images={showcaseImages} /> : null}
+        {canRegisterArtifact ? <ShowcaseManager key={showcaseImages.map((image) => image.id).join(":")} teamId={workspace.id} thumbnailPath={reportWorkspace.thumbnailPath} githubUrl={githubUrl} images={showcaseImages} /> : null}
         {canRegisterArtifact ? <ArtifactRegistrationForm teamId={workspace.id} /> : null}
 
         <FormSection
