@@ -116,3 +116,60 @@ export function normalizeRepoUrl(url: string): string {
   const repo = cleaned.match(/^https:\/\/github\.com\/[^/]+\/[^/]+/)?.[0] ?? cleaned.replace(/\/+$/, "");
   return repo.replace(/\.git$/, "");
 }
+
+export type GithubRepo = { owner: string; repo: string };
+
+/** 레포 주소에서 owner 와 repo 를 뽑는다. 하위 경로와 .git 은 normalizeRepoUrl 이 걷어 낸다. */
+export function parseGithubRepo(url: string): GithubRepo | null {
+  const match = normalizeRepoUrl(url).match(/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)$/);
+  return match ? { owner: match[1]!, repo: match[2]! } : null;
+}
+
+const ASSET_HOSTS = new Set([
+  "raw.githubusercontent.com",
+  "user-images.githubusercontent.com",
+  "private-user-images.githubusercontent.com",
+  "objects.githubusercontent.com",
+]);
+
+/**
+ * 서버가 대신 받아도 되는 그림 주소인지 본다. 서버가 남의 주소를 받는 기능이라
+ * 학생이 README 에 내부망 주소를 적어 서버를 찌르지 못하게 GitHub 그림 호스트로 묶는다.
+ */
+export function isAllowedGithubAssetUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return false;
+  if (ASSET_HOSTS.has(url.hostname)) return true;
+  return url.hostname === "github.com" && url.pathname.startsWith("/user-attachments/");
+}
+
+const MARKDOWN_IMAGE = /!\[[^\]]*\]\(\s*<?([^)\s>]+)/g;
+const HTML_IMAGE = /<img\b[^>]*?\ssrc\s*=\s*["']([^"']+)["']/gi;
+const BADGE_IMAGE = /shields\.io|badgen\.net|badge|codecov\.io|travis-ci|\/actions\/workflows\//i;
+
+function resolveReadmeImage(src: string, source: GithubRepo & { branch: string }): string | null {
+  const blob = src.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/(?:blob|raw)\/([^?#]+)/);
+  if (blob) return `https://raw.githubusercontent.com/${blob[1]}/${blob[2]}/${blob[3]}`;
+  if (/^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith("//")) return src;
+  const path = src.replace(/[?#].*$/, "").replace(/^\.?\//, "");
+  if (!path || path.split("/").includes("..")) return null;
+  return `https://raw.githubusercontent.com/${source.owner}/${source.repo}/${source.branch}/${path}`;
+}
+
+/** README 의 첫 그림을 받을 수 있는 주소로 돌려준다. 배지와 허용 목록 밖 주소는 건너뛴다. */
+export function firstReadmeImage(markdown: string, source: GithubRepo & { branch: string }): string | null {
+  const candidates = [...markdown.matchAll(MARKDOWN_IMAGE), ...markdown.matchAll(HTML_IMAGE)]
+    .sort((left, right) => left.index - right.index)
+    .map((match) => match[1]!);
+  for (const candidate of candidates) {
+    if (BADGE_IMAGE.test(candidate)) continue;
+    const resolved = resolveReadmeImage(candidate, source);
+    if (resolved && isAllowedGithubAssetUrl(resolved)) return resolved;
+  }
+  return null;
+}
