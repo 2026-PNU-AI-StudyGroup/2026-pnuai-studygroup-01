@@ -312,7 +312,7 @@ export async function ProgramManagementWorkspace({
         description="지도교수 유무, 프로젝트 참여 방식, 팀 인원입니다."
         aside={<UiText>{`${participationLabel(program.studentProjectCreationEnabled)}, ${program.studentProjectCreationEnabled ? `팀 ${teamMin}~${teamMax}명` : `팀 최대 ${teamMax}명`}, ${program.advisorEnabled ? "지도교수 있음" : "지도교수 없음"}`}</UiText>}
       >
-        <ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, projectTeamMinSize: teamMin, projectTeamMaxSize: teamMax }} />
+        <ProgramOperationPanel program={{ id: program.id, advisorEnabled: program.advisorEnabled, studentProjectCreationEnabled: program.studentProjectCreationEnabled, studentProjectInstantPublish: program.studentProjectInstantPublish, projectTeamMinSize: teamMin, projectTeamMaxSize: teamMax }} />
       </SettingsRow>
       <SettingsRow
         id="schedule"

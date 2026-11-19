@@ -655,6 +655,8 @@ model ProjectProgram {
   executionEndsAt               DateTime
   advisorEnabled                Boolean                   @default(true)
   studentProjectCreationEnabled Boolean                   @default(false)
+  // 켜면 학생이 만든 프로젝트를 승인 없이 바로 공개하고 1인 팀으로 확정한다(수업 개인 과제).
+  studentProjectInstantPublish  Boolean                   @default(false)
   projectTeamMinSize            Int                       @default(2)
   projectTeamMaxSize            Int                       @default(6)
   icon                          ProgramIcon               @default(FOLDER)

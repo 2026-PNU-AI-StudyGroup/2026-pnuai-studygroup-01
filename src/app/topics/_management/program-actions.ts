@@ -276,6 +276,21 @@ export async function updateProgramOperationAction(_state: ProgramActionState, f
     : { status: "success", message: "운영 설정을 저장했습니다." };
 }
 
+export async function updateProgramInstantPublishAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const programId = programIdSchema.safeParse(formData.get("programId"));
+  const instantPublish = z.enum(["true", "false"]).safeParse(formData.get("instantPublish"));
+  if (!programId.success || !instantPublish.success) return { status: "error", message: "설정 값을 확인해 주세요." };
+  const enabled = instantPublish.data === "true";
+  try {
+    await service().updateInstantPublish(await actor(), programId.data, enabled);
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  refreshManagement(programId.data);
+  return { status: "success", message: enabled ? "개인 프로젝트 바로 올리기를 켰습니다." : "개인 프로젝트 바로 올리기를 껐습니다." };
+}
+
 export async function updateProgramScheduleAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
   const programId = programIdSchema.safeParse(formData.get("programId"));
   const input = programScheduleSchema.safeParse(Object.fromEntries(formData));
