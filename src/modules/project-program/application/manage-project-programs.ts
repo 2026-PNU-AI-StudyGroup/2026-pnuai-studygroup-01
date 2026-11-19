@@ -17,6 +17,7 @@ export type ProjectProgramRecord = Omit<ProjectProgramDetails, "projectRegistrat
   status?: "DRAFT" | "OPEN" | "CLOSED";
   divisions?: Array<{ id: string; name: string; position: number }>;
   votingPolicy?: ProgramVotingPolicyDetails | null;
+  studentProjectInstantPublish?: boolean;
 };
 
 export type ProjectProgramCreateInput = Omit<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt"> & Partial<Pick<ProjectProgramDetails, "projectRegistrationStartsAt" | "projectRegistrationEndsAt">> & {
@@ -115,6 +116,7 @@ export interface ProjectProgramRepository {
   close?(id: string, changedById: string, changedAt: Date): Promise<boolean>;
   changeStatus(id: string, status: "OPEN" | "CLOSED", changedById: string, changedAt: Date): Promise<boolean>;
   changeStudentProjectPolicy(id: string, input: { enabled: boolean; minSize: number; maxSize: number; recruitmentStartsAt: Date | null; recruitmentEndsAt: Date | null; advisorEnabled?: boolean }): Promise<ChangeStudentProjectPolicyOutcome>;
+  setStudentProjectInstantPublish(id: string, enabled: boolean): Promise<"UPDATED" | "NOT_STUDENT_REGISTRATION" | "NOT_FOUND">;
   changeIcon(id: string, icon: ProgramIconKey): Promise<boolean>;
   findPublicActive?(id: string): Promise<{
     id: string;
@@ -128,6 +130,7 @@ export interface ProjectProgramRepository {
     executionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
+    studentProjectInstantPublish?: boolean;
     projectTeamMinSize: number;
     projectTeamMaxSize: number;
   } | null>;
@@ -143,6 +146,7 @@ export interface ProjectProgramRepository {
     executionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
+    studentProjectInstantPublish?: boolean;
     projectTeamMinSize: number;
     projectTeamMaxSize: number;
   } | null>;
@@ -295,6 +299,16 @@ export class ProjectProgramService {
     assertProgramAdmin(actor);
     const outcome = await this.repository.updateSettings(id, { advisorEnabled }, actor.id);
     if (outcome !== "UPDATED") throw new ProjectProgramOperationError("지도교수 설정을 변경할 프로그램이 없습니다.");
+  }
+  async updateInstantPublish(actor: CurrentActor, id: string, enabled: boolean) {
+    assertProgramAdmin(actor);
+    const outcome = await this.repository.setStudentProjectInstantPublish(id, enabled);
+    if (outcome === "UPDATED") return;
+    throw new ProjectProgramOperationError(
+      outcome === "NOT_STUDENT_REGISTRATION"
+        ? "학생이 등록하는 방식의 프로그램에서만 켤 수 있습니다."
+        : "설정할 프로그램이 없습니다.",
+    );
   }
   async updateSchedule(actor: CurrentActor, id: string, input: ProjectProgramScheduleUpdate) {
     assertProgramAdmin(actor);

@@ -28,6 +28,7 @@ function repository(overrides: Partial<ProjectProgramRepository> = {}): ProjectP
     updateSchedule: vi.fn(async () => "UPDATED" as const),
     changeStatus: vi.fn(),
     changeStudentProjectPolicy: vi.fn(),
+    setStudentProjectInstantPublish: vi.fn(),
     changeIcon: vi.fn(),
     findOpen: vi.fn(),
     ...overrides,

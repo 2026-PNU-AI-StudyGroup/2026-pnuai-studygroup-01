@@ -396,6 +396,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
           executionStartsAt: normalized.executionStartsAt,
           executionEndsAt: normalized.executionEndsAt,
           studentProjectCreationEnabled: normalized.studentProjectCreationEnabled,
+          ...(transitionToDirect ? { studentProjectInstantPublish: false } : {}),
           projectTeamMinSize: normalized.projectTeamMinSize,
           projectTeamMaxSize: normalized.projectTeamMaxSize,
           endProcessedAt: normalized.endsAt > new Date() && normalized.endsAt.getTime() !== current.endsAt.getTime() ? null : undefined,
@@ -454,6 +455,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         where: { id },
         data: {
           studentProjectCreationEnabled: input.enabled,
+          ...(input.enabled ? {} : { studentProjectInstantPublish: false }),
           projectTeamMinSize: input.minSize,
           projectTeamMaxSize: input.maxSize,
           recruitmentStartsAt: input.recruitmentStartsAt,
@@ -463,6 +465,14 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
       });
       return "UPDATED";
     });
+  }
+
+  async setStudentProjectInstantPublish(id: string, enabled: boolean): Promise<"UPDATED" | "NOT_STUDENT_REGISTRATION" | "NOT_FOUND"> {
+    const program = await this.client.projectProgram.findUnique({ where: { id }, select: { studentProjectCreationEnabled: true } });
+    if (!program) return "NOT_FOUND";
+    if (enabled && !program.studentProjectCreationEnabled) return "NOT_STUDENT_REGISTRATION";
+    await this.client.projectProgram.update({ where: { id }, data: { studentProjectInstantPublish: enabled } });
+    return "UPDATED";
   }
 
   async changeIcon(id: string, icon: ProgramIconKey): Promise<boolean> {
@@ -482,6 +492,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
     executionEndsAt: Date;
     advisorEnabled: boolean;
     studentProjectCreationEnabled: boolean;
+    studentProjectInstantPublish: boolean;
     projectTeamMinSize: number;
     projectTeamMaxSize: number;
   } | null> {
@@ -499,6 +510,7 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
         executionEndsAt: true,
         advisorEnabled: true,
         studentProjectCreationEnabled: true,
+        studentProjectInstantPublish: true,
         projectTeamMinSize: true,
         projectTeamMaxSize: true,
       },
