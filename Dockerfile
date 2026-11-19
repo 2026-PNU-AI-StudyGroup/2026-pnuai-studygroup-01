@@ -42,6 +42,7 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build ./node_modules/.b
 COPY tsconfig.json ./tsconfig.json
 COPY scripts ./scripts
 COPY src/shared/infrastructure/object-storage ./src/shared/infrastructure/object-storage
+COPY src/modules/github-readme/domain ./src/modules/github-readme/domain
 COPY public/fonts/pretendard ./public/fonts/pretendard
 COPY public/mock ./public/mock
 CMD ["./node_modules/.bin/tsx", "scripts/seed-demo-data.ts"]
