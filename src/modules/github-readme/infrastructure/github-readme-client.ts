@@ -16,6 +16,11 @@ const TIMEOUT_MS = 8_000;
 const README_MAX_CHARS = 200_000;
 const MAX_REDIRECTS = 3;
 
+/** 읽지 않을 응답 본문을 닫아 연결을 돌려준다. */
+async function discard(response: Response): Promise<void> {
+  await response.body?.cancel().catch(() => undefined);
+}
+
 type ClientOptions = { fetch?: typeof fetch; token?: string };
 
 function headers(accept: string, token?: string): Record<string, string> {
@@ -36,16 +41,28 @@ export async function fetchGithubReadme(repo: GithubRepo, options: ClientOptions
       headers: headers("application/vnd.github+json", options.token),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (repoResponse.status === 404) return { ok: false, reason: "NOT_FOUND" };
-    if (!repoResponse.ok) return { ok: false, reason: "UNAVAILABLE" };
+    if (repoResponse.status === 404) {
+      await discard(repoResponse);
+      return { ok: false, reason: "NOT_FOUND" };
+    }
+    if (!repoResponse.ok) {
+      await discard(repoResponse);
+      return { ok: false, reason: "UNAVAILABLE" };
+    }
     const meta = (await repoResponse.json()) as { default_branch?: string; description?: string | null; name?: string };
 
     const readmeResponse = await request(`${base}/readme`, {
       headers: headers("application/vnd.github.raw", options.token),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (readmeResponse.status === 404) return { ok: false, reason: "NO_README" };
-    if (!readmeResponse.ok) return { ok: false, reason: "UNAVAILABLE" };
+    if (readmeResponse.status === 404) {
+      await discard(readmeResponse);
+      return { ok: false, reason: "NO_README" };
+    }
+    if (!readmeResponse.ok) {
+      await discard(readmeResponse);
+      return { ok: false, reason: "UNAVAILABLE" };
+    }
     const markdown = (await readmeResponse.text()).slice(0, README_MAX_CHARS);
 
     const { title, summary } = readmeTitleAndSummary(markdown);
@@ -104,13 +121,20 @@ export async function downloadGithubImage(
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (response.status >= 300 && response.status < 400) {
+        await discard(response);
         const location = response.headers.get("location");
         if (!location) return null;
         current = new URL(location, current).toString();
         continue;
       }
-      if (!response.ok || !response.body) return null;
-      if (Number(response.headers.get("content-length") ?? 0) > GITHUB_IMAGE_MAX_BYTES) return null;
+      if (!response.ok || !response.body) {
+        await discard(response);
+        return null;
+      }
+      if (Number(response.headers.get("content-length") ?? 0) > GITHUB_IMAGE_MAX_BYTES) {
+        await discard(response);
+        return null;
+      }
       const bytes = await readCapped(response.body, GITHUB_IMAGE_MAX_BYTES);
       if (!bytes) return null;
       const contentType = detectRasterImageType(bytes);

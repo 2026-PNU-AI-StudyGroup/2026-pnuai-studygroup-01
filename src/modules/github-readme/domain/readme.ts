@@ -122,7 +122,10 @@ export type GithubRepo = { owner: string; repo: string };
 /** 레포 주소에서 owner 와 repo 를 뽑는다. 하위 경로와 .git 은 normalizeRepoUrl 이 걷어 낸다. */
 export function parseGithubRepo(url: string): GithubRepo | null {
   const match = normalizeRepoUrl(url).match(/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)$/);
-  return match ? { owner: match[1]!, repo: match[2]! } : null;
+  if (!match) return null;
+  // "." 와 ".." 는 문자 규칙을 통과하지만 경로 이동이라 이름이 될 수 없다.
+  if ([match[1], match[2]].some((part) => part === "." || part === "..")) return null;
+  return { owner: match[1]!, repo: match[2]! };
 }
 
 const ASSET_HOSTS = new Set([

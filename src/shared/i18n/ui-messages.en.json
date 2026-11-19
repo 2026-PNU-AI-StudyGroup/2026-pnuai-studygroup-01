@@ -2855,5 +2855,6 @@
   "공개 레포 주소를 넣으면 README 로 제목과 설명을 채웁니다.": "Enter a public repository URL to fill the title and description from its README.",
   "https://github.com/아이디/레포": "https://github.com/user/repo",
   "가져오는 중": "Importing",
-  "README 가져오기": "Import README"
+  "README 가져오기": "Import README",
+  "GitHub 가져오기를 너무 자주 눌렀어요. 10분 뒤 다시 시도해 주세요.": "You pressed GitHub import too often. Try again in 10 minutes."
 }

@@ -99,9 +99,9 @@ function StudentProjectRegistrationWizard({ action: createTopic, programs, defau
         setReadmeMessage(result.message);
         return;
       }
-      // 학생이 이미 쓴 칸은 덮지 않는다.
-      if (!title.trim()) setTitle(result.preview.title);
-      if (!description.trim() && result.preview.summary) setDescription(result.preview.summary);
+      // 학생이 이미 쓴 칸은 덮지 않는다. 기다리는 동안 입력했을 수 있어 현재 값으로 본다.
+      setTitle((current) => (current.trim() ? current : result.preview.title));
+      if (result.preview.summary) setDescription((current) => (current.trim() ? current : result.preview.summary));
       setReadmeMessage("README 에서 제목과 설명을 가져왔습니다. 확인하고 고쳐 주세요.");
     });
   }

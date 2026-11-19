@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import { parseGithubRepo } from "@/modules/github-readme/domain/readme";
+import { takeGithubQuota } from "@/modules/github-readme/infrastructure/github-rate-limit";
 import { downloadGithubImage, fetchGithubReadme, type ReadmeFailure } from "@/modules/github-readme/infrastructure/github-readme-client";
 import type { CurrentActor } from "@/modules/identity/domain/current-actor";
 import { ArtifactManagementService } from "@/modules/report/application/manage-reports";
@@ -10,7 +11,7 @@ import { PrismaArtifactRepository } from "@/modules/report/infrastructure/prisma
 import { prisma } from "@/shared/infrastructure/database/prisma";
 import { objectStorageBucket, s3 } from "@/shared/infrastructure/object-storage/s3";
 
-export type GithubThumbnailResult = "FILLED" | "SKIPPED" | "FORBIDDEN" | "NO_REPO" | "NO_IMAGE" | ReadmeFailure;
+export type GithubThumbnailResult = "FILLED" | "SKIPPED" | "FORBIDDEN" | "NO_REPO" | "NO_IMAGE" | "RATE_LIMITED" | ReadmeFailure;
 
 /**
  * README 첫 그림을 프로젝트 대표 이미지로 넣는다.
@@ -33,15 +34,22 @@ export async function importGithubThumbnail(
   const team = await prisma.projectTeam.findUnique({
     where: { id: input.teamId },
     select: {
-      project: { select: { thumbnailPath: true } },
+      confirmedAt: true,
+      project: { select: { thumbnailPath: true, status: true, program: { select: { executionStartsAt: true, executionEndsAt: true } } } },
       memberships: { where: { userId: actor.id, endedAt: null }, select: { id: true } },
       _count: { select: { artifacts: { where: { type: "IMAGE" } } } },
     },
   });
   // 남의 팀에 그림을 받아 두는 일이 없게 GitHub 를 부르기 전에 먼저 막는다.
-  if (!team || (actor.role !== "ADMIN" && team.memberships.length === 0)) return "FORBIDDEN";
+  // 조건은 setThumbnail 의 authorizeTeam 과 같다(진행 중 주제, 확정된 팀, 학생은 실행 기간 안).
+  if (!team || team.project.status !== "ACTIVE" || !team.confirmedAt) return "FORBIDDEN";
+  if (actor.role !== "ADMIN") {
+    const { executionStartsAt, executionEndsAt } = team.project.program;
+    if (team.memberships.length === 0 || now < executionStartsAt || now > executionEndsAt) return "FORBIDDEN";
+  }
   if (!input.replace && (team.project.thumbnailPath || team._count.artifacts > 0)) return "SKIPPED";
 
+  if (!takeGithubQuota(actor.id)) return "RATE_LIMITED";
   const readme = await fetchGithubReadme(repo, { token: process.env.GITHUB_TOKEN || undefined });
   if (!readme.ok) return readme.reason;
   if (!readme.preview.imageUrl) return "NO_IMAGE";
@@ -60,26 +68,47 @@ export async function importGithubThumbnail(
     ChecksumSHA256: digest.digest("base64"),
   }));
   const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
-  await prisma.storedFile.create({
-    data: {
-      id: fileId,
-      objectKey,
-      uploadObjectKey: `staging/${input.teamId}/${fileId}`,
-      projectTeamId: input.teamId,
-      ownerId: actor.id,
-      purpose: "ARTIFACT",
-      consumer: "ARTIFACT",
-      status: "READY",
-      originalName: `${repo.repo}-readme`,
-      contentType: image.contentType,
-      size: image.bytes.length,
-      sha256,
-      expiresAt,
-      // 제약: cleanupAfter 는 expiresAt 보다 하루 이상 뒤
-      cleanupAfter: new Date(expiresAt.getTime() + 24 * 60 * 60 * 1000),
-      readyAt: now,
-    },
-  });
+  try {
+    await prisma.storedFile.create({
+      data: {
+        id: fileId,
+        objectKey,
+        uploadObjectKey: `staging/${input.teamId}/${fileId}`,
+        projectTeamId: input.teamId,
+        ownerId: actor.id,
+        purpose: "ARTIFACT",
+        consumer: "ARTIFACT",
+        status: "READY",
+        originalName: `${repo.repo}-readme`,
+        contentType: image.contentType,
+        size: image.bytes.length,
+        sha256,
+        expiresAt,
+        // 제약: cleanupAfter 는 expiresAt 보다 하루 이상 뒤
+        cleanupAfter: new Date(expiresAt.getTime() + 24 * 60 * 60 * 1000),
+        readyAt: now,
+      },
+    });
+  } catch (error) {
+    // DB 행이 없으면 정리 작업이 이 객체를 찾지 못한다. 직접 지우고 오류를 올린다.
+    await s3.send(new DeleteObjectCommand({ Bucket: objectStorageBucket, Key: objectKey })).catch(() => undefined);
+    throw error;
+  }
+  if (!input.replace) {
+    // 가져오는 사이 학생이 직접 올렸을 수 있다. 붙이기 직전에 빈 칸인지 다시 본다.
+    const latest = await prisma.projectTeam.findUnique({
+      where: { id: input.teamId },
+      select: {
+        project: { select: { thumbnailPath: true } },
+        _count: { select: { artifacts: { where: { type: "IMAGE" } } } },
+      },
+    });
+    if (!latest || latest.project.thumbnailPath || latest._count.artifacts > 0) {
+      // 행을 지우면 DB 트리거가 객체 삭제를 예약한다.
+      await prisma.storedFile.delete({ where: { id: fileId } });
+      return "SKIPPED";
+    }
+  }
   await new ArtifactManagementService(new PrismaArtifactRepository(prisma)).setThumbnail(actor, { teamId: input.teamId, fileId }, now);
   return "FILLED";
 }

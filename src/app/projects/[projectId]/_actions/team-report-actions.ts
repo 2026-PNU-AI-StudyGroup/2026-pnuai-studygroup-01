@@ -327,6 +327,8 @@ export async function importGithubThumbnailAction(formData: FormData): Promise<R
   } catch (error) {
     const expected = message(error);
     if (expected) return { status: "error", message: expected };
-    throw error;
+    // S3 나 DB 오류는 화면을 깨지 않고 안내만 한다.
+    console.error("importGithubThumbnailAction failed", error);
+    return { status: "error", message: GITHUB_THUMBNAIL_MESSAGES.UNAVAILABLE };
   }
 }

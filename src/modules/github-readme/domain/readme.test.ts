@@ -15,6 +15,9 @@ describe("parseGithubRepo", () => {
     expect(parseGithubRepo("https://gitlab.com/alice/agent")).toBeNull();
     expect(parseGithubRepo("https://github.com/alice")).toBeNull();
     expect(parseGithubRepo("not a url")).toBeNull();
+    expect(parseGithubRepo("https://github.com/../agent")).toBeNull();
+    expect(parseGithubRepo("https://github.com/alice/..")).toBeNull();
+    expect(parseGithubRepo("https://github.com/./agent")).toBeNull();
   });
 });
 

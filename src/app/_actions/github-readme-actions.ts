@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { parseGithubRepo } from "@/modules/github-readme/domain/readme";
+import { takeGithubQuota } from "@/modules/github-readme/infrastructure/github-rate-limit";
 import { fetchGithubReadme, type ReadmePreview } from "@/modules/github-readme/infrastructure/github-readme-client";
 import { README_FAILURE_MESSAGES } from "@/modules/github-readme/ui/github-readme-messages";
 import { getCurrentOperationalActor } from "@/modules/identity/infrastructure/operational-actor";
@@ -15,6 +16,7 @@ export async function previewGithubReadmeAction(
   if (!actor) redirect("/sign-in");
   const repo = parseGithubRepo(String(repoUrl).slice(0, 2048));
   if (!repo) return { status: "error", message: README_FAILURE_MESSAGES.NO_REPO };
+  if (!takeGithubQuota(actor.id)) return { status: "error", message: README_FAILURE_MESSAGES.RATE_LIMITED };
   const result = await fetchGithubReadme(repo, { token: process.env.GITHUB_TOKEN || undefined });
   return result.ok
     ? { status: "success", preview: result.preview }
