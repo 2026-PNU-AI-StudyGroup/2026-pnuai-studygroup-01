@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   updateProgramBasicInfoAction,
+  updateProgramInstantPublishAction,
   updateProgramOperationAction,
   updateProgramScheduleAction,
   updateProgramVotingPolicyAction,
@@ -84,7 +85,7 @@ export function ProgramBasicInfoPanel({ program, categoryOptions, tracks }: {
   </div>;
 }
 
-export function ProgramOperationPanel({ program }: { program: { id: string; advisorEnabled: boolean; studentProjectCreationEnabled: boolean; projectTeamMinSize: number; projectTeamMaxSize: number } }) {
+export function ProgramOperationPanel({ program }: { program: { id: string; advisorEnabled: boolean; studentProjectCreationEnabled: boolean; studentProjectInstantPublish?: boolean; projectTeamMinSize: number; projectTeamMaxSize: number } }) {
   const [registrationMode, setRegistrationMode] = useState(program.studentProjectCreationEnabled);
   const [advisorEnabled, setAdvisorEnabled] = useState(program.advisorEnabled);
   const [teamMinSize, setTeamMinSize] = useState(program.projectTeamMinSize);
@@ -118,7 +119,23 @@ export function ProgramOperationPanel({ program }: { program: { id: string; advi
         {hasUnsavedAdvisorChange ? <><input type="hidden" name="operationIntent" value="ADVISOR_ONLY" /><ActionBar state={state} pending={pending} label="지도교수 설정 저장" /></> : <Link className="button-secondary button-compact min-h-8 px-3 font-medium" href={`${programManagementHref(program.id)}?targetMode=DIRECT#schedule`}><UiText>{"모집 기간 설정으로 이동"}</UiText></Link>}
       </div> : <ActionBar state={state} pending={pending} label="운영 설정 저장" />}
     </form>
+    {program.studentProjectCreationEnabled ? <InstantPublishForm programId={program.id} enabled={program.studentProjectInstantPublish ?? false} /> : null}
   </div>;
+}
+
+function InstantPublishForm({ programId, enabled }: { programId: string; enabled: boolean }) {
+  const [value, setValue] = useState(enabled);
+  const [state, action, pending] = useActionState(updateProgramInstantPublishAction, initialProgramActionState);
+  return <form action={action} aria-busy={pending} className={styles.form}>
+    <input type="hidden" name="programId" value={programId} />
+    <fieldset className={formStyles.radioGroup}>
+      <legend><UiText>{"개인 프로젝트 바로 올리기"}</UiText></legend>
+      <ChoiceCard variant="inline" name="instantPublish" value="false" checked={!value} onChange={() => setValue(false)} required label="승인 후 공개 (팀 프로젝트)" />
+      <ChoiceCard variant="inline" name="instantPublish" value="true" checked={value} onChange={() => setValue(true)} required label="바로 공개 (1인 개인 프로젝트, 수업용)" />
+    </fieldset>
+    <p className="text-sm text-[var(--muted)]"><UiText>{"바로 공개를 고르면 학생이 저장하는 즉시 프로젝트가 공개되고 학생 혼자인 팀이 확정됩니다. 학생 1명당 프로젝트 1개입니다."}</UiText></p>
+    <ActionBar state={state} pending={pending} label="바로 올리기 설정 저장" />
+  </form>;
 }
 
 export function ProgramSchedulePanel({ program, targetMode }: { program: ProgramDates & { id: string; studentProjectCreationEnabled: boolean }; targetMode: "CURRENT" | "DIRECT" }) {

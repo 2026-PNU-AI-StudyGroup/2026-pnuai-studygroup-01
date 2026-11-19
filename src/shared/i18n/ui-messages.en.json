@@ -2856,5 +2856,14 @@
   "https://github.com/아이디/레포": "https://github.com/user/repo",
   "가져오는 중": "Importing",
   "README 가져오기": "Import README",
-  "GitHub 가져오기를 너무 자주 눌렀어요. 10분 뒤 다시 시도해 주세요.": "You pressed GitHub import too often. Try again in 10 minutes."
+  "GitHub 가져오기를 너무 자주 눌렀어요. 10분 뒤 다시 시도해 주세요.": "You pressed GitHub import too often. Try again in 10 minutes.",
+  "설정 값을 확인해 주세요.": "Check the setting value.",
+  "개인 프로젝트 바로 올리기를 켰습니다.": "Personal project instant publish is on.",
+  "개인 프로젝트 바로 올리기를 껐습니다.": "Personal project instant publish is off.",
+  "개인 프로젝트 바로 올리기": "Personal project instant publish",
+  "승인 후 공개 (팀 프로젝트)": "Publish after approval (team project)",
+  "바로 공개 (1인 개인 프로젝트, 수업용)": "Publish immediately (solo personal project, for classes)",
+  "바로 공개를 고르면 학생이 저장하는 즉시 프로젝트가 공개되고 학생 혼자인 팀이 확정됩니다. 학생 1명당 프로젝트 1개입니다.": "With immediate publishing, the project goes public as soon as the student saves it and a one-person team is confirmed. Each student can have one project.",
+  "바로 올리기 설정 저장": "Save instant publish setting",
+  "학생이 등록하는 방식의 프로그램에서만 켤 수 있습니다.": "This can only be turned on for programs where students register projects."
 }
