@@ -468,11 +468,14 @@ export class PrismaProjectProgramRepository implements ProjectProgramRepository 
   }
 
   async setStudentProjectInstantPublish(id: string, enabled: boolean): Promise<"UPDATED" | "NOT_STUDENT_REGISTRATION" | "NOT_FOUND"> {
-    const program = await this.client.projectProgram.findUnique({ where: { id }, select: { studentProjectCreationEnabled: true } });
-    if (!program) return "NOT_FOUND";
-    if (enabled && !program.studentProjectCreationEnabled) return "NOT_STUDENT_REGISTRATION";
-    await this.client.projectProgram.update({ where: { id }, data: { studentProjectInstantPublish: enabled } });
-    return "UPDATED";
+    // 조건부 갱신 한 번으로 끝낸다. 읽고 쓰는 사이에 학생 등록이 꺼져도 DB CHECK 오류 대신 안내 문구로 돌아간다.
+    const result = await this.client.projectProgram.updateMany({
+      where: { id, ...(enabled ? { studentProjectCreationEnabled: true } : {}) },
+      data: { studentProjectInstantPublish: enabled },
+    });
+    if (result.count === 1) return "UPDATED";
+    const exists = await this.client.projectProgram.count({ where: { id } });
+    return exists ? "NOT_STUDENT_REGISTRATION" : "NOT_FOUND";
   }
 
   async changeIcon(id: string, icon: ProgramIconKey): Promise<boolean> {

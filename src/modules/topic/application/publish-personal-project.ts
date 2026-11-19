@@ -20,7 +20,7 @@ export interface PersonalProjectPublisher {
 }
 
 const FAILURE_MESSAGES = {
-  UNAVAILABLE: "지금은 이 프로그램에 프로젝트를 올릴 수 없습니다. 등록 기간과 프로그램 설정을 확인해 주세요.",
+  UNAVAILABLE: "지금은 이 프로그램에 프로젝트를 올릴 수 없습니다. 등록 기간, 수행 기간과 프로그램 설정을 확인해 주세요.",
   ALREADY_IN_PROGRAM: "이미 이 프로그램에 프로젝트가 있습니다. 학생 1명당 프로젝트 1개만 올릴 수 있습니다.",
   INVALID_DIVISION: "분과를 다시 선택해 주세요.",
 } as const;

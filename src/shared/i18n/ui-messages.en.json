@@ -2866,7 +2866,7 @@
   "바로 공개를 고르면 학생이 저장하는 즉시 프로젝트가 공개되고 학생 혼자인 팀이 확정됩니다. 학생 1명당 프로젝트 1개입니다.": "With immediate publishing, the project goes public as soon as the student saves it and a one-person team is confirmed. Each student can have one project.",
   "바로 올리기 설정 저장": "Save instant publish setting",
   "학생이 등록하는 방식의 프로그램에서만 켤 수 있습니다.": "This can only be turned on for programs where students register projects.",
-  "지금은 이 프로그램에 프로젝트를 올릴 수 없습니다. 등록 기간과 프로그램 설정을 확인해 주세요.": "Projects cannot be added to this program right now. Check the registration period and program settings.",
+  "지금은 이 프로그램에 프로젝트를 올릴 수 없습니다. 등록 기간, 수행 기간과 프로그램 설정을 확인해 주세요.": "Projects cannot be added to this program right now. Check the registration period, execution period and program settings.",
   "이미 이 프로그램에 프로젝트가 있습니다. 학생 1명당 프로젝트 1개만 올릴 수 있습니다.": "You already have a project in this program. Each student can add only one project.",
   "분과를 다시 선택해 주세요.": "Please select the track again.",
   "학생만 개인 프로젝트를 올릴 수 있습니다.": "Only students can add a personal project.",

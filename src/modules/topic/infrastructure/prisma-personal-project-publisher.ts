@@ -11,6 +11,8 @@ type LockedProgram = {
   endsAt: Date;
   projectRegistrationStartsAt: Date;
   projectRegistrationEndsAt: Date;
+  executionStartsAt: Date;
+  executionEndsAt: Date;
   studentProjectCreationEnabled: boolean;
   studentProjectInstantPublish: boolean;
   createdById: string | null;
@@ -28,6 +30,7 @@ export class PrismaPersonalProjectPublisher implements PersonalProjectPublisher 
     return this.client.$transaction(async (transaction) => {
       const program = (await transaction.$queryRaw<LockedProgram[]>(Prisma.sql`
         SELECT "isPublic", "endsAt", "projectRegistrationStartsAt", "projectRegistrationEndsAt",
+               "executionStartsAt", "executionEndsAt",
                "studentProjectCreationEnabled", "studentProjectInstantPublish", "createdById"
         FROM "project_program"
         WHERE "id" = ${input.programId}
@@ -39,6 +42,9 @@ export class PrismaPersonalProjectPublisher implements PersonalProjectPublisher 
         program.endsAt <= input.now ||
         program.projectRegistrationStartsAt > input.now ||
         program.projectRegistrationEndsAt <= input.now ||
+        // 결과물 등록과 대표 이미지는 수행 기간에만 되므로, 올리는 순간도 수행 기간 안이어야 한다.
+        program.executionStartsAt > input.now ||
+        program.executionEndsAt < input.now ||
         !program.studentProjectCreationEnabled ||
         !program.studentProjectInstantPublish
       ) return { status: "UNAVAILABLE" };
