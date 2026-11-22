@@ -657,6 +657,8 @@ model ProjectProgram {
   studentProjectCreationEnabled Boolean                   @default(false)
   // 켜면 학생이 만든 프로젝트를 승인 없이 바로 공개하고 1인 팀으로 확정한다(수업 개인 과제).
   studentProjectInstantPublish  Boolean                   @default(false)
+  /// 심사 집계 환산 점수에서 내부 심사 비율(%). 나머지는 자문위원 평균. DB CHECK 0~100.
+  scoreboardStaffWeight         Int                       @default(50)
   projectTeamMinSize            Int                       @default(2)
   projectTeamMaxSize            Int                       @default(6)
   icon                          ProgramIcon               @default(FOLDER)

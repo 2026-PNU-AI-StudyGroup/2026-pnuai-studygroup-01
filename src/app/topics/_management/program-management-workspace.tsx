@@ -357,8 +357,11 @@ export async function ProgramManagementWorkspace({
       </WorkCard>
     );
   } else if (tab === "results") {
-    const scoreboard = await programScoreboard(prisma, program.id);
-    content = <ProgramScoreboardPanel programId={program.id} programName={program.name} rows={scoreboard} />;
+    const [scoreboard, weight] = await Promise.all([
+      programScoreboard(prisma, program.id),
+      prisma.projectProgram.findUnique({ where: { id: program.id }, select: { scoreboardStaffWeight: true } }),
+    ]);
+    content = <ProgramScoreboardPanel programId={program.id} programName={program.name} rows={scoreboard} staffWeight={weight?.scoreboardStaffWeight ?? 50} />;
   } else if (tab === "reports") {
     const [records, teamRecords] = await Promise.all([
       prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } }),

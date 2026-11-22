@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // 서버 액션을 그대로 들이면 prisma 까지 딸려 와 DATABASE_URL 을 찾는다. 화면만 본다.
-vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramTeamResultsAction: vi.fn() }));
+vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramTeamResultsAction: vi.fn(), saveScoreboardWeightAction: vi.fn() }));
 
 import {
   ProgramScoreboardPanel,
@@ -49,6 +49,26 @@ describe("집계표 줄 세우기", () => {
   it("환산 점수는 내부 심사와 자문 평균을 만점 대비 100점으로 바꿔 평균한다", () => {
     expect(combinedScore(rows[0]!)).toBe(45);
     expect(combinedScore(row({ teamName: "x", staffTotal: 120, maxPoints: 150 }))).toBe(80);
+  });
+
+  it("비율을 주면 내부 심사와 자문 평균을 그 비율로 섞는다", () => {
+    const entry = row({ teamName: "x", staffTotal: 80, advisorAverage: 60 });
+    expect(combinedScore(entry, 30)).toBeCloseTo(66);
+    expect(combinedScore(entry, 50)).toBe(70);
+  });
+
+  it("비율이 0 인 쪽은 넣지 않고, 점수가 없는 쪽은 있는 쪽 비율만으로 나눈다", () => {
+    expect(combinedScore(row({ teamName: "x", staffTotal: 80, advisorAverage: 60 }), 0)).toBe(60);
+    expect(combinedScore(row({ teamName: "x", staffTotal: 80 }), 30)).toBe(80);
+    // 외부 심사만 반영하는데 자문 점수가 아직 없으면 순위를 매기지 않는다.
+    expect(combinedScore(row({ teamName: "x", staffTotal: 80 }), 0)).toBeNull();
+  });
+
+  it("비율을 바꾸면 순위가 바뀐다", () => {
+    const staffStrong = row({ teamName: "내부강", staffTotal: 90, advisorAverage: 50 });
+    const advisorStrong = row({ teamName: "자문강", staffTotal: 50, advisorAverage: 80 });
+    expect(sortRows([staffStrong, advisorStrong], "combined", 80).map((entry) => entry.teamName)).toEqual(["내부강", "자문강"]);
+    expect(sortRows([staffStrong, advisorStrong], "combined", 20).map((entry) => entry.teamName)).toEqual(["자문강", "내부강"]);
   });
 
   it("채점이 없으면 환산 점수는 0이 아니라 비어 있다", () => {
@@ -137,7 +157,7 @@ describe("집계표 줄 세우기", () => {
     });
     const csv = buildScoreboardCsv([entry], [["adv-1", "박위원"]]);
 
-    expect(csv.startsWith("﻿순위,번호,팀,프로젝트,분과,내부 심사,채점자,박위원,자문 평균,자문 완료,만점,득표,환산 점수,수상\r\n")).toBe(true);
+    expect(csv.startsWith("﻿순위,번호,팀,프로젝트,분과,내부 심사,채점자,박위원,자문 평균,자문 완료,만점,득표,\"환산 점수 (내부 50%, 자문 50%)\",수상\r\n")).toBe(true);
     expect(csv).toContain('1,7,마팀,"AI, 그리고 교육",미분과,70,김교수,45 (일부),,0/1,100,0,70.0,대상');
   });
 
