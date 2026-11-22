@@ -53,7 +53,9 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
           <thead>
             <tr className="border-t border-[var(--line)] text-left">
               <th scope="col" className="w-12 py-2 pl-5 pr-3 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"순위"}</UiText></th>
-              <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"번호"}</UiText></th>
+              {/* 순위의 근거가 가로 스크롤 밖으로 밀리지 않게 환산 점수를 순위 바로 옆에 둔다. */}
+              <SortHeader label="환산 점수" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
+              <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"팀 번호"}</UiText></th>
               <SortHeader label="팀" columnKey="team" sortKey={sortKey} onSort={setSortKey} />
               <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
               <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
@@ -63,7 +65,6 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
               ))}
               <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
-              <SortHeader label="환산 점수" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
               {/* 표가 넓어 수상 칸이 가로 스크롤 밖으로 밀린다. 오른쪽에 붙여 늘 보이게 한다. */}
               <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-2 pl-3 pr-5 text-xs font-normal text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
             </tr>
@@ -75,6 +76,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
               return (
                 <tr key={row.teamId} className="border-t border-[var(--line)]">
                   <td className="py-2 pl-5 pr-3 text-right tabular-nums text-[var(--muted)]">{ranks[index] ?? <Missing />}</td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{combined === null ? <Missing /> : combined.toFixed(1)}</td>
                   <td className="px-3 py-1.5">
                     <TextInput
                       type="number"
@@ -83,6 +85,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
                       max={9999}
                       name={`number:${row.teamId}`}
                       defaultValue={row.teamNumber ?? ""}
+                      placeholder="예: 1"
                       aria-label={`${row.teamName} 팀 번호`}
                       className="h-8 min-h-8 w-20 py-0 text-right text-[0.8125rem] tabular-nums"
                     />
@@ -112,7 +115,6 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
                     {row.advisorProgress.assigned ? <Progress text={`완료 ${row.advisorProgress.complete}/${row.advisorProgress.assigned}명`} /> : null}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{row.voteCount}</td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{combined === null ? <Missing /> : combined.toFixed(1)}</td>
                   <td className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-1.5 pl-3 pr-5">
                     <TextInput
                       name={`award:${row.teamId}`}
@@ -131,7 +133,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
       </div>
       <div className="flex flex-wrap items-center gap-3 border-t border-[var(--line)] px-5 py-3">
         <p className="min-w-0 flex-1 text-xs text-[var(--muted)]">
-          <UiText>{"번호는 지난 프로젝트 목록의 차례가 됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
+          <UiText>{"팀 번호는 행사에서 부르는 번호(발표 순서, 부스 번호)이고 비워 둬도 됩니다. 적으면 지난 프로젝트 목록이 이 순서로 정렬됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다."}</UiText>
         </p>
         {resultState.message ? (
           <p role={resultState.status === "error" ? "alert" : "status"} aria-live="polite" className={`text-xs ${resultState.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
@@ -139,7 +141,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
           </p>
         ) : null}
         <button type="submit" className="button-primary button-compact min-h-8 px-3 font-medium" disabled={savingResults}>
-          <UiText>{savingResults ? "저장 중" : "번호·수상 저장"}</UiText>
+          <UiText>{savingResults ? "저장 중" : "팀 번호와 수상 저장"}</UiText>
         </button>
       </div>
       </form>

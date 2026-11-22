@@ -2906,5 +2906,9 @@
   "환산 비율": "Score weights",
   "자문위원 {0}%": "Advisors {0}%",
   "0부터 100 사이": "0 to 100",
-  "비율 저장": "Save weights"
+  "비율 저장": "Save weights",
+  "팀 번호": "Team number",
+  "예: 1": "e.g. 1",
+  "팀 번호는 행사에서 부르는 번호(발표 순서, 부스 번호)이고 비워 둬도 됩니다. 적으면 지난 프로젝트 목록이 이 순서로 정렬됩니다. 상 이름은 그대로 배지에 찍히고, 한 팀이 둘 받으면 가운뎃점으로 잇습니다. 인기상은 득표에서 자동으로 붙으므로 적지 않습니다.": "The team number is what the event calls each team (presentation order, booth number) and can be left blank. If filled in, the past projects list is sorted in this order. Award names appear on badges as written; join two awards for one team with a middle dot. The popularity award comes from votes automatically, so do not enter it.",
+  "팀 번호와 수상 저장": "Save team numbers and awards"
 }
