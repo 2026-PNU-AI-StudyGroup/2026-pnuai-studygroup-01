@@ -2898,5 +2898,13 @@
   "자문 완료": "Advisors done",
   "만점": "Max points",
   "{0} (일부)": "{0} (partial)",
-  "팀이 확정된 공개 프로젝트만 채점할 수 있습니다.": "Only public projects with a confirmed team can be scored."
+  "팀이 확정된 공개 프로젝트만 채점할 수 있습니다.": "Only public projects with a confirmed team can be scored.",
+  "내부 심사 비율은 0부터 100 사이의 정수로 적어 주세요.": "Enter the internal review weight as a whole number from 0 to 100.",
+  "환산 비율을 저장했습니다.": "Score weights saved.",
+  "내부 채점표, 자문위원 점수, 득표를 한 표로 모읍니다. 열 이름을 눌러 줄을 세웁니다. 환산 점수는 내부 심사와 자문 평균을 각각 만점 대비 100점으로 바꿔 아래 비율로 섞은 값입니다. 채점표를 모두 채점한 점수만 들어가고, 한쪽이 아직 없으면 있는 쪽만으로 냅니다. 득표는 넣지 않습니다. 순위는 분과마다 따로 매깁니다.": "Internal rubric scores, advisor scores and votes in one table. Click a column name to sort. The scaled score converts the internal score and the advisor average to a 100-point scale and blends them using the weights below. Only fully scored rubrics count, and if one side has no score yet only the other side is used. Votes are not included. Ranks restart in each division.",
+  "환산 점수 (내부 {0}%, 자문 {1}%)": "Scaled score (internal {0}%, advisors {1}%)",
+  "환산 비율": "Score weights",
+  "자문위원 {0}%": "Advisors {0}%",
+  "0부터 100 사이": "0 to 100",
+  "비율 저장": "Save weights"
 }

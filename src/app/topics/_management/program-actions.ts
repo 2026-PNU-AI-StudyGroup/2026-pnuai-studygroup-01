@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ProgramDivisionSyncConfirmationRequiredError, ProgramVoteResetConfirmationRequiredError, ProjectProgramOperationError, ProjectProgramService, type ProgramDivisionSyncImpact, type ProgramVoteResetImpact } from "@/modules/project-program/application/manage-project-programs";
-import { InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
+import { assertProgramAdmin, InvalidProjectProgramError } from "@/modules/project-program/domain/project-program-policy";
 import { PROGRAM_ICON_KEYS } from "@/modules/project-program/domain/program-icon";
 import { PrismaProjectProgramRepository } from "@/modules/project-program/infrastructure/prisma-project-program-repository";
 import { programManagementHref } from "@/modules/project-program/ui/program-management-route";
@@ -467,4 +467,23 @@ export async function saveProgramTeamResultsAction(_state: ProgramActionState, f
   }
   refreshManagement(programId.data, "results");
   return { status: "success", message: "팀 번호와 수상 내역을 저장했습니다." };
+}
+
+/** 집계 환산 점수의 내부 심사 비율. 자문위원 비율은 100 에서 뺀 값이다. */
+export async function saveScoreboardWeightAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const parsed = z.object({
+    programId: z.string().min(1).max(200),
+    staffWeight: z.coerce.number().int().min(0).max(100),
+  }).safeParse({ programId: formData.get("programId"), staffWeight: formData.get("staffWeight") });
+  if (!parsed.success) return { status: "error", message: "내부 심사 비율은 0부터 100 사이의 정수로 적어 주세요." };
+  try {
+    assertProgramAdmin(await actor());
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  const { count } = await prisma.projectProgram.updateMany({ where: { id: parsed.data.programId }, data: { scoreboardStaffWeight: parsed.data.staffWeight } });
+  if (count === 0) return { status: "error", message: "저장할 프로그램을 찾을 수 없습니다." };
+  refreshManagement(parsed.data.programId, "results");
+  return { status: "success", message: "환산 비율을 저장했습니다." };
 }
