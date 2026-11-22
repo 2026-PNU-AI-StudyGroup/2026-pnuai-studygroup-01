@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { AdvisorAssignmentContext, AdvisorReviewRepository } from "@/modules/advisor/application/advisor-review";
 import { usableAssignmentWhere } from "@/modules/advisor/infrastructure/prisma-advisor-invitation-query";
 
@@ -28,12 +28,14 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
   async findAssignment(advisorId: string, topicId: string): Promise<AdvisorAssignmentContext | null> {
     const assignment = await this.client.projectAdvisor.findFirst({
       where: { topicId, ...usableAssignmentWhere(advisorId) },
-      select: { topic: { select: { program: { select: { endsAt: true } }, projectTeam: { select: { id: true } } } } },
+      select: { topic: { select: { status: true, program: { select: { endsAt: true } }, projectTeam: { select: { id: true, confirmedAt: true } } } } },
     });
     const topic = assignment?.topic;
     if (!topic?.projectTeam) return null;
     return {
       teamId: topic.projectTeam.id,
+      // 내부 채점과 집계표처럼 공개된 프로젝트의 확정된 팀만 채점한다. 의견은 팀을 꾸리는 중에도 남길 수 있다.
+      scorable: topic.status === "ACTIVE" && topic.projectTeam.confirmedAt !== null,
       programEndsAt: topic.program.endsAt,
       rubrics: await findTeamRubrics(this.client, topic.projectTeam.id),
     };
@@ -41,6 +43,14 @@ export class PrismaAdvisorReviewRepository implements AdvisorReviewRepository {
 
   async saveScores(input: { teamId: string; advisorId: string; rubricId: string; scores: Array<{ criterionId: string; points: number }> }) {
     await this.client.$transaction(async (transaction) => {
+      // 내부 채점과 같은 잠금. 관리자가 항목을 고치는 순간과 겹쳐 새 항목이 빠진 채 저장되지 않게 한다.
+      await transaction.$queryRaw(Prisma.sql`
+        SELECT "project_program"."id" FROM "project_program"
+        JOIN "topic" ON "topic"."programId" = "project_program"."id"
+        JOIN "project_team" ON "project_team"."projectId" = "topic"."id"
+        WHERE "project_team"."id" = ${input.teamId}
+        FOR UPDATE OF "project_program"
+      `);
       const evaluation = await transaction.advisorEvaluation.upsert({
         where: { projectTeamId_advisorId_rubricId: { projectTeamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId } },
         create: { projectTeamId: input.teamId, advisorId: input.advisorId, rubricId: input.rubricId },

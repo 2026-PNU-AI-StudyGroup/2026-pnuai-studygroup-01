@@ -34,7 +34,7 @@ function panel(advisors: ProgramAdvisorRow[]) {
       programId={programId}
       advisors={advisors}
       topics={[{ id: "70000000-0000-4000-8000-000000000001", title: "실내 길찾기", team: { name: "1팀", confirmedAt: null } }]}
-      matrix={[]}
+      scoreboard={[]}
     />
   );
 }

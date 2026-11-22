@@ -18,12 +18,9 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("combined");
   const [resultState, saveResults, savingResults] = useActionState(saveProgramTeamResultsAction, initialProgramActionState);
-  const advisorColumns = useMemo(() => {
-    const columns = new Map<string, string>();
-    for (const row of rows) for (const score of row.advisorScores) columns.set(score.advisorId, score.advisorName);
-    return [...columns.entries()].sort((left, right) => left[1].localeCompare(right[1], "ko"));
-  }, [rows]);
+  const advisorColumns = useMemo(() => advisorColumnsOf(rows), [rows]);
   const ranked = useMemo(() => sortRows(rows, sortKey), [rows, sortKey]);
+  const ranks = useMemo(() => divisionRanks(ranked), [ranked]);
 
   // 화면의 질문은 "누가 몇 점인가"다. 표 한 장이 카드 전체이고, 열 이름이 정렬 단추다.
   return (
@@ -38,7 +35,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
           </button>
         ) : undefined}
       />
-      <p className="px-5 pb-3 text-xs text-[var(--muted)]"><UiText>{"내부 채점표, 자문위원 점수, 득표를 한 표로 모읍니다. 열 이름을 눌러 줄을 세웁니다. 합계는 내부 심사 총점에 자문위원 평균을 더한 값입니다."}</UiText></p>
+      <p className="px-5 pb-3 text-xs text-[var(--muted)]"><UiText>{"내부 채점표, 자문위원 점수, 득표를 한 표로 모읍니다. 열 이름을 눌러 줄을 세웁니다. 환산 점수는 내부 심사와 자문 평균을 각각 만점 대비 100점으로 바꿔 평균한 값입니다. 채점표를 모두 채점한 점수만 들어가고, 순위는 분과마다 따로 매깁니다."}</UiText></p>
       {rows.length === 0 ? (
         <div role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem]"><p className="font-medium text-[var(--ink)]"><UiText>{"팀이 없습니다"}</UiText></p><p className="mt-0.5 text-[var(--muted)]"><UiText>{"팀이 확정되면 집계표가 채워집니다."}</UiText></p></div>
       ) : <>
@@ -58,22 +55,23 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
               <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"프로젝트"}</UiText></th>
               <th scope="col" className="px-3 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"분과"}</UiText></th>
               <SortHeader label="내부 심사" columnKey="staff" sortKey={sortKey} onSort={setSortKey} align="right" />
-              {advisorColumns.map(([advisorId, advisorName]) => (
-                <th key={advisorId} scope="col" className="px-3 py-2 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
+              {advisorColumns.map(([advisorId, advisorLabel]) => (
+                <th key={advisorId} scope="col" className="px-3 py-2 text-right text-xs font-normal text-[var(--muted)]">{advisorLabel}</th>
               ))}
               <SortHeader label="자문 평균" columnKey="advisor" sortKey={sortKey} onSort={setSortKey} align="right" />
               <SortHeader label="득표" columnKey="vote" sortKey={sortKey} onSort={setSortKey} align="right" />
-              <SortHeader label="합계" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
+              <SortHeader label="환산 점수" columnKey="combined" sortKey={sortKey} onSort={setSortKey} align="right" />
               {/* 표가 넓어 수상 칸이 가로 스크롤 밖으로 밀린다. 오른쪽에 붙여 늘 보이게 한다. */}
               <th scope="col" className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-2 pl-3 pr-5 text-xs font-normal text-[var(--muted)]"><UiText>{"수상"}</UiText></th>
             </tr>
           </thead>
           <tbody>
             {ranked.map((row, index) => {
-              const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score.total]));
+              const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score]));
+              const combined = combinedScore(row);
               return (
                 <tr key={row.teamId} className="border-t border-[var(--line)]">
-                  <td className="py-2 pl-5 pr-3 text-right tabular-nums text-[var(--muted)]">{index + 1}</td>
+                  <td className="py-2 pl-5 pr-3 text-right tabular-nums text-[var(--muted)]">{ranks[index] ?? <Missing />}</td>
                   <td className="px-3 py-1.5">
                     <TextInput
                       type="number"
@@ -94,13 +92,24 @@ export function ProgramScoreboardPanel({ programId, programName, rows }: {
                   </th>
                   <td className="max-w-[22rem] truncate px-3 py-2 text-[var(--muted)]" title={row.projectTitle}><UiText>{row.projectTitle}</UiText></td>
                   <td className="px-3 py-2 text-[var(--muted)]"><UiText>{row.divisionName ?? "미분과"}</UiText></td>
-                  <td className="px-3 py-2 text-right tabular-nums">{row.staffTotal ?? <Missing />}</td>
-                  {advisorColumns.map(([advisorId]) => (
-                    <td key={advisorId} className="px-3 py-2 text-right tabular-nums">{scoreByAdvisor.get(advisorId) ?? <Missing />}</td>
-                  ))}
-                  <td className="px-3 py-2 text-right tabular-nums">{row.advisorAverage === null ? <Missing /> : row.advisorAverage.toFixed(1)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {row.staffTotal ?? <Missing />}
+                    {row.staffTotal === null && row.staffProgress.scored > 0 ? <Progress text={`${row.staffProgress.scored}/${row.staffProgress.total} 채점`} /> : null}
+                  </td>
+                  {advisorColumns.map(([advisorId]) => {
+                    const cell = scoreByAdvisor.get(advisorId);
+                    return (
+                      <td key={advisorId} className="px-3 py-2 text-right tabular-nums">
+                        {!cell || cell.scoredRubrics === 0 ? <Missing /> : cell.complete ? cell.total : <span className="text-[var(--muted)]">{cell.total}<Progress text="일부, 평균 제외" /></span>}
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {row.advisorAverage === null ? <Missing /> : row.advisorAverage.toFixed(1)}
+                    {row.advisorProgress.assigned ? <Progress text={`완료 ${row.advisorProgress.complete}/${row.advisorProgress.assigned}명`} /> : null}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">{row.voteCount}</td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{combinedScore(row).toFixed(1)}</td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{combined === null ? <Missing /> : combined.toFixed(1)}</td>
                   <td className="sticky right-0 border-l border-[var(--line)] bg-[var(--surface)] py-1.5 pl-3 pr-5">
                     <TextInput
                       name={`award:${row.teamId}`}
@@ -171,41 +180,98 @@ function SortHeader({ label, columnKey, sortKey, onSort, align = "left" }: {
   );
 }
 
-export function combinedScore(row: ProgramScoreboardRow): number {
-  return (row.staffTotal ?? 0) + (row.advisorAverage ?? 0);
+/** 같은 이름의 위원이 둘이면 열 제목이 같아 구분할 수 없다. 그때만 이메일 앞부분을 붙인다. */
+export function advisorColumnsOf(rows: ProgramScoreboardRow[]): Array<[string, string]> {
+  const people = new Map<string, { name: string; email: string }>();
+  for (const row of rows) for (const score of row.advisorScores) people.set(score.advisorId, { name: score.advisorName, email: score.advisorEmail });
+  const nameCount = new Map<string, number>();
+  for (const { name } of people.values()) nameCount.set(name, (nameCount.get(name) ?? 0) + 1);
+  return [...people.entries()]
+    .map(([advisorId, { name, email }]): [string, string] => [advisorId, (nameCount.get(name) ?? 0) > 1 ? `${name} (${email.split("@")[0]})` : name])
+    .sort((left, right) => left[1].localeCompare(right[1], "ko"));
 }
 
+/**
+ * 100점 만점 환산 점수. 분과마다 채점표가 달라 만점이 다르므로 원점수를 더하면 만점이 큰 분과가
+ * 늘 위에 선다. 내부 심사와 자문 평균을 각각 만점 대비 비율로 바꿔 평균한다.
+ * 다 채점한 점수가 하나도 없으면 null 이다. 0점과 미채점을 구분해야 한다.
+ */
+export function combinedScore(row: ProgramScoreboardRow): number | null {
+  const parts = [row.staffTotal, row.advisorAverage].filter((value): value is number => value !== null);
+  if (!parts.length || row.maxPoints <= 0) return null;
+  return (parts.reduce((sum, value) => sum + value, 0) / (row.maxPoints * parts.length)) * 100;
+}
+
+/** 분과끼리 묶은 뒤 그 안에서 고른 기준으로 줄을 세운다. 분과가 다르면 채점표가 달라 한 줄로 비교하지 않는다. */
 export function sortRows(rows: ProgramScoreboardRow[], key: SortKey): ProgramScoreboardRow[] {
   const byName = (left: ProgramScoreboardRow, right: ProgramScoreboardRow) => left.teamName.localeCompare(right.teamName, "ko");
-  if (key === "team") return [...rows].sort(byName);
+  const byDivision = (left: ProgramScoreboardRow, right: ProgramScoreboardRow) =>
+    left.divisionPosition - right.divisionPosition || (left.divisionName ?? "").localeCompare(right.divisionName ?? "", "ko");
+  if (key === "team") return [...rows].sort((left, right) => byDivision(left, right) || byName(left, right));
   const value = (row: ProgramScoreboardRow) => {
     if (key === "staff") return row.staffTotal ?? -1;
     if (key === "advisor") return row.advisorAverage ?? -1;
     if (key === "vote") return row.voteCount;
-    return combinedScore(row);
+    return combinedScore(row) ?? -1;
   };
-  return [...rows].sort((left, right) => value(right) - value(left) || byName(left, right));
+  return [...rows].sort((left, right) => byDivision(left, right) || value(right) - value(left) || byName(left, right));
+}
+
+/** 분과마다 1등부터 다시 센다. 환산 점수가 없는 팀은 순위를 비운다. 같은 점수는 같은 순위다. */
+export function divisionRanks(sorted: ProgramScoreboardRow[]): Array<number | null> {
+  const ranks: Array<number | null> = [];
+  let division: string | null | undefined;
+  let position = 0;
+  let previous: number | null = null;
+  let previousRank = 0;
+  for (const row of sorted) {
+    if (row.divisionName !== division) {
+      division = row.divisionName;
+      position = 0;
+      previous = null;
+    }
+    const score = combinedScore(row);
+    if (score === null) {
+      ranks.push(null);
+      continue;
+    }
+    position += 1;
+    previousRank = previous !== null && Math.abs(previous - score) < 1e-9 ? previousRank : position;
+    previous = score;
+    ranks.push(previousRank);
+  }
+  return ranks;
 }
 
 export function buildScoreboardCsv(rows: ProgramScoreboardRow[], advisorColumns: Array<[string, string]>): string {
-  const header = ["순위", "팀", "프로젝트", "분과", "내부 심사", "채점자", ...advisorColumns.map(([, name]) => name), "자문 평균", "득표", "합계"];
+  const ranks = divisionRanks(rows);
+  const header = ["순위", "번호", "팀", "프로젝트", "분과", "내부 심사", "채점자", ...advisorColumns.map(([, label]) => label), "자문 평균", "자문 완료", "만점", "득표", "환산 점수", "수상"];
   const lines = rows.map((row, index) => {
-    const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score.total]));
+    const scoreByAdvisor = new Map(row.advisorScores.map((score) => [score.advisorId, score]));
+    const combined = combinedScore(row);
     return [
-      index + 1,
+      ranks[index] ?? "",
+      row.teamNumber ?? "",
       row.teamName,
       row.projectTitle,
       row.divisionName ?? "미분과",
       row.staffTotal ?? "",
       row.staffScorerNames.join(" "),
-      ...advisorColumns.map(([advisorId]) => scoreByAdvisor.get(advisorId) ?? ""),
+      ...advisorColumns.map(([advisorId]) => {
+        const cell = scoreByAdvisor.get(advisorId);
+        if (!cell || cell.scoredRubrics === 0) return "";
+        return cell.complete ? cell.total : `${cell.total} (일부)`;
+      }),
       row.advisorAverage === null ? "" : row.advisorAverage.toFixed(1),
+      row.advisorProgress.assigned ? `${row.advisorProgress.complete}/${row.advisorProgress.assigned}` : "",
+      row.maxPoints,
       row.voteCount,
-      combinedScore(row).toFixed(1),
+      combined === null ? "" : combined.toFixed(1),
+      row.award ?? "",
     ];
   });
   // 엑셀이 UTF-8 로 열도록 BOM 을 앞에 둔다. 없으면 한글이 깨진다.
-  return `﻿${[header, ...lines].map((cells) => cells.map(csvCell).join(",")).join("\r\n")}\r\n`;
+  return `\uFEFF${[header, ...lines].map((cells) => cells.map(csvCell).join(",")).join("\r\n")}\r\n`;
 }
 
 function downloadCsv(programName: string, rows: ProgramScoreboardRow[], advisorColumns: Array<[string, string]>) {
@@ -218,6 +284,12 @@ function downloadCsv(programName: string, rows: ProgramScoreboardRow[], advisorC
 }
 
 function csvCell(value: string | number): string {
-  const text = String(value);
+  // 팀 이름과 프로젝트명은 학생이 짓는다. =, +, -, @ 로 시작하면 엑셀이 수식으로 실행하므로 ' 를 앞에 붙인다.
+  const raw = String(value);
+  const text = typeof value === "string" && /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function Progress({ text }: { text: string }) {
+  return <span className="mt-0.5 block text-[0.6875rem] font-normal text-[var(--muted)]"><UiText>{text}</UiText></span>;
 }

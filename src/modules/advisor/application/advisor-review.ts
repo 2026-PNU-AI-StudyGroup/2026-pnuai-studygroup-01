@@ -7,6 +7,8 @@ export const ADVISOR_FEEDBACK_MAX_LENGTH = 4000;
 
 export type AdvisorAssignmentContext = {
   teamId: string;
+  /** 공개된 프로젝트의 확정된 팀인지. 아니면 채점은 막고 의견만 받는다. */
+  scorable: boolean;
   programEndsAt: Date;
   rubrics: Array<{ id: string; gradingDueAt: Date; criteria: Array<{ id: string; maxPoints: number }> }>;
 };
@@ -34,6 +36,7 @@ export class AdvisorReviewService {
     now = new Date(),
   ) {
     const assignment = await this.assignmentOf(actor, input.topicId);
+    if (!assignment.scorable) throw new AdvisorOperationError("팀이 확정된 공개 프로젝트만 채점할 수 있습니다.");
     if (assignment.rubrics.length === 0) throw new AdvisorOperationError("채점표가 준비되지 않았습니다.");
     const rubric = assignment.rubrics.find((candidate) => candidate.id === input.rubricId);
     if (!rubric) throw new AdvisorOperationError("채점표를 찾을 수 없습니다.");
