@@ -13,7 +13,8 @@ import {
   type AdvisorActionState,
 } from "@/app/topics/_management/advisor-actions";
 import { cardClass, CardHead, Missing, Pill } from "@/modules/project-program/ui/work-screen";
-import type { AdvisorScoreMatrixRow, ProgramAdvisorRow, ProgramTopicForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
+import type { ProgramAdvisorRow, ProgramTopicForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
+import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
 import { ChoiceCard, FormField, TextInput } from "@/shared/ui/form-system";
 
@@ -25,10 +26,11 @@ type ProgramAdvisorPanelProps = {
   programId: string;
   advisors: ProgramAdvisorRow[];
   topics: ProgramTopicForAssignment[];
-  matrix: AdvisorScoreMatrixRow[];
+  /** 집계표와 같은 줄. 위원별 진행을 여기서 센다. */
+  scoreboard: ProgramScoreboardRow[];
 };
 
-export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: ProgramAdvisorPanelProps) {
+export function ProgramAdvisorPanel({ programId, advisors, topics, scoreboard }: ProgramAdvisorPanelProps) {
   // 회수한 위원은 심사단이 아니지만 화면에서 지우지는 않는다. 사라지면 다시 부르는 길이
   // 어디에도 없어 막힌 것처럼 보인다. 목록과 팀 할당은 지금 심사단만, 되살리기는 아래 따로.
   const serving = advisors.filter((advisor) => advisor.revokedAt === null);
@@ -70,11 +72,16 @@ export function ProgramAdvisorPanel({ programId, advisors, topics, matrix }: Pro
         )}
       </section>
       <section aria-labelledby="advisor-score-title" className={cardClass}>
-        <CardHead id="advisor-score-title" title={<UiText>{"점수 집계"}</UiText>} count={matrix.length ? <UiText>{`팀 ${matrix.length}개`}</UiText> : undefined} />
-        <ScoreMatrix matrix={matrix} />
+        <CardHead id="advisor-score-title" title={<UiText>{"채점 진행"}</UiText>} count={serving.length ? <UiText>{`위원 ${serving.length}명`}</UiText> : undefined} />
+        <p className="px-5 pb-3 text-xs text-[var(--muted)]"><UiText>{"팀이 확정된 공개 프로젝트만 셉니다. 팀에 걸린 채점표를 모두 채점해야 완료입니다. 점수는 집계 탭에서 봅니다."}</UiText></p>
+        <ScoringProgress advisors={serving} scoreboard={scoreboard} />
       </section>
     </div>
   );
+}
+
+function toggleAll(form: HTMLFormElement | null, checked: boolean) {
+  form?.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name="topicIds"]:not(:disabled)').forEach((box) => { box.checked = checked; });
 }
 
 function ActionResult({ state }: { state: AdvisorActionState }) {
@@ -258,6 +265,11 @@ function AssignmentForm({ programId, advisor, topics }: { programId: string; adv
       <form action={action} aria-busy={pending} className="grid gap-3 px-5 pb-4">
         <input type="hidden" name="programId" value={programId} />
         <input type="hidden" name="userId" value={advisor.userId} />
+        {/* 위원 5명이 30팀을 다 맡는 해커톤에서 하나씩 누르면 150번이다. 한 번에 고르고 푼다. */}
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={rowButton} onClick={(event) => toggleAll(event.currentTarget.form, true)}><UiText>{"팀 있는 프로젝트 모두 선택"}</UiText></button>
+          <button type="button" className={rowButton} onClick={(event) => toggleAll(event.currentTarget.form, false)}><UiText>{"모두 해제"}</UiText></button>
+        </div>
         <ul className="grid gap-2">
           {topics.map((topic) => {
             const disabled = !topic.team;
@@ -288,38 +300,45 @@ function AssignmentForm({ programId, advisor, topics }: { programId: string; adv
   );
 }
 
-function ScoreMatrix({ matrix }: { matrix: AdvisorScoreMatrixRow[] }) {
-  const advisorColumns = new Map<string, string>();
-  for (const row of matrix) for (const score of row.scores) advisorColumns.set(score.advisorId, score.advisorName);
-  if (matrix.length === 0 || advisorColumns.size === 0) {
-    return <p role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"아직 채점한 자문위원이 없습니다."}</UiText></p>;
+/**
+ * 위원별 채점 진행. 위원 5명이 30팀을 채점하면 운영자가 묻는 것은 "누가 몇 팀 남았나"다.
+ * 점수 자체는 집계 탭에 있다. 여기서는 확정된 팀 중 배정된 팀을 기준으로 다 채점한 팀을 센다.
+ */
+function ScoringProgress({ advisors, scoreboard }: { advisors: ProgramAdvisorRow[]; scoreboard: ProgramScoreboardRow[] }) {
+  if (advisors.length === 0) {
+    return <p role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem] text-[var(--muted)]"><UiText>{"자문위원을 먼저 초대해 주세요."}</UiText></p>;
   }
-  const columns = [...advisorColumns.entries()];
+  const rows = advisors.map((advisor) => {
+    const cells = scoreboard.flatMap((row) => row.advisorScores.filter((cell) => cell.advisorId === advisor.userId));
+    const complete = cells.filter((cell) => cell.complete).length;
+    const partial = cells.filter((cell) => !cell.complete && cell.scoredRubrics > 0).length;
+    return { advisor, assigned: cells.length, complete, partial };
+  });
   return (
     <div className="min-w-0 overflow-x-auto">
       <table className="w-full min-w-max border-collapse text-[0.8125rem]">
         <thead>
           <tr className="text-left">
-            <th scope="col" className="px-5 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"팀"}</UiText></th>
-            {columns.map(([advisorId, advisorName]) => (
-              <th key={advisorId} scope="col" className="px-4 py-2 text-right text-xs font-normal text-[var(--muted)]">{advisorName}</th>
-            ))}
-            <th scope="col" className="py-2 pl-4 pr-5 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"평균"}</UiText></th>
+            <th scope="col" className="px-5 py-2 text-xs font-normal text-[var(--muted)]"><UiText>{"위원"}</UiText></th>
+            <th scope="col" className="px-4 py-2 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"채점할 팀"}</UiText></th>
+            <th scope="col" className="px-4 py-2 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"채점 완료"}</UiText></th>
+            <th scope="col" className="px-4 py-2 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"일부만 채점"}</UiText></th>
+            <th scope="col" className="py-2 pl-4 pr-5 text-right text-xs font-normal text-[var(--muted)]"><UiText>{"남은 팀"}</UiText></th>
           </tr>
         </thead>
         <tbody>
-          {matrix.map((row) => {
-            const scoreByAdvisor = new Map(row.scores.map((score) => [score.advisorId, score.total]));
-            return (
-              <tr key={row.teamId} className="border-t border-[var(--line)]">
-                <th scope="row" className="px-5 py-2.5 text-left text-sm font-medium text-[var(--ink)]">{row.teamName}</th>
-                {columns.map(([advisorId]) => (
-                  <td key={advisorId} className="px-4 py-2.5 text-right tabular-nums">{scoreByAdvisor.has(advisorId) ? scoreByAdvisor.get(advisorId) : <Missing />}</td>
-                ))}
-                <td className="py-2.5 pl-4 pr-5 text-right font-semibold tabular-nums text-[var(--accent-ink)]">{row.average === null ? <Missing /> : row.average.toFixed(1)}</td>
-              </tr>
-            );
-          })}
+          {rows.map(({ advisor, assigned, complete, partial }) => (
+            <tr key={advisor.userId} className="border-t border-[var(--line)]">
+              <th scope="row" className="px-5 py-2.5 text-left text-sm font-medium text-[var(--ink)]">
+                {advisor.name}
+                <span className="ml-2 text-xs font-normal text-[var(--muted)]">{advisor.email}</span>
+              </th>
+              <td className="px-4 py-2.5 text-right tabular-nums">{assigned}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{complete}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{partial || <Missing />}</td>
+              <td className={`py-2.5 pl-4 pr-5 text-right font-semibold tabular-nums ${assigned - complete > 0 ? "text-[var(--accent-ink)]" : "text-[var(--muted)]"}`}>{assigned - complete}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

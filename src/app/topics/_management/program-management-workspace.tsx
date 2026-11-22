@@ -27,7 +27,7 @@ import { cardClass, CardHead, daysLabel, daysUntil, ObjectHeader, Pill } from "@
 import { schedulePhaseState } from "@/modules/team/ui/task-presentation";
 import { ProjectVotingService } from "@/modules/project-voting/application/manage-project-voting";
 import { PrismaProjectVotingRepository } from "@/modules/project-voting/infrastructure/prisma-project-voting-repository";
-import { advisorScoreMatrix, listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
+import { listProgramAdvisors, listProgramTopicsForAssignment } from "@/modules/advisor/infrastructure/prisma-advisor-admin-query";
 import { programScoreboard } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { ProgramScoreboardPanel } from "@/app/topics/_management/program-scoreboard-panel";
 import { UiDate, UiText } from "@/modules/translation/ui/i18n-provider";
@@ -377,12 +377,12 @@ export async function ProgramManagementWorkspace({
       </WorkCard>
     </div>;
   } else if (tab === "advisors") {
-    const [advisors, topics, matrix] = await Promise.all([
+    const [advisors, topics, scoreboard] = await Promise.all([
       listProgramAdvisors(prisma, program.id),
       listProgramTopicsForAssignment(prisma, program.id),
-      advisorScoreMatrix(prisma, program.id),
+      programScoreboard(prisma, program.id),
     ]);
-    content = <ProgramAdvisorPanel programId={program.id} advisors={advisors} topics={topics} matrix={matrix} />;
+    content = <ProgramAdvisorPanel programId={program.id} advisors={advisors} topics={topics} scoreboard={scoreboard} />;
   }
 
   return (

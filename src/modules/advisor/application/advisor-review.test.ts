@@ -12,6 +12,7 @@ function repository(overrides = {}) {
   return {
     findAssignment: vi.fn().mockResolvedValue({
       teamId: "team-1",
+      scorable: true,
       programEndsAt,
       rubrics: [
         { id: "rubric-1", gradingDueAt, criteria: [{ id: "c1", maxPoints: 30 }, { id: "c2", maxPoints: 70 }] },
@@ -51,6 +52,15 @@ describe("AdvisorReviewService", () => {
     const service = new AdvisorReviewService(repository());
     await expect(service.saveScores(advisor, scoreInput([{ criterionId: "d1", points: 10 }], "rubric-2"), now))
       .rejects.toBeInstanceOf(AdvisorOperationError);
+  });
+
+  it("팀이 확정되지 않았거나 공개 전인 프로젝트는 채점을 막고 의견은 받는다", async () => {
+    const base = await repository().findAssignment("adv-1", "t");
+    const repo = repository({ findAssignment: vi.fn().mockResolvedValue({ ...base, scorable: false }) });
+    const service = new AdvisorReviewService(repo);
+    await expect(service.saveScores(advisor, scoreInput(), now)).rejects.toThrow("팀이 확정된 공개 프로젝트만 채점할 수 있습니다.");
+    expect(repo.saveScores).not.toHaveBeenCalled();
+    await expect(service.addFeedback(advisor, { topicId: "t", body: "좋아요" }, now)).resolves.toBeUndefined();
   });
 
   it("비할당 프로젝트는 거부한다", async () => {
@@ -105,7 +115,7 @@ describe("AdvisorReviewService", () => {
   });
 
   it("채점표가 없으면 거부한다", async () => {
-    const repo = repository({ findAssignment: vi.fn().mockResolvedValue({ teamId: "team-1", programEndsAt, rubrics: [] }) });
+    const repo = repository({ findAssignment: vi.fn().mockResolvedValue({ teamId: "team-1", scorable: true, programEndsAt, rubrics: [] }) });
     await expect(new AdvisorReviewService(repo).saveScores(advisor, scoreInput(), now))
       .rejects.toThrow("채점표가 준비되지 않았습니다.");
   });
