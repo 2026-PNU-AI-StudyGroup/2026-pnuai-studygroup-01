@@ -2768,7 +2768,8 @@
         "teamName": "1팀",
         "title": "AutoBridge: AI 기반 빌딩 설비 연동 규격 자동 생성 Agent",
         "summary": "제조사 매뉴얼을 읽어 빌딩 설비 연동 규격과 설정을 만들어 주는 AI Agent 입니다. 문서 해석, 가상 시험, 사람 승인 순서로 결과를 확인합니다.",
-        "award": null
+        "award": null,
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-1.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-2",
@@ -2777,7 +2778,8 @@
         "teamName": "2팀",
         "title": "건전지: 생성형 AI 기반 에너지 운영 대시보드",
         "summary": "캠퍼스 에너지 관리자가 자연어로 물으면 전력 사용이 이상한 건물을 찾고, 원인과 줄일 방법을 근거와 함께 보여 주는 대시보드입니다.",
-        "award": null
+        "award": null,
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-2.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-3",
@@ -2786,7 +2788,8 @@
         "teamName": "3팀",
         "title": "ON:D: 스케줄 기반 HVAC 자동 운전 AI",
         "summary": "시간표와 날씨를 분석해 에너지와 쾌적함의 균형을 찾는 AI 냉난방 서비스입니다. 관리자와 사용자를 대신하는 두 에이전트가 숫자를 근거로 설정온도를 협상합니다.",
-        "award": "대상"
+        "award": "대상",
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-3.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-4",
@@ -2795,7 +2798,8 @@
         "teamName": "4팀",
         "title": "에게: AI 디지털트윈 기반 공간 가시화 및 운영 최적화",
         "summary": "평면도를 3D 디지털트윈으로 바꿔 공간과 설비 상태를 한눈에 보여 주고, AI 가 건물 운영을 돕는 서비스입니다.",
-        "award": "최우수상"
+        "award": "최우수상",
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-4.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-5",
@@ -2804,7 +2808,8 @@
         "teamName": "5팀",
         "title": "BusanNow: 생성형 AI 기반 외국인 관광객 다국어 맞춤형 안내 Agent",
         "summary": "부산을 찾은 외국인 개별 관광객에게 여러 언어로 맞춤 관광 안내를 하는 AI Agent 입니다.",
-        "award": null
+        "award": null,
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-5.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-6",
@@ -2813,7 +2818,8 @@
         "teamName": "6팀",
         "title": "AI 기반 첨단물류 문서 자동화 Agent",
         "summary": "물류 서류를 분류하고 읽어 서류끼리 다른 값을 찾아내고, 신고서 초안까지 만드는 AI 에이전트입니다. 어느 서류의 어느 칸이 다른지 서류 위에서 바로 확인합니다.",
-        "award": "최우수상"
+        "award": "최우수상",
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-6.webp"
       },
       {
         "fullName": "aws-ai-maestro-hackathon-2026/team-7",
@@ -2822,7 +2828,8 @@
         "teamName": "7팀",
         "title": "부산커리어: 생성형 AI 기반 청년취업 맞춤형 멘토링 Agent",
         "summary": "부산에서 일하고 싶은 청년의 경험에 맞는 채용공고와 청년정책을 찾고, 고른 공고로 모의면접을 연습하는 AI Agent 입니다.",
-        "award": null
+        "award": null,
+        "thumbnail": "aws-ai-maestro-hackathon-2026-team-7.webp"
       }
     ]
   }

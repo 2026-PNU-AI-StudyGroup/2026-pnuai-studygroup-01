@@ -487,3 +487,26 @@ export async function saveScoreboardWeightAction(_state: ProgramActionState, for
   refreshManagement(parsed.data.programId, "results");
   return { status: "success", message: "환산 비율을 저장했습니다." };
 }
+
+/** 지난 프로젝트 목록 차례. 수상 팀 먼저, 또는 팀 번호순. */
+export async function saveArchiveOrderAction(_state: ProgramActionState, formData: FormData): Promise<ProgramActionState> {
+  const parsed = z.object({
+    programId: z.string().min(1).max(200),
+    order: z.enum(["AWARD_FIRST", "TEAM_NUMBER"]),
+  }).safeParse({ programId: formData.get("programId"), order: formData.get("order") });
+  if (!parsed.success) return { status: "error", message: "목록 순서를 다시 골라 주세요." };
+  try {
+    assertProgramAdmin(await actor());
+  } catch (error) {
+    if (error instanceof InvalidProjectProgramError || error instanceof ProjectProgramOperationError) return { status: "error", message: error.message };
+    throw error;
+  }
+  const { count } = await prisma.projectProgram.updateMany({
+    where: { id: parsed.data.programId },
+    data: { archiveAwardFirst: parsed.data.order === "AWARD_FIRST" },
+  });
+  if (count === 0) return { status: "error", message: "저장할 프로그램을 찾을 수 없습니다." };
+  refreshManagement(parsed.data.programId, "results");
+  revalidatePath("/archive");
+  return { status: "success", message: "목록 순서를 저장했습니다." };
+}

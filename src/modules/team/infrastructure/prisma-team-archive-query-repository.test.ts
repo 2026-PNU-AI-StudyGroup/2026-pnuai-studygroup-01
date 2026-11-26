@@ -286,7 +286,7 @@ describe("공개 아카이브 조회", () => {
           title: true,
           description: true,
           sourceUrl: true,
-          program: { select: { id: true, name: true, category: true, startsAt: true } },
+          program: { select: { id: true, name: true, category: true, startsAt: true, archiveAwardFirst: true } },
         } },
         artifacts: {
           where: { type: "SOURCE_CODE" },

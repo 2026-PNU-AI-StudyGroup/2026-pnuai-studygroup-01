@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // 서버 액션을 그대로 들이면 prisma 까지 딸려 와 DATABASE_URL 을 찾는다. 화면만 본다.
-vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramTeamResultsAction: vi.fn(), saveScoreboardWeightAction: vi.fn() }));
+vi.mock("@/app/topics/_management/program-actions", () => ({ saveProgramTeamResultsAction: vi.fn(), saveScoreboardWeightAction: vi.fn(), saveArchiveOrderAction: vi.fn() }));
 
 import {
   ProgramScoreboardPanel,
