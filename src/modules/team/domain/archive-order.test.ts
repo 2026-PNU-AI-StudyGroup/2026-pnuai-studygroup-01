@@ -94,4 +94,13 @@ describe("orderArchivedTeamIds", () => {
 
     expect(ordered).toEqual(["올해장려", "작년대상"]);
   });
+
+  it("프로그램 설정으로 수상 순서를 끄면 팀 번호순이다", () => {
+    const ordered = orderArchivedTeamIds([
+      { ...row("3팀", 3, "3팀", "대상"), awardFirst: false },
+      { ...row("1팀", 1, "1팀", null), awardFirst: false },
+      { ...row("2팀", 2, "2팀", "최우수상"), awardFirst: false },
+    ]);
+    expect(ordered).toEqual(["1팀", "2팀", "3팀"]);
+  });
 });

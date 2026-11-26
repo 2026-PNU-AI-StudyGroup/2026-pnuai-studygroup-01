@@ -68,7 +68,7 @@ const publicArchivedProjectSelect = {
     title: true,
     description: true,
     sourceUrl: true,
-    program: { select: { id: true, name: true, category: true, startsAt: true } },
+    program: { select: { id: true, name: true, category: true, startsAt: true, archiveAwardFirst: true } },
   } },
   artifacts: {
     where: { type: "SOURCE_CODE" as const },
@@ -151,7 +151,7 @@ export class PrismaTeamArchiveQueryRepository
     const where = closedProjectWhere(input.filters, this.audience);
     const candidates = await this.client.projectTeam.findMany({
       where,
-      select: { id: true, name: true, number: true, award: true, project: { select: { program: { select: { startsAt: true } } } } },
+      select: { id: true, name: true, number: true, award: true, project: { select: { program: { select: { startsAt: true, archiveAwardFirst: true } } } } },
     });
     const pageIds = orderArchivedTeamIds(candidates.map((team) => ({
       id: team.id,
@@ -159,6 +159,7 @@ export class PrismaTeamArchiveQueryRepository
       teamNumber: team.number,
       award: team.award,
       programStartsAt: team.project.program.startsAt,
+      awardFirst: team.project.program.archiveAwardFirst,
     }))).slice(input.offset, input.offset + input.limit);
     if (pageIds.length === 0) return [];
     const rows = await this.client.projectTeam.findMany({
@@ -283,6 +284,7 @@ export class PrismaTeamArchiveQueryRepository
       teamNumber: row.number,
       award: row.award,
       programStartsAt: row.project.program.startsAt,
+      awardFirst: row.project.program.archiveAwardFirst,
     }))).map((id) => toPublicArchivedProject(byId.get(id)!));
   }
 }

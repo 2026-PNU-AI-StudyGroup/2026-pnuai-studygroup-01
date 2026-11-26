@@ -5,6 +5,8 @@
  * 상이 없는 팀은 그 아래에 다시 번호대로 붙는다. 상을 아직 안 넣은 프로그램은 모두
  * 같은 순위가 되어 자연히 번호순 하나로 떨어진다.
  *
+ * 프로그램 설정으로 수상 순서를 끌 수 있다. 끄면 팀 번호순 하나다.
+ *
  * 프로그램은 따로 묶는다. 상 순위를 프로그램보다 앞에 두면 2022년 대상이 올해 장려상보다
  * 위로 올라온다. 한 행사 안에서만 상으로 줄을 세우는 것이 맞다.
  */
@@ -37,6 +39,8 @@ export type ArchiveOrderRow = {
   teamNumber: number | null;
   award: string | null;
   programStartsAt: Date;
+  /** 프로그램 설정. false 면 상과 관계없이 팀 번호순이다. 없으면 수상 팀 먼저. */
+  awardFirst?: boolean;
 };
 
 /** 번호를 매긴 팀이 먼저 서고, 번호가 없으면 이름 가나다순이다. */
@@ -51,7 +55,8 @@ export function orderArchivedTeamIds(rows: readonly ArchiveOrderRow[]): string[]
   return [...rows]
     .sort((left, right) =>
       right.programStartsAt.getTime() - left.programStartsAt.getTime()
-      || awardRank(left.award) - awardRank(right.award)
+      // 같은 행사 안에서만 비교하므로 두 줄의 설정은 같다. 한쪽만 본다.
+      || (left.awardFirst === false ? 0 : awardRank(left.award) - awardRank(right.award))
       || compareTeam(left, right)
       || left.id.localeCompare(right.id))
     .map(({ id }) => id);

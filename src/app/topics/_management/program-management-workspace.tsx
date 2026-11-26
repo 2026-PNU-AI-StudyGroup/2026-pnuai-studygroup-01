@@ -359,9 +359,9 @@ export async function ProgramManagementWorkspace({
   } else if (tab === "results") {
     const [scoreboard, weight] = await Promise.all([
       programScoreboard(prisma, program.id),
-      prisma.projectProgram.findUnique({ where: { id: program.id }, select: { scoreboardStaffWeight: true } }),
+      prisma.projectProgram.findUnique({ where: { id: program.id }, select: { scoreboardStaffWeight: true, archiveAwardFirst: true } }),
     ]);
-    content = <ProgramScoreboardPanel programId={program.id} programName={program.name} rows={scoreboard} staffWeight={weight?.scoreboardStaffWeight ?? 50} />;
+    content = <ProgramScoreboardPanel programId={program.id} programName={program.name} rows={scoreboard} staffWeight={weight?.scoreboardStaffWeight ?? 50} archiveAwardFirst={weight?.archiveAwardFirst ?? true} />;
   } else if (tab === "reports") {
     const [records, teamRecords] = await Promise.all([
       prisma.programReportDefinition.findMany({ where: { programId: program.id, archivedAt: null }, orderBy: { position: "asc" }, select: { id: true, title: true, dueAt: true, required: true, reports: { select: { _count: { select: { versions: true } } } } } }),

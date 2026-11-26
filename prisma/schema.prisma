@@ -659,6 +659,8 @@ model ProjectProgram {
   studentProjectInstantPublish  Boolean                   @default(false)
   /// 심사 집계 환산 점수에서 내부 심사 비율(%). 나머지는 자문위원 평균. DB CHECK 0~100.
   scoreboardStaffWeight         Int                       @default(50)
+  /// 지난 프로젝트 목록에서 수상 팀을 먼저 세운다. false 면 팀 번호순.
+  archiveAwardFirst             Boolean                   @default(true)
   projectTeamMinSize            Int                       @default(2)
   projectTeamMaxSize            Int                       @default(6)
   icon                          ProgramIcon               @default(FOLDER)

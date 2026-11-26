@@ -2,21 +2,23 @@
 
 import { useActionState, useMemo, useState, useTransition } from "react";
 
-import { saveProgramTeamResultsAction, saveScoreboardWeightAction } from "@/app/topics/_management/program-actions";
+import { saveArchiveOrderAction, saveProgramTeamResultsAction, saveScoreboardWeightAction } from "@/app/topics/_management/program-actions";
 import { initialProgramActionState } from "@/app/topics/_management/program-form-state";
 import type { ProgramScoreboardRow } from "@/modules/rubric/infrastructure/prisma-program-scoreboard-query";
 import { UiText } from "@/modules/translation/ui/i18n-provider";
 import { cardClass, CardHead, Missing } from "@/modules/project-program/ui/work-screen";
-import { TextInput } from "@/shared/ui/form-system";
+import { ChoiceCard, TextInput } from "@/shared/ui/form-system";
 
 type SortKey = "combined" | "staff" | "advisor" | "vote" | "team";
 
-export function ProgramScoreboardPanel({ programId, programName, rows, staffWeight = 50 }: {
+export function ProgramScoreboardPanel({ programId, programName, rows, staffWeight = 50, archiveAwardFirst = true }: {
   programId: string;
   programName: string;
   rows: ProgramScoreboardRow[];
   /** 환산 점수에서 내부 심사 비율(%). 나머지는 자문위원 평균이다. */
   staffWeight?: number;
+  /** 지난 프로젝트 목록에서 수상 팀을 먼저 세우는지. */
+  archiveAwardFirst?: boolean;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("combined");
   const [resultState, saveResults, savingResults] = useActionState(saveProgramTeamResultsAction, initialProgramActionState);
@@ -39,6 +41,7 @@ export function ProgramScoreboardPanel({ programId, programName, rows, staffWeig
       />
       <p className="px-5 pb-3 text-xs text-[var(--muted)]"><UiText>{"내부 채점표, 자문위원 점수, 득표를 한 표로 모읍니다. 열 이름을 눌러 줄을 세웁니다. 환산 점수는 내부 심사와 자문 평균을 각각 만점 대비 100점으로 바꿔 아래 비율로 섞은 값입니다. 채점표를 모두 채점한 점수만 들어가고, 한쪽이 아직 없으면 있는 쪽만으로 냅니다. 득표는 넣지 않습니다. 순위는 분과마다 따로 매깁니다."}</UiText></p>
       <WeightForm programId={programId} staffWeight={staffWeight} />
+      <ArchiveOrderForm programId={programId} awardFirst={archiveAwardFirst} />
       {rows.length === 0 ? (
         <div role="status" className="border-t border-[var(--line)] px-5 py-4 text-[0.8125rem]"><p className="font-medium text-[var(--ink)]"><UiText>{"팀이 없습니다"}</UiText></p><p className="mt-0.5 text-[var(--muted)]"><UiText>{"팀이 확정되면 집계표가 채워집니다."}</UiText></p></div>
       ) : <>
@@ -343,6 +346,38 @@ function WeightForm({ programId, staffWeight }: { programId: string; staffWeight
       <span className="tabular-nums text-[var(--muted)]"><UiText>{valid ? `자문위원 ${100 - parsed}%` : "0부터 100 사이"}</UiText></span>
       <button type="submit" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending || !valid || parsed === staffWeight}>
         <UiText>{pending ? "저장 중" : "비율 저장"}</UiText>
+      </button>
+      {state.message ? (
+        <span role={state.status === "error" ? "alert" : "status"} className={`text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></span>
+      ) : null}
+    </form>
+  );
+}
+
+/**
+ * 지난 프로젝트 목록 차례. 결과 발표처럼 수상 팀을 앞에 세울지, 발표 순서대로 팀 번호순으로 둘지 고른다.
+ * 비율 칸과 같이 form action 대신 onSubmit 으로 보내 저장 뒤 선택이 예전 값으로 돌아가지 않게 한다.
+ */
+function ArchiveOrderForm({ programId, awardFirst }: { programId: string; awardFirst: boolean }) {
+  const [value, setValue] = useState(awardFirst ? "AWARD_FIRST" : "TEAM_NUMBER");
+  const [state, action, pending] = useActionState(saveArchiveOrderAction, initialProgramActionState);
+  const [, startSubmit] = useTransition();
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startSubmit(() => action(formData));
+  }
+  const saved = awardFirst ? "AWARD_FIRST" : "TEAM_NUMBER";
+  return (
+    <form onSubmit={submit} aria-busy={pending} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[var(--line)] px-5 py-3 text-[0.8125rem]">
+      <input type="hidden" name="programId" value={programId} />
+      <span id="archive-order-label" className="font-medium text-[var(--ink)]"><UiText>{"지난 프로젝트 순서"}</UiText></span>
+      <span role="radiogroup" aria-labelledby="archive-order-label" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <ChoiceCard variant="inline" name="order" value="AWARD_FIRST" checked={value === "AWARD_FIRST"} onChange={() => setValue("AWARD_FIRST")} label="수상 팀 먼저" />
+        <ChoiceCard variant="inline" name="order" value="TEAM_NUMBER" checked={value === "TEAM_NUMBER"} onChange={() => setValue("TEAM_NUMBER")} label="팀 번호순" />
+      </span>
+      <button type="submit" className="button-secondary button-compact min-h-8 px-3 font-medium" disabled={pending || value === saved}>
+        <UiText>{pending ? "저장 중" : "순서 저장"}</UiText>
       </button>
       {state.message ? (
         <span role={state.status === "error" ? "alert" : "status"} className={`text-xs ${state.status === "error" ? "text-[var(--danger)]" : "text-[var(--success)]"}`}><UiText>{state.message}</UiText></span>
