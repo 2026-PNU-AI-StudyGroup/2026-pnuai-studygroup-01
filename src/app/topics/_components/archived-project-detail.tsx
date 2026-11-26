@@ -30,8 +30,8 @@ export function ArchivedProjectDetail({ project, ballot, workspaceLink }: { proj
   // 심사는 저장소의 리드미를 읽고 이뤄진다. 읽고 나서 투표하는 차례가 되도록 저장소를 머리에 둔다.
   const repository = resolveShowcaseRepository({ artifacts: project.artifacts, sourceUrl: project.sourceUrl });
   const people: Array<[string, string[]]> = [
-    ["팀장", project.memberNames.slice(0, 1)],
-    ["팀원", project.memberNames.slice(1)],
+    ["팀장", project.leaderListed ? project.memberNames.slice(0, 1) : []],
+    ["팀원", project.leaderListed ? project.memberNames.slice(1) : project.memberNames],
     ...(project.advisorEnabled ? [[project.advisorRole, [project.professorName]] as [string, string[]]] : []),
   ];
 

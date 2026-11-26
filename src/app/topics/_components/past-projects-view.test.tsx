@@ -27,6 +27,7 @@ const project: ArchivedProject = {
   advisorRole: "교수",
   advisorEnabled: true,
   memberNames: ["정하늘"],
+  leaderListed: true,
   thumbnailPath: "/demo/archive/project.png",
   artifacts: [],
 };

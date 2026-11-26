@@ -21,6 +21,7 @@ const archivedProjectSelect = {
   showcaseIntro: true,
   award: true,
   archivedVoteCount: true,
+  archivedMemberNames: true,
   project: { select: {
     id: true,
     title: true,
@@ -313,9 +314,13 @@ function toArchivedProject(
     advisorEnabled: team.project.program.advisorEnabled,
     // 화면은 첫 사람을 팀장으로 보여 준다. 승인 시 모든 구성원의 합류 시각이 같아
     // 들어온 순서만으로는 팀장이 앞에 온다는 보장이 없다. 팀장을 앞으로 끌어 둔다.
-    memberNames: [...team.memberships]
-      .sort((left, right) => Number(right.role === "LEADER") - Number(left.role === "LEADER"))
-      .map(({ user }) => user.name),
+    // 계정 없이 옮겨 넣은 팀은 적어 둔 이름을 쓴다. 그 명단에는 팀장이 없다.
+    memberNames: team.memberships.length
+      ? [...team.memberships]
+        .sort((left, right) => Number(right.role === "LEADER") - Number(left.role === "LEADER"))
+        .map(({ user }) => user.name)
+      : team.archivedMemberNames,
+    leaderListed: team.memberships.some(({ role }) => role === "LEADER"),
     sourceUrl: team.project.sourceUrl ?? undefined,
     thumbnailPath: team.project.thumbnailPath ?? undefined,
     posterPath: team.project.posterPath ?? undefined,

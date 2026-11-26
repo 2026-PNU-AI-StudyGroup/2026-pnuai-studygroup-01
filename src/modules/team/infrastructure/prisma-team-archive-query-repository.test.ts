@@ -99,6 +99,7 @@ describe("인기상 자동 표시", () => {
     name: string;
     award?: string | null;
     votingPolicy?: { endsAt: Date; resultsVisibleAfterVoting: boolean } | null;
+    archivedMemberNames?: string[];
   }) {
     return {
       id: `team-${overrides.topicId}`,
@@ -106,6 +107,7 @@ describe("인기상 자동 표시", () => {
       showcaseIntro: null,
       award: overrides.award ?? null,
       archivedVoteCount: null,
+      archivedMemberNames: overrides.archivedMemberNames ?? [],
       project: {
         id: overrides.topicId,
         title: overrides.name,
@@ -152,6 +154,14 @@ describe("인기상 자동 표시", () => {
 
   const listClosed = (client: PrismaClient) =>
     new PrismaTeamArchiveQueryRepository(client, "ADMIN").listClosed({ offset: 0, limit: 20, filters: {} });
+
+  it("팀원 계정이 없으면 옮겨 넣은 명단을 팀장 없이 쓴다", async () => {
+    const teams = [archivedTeam({ topicId: "topic-1", name: "1팀", archivedMemberNames: ["조재영", "김제원"] })];
+    const [project] = await listClosed(clientWith({ teams }));
+
+    expect(project.memberNames).toEqual(["조재영", "김제원"]);
+    expect(project.leaderListed).toBe(false);
+  });
 
   it("옮겨 온 대회는 팀에 적힌 보관 득표로 상위 두 팀을 고른다", async () => {
     const teams = [
