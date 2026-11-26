@@ -101,6 +101,24 @@ const PROGRAMS: ProgramSource[] = [
     },
   },
   {
+    key: "kakao-tech-campus-4",
+    org: "kakaotechcampus-4",
+    programName: "카카오테크 캠퍼스 4기",
+    category: "카카오테크 캠퍼스",
+    // 2단계 팀 프로젝트. 부산대 레포가 2026-08-20 에 생기고 최종 산출물 제출 뒤 마지막 커밋이 11-25 다.
+    startsAt: "2026-08-20",
+    endsAt: "2026-11-25",
+    // 팀 이름과 서비스 이름은 카테캠 "부산대학교 최종프로젝트 산출물" 노션 페이지에서 옮겼다.
+    // 4기는 3기와 달리 부산대 팀마다 레포가 하나다(ktc4-pusan-1~5).
+    teams: {
+      "ktc4-pusan-1": { teamNumber: 1, teamName: "Polyphemus", title: "IRYA: 면접은 사람이, 정리는 AI가", summary: "면접 준비부터 실시간 자막과 꼬리질문, 면접 뒤 근거 검토까지 잇는 AI 화상면접 지원 서비스입니다." },
+      "ktc4-pusan-2": { teamNumber: 2, teamName: "멸종위기청년", title: "피치코치: 반복 연습을 설계하는 AI 발표 코치", summary: "발표 연습을 카메라와 마이크로 재고, 이전 연습을 기억하는 AI 에이전트가 다음 연습에서 고칠 한 가지를 정해 주는 발표 코치입니다." },
+      "ktc4-pusan-3": { teamNumber: 3, teamName: "내 아를 키워도", title: "아이캐치: 우리 아이를 가장 오래 알아온 AI", summary: "아이의 하루 기록을 쌓아 그 아이에게 맞는 식단과 육아를 추천하는 AI 서비스입니다." },
+      "ktc4-pusan-4": { teamNumber: 4, teamName: "최강롯데", title: "PreeT: 개인사업자 종합소득세 경비 판정", summary: "카드 승인내역을 올리면 거래마다 경비로 가능, 불가, 확인 필요를 판정하고 근거 조문을 붙이는 서비스입니다." },
+      "ktc4-pusan-5": { teamNumber: 5, teamName: "FOMO도로", title: "MarketLit: 분석 보고서로 배우는 경제", summary: "분석 보고서를 읽으면서 경제를 배우고 싶은 투자 입문자를 위한 서비스입니다." },
+    },
+  },
+  {
     key: "pnu-ai-studygroup-2025",
     org: "2025-PNU-SW-StudyGroup",
     programName: "AI학습공동체 2025",
