@@ -233,4 +233,42 @@ describe("TeamArtifactsPage", () => {
     expect(screen.getByRole("button", { name: "결과물 등록" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: /결과물 등록 기간/ })).not.toBeInTheDocument();
   });
+
+  it("관리자는 프로그램이 끝난 프로젝트에도 결과물을 등록할 수 있다", async () => {
+    vi.setSystemTime(new Date("2027-01-10T00:00:00Z"));
+    loadTeamReportWorkspace.mockResolvedValue({
+      actor: { ...actor, id: "admin-1", role: "ADMIN" },
+      workspace: {
+        ...workspace,
+        status: "COMPLETED",
+        access: {
+          isPrimaryAdvisor: false,
+          isAssistant: false,
+          isTeamMember: false,
+          canSupervise: true,
+          // 프로그램이 끝나면 canContribute 는 관리자에게도 false 다. 결과물 화면은 이것에 기대지 않는다.
+          canContribute: false,
+        },
+      },
+      reportWorkspace: { reports: [], artifacts: [] },
+    });
+
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
+
+    expect(screen.getByRole("button", { name: "결과물 등록" })).toBeInTheDocument();
+  });
+
+  it("학생은 프로그램이 끝난 프로젝트에 결과물을 등록할 수 없다", async () => {
+    vi.setSystemTime(new Date("2027-01-10T00:00:00Z"));
+    loadTeamReportWorkspace.mockResolvedValue({
+      actor,
+      workspace: { ...workspace, status: "COMPLETED", access: { ...workspace.access, canContribute: false } },
+      reportWorkspace: { reports: [], artifacts: [] },
+    });
+
+    render(await TeamArtifactsPage({ params: Promise.resolve({ projectId: workspace.id }) }));
+
+    expect(screen.queryByRole("button", { name: "결과물 등록" })).not.toBeInTheDocument();
+    expect(screen.getByText("프로젝트 종료 전에 공개한 결과물이 없습니다.")).toBeInTheDocument();
+  });
 });

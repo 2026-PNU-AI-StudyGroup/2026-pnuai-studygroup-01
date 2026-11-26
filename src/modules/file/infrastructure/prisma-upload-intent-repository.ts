@@ -50,6 +50,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       await transaction.$executeRaw(Prisma.sql`
         SELECT pg_advisory_xact_lock(hashtextextended(${input.teamId}, 0))
       `);
+      // 끝난 프로그램에는 관리자만 올린다. 지난 프로젝트에 발표 자료와 대표 이미지를 붙이는 일이다.
       const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT "project_team"."id"
         FROM "project_team"
@@ -57,7 +58,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         WHERE "project_team"."id" = ${input.teamId}
           AND "topic"."status" = 'ACTIVE'
-          AND "project_program"."endsAt" > NOW()
+          AND ("project_program"."endsAt" > NOW() OR ${input.actor.role}::"UserRole" = 'ADMIN')
           AND (
             ${input.actor.role}::"UserRole" = 'ADMIN' OR
             (${input.actor.role}::"UserRole" = 'STUDENT' AND EXISTS (
@@ -86,7 +87,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
         JOIN "project_program" ON "project_program"."id" = "topic"."programId"
         WHERE "project_team"."id" = ${input.teamId}
           AND "topic"."status" = 'ACTIVE'
-          AND "project_program"."endsAt" > NOW()
+          AND ("project_program"."endsAt" > NOW() OR ${input.actor.role}::"UserRole" = 'ADMIN')
           AND (
             SELECT count(*) FROM "stored_file"
             WHERE "ownerId" = ${input.actor.id} AND "status" = 'PENDING'
@@ -137,6 +138,7 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
       });
       if (!scope) return false;
       if (scope.projectTeamId !== null) {
+        // 시작할 때와 같이 끝난 프로그램은 관리자가 올린 파일만 마무리한다.
         const teams = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
           SELECT "project_team"."id"
           FROM "project_team"
@@ -144,7 +146,10 @@ export class PrismaUploadIntentRepository implements UploadIntentRepository {
           JOIN "project_program" ON "project_program"."id" = "topic"."programId"
           WHERE "project_team"."id" = ${scope.projectTeamId}
             AND "topic"."status" = 'ACTIVE'
-            AND "project_program"."endsAt" > NOW()
+            AND (
+              "project_program"."endsAt" > NOW()
+              OR EXISTS (SELECT 1 FROM "user" WHERE "user"."id" = ${ownerId} AND "user"."role" = 'ADMIN')
+            )
           FOR UPDATE
         `);
         if (teams.length !== 1) return false;
