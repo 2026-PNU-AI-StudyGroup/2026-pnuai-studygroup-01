@@ -107,10 +107,14 @@ async function ensureThumbnail(repo: SnapshotRepo, startsAt: Date): Promise<bool
  */
 async function ensureDetails(repo: SnapshotRepo, startsAt: Date): Promise<number> {
   const projectTeamId = stableArchiveId("team", repo.fullName);
-  const team = await prisma.projectTeam.findUnique({ where: { id: projectTeamId }, select: { showcaseIntro: true } });
+  const team = await prisma.projectTeam.findUnique({ where: { id: projectTeamId }, select: { showcaseIntro: true, archivedMemberNames: true } });
   if (!team) return 0;
   if (repo.intro && !team.showcaseIntro) {
     await prisma.projectTeam.update({ where: { id: projectTeamId }, data: { showcaseIntro: repo.intro } });
+  }
+  // 운영자가 화면에서 고친 명단은 없으므로 비어 있을 때만 채운다. 다시 돌려도 같다.
+  if (repo.members?.length && team.archivedMemberNames.length === 0) {
+    await prisma.projectTeam.update({ where: { id: projectTeamId }, data: { archivedMemberNames: repo.members } });
   }
   let added = 0;
   const links: ["PRESENTATION_VIDEO" | "OTHER", string, string | null | undefined, number][] = [
@@ -226,6 +230,13 @@ async function main() {
       });
     }
 
+    // 교수 계정을 담당자로 건다. 계정이 없으면 이관용 계정 그대로 두고 알린다.
+    const manager = source.managerEmail
+      ? await prisma.user.findUnique({ where: { email: source.managerEmail }, select: { id: true } })
+      : null;
+    if (source.managerEmail && !manager) console.warn(`  담당자 계정이 없어 이관용 계정으로 둠: ${source.managerEmail}`);
+    const managerId = manager?.id ?? ARCHIVE_USER_ID;
+
     let created = 0;
     let existing = 0;
     let duplicate = 0;
@@ -236,6 +247,10 @@ async function main() {
       if (await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } })) {
         console.log(`  이미 넣은 프로젝트라 건너뜀: ${repo.fullName}`);
         existing += 1;
+        // 이관용 계정이 담당자인 프로젝트만 바꾼다. 운영자가 화면에서 바꾼 담당자는 둔다.
+        if (managerId !== ARCHIVE_USER_ID) {
+          await prisma.topic.updateMany({ where: { id: topicId, managerId: ARCHIVE_USER_ID }, data: { managerId } });
+        }
         if (await ensureThumbnail(repo, startsAt)) thumbnails += 1;
         details += await ensureDetails(repo, startsAt);
         continue;
@@ -255,7 +270,7 @@ async function main() {
             programId,
             authorId: ARCHIVE_USER_ID,
             // 지난 프로젝트 조회가 담당자 이름을 그대로 읽는다. 비워 두면 조회가 실패한다.
-            managerId: ARCHIVE_USER_ID,
+            managerId,
             title: repo.title,
             description: repo.summary || repo.title,
             capacity: 1,

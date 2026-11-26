@@ -19,6 +19,8 @@ export type ArchiveProgram = {
   programId?: string;
   /** 없으면 TROPHY. */
   icon?: "TROPHY" | "GRADUATION_CAP";
+  /** 담당자(교수)로 연결할 운영 계정 이메일. 없거나 계정이 없으면 이관용 계정이 담당자다. */
+  managerEmail?: string;
 };
 
 export type ArchiveTeam = {
@@ -51,6 +53,8 @@ export type SnapshotRepo = {
   images?: string[];
   /** github-archive/images 아래 썸네일 파일. 유튜브 대표 이미지나 README 사진을 webp 로 줄인 것. */
   thumbnail?: string;
+  /** 팀원 이름. 계정을 만들지 않고 팀에 이름만 적는다. 공식 명단에서 옮기고 팀장은 따로 두지 않는다. */
+  members?: string[];
 };
 
 export type SnapshotProgram = { program: ArchiveProgram; repos: SnapshotRepo[] };

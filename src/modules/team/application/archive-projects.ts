@@ -19,6 +19,8 @@ export type ArchivedProject = {
   advisorRole: string;
   advisorEnabled: boolean;
   memberNames: string[];
+  /** memberNames 의 첫 사람이 팀장인지. 계정 없이 옮겨 넣은 명단에는 팀장이 없다. */
+  leaderListed: boolean;
   sourceUrl?: string;
   thumbnailPath?: string;
   posterPath?: string;

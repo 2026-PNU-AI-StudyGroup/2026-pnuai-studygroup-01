@@ -1157,6 +1157,8 @@ model ProjectTeam {
   award              String?
   // 이전 시스템에서 옮겨 온 득표수. 투표 이력이 없어 집계할 수 없으므로 값만 보관한다.
   archivedVoteCount  Int?
+  /// 계정 없이 옮겨 넣은 팀원 이름. 팀원 계정이 하나도 없을 때만 화면에 쓴다.
+  archivedMemberNames String[]  @default([])
   advisorEvaluations AdvisorEvaluation[]
   advisorFeedbacks   AdvisorFeedback[]
 
