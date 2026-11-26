@@ -37,9 +37,11 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
   const now = new Date();
   const isStudentRegistrationPeriod = now >= workspace.schedule.executionStartsAt &&
     now <= workspace.schedule.executionEndsAt;
-  const canRegisterArtifact = workspace.status === "IN_PROGRESS" &&
-    workspace.access.canContribute &&
-    (actor.role === "ADMIN" || isStudentRegistrationPeriod);
+  // 관리자는 프로그램이 끝난 뒤에도 결과물을 채운다. 끝난 행사를 지난 프로젝트로 옮겨 넣고 발표 자료와
+  // 영상을 나중에 붙이는 일이 관리자 몫이다. 학생은 수행 기간 안에서만 등록한다.
+  const canRegisterArtifact = actor.role === "ADMIN"
+    ? workspace.status === "IN_PROGRESS" || workspace.status === "COMPLETED"
+    : workspace.status === "IN_PROGRESS" && workspace.access.canContribute && isStudentRegistrationPeriod;
   const registrationPeriodState = workspace.status === "IN_PROGRESS" &&
     workspace.access.isTeamMember &&
     actor.role !== "ADMIN"
@@ -49,7 +51,9 @@ export default async function TeamArtifactsPage({ params }: { params: Promise<{ 
         ? "AFTER"
         : null
     : null;
-  const emptyDescription = workspace.status === "COMPLETED"
+  const emptyDescription = canRegisterArtifact && actor.role === "ADMIN"
+    ? "공개할 소스 코드, 발표 영상, 포스터를 파일 또는 링크로 등록하세요."
+    : workspace.status === "COMPLETED"
     ? "프로젝트 종료 전에 공개한 결과물이 없습니다."
     : !workspace.access.canContribute
       ? "팀원이 결과물을 등록하면 확인할 수 있습니다."
